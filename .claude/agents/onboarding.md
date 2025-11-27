@@ -363,6 +363,38 @@ Now create the configuration files:
 # Update .agent-context/current-state.json with project details
 ```
 
+### Create First Task: TDD Infrastructure Setup
+
+**IMPORTANT**: Create a seed task to guide the planner toward TDD practices from day one.
+
+1. Copy the template:
+```bash
+cp delegation/tasks/9-reference/templates/SETUP-0001-testing-infrastructure.md \
+   delegation/tasks/2-todo/[PREFIX]-0001-testing-infrastructure.md
+```
+
+2. Update the task file:
+   - Replace `SETUP-0001` with `[PREFIX]-0001` (using the task prefix from Phase 1)
+   - Replace `[DATE]` with today's date
+   - Adjust language-specific sections based on languages selected in Phase 2
+
+3. Tell the user:
+```
+**First Task Created!**
+
+I've created your first task: `[PREFIX]-0001: Set Up Testing Infrastructure`
+
+This task guides you through setting up:
+- Test framework (pytest/Jest/Vitest)
+- CI/CD pipeline (GitHub Actions)
+- Pre-commit hooks
+
+When you start working with the planner agent, it will see this task
+and help you complete it before writing any feature code.
+
+This ensures your project follows Test-Driven Development (TDD) from day one!
+```
+
 ---
 
 ## Phase 7: GitHub Repository Setup
@@ -467,9 +499,10 @@ Configuration Summary:
 - Pre-commit Hooks: [Enabled / Not configured]
 
 **Next Steps:**
-1. Run `./agents/launch` to see available agents
-2. Run `./agents/launch planner` to start planning your project
-3. Tell planner what you want to build!
+1. Run `./agents/launch planner` to start working with your planner
+2. Planner will see your first task: **[PREFIX]-0001: Set Up Testing Infrastructure**
+3. Complete that task first - it sets up TDD practices for your project
+4. Then tell planner what you want to build!
 
 Happy building!
 ```
