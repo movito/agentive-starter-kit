@@ -36,12 +36,16 @@ parse_frontmatter() {
 
 # Get list of available agent files with custom ordering
 get_agent_files() {
-    # Define custom agent ordering (in preferred display order)
+    # =========================================================================
+    # AGENT DISPLAY ORDER
+    # Edit this array to change the order agents appear in the menu.
+    # Agents not listed here will appear at the end alphabetically.
+    # =========================================================================
     local agent_order=(
         "planner"
-        "tycho"
         "feature-developer"
         "test-runner"
+        "tycho"
         "powertest-runner"
         "document-reviewer"
         "security-reviewer"
@@ -119,19 +123,13 @@ list_agents() {
     for agent_file in "${agent_files[@]}"; do
         local name=$(get_agent_name "$agent_file")
         local description=$(get_agent_description "$agent_file")
-        local model=$(get_agent_model "$agent_file")
-
-        # Simple icon based on agent type
-        local icon="⚡"
-        [[ "$name" == *"planner"*]] && icon="📋"
-        [[ "$name" == *"tycho"* ]] && icon="🧭"
-        [[ "$name" == *"test"* ]] && icon="🧪"
-        [[ "$name" == *"document"* ]] && icon="📄"
-        [[ "$name" == *"security"* ]] && icon="🔒"
+        local icon=$(get_agent_icon "$name")
 
         echo -e "  ${YELLOW}$counter${NC}) $icon $name - $description"
         counter=$((counter + 1))
     done
+    echo
+    echo -e "  ${BLUE}Tip:${NC} To reorder or customize agents, edit ${YELLOW}agents/launch${NC}"
     echo
 }
 
@@ -155,13 +153,18 @@ needs_serena_activation() {
         return 1  # false - Serena not available
     fi
 
-    # Agents that use Serena for code navigation
+    # =========================================================================
+    # SERENA-ENABLED AGENTS
+    # These agents get automatic Serena activation for semantic code navigation.
+    # Add agent names here if they work with code and would benefit from Serena.
+    # =========================================================================
     local serena_agents=(
         "planner"
-        "tycho"
         "feature-developer"
         "test-runner"
+        "tycho"
         "powertest-runner"
+        "security-reviewer"
     )
 
     for serena_agent in "${serena_agents[@]}"; do
@@ -221,6 +224,21 @@ launch_agent() {
     fi
 }
 
+# Get icon for agent name
+get_agent_icon() {
+    local name="$1"
+    local icon="⚡"
+    [[ "$name" == *"planner"* ]] && icon="📋"
+    [[ "$name" == *"tycho"* ]] && icon="🧭"
+    [[ "$name" == *"feature"* ]] && icon="🛠️"
+    [[ "$name" == *"test"* ]] && icon="🧪"
+    [[ "$name" == *"document"* ]] && icon="📄"
+    [[ "$name" == *"security"* ]] && icon="🔒"
+    [[ "$name" == *"ci-checker"* ]] && icon="✅"
+    [[ "$name" == *"agent-creator"* ]] && icon="🤖"
+    echo "$icon"
+}
+
 # Interactive agent selection
 interactive_select() {
     local agent_files=($(get_agent_files))
@@ -229,15 +247,7 @@ interactive_select() {
     local options=()
     for agent_file in "${agent_files[@]}"; do
         local name=$(get_agent_name "$agent_file")
-
-        # Simple icon based on agent type
-        local icon="⚡"
-        [[ "$name" == *"planner"*]] && icon="📋"
-        [[ "$name" == *"tycho"* ]] && icon="🧭"
-        [[ "$name" == *"test"* ]] && icon="🧪"
-        [[ "$name" == *"document"* ]] && icon="📄"
-        [[ "$name" == *"security"* ]] && icon="🔒"
-
+        local icon=$(get_agent_icon "$name")
         options+=("$icon $name")
     done
 
