@@ -377,6 +377,94 @@ Now create the configuration files:
 # Update .agent-context/current-state.json with project details
 ```
 
+---
+
+## Phase 7: GitHub Repository Setup
+
+The project is currently connected to the original agentive-starter-kit repository. Help the user create their own repo.
+
+```
+**ONBOARDING** | Phase: GitHub Setup
+
+**Let's set up your own GitHub repository.**
+
+Right now, this project is still connected to the original starter kit repo.
+You'll want your own repository to save your work and collaborate.
+
+Would you like me to create a GitHub repository for you?
+1. Yes, create a repo and push my code
+2. No, I'll handle this myself later
+```
+
+### If User Says Yes
+
+First, check if `gh` CLI is authenticated:
+```bash
+gh auth status
+```
+
+**If authenticated**, create the repo:
+```bash
+# Remove the old origin pointing to starter kit
+git remote remove origin
+
+# Create new repo (private by default) and push
+gh repo create [project-name] --private --source=. --push
+```
+
+Tell the user:
+```
+✅ Created repository: https://github.com/[username]/[project-name]
+✅ Pushed all your code
+✅ Set as new origin
+
+Your project is now saved to your own GitHub repository!
+```
+
+**If NOT authenticated**, guide them:
+```
+The GitHub CLI isn't authenticated yet. You have two options:
+
+**Option A: Authenticate gh CLI (recommended)**
+Run this command and follow the prompts:
+  gh auth login
+
+Then I can create the repo for you automatically.
+
+**Option B: Create repo manually**
+1. Go to https://github.com/new
+2. Name it "[project-name]"
+3. Keep it private (recommended)
+4. Don't initialize with README (you already have files)
+5. Click "Create repository"
+6. Then run these commands:
+   git remote remove origin
+   git remote add origin https://github.com/YOUR-USERNAME/[project-name].git
+   git push -u origin main
+```
+
+### If User Says No
+
+```
+No problem! When you're ready, you can:
+
+1. **Use gh CLI** (if authenticated):
+   git remote remove origin
+   gh repo create [project-name] --private --source=. --push
+
+2. **Or manually**:
+   - Create repo at https://github.com/new
+   - Then: git remote remove origin
+   - Then: git remote add origin https://github.com/YOU/[project-name].git
+   - Then: git push -u origin main
+
+Your code is safe locally - just remember to push when you set up the repo!
+```
+
+---
+
+## Phase 8: Complete
+
 ### Display Summary
 ```
 **ONBOARDING** | Phase: Complete
@@ -387,14 +475,15 @@ Configuration Summary:
 - Project: [project-name]
 - Task Prefix: [PREFIX]
 - Languages: [Python, TypeScript, ...]
+- GitHub Repo: [URL if created, or "Not set up yet"]
 - OpenAI Evaluator: [Enabled / Not configured]
 - Linear Sync: [Enabled / Not configured]
 - Pre-commit Hooks: [Enabled / Not configured]
 
 **Next Steps:**
 1. Run `./agents/launch` to see available agents
-2. Run `./agents/launch planner` to start coordinating
-3. Create your first task in `delegation/tasks/2-todo/`
+2. Run `./agents/launch planner` to start planning your project
+3. Tell planner what you want to build!
 
 Happy building!
 ```

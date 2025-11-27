@@ -99,7 +99,8 @@ cat > "$ONBOARDING_STATE" << 'EOF'
 - [ ] Phase 3: API keys configured
 - [ ] Phase 4: Features selected
 - [ ] Phase 5: Agents customized
-- [ ] Phase 6: First task created
+- [ ] Phase 6: Configuration files created
+- [ ] Phase 7: GitHub repository setup
 
 ## Configuration
 
