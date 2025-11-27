@@ -1,7 +1,7 @@
 ---
 name: feature-developer
 description: Feature implementation specialist for this project
-model: claude-sonnet-4-5-20250929
+# model: claude-sonnet-4-5-20250929  # Uncomment and set your preferred model
 tools:
   - Bash
   - Glob

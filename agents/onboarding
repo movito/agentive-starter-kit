@@ -27,6 +27,36 @@ echo -e "${CYAN}║                                                             
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo
 
+# Run preflight check
+PREFLIGHT_SCRIPT="$SCRIPT_DIR/preflight"
+if [[ -x "$PREFLIGHT_SCRIPT" ]]; then
+    echo -e "${BLUE}Running preflight checks...${NC}"
+    echo
+    
+    # Run preflight and capture exit code
+    "$PREFLIGHT_SCRIPT"
+    PREFLIGHT_EXIT=$?
+    
+    if [[ $PREFLIGHT_EXIT -eq 1 ]]; then
+        echo
+        echo -e "${RED}Please resolve the issues above before continuing.${NC}"
+        echo -e "Run ${CYAN}./agents/preflight${NC} again after fixing."
+        exit 1
+    elif [[ $PREFLIGHT_EXIT -eq 0 ]]; then
+        # Check if there were warnings (the script prints a specific message)
+        echo
+        read -p "Continue with onboarding? (Y/n): " confirm
+        if [[ "$confirm" =~ ^[Nn]$ ]]; then
+            echo -e "${BLUE}Run ./agents/onboarding again when ready.${NC}"
+            exit 0
+        fi
+    fi
+    echo
+else
+    echo -e "${YELLOW}Warning: preflight script not found. Skipping checks.${NC}"
+    echo
+fi
+
 # Check if already configured
 if [[ -f "$PROJECT_ROOT/.env" ]]; then
     echo -e "${YELLOW}Note: .env file already exists.${NC}"

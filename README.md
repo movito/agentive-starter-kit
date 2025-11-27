@@ -23,14 +23,67 @@ This kit provides:
 
 ---
 
-## Quick Start
+## Prerequisites
 
-### 1. Clone and Enter Directory
+Before you begin, verify you have the following:
+
+### Must Have (Required)
+
+| Requirement | How to Check | How to Get |
+|-------------|--------------|------------|
+| **Claude Account** | You can log into [claude.ai](https://claude.ai) | [Sign up](https://claude.ai) |
+| **Claude Code** | `claude --version` | [Download](https://claude.ai/download) or install VS Code/Cursor extension |
+| **GitHub Account** | You can log into [github.com](https://github.com) | [Sign up](https://github.com/signup) |
+| **Git Configured** | `git config user.name && git config user.email` | [Setup guide](https://docs.github.com/en/get-started/quickstart/set-up-git) |
+
+> **New to Git?** Check out [GitHub's Git Handbook](https://guides.github.com/introduction/git-handbook/) for a quick introduction.
+
+### Should Have (For Core Features)
+
+| Requirement | How to Check | How to Get |
+|-------------|--------------|------------|
+| **Python 3.9+** | `python3 --version` | [python.org](https://www.python.org/downloads/) or `brew install python` |
+| **uvx or pipx** | `uvx --version` or `pipx --version` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+
+### Nice to Have (Optional Enhancements)
+
+| Requirement | Purpose | How to Get |
+|-------------|---------|------------|
+| **OpenAI API Key** | Adversarial evaluation (~$0.04/eval) | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Linear API Key** | Task sync with Linear issues | [linear.app/settings/api](https://linear.app/settings/api) |
+
+### Quick Preflight Check
+
+Run this script to validate your environment:
 
 ```bash
-git clone https://github.com/movito/agentive-starter-kit.git my-project
-cd my-project
+./agents/preflight
 ```
+
+It will check all requirements and tell you what's missing.
+
+---
+
+## Quick Start
+
+### 1. Clone the Repository
+
+Open your terminal and navigate to where you keep projects (e.g., `~/Github` or `~/Projects`):
+
+```bash
+cd ~/Github
+```
+
+Then clone this starter kit with your project name:
+
+```bash
+git clone https://github.com/movito/agentive-starter-kit.git my-project-name
+cd my-project-name
+```
+
+This creates a new `my-project-name` folder with everything inside. **Don't create the folder first** - the clone command does that for you.
+
+Then open the folder in your IDE (VS Code, Cursor, etc.).
 
 ### 2. Run First-Time Onboarding
 
@@ -228,16 +281,6 @@ your-project/
 ├── .pre-commit-config.yaml  # Pre-commit hooks
 └── pyproject.toml           # Python project config
 ```
-
----
-
-## Requirements
-
-- **Claude Code** - For running agents
-- **Python 3.9+** - For tooling and tests
-- **Git** - Version control
-- **OpenAI API Key** - For adversarial evaluation (optional)
-- **Linear Account** - For task sync (optional)
 
 ---
 

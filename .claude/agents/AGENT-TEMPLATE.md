@@ -1,7 +1,7 @@
 ---
 name: [agent-name]
 description: [One sentence description of agent role and primary responsibility]
-model: claude-sonnet-4-5-20250929  # Use claude-3-5-haiku-20241022 for simpler/faster tasks
+# model: claude-sonnet-4-5-20250929  # Use claude-3-5-haiku-20241022 for simpler/faster tasks  # Uncomment and set your preferred model
 tools:
   - Read
   - Write

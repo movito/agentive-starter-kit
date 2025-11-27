@@ -1,7 +1,7 @@
 ---
 name: powertest-runner
 description: Comprehensive testing and validation specialist with advanced TDD and analysis capabilities
-model: claude-sonnet-4-5-20250929
+# model: claude-sonnet-4-5-20250929  # Uncomment and set your preferred model
 tools:
   - Read
   - Write

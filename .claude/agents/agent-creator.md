@@ -1,7 +1,7 @@
 ---
 name: agent-creator
 description: Interactive agent creation specialist - guides users through creating new specialized agents
-model: claude-sonnet-4-5-20250929
+# model: claude-sonnet-4-5-20250929  # Uncomment and set your preferred model
 tools:
   - Read
   - Write

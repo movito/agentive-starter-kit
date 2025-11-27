@@ -1,7 +1,7 @@
 ---
 name: test-runner
 description: Testing and quality assurance specialist
-model: claude-haiku-4-5-20251001
+# model: claude-haiku-4-5-20251001  # Uncomment and set your preferred model
 tools:
   - Bash
   - Read

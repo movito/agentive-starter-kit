@@ -1,7 +1,7 @@
 ---
 name: rem
 description: High-level project coordination and task management specialist
-model: claude-opus-4-5-20251101
+# model: claude-opus-4-5-20251101  # Uncomment and set your preferred model
 tools:
   - Read
   - Write

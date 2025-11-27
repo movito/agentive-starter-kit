@@ -150,3 +150,6 @@ logs/
 # Task monitoring system
 .task-monitor.db
 .task-monitor.db-journal
+
+# Serena config (generated from template)
+.serena/project.yml
