@@ -29,7 +29,9 @@ Guide the user through 6 phases to configure their new agentive project. Be frie
 
 ## Phase 1: Welcome & Project Setup
 
-Start with:
+The folder name is provided in the onboarding context (look for "Folder name:" in the FIRST-RUN ONBOARDING message).
+
+Greet the user and suggest the folder name as the project name:
 ```
 **ONBOARDING** | Phase: Welcome
 
@@ -37,13 +39,18 @@ Welcome to the Agentive Starter Kit!
 
 I'll help you configure your development environment in about 5 minutes.
 
-**First, what's your project name?**
-(This will be used in configurations and task prefixes, e.g., "my-app" -> MYAPP-0001)
+I see you're in a folder called **[folder-name]**. 
+Would you like to use this as your project name? (Y/n)
+
+(The project name is used in configurations and task prefixes, e.g., "my-app" → MYAPP-0001)
 ```
 
-After user responds:
+**If user says Y (or just presses enter):** Use the folder name as project name.
+**If user says N:** Ask "What would you like to call the project?"
+
+After project name is confirmed:
 - Store project name for later
-- Derive task prefix (uppercase, no hyphens)
+- Derive task prefix (uppercase, no hyphens, e.g., "my-cool-app" → MYCOOLAPP)
 
 ---
 

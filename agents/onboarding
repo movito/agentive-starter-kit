@@ -127,12 +127,12 @@ FIRST_RUN_CONTEXT="
 **FIRST-RUN ONBOARDING ACTIVE**
 
 Project Context:
-- Directory: $PROJECT_NAME
+- Folder name: $PROJECT_NAME (suggest this as project name)
 - Location: $PROJECT_ROOT
 - Status: No .env file (unconfigured)
 - Onboarding state: $ONBOARDING_STATE
 
-Begin the interactive onboarding flow immediately. Start with Phase 1 (Welcome).
+Begin Phase 1 immediately. Suggest '$PROJECT_NAME' as the project name since that's the folder name.
 "
 
 echo -e "${BLUE}Launching onboarding agent...${NC}"
