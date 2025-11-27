@@ -1,10 +1,10 @@
 {
   "planner": {
-    "status": "idle",
-    "current_task": null,
-    "task_started": null,
-    "brief_note": "Ready for planning and coordination",
-    "details_link": null
+    "status": "completed",
+    "current_task": "Starter kit improvements",
+    "task_started": "2025-11-27",
+    "brief_note": "Session complete: TDD seed task, onboarding UX, rem→planner rename, model defaults",
+    "details_link": ".agent-context/2025-11-27-SESSION-HANDOVER.md"
   },
   "feature-developer": {
     "status": "idle",
