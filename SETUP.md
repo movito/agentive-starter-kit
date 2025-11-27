@@ -34,13 +34,13 @@ Before you begin, ensure you have:
 
 ### Option A: Interactive Setup (Recommended)
 
-Run the onboarding script to launch `rem` with full setup context:
+Run the onboarding script to launch `planner` with full setup context:
 
 ```bash
 ./agents/onboarding
 ```
 
-`rem` will help you:
+`planner` will help you:
 1. Configure your project name
 2. Select programming languages
 3. Set up API keys
@@ -258,7 +258,7 @@ After setup, verify each component:
 
 ### Agents
 - [ ] `./agents/launch` shows agent menu
-- [ ] `./agents/launch rem` starts rem agent
+- [ ] `./agents/launch planner` starts planner agent
 - [ ] Serena activates when agent starts
 
 ### Task Management
@@ -339,7 +339,7 @@ After setup:
    - Review feedback in `.adversarial/logs/`
 
 3. **Assign to Agent**
-   - Launch `rem` or `coordinator`
+   - Launch `planner` or `coordinator`
    - Discuss the task and get it assigned
 
 4. **Read the Guide**
@@ -350,7 +350,7 @@ After setup:
 
 ## Getting Help
 
-- **Agent Issues**: Ask `rem` or `coordinator` for help
+- **Agent Issues**: Ask `planner` or `coordinator` for help
 - **Setup Issues**: Check troubleshooting above
 - **Methodology Questions**: See `docs/agentive-development/`
 - **Bug Reports**: https://github.com/movito/agentive-starter-kit/issues

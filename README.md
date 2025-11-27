@@ -93,7 +93,7 @@ Then open the folder in your IDE (VS Code, Cursor, etc.).
 
 ### 3. Follow Interactive Setup
 
-`rem` (your project coordinator) will guide you through:
+`planner` (your project coordinator) will guide you through:
 
 1. **Project Configuration** - Name your project
 2. **Language Selection** - Configure Serena for your languages
@@ -111,7 +111,7 @@ Setup takes approximately 5-10 minutes.
 
 | Agent | Purpose |
 |-------|---------|
-| `rem` | Primary project coordinator, handles onboarding |
+| `planner` | Helps you plan, tracks work, keeps things on track |
 | `coordinator` | High-level task coordination |
 | `tycho` | Day-to-day project management |
 | `feature-developer` | Implementation tasks |
@@ -272,17 +272,17 @@ Tasks work fine without Linear - they're just markdown files. Agents can create,
 ./agents/launch
 
 # Launch specific agent
-./agents/launch rem
+./agents/launch planner
 ./agents/launch feature-developer
 ./agents/launch test-runner
 ```
 
 ### Creating Tasks
 
-**The easy way:** Just tell `rem` what you want to build. The agent will create and manage tasks for you.
+**The easy way:** Just tell `planner` what you want to build. The agent will create and manage tasks for you.
 
 ```bash
-./agents/launch rem
+./agents/launch planner
 # Then: "I want to add user authentication to my app"
 ```
 
@@ -291,7 +291,7 @@ Tasks work fine without Linear - they're just markdown files. Agents can create,
 1. Copy task template: `delegation/tasks/9-reference/templates/task-template.md`
 2. Create task file: `delegation/tasks/2-todo/TASK-0001-my-task.md`
 3. Run evaluation: `adversarial evaluate delegation/tasks/2-todo/TASK-0001-my-task.md`
-4. Assign to agent via `rem` or `coordinator`
+4. Assign to agent via `planner` or `coordinator`
 
 ### Running Tests
 

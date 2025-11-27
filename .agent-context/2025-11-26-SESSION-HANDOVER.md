@@ -1,8 +1,8 @@
 # Session Handover: agentive-starter-kit
 
 **Date**: 2025-11-26
-**From**: rem @ thematic-cuts (coordination session)
-**To**: rem @ agentive-starter-kit
+**From**: planner @ thematic-cuts (coordination session)
+**To**: planner @ agentive-starter-kit
 
 ---
 
@@ -20,9 +20,9 @@
 
 1. **Onboarding Separation** (commit `c8b69c7`)
    - Created dedicated `onboarding.md` agent (341 lines)
-   - Removed onboarding from `rem.md` (now 322 lines)
-   - `agents/onboarding` launches onboarding agent, not rem
-   - Separation of concerns: onboarding = setup, rem = coordination
+   - Removed onboarding from `planner.md` (now 322 lines)
+   - `agents/onboarding` launches onboarding agent, not planner
+   - Separation of concerns: onboarding = setup, planner = coordination
 
 2. **Serena MCP Integration** (commit `3f0057b`)
    - Created `.serena/setup-serena.sh` - automated installation script
@@ -40,7 +40,7 @@
 | File | Change |
 |------|--------|
 | `.claude/agents/onboarding.md` | NEW - Dedicated setup agent |
-| `.claude/agents/rem.md` | Reduced from 495 to 322 lines |
+| `.claude/agents/planner.md` | Reduced from 495 to 322 lines |
 | `.serena/setup-serena.sh` | NEW - Serena installation script |
 | `agents/launch` | Added `is_serena_configured()` check |
 | `agents/onboarding` | Now launches onboarding agent |
@@ -56,7 +56,7 @@
 agentive-starter-kit/
 ├── .claude/agents/        # Agent definitions (10 agents)
 │   ├── onboarding.md      # First-run setup (NEW)
-│   ├── rem.md             # Coordinator (slimmed down)
+│   ├── planner.md             # Coordinator (slimmed down)
 │   ├── feature-developer.md
 │   └── ...
 ├── .serena/
@@ -129,11 +129,11 @@ A sibling project using this starter kit was also set up:
 
 ## Session Notes
 
-- The thematic-cuts session ran into API overload with large rem.md (~500 lines)
+- The thematic-cuts session ran into API overload with large planner.md (~500 lines)
 - Solution: Separate onboarding into dedicated agent
 - Both repos now have Serena setup scripts
-- User prefers explicit steps (onboarding as separate step, not baked into rem)
+- User prefers explicit steps (onboarding as separate step, not baked into planner)
 
 ---
 
-*This handover was created by rem @ thematic-cuts to provide context continuity.*
+*This handover was created by planner @ thematic-cuts to provide context continuity.*

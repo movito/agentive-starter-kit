@@ -44,7 +44,7 @@ The `overloaded_error` is an Anthropic API capacity issue, not a prompt size err
 
 Rather than one large agent handling everything, split responsibilities:
 - **onboarding agent**: First-run setup only (dedicated, focused)
-- **rem agent**: Project coordination (no setup code)
+- **planner agent**: Project coordination (no setup code)
 - **feature-developer**: Implementation only
 
 This naturally keeps each agent file smaller and more focused.

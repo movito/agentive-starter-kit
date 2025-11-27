@@ -264,7 +264,7 @@ Note: Adversarial Evaluation and Linear Task Sync auto-enable if their API keys 
 **The starter kit includes these agents:**
 
 // Core team //
-- rem: Helps you plan, tracks ongoing work, and keeps things on track
+- planner: Helps you plan, tracks ongoing work, and keeps things on track
 - feature-developer: Writes code for features in your project
 - test-runner: Handles testing and verification of code
 
@@ -393,7 +393,7 @@ Configuration Summary:
 
 **Next Steps:**
 1. Run `./agents/launch` to see available agents
-2. Run `./agents/launch rem` to start coordinating
+2. Run `./agents/launch planner` to start coordinating
 3. Create your first task in `delegation/tasks/2-todo/`
 
 Happy building!
