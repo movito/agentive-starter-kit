@@ -117,11 +117,23 @@ The script will:
 **Then update project.yml with selected languages:**
 Edit `.serena/project.yml` to enable the languages the user selected in Phase 2.
 
-**After setup, tell the user:**
+**After setup, update agent files with the project name:**
+
+```bash
+# Replace "your-project" placeholder with actual project name in all agent files
+# This enables Serena auto-activation when agents start
+for agent_file in .claude/agents/*.md; do
+  sed -i '' "s/activate_project(\"your-project\")/activate_project(\"[project-name]\")/" "$agent_file" 2>/dev/null || \
+  sed -i "s/activate_project(\"your-project\")/activate_project(\"[project-name]\")/" "$agent_file"
+done
+```
+
+**Tell the user:**
 ```
 **Serena configured!**
 
 Languages enabled: [Python, TypeScript, ...]
+Agent files updated with project name for auto-activation.
 
 **Important next step:** You'll need to restart Claude Code (quit and reopen)
 for Serena to be available. Agents will then auto-activate it.
@@ -362,6 +374,23 @@ Now create the configuration files:
 ```bash
 # Update .agent-context/current-state.json with project details
 ```
+
+### Update Agent Files with Project Name
+
+**IMPORTANT**: Update all agent files to use the actual project name for Serena activation:
+
+```bash
+# Replace "your-project" placeholder with actual project name
+# This ensures agents can activate Serena when it's set up
+for agent_file in .claude/agents/*.md; do
+  sed -i '' "s/activate_project(\"your-project\")/activate_project(\"[project-name]\")/" "$agent_file" 2>/dev/null || \
+  sed -i "s/activate_project(\"your-project\")/activate_project(\"[project-name]\")/" "$agent_file"
+done
+```
+
+This step is needed even if Serena wasn't set up, because:
+- User might set up Serena later
+- Agents will already have the correct project name configured
 
 ### Create First Task: TDD Infrastructure Setup
 
