@@ -1,9 +1,9 @@
 {
-  "coordinator": {
+  "planner": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "Ready for first task assignment",
+    "brief_note": "Ready for planning and coordination",
     "details_link": null
   },
   "feature-developer": {

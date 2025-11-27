@@ -339,7 +339,7 @@ After setup:
    - Review feedback in `.adversarial/logs/`
 
 3. **Assign to Agent**
-   - Launch `planner` or `coordinator`
+   - Launch `planner`
    - Discuss the task and get it assigned
 
 4. **Read the Guide**
@@ -350,7 +350,7 @@ After setup:
 
 ## Getting Help
 
-- **Agent Issues**: Ask `planner` or `coordinator` for help
+- **Agent Issues**: Ask `planner` for help
 - **Setup Issues**: Check troubleshooting above
 - **Methodology Questions**: See `docs/agentive-development/`
 - **Bug Reports**: https://github.com/movito/agentive-starter-kit/issues

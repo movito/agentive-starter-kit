@@ -12,7 +12,7 @@ A complete starter kit for **agentive development** - a methodology for coordina
 
 This kit provides:
 
-- **10+ Specialized Agents** - Coordinator, feature-developer, test-runner, and more
+- **10+ Specialized Agents** - Planner, feature-developer, test-runner, and more
 - **Task Management System** - Linear-compatible workflow with numbered folders
 - **Adversarial Evaluation** - GPT-4o reviews your plans before implementation
 - **Serena Integration** - Semantic code navigation across multiple languages
@@ -112,7 +112,7 @@ Setup takes approximately 5-10 minutes.
 | Agent | Purpose |
 |-------|---------|
 | `planner` | Helps you plan, tracks work, keeps things on track |
-| `coordinator` | High-level task coordination |
+
 | `tycho` | Day-to-day project management |
 | `feature-developer` | Implementation tasks |
 | `test-runner` | TDD and testing |
@@ -291,7 +291,7 @@ Tasks work fine without Linear - they're just markdown files. Agents can create,
 1. Copy task template: `delegation/tasks/9-reference/templates/task-template.md`
 2. Create task file: `delegation/tasks/2-todo/TASK-0001-my-task.md`
 3. Run evaluation: `adversarial evaluate delegation/tasks/2-todo/TASK-0001-my-task.md`
-4. Assign to agent via `planner` or `coordinator`
+4. Assign to agent via `planner`
 
 ### Running Tests
 
@@ -367,7 +367,7 @@ your-project/
 ### Multi-Model Collaboration
 - Claude for implementation
 - GPT-4o for evaluation/critique
-- Coordinator for orchestration
+- Planner for orchestration
 
 ### Context Management
 - Documentation is infrastructure

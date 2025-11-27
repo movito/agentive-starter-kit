@@ -39,7 +39,6 @@ get_agent_files() {
     # Define custom agent ordering (in preferred display order)
     local agent_order=(
         "planner"
-        "coordinator"
         "tycho"
         "feature-developer"
         "test-runner"
@@ -124,7 +123,6 @@ list_agents() {
 
         # Simple icon based on agent type
         local icon="⚡"
-        [[ "$name" == *"coordinator"* ]] && icon="🎯"
         [[ "$name" == *"planner"*]] && icon="📋"
         [[ "$name" == *"tycho"* ]] && icon="🧭"
         [[ "$name" == *"test"* ]] && icon="🧪"
@@ -160,7 +158,6 @@ needs_serena_activation() {
     # Agents that use Serena for code navigation
     local serena_agents=(
         "planner"
-        "coordinator"
         "tycho"
         "feature-developer"
         "test-runner"
@@ -197,7 +194,6 @@ launch_agent() {
     echo -e "${BLUE}Model: ${NC}$model"
 
     # Check Serena status for code-focused agents
-    local serena_agents=("planner" "coordinator" "tycho" "feature-developer" "test-runner" "powertest-runner")
     local is_code_agent=false
     for sa in "${serena_agents[@]}"; do
         [[ "$name" == "$sa" ]] && is_code_agent=true && break
@@ -236,7 +232,6 @@ interactive_select() {
 
         # Simple icon based on agent type
         local icon="⚡"
-        [[ "$name" == *"coordinator"* ]] && icon="🎯"
         [[ "$name" == *"planner"*]] && icon="📋"
         [[ "$name" == *"tycho"* ]] && icon="🧭"
         [[ "$name" == *"test"* ]] && icon="🧪"
