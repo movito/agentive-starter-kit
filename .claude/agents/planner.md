@@ -1,7 +1,7 @@
 ---
 name: planner
 description: Helps you plan, tracks ongoing work, and keeps things on track
-model: claude-opus-4-5-20250514  # You can change this or comment out to use default
+model: claude-opus-4-5-20251101  # You can change this or comment out to use default
 tools:
   - Read
   - Write

@@ -1,7 +1,7 @@
 ---
 name: onboarding
 description: First-run setup specialist for new agentive projects
-model: claude-sonnet-4-5-20250514  # You can change this or comment out to use default
+model: claude-sonnet-4-5-20250929  # You can change this or comment out to use default
 tools:
   - Read
   - Write

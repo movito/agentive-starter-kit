@@ -1,7 +1,7 @@
 ---
 name: security-reviewer
 description: Security analysis and hardening specialist
-model: claude-opus-4-5-20250514  # You can change this or comment out to use default
+model: claude-opus-4-5-20251101  # You can change this or comment out to use default
 tools:
   - Read
   - Grep
