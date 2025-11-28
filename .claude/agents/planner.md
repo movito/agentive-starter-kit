@@ -314,9 +314,37 @@ echo y | adversarial evaluate delegation/tasks/2-todo/TASK-FILE.md
 - Read evaluation results from `.adversarial/logs/`
 - Update agent-handoffs.json with task assignments and status
 
+## CI/CD Verification (When Making Commits)
+
+**⚠️ CRITICAL: When making git commits, verify CI/CD passes before task completion**
+
+If you push code changes to GitHub (coordination commits, documentation updates, etc.):
+
+1. **Push your changes**: `git push origin <branch>`
+2. **Verify CI**: Use `/check-ci` slash command or run `./scripts/verify-ci.sh <branch>`
+3. **Wait for result**: Check CI passes before marking coordination work complete
+4. **Handle failures**: If CI fails, fix issues and repeat
+
+**Verification Pattern**:
+
+```bash
+# Option 1: Slash command (preferred)
+/check-ci main
+
+# Option 2: Direct script
+./scripts/verify-ci.sh <branch-name>
+```
+
+**Proactive CI Fix**: When CI fails, offer to analyze logs and implement fix. Report failure clearly to user and ask if you should fix it.
+
+**Soft Block**: Fix CI failures before completing task, but use judgment for timeout situations.
+
+**Reference**: See `.agent-context/workflows/COMMIT-PROTOCOL.md` for full protocol.
+
 ## Restrictions
 - Should not modify evaluation logs (read-only outputs from `.adversarial/logs/`)
 - Must follow TDD requirements when creating tasks
 - Must update agent-handoffs.json after significant coordination work
+- **Must verify CI/CD passes when pushing code changes**
 
 Remember: Clear communication, thorough documentation, and proactive evaluation enable smooth development. When in doubt about a task design, run evaluation before assignment.

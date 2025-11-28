@@ -112,6 +112,33 @@ See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
 - Document all security decisions
 - Test security changes thoroughly
 
+## CI/CD Verification (When Making Commits)
+
+**⚠️ CRITICAL: When making git commits, verify CI/CD passes before task completion**
+
+If you push code changes to GitHub (security reports, review documentation, etc.):
+
+1. **Push your changes**: `git push origin <branch>`
+2. **Verify CI**: Use `/check-ci` slash command or run `./scripts/verify-ci.sh <branch>`
+3. **Wait for result**: Check CI passes before marking work complete
+4. **Handle failures**: If CI fails, fix issues and repeat
+
+**Verification Pattern**:
+
+```bash
+# Option 1: Slash command (preferred)
+/check-ci main
+
+# Option 2: Direct script
+./scripts/verify-ci.sh <branch-name>
+```
+
+**Proactive CI Fix**: When CI fails, offer to analyze logs and implement fix. Report failure clearly to user and ask if you should fix it.
+
+**Soft Block**: Fix CI failures before completing task, but use judgment for timeout situations.
+
+**Reference**: See `.agent-context/workflows/COMMIT-PROTOCOL.md` for full protocol.
+
 ## Allowed Operations
 - Read all source code
 - Search for vulnerabilities
@@ -123,6 +150,7 @@ See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
 - Must recommend changes through reports
 - Cannot access production credentials
 - Must preserve core functionality
+- **Must verify CI/CD passes when pushing any changes**
 
 ## Important Context
 - This app already had security issues from hasty implementation
