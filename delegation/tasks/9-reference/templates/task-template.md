@@ -377,7 +377,7 @@ pytest tests/api/test_openapi_compliance.py -v
 
 ### References
 - **ADR-0035**: `docs/decisions/adr/ADR-0035-separate-api-testing-infrastructure.md`
-- **OpenAPI Spec**: `openapi/thematic-cuts-api-YYYY-MM-DD.yaml`
+- **OpenAPI Spec**: `openapi/api-YYYY-MM-DD.yaml` (if applicable)
 - **API Testing Guide**: `.agent-context/workflows/API-TESTING-WORKFLOW.md` (if exists)
 
 ---

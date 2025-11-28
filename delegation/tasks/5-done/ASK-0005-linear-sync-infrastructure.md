@@ -18,11 +18,11 @@
 
 Add Linear task synchronization infrastructure to the starter kit. This enables projects using the kit to sync their markdown task files (`delegation/tasks/`) to Linear for visual project management.
 
-**Context**: The thematic-cuts project has a mature Linear sync implementation that needs to be generalized for the starter kit. Currently, projects cloned from the starter kit have documentation referencing `./thematic linearsync` which doesn't exist. AL2 (agentic-lotion-2) discovered this gap when attempting to sync tasks.
+**Context**: The upstream-project project has a mature Linear sync implementation that needs to be generalized for the starter kit. Currently, projects cloned from the starter kit have documentation referencing `./thematic linearsync` which doesn't exist. AL2 (agentic-lotion-2) discovered this gap when attempting to sync tasks.
 
 **Related Work**:
-- thematic-cuts `scripts/sync_tasks_to_linear.py` (28KB, production-ready)
-- thematic-cuts `scripts/linear_sync_stubs.py` (TDD implementation)
+- upstream-project `scripts/sync_tasks_to_linear.py` (28KB, production-ready)
+- upstream-project `scripts/linear_sync_stubs.py` (TDD implementation)
 - AL2 ADR-0001 (documented missing infrastructure)
 
 ## Requirements
@@ -84,7 +84,7 @@ Add Linear task synchronization infrastructure to the starter kit. This enables 
 1. `scripts/sync_tasks_to_linear.py` - Main sync script
    - Purpose: Sync task markdown files to Linear issues
    - Contains: TaskData, TaskParser, LinearClient, main()
-   - Estimated lines: ~400 (simplified from thematic-cuts 863)
+   - Estimated lines: ~400 (simplified from upstream-project 863)
 
 2. `scripts/linear_sync_utils.py` - Helper functions
    - Purpose: Status mapping, migration, validation
@@ -130,7 +130,7 @@ Add Linear task synchronization infrastructure to the starter kit. This enables 
 2. Create `scripts/sync_tasks_to_linear.py`:
    - `TaskData` dataclass (generalized, no THEMATIC references)
    - `TaskParser` class (supports TASK-#### pattern)
-   - `LinearClient` class (from thematic-cuts, unchanged)
+   - `LinearClient` class (from upstream-project, unchanged)
    - `main()` function (sync mode only, remove comment mode)
 
 3. Run tests (should pass): `pytest tests/test_linear_sync.py -v`
@@ -146,12 +146,12 @@ Add Linear task synchronization infrastructure to the starter kit. This enables 
 1. Update `README.md` with Linear sync section
 2. Update onboarding docs for Linear setup
 
-## Key Generalizations from thematic-cuts
+## Key Generalizations from upstream-project
 
-| thematic-cuts | starter-kit | Change |
+| upstream-project | starter-kit | Change |
 |---------------|-------------|--------|
 | `THEMATIC-####` pattern | `TASK-####` pattern | Remove THEMATIC support |
-| `github.com/movito/thematic-cuts` | `GITHUB_REPO_URL` env var | Make configurable |
+| `github.com/movito/upstream-project` | `GITHUB_REPO_URL` env var | Make configurable |
 | `./thematic linearsync` | `./project linearsync` | Generic CLI name |
 | Comment posting mode | Removed | Simplify for starter kit |
 | TDD stubs import | Inline | Remove external dependency |
@@ -217,18 +217,18 @@ Add Linear task synchronization infrastructure to the starter kit. This enables 
 ## References
 
 ### Source Implementation
-- `thematic-cuts/scripts/sync_tasks_to_linear.py` (863 lines)
-- `thematic-cuts/scripts/linear_sync_stubs.py` (580 lines)
-- `thematic-cuts/thematic` (CLI launcher, 79 lines)
-- `thematic-cuts/.github/workflows/sync-to-linear.yml` (54 lines)
+- `upstream-project/scripts/sync_tasks_to_linear.py` (863 lines)
+- `upstream-project/scripts/linear_sync_stubs.py` (580 lines)
+- `upstream-project/thematic` (CLI launcher, 79 lines)
+- `upstream-project/.github/workflows/sync-to-linear.yml` (54 lines)
 
 ### Documentation
 - Linear API: https://developers.linear.app/docs/graphql/working-with-the-graphql-api
-- ADR-0038: Task status Linear alignment (from thematic-cuts)
+- ADR-0038: Task status Linear alignment (from upstream-project)
 
 ## Notes
 
-- The thematic-cuts implementation includes TDD stubs and comment posting features that are overkill for the starter kit
+- The upstream-project implementation includes TDD stubs and comment posting features that are overkill for the starter kit
 - Focus on core sync functionality; advanced features can be added later
 - GitHub URL should default to auto-detection from `git remote get-url origin` if env var not set
 

@@ -747,7 +747,7 @@ The automation script (`.agent-context/scripts/create-agent.sh`) streamlines age
 
 ```bash
 # Navigate to project root
-cd /path/to/thematic-cuts
+cd /path/to/your-project
 
 # Run script with agent name and description
 .agent-context/scripts/create-agent.sh agent-name "One sentence description"

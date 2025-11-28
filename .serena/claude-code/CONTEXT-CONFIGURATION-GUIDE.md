@@ -118,7 +118,7 @@ The `--context` parameter tells Serena HOW to behave and which tools to enable:
         "--context",
         "agent",
         "--project",
-        "/Users/broadcaster_three/Github/thematic-cuts"
+        "/path/to/your-project"
       ]
     }
   }
@@ -157,7 +157,7 @@ The `--context` parameter tells Serena HOW to behave and which tools to enable:
         "--context",
         "agent",
         "--project",
-        "/Users/broadcaster_three/Github/thematic-cuts"
+        "/path/to/your-project"
       ]
     }
   }
@@ -236,7 +236,7 @@ vim .serena/config/mcp-config.json
   "--context",
   "agent",           # ← CRITICAL: Add or verify this
   "--project",
-  "/Users/broadcaster_three/Github/thematic-cuts"
+  "/path/to/your-project"
 ]
 ```
 
@@ -268,7 +268,7 @@ vim ~/Library/Application\ Support/Claude/claude_desktop_config.json
   "--context",
   "agent",           # ← CRITICAL: Add or verify this
   "--project",
-  "/Users/broadcaster_three/Github/thematic-cuts"
+  "/path/to/your-project"
 ]
 ```
 
@@ -339,7 +339,7 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | grep -A 2
 ```
 Current configuration:
 Serena version: 0.1.4-437bad3c-dirty
-Active project: thematic-cuts
+Active project: your-project
 Active context: agent              # ← MUST say "agent"
 Active modes: interactive, editing
 
@@ -560,7 +560,7 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | grep -A 2
      "--context",
      "agent",
      "--project",
-     "/Users/broadcaster_three/Github/thematic-cuts"
+     "/path/to/your-project"
    ]
    ```
 
@@ -722,7 +722,7 @@ Possible causes:
      "mcpServers": {
        "serena": {
          "command": "/Users/broadcaster_three/.local/bin/uvx",
-         "args": ["--from", "git+https://github.com/oraios/serena", "serena-mcp-server", "--context", "agent", "--project", "/Users/broadcaster_three/Github/thematic-cuts"]
+         "args": ["--from", "git+https://github.com/oraios/serena", "serena-mcp-server", "--context", "agent", "--project", "/path/to/your-project"]
        }
      }
    }
@@ -923,7 +923,7 @@ python3 -m json.tool ~/Library/Application\ Support/Claude/claude_desktop_config
         "--context",
         "agent",
         "--project",
-        "/Users/broadcaster_three/Github/thematic-cuts"
+        "/path/to/your-project"
       ]
     }
   }
@@ -949,7 +949,7 @@ python3 -m json.tool ~/Library/Application\ Support/Claude/claude_desktop_config
         "--context",
         "agent",
         "--project",
-        "/Users/broadcaster_three/Github/thematic-cuts"
+        "/path/to/your-project"
       ]
     }
   }
@@ -972,7 +972,7 @@ python3 -m json.tool ~/Library/Application\ Support/Claude/claude_desktop_config
         "--context",
         "agent",
         "--project",
-        "/Users/broadcaster_three/Github/thematic-cuts"
+        "/path/to/your-project"
       ]
     },
     "serena-other-project": {

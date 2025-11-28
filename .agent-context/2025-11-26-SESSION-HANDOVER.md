@@ -1,14 +1,14 @@
 # Session Handover: agentive-starter-kit
 
 **Date**: 2025-11-26
-**From**: planner @ thematic-cuts (coordination session)
+**From**: planner @ upstream-project (coordination session)
 **To**: planner @ agentive-starter-kit
 
 ---
 
 ## Project Overview
 
-**agentive-starter-kit** is a template repository for bootstrapping new projects with AI agent coordination infrastructure. It was extracted from the thematic-cuts project.
+**agentive-starter-kit** is a template repository for bootstrapping new projects with AI agent coordination infrastructure.
 
 **GitHub**: https://github.com/movito/agentive-starter-kit
 
@@ -129,11 +129,11 @@ A sibling project using this starter kit was also set up:
 
 ## Session Notes
 
-- The thematic-cuts session ran into API overload with large planner.md (~500 lines)
+- The upstream project session ran into API overload with large planner.md (~500 lines)
 - Solution: Separate onboarding into dedicated agent
 - Both repos now have Serena setup scripts
 - User prefers explicit steps (onboarding as separate step, not baked into planner)
 
 ---
 
-*This handover was created by planner @ thematic-cuts to provide context continuity.*
+*This handover was created by planner to provide context continuity.*

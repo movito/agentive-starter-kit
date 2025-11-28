@@ -100,12 +100,11 @@ temp/
 output/
 exported_edls/
 rendered_videos/
-# thematic-cuts-gui/ - Now tracked in repo (TASK-2025-0037, TASK-2025-0038, TASK-2025-0039)
-# But ignore GUI test artifacts
-thematic-cuts-gui/coverage/
-thematic-cuts-gui/playwright-report/
-thematic-cuts-gui/test-results/
-thematic-cuts-gui/*.aaf
+# GUI test artifacts (if frontend directory exists)
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/*.aaf
 
 # Test cutlist files (user-generated test data)
 *_cutlist.json

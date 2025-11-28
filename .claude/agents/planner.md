@@ -275,7 +275,7 @@ User will:
 
 ## Version Management
 - Follow semantic versioning (MAJOR.MINOR.PATCH)
-- Track versions in: `pyproject.toml`, `thematic-cuts-gui/package.json`
+- Track versions in: `pyproject.toml`, `package.json` (if applicable)
 - Create GitHub releases with release notes
 - Update `current-state.json` with version info
 - Document all changes in task completion summaries

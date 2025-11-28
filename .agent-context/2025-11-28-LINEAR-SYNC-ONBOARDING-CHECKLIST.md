@@ -316,6 +316,6 @@ When setting up a new project, verify:
 **Status**: ✅ PRODUCTION READY
 **Last Updated**: 2025-11-28
 **Tested With**:
-- Single-team workspace (thematic-cuts) ✅
+- Single-team workspace ✅
 - Multi-team workspace (AL2 + THM) ✅
 - All 42 tests passing ✅

@@ -69,7 +69,7 @@ After activation, use semantic navigation tools for 70-98% token savings. If act
 
 **When to use**:
 - ✅ Python code navigation (`your_project/`, `tests/`)
-- ✅ TypeScript/React code (`thematic-cuts-gui/src/`)
+- ✅ TypeScript/React code (if present in project)
 - ✅ Swift code (if present)
 - ✅ Finding references for refactoring/impact analysis
 
@@ -86,7 +86,7 @@ After activation, use semantic navigation tools for 70-98% token savings. If act
 - **Post-push**: Verify CI/CD passes (see CI Verification below)
 - **Manual**: `pytest tests/ -v` for local verification
 - **Coverage**: Maintain or improve coverage baseline (53%+)
-- **TypeScript**: `npm run type-check` in `thematic-cuts-gui/`
+- **TypeScript**: `npm run type-check` (if applicable)
 
 ## CI/CD Verification (MANDATORY)
 
@@ -271,7 +271,7 @@ See `.agent-context/THEMATIC-0102-HANDOFF-implementation-agent.md` for complete 
 You have full development permissions including:
 - Reading all project files
 - Modifying Python code in `your_project/`
-- Modifying TypeScript/React code in `thematic-cuts-gui/`
+- Modifying TypeScript/React code (if present in project)
 - Running pytest, npm commands
 - Executing test scripts
 - Using git for version control (following commit protocol)

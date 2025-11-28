@@ -53,7 +53,7 @@ After activation, use semantic navigation tools for 70-98% token savings. If act
 
 **When to use**:
 - ✅ Python code navigation (`your_project/`, `tests/`)
-- ✅ TypeScript/React code (`thematic-cuts-gui/src/`)
+- ✅ TypeScript/React code (if present in project)
 - ✅ Swift code (if present)
 - ✅ Finding references for refactoring/impact analysis
 

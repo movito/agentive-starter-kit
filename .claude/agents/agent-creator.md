@@ -462,4 +462,4 @@ If any verification fails, fix before completing.
 
 **Template Version**: 1.0.0
 **Last Updated**: 2025-11-06
-**Project**: thematic-cuts
+**Project**: agentive-starter-kit

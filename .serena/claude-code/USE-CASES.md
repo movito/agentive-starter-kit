@@ -326,9 +326,9 @@ mcp__serena__find_referencing_symbols("ResolveConnector")
 
 **Monorepo**:
 ```
-thematic-cuts/
+your-project/
 ├── your_project/        # Python package ✅
-├── thematic-cuts-gui/    # TypeScript ❌
+├── frontend/    # TypeScript ❌
 ├── scripts/              # Shell ❌
 ├── tests/                # Python ✅
 ```
@@ -491,7 +491,7 @@ mcp__serena__search_for_pattern(substring_pattern="ERROR")
 #### Traditional Approach
 
 **Steps**:
-1. `grep -r "WizardRouter" thematic-cuts-gui/` → Find file
+1. `grep -r "WizardRouter" frontend/` → Find file
 2. `Read(WizardRouter.tsx)` → Read all 38 lines
 3. Manually identify hooks, handlers, structure
 
@@ -508,7 +508,7 @@ mcp__serena__search_for_pattern(substring_pattern="ERROR")
 ```
 mcp__serena__find_symbol(
     name_path_pattern="WizardRouter",
-    relative_path="thematic-cuts-gui/src/components/wizard",
+    relative_path="frontend/src/components/wizard",
     include_body=false,
     depth=1
 )
@@ -704,7 +704,7 @@ mcp__serena__find_referencing_symbols("ResolveConnector")
 
 #### Traditional Approach
 
-**Command**: `grep -r "useWizard" thematic-cuts-gui/`
+**Command**: `grep -r "useWizard" frontend/`
 
 **Results**: Mix of imports, usages, comments, test descriptions
 
@@ -721,7 +721,7 @@ mcp__serena__find_referencing_symbols("ResolveConnector")
 ```
 mcp__serena__find_referencing_symbols(
     name_path="useWizard",
-    relative_path="thematic-cuts-gui/src/context/WizardContext.tsx"
+    relative_path="frontend/src/context/WizardContext.tsx"
 )
 ```
 

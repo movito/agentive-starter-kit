@@ -8,7 +8,7 @@
 
 ## Overview
 
-This guide explains how to set up and verify TypeScript/JavaScript semantic navigation with Serena MCP for the `thematic-cuts-gui/` directory.
+This guide explains how to set up and verify TypeScript/JavaScript semantic navigation with Serena MCP for the `frontend/` directory.
 
 **Benefits**:
 - 65% average token reduction (vs traditional grep + file reads)
@@ -111,13 +111,13 @@ Run these tests in Claude Code to verify TypeScript semantic navigation works.
 
 **Test**:
 ```
-Can you find the App component in the thematic-cuts-gui directory using Serena?
+Can you find the App component in the frontend directory using Serena?
 Expected tool: mcp__serena__find_symbol
 ```
 
 **Expected Result**:
 - Component found: `App` (Function, lines 6-13)
-- File: `thematic-cuts-gui/src/App.tsx`
+- File: `frontend/src/App.tsx`
 - ✅ PASS if component found
 
 ---
@@ -129,7 +129,7 @@ Expected tool: mcp__serena__find_symbol
 **Test**:
 ```
 Can you find all references to the useWizard hook using Serena?
-File: thematic-cuts-gui/src/context/WizardContext.tsx
+File: frontend/src/context/WizardContext.tsx
 ```
 
 **Expected Result**:
@@ -198,12 +198,12 @@ Can you find the sync_task_to_linear function in the scripts directory using Ser
 **Serena Approach**:
 ```
 1. Get symbol overview:
-   mcp__serena__get_symbols_overview("thematic-cuts-gui/src/components/wizard/WizardContext.tsx")
+   mcp__serena__get_symbols_overview("frontend/src/components/wizard/WizardContext.tsx")
 
 2. Find specific component with children:
    mcp__serena__find_symbol(
        name_path_pattern="WizardProvider",
-       relative_path="thematic-cuts-gui/src/context/WizardContext.tsx",
+       relative_path="frontend/src/context/WizardContext.tsx",
        include_body=false,
        depth=1
    )
@@ -221,7 +221,7 @@ Can you find the sync_task_to_linear function in the scripts directory using Ser
 ```
 mcp__serena__find_referencing_symbols(
     name_path="useWizard",
-    relative_path="thematic-cuts-gui/src/context/WizardContext.tsx"
+    relative_path="frontend/src/context/WizardContext.tsx"
 )
 ```
 
@@ -240,7 +240,7 @@ mcp__serena__find_referencing_symbols(
 ```
 mcp__serena__find_symbol(
     name_path_pattern="WizardRouter",
-    relative_path="thematic-cuts-gui/src"
+    relative_path="frontend/src"
 )
 ```
 
@@ -327,7 +327,7 @@ typescript-language-server --stdio
 
 **A. Check File Path**
 - Ensure `relative_path` points to correct directory
-- Example: `thematic-cuts-gui/src` not `thematic-cuts-gui`
+- Example: `frontend/src` not `frontend`
 
 **B. Check Symbol Name**
 - Try partial name with `substring_matching=true`

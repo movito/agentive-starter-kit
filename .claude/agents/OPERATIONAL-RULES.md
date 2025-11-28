@@ -2,7 +2,7 @@
 
 **Version**: 2.0
 **Last Updated**: 2025-11-12
-**Applies To**: ALL agents in thematic-cuts project
+**Applies To**: ALL agents in this project
 
 ---
 
