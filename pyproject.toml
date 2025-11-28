@@ -1,6 +1,15 @@
 # Project configuration for Python projects using the Agentive Starter Kit
 # See: https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
 
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# Prevent auto-discovery of non-Python directories (agents/, delegation/)
+# Add your packages here when you create them, e.g.: packages = ["your_project"]
+packages = []
+
 [project]
 name = "your-project-name"  # TODO: Change this to your project name
 version = "0.1.0"
@@ -17,52 +26,58 @@ dependencies = []  # Add runtime dependencies as needed
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",  # For async test support
+    "httpx>=0.25.0",           # For API testing (FastAPI, etc.)
     "black>=23.12.0",
     "ruff>=0.1.0",
     "isort>=5.13.0",
     "pre-commit>=3.5.0",
 ]
 
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-# Prevent auto-discovery of non-Python directories (agents/, delegation/)
-# Add your packages here when you create them, e.g.: packages = ["your_project"]
-packages = []
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
 ]
-addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow (>1s runtime, deselect with '-m \"not slow\"')",
+    "integration: integration tests requiring external services",
+    "unit: fast unit tests (default)",
+]
 
 [tool.black]
 line-length = 88
 target-version = ["py39", "py310", "py311"]
+include = '\.pyi?$'
 
 [tool.ruff]
 line-length = 88
-select = ["E", "F", "W", "I"]
-ignore = ["E203", "W503"]
+target-version = "py39"
 
-[tool.ruff.isort]
-known-first-party = ["your_project"]  # TODO: Change to your package name
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E203"]  # Conflicts with black
 
 [tool.isort]
 profile = "black"
 line_length = 88
 
 [tool.coverage.run]
-source = ["your_project"]  # TODO: Change to your package name
+# Source will be added when your package is created
+# source = ["your_project"]
 omit = ["tests/*", "venv/*", ".venv/*"]
 
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
+    "raise AssertionError",
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
 ]
