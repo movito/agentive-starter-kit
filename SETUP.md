@@ -307,11 +307,11 @@ cat .serena/project.yml
 # Check API key is set
 echo $OPENAI_API_KEY
 
-# Check aider is installed
-pip install aider-chat
+# Check adversarial is installed (included with dev dependencies)
+adversarial --version
 
-# Try running aider directly
-aider --help
+# If not found, reinstall dev dependencies
+pip install -e ".[dev]"
 ```
 
 ### Pre-commit hooks not running

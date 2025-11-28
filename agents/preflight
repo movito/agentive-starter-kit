@@ -199,6 +199,16 @@ else
     echo "         Install: pip install pre-commit"
 fi
 
+# Check: adversarial (for evaluation workflow)
+if command -v adversarial &> /dev/null; then
+    ADV_VERSION=$(adversarial --version 2>/dev/null || echo "installed")
+    check_pass "adversarial: $ADV_VERSION"
+else
+    check_warn "adversarial: Not installed"
+    echo "         Needed for: GPT-4o task evaluation"
+    echo "         Install: pip install -e \".[dev]\""
+fi
+
 # ============================================================================
 # SUMMARY
 # ============================================================================

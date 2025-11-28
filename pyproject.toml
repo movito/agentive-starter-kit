@@ -36,6 +36,8 @@ dev = [
     # Linear sync (included by default - most projects use it)
     "gql[requests]>=3.4.0",    # GraphQL client for Linear API
     "python-dotenv>=1.0.0",    # Load .env files
+    # Adversarial evaluation (GPT-4o reviews task specs)
+    "adversarial-workflow>=0.4.0",  # Includes aider-chat
 ]
 
 [tool.pytest.ini_options]
