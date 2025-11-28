@@ -6,8 +6,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-# Prevent auto-discovery of non-Python directories (agents/, delegation/)
-# Add your packages here when you create them, e.g.: packages = ["your_project"]
+# This section has no Python packages yet. Add them when you create your package.
+# When you create packages, add them to this section, e.g. packages = ["your_project"].
+# Note: we have set this section up this way to prevent auto-discovery of non-Python directories such as agents/, delegation/, etc.
 packages = []
 
 [project]
