@@ -51,7 +51,7 @@ This approach enables experimentation. Small, reversible tasks let you try an ap
 
 Decomposition multiplies agent productivity. Independent tasks enable parallel work without conflicts. The coordinator assigns discrete tasks to specialized agents and integrates finished work without merge conflicts.
 
-**Real-world example:** In the this project, implementing an API server was decomposed into four independent tasks (THEMATIC-0078-A through D): database models, endpoint implementations, request validation, and comprehensive testing. Four different agents worked on these tasks simultaneously, completing in 2 days what would have taken 4 days sequentially—a 44% time savings (source: `delegation/tasks/active/THEMATIC-0078-api-server-foundation.md`). Because tasks were discrete, each agent could validate their work independently, and integration required no conflict resolution.
+**Real-world example:** In the this project, implementing an API server was decomposed into four independent tasks (TASK-0078-A through D): database models, endpoint implementations, request validation, and comprehensive testing. Four different agents worked on these tasks simultaneously, completing in 2 days what would have taken 4 days sequentially—a 44% time savings (source: `delegation/tasks/active/TASK-0078-api-server-foundation.md`). Because tasks were discrete, each agent could validate their work independently, and integration required no conflict resolution.
 
 ## How It Fits in Agentive Development
 
@@ -107,7 +107,7 @@ Design tasks so failures can be reverted cleanly. This requires avoiding changes
 
 Ready to see this in action? Continue to:
 
-1. **[Example: Discrete Task Decomposition](./example.md)** - See how THEMATIC-0091 decomposed 30 tasks into 5 parallel groups
+1. **[Example: Discrete Task Decomposition](./example.md)** - See how TASK-0091 decomposed 30 tasks into 5 parallel groups
 2. **[Practice Exercise](./practice.md)** - Apply these principles to decompose a feature yourself
 3. **[Reflection Questions](./reflection.md)** - Deepen your understanding with guided questions
 4. **[Pattern Template](./pattern.md)** - Get a reusable checklist for task decomposition

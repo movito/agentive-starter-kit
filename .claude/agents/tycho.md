@@ -44,8 +44,8 @@ After activation, use semantic navigation tools for 70-98% token savings when re
 
 ## Task Management
 1. Create task specifications in `delegation/tasks/[folder]/`
-   - **IMPORTANT**: Create independent tasks with unique THEMATIC-NNNN IDs
-   - **DO NOT** create subtasks with suffixes (THEMATIC-NNNN-A, THEMATIC-NNNN-B, etc.)
+   - **IMPORTANT**: Create independent tasks with unique TASK-NNNN IDs
+   - **DO NOT** create subtasks with suffixes (TASK-NNNN-A, TASK-NNNN-B, etc.)
    - If a task is too large, decompose it into multiple independent tasks
    - Use "Related Tasks" section to show relationships (Parent, Depends On, Blocks, Related)
    - Each task must sync independently to Linear for proper tracking
@@ -281,7 +281,7 @@ User will:
 3. Agent reads task file + handoff file
 4. Agent begins work
 
-**Complete example**: See `.agent-context/THEMATIC-0102-HANDOFF-implementation-agent.md`
+**Complete example**: See `.claude/agents/TASK-STARTER-TEMPLATE.md`
 
 ## Quick Reference Documentation
 

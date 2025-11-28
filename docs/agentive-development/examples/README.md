@@ -29,7 +29,7 @@ Learn from both our successes and mistakes.
 ### Foundation Layer (Solo Developer + LLM)
 
 #### Example F1: Task Decomposition at Scale
-**File:** `01-task-decomposition-THEMATIC-0091.md`
+**File:** `01-task-decomposition-TASK-0091.md`
 **Pattern:** Breaking complex work into manageable chunks
 **Outcome:** 30 tasks organized into 5 groups, completed in 3.5 hours (vs 4-5 estimated)
 **Key Lesson:** Group classification enables pattern-based updates
@@ -49,7 +49,7 @@ Learn from both our successes and mistakes.
 #### Example F4: Context Management Across Sessions
 **File:** `04-context-handoff-sessions.md`
 **Pattern:** Session handoff documentation for multi-session tasks
-**Outcome:** 3 coordinator sessions completing THEMATIC-0091 smoothly
+**Outcome:** 3 coordinator sessions completing TASK-0091 smoothly
 **Key Lesson:** Handoff docs enable stateless agent transitions
 
 #### Example F5: Documentation Discipline
@@ -115,7 +115,7 @@ Learn from both our successes and mistakes.
 **Key Lesson:** Appropriate permissions prevent accidental changes
 
 #### Example D4: Task Assignment Excellence
-**File:** `24-task-assignment-THEMATIC-0078-B.md`
+**File:** `24-task-assignment-TASK-0078-B.md`
 **Pattern:** Matching task to agent capabilities
 **Outcome:** Test-runner exceeds targets (88-100% coverage vs 80% goal)
 **Key Lesson:** Good agent-task fit leads to exceptional results
@@ -223,7 +223,7 @@ Learn from both our successes and mistakes.
 ## Cross-Cutting Examples
 
 ### Example X1: End-to-End Task Lifecycle
-**File:** `51-e2e-task-lifecycle-THEMATIC-0078.md`
+**File:** `51-e2e-task-lifecycle-TASK-0078.md`
 **Shows:** Complete flow from task creation → evaluation → assignment → completion
 **Duration:** 3.5 days for comprehensive API testing
 **Involves:** Coordinator, evaluator, test-runner, api-developer
@@ -279,7 +279,7 @@ Each example file follows this template:
 
 **Layer:** [Foundation/Augmentation/Delegation/Orchestration/Systems]
 **Pattern:** [Name of the pattern demonstrated]
-**Task ID:** [TASK-2025-XXXX or THEMATIC-XXXX]
+**Task ID:** [TASK-2025-XXXX or TASK-XXXX]
 **Outcome:** [Success/Partial/Failure - with metrics]
 
 ## Context
@@ -319,7 +319,7 @@ Each example file follows this template:
 ## Navigation
 
 - **[Back to Main Outline](../OUTLINE.md)**
-- **[View Individual Examples](./01-task-decomposition-THEMATIC-0091.md)** (start here)
+- **[View Individual Examples](./01-task-decomposition-TASK-0091.md)** (start here)
 - **[Templates Directory](../templates/README.md)** (copy patterns from examples)
 
 ---

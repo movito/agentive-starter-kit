@@ -59,7 +59,7 @@ Use for: Simple tasks, daily standups, quick status updates
 
 **Date:** YYYY-MM-DD HH:MM
 **Agent:** [Agent name or developer name]
-**Task:** [TASK-ID or THEMATIC-ID]
+**Task:** [TASK-ID or TASK-ID]
 **Branch:** [branch-name or "main"]
 **Status:** [In Progress | Blocked | Ready for Review]
 
@@ -626,7 +626,7 @@ This template was used for:
    - Pattern: `brief_note` provides 1-sentence status, `details_link` points to full handoff
    - Update frequency: After every significant status change
 
-3. **[THEMATIC-0091 Multi-Agent Coordination](../../../delegation/tasks/completed/THEMATIC-0091-align-tasks-with-tdd-enforcement.md)**
+3. **[TASK-0091 Multi-Agent Coordination](../../../delegation/tasks/completed/TASK-0091-align-tasks-with-tdd-enforcement.md)**
    - Format: Standard form with frequent status updates
    - Purpose: Track progress across 30 tasks in 5 groups
    - Pattern: Updated "Progress Summary" section at top as work progressed

@@ -271,7 +271,7 @@ User will:
 3. Agent reads task file + handoff file
 4. Agent begins work
 
-**Complete example**: See `.agent-context/THEMATIC-0102-HANDOFF-implementation-agent.md`
+**Complete example**: See `.claude/agents/TASK-STARTER-TEMPLATE.md`
 
 ## Version Management
 - Follow semantic versioning (MAJOR.MINOR.PATCH)

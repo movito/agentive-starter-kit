@@ -2,7 +2,7 @@
 
 **Layers:** Augmentation (Evaluation) + Delegation (Agent Assignment)
 **Pattern:** Using External GPT-4o Evaluator to Catch Bugs Before Wasted Implementation
-**Task ID:** THEMATIC-0040-BUGFIX
+**Task ID:** TASK-0040-BUGFIX
 **Outcome:** Success - Evaluation corrected our misdiagnosis, saved 4-6 hours of wrong fixes
 
 ---
@@ -510,7 +510,7 @@ Based on this experience, here's a template for bug evaluation requests:
 ---
 
 **Example Status:** Complete
-**Task ID:** THEMATIC-0040-BUGFIX
+**Task ID:** TASK-0040-BUGFIX
 **Completion Date:** October 31, 2025
 **Agents:** Coordinator (evaluation request) + Feature-developer (implementation)
 **Evaluator:** GPT-4o (via Aider)

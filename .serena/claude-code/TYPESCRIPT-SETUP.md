@@ -250,7 +250,7 @@ mcp__serena__find_symbol(
 
 ## Performance Expectations
 
-Based on validation testing (THEMATIC-0108):
+Based on validation testing:
 
 ### Token Savings by File Size
 
@@ -407,7 +407,7 @@ mcp__serena__restart_language_server
 
 **Status**: This is expected LSP behavior. Each language server operates independently.
 
-**Future**: Multi-language integration planned in THEMATIC-0110.
+**Future**: Multi-language integration is a planned enhancement.
 
 ---
 
@@ -556,7 +556,7 @@ mcp__serena__activate_project("/path/to/your/project")
 
 - ✅ TypeScript LSP v5.1.2 installed (pre-installed on 2025-11-18)
 - ✅ Detection verification completed
-- ✅ Validation testing completed (THEMATIC-0108)
+- ✅ Validation testing completed
 - ✅ Performance metrics: 65% token savings, 2-3x speed improvement
 - ✅ Documentation created (this guide + validation report)
 - ✅ **Status**: Production ready for team use

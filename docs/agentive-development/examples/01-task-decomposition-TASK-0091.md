@@ -2,7 +2,7 @@
 
 **Layer:** Foundation
 **Pattern:** Group Classification for Batch Updates
-**Task ID:** THEMATIC-0091
+**Task ID:** TASK-0091
 **Outcome:** Success - 30 tasks organized and updated in 3.5 hours (vs 4-5 estimated, 30% faster)
 
 ---
@@ -269,7 +269,7 @@ TASK-2025-0082-ci-test-remediation.md
 ## Artifacts
 
 ### Task Files
-- **Main task:** `delegation/tasks/completed/THEMATIC-0091-align-tasks-with-tdd-enforcement.md`
+- **Main task:** `delegation/tasks/completed/TASK-0091-align-tasks-with-tdd-enforcement.md`
 - **Task template:** `delegation/templates/TASK-TEMPLATE.md` (updated)
 - **Updated tasks:** 19 files in `delegation/tasks/active/`
 - **Archived tasks:** 6 files moved to `delegation/tasks/completed/`

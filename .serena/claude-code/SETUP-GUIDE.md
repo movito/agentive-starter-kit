@@ -530,8 +530,6 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 
 - **Setup Guide**: This file
 - **Use Case Matrix**: `.serena/claude-code/USE-CASES.md`
-- **Validation Report**: `.agent-context/THEMATIC-0107-VALIDATION-REPORT.md`
-- **Phase 1 Findings**: `.agent-context/THEMATIC-0107-PHASE-1-FINDINGS.md`
 
 ### External Resources
 
@@ -542,7 +540,6 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 ### Project-Specific
 
 - **ADR-0040**: Architectural decision for Serena adoption
-- **THEMATIC-0107**: Full validation task specification
 
 ---
 

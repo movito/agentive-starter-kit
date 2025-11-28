@@ -186,7 +186,7 @@ docs/agentive-development/
 │
 ├── examples/ ✅ FRAMEWORK COMPLETE
 │   ├── README.md (32 real production examples)
-│   ├── 01-task-decomposition-THEMATIC-0091.md ✅ COMPLETE
+│   ├── 01-task-decomposition-TASK-0091.md ✅ COMPLETE
 │   ├── 11-evaluation-TASK-2025-0073-B.md ✅ COMPLETE
 │   └── [30 more examples - templates ready]
 │

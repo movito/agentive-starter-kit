@@ -251,7 +251,7 @@ For longer tasks requiring multiple agent sessions or handoffs:
 
 **Example**: After completing implementation phase, create task starter for powertest-runner to handle validation phase.
 
-See `.agent-context/THEMATIC-0102-HANDOFF-implementation-agent.md` for complete example.
+See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
 
 ## Quick Reference Documentation
 

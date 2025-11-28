@@ -41,7 +41,7 @@ This layer teaches how to design and deploy single-purpose AI agents with focuse
 
 ### 3.4 Single-Agent Task Assignment
 - **Concept:** Matching tasks to agent capabilities
-- **Example:** THEMATIC-0078-B (test-runner exceeds targets)
+- **Example:** TASK-0078-B (test-runner exceeds targets)
 - **Practice:** Assign 5 tasks to appropriate agents
 - **Pattern:** Task assignment checklist
 

@@ -223,7 +223,7 @@ For longer tasks requiring multiple agent sessions or handoffs:
 
 **Example**: After completing TDD implementation and testing, create task starter for document-reviewer to handle documentation phase.
 
-See `.agent-context/THEMATIC-0102-HANDOFF-implementation-agent.md` for complete example.
+See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
 
 ## Coordination Protocol
 

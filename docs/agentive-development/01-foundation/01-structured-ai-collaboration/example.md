@@ -2,7 +2,7 @@
 
 **Layer:** Foundation
 **Topic:** 1.1 Structured AI Collaboration
-**Task:** THEMATIC-0091
+**Task:** TASK-0091
 **Date:** 2025-11-02
 **Impact:** 30 tasks aligned in 3.5 hours (30% faster than estimated), prevented quality drift across all agent work
 
@@ -199,7 +199,7 @@ Instead of treating 30 tasks individually, we grouped them by type:
 - **Quality:** Zero regressions (existing context preserved)
 - **Consistency:** All tasks reference same workflows (TESTING-WORKFLOW.md)
 
-**Source:** Task completion summary in `delegation/tasks/completed/THEMATIC-0091-align-tasks-with-tdd-enforcement.md`
+**Source:** Task completion summary in `delegation/tasks/completed/TASK-0091-align-tasks-with-tdd-enforcement.md`
 
 **Impact:**
 

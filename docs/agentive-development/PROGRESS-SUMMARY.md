@@ -61,7 +61,7 @@
 ---
 
 ### ✅ Example A/D21: Wizard Bugs with Evaluation (Augmentation/Delegation)
-**File:** `examples/21-wizard-bugs-evaluation-THEMATIC-0040.md` (580 lines)
+**File:** `examples/21-wizard-bugs-evaluation-TASK-0040.md` (580 lines)
 
 **What it shows:**
 - Adversarial evaluation catching wrong diagnosis

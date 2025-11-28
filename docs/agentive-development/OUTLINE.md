@@ -31,7 +31,7 @@ This document provides a complete structural outline of the Agentive Development
 ### 1.2 Discrete Task Decomposition
 - **Concept:** Breaking work into testable, independent units
 - **Problems solved:** Scope creep, unclear success, difficult debugging
-- **Example:** THEMATIC-0091 (task alignment - 30 tasks organized into 5 groups)
+- **Example:** TASK-0091 (task alignment - 30 tasks organized into 5 groups)
 - **Practice:** Decompose a medium feature into 3-5 discrete tasks
 - **Reflection:** How small is too small? How large is too large?
 - **Pattern:** Task size guidelines (2-6 hours, single responsibility)
@@ -171,7 +171,7 @@ This document provides a complete structural outline of the Agentive Development
 ### 3.4 Single-Agent Task Assignment
 - **Concept:** Matching tasks to agent capabilities and monitoring progress
 - **Problems solved:** Wrong agent for task, unclear expectations, stalled work
-- **Example:** THEMATIC-0078-B assignment to test-runner (exceeded targets)
+- **Example:** TASK-0078-B assignment to test-runner (exceeded targets)
 - **Practice:** Assign 5 tasks to appropriate agents, monitor completion
 - **Reflection:** What signals indicate good vs. poor agent-task fit?
 - **Pattern:** Task assignment checklist (complexity, tools, expertise)
@@ -338,7 +338,7 @@ This document provides a complete structural outline of the Agentive Development
 Real tasks from Your Project demonstrating each concept:
 
 - **Foundation:**
-  - Task decomposition: THEMATIC-0091 (30 tasks organized)
+  - Task decomposition: TASK-0091 (30 tasks organized)
   - TDD workflow: TASK-2025-012 (precision timecode fixes)
   - Git safety: TASK-2025-014 (failed implementation, clean rollback)
 
@@ -349,7 +349,7 @@ Real tasks from Your Project demonstrating each concept:
 
 - **Delegation:**
   - Agent design: api-developer-davinci (DaVinci Resolve specialist)
-  - Task assignment: THEMATIC-0078-B (test-runner exceeds targets)
+  - Task assignment: TASK-0078-B (test-runner exceeds targets)
   - Quality gates: 80%+ coverage requirement enforcement
 
 - **Orchestration:**

@@ -2,7 +2,7 @@
 
 **Layer:** Foundation
 **Topic:** 1.2 Discrete Task Decomposition
-**Task:** THEMATIC-0078
+**Task:** TASK-0078
 **Date:** 2025-11-10
 **Impact:** 4-day monolithic task decomposed into 4 independent subtasks, enabled parallel execution, reduced risk
 
@@ -99,26 +99,26 @@ We analyzed the API server feature to find natural fault lines - pieces that cou
 
 Each subtask got objective completion criteria (not subjective "looks good"):
 
-**THEMATIC-0078-A (Foundation):**
+**TASK-0078-A (Foundation):**
 - [ ] Server starts on configurable port
 - [ ] Health endpoint responds with 200
 - [ ] OpenAPI spec generated at /api/docs
 - [ ] 10+ server tests passing
 - [ ] Deployment configs for 3 environments
 
-**THEMATIC-0078-B (Validation):**
+**TASK-0078-B (Validation):**
 - [ ] Request validation uses Pydantic models
 - [ ] Error responses follow RFC 7807 standard
 - [ ] 15+ validation tests passing
 - [ ] API versioning works (v1/ prefix)
 
-**THEMATIC-0078-C (Testing):**
+**TASK-0078-C (Testing):**
 - [ ] Test fixtures cover all API endpoints
 - [ ] Integration tests run in <5 seconds
 - [ ] Performance benchmarks established
 - [ ] 20+ integration tests passing
 
-**THEMATIC-0078-D (Decorator Safety):**
+**TASK-0078-D (Decorator Safety):**
 - [ ] Type hints pass mypy strict mode
 - [ ] Decorator composition works correctly
 - [ ] 8+ decorator tests passing
@@ -130,10 +130,10 @@ Each subtask got objective completion criteria (not subjective "looks good"):
 
 | Task | Estimated Time | Agent | Dependencies |
 |------|----------------|-------|--------------|
-| THEMATIC-0078-A | 8 hours | api-developer | None |
-| THEMATIC-0078-B | 6 hours | api-developer | Depends on A (needs server running) |
-| THEMATIC-0078-C | 8 hours | powertest-runner | Depends on A+B (needs endpoints) |
-| THEMATIC-0078-D | 4 hours | api-developer | None (independent) |
+| TASK-0078-A | 8 hours | api-developer | None |
+| TASK-0078-B | 6 hours | api-developer | Depends on A (needs server running) |
+| TASK-0078-C | 8 hours | powertest-runner | Depends on A+B (needs endpoints) |
+| TASK-0078-D | 4 hours | api-developer | None (independent) |
 
 **Total estimated:** 26 hours (3.25 days)
 
@@ -156,10 +156,10 @@ Each subtask got full task specification:
 **File structure:**
 ```
 delegation/tasks/active/
-  THEMATIC-0078-A-api-server-foundation.md (828 lines)
-  THEMATIC-0078-B-api-validation-error-handling.md (612 lines)
-  THEMATIC-0078-C-api-testing-validation.md (547 lines)
-  THEMATIC-0078-D-api-decorator-fix.md (423 lines)
+  TASK-0078-A-api-server-foundation.md (828 lines)
+  TASK-0078-B-api-validation-error-handling.md (612 lines)
+  TASK-0078-C-api-testing-validation.md (547 lines)
+  TASK-0078-D-api-decorator-fix.md (423 lines)
 ```
 
 Total: 2,410 lines of specification across 4 subtasks.
@@ -172,8 +172,8 @@ Total: 2,410 lines of specification across 4 subtasks.
 
 ```bash
 # Day 1, Morning: Start both tasks in parallel
-# api-developer working on THEMATIC-0078-A (Foundation)
-# api-developer working on THEMATIC-0078-D (Decorator Safety) in separate branch
+# api-developer working on TASK-0078-A (Foundation)
+# api-developer working on TASK-0078-D (Decorator Safety) in separate branch
 
 # Results (Day 1, End):
 # - A: 70% complete (server runs, health endpoint works)
@@ -184,7 +184,7 @@ Total: 2,410 lines of specification across 4 subtasks.
 
 ```bash
 # Day 2, Morning:
-# - Finish THEMATIC-0078-A
+# - Finish TASK-0078-A
 # - OpenAPI docs generated
 # - Deployment configs added
 # - All 10 server tests passing
@@ -196,7 +196,7 @@ Total: 2,410 lines of specification across 4 subtasks.
 
 ```bash
 # Day 2, Afternoon:
-# - Start THEMATIC-0078-B
+# - Start TASK-0078-B
 # - Build on Foundation (server already running)
 # - Add request validation
 # - Add error handling
@@ -208,7 +208,7 @@ Total: 2,410 lines of specification across 4 subtasks.
 
 ```bash
 # Day 3, Afternoon:
-# - powertest-runner starts THEMATIC-0078-C
+# - powertest-runner starts TASK-0078-C
 # - Create integration test suite
 # - All endpoints functional (thanks to A+B complete)
 # - Performance benchmarks established
@@ -229,7 +229,7 @@ Total: 2,410 lines of specification across 4 subtasks.
 - **Parallelization:** 2 subtasks ran simultaneously (A+D)
 - **Rollback incidents:** 0 (each subtask independently mergeable)
 
-**Source:** Task completion summaries in `delegation/tasks/completed/THEMATIC-0078-*.md`
+**Source:** Task completion summaries in `delegation/tasks/completed/TASK-0078-*.md`
 
 **Quality Benefits:**
 - Each subtask reviewed independently (smaller PRs, better reviews)

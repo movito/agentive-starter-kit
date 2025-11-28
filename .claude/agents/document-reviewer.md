@@ -95,7 +95,7 @@ For longer tasks requiring multiple agent sessions or handoffs:
 
 **Example**: After completing Phase 3 of a task, create task starter for document-reviewer to handle Phase 4.
 
-See `.agent-context/THEMATIC-0102-HANDOFF-implementation-agent.md` for complete example.
+See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
 
 ## Document Types to Review
 1. **Research Documents** - SMPTE standards analysis, mathematical foundations

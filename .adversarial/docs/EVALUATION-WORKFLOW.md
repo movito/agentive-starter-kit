@@ -596,7 +596,6 @@ Markdown with structured sections:
 - **Proofreading wrapper script**: `.adversarial/scripts/proofread_content.sh`
 - **Bugfix docs**: `.adversarial/docs/BUGFIX-OUTPUT-CAPTURE.md` (tee output capture fix)
 - **ADR**: `docs/decisions/adr/ADR-0011-adversarial-workflow-integration.md`
-- **Implementation task**: `delegation/tasks/active/THEMATIC-0082-proofreader-evaluator.md`
 
 ### Quick Reference:
 - **Procedural index**: `.agent-context/PROCEDURAL-KNOWLEDGE-INDEX.md` → Planner Procedures → Evaluation Workflow

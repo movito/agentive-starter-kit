@@ -30,7 +30,7 @@ This layer teaches the basics of structured AI-assisted work before delegating t
 
 ### 1.2 Discrete Task Decomposition
 - ✅ **[Concept](./02-discrete-task-decomposition/concept.md):** Breaking work into testable, independent units
-- ✅ **[Example](./02-discrete-task-decomposition/example.md):** THEMATIC-0078 (API server decomposed into 4 parallel tasks)
+- ✅ **[Example](./02-discrete-task-decomposition/example.md):** TASK-0078 (API server decomposed into 4 parallel tasks)
 - ✅ **[Practice](./02-discrete-task-decomposition/practice.md):** Decompose a feature into 3-5 discrete tasks
 - ✅ **[Reflection](./02-discrete-task-decomposition/reflection.md):** Reflect on task decomposition trade-offs
 - ✅ **[Pattern](./02-discrete-task-decomposition/pattern.md):** Task size guidelines and dependency mapping

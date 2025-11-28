@@ -65,7 +65,7 @@ While layer content is being developed, you can:
 
 **✅ Study existing examples:**
 - [Example A1: Evaluation Workflow](../examples/11-evaluation-TASK-2025-0073-B.md)
-- [Example A/D21: Wizard Bugs with Evaluation](../examples/21-wizard-bugs-evaluation-THEMATIC-0040.md)
+- [Example A/D21: Wizard Bugs with Evaluation](../examples/21-wizard-bugs-evaluation-TASK-0040.md)
 
 **✅ Review evaluation setup:**
 - See project `.adversarial/docs/EVALUATION-WORKFLOW.md`

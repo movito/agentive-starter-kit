@@ -183,7 +183,6 @@ Before restarting, verify these are all ✅:
 For comprehensive troubleshooting, see:
 - **CONTEXT-CONFIGURATION-GUIDE.md** - 500+ lines of detailed guidance
 - **ADR-0040** - Context configuration section
-- **THEMATIC-0107** - Validation results
 
 ---
 

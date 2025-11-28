@@ -126,14 +126,14 @@ Your mission: [Clear, action-oriented statement of the agent's goal]
 Here's a complete example following the template:
 
 ```markdown
-## Task Assignment: THEMATIC-0102 - Linear Task Sync TDD Rebuild
+## Task Assignment: TASK-0102 - Linear Task Sync TDD Rebuild
 
-**Task File**: `delegation/tasks/2-todo/THEMATIC-0102-linear-task-sync-tdd-rebuild.md`
-**Handoff File**: `.agent-context/THEMATIC-0102-HANDOFF-implementation-agent.md`
+**Task File**: `delegation/tasks/2-todo/TASK-0102-linear-task-sync-tdd-rebuild.md`
+**Handoff File**: `.agent-context/TASK-0102-HANDOFF-implementation-agent.md`
 
 ### Overview
 
-Rebuild our Linear task folder synchronization system using proper Test-Driven Development. The current sync was built without tests and shows 12+ legacy mapping warnings per sync despite THEMATIC-0094 claiming to fix this. Two sync scripts exist with unclear responsibilities, and zero tests cover the core sync functionality.
+Rebuild our Linear task folder synchronization system using proper Test-Driven Development. The current sync was built without tests and shows 12+ legacy mapping warnings per sync. Two sync scripts exist with unclear responsibilities, and zero tests cover the core sync functionality.
 
 Your mission: Follow the RED-GREEN-REFACTOR TDD cycle to create a properly tested, single sync implementation that eliminates legacy warnings and syncs all 178 tasks correctly to Linear.
 
@@ -193,7 +193,7 @@ The task starter references a handoff file that contains:
 - Evaluation history
 - Success criteria
 
-See example: `.agent-context/THEMATIC-0102-HANDOFF-implementation-agent.md`
+See template structure below for creating handoff files.
 
 ### Handoff File Structure
 

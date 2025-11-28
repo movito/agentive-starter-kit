@@ -67,7 +67,7 @@ The `--context` parameter tells Serena HOW to behave and which tools to enable:
 
 ### Why Context Matters
 
-**Problem Discovered in THEMATIC-0107**:
+**Problem Discovered During Validation**:
 - MCP tools (including Serena) were NOT available in agent tabs
 - Only worked in main conversation thread
 - Prevented autonomous agents from using semantic navigation
@@ -870,7 +870,7 @@ python3 -m json.tool ~/Library/Application\ Support/Claude/claude_desktop_config
 
 ### Related Issues & Tasks
 
-**THEMATIC-0107** (2025-11-18 to 2025-11-19):
+**Initial Validation** (2025-11-18 to 2025-11-19):
 - Initial Serena Claude Code setup
 - Discovered agent tab limitation (with `desktop-app` context)
 - Validated main conversation access

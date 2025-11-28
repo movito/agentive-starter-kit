@@ -202,13 +202,13 @@ Before proceeding with task creation, verify:
 
 This template was used for:
 
-1. **[THEMATIC-0091: TDD Enforcement Alignment](../../../delegation/tasks/completed/THEMATIC-0091-align-tasks-with-tdd-enforcement.md)**
+1. **[TASK-0091: TDD Enforcement Alignment](../../../delegation/tasks/completed/TASK-0091-align-tasks-with-tdd-enforcement.md)**
    - Feature: Update 30 active tasks with new TDD requirements
    - Decomposition: 5 groups (A, B, C, D, E) with 30 tasks total
    - Result: Enabled parallel updates, 6 tasks archived, 19 updated, 5 kept as-is
    - Time savings: Completed in 3.5 hours (estimated 4-5 hours)
 
-2. **[TASK-2025-0078: API Server Foundation](../../../delegation/tasks/active/THEMATIC-0078-api-server-foundation.md)**
+2. **[TASK-2025-0078: API Server Foundation](../../../delegation/tasks/active/TASK-0078-api-server-foundation.md)**
    - Feature: Build FastAPI server with 2 endpoints + monitoring
    - Decomposition: 4 phases broken into 24 tasks (6 tasks/phase)
    - Result: Completed in 3 days (estimated 4.5 days, 33% time savings)
@@ -230,7 +230,7 @@ This template was used for:
 
 - **Tip 3: Test independence with "can I start this today?"** - For each task, imagine you're starting work right now. If the answer is "I need to wait for X first," that's a dependency to document.
 
-- **Tip 4: Use grouping for large features** - If you have >10 tasks, group them by theme (e.g., Group A: Testing, Group B: API, Group C: Features). See THEMATIC-0091 for example.
+- **Tip 4: Use grouping for large features** - If you have >10 tasks, group them by theme (e.g., Group A: Testing, Group B: API, Group C: Features). See TASK-0091 for example.
 
 - **Tip 5: Size tasks for TDD cycles** - A 2-6 hour task typically fits 2-4 RED-GREEN-REFACTOR cycles. This natural rhythm helps maintain momentum.
 

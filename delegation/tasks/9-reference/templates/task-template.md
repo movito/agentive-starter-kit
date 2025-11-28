@@ -11,40 +11,40 @@
 
 For blocked tasks, use:
 **Status**: Blocked
-**Blocked By**: [THEMATIC-NNNN or clear blocker description]
+**Blocked By**: [TASK-NNNN or clear blocker description]
 -->
 **Priority**: critical | high | medium | low
 **Assigned To**: [agent-name]
 **Estimated Effort**: X-Y days/hours
 **Created**: YYYY-MM-DD
 **Target Completion**: YYYY-MM-DD
-**Linear ID**: THM-XX (automatically backfilled after first sync)
+**Linear ID**: (automatically backfilled after first sync)
 
 ## Related Tasks
 
-**Parent Task**: THEMATIC-NNNN (Task Title) [if this task was decomposed from a larger task]
-**Depends On**: THEMATIC-NNNN, THEMATIC-MMMM [tasks that must complete before this one]
-**Blocks**: THEMATIC-PPPP, THEMATIC-QQQQ [tasks that cannot start until this completes]
-**Related**: THEMATIC-RRRR, THEMATIC-SSSS [tasks in the same initiative/theme]
+**Parent Task**: TASK-NNNN (Task Title) [if this task was decomposed from a larger task]
+**Depends On**: TASK-NNNN, TASK-MMMM [tasks that must complete before this one]
+**Blocks**: TASK-PPPP, TASK-QQQQ [tasks that cannot start until this completes]
+**Related**: TASK-RRRR, TASK-SSSS [tasks in the same initiative/theme]
 
 <!-- Related Tasks Section:
 Use this section to show relationships between tasks. This replaces the old approach
-of creating subtasks with suffixes like THEMATIC-NNNN-A, THEMATIC-NNNN-B.
+of creating subtasks with suffixes like TASK-NNNN-A, TASK-NNNN-B.
 
 Guidelines:
 - If a task becomes too large, decompose it into multiple INDEPENDENT tasks
-- Each task gets its own THEMATIC-NNNN ID (not THEMATIC-NNNN-A suffixes)
+- Each task gets its own TASK-NNNN ID (not TASK-NNNN-A suffixes)
 - Use "Parent Task" to link back to the original task
 - Use "Depends On" for sequential dependencies
 - Use "Blocks" to show what's waiting on this task
 - Use "Related" for tasks in the same initiative but no hard dependencies
 
 Example (Task Decomposition):
-  Original: THEMATIC-0100 (too large)
+  Original: TASK-0100 (too large)
   Decomposed into:
-    - THEMATIC-0200 (Part 1) → Parent Task: THEMATIC-0100
-    - THEMATIC-0201 (Part 2) → Parent Task: THEMATIC-0100, Depends On: THEMATIC-0200
-    - THEMATIC-0202 (Part 3) → Parent Task: THEMATIC-0100, Depends On: THEMATIC-0201
+    - TASK-0200 (Part 1) → Parent Task: TASK-0100
+    - TASK-0201 (Part 2) → Parent Task: TASK-0100, Depends On: TASK-0200
+    - TASK-0202 (Part 3) → Parent Task: TASK-0100, Depends On: TASK-0201
 
 Each task is independent, trackable in Linear, and shows clear relationships.
 See: Subtask → Linked Task Conversion (2025-11-25)
@@ -62,7 +62,7 @@ between folders. Each entry shows:
 - Timestamp in ISO 8601 format (YYYY-MM-DD HH:MM:SS)
 
 Entries are in reverse chronological order (newest first). Do not edit manually.
-See: THEMATIC-0113, scripts/task-monitor.py
+See: scripts/task-monitor.py
 -->
 
 ## Overview
