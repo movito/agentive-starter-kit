@@ -52,7 +52,7 @@ jobs:
       - name: Sync tasks to Linear
         if: steps.check-secret.outputs.skip != 'true'
         run: |
-          cd scripts && python sync_tasks_to_linear.py
+          python scripts/sync_tasks_to_linear.py
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           LINEAR_TEAM_ID: ${{ secrets.LINEAR_TEAM_ID }}
