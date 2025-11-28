@@ -20,6 +20,15 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+# Import logging configuration - support both direct script execution and package import
+try:
+    from scripts.logging_config import setup_logging
+except ImportError:
+    from logging_config import setup_logging
+
+# Initialize logger
+logger = setup_logging("agentive.utils")
+
 # =============================================================================
 # STATUS VALIDATION
 # =============================================================================
@@ -204,7 +213,9 @@ def migrate_legacy_status(task_file: Path, legacy_status: str) -> bool:
     # Write updated content
     task_file.write_text(updated_content, encoding="utf-8")
 
-    print(f"🔄 Migrated {task_file.name}: '{legacy_status}' → '{linear_status}'")
+    logger.info(
+        "🔄 Migrated %s: '%s' → '%s'", task_file.name, legacy_status, linear_status
+    )
 
     return True
 

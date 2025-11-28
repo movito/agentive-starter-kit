@@ -39,6 +39,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# Import logging configuration - support both direct script execution and package import
+try:
+    from scripts.logging_config import setup_logging
+except ImportError:
+    from logging_config import setup_logging
+
+# Initialize logger
+logger = setup_logging("agentive.sync")
+
 # Try to load .env file if it exists
 try:
     from dotenv import load_dotenv
@@ -46,7 +55,7 @@ try:
     env_path = Path(__file__).parent.parent / ".env"
     if env_path.exists():
         load_dotenv(env_path)
-        print(f"📋 Loaded environment from {env_path}")
+        logger.info("📋 Loaded environment from %s", env_path)
 except ImportError:
     # dotenv not installed, continue without it
     pass
@@ -56,8 +65,8 @@ try:
     from gql import Client, gql
     from gql.transport.requests import RequestsHTTPTransport
 except ImportError:
-    print("❌ Error: gql package not installed")
-    print("   Run: pip install gql[requests]")
+    logger.error("❌ Error: gql package not installed")
+    logger.error("   Run: pip install gql[requests]")
     sys.exit(1)
 
 # Import local utilities - support both direct script execution and package import
@@ -167,7 +176,7 @@ class LinearClient:
             raise ValueError("No teams found in Linear workspace")
 
         team = teams[0]
-        print(f"📋 Using Linear team: {team['name']} ({team['id']})")
+        logger.info("📋 Using Linear team: %s (%s)", team["name"], team["id"])
         return team["id"]
 
     def resolve_team_id(self, team_identifier: Optional[str] = None) -> str:
@@ -188,7 +197,7 @@ class LinearClient:
 
         # Check if it's already a UUID (contains hyphens and is ~36 chars)
         if "-" in team_identifier and len(team_identifier) > 30:
-            print(f"📋 Using configured team UUID: {team_identifier}")
+            logger.info("📋 Using configured team UUID: %s", team_identifier)
             return team_identifier
 
         # Otherwise, treat it as a team KEY and look it up
@@ -212,7 +221,7 @@ class LinearClient:
         # Find team by KEY
         for team in teams:
             if team["key"] == team_identifier:
-                print(f"📋 Using Linear team: {team['name']} ({team['id']})")
+                logger.info("📋 Using Linear team: %s (%s)", team["name"], team["id"])
                 return team["id"]
 
         # If no match, raise error with helpful message
@@ -250,7 +259,7 @@ class LinearClient:
 
             return None
         except Exception as e:
-            print(f"⚠️  Error searching for {task_id}: {e}")
+            logger.warning("⚠️  Error searching for %s: %s", task_id, e)
             return None
 
     def create_issue(self, task: TaskData, team_id: str) -> Dict[str, Any]:
@@ -297,8 +306,8 @@ class LinearClient:
 
         if result["issueCreate"]["success"]:
             issue = result["issueCreate"]["issue"]
-            print(f"✅ Created: {issue['identifier']} - {task.task_id}")
-            print(f"   URL: {issue['url']}")
+            logger.info("✅ Created: %s - %s", issue["identifier"], task.task_id)
+            logger.info("   URL: %s", issue["url"])
             return issue
         else:
             raise ValueError(f"Failed to create issue for {task.task_id}")
@@ -351,7 +360,7 @@ class LinearClient:
 
         if result["issueUpdate"]["success"]:
             issue = result["issueUpdate"]["issue"]
-            print(f"🔄 Updated: {issue['identifier']} - {task.task_id}")
+            logger.info("🔄 Updated: %s - %s", issue["identifier"], task.task_id)
             return issue
         else:
             raise ValueError(f"Failed to update issue for {task.task_id}")
@@ -436,7 +445,7 @@ def sync_task(
     try:
         metadata = parse_task_metadata(task_file)
     except ValueError as e:
-        print(f"⚠️  Skipping {task_file.name}: {e}")
+        logger.warning("⚠️  Skipping %s: %s", task_file.name, e)
         return None
 
     # Check for legacy status and migrate if needed
@@ -471,25 +480,28 @@ def sync_task(
 
 def main():
     """Main function for sync mode."""
-    print("🚀 Linear Task Sync")
-    print("=" * 60)
+    logger.info("🚀 Linear Task Sync")
+    logger.info("=" * 60)
 
     # Check environment
     api_key = os.getenv("LINEAR_API_KEY")
     if not api_key:
-        print("❌ Error: LINEAR_API_KEY environment variable not set")
-        print("\nTo get your API key:")
-        print("1. Go to https://linear.app/{workspace}/settings/account/security")
-        print("   (Replace {workspace} with your Linear workspace name)")
-        print("2. Scroll to 'Personal API keys' and create a new key")
-        print("3. Set LINEAR_API_KEY environment variable")
+        logger.error("❌ Error: LINEAR_API_KEY environment variable not set")
+        logger.error("")
+        logger.error("To get your API key:")
+        logger.error(
+            "1. Go to https://linear.app/{workspace}/settings/account/security"
+        )
+        logger.error("   (Replace {workspace} with your Linear workspace name)")
+        logger.error("2. Scroll to 'Personal API keys' and create a new key")
+        logger.error("3. Set LINEAR_API_KEY environment variable")
         sys.exit(1)
 
     # Initialize Linear client
     try:
         linear = LinearClient(api_key)
     except Exception as e:
-        print(f"❌ Error connecting to Linear: {e}")
+        logger.error("❌ Error connecting to Linear: %s", e)
         sys.exit(1)
 
     # Resolve team ID - accepts UUID, team KEY (e.g., "AL2"), or None for auto-detect
@@ -498,7 +510,7 @@ def main():
     # Find task files from all workflow folders
     base_dir = Path("delegation/tasks")
     if not base_dir.exists():
-        print(f"❌ Error: {base_dir} not found")
+        logger.error("❌ Error: %s not found", base_dir)
         sys.exit(1)
 
     # Look in all numbered workflow folders (1-backlog through 7-blocked)
@@ -521,7 +533,9 @@ def main():
             ask_files = list(folder_path.glob("ASK-*.md"))
             all_files.extend(task_files + ask_files)
 
-    print(f"\n📂 Found {len(all_files)} task files across workflow folders\n")
+    logger.info("")
+    logger.info("📂 Found %d task files across workflow folders", len(all_files))
+    logger.info("")
 
     # Parse and sync tasks
     synced = 0
@@ -536,16 +550,16 @@ def main():
             else:
                 skipped += 1
         except Exception as e:
-            print(f"❌ Error processing {task_file.name}: {e}")
+            logger.error("❌ Error processing %s: %s", task_file.name, e)
             errors += 1
 
     # Summary
-    print()
-    print("=" * 60)
-    print(f"✅ Synced: {synced}")
-    print(f"⏭️  Skipped: {skipped}")
-    print(f"❌ Errors: {errors}")
-    print()
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("✅ Synced: %d", synced)
+    logger.info("⏭️  Skipped: %d", skipped)
+    logger.info("❌ Errors: %d", errors)
+    logger.info("")
 
     if errors > 0:
         sys.exit(1)
