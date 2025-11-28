@@ -76,9 +76,17 @@ line_length = 88
 [tool.coverage.run]
 # Source will be added when your package is created
 # source = ["your_project"]
-omit = ["tests/*", "venv/*", ".venv/*"]
+omit = [
+    "tests/*",
+    "venv/*",
+    ".venv/*",
+    # CLI entry points are hard to unit test - focus coverage on utility modules
+    "scripts/sync_tasks_to_linear.py",
+]
 
 [tool.coverage.report]
+fail_under = 80
+show_missing = true
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
