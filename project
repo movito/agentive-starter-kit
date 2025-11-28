@@ -44,6 +44,76 @@ def main():
             str(project_dir / "scripts" / "sync_tasks_to_linear.py"),
         ] + sync_args
 
+    elif command in ["teams", "linearteams"]:
+        # List Linear teams
+        print("🏢 Listing Linear teams...")
+        cmd = [
+            python_cmd,
+            "-c",
+            """
+import os
+import sys
+from pathlib import Path
+from dotenv import load_dotenv
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
+
+# Load .env from project root
+env_path = Path.cwd() / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+
+api_key = os.getenv('LINEAR_API_KEY')
+if not api_key:
+    print('❌ LINEAR_API_KEY not found in .env')
+    print('   Get your key at: https://linear.app/settings/api')
+    sys.exit(1)
+
+transport = RequestsHTTPTransport(
+    url='https://api.linear.app/graphql',
+    headers={'Authorization': api_key},
+    use_json=True
+)
+
+try:
+    client = Client(transport=transport, fetch_schema_from_transport=True)
+    query = gql('''
+        query {
+          teams {
+            nodes {
+              id
+              key
+              name
+            }
+          }
+        }
+    ''')
+
+    result = client.execute(query)
+    teams = result['teams']['nodes']
+
+    if not teams:
+        print('❌ No teams found in Linear workspace')
+        sys.exit(1)
+
+    print()
+    print('🏢 Your Linear Teams:')
+    print('=' * 70)
+    for team in teams:
+        print(f"Team: {team['name']}")
+        print(f"  Key:  {team['key']}")
+        print(f"  UUID: {team['id']}")
+        print()
+
+    print('💡 To use a specific team, add to .env:')
+    print(f"   LINEAR_TEAM_ID={teams[0]['key']}  # (or any team KEY above)")
+
+except Exception as e:
+    print(f'❌ Error connecting to Linear: {e}')
+    sys.exit(1)
+""",
+        ]
+
     elif command in ["help", "-h", "--help"]:
         print_help()
         sys.exit(0)
@@ -77,7 +147,8 @@ def main():
 
 def print_help():
     """Print help message."""
-    print("""
+    print(
+        """
 Project CLI - Agentive Starter Kit
 ==================================
 
@@ -85,11 +156,13 @@ Usage: ./project <command> [options]
 
 Commands:
   linearsync, sync   Sync task files to Linear
+  teams              List all Linear teams (KEY, UUID, name)
   help               Show this help message
   version            Show version information
 
 Examples:
   ./project linearsync           Sync all tasks to Linear
+  ./project teams                List available Linear teams
   ./project sync                 Alias for linearsync
 
 Setup:
@@ -103,11 +176,15 @@ Setup:
      cp .env.template .env
      # Edit .env and add your LINEAR_API_KEY
 
-  4. Sync tasks:
+  4. List teams (if you have multiple):
+     ./project teams
+
+  5. Sync tasks:
      ./project linearsync
 
 For more information, see README.md
-""")
+"""
+    )
 
 
 if __name__ == "__main__":

@@ -170,6 +170,58 @@ class LinearClient:
         print(f"📋 Using Linear team: {team['name']} ({team['id']})")
         return team["id"]
 
+    def resolve_team_id(self, team_identifier: Optional[str] = None) -> str:
+        """
+        Resolve team identifier to UUID.
+
+        Args:
+            team_identifier: Can be:
+                - UUID (e.g., "89b26800-e1e6-4998-bedf-04195e592cd9") - returned as-is
+                - Team KEY (e.g., "AL2") - looked up and UUID returned
+                - None - uses default team
+
+        Returns:
+            Team UUID
+        """
+        if not team_identifier:
+            return self.get_default_team()
+
+        # Check if it's already a UUID (contains hyphens and is ~36 chars)
+        if "-" in team_identifier and len(team_identifier) > 30:
+            print(f"📋 Using configured team UUID: {team_identifier}")
+            return team_identifier
+
+        # Otherwise, treat it as a team KEY and look it up
+        query = gql(
+            """
+            query {
+              teams {
+                nodes {
+                  id
+                  key
+                  name
+                }
+              }
+            }
+        """
+        )
+
+        result = self.client.execute(query)
+        teams = result["teams"]["nodes"]
+
+        # Find team by KEY
+        for team in teams:
+            if team["key"] == team_identifier:
+                print(f"📋 Using Linear team: {team['name']} ({team['id']})")
+                return team["id"]
+
+        # If no match, raise error with helpful message
+        available_keys = [t["key"] for t in teams]
+        raise ValueError(
+            f"Team '{team_identifier}' not found. "
+            f"Available teams: {', '.join(available_keys)}"
+        )
+
     def find_issue_by_identifier(self, task_id: str) -> Optional[Dict[str, Any]]:
         """Find existing Linear issue by task ID in title."""
         query = gql(
@@ -361,7 +413,9 @@ class LinearClient:
             return self.create_issue(task, team_id)
 
 
-def sync_task(task_file: Path, client: LinearClient, team_id: str) -> Optional[Dict[str, Any]]:
+def sync_task(
+    task_file: Path, client: LinearClient, team_id: str
+) -> Optional[Dict[str, Any]]:
     """
     Sync a single task file to Linear.
 
@@ -437,7 +491,8 @@ def main():
         print(f"❌ Error connecting to Linear: {e}")
         sys.exit(1)
 
-    team_id = os.getenv("LINEAR_TEAM_ID") or linear.get_default_team()
+    # Resolve team ID - accepts UUID, team KEY (e.g., "AL2"), or None for auto-detect
+    team_id = linear.resolve_team_id(os.getenv("LINEAR_TEAM_ID"))
 
     # Find task files from all workflow folders
     base_dir = Path("delegation/tasks")

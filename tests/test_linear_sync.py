@@ -17,15 +17,16 @@ Usage:
 TDD Phase: RED (tests written, implementation pending)
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 import re
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def task_content_valid():
@@ -92,7 +93,13 @@ Task without status field.
 @pytest.fixture
 def tmp_task_file(tmp_path, task_content_valid):
     """Create a temporary task file."""
-    task_file = tmp_path / "delegation" / "tasks" / "2-todo" / "TASK-0001-implement-feature-x.md"
+    task_file = (
+        tmp_path
+        / "delegation"
+        / "tasks"
+        / "2-todo"
+        / "TASK-0001-implement-feature-x.md"
+    )
     task_file.parent.mkdir(parents=True, exist_ok=True)
     task_file.write_text(task_content_valid)
     return task_file
@@ -101,7 +108,9 @@ def tmp_task_file(tmp_path, task_content_valid):
 @pytest.fixture
 def tmp_task_file_legacy(tmp_path, task_content_legacy_status):
     """Create a temporary task file with legacy status."""
-    task_file = tmp_path / "delegation" / "tasks" / "1-backlog" / "TASK-0002-legacy-status.md"
+    task_file = (
+        tmp_path / "delegation" / "tasks" / "1-backlog" / "TASK-0002-legacy-status.md"
+    )
     task_file.parent.mkdir(parents=True, exist_ok=True)
     task_file.write_text(task_content_legacy_status)
     return task_file
@@ -110,7 +119,9 @@ def tmp_task_file_legacy(tmp_path, task_content_legacy_status):
 @pytest.fixture
 def tmp_task_file_archive(tmp_path, task_content_valid):
     """Create a temporary task file in archive folder."""
-    task_file = tmp_path / "delegation" / "tasks" / "8-archive" / "TASK-0099-archived.md"
+    task_file = (
+        tmp_path / "delegation" / "tasks" / "8-archive" / "TASK-0099-archived.md"
+    )
     task_file.parent.mkdir(parents=True, exist_ok=True)
     task_file.write_text(task_content_valid)
     return task_file
@@ -119,6 +130,7 @@ def tmp_task_file_archive(tmp_path, task_content_valid):
 # =============================================================================
 # TASK PARSING TESTS
 # =============================================================================
+
 
 class TestTaskParser:
     """Tests for TaskParser class."""
@@ -169,7 +181,9 @@ class TestTaskParser:
         from scripts.linear_sync_utils import parse_task_metadata
 
         # Arrange
-        task_file = tmp_path / "delegation" / "tasks" / "2-todo" / "TASK-0099-no-title.md"
+        task_file = (
+            tmp_path / "delegation" / "tasks" / "2-todo" / "TASK-0099-no-title.md"
+        )
         task_file.parent.mkdir(parents=True, exist_ok=True)
         task_file.write_text(task_content_no_title)
 
@@ -182,7 +196,9 @@ class TestTaskParser:
         from scripts.linear_sync_utils import parse_task_metadata
 
         # Arrange
-        task_file = tmp_path / "delegation" / "tasks" / "2-todo" / "TASK-0003-no-status.md"
+        task_file = (
+            tmp_path / "delegation" / "tasks" / "2-todo" / "TASK-0003-no-status.md"
+        )
         task_file.parent.mkdir(parents=True, exist_ok=True)
         task_file.write_text(task_content_no_status)
 
@@ -210,6 +226,7 @@ class TestTaskParser:
 # STATUS DETERMINATION TESTS
 # =============================================================================
 
+
 class TestStatusDetermination:
     """Tests for status determination logic."""
 
@@ -217,7 +234,15 @@ class TestStatusDetermination:
         """Valid Linear statuses should return True."""
         from scripts.linear_sync_utils import is_linear_native_status
 
-        valid_statuses = ["Backlog", "Todo", "In Progress", "In Review", "Done", "Blocked", "Canceled"]
+        valid_statuses = [
+            "Backlog",
+            "Todo",
+            "In Progress",
+            "In Review",
+            "Done",
+            "Blocked",
+            "Canceled",
+        ]
 
         for status in valid_statuses:
             assert is_linear_native_status(status) is True
@@ -300,7 +325,9 @@ class TestStatusDetermination:
         """Unknown folder should return None."""
         from scripts.linear_sync_utils import determine_status_from_path
 
-        task_file = tmp_path / "delegation" / "tasks" / "unknown-folder" / "TASK-0001.md"
+        task_file = (
+            tmp_path / "delegation" / "tasks" / "unknown-folder" / "TASK-0001.md"
+        )
 
         assert determine_status_from_path(task_file) is None
 
@@ -342,6 +369,7 @@ class TestStatusDetermination:
 # =============================================================================
 # LEGACY STATUS MIGRATION TESTS
 # =============================================================================
+
 
 class TestLegacyStatusMigration:
     """Tests for legacy status migration."""
@@ -420,6 +448,7 @@ class TestLegacyStatusMigration:
 # SYNC EXCLUSION TESTS
 # =============================================================================
 
+
 class TestSyncExclusion:
     """Tests for sync exclusion rules."""
 
@@ -452,6 +481,7 @@ class TestSyncExclusion:
 # LINEAR CLIENT TESTS (MOCKED)
 # =============================================================================
 
+
 class TestLinearClient:
     """Tests for LinearClient class with mocked API."""
 
@@ -459,7 +489,7 @@ class TestLinearClient:
         """LinearClient should initialize with API key."""
         from scripts.sync_tasks_to_linear import LinearClient
 
-        with patch('scripts.sync_tasks_to_linear.Client'):
+        with patch("scripts.sync_tasks_to_linear.Client"):
             client = LinearClient("test-api-key")
             assert client is not None
 
@@ -472,12 +502,16 @@ class TestLinearClient:
         mock_client.execute.return_value = {
             "issues": {
                 "nodes": [
-                    {"id": "issue-123", "identifier": "PROJ-1", "title": "[TASK-0001] Test Task"}
+                    {
+                        "id": "issue-123",
+                        "identifier": "PROJ-1",
+                        "title": "[TASK-0001] Test Task",
+                    }
                 ]
             }
         }
 
-        with patch('scripts.sync_tasks_to_linear.Client', return_value=mock_client):
+        with patch("scripts.sync_tasks_to_linear.Client", return_value=mock_client):
             client = LinearClient("test-api-key")
             client.client = mock_client
 
@@ -494,11 +528,9 @@ class TestLinearClient:
 
         # Arrange
         mock_client = MagicMock()
-        mock_client.execute.return_value = {
-            "issues": {"nodes": []}
-        }
+        mock_client.execute.return_value = {"issues": {"nodes": []}}
 
-        with patch('scripts.sync_tasks_to_linear.Client', return_value=mock_client):
+        with patch("scripts.sync_tasks_to_linear.Client", return_value=mock_client):
             client = LinearClient("test-api-key")
             client.client = mock_client
 
@@ -513,6 +545,7 @@ class TestLinearClient:
 # INTEGRATION TESTS
 # =============================================================================
 
+
 class TestSyncIntegration:
     """Integration tests for end-to-end sync workflow."""
 
@@ -525,7 +558,7 @@ class TestSyncIntegration:
         # sync_task calls client.sync_task, which returns the issue
         mock_client.sync_task.return_value = {
             "id": "new-issue-123",
-            "identifier": "PROJ-99"
+            "identifier": "PROJ-99",
         }
 
         # Act
@@ -544,7 +577,7 @@ class TestSyncIntegration:
         # sync_task calls client.sync_task, which handles create/update internally
         mock_client.sync_task.return_value = {
             "id": "existing-issue-123",
-            "identifier": "PROJ-1"
+            "identifier": "PROJ-1",
         }
 
         # Act
@@ -574,6 +607,7 @@ class TestSyncIntegration:
 # GITHUB URL GENERATION TESTS
 # =============================================================================
 
+
 class TestGitHubUrl:
     """Tests for GitHub URL generation."""
 
@@ -593,12 +627,125 @@ class TestGitHubUrl:
 
         monkeypatch.delenv("GITHUB_REPO_URL", raising=False)
 
-        with patch('subprocess.run') as mock_run:
+        with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
-                stdout="https://github.com/detected/repo.git\n",
-                returncode=0
+                stdout="https://github.com/detected/repo.git\n", returncode=0
             )
 
             result = get_github_file_url(tmp_task_file)
 
             assert "github.com" in result
+
+
+# =============================================================================
+# TEAM RESOLUTION TESTS
+# =============================================================================
+
+
+class TestTeamResolution:
+    """Test suite for LinearClient.resolve_team_id() method."""
+
+    def test_resolve_team_id_with_uuid(self):
+        """Should return UUID as-is when given a UUID."""
+        from scripts.sync_tasks_to_linear import LinearClient
+
+        with patch("scripts.sync_tasks_to_linear.Client"):
+            client = LinearClient("test-api-key")
+            uuid = "89b26800-e1e6-4998-bedf-04195e592cd9"
+            result = client.resolve_team_id(uuid)
+
+            assert result == uuid
+
+    def test_resolve_team_id_with_key(self):
+        """Should look up UUID when given a team KEY."""
+        from scripts.sync_tasks_to_linear import LinearClient
+
+        with patch("scripts.sync_tasks_to_linear.Client"):
+            client = LinearClient("test-api-key")
+            mock_gql_client = MagicMock()
+            client.client = mock_gql_client
+
+            # Mock API response with teams
+            mock_gql_client.execute.return_value = {
+                "teams": {
+                    "nodes": [
+                        {"id": "uuid-1", "key": "AL2", "name": "Agentic Lotion 2"},
+                        {"id": "uuid-2", "key": "THM", "name": "Thematic"},
+                    ]
+                }
+            }
+
+            result = client.resolve_team_id("AL2")
+
+            assert result == "uuid-1"
+            assert mock_gql_client.execute.called
+
+    def test_resolve_team_id_with_none(self):
+        """Should call get_default_team() when given None."""
+        from scripts.sync_tasks_to_linear import LinearClient
+
+        with patch("scripts.sync_tasks_to_linear.Client"):
+            client = LinearClient("test-api-key")
+            mock_gql_client = MagicMock()
+            client.client = mock_gql_client
+
+            # Mock API response for get_default_team
+            mock_gql_client.execute.return_value = {
+                "teams": {
+                    "nodes": [
+                        {"id": "uuid-1", "name": "First Team"},
+                    ]
+                }
+            }
+
+            result = client.resolve_team_id(None)
+
+            assert result == "uuid-1"
+            assert mock_gql_client.execute.called
+
+    def test_resolve_team_id_unknown_key_raises(self):
+        """Should raise ValueError when team KEY not found."""
+        from scripts.sync_tasks_to_linear import LinearClient
+
+        with patch("scripts.sync_tasks_to_linear.Client"):
+            client = LinearClient("test-api-key")
+            mock_gql_client = MagicMock()
+            client.client = mock_gql_client
+
+            # Mock API response with teams
+            mock_gql_client.execute.return_value = {
+                "teams": {
+                    "nodes": [
+                        {"id": "uuid-1", "key": "AL2", "name": "Agentic Lotion 2"},
+                        {"id": "uuid-2", "key": "THM", "name": "Thematic"},
+                    ]
+                }
+            }
+
+            with pytest.raises(ValueError) as exc_info:
+                client.resolve_team_id("UNKNOWN")
+
+            assert "Team 'UNKNOWN' not found" in str(exc_info.value)
+            assert "AL2, THM" in str(exc_info.value)
+
+    def test_resolve_team_id_empty_string_uses_default(self):
+        """Should treat empty string as None and use default team."""
+        from scripts.sync_tasks_to_linear import LinearClient
+
+        with patch("scripts.sync_tasks_to_linear.Client"):
+            client = LinearClient("test-api-key")
+            mock_gql_client = MagicMock()
+            client.client = mock_gql_client
+
+            # Mock API response for get_default_team
+            mock_gql_client.execute.return_value = {
+                "teams": {
+                    "nodes": [
+                        {"id": "uuid-default", "name": "Default Team"},
+                    ]
+                }
+            }
+
+            result = client.resolve_team_id("")
+
+            assert result == "uuid-default"
