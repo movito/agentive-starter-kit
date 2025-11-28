@@ -36,8 +36,9 @@ pip install -e ".[linear]"
 - `python-dotenv>=1.0.0` (Environment variables)
 
 ### 3. Linear API Key
-1. Go to https://linear.app/settings/api
-2. Create new **API key** (NOT webhook key!)
+1. Go to https://linear.app/{workspace}/settings/account/security
+   (Replace {workspace} with your Linear workspace name)
+2. Scroll to **Personal API keys** and create new key (NOT webhook key!)
 3. Copy key starting with `lin_api_...`
 
 **Common Mistake**: Using webhook key (`lin_wh_...`) instead of API key

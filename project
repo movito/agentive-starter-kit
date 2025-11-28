@@ -66,7 +66,7 @@ if env_path.exists():
 api_key = os.getenv('LINEAR_API_KEY')
 if not api_key:
     print('❌ LINEAR_API_KEY not found in .env')
-    print('   Get your key at: https://linear.app/settings/api')
+    print('   Get your key at: https://linear.app/{workspace}/settings/account/security')
     sys.exit(1)
 
 transport = RequestsHTTPTransport(

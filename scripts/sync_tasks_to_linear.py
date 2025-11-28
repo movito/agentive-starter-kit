@@ -479,8 +479,9 @@ def main():
     if not api_key:
         print("❌ Error: LINEAR_API_KEY environment variable not set")
         print("\nTo get your API key:")
-        print("1. Go to https://linear.app/settings/api")
-        print("2. Click 'Create new key'")
+        print("1. Go to https://linear.app/{workspace}/settings/account/security")
+        print("   (Replace {workspace} with your Linear workspace name)")
+        print("2. Scroll to 'Personal API keys' and create a new key")
         print("3. Set LINEAR_API_KEY environment variable")
         sys.exit(1)
 

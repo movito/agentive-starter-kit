@@ -186,7 +186,7 @@ elif [[ -f ".env" ]] && grep -q "LINEAR_API_KEY=" .env 2>/dev/null; then
 else
     check_warn "Linear API Key: Not configured"
     echo "         Needed for: Task sync with Linear"
-    echo "         Get key at: https://linear.app/settings/api"
+    echo "         Get key at: https://linear.app/{workspace}/settings/account/security"
 fi
 
 # Check: pre-commit (for TDD hooks)

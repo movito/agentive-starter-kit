@@ -221,9 +221,9 @@ This keeps task IDs consistent between your codebase and Linear.
 
 **3. Get your Linear API key**
 
-Go to Settings → API → [API settings](https://linear.app/settings/api)
-
-The page shows "OAuth applications" and "Webhooks" - **click "Webhooks"** on the left sidebar to find Personal API keys.
+Go to your Linear workspace settings:
+`https://linear.app/{workspace}/settings/account/security`
+(Replace `{workspace}` with your Linear workspace name, e.g., `ixda`)
 
 - Scroll down to "Personal API keys"
 - Click "Create new API key"

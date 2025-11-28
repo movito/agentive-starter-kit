@@ -26,7 +26,7 @@ Before you begin, ensure you have:
    - **OpenAI API Key** for adversarial evaluation
      - Get at: https://platform.openai.com/api-keys
    - **Linear API Key** for task synchronization
-     - Get at: https://linear.app/settings/api
+     - Get at: https://linear.app/{workspace}/settings/account/security
 
 ---
 
@@ -201,12 +201,14 @@ adversarial evaluate delegation/tasks/2-todo/TASK-0001-test.md
 **When needed**: For synchronizing tasks with Linear issues.
 
 **To get a key**:
-1. Go to https://linear.app/settings/api
-2. Click "Create new API key"
-3. Copy the key (starts with `lin_api_`)
-4. Add to `.env` as `LINEAR_API_KEY`
+1. Go to `https://linear.app/{workspace}/settings/account/security`
+   (Replace `{workspace}` with your Linear workspace name, e.g., `ixda`)
+2. Scroll to "Personal API keys"
+3. Click "Create new API key"
+4. Copy the key (starts with `lin_api_`)
+5. Add to `.env` as `LINEAR_API_KEY`
 
-**Team ID**: Find at linear.app/YOUR-TEAM - the "YOUR-TEAM" part is your team ID.
+**Team ID**: Run `./project teams` to list available teams with their KEYs and UUIDs.
 
 ---
 
