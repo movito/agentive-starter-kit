@@ -33,7 +33,7 @@ jobs:
           fi
       - name: Checkout repository
         if: steps.check-secret.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Full history for context
 
