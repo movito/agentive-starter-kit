@@ -1,9 +1,12 @@
 # Agentive Starter Kit
 
-**A structured setup for building software with agents**
+**A bit of structure to help you get more out of agentive software development**
 
-In this kit, you'll find a set of tools, approaches, and scaffolds for more effective agent-augmented software development. These grew out of our own agentive projects, and eventually became the repo we clone when starting a new project. You can use these as you wish, and tweak or delete things to suit your preferences. We mostly use Claude Opus 4.5 and Claude Sonnet 4.5 for agent work. You can use other models if you like, manually, or with help from the agents.
+Using agents to build software works better if you add a bit of structure. Anthropic calls this a [harness](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents). We created the tools in this kit to overcome the usual problems of agentive development: documentation, testing, architecture, and value for money (and tokens). 
 
+When we start a new project, we clone this repo and complete the onboarding. This gives us tests, tasks, documentation, and token-efficient tools, all in about ten minutes. You can tweak things as you wish, including how the agents work, and what models you use.
+
+----
 ## What's inside?
 
 1. An **onboarding agent** to help you get started. 
@@ -26,37 +29,36 @@ In this kit, you'll find a set of tools, approaches, and scaffolds for more effe
 
 ## Requirements
 
-Before you begin, verify you have the following:
+If you'd like to try this kit, here are the tools you'll need:
 
-### Must Have (Required)
+### To get started
 
 | Requirement | How to Check | How to Get |
 |-------------|--------------|------------|
-| **A code editor with a terminal | | |
-| **A Claude account** | You can log into [claude.ai](https://claude.ai) | [Sign up](https://claude.ai) |
-| **Claude Code installed** | `claude --version` | [Download](https://claude.ai/download) or install VS Code/Cursor extension |
-| **GitHub account** | You can log into [github.com](https://github.com) | [Sign up](https://github.com/signup) |
+| **A Claude account** | Log in to [claude.ai](https://claude.ai) | [Sign up](https://claude.ai) |
+| **Claude Code installed** in your terminal or IDE | `claude --version` | [Download](https://claude.ai/download) or install VS Code/Cursor extension |
+| **GitHub account** | Log in to [github.com](https://github.com) | [Sign up](https://github.com/signup) |
 | **Git configured** | `git config user.name && git config user.email` | [Setup guide](https://docs.github.com/en/get-started/quickstart/set-up-git) |
 
 > **New to Git?** Check out [GitHub's Git Handbook](https://guides.github.com/introduction/git-handbook/) for a quick introduction.
 
-### Should Have (For Core Features)
+### To start building
 
 | Requirement | How to Check | How to Get |
 |-------------|--------------|------------|
 | **Python 3.9+** | `python3 --version` | [python.org](https://www.python.org/downloads/) or `brew install python` |
 | **uvx or pipx** | `uvx --version` or `pipx --version` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 
-### Nice to Have (Optional Enhancements)
+### Evaluation and planning support
 
 | Requirement | Purpose | How to Get |
 |-------------|---------|------------|
 | **OpenAI API Key** | Adversarial evaluation (~$0.04 per evaluation) | [platform.openai.com](https://platform.openai.com/api-keys) |
 | **Linear Integration** | Task sync with Linear issues | See [Linear Integration](#linear-integration) section below |
 
-### Quick Preflight Check
+### Not sure if you have everythng you need?
 
-Run this script to validate your environment:
+Clone the repo and run this script to validate your environment:
 
 ```bash
 ./agents/preflight
@@ -76,7 +78,7 @@ Open your terminal and navigate to where you keep projects (e.g., `~/Github` or 
 cd ~/Github
 ```
 
-Then clone this starter kit with your project name:
+Then clone this starter kit with your `project name`:
 
 ```bash
 git clone https://github.com/movito/agentive-starter-kit.git my-project-name
