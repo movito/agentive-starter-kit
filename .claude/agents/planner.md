@@ -166,6 +166,69 @@ cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 - Focus on GPT-4o's questions, not just the verdict
 - After 2 iterations, proceed with best judgment + document decision
 
+## Code Review Workflow (ADR-0014)
+
+**📖 Reference**: `docs/decisions/adr/ADR-0014-code-review-workflow.md`
+
+After implementation is complete and CI passes, tasks move to `4-in-review/` for agent-based code review.
+
+### Workflow States
+
+```
+3-in-progress → CI passes → 4-in-review → 5-done
+                                 ↓
+                      (if CHANGES_REQUESTED)
+                                 ↓
+                          back to 3-in-progress
+```
+
+### When to Invoke Code Review
+
+1. Implementation agent completes work
+2. CI passes (verify with `/check-ci`)
+3. Task moved to `4-in-review/`
+4. User invokes `code-reviewer` agent in new tab
+
+### Review Verdicts and Actions
+
+| Verdict | Planner Action |
+|---------|----------------|
+| APPROVED | Move task to `5-done/` |
+| CHANGES_REQUESTED | Move task to `3-in-progress/`, notify implementation agent |
+| ESCALATE_TO_HUMAN | Notify user, await decision |
+
+### Review Coordination
+
+```bash
+# After implementation agent completes:
+1. Verify CI: /check-ci main
+2. Move task: git mv delegation/tasks/3-in-progress/ASK-XXXX.md delegation/tasks/4-in-review/
+3. Notify user: "Ready for code review. Invoke code-reviewer agent."
+
+# After code-reviewer completes:
+4. Read review: cat .agent-context/reviews/ASK-XXXX-review.md
+5. Act on verdict (see table above)
+```
+
+### Iteration Limits
+
+- Max 2 review rounds
+- After round 2 with issues: ESCALATE_TO_HUMAN
+- No round 3 (prevents infinite loops)
+
+### Skip Conditions
+
+Review may be skipped for:
+- Documentation-only changes (< 20 lines)
+- Tasks marked `skip-review: true`
+- Urgent hotfixes (with user approval)
+
+### Review Files
+
+- **Reports**: `.agent-context/reviews/ASK-XXXX-review.md`
+- **Template**: `.agent-context/templates/review-template.md`
+- **Agent**: `.claude/agents/code-reviewer.md`
+
 ## Documentation Areas
 - Task specifications: `delegation/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
 - Agent coordination: `.agent-context/agent-handoffs.json`
@@ -286,12 +349,14 @@ User will:
 1. **Evaluation Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
 2. **Task Creation**: `delegation/templates/TASK-TEMPLATE.md`
 3. **Agent Assignment**: `.agent-context/agent-handoffs.json` updates
-4. **Commit Protocol**: `.agent-context/workflows/COMMIT-PROTOCOL.md`
-5. **Procedural Index**: `.agent-context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+4. **Code Review Workflow**: `docs/decisions/adr/ADR-0014-code-review-workflow.md`
+5. **Commit Protocol**: `.agent-context/workflows/COMMIT-PROTOCOL.md`
+6. **Procedural Index**: `.agent-context/PROCEDURAL-KNOWLEDGE-INDEX.md`
 
 **Key Files to Maintain**:
 - `.agent-context/agent-handoffs.json` (current agent status, task assignments)
 - `.agent-context/current-state.json` (project state, metrics, phase tracking)
+- `.agent-context/reviews/` (code review reports)
 - `delegation/tasks/` (task specifications in numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
 - `.adversarial/logs/` (evaluation results - read-only)
 
