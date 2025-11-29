@@ -1,6 +1,6 @@
 # ASK-0022: Code Review Workflow ADR
 
-**Status**: Todo
+**Status**: Done
 **Priority**: high
 **Assigned To**: planner
 **Estimated Effort**: 2-3 hours
