@@ -104,6 +104,40 @@ For every review, verify:
 | MEDIUM | Code quality issues, maintainability concerns, missing docs | No |
 | LOW | Style issues, minor improvements, nice-to-haves | No |
 
+### Severity Examples
+
+**CRITICAL**:
+- Hardcoded API key or secret in source code
+- SQL injection or command injection vulnerability
+- Unhandled exception causing data loss or corruption
+
+**HIGH**:
+- Acceptance criterion from task file not met
+- Test file missing for new feature
+- Breaking change without migration path
+
+**MEDIUM**:
+- Missing docstring on public function
+- Code duplication (DRY violation)
+- Inconsistent naming convention
+
+**LOW**:
+- Import order could be optimized
+- Consider more descriptive variable name
+- Optional: add type hints for clarity
+
+## Time Management
+
+Target review times by change scope:
+
+| Scope | Lines Changed | Target Time |
+|-------|---------------|-------------|
+| Small | < 100 lines | 5-10 minutes |
+| Medium | 100-500 lines | 10-20 minutes |
+| Large | > 500 lines | 20-30 minutes |
+
+If review exceeds target time, note in report and continue. For very large changes, consider recommending the implementation be split.
+
 ## Verdict Decision Criteria
 
 ### APPROVED
