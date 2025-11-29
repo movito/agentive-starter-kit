@@ -1,4 +1,4 @@
-# ADR-0013: Real-Time Task Monitoring
+# KIT-ADR-0013: Real-Time Task Monitoring
 
 **Status**: Accepted
 
@@ -323,9 +323,9 @@ def on_task_moved(event: TaskEvent):
 
 ## Related Decisions
 
-- ADR-0003: Linear Sync vs MCP (sync strategy)
-- ADR-0012: Task Status Linear Alignment (status mapping)
-- ADR-0009: Logging & Observability (event logging)
+- KIT-ADR-0003: Linear Sync vs MCP (sync strategy)
+- KIT-ADR-0012: Task Status Linear Alignment (status mapping)
+- KIT-ADR-0009: Logging & Observability (event logging)
 
 ## References
 

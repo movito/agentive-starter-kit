@@ -84,7 +84,7 @@ A synthetic implementation would include these intentional issues:
 
 ## Test 3: Trivial Change (Skipped)
 
-**Rationale**: Lower priority for initial calibration. Skip conditions documented in ADR-0014:
+**Rationale**: Lower priority for initial calibration. Skip conditions documented in KIT-ADR-0014:
 - Documentation-only changes (< 20 lines)
 - Tasks marked `skip-review: true`
 

@@ -1,4 +1,4 @@
-# ADR-0001: System Prompt Size Considerations
+# KIT-ADR-0001: System Prompt Size Considerations
 
 **Status**: Accepted
 **Date**: 2025-11-25

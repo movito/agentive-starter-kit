@@ -1,4 +1,4 @@
-# ADR-0005: Test Infrastructure Strategy
+# KIT-ADR-0005: Test Infrastructure Strategy
 
 **Status**: Accepted
 
@@ -176,7 +176,7 @@ Pre-commit runs automatically before each commit:
 
 ## Related Decisions
 
-- **ADR-0004**: Adversarial Workflow Integration - Uses testing as verification
+- **KIT-ADR-0004**: Adversarial Workflow Integration - Uses testing as verification
 - **ASK-0019**: Test CI Implementation - Implements the CI workflow for this strategy
 
 ## References

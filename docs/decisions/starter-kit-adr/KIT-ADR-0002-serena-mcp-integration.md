@@ -1,4 +1,4 @@
-# ADR-0002: Serena MCP Integration for Semantic Code Navigation
+# KIT-ADR-0002: Serena MCP Integration for Semantic Code Navigation
 
 **Status**: Accepted
 
@@ -152,7 +152,7 @@ done
 
 ## Related Decisions
 
-- ADR-0001: System Prompt Size Considerations (token efficiency)
+- KIT-ADR-0001: System Prompt Size Considerations (token efficiency)
 
 ## References
 

@@ -1,4 +1,4 @@
-# ADR-0004: Adversarial Workflow Integration for Quality Development
+# KIT-ADR-0004: Adversarial Workflow Integration for Quality Development
 
 **Status**: Accepted
 
@@ -150,8 +150,8 @@ adversarial proofread <doc-file>
 
 ## Related Decisions
 
-- **ADR-0002**: Serena MCP Integration - Enables efficient code investigation
-- **Source**: thematic-cuts ADR-0011 (original implementation)
+- **KIT-ADR-0002**: Serena MCP Integration - Enables efficient code investigation
+- **Source**: thematic-cuts KIT-ADR-0011 (original implementation)
 
 ## References
 
@@ -168,13 +168,13 @@ adversarial proofread <doc-file>
 
 ### Source Documentation
 
-- **thematic-cuts ADR-0011**: Original adversarial workflow decision
+- **thematic-cuts KIT-ADR-0011**: Original adversarial workflow decision
 - **adversarial-workflow package**: PyPI package for CLI tools
 
 ## Revision History
 
 - 2025-11-28: Initial decision for agentive-starter-kit (Accepted)
-- Adapted from thematic-cuts ADR-0011 (2025-10-17)
+- Adapted from thematic-cuts KIT-ADR-0011 (2025-10-17)
 
 ---
 

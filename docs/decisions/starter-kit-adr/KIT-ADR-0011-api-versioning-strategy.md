@@ -1,4 +1,4 @@
-# ADR-0011: API Versioning Strategy
+# KIT-ADR-0011: API Versioning Strategy
 
 **Status**: Accepted
 
@@ -26,7 +26,7 @@ When APIs evolve, breaking changes are inevitable. We need a versioning strategy
 
 **Constraints:**
 - Must work with REST APIs
-- Should integrate with OpenAPI (ADR-0010)
+- Should integrate with OpenAPI (KIT-ADR-0010)
 - Must be implementable in Python frameworks
 
 **Assumptions:**
@@ -264,7 +264,7 @@ Each version must have a changelog entry:
 
 ## Related Decisions
 
-- ADR-0010: OpenAPI Specification Strategy (version in spec)
+- KIT-ADR-0010: OpenAPI Specification Strategy (version in spec)
 
 ## References
 

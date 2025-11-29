@@ -76,7 +76,7 @@ Tasks are organized in numbered folders that map to Linear statuses:
 | `8-archive/` | *Not synced* | Historical tasks (excluded) |
 | `9-reference/` | *Not synced* | Documentation (excluded) |
 
-### Status Determination Priority (ADR-0038)
+### Status Determination Priority (KIT-ADR-0012)
 
 The Linear sync uses a **3-level priority system**:
 
@@ -126,7 +126,7 @@ Priority 3: Default to "Backlog"
 - Migration happens once during sync (file is permanently updated)
 - Example: `**Status**: draft` → `**Status**: Backlog`
 
-**Reference**: ADR-0038 (`docs/decisions/adr/ADR-0038-task-status-linear-alignment.md`)
+**Reference**: KIT-ADR-0012 (`docs/decisions/starter-kit-adr/KIT-ADR-0012-task-status-linear-alignment.md`)
 
 ## Evaluation Workflow (Everyday Planner Responsibility)
 

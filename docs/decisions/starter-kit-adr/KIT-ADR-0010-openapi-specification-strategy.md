@@ -1,4 +1,4 @@
-# ADR-0010: OpenAPI Specification Strategy
+# KIT-ADR-0010: OpenAPI Specification Strategy
 
 **Status**: Accepted
 
@@ -265,7 +265,7 @@ app.add_middleware(StarletteOpenAPIMiddleware, openapi=spec)
 
 ## Related Decisions
 
-- ADR-0005: Test Infrastructure (API tests)
+- KIT-ADR-0005: Test Infrastructure (API tests)
 - ADR-0018: Validation Architecture (Pydantic patterns)
 
 ## References

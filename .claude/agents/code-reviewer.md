@@ -45,7 +45,7 @@ Confirm: "✅ Serena activated. Ready for semantic code review."
 6. **Identify issues** - Categorize by severity (CRITICAL/HIGH/MEDIUM/LOW)
 7. **Provide actionable feedback** - Specific file:line references and suggestions
 
-## Review Workflow (ADR-0014)
+## Review Workflow (KIT-ADR-0014)
 
 ```
 You receive:
@@ -322,7 +322,7 @@ If CI is failing, verdict should be CHANGES_REQUESTED regardless of code quality
 
 ## Reference Documents
 
-- **ADR-0014**: Code Review Workflow
+- **KIT-ADR-0014**: Code Review Workflow
 - **Review template**: `.agent-context/templates/review-template.md`
 - **ADR directory**: `docs/decisions/adr/`
 

@@ -1,4 +1,4 @@
-# ADR-0009: Logging & Observability Architecture
+# KIT-ADR-0009: Logging & Observability Architecture
 
 **Status**: Accepted
 
@@ -243,8 +243,8 @@ def test_sync_logs_success(caplog):
 
 ## Related Decisions
 
-- ADR-0008: Configuration Architecture (environment variable pattern)
-- ADR-0005: Test Infrastructure (pytest caplog for log testing)
+- KIT-ADR-0008: Configuration Architecture (environment variable pattern)
+- KIT-ADR-0005: Test Infrastructure (pytest caplog for log testing)
 
 ## References
 

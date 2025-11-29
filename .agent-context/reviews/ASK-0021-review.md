@@ -9,7 +9,7 @@
 
 ## Summary
 
-The logging infrastructure implementation successfully replaces all print() statements with proper Python logging, adds configurable verbosity via environment variables, and includes comprehensive test coverage. The implementation follows ADR-0009 patterns and maintains backward compatibility with existing CLI output.
+The logging infrastructure implementation successfully replaces all print() statements with proper Python logging, adds configurable verbosity via environment variables, and includes comprehensive test coverage. The implementation follows KIT-ADR-0009 patterns and maintains backward compatibility with existing CLI output.
 
 ## Acceptance Criteria Verification
 
@@ -35,7 +35,7 @@ The logging infrastructure implementation successfully replaces all print() stat
 
 | Aspect | Rating | Notes |
 |--------|--------|-------|
-| Patterns | Good | Follows stdlib logging patterns, matches ADR-0009 |
+| Patterns | Good | Follows stdlib logging patterns, matches KIT-ADR-0009 |
 | Testing | Good | 21 comprehensive tests, uses fixtures properly |
 | Documentation | Good | Module docstring, function docstrings with examples |
 | Architecture | Good | Hierarchical loggers, proper handler configuration |
@@ -71,7 +71,7 @@ The logging infrastructure implementation successfully replaces all print() stat
 - All Should Have criteria are met
 - No CRITICAL or HIGH findings
 - Code quality is good with comprehensive tests
-- Implementation follows ADR-0009 patterns
+- Implementation follows KIT-ADR-0009 patterns
 - CI passes (verified: 68/68 tests pass)
 
 **Commendations**:

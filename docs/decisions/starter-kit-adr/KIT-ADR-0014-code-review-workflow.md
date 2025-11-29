@@ -1,4 +1,4 @@
-# ADR-0014: Code Review Workflow
+# KIT-ADR-0014: Code Review Workflow
 
 **Status**: Accepted
 
@@ -311,9 +311,9 @@ Review may be skipped for:
 
 ## Related Decisions
 
-- ADR-0006: Agent Session Initialization (agent startup pattern)
-- ADR-0006: Adversarial Workflow (similar evaluation pattern, pre-implementation)
-- ADR-0009: Logging & Observability (review may check logging adherence)
+- KIT-ADR-0006: Agent Session Initialization (agent startup pattern)
+- KIT-ADR-0006: Adversarial Workflow (similar evaluation pattern, pre-implementation)
+- KIT-ADR-0009: Logging & Observability (review may check logging adherence)
 
 ## References
 

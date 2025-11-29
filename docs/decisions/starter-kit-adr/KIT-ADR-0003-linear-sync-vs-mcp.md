@@ -1,4 +1,4 @@
-# ADR-0003: Custom Linear Sync over Linear MCP
+# KIT-ADR-0003: Custom Linear Sync over Linear MCP
 
 **Status**: Accepted
 
@@ -142,7 +142,7 @@ We will **keep the custom Linear sync implementation** as the primary mechanism 
 
 ## Related Decisions
 
-- ADR-0002: Serena MCP Integration (demonstrates MCP adoption for code navigation)
+- KIT-ADR-0002: Serena MCP Integration (demonstrates MCP adoption for code navigation)
 
 ## References
 

@@ -1,4 +1,4 @@
-# ADR-0006: Agent Session Initialization Pattern
+# KIT-ADR-0006: Agent Session Initialization Pattern
 
 **Status**: Accepted
 
@@ -244,7 +244,7 @@ mcp__serena__get_current_config()  # Should show correct project
 
 ## Related Decisions
 
-- ADR-0002: Serena MCP Integration (specific implementation of this pattern for Serena)
+- KIT-ADR-0002: Serena MCP Integration (specific implementation of this pattern for Serena)
 
 ## References
 

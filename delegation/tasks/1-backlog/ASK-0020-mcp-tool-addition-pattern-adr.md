@@ -11,7 +11,7 @@
 **Parent Task**: None
 **Depends On**: ASK-0013 (Agent Session Initialization Pattern)
 **Blocks**: None
-**Related**: ADR-0002 (Serena MCP Integration)
+**Related**: KIT-ADR-0002 (Serena MCP Integration)
 
 ## Overview
 

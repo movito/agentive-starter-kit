@@ -1,4 +1,4 @@
-# ADR-0008: Configuration Architecture
+# KIT-ADR-0008: Configuration Architecture
 
 **Status**: Accepted
 
@@ -209,8 +209,8 @@ omit = ["tests/*", "venv/*"]
 
 ## Related Decisions
 
-- ADR-0002: Serena MCP Integration (uses .serena/project.yml)
-- ADR-0007: Dependabot Automation (uses pyproject.toml for Python deps)
+- KIT-ADR-0002: Serena MCP Integration (uses .serena/project.yml)
+- KIT-ADR-0007: Dependabot Automation (uses pyproject.toml for Python deps)
 
 ## References
 

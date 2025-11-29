@@ -1,4 +1,4 @@
-# ADR-0007: Dependabot Automated Dependency Management
+# KIT-ADR-0007: Dependabot Automated Dependency Management
 
 **Status**: Accepted
 
@@ -162,7 +162,7 @@ Tests fail? → Investigate compatibility
 
 ## Related Decisions
 
-- ADR-0005: Test Infrastructure Strategy (CI runs on Dependabot PRs)
+- KIT-ADR-0005: Test Infrastructure Strategy (CI runs on Dependabot PRs)
 
 ## References
 

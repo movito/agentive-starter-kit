@@ -1,4 +1,4 @@
-# ADR-0012: Task Status ↔ Linear Alignment
+# KIT-ADR-0012: Task Status ↔ Linear Alignment
 
 **Status**: Accepted
 
@@ -16,7 +16,7 @@ Task files have a `**Status**:` field and live in numbered folders (`1-backlog/`
 - What to do with legacy status values
 - When to exclude tasks from sync
 
-This ADR documents the **implementation pattern** for status alignment. For the strategic decision on why we use custom sync (vs Linear MCP), see ADR-0003.
+This ADR documents the **implementation pattern** for status alignment. For the strategic decision on why we use custom sync (vs Linear MCP), see KIT-ADR-0003.
 
 ### Forces at Play
 
@@ -264,8 +264,8 @@ def should_sync_task(task_file: Path) -> bool:
 
 ## Related Decisions
 
-- ADR-0003: Custom Linear Sync vs MCP (strategic decision)
-- ADR-0006: Agent Session Initialization (status updates during tasks)
+- KIT-ADR-0003: Custom Linear Sync vs MCP (strategic decision)
+- KIT-ADR-0006: Agent Session Initialization (status updates during tasks)
 
 ## References
 
