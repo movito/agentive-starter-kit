@@ -106,13 +106,13 @@ Priority 3: Default to "Backlog"
 ./scripts/start-daemons.sh
 
 # Or manually:
-./thematic daemon start
-./thematic daemon status    # Check if running
-./thematic daemon logs      # View activity
+./project daemon start
+./project daemon status    # Check if running
+./project daemon logs      # View activity
 ```
 
 **If Monitor is NOT Running**:
-- Manual sync: `./thematic linearsync`
+- Manual sync: `./project linearsync`
 - Status field and folder can get out of sync temporarily
 - Priority system still applies (Status field > folder location)
 
