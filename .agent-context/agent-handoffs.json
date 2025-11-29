@@ -1,10 +1,10 @@
 {
   "planner": {
     "status": "completed",
-    "current_task": "ASK-0020",
+    "current_task": "Backlog Clear",
     "task_started": "2025-11-29",
-    "brief_note": "✅ COMPLETE: Created KIT-ADR-0015 (MCP Tool Addition Pattern) - documents four-phase process for adding new MCP tools",
-    "details_link": "docs/decisions/starter-kit-adr/KIT-ADR-0015-mcp-tool-addition-pattern.md"
+    "brief_note": "✅ COMPLETE: Cleared backlog - ASK-0020, ASK-0018, ASK-0017, ASK-0014 → KIT-ADR-0015 through KIT-ADR-0018",
+    "details_link": "docs/decisions/starter-kit-adr/README.md"
   },
   "feature-developer": {
     "status": "idle",

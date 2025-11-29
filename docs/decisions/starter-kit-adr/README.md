@@ -40,6 +40,9 @@ This folder contains ADRs inherited from the **agentive-starter-kit** template. 
 | KIT-ADR-0013 | Real-Time Task Monitoring | Accepted |
 | KIT-ADR-0014 | Code Review Workflow | Accepted |
 | KIT-ADR-0015 | MCP Tool Addition Pattern | Accepted |
+| KIT-ADR-0016 | Validation Architecture | Accepted |
+| KIT-ADR-0017 | API Testing Infrastructure | Accepted |
+| KIT-ADR-0018 | Workflow Observation | Accepted |
 
 ## When to Reference These
 

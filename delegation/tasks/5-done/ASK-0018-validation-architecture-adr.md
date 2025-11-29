@@ -1,6 +1,6 @@
 # ASK-0018: Validation Architecture ADR
 
-**Status**: Backlog
+**Status**: Done
 **Priority**: low
 **Assigned To**: planner
 **Estimated Effort**: 2-3 hours

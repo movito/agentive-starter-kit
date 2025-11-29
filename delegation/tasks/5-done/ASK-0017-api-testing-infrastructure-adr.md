@@ -1,6 +1,6 @@
 # ASK-0017: Separate API Testing Infrastructure ADR
 
-**Status**: Backlog
+**Status**: Done
 **Priority**: low
 **Assigned To**: planner
 **Estimated Effort**: 2-3 hours
