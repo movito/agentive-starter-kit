@@ -181,6 +181,68 @@ You: [Reads logs, updates test, commits, pushes]
      Verifying CI again... ✅ Passed! Task complete.
 ```
 
+## Code Review Workflow (MANDATORY)
+
+**⚠️ CRITICAL: Do NOT mark task complete until code review passes**
+
+After implementation is complete and CI passes, you **MUST** request code review before moving task to `5-done`.
+
+### Task Status Flow
+
+```
+2-todo → 3-in-progress → 4-in-review → 5-done
+         (implement)      (code review)   (complete)
+```
+
+**Never skip `4-in-review`** - all implementation work requires peer review.
+
+### Code Review Process
+
+1. **Complete implementation**: All acceptance criteria met, tests pass
+2. **Verify CI passes**: Use ci-checker agent (see above)
+3. **Move task to 4-in-review**: `./project move <TASK-ID> in-review`
+4. **Request code review**: Invoke code-reviewer agent (see below)
+5. **Address feedback**: Fix any issues raised by reviewer
+6. **After approval**: Move to `5-done` with `./project complete <TASK-ID>`
+
+### Invoking Code Reviewer
+
+After CI passes and task is in `4-in-review`, invoke the code-reviewer agent:
+
+```
+Use the Task tool with these parameters:
+- subagent_type: "code-reviewer"
+- description: "Code review for <TASK-ID>"
+- prompt: "Please review the implementation for <TASK-ID>.
+  Task file: delegation/tasks/4-in-review/<TASK-ID>.md
+  Recent commits: [list relevant commit hashes]
+  Focus areas: [any specific concerns]"
+```
+
+The code-reviewer agent will:
+- Review code changes for quality, patterns, edge cases
+- Check test coverage and documentation
+- Report ✅ APPROVED / 🔄 CHANGES REQUESTED / ❌ REJECTED
+- Provide specific feedback for improvements
+
+### Handling Review Feedback
+
+- **APPROVED**: Move task to `5-done`, commit completion
+- **CHANGES REQUESTED**:
+  1. Address feedback
+  2. Commit fixes
+  3. Re-request review (repeat until approved)
+- **REJECTED**: Discuss with coordinator, may need task revision
+
+### Why Code Review Is Required
+
+- Catches bugs before they reach main branch
+- Ensures consistent code quality and patterns
+- Knowledge sharing across agents
+- Documents design decisions in review comments
+
+**Reference**: `docs/decisions/starter-kit-adr/KIT-ADR-0014-code-review-workflow.md`
+
 ## Evaluator Workflow (When You Need Design Clarification)
 
 Sometimes during implementation you may encounter ambiguities or need design clarification. You can run evaluation autonomously via the external GPT-4o Evaluator.

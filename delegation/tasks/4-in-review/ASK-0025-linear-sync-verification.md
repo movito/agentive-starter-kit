@@ -1,6 +1,6 @@
 # ASK-0025: Linear Sync Verification
 
-**Status**: Done
+**Status**: In Review
 **Priority**: medium
 **Assigned To**: feature-developer
 **Estimated Effort**: 1-2 hours
