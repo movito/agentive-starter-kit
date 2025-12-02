@@ -186,10 +186,10 @@ This guides you through setting up:
 - GitHub repository
 - First task creation
 
-For manual configuration or reference, see the template files:
-- `.env.template` → `.env`
-- `.serena/project.yml.template` → `.serena/project.yml`
-- `.adversarial/config.yml.template` → `.adversarial/config.yml`
+If you prefer to handle setup yourself, copy these template files and configure manually:
+- `.env.template` → `.env` (API keys)
+- `.serena/project.yml.template` → `.serena/project.yml` (languages)
+- `.adversarial/config.yml.template` → `.adversarial/config.yml` (evaluation settings)
 
 ---
 
