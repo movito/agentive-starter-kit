@@ -1,7 +1,7 @@
 ---
 name: [agent-name]
 description: [One sentence description of agent role and primary responsibility]
-model: claude-sonnet-4-5-20250929  # You can change this - see Model Selection Guide at bottom
+model: claude-sonnet-4-20250514  # You can change this - see Model Selection Guide at bottom
 tools:
   - Read
   - Write

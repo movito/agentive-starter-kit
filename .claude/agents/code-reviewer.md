@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Reviews completed implementations for quality, consistency, and standards adherence
-model: claude-sonnet-4-5-20250929  # Fast model suitable for review tasks
+model: claude-sonnet-4-20250514  # Fast model suitable for review tasks
 tools:
   - Read
   - Glob
