@@ -528,10 +528,9 @@ def main():
     for folder in workflow_folders:
         folder_path = base_dir / folder
         if folder_path.exists():
-            # Find TASK-* and ASK-* files
-            task_files = list(folder_path.glob("TASK-*.md"))
-            ask_files = list(folder_path.glob("ASK-*.md"))
-            all_files.extend(task_files + ask_files)
+            # Match any task format: PREFIX-NNNN-description.md (e.g., TASK-0001, ASK-0001, TC2-0001)
+            task_files = list(folder_path.glob("*-[0-9]*.md"))
+            all_files.extend(task_files)
 
     logger.info("")
     logger.info("📂 Found %d task files across workflow folders", len(all_files))

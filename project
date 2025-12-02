@@ -367,8 +367,8 @@ local_tasks = []
 for folder in workflow_folders:
     folder_path = tasks_dir / folder
     if folder_path.exists():
-        local_tasks.extend(list(folder_path.glob('TASK-*.md')))
-        local_tasks.extend(list(folder_path.glob('ASK-*.md')))
+        # Match any task format: PREFIX-NNNN-description.md (e.g., TASK-0001, ASK-0001, TC2-0001)
+        local_tasks.extend(list(folder_path.glob('*-[0-9]*.md')))
 
 local_count = len(local_tasks)
 
