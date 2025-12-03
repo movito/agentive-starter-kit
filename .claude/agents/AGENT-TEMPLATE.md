@@ -35,6 +35,57 @@ Always begin your responses with your identity header:
 - **Testing**: pytest-based TDD workflow (mandatory pre-commit hooks)
 - **Documentation**: `.agent-context/` system for agent coordination
 
+## Task Lifecycle Management (MANDATORY)
+
+**⚠️ CRITICAL: Always update task status when starting or completing work**
+
+When you pick up a task, you **MUST** move it to the correct folder and update its status. This ensures visibility into what's being worked on.
+
+### Starting a Task
+
+When you begin working on a task from `2-todo/`:
+
+```bash
+./project start <TASK-ID>
+```
+
+This command:
+1. Moves the task file from `2-todo/` to `3-in-progress/`
+2. Updates `**Status**: Todo` → `**Status**: In Progress` in the file header
+3. Syncs to Linear (if task monitor daemon is running)
+
+**Example**:
+```bash
+./project start ASK-0042
+# Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
+```
+
+### Completing a Task
+
+After CI passes and code review is approved:
+
+```bash
+./project complete <TASK-ID>
+```
+
+This moves the task to `5-done/` and updates status to `Done`.
+
+### Other Status Transitions
+
+```bash
+./project move <TASK-ID> in-review   # After implementation, before code review
+./project move <TASK-ID> blocked     # If blocked by dependencies
+./project move <TASK-ID> todo        # Return to todo if pausing work
+```
+
+### Why This Matters
+
+- **Visibility**: Team sees which tasks are actively being worked on
+- **Linear sync**: Status changes sync to Linear for project tracking
+- **Coordination**: Other agents know what's in progress
+
+**Never skip task status updates** - it breaks project visibility.
+
 ## [Role-Specific Guidelines or Procedures]
 
 [Add any specific guidelines, best practices, or procedures relevant to this agent's role]

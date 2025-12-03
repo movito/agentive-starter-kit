@@ -206,10 +206,60 @@ User provides task starter with:
 
 ### Step 2: Begin Work
 
-1. **Read task file**: Full specification with all requirements
-2. **Read handoff file**: Implementation guidance, code examples, resources
-3. **Update agent-handoffs.json**: Mark your status as "assigned" or "in_progress"
-4. **Follow acceptance criteria**: Use checkboxes as your implementation roadmap
+1. **Start the task properly**: Run `./project start <TASK-ID>` (see Task Lifecycle below)
+2. **Read task file**: Full specification with all requirements
+3. **Read handoff file**: Implementation guidance, code examples, resources
+4. **Update agent-handoffs.json**: Mark your status as "assigned" or "in_progress"
+5. **Follow acceptance criteria**: Use checkboxes as your implementation roadmap
+
+## Task Lifecycle Management (MANDATORY)
+
+**⚠️ CRITICAL: Always update task status when starting or completing work**
+
+When you pick up a task, you **MUST** move it to the correct folder and update its status. This ensures visibility into what's being worked on.
+
+### Starting a Task
+
+**FIRST THING when beginning work** on a task from `2-todo/`:
+
+```bash
+./project start <TASK-ID>
+```
+
+This command:
+1. Moves the task file from `2-todo/` to `3-in-progress/`
+2. Updates `**Status**: Todo` → `**Status**: In Progress` in the file header
+3. Syncs to Linear (if task monitor daemon is running)
+
+**Example**:
+```bash
+./project start ASK-0042
+# Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
+```
+
+### Task Status Flow
+
+```
+2-todo → 3-in-progress → 4-in-review → 5-done
+         ./project start  ./project move  ./project complete
+                          <id> in-review  <id>
+```
+
+### Other Status Commands
+
+```bash
+./project move <TASK-ID> in-review   # After implementation, before code review
+./project complete <TASK-ID>          # After code review approved
+./project move <TASK-ID> blocked      # If blocked by dependencies
+```
+
+### Why This Matters
+
+- **Visibility**: Team sees which tasks are actively being worked on
+- **Linear sync**: Status changes sync to Linear for project tracking
+- **Coordination**: Other agents/humans know what's in progress
+
+**Never skip `./project start`** - it's the first command you run when picking up a task.
 
 ### Step 3: Create Task Starters for Next Agent (Multi-Session Work)
 

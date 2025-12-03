@@ -54,13 +54,63 @@ After activation, use semantic navigation tools for 70-98% token savings.
 - **Documentation**: `.agent-context/` system for agent coordination
 
 ## Development Guidelines
-1. **Read task specifications first**: `delegation/tasks/3-in-progress/TASK-*.md` (or `2-todo/` if starting)
-2. **Follow TDD workflow**: Write tests before implementation (see `.agent-context/workflows/TESTING-WORKFLOW.md`)
-3. **Always read existing code** before making changes
-4. **Follow established patterns** from existing codebase
-5. **Test after each change**: Run pytest, verify no regressions
-6. **Update agent-handoffs.json**: Document your progress
-7. **Use semantic versioning** for releases
+1. **Start the task properly**: Run `./project start <TASK-ID>` first (see Task Lifecycle below)
+2. **Read task specifications**: `delegation/tasks/3-in-progress/TASK-*.md` after starting
+3. **Follow TDD workflow**: Write tests before implementation (see `.agent-context/workflows/TESTING-WORKFLOW.md`)
+4. **Always read existing code** before making changes
+5. **Follow established patterns** from existing codebase
+6. **Test after each change**: Run pytest, verify no regressions
+7. **Update agent-handoffs.json**: Document your progress
+8. **Use semantic versioning** for releases
+
+## Task Lifecycle Management (MANDATORY)
+
+**⚠️ CRITICAL: Always update task status when starting or completing work**
+
+When you pick up a task, you **MUST** move it to the correct folder and update its status. This ensures visibility into what's being worked on.
+
+### Starting a Task
+
+**FIRST THING when beginning work** on a task from `2-todo/`:
+
+```bash
+./project start <TASK-ID>
+```
+
+This command:
+1. Moves the task file from `2-todo/` to `3-in-progress/`
+2. Updates `**Status**: Todo` → `**Status**: In Progress` in the file header
+3. Syncs to Linear (if task monitor daemon is running)
+
+**Example**:
+```bash
+./project start ASK-0042
+# Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
+```
+
+### Task Status Flow
+
+```
+2-todo → 3-in-progress → 4-in-review → 5-done
+         ./project start  ./project move  ./project complete
+                          <id> in-review  <id>
+```
+
+### Other Status Commands
+
+```bash
+./project move <TASK-ID> in-review   # After implementation, before code review
+./project complete <TASK-ID>          # After code review approved
+./project move <TASK-ID> blocked      # If blocked by dependencies
+```
+
+### Why This Matters
+
+- **Visibility**: Team sees which tasks are actively being worked on
+- **Linear sync**: Status changes sync to Linear for project tracking
+- **Coordination**: Other agents/humans know what's in progress
+
+**Never skip `./project start`** - it's the first command you run when picking up a task.
 
 ## Code Navigation Tools
 

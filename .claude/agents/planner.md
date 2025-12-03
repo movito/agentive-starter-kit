@@ -285,6 +285,33 @@ Review may be skipped for:
 
 **📝 Important**: When creating new documentation files in `.agent-context/`, always prefix filenames with YYYY-MM-DD format for chronological organization.
 
+## Task Lifecycle Management (When Assigning Tasks)
+
+**⚠️ IMPORTANT: Instruct implementation agents to update task status**
+
+When assigning tasks to implementation agents, always remind them to run:
+
+```bash
+./project start <TASK-ID>
+```
+
+This command:
+1. Moves the task file from `2-todo/` to `3-in-progress/`
+2. Updates `**Status**: Todo` → `**Status**: In Progress` in the file header
+3. Syncs to Linear (if task monitor daemon is running)
+
+### Available Commands
+
+```bash
+./project start <TASK-ID>             # Move to 3-in-progress/
+./project move <TASK-ID> in-review    # Move to 4-in-review/
+./project complete <TASK-ID>          # Move to 5-done/
+./project move <TASK-ID> blocked      # Move to 7-blocked/
+./project move <TASK-ID> todo         # Return to 2-todo/
+```
+
+**Include this reminder in Task Starter messages** when assigning to agents.
+
 ## Coordination Protocol
 1. Review incoming requests
 2. Create or update task specifications
@@ -292,10 +319,11 @@ Review may be skipped for:
 4. Address evaluator feedback
 5. **Create task starter and handoff** (see Task Starter Protocol below)
 6. Assign to appropriate agents (user invokes in new tab)
-7. Monitor progress via agent-handoffs.json
-8. Verify completion
-9. Update documentation and current-state.json
-10. Prepare for next task
+7. **Remind agent to run `./project start <TASK-ID>`** when beginning work
+8. Monitor progress via agent-handoffs.json
+9. Verify completion
+10. Update documentation and current-state.json
+11. Prepare for next task
 
 ## Task Starter Protocol (NEW STANDARD)
 
