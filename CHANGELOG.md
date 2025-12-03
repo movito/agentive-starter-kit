@@ -1,0 +1,46 @@
+# Changelog
+
+All notable changes to the Agentive Starter Kit will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.2.0] - 2025-12-03
+
+### Added
+
+- **Task lifecycle management** - Agents now run `./scripts/project start <TASK-ID>` when picking up tasks, automatically moving them to `3-in-progress/` and updating status headers for visibility
+- **TDD infrastructure out of the box** - pytest, pre-commit hooks, and test workflows ship ready to use
+- **Startup task scanning** - Planner agent checks `delegation/tasks/2-todo/` on session start and summarizes pending work
+- **CI verification script** - `./scripts/ci-check.sh` for local pre-push validation
+- **Browser warning for Serena** - Dashboard flash warning added to prevent confusion during LSP initialization
+
+### Changed
+
+- **Project CLI location** - Moved from `./project` to `./scripts/project` for cleaner root directory
+- **Simplified planner startup** - Planner now asks what to build when no tasks exist, recognizes TDD is pre-configured
+- **Improved onboarding** - Clearer Linear API key instructions, better Serena activation guidance for new projects
+- **Updated adversarial-workflow** - Upgraded to v0.5.0
+
+### Fixed
+
+- Custom task prefix support in glob patterns (e.g., `ASK-*`, `TASK-*`)
+- Invalid model ID `claude-sonnet-4-5` corrected to `claude-sonnet-4`
+- Dependencies `gql` and `python-dotenv` moved to main dependencies (were missing)
+- Various path inconsistencies in documentation and agent instructions
+
+## [0.1.0] - 2025-11-25
+
+### Added
+
+- Initial release of the Agentive Starter Kit
+- Multi-agent coordination system with specialized agents (planner, feature-developer, test-runner, etc.)
+- Linear task synchronization with bidirectional status updates
+- Serena MCP integration for semantic code navigation
+- Adversarial evaluation workflow with GPT-4o
+- Task delegation system with numbered folder workflow
+- Agent handoff protocol via `.agent-context/`
+- Pre-configured Claude Code settings and permissions
+
+[0.2.0]: https://github.com/movito/agentive-starter-kit/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/movito/agentive-starter-kit/releases/tag/v0.1.0
