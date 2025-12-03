@@ -97,13 +97,18 @@ agents/onboarding
 
 ### 3. Follow Interactive Setup
 
-`planner` (your project coordinator) will guide you through:
+The onboarding agent will guide you through:
 
-1. **Project Configuration** - Name your project
+1. **Project Configuration** - Name your project (use the same name as your folder)
 2. **Language Selection** - Configure Serena for your languages
 3. **API Keys** - Set up Anthropic, OpenAI, and Linear (optional)
 4. **Feature Selection** - Enable evaluation, task sync, etc.
 5. **First Task** - Create your first task to get started
+
+**Important**: When asked for your project name, use the same name you chose for the folder (e.g., `my-project-name`). Onboarding uses this to:
+- Configure Serena for code navigation
+- Update agent files so they can find your project
+- Set up your task prefix for Linear sync
 
 Setup takes approximately 5-10 minutes.
 
