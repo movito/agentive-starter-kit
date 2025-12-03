@@ -16,7 +16,7 @@ Scans these numbered workflow folders:
 
 Usage:
     python scripts/sync_tasks_to_linear.py
-    ./project linearsync
+    ./scripts/project linearsync
 
 Environment variables required:
     LINEAR_API_KEY: Your Linear API key (loaded from .env file)

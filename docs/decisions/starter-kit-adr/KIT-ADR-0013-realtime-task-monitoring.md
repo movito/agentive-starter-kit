@@ -99,19 +99,19 @@ We will adopt an **event-driven file watching architecture** with daemon mode fo
 
 ```bash
 # Start the monitoring daemon
-./project daemon start
+./scripts/project daemon start
 
 # Check if daemon is running
-./project daemon status
+./scripts/project daemon status
 
 # View daemon logs
-./project daemon logs
+./scripts/project daemon logs
 
 # Stop the daemon
-./project daemon stop
+./scripts/project daemon stop
 
 # Run in foreground (for debugging)
-./project daemon run
+./scripts/project daemon run
 ```
 
 **Implementation Pattern (Python):**
@@ -318,7 +318,7 @@ def on_task_moved(event: TaskEvent):
 **First Steps**:
 1. Add `watchdog` to dependencies
 2. Create `scripts/task_monitor.py`
-3. Add daemon commands to `./project` CLI
+3. Add daemon commands to `./scripts/project` CLI
 4. Create `scripts/daemon.py` for background mode
 
 ## Related Decisions

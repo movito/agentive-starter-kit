@@ -246,7 +246,7 @@ When configured, the task system:
 
 **Manual sync:**
 ```bash
-./project linearsync
+./scripts/project linearsync
 ```
 
 **Auto-sync:** Pushing to `main` or `develop` triggers GitHub Actions workflow.

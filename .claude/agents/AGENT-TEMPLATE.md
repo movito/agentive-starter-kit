@@ -46,7 +46,7 @@ When you pick up a task, you **MUST** move it to the correct folder and update i
 When you begin working on a task from `2-todo/`:
 
 ```bash
-./project start <TASK-ID>
+./scripts/project start <TASK-ID>
 ```
 
 This command:
@@ -56,7 +56,7 @@ This command:
 
 **Example**:
 ```bash
-./project start ASK-0042
+./scripts/project start ASK-0042
 # Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
 ```
 
@@ -65,7 +65,7 @@ This command:
 After CI passes and code review is approved:
 
 ```bash
-./project complete <TASK-ID>
+./scripts/project complete <TASK-ID>
 ```
 
 This moves the task to `5-done/` and updates status to `Done`.
@@ -73,9 +73,9 @@ This moves the task to `5-done/` and updates status to `Done`.
 ### Other Status Transitions
 
 ```bash
-./project move <TASK-ID> in-review   # After implementation, before code review
-./project move <TASK-ID> blocked     # If blocked by dependencies
-./project move <TASK-ID> todo        # Return to todo if pausing work
+./scripts/project move <TASK-ID> in-review   # After implementation, before code review
+./scripts/project move <TASK-ID> blocked     # If blocked by dependencies
+./scripts/project move <TASK-ID> todo        # Return to todo if pausing work
 ```
 
 ### Why This Matters

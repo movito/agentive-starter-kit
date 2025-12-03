@@ -115,7 +115,7 @@ def main():
         for error in errors:
             print(f"{error}\n")
         print("To fix: Update the Status field to match the folder, or use:")
-        print("  ./project move <task-id> <status>")
+        print("  ./scripts/project move <task-id> <status>")
         sys.exit(1)
 
     sys.exit(0)

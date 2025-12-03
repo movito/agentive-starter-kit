@@ -30,14 +30,14 @@ Add verification steps to ensure Linear sync is working after task status change
 
 ### Must Have
 
-- [ ] Add `./project sync-status` command to check last sync
+- [ ] Add `./scripts/project sync-status` command to check last sync
 - [ ] Update COMMIT-PROTOCOL.md with sync verification step
 - [ ] Add sync verification to planner/tycho agent prompts
 - [ ] Log sync results with task counts (created/updated/unchanged)
 
 ### Should Have
 
-- [ ] Add `--verify` flag to `./project linearsync` that checks Linear state
+- [ ] Add `--verify` flag to `./scripts/project linearsync` that checks Linear state
 - [ ] Warning if local task count differs from Linear issue count
 - [ ] Summary of sync in CI job output with link to Linear board
 
@@ -52,7 +52,7 @@ Add verification steps to ensure Linear sync is working after task status change
 ### Sync Status Command
 
 ```bash
-./project sync-status
+./scripts/project sync-status
 # Output:
 # Last sync: 2025-11-29 02:19:17
 # Tasks synced: 24
@@ -69,7 +69,7 @@ Add to `.agent-context/workflows/COMMIT-PROTOCOL.md`:
 
 After pushing changes that affect tasks:
 1. Wait for CI to complete
-2. Run `./project sync-status` to verify Linear sync
+2. Run `./scripts/project sync-status` to verify Linear sync
 3. Check Linear board if counts don't match
 ```
 
@@ -83,8 +83,8 @@ Add to planner.md and tycho.md:
 After completing task status changes:
 1. Push changes to GitHub
 2. Verify CI passes
-3. Run `./project sync-status` to confirm Linear is updated
-4. If mismatch, run `./project linearsync` manually
+3. Run `./scripts/project sync-status` to confirm Linear is updated
+4. If mismatch, run `./scripts/project linearsync` manually
 ```
 
 ## Success Metrics

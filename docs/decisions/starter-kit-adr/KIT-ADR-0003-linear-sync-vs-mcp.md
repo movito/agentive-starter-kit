@@ -62,7 +62,7 @@ We will **keep the custom Linear sync implementation** as the primary mechanism 
 
 **CLI usage:**
 ```bash
-./project linearsync
+./scripts/project linearsync
 ```
 
 ### Sync Execution Modes
@@ -71,7 +71,7 @@ The sync can be triggered in two ways:
 
 **1. Local Sync (On-Demand)**
 ```bash
-./project linearsync
+./scripts/project linearsync
 ```
 - Reads task files directly from local filesystem
 - Syncs immediately to Linear via API
@@ -89,8 +89,8 @@ The sync can be triggered in two ways:
 **Key difference**: Local sync reads uncommitted files, CI sync reads committed files. Both use the same sync script and produce identical results for the same file content.
 
 **Recommended workflow**:
-1. Complete task, update Status field (or use `./project complete <id>`)
-2. Run `./project linearsync` to verify sync works
+1. Complete task, update Status field (or use `./scripts/project complete <id>`)
+2. Run `./scripts/project linearsync` to verify sync works
 3. Commit and push changes
 4. CI sync runs automatically as backup
 
@@ -115,7 +115,7 @@ The sync can be triggered in two ways:
 ### Neutral
 
 - **Linear MCP remains available**: Can be added later for supplementary use cases
-- **Daemon capability planned**: Future `./project daemon` could add continuous sync
+- **Daemon capability planned**: Future `./scripts/project daemon` could add continuous sync
 
 ## Alternatives Considered
 

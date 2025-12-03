@@ -29,7 +29,7 @@ Add Linear task synchronization infrastructure to the starter kit. This enables 
 
 ### Functional Requirements
 1. **Task sync script** that reads `delegation/tasks/[1-7]-*/` folders and syncs to Linear
-2. **Project CLI launcher** (`./project` or configurable name) with `linearsync` command
+2. **Project CLI launcher** (`./scripts/project` or configurable name) with `linearsync` command
 3. **GitHub workflow** that auto-syncs on push to task folders
 4. **Status mapping** from folder structure to Linear status (e.g., `2-todo/` → "Todo")
 5. **Legacy status migration** for non-Linear-native statuses in task files
@@ -92,7 +92,7 @@ Add Linear task synchronization infrastructure to the starter kit. This enables 
    - Estimated lines: ~150
 
 3. `project` - CLI launcher (root directory)
-   - Purpose: Simple command interface (`./project linearsync`)
+   - Purpose: Simple command interface (`./scripts/project linearsync`)
    - Contains: Command routing to scripts
    - Estimated lines: ~80
 
@@ -152,14 +152,14 @@ Add Linear task synchronization infrastructure to the starter kit. This enables 
 |---------------|-------------|--------|
 | `THEMATIC-####` pattern | `TASK-####` pattern | Remove THEMATIC support |
 | `github.com/movito/upstream-project` | `GITHUB_REPO_URL` env var | Make configurable |
-| `./thematic linearsync` | `./project linearsync` | Generic CLI name |
+| `./thematic linearsync` | `./scripts/project linearsync` | Generic CLI name |
 | Comment posting mode | Removed | Simplify for starter kit |
 | TDD stubs import | Inline | Remove external dependency |
 
 ## Acceptance Criteria
 
 ### Must Have ✅
-- [ ] `./project linearsync` syncs tasks to Linear
+- [ ] `./scripts/project linearsync` syncs tasks to Linear
 - [ ] Tasks in `1-backlog/` through `7-blocked/` folders sync correctly
 - [ ] Tasks in `8-archive/` and `9-reference/` are excluded
 - [ ] Status field in file takes priority over folder location
@@ -170,11 +170,11 @@ Add Linear task synchronization infrastructure to the starter kit. This enables 
 
 ### Should Have 🎯
 - [ ] Clear error messages for missing API key
-- [ ] Dry-run mode (`./project linearsync --dry-run`)
+- [ ] Dry-run mode (`./scripts/project linearsync --dry-run`)
 - [ ] Batch processing for large task counts
 
 ### Nice to Have 🌟
-- [ ] Task monitoring daemon (`./project daemon start`)
+- [ ] Task monitoring daemon (`./scripts/project daemon start`)
 - [ ] Bidirectional sync (Linear → files)
 
 ## Success Metrics

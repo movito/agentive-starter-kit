@@ -208,7 +208,7 @@ adversarial evaluate delegation/tasks/2-todo/TASK-0001-test.md
 4. Copy the key (starts with `lin_api_`)
 5. Add to `.env` as `LINEAR_API_KEY`
 
-**Team ID**: Run `./project teams` to list available teams with their KEYs and UUIDs.
+**Team ID**: Run `./scripts/project teams` to list available teams with their KEYs and UUIDs.
 
 ---
 

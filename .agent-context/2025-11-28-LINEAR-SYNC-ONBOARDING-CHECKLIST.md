@@ -12,7 +12,7 @@ Linear sync enables two-way synchronization between task files (`delegation/task
 ## Key Features
 
 1. **Flexible Team Resolution** - Accepts team KEY, UUID, or auto-detects
-2. **Helper Commands** - `./project teams` for debugging
+2. **Helper Commands** - `./scripts/project teams` for debugging
 3. **Comprehensive Tests** - 42 tests covering all scenarios
 4. **Clear Documentation** - Step-by-step guidance in `.env.template`
 
@@ -71,7 +71,7 @@ LINEAR_API_KEY=lin_api_YOUR_KEY_HERE
 #### Multi-Team Workspace
 ```bash
 # Option 1: List teams and choose
-./project teams
+./scripts/project teams
 
 # Output shows:
 # Team: Agentic Lotion 2
@@ -93,7 +93,7 @@ LINEAR_TEAM_ID=89b26800-e1e6-4998-bedf-04195e592cd9
 
 ```bash
 # Manual sync
-./project linearsync
+./scripts/project linearsync
 
 # Expected output:
 # 📋 Using Linear team: Agentic Lotion 2 (89b26800-...)
@@ -138,7 +138,7 @@ LINEAR_TEAM_ID=89b26800-e1e6-4998-bedf-04195e592cd9
 
 ### List Teams
 ```bash
-./project teams
+./scripts/project teams
 ```
 **Purpose**:
 - Debug multi-team setup
@@ -163,9 +163,9 @@ Team: thematic
 
 ### Sync Tasks
 ```bash
-./project linearsync
+./scripts/project linearsync
 # or
-./project sync  # alias
+./scripts/project sync  # alias
 ```
 
 ---
@@ -212,7 +212,7 @@ pip install -e ".[linear]"
 ### Error: "not authenticated"
 - Check API key starts with `lin_api_` (NOT `lin_wh_`)
 - Verify key in `.env` file
-- Test: `./project teams`
+- Test: `./scripts/project teams`
 
 ### Error: "teamId must be a UUID"
 **Old Issue (FIXED)**:
@@ -220,14 +220,14 @@ pip install -e ".[linear]"
 - **Solution**: `resolve_team_id()` now handles KEY → UUID conversion
 
 ### Error: "Team 'XXX' not found"
-- Run `./project teams` to see available teams
+- Run `./scripts/project teams` to see available teams
 - Check spelling of team KEY in `.env`
 - Verify API key has access to team
 
 ### Auto-detection picks wrong team
 **For multi-team workspaces**:
 - Set `LINEAR_TEAM_ID=YOUR_TEAM_KEY` in `.env`
-- Use `./project teams` to find correct KEY
+- Use `./scripts/project teams` to find correct KEY
 
 ---
 
@@ -273,7 +273,7 @@ When setting up a new project, verify:
 4. [ ] **API key added to .env** (`LINEAR_API_KEY=lin_api_...`)
 5. [ ] **Team configuration determined** (single vs multi-team)
 6. [ ] **LINEAR_TEAM_ID set if needed** (multi-team only)
-7. [ ] **Test sync runs successfully** (`./project linearsync`)
+7. [ ] **Test sync runs successfully** (`./scripts/project linearsync`)
 8. [ ] **Issues appear in Linear** (verify in web UI)
 9. [ ] **All tests pass** (`pytest tests/test_linear_sync.py`)
 10. [ ] **GitHub Actions secret set** (if using auto-sync)
@@ -283,12 +283,12 @@ When setting up a new project, verify:
 ## Success Criteria
 
 ✅ **Single-team workspace**:
-- `./project linearsync` works without LINEAR_TEAM_ID
+- `./scripts/project linearsync` works without LINEAR_TEAM_ID
 - Auto-detects and prints team name/UUID
 - Creates/updates issues successfully
 
 ✅ **Multi-team workspace**:
-- `./project teams` lists all teams
+- `./scripts/project teams` lists all teams
 - `LINEAR_TEAM_ID=KEY` resolves correctly
 - Syncs to correct team
 

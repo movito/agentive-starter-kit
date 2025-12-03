@@ -15,7 +15,7 @@ Add verification capabilities to the Linear sync workflow. Currently we sync to 
 
 ## Current Situation
 
-- `./project linearsync` syncs tasks but outputs only "Updated" messages
+- `./scripts/project linearsync` syncs tasks but outputs only "Updated" messages
 - No way to verify Linear board matches local state
 - CI shows "success" but doesn't verify actual Linear state
 - COMMIT-PROTOCOL.md doesn't include sync verification step
@@ -27,13 +27,13 @@ Add verification capabilities to the Linear sync workflow. Currently we sync to 
 
 Add sync verification at three levels:
 
-1. **CLI Command**: `./project sync-status` to check sync state
+1. **CLI Command**: `./scripts/project sync-status` to check sync state
 2. **Process Update**: Add verification steps to COMMIT-PROTOCOL.md
 3. **Agent Prompts**: Update planner.md and tycho.md with verification guidance
 
 ### Phase 1: Sync Status Command (1 hour)
 
-Create `./project sync-status` that:
+Create `./scripts/project sync-status` that:
 - Shows last sync timestamp
 - Counts local tasks vs Linear issues
 - Reports "In sync" or "Mismatch detected"
@@ -51,11 +51,11 @@ Update `.agent-context/workflows/COMMIT-PROTOCOL.md`:
 Update `.claude/agents/planner.md` and `.claude/agents/tycho.md`:
 - Add "Linear Sync Verification" section
 - Document when agents should verify sync
-- Show `./project sync-status` usage
+- Show `./scripts/project sync-status` usage
 
 ## Acceptance Criteria (Must Have)
 
-- [ ] `./project sync-status` command returns sync state
+- [ ] `./scripts/project sync-status` command returns sync state
 - [ ] Command shows local task count and Linear issue count
 - [ ] Command indicates "In sync" or "Mismatch" status
 - [ ] COMMIT-PROTOCOL.md updated with verification step
@@ -77,7 +77,7 @@ Update `.claude/agents/planner.md` and `.claude/agents/tycho.md`:
 
 ### 1. Sync Status Command Location
 
-Add to `./project` CLI (already has task management commands):
+Add to `./scripts/project` CLI (already has task management commands):
 
 ```python
 elif command == "sync-status":
@@ -126,12 +126,12 @@ Linear issues: 24
 Status: ⚠️  Mismatch detected
 
 Missing in Linear: ASK-0025, ASK-0026
-Run: ./project linearsync
+Run: ./scripts/project linearsync
 ```
 
 ## Resources for Implementation
 
-- `./project` CLI: Current implementation pattern
+- `./scripts/project` CLI: Current implementation pattern
 - `scripts/sync_tasks_to_linear.py`: GraphQL examples
 - `.agent-context/workflows/COMMIT-PROTOCOL.md`: Documentation to update
 - `.claude/agents/planner.md`: Agent prompt to update
@@ -146,10 +146,10 @@ Run: ./project linearsync
 
 ## Starting Point
 
-1. Open `./project` and add `sync-status` command handler
+1. Open `./scripts/project` and add `sync-status` command handler
 2. Create `get_linear_issue_count()` function using existing Linear API pattern
 3. Create `print_sync_status()` that compares local vs Linear counts
-4. Test with `./project sync-status`
+4. Test with `./scripts/project sync-status`
 5. Update documentation files
 
 ## Questions for Planner
@@ -162,7 +162,7 @@ If blocked on:
 ## Success Looks Like
 
 ```bash
-$ ./project sync-status
+$ ./scripts/project sync-status
 Linear Sync Status
 ==================
 Local tasks:  26
@@ -170,11 +170,11 @@ Linear issues: 26
 Status: ✅ In sync
 
 $ # After commit and push...
-$ ./project sync-status  # Quick verification
+$ ./scripts/project sync-status  # Quick verification
 ```
 
 And agents including sync verification in their workflows:
-> "After completing task status changes, I'll run `./project sync-status` to verify Linear is updated..."
+> "After completing task status changes, I'll run `./scripts/project sync-status` to verify Linear is updated..."
 
 ## Notes
 

@@ -206,7 +206,7 @@ User provides task starter with:
 
 ### Step 2: Begin Work
 
-1. **Start the task properly**: Run `./project start <TASK-ID>` (see Task Lifecycle below)
+1. **Start the task properly**: Run `./scripts/project start <TASK-ID>` (see Task Lifecycle below)
 2. **Read task file**: Full specification with all requirements
 3. **Read handoff file**: Implementation guidance, code examples, resources
 4. **Update agent-handoffs.json**: Mark your status as "assigned" or "in_progress"
@@ -223,7 +223,7 @@ When you pick up a task, you **MUST** move it to the correct folder and update i
 **FIRST THING when beginning work** on a task from `2-todo/`:
 
 ```bash
-./project start <TASK-ID>
+./scripts/project start <TASK-ID>
 ```
 
 This command:
@@ -233,7 +233,7 @@ This command:
 
 **Example**:
 ```bash
-./project start ASK-0042
+./scripts/project start ASK-0042
 # Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
 ```
 
@@ -241,16 +241,16 @@ This command:
 
 ```
 2-todo → 3-in-progress → 4-in-review → 5-done
-         ./project start  ./project move  ./project complete
+         ./scripts/project start  ./scripts/project move  ./scripts/project complete
                           <id> in-review  <id>
 ```
 
 ### Other Status Commands
 
 ```bash
-./project move <TASK-ID> in-review   # After implementation, before code review
-./project complete <TASK-ID>          # After code review approved
-./project move <TASK-ID> blocked      # If blocked by dependencies
+./scripts/project move <TASK-ID> in-review   # After implementation, before code review
+./scripts/project complete <TASK-ID>          # After code review approved
+./scripts/project move <TASK-ID> blocked      # If blocked by dependencies
 ```
 
 ### Why This Matters
@@ -259,7 +259,7 @@ This command:
 - **Linear sync**: Status changes sync to Linear for project tracking
 - **Coordination**: Other agents/humans know what's in progress
 
-**Never skip `./project start`** - it's the first command you run when picking up a task.
+**Never skip `./scripts/project start`** - it's the first command you run when picking up a task.
 
 ### Step 3: Create Task Starters for Next Agent (Multi-Session Work)
 
@@ -411,10 +411,10 @@ After implementation is complete and CI passes, you **MUST** request code review
 
 1. **Complete implementation**: All acceptance criteria met, tests pass (TDD complete)
 2. **Verify CI passes**: Use ci-checker agent (see above)
-3. **Move task to 4-in-review**: `./project move <TASK-ID> in-review`
+3. **Move task to 4-in-review**: `./scripts/project move <TASK-ID> in-review`
 4. **Request code review**: Invoke code-reviewer agent (see below)
 5. **Address feedback**: Fix any issues raised by reviewer
-6. **After approval**: Move to `5-done` with `./project complete <TASK-ID>`
+6. **After approval**: Move to `5-done` with `./scripts/project complete <TASK-ID>`
 
 ### Invoking Code Reviewer
 

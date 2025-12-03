@@ -129,13 +129,13 @@ Priority 3: Default to "Backlog"
 ./scripts/start-daemons.sh
 
 # Or manually:
-./project daemon start
-./project daemon status    # Check if running
-./project daemon logs      # View activity
+./scripts/project daemon start
+./scripts/project daemon status    # Check if running
+./scripts/project daemon logs      # View activity
 ```
 
 **If Monitor is NOT Running**:
-- Manual sync: `./project linearsync`
+- Manual sync: `./scripts/project linearsync`
 - Status field and folder can get out of sync temporarily
 - Priority system still applies (Status field > folder location)
 
@@ -151,18 +151,18 @@ Priority 3: Default to "Backlog"
 After completing task status changes, verify Linear is updated:
 
 ```bash
-./project sync-status
+./scripts/project sync-status
 ```
 
 **When to Verify**:
 - After completing tasks (moving to `5-done/`)
 - After creating new tasks
 - After any task status changes
-- After CI runs `./project linearsync`
+- After CI runs `./scripts/project linearsync`
 
 **If Mismatch Detected**:
-1. Run `./project linearsync` to sync missing tasks
-2. Re-verify with `./project sync-status`
+1. Run `./scripts/project linearsync` to sync missing tasks
+2. Re-verify with `./scripts/project sync-status`
 3. If persistent, check `.env` for `LINEAR_API_KEY` and `LINEAR_TEAM_ID`
 
 **Reference**: `.agent-context/workflows/COMMIT-PROTOCOL.md` → "Post-Push Linear Sync Verification"
@@ -292,7 +292,7 @@ Review may be skipped for:
 When assigning tasks to implementation agents, always remind them to run:
 
 ```bash
-./project start <TASK-ID>
+./scripts/project start <TASK-ID>
 ```
 
 This command:
@@ -303,11 +303,11 @@ This command:
 ### Available Commands
 
 ```bash
-./project start <TASK-ID>             # Move to 3-in-progress/
-./project move <TASK-ID> in-review    # Move to 4-in-review/
-./project complete <TASK-ID>          # Move to 5-done/
-./project move <TASK-ID> blocked      # Move to 7-blocked/
-./project move <TASK-ID> todo         # Return to 2-todo/
+./scripts/project start <TASK-ID>             # Move to 3-in-progress/
+./scripts/project move <TASK-ID> in-review    # Move to 4-in-review/
+./scripts/project complete <TASK-ID>          # Move to 5-done/
+./scripts/project move <TASK-ID> blocked      # Move to 7-blocked/
+./scripts/project move <TASK-ID> todo         # Return to 2-todo/
 ```
 
 **Include this reminder in Task Starter messages** when assigning to agents.
@@ -319,7 +319,7 @@ This command:
 4. Address evaluator feedback
 5. **Create task starter and handoff** (see Task Starter Protocol below)
 6. Assign to appropriate agents (user invokes in new tab)
-7. **Remind agent to run `./project start <TASK-ID>`** when beginning work
+7. **Remind agent to run `./scripts/project start <TASK-ID>`** when beginning work
 8. Monitor progress via agent-handoffs.json
 9. Verify completion
 10. Update documentation and current-state.json

@@ -254,20 +254,20 @@ def should_sync_task(task_file: Path) -> bool:
 
 ### Helper Commands
 
-The `./project` CLI provides commands to maintain status/folder alignment:
+The `./scripts/project` CLI provides commands to maintain status/folder alignment:
 
 ```bash
 # Move task and update Status field atomically
-./project move ASK-0001 done
-./project move ASK-0002 in-progress
+./scripts/project move ASK-0001 done
+./scripts/project move ASK-0002 in-progress
 
 # Shorthand commands
-./project complete ASK-0001    # → 5-done, Status: Done
-./project start ASK-0001       # → 3-in-progress, Status: In Progress
-./project block ASK-0001       # → 7-blocked, Status: Blocked
+./scripts/project complete ASK-0001    # → 5-done, Status: Done
+./scripts/project start ASK-0001       # → 3-in-progress, Status: In Progress
+./scripts/project block ASK-0001       # → 7-blocked, Status: Blocked
 
 # Validate all tasks
-./project validate             # Check all statuses match folders
+./scripts/project validate             # Check all statuses match folders
 ```
 
 ### Pre-commit Validation
@@ -288,12 +288,12 @@ A pre-commit hook validates Status field matches folder location:
 **Behavior:**
 - Blocks commits if Status doesn't match folder
 - Shows specific files and expected values
-- Suggests fix: `./project move <task-id> <status>`
+- Suggests fix: `./scripts/project move <task-id> <status>`
 
 ### Recommended Workflow
 
-1. **Moving tasks**: Use `./project complete ASK-0001` instead of `git mv`
-2. **Bulk fixes**: Run `./project validate` to find mismatches
+1. **Moving tasks**: Use `./scripts/project complete ASK-0001` instead of `git mv`
+2. **Bulk fixes**: Run `./scripts/project validate` to find mismatches
 3. **Pre-commit**: Automatically catches misaligned status before commit
 
 ## Real-World Results
@@ -302,7 +302,7 @@ A pre-commit hook validates Status field matches folder location:
 - `scripts/linear_sync_utils.py` - Status mapping utilities
 - `scripts/sync_tasks_to_linear.py` - Sync orchestration
 - `scripts/validate_task_status.py` - Pre-commit validation
-- `./project` CLI - Helper commands (move, complete, start, block, validate)
+- `./scripts/project` CLI - Helper commands (move, complete, start, block, validate)
 
 **Observed behavior:**
 - Tasks sync with correct status on push
@@ -325,8 +325,8 @@ A pre-commit hook validates Status field matches folder location:
 ## Revision History
 
 - 2025-11-29: Added tooling support (v1.1)
-  - Added `./project move/complete/start/block` commands
-  - Added `./project validate` command
+  - Added `./scripts/project move/complete/start/block` commands
+  - Added `./scripts/project validate` command
   - Added pre-commit hook for status validation
   - Updated References section
 - 2025-11-28: Initial decision (Accepted)

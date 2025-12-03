@@ -30,36 +30,36 @@ Strengthen Status field handling to prevent sync issues. The Status field in tas
 
 ### Must Have
 
-- [ ] Add `./project move` command to move task AND update Status
+- [ ] Add `./scripts/project move` command to move task AND update Status
 - [ ] Add pre-commit hook to validate Status matches folder
 - [ ] Hook warns on mismatch, allows override with flag
 - [ ] Document commands in README and agent prompts
 
 ### Should Have
 
-- [ ] `./project complete ASK-0001` shorthand for moving to done
-- [ ] `./project status ASK-0001` shows current status and folder
+- [ ] `./scripts/project complete ASK-0001` shorthand for moving to done
+- [ ] `./scripts/project status ASK-0001` shows current status and folder
 - [ ] Hook auto-fixes simple mismatches (with confirmation)
 
 ### Could Have
 
-- [ ] `./project validate` command to check all tasks
+- [ ] `./scripts/project validate` command to check all tasks
 - [ ] Integration with task monitor daemon
 
 ## Implementation
 
-### Helper Command: `./project move`
+### Helper Command: `./scripts/project move`
 
 ```bash
 # Move task to new status folder and update Status field
-./project move ASK-0001 done
-./project move ASK-0001 in-progress
-./project move ASK-0001 blocked
+./scripts/project move ASK-0001 done
+./scripts/project move ASK-0001 in-progress
+./scripts/project move ASK-0001 blocked
 
 # Shorthand for common operations
-./project complete ASK-0001    # → 5-done, Status: Done
-./project start ASK-0001       # → 3-in-progress, Status: In Progress
-./project block ASK-0001       # → 7-blocked, Status: Blocked
+./scripts/project complete ASK-0001    # → 5-done, Status: Done
+./scripts/project start ASK-0001       # → 3-in-progress, Status: In Progress
+./scripts/project block ASK-0001       # → 7-blocked, Status: Blocked
 ```
 
 ### Pre-commit Hook

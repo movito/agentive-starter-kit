@@ -45,16 +45,16 @@ Dashboard / WebSocket / CLI
 
 ```bash
 # Start monitoring
-./project daemon start
+./scripts/project daemon start
 
 # Check status
-./project daemon status
+./scripts/project daemon status
 
 # View logs
-./project daemon logs
+./scripts/project daemon logs
 
 # Stop monitoring
-./project daemon stop
+./scripts/project daemon stop
 ```
 
 ### Events Tracked

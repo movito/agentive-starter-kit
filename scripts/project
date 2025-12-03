@@ -278,7 +278,7 @@ except Exception as e:
     elif command == "move":
         # Move task to new status folder
         if len(sys.argv) < 4:
-            print("Usage: ./project move <task-id> <status>")
+            print("Usage: ./scripts/project move <task-id> <status>")
             print("       ./project move ASK-0001 done")
             print(f"       Valid statuses: {', '.join(STATUS_FOLDER_MAP.keys())}")
             sys.exit(1)
@@ -290,7 +290,7 @@ except Exception as e:
     elif command == "complete":
         # Shorthand for moving to done
         if len(sys.argv) < 3:
-            print("Usage: ./project complete <task-id>")
+            print("Usage: ./scripts/project complete <task-id>")
             sys.exit(1)
         task_id = sys.argv[2]
         success = move_task(task_id, "done", project_dir)
@@ -299,7 +299,7 @@ except Exception as e:
     elif command == "start":
         # Shorthand for moving to in-progress
         if len(sys.argv) < 3:
-            print("Usage: ./project start <task-id>")
+            print("Usage: ./scripts/project start <task-id>")
             sys.exit(1)
         task_id = sys.argv[2]
         success = move_task(task_id, "in-progress", project_dir)
@@ -308,7 +308,7 @@ except Exception as e:
     elif command == "block":
         # Shorthand for moving to blocked
         if len(sys.argv) < 3:
-            print("Usage: ./project block <task-id>")
+            print("Usage: ./scripts/project block <task-id>")
             sys.exit(1)
         task_id = sys.argv[2]
         success = move_task(task_id, "blocked", project_dir)
@@ -533,7 +533,7 @@ def print_help():
 Project CLI - Agentive Starter Kit
 ==================================
 
-Usage: ./project <command> [options]
+Usage: ./scripts/project <command> [options]
 
 Task Management:
   move <id> <status>   Move task to folder and update Status field

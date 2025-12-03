@@ -57,7 +57,7 @@ When you pick up a testing task, you **MUST** move it to the correct folder and 
 **FIRST THING when beginning work** on a task from `2-todo/`:
 
 ```bash
-./project start <TASK-ID>
+./scripts/project start <TASK-ID>
 ```
 
 This command:
@@ -67,16 +67,16 @@ This command:
 
 **Example**:
 ```bash
-./project start ASK-0042
+./scripts/project start ASK-0042
 # Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
 ```
 
 ### Other Status Commands
 
 ```bash
-./project move <TASK-ID> in-review   # After testing complete, before review
-./project complete <TASK-ID>          # After review approved
-./project move <TASK-ID> blocked      # If blocked by dependencies
+./scripts/project move <TASK-ID> in-review   # After testing complete, before review
+./scripts/project complete <TASK-ID>          # After review approved
+./scripts/project move <TASK-ID> blocked      # If blocked by dependencies
 ```
 
 ### Why This Matters
@@ -85,7 +85,7 @@ This command:
 - **Linear sync**: Status changes sync to Linear for project tracking
 - **Coordination**: Other agents/humans know what's in progress
 
-**Never skip `./project start`** - it's the first command you run when picking up a task.
+**Never skip `./scripts/project start`** - it's the first command you run when picking up a task.
 
 ## Code Navigation Tools
 

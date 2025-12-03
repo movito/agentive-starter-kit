@@ -106,7 +106,7 @@ Your mission: [Clear, action-oriented statement of the agent's goal]
 - All [CRITICAL/HIGH/etc.] feedback addressed
 - See handoff file for detailed implementation guidance
 
-**⚠️ FIRST ACTION**: Run `./project start [TASK-ID]` to move task to `3-in-progress/`
+**⚠️ FIRST ACTION**: Run `./scripts/project start [TASK-ID]` to move task to `3-in-progress/`
 ```
 
 ### Footer
@@ -178,7 +178,7 @@ Your mission: Follow the RED-GREEN-REFACTOR TDD cycle to create a properly teste
 - See handoff file for starting point and implementation details
 - Follow `tests/test_linear_comments.py` as TDD example pattern
 
-**⚠️ FIRST ACTION**: Run `./project start TASK-0102` to move task to `3-in-progress/`
+**⚠️ FIRST ACTION**: Run `./scripts/project start TASK-0102` to move task to `3-in-progress/`
 
 ---
 
@@ -306,7 +306,7 @@ Before sending task starter to user:
 - [ ] Time estimate is realistic and broken down by phase
 - [ ] Evaluation status mentioned (if applicable)
 - [ ] Both task file and handoff file links included
-- [ ] **FIRST ACTION reminder included** (`./project start <TASK-ID>`)
+- [ ] **FIRST ACTION reminder included** (`./scripts/project start <TASK-ID>`)
 - [ ] Recommended agent type specified
 - [ ] agent-handoffs.json updated with task assignment
 - [ ] Message is concise enough to fit in viewport
@@ -328,7 +328,7 @@ After creating task specification and addressing evaluation feedback:
 ### For Implementation Agents
 
 When receiving task starter:
-1. **Run `./project start <TASK-ID>`** to move task to `3-in-progress/` and update status
+1. **Run `./scripts/project start <TASK-ID>`** to move task to `3-in-progress/` and update status
 2. Read task file for full specification
 3. Read handoff file for implementation guidance
 4. Update `agent-handoffs.json` status to "in_progress"
