@@ -78,14 +78,20 @@ Open your terminal and navigate to where you keep projects (e.g., `~/Github` or 
 cd ~/Github
 ```
 
-Then clone this starter kit with your `project name`:
+Then clone this starter kit, replacing `your-project-name` with your actual project name:
 
 ```bash
-git clone https://github.com/movito/agentive-starter-kit.git my-project-name
-cd my-project-name
+git clone https://github.com/movito/agentive-starter-kit.git your-project-name
+cd your-project-name
 ```
 
-This creates a new `my-project-name` folder with everything inside. **Don't create the folder first** - the clone command does that for you.
+For example, if you're building a weather app:
+```bash
+git clone https://github.com/movito/agentive-starter-kit.git weather-app
+cd weather-app
+```
+
+This creates a new folder with everything inside. **Don't create the folder first** - the clone command does that for you.
 
 Then open the folder in your IDE (VS Code, Cursor, etc.).
 
@@ -99,16 +105,13 @@ agents/onboarding
 
 The onboarding agent will guide you through:
 
-1. **Project Configuration** - Name your project (use the same name as your folder)
+1. **Project Configuration** - Name your project
 2. **Language Selection** - Configure Serena for your languages
 3. **API Keys** - Set up Anthropic, OpenAI, and Linear (optional)
 4. **Feature Selection** - Enable evaluation, task sync, etc.
 5. **First Task** - Create your first task to get started
 
-**Important**: When asked for your project name, use the same name you chose for the folder (e.g., `my-project-name`). Onboarding uses this to:
-- Configure Serena for code navigation
-- Update agent files so they can find your project
-- Set up your task prefix for Linear sync
+**Important**: When asked for your project name, use the **same name** you chose for the folder (e.g., `weather-app`). Onboarding uses this to configure Serena and update agent files so they can navigate your codebase.
 
 Setup takes approximately 5-10 minutes.
 
