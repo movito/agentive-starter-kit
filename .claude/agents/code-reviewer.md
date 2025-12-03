@@ -185,7 +185,22 @@ If review exceeds target time, note in report and continue. For very large chang
 
 ## Review Report Format
 
-Create your review report at `.agent-context/reviews/ASK-XXXX-review.md`:
+**Before creating a review report**, check for existing reviews:
+
+```bash
+ls -la .agent-context/reviews/ASK-XXXX-review*.md 2>/dev/null
+```
+
+**If a previous review exists**:
+- For Round 2: Create `.agent-context/reviews/ASK-XXXX-review-round2.md`
+- Never overwrite previous reviews - they document the review history
+
+**Naming convention**:
+- Round 1: `ASK-XXXX-review.md`
+- Round 2: `ASK-XXXX-review-round2.md`
+- (No Round 3 - escalate to human instead)
+
+Create your review report at `.agent-context/reviews/ASK-XXXX-review.md` (or `-round2.md` for second review):
 
 ```markdown
 # Review: ASK-XXXX - [Task Title]
@@ -284,7 +299,9 @@ Read docs/decisions/adr/ADR-XXXX.md
 ```
 
 ### Step 7: Write Review Report
-Create `.agent-context/reviews/ASK-XXXX-review.md` with findings.
+Check for existing reviews first (see "Review Report Format" above). Create new file - never overwrite:
+- Round 1: `.agent-context/reviews/ASK-XXXX-review.md`
+- Round 2: `.agent-context/reviews/ASK-XXXX-review-round2.md`
 
 ### Step 8: Communicate Verdict
 Clearly state the verdict and next steps.
