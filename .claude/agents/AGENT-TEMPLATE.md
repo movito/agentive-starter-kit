@@ -206,7 +206,7 @@ If you push code changes to GitHub:
 
 ### Example: Testing Requirements (for implementation agents)
 - Pre-commit: Tests run automatically (fast tests only)
-- Pre-push: Run `./ci-check.sh` before pushing (full test suite)
+- Pre-push: Run `./scripts/ci-check.sh` before pushing (full test suite)
 - Manual: `pytest tests/ -v` for local verification
 - Coverage: Maintain or improve coverage baseline
 
