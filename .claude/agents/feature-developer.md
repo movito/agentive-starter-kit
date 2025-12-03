@@ -255,31 +255,68 @@ After implementation is complete and CI passes, you **MUST** request code review
 ### Code Review Process
 
 1. **Complete implementation**: All acceptance criteria met, tests pass
-2. **Verify CI passes**: Use ci-checker agent (see above)
-3. **Move task to 4-in-review**: `./scripts/project move <TASK-ID> in-review`
-4. **Request code review**: Invoke code-reviewer agent (see below)
-5. **Address feedback**: Fix any issues raised by reviewer
-6. **After approval**: Move to `5-done` with `./scripts/project complete <TASK-ID>`
+2. **Verify CI passes**: Use `/check-ci` or `./scripts/verify-ci.sh`
+3. **Move task to 4-in-review**: `./project move <TASK-ID> in-review`
+4. **Create review starter**: Write `.agent-context/<TASK-ID>-REVIEW-STARTER.md`
+5. **Notify user**: Tell them to invoke code-reviewer in a new tab
+6. **Address feedback**: Fix any issues raised by reviewer
+7. **After approval**: Move to `5-done` with `./project complete <TASK-ID>`
+
+### Creating Review Starter
+
+**IMPORTANT**: Create a review starter file so code-reviewer has context:
+
+Copy template from `.agent-context/templates/review-starter-template.md` to `.agent-context/<TASK-ID>-REVIEW-STARTER.md` and fill in:
+
+```markdown
+# Review Starter: <TASK-ID>
+
+**Task**: <TASK-ID> - [Task Title]
+**Task File**: `delegation/tasks/4-in-review/<TASK-ID>-*.md`
+**Branch**: [feature-branch] → main
+
+## Implementation Summary
+- [What was built]
+- [Key decisions made]
+
+## Files Changed
+- path/to/file.py (new/modified)
+- ...
+
+## Test Results
+- X tests passing
+- Y% coverage
+
+## Areas for Review Focus
+- [Any concerns you have]
+- [Tricky implementations]
+
+---
+**Ready for code-reviewer agent in new tab**
+```
 
 ### Invoking Code Reviewer
 
-After CI passes and task is in `4-in-review`, invoke the code-reviewer agent:
+**DO NOT use the Task tool** - it runs in a sandbox without filesystem access.
 
+Instead, tell the user:
 ```
-Use the Task tool with these parameters:
-- subagent_type: "code-reviewer"
-- description: "Code review for <TASK-ID>"
-- prompt: "Please review the implementation for <TASK-ID>.
-  Task file: delegation/tasks/4-in-review/<TASK-ID>.md
-  Recent commits: [list relevant commit hashes]
-  Focus areas: [any specific concerns]"
+Implementation complete and CI passes. Ready for code review.
+
+Review starter: `.agent-context/<TASK-ID>-REVIEW-STARTER.md`
+
+To start review:
+1. Open new Claude Code tab
+2. Run: `agents/launch code-reviewer`
+3. Reviewer will auto-detect the review starter
 ```
 
 The code-reviewer agent will:
+- Auto-detect the review starter file
 - Review code changes for quality, patterns, edge cases
 - Check test coverage and documentation
-- Report ✅ APPROVED / 🔄 CHANGES REQUESTED / ❌ REJECTED
-- Provide specific feedback for improvements
+- Write report to `.agent-context/reviews/<TASK-ID>-review.md`
+- Report verdict: APPROVED / CHANGES_REQUESTED / ESCALATE_TO_HUMAN
 
 ### Handling Review Feedback
 

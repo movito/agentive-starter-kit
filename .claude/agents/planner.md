@@ -231,7 +231,10 @@ After implementation is complete and CI passes, tasks move to `4-in-review/` for
 1. Implementation agent completes work
 2. CI passes (verify with `/check-ci`)
 3. Task moved to `4-in-review/`
-4. User invokes `code-reviewer` agent in new tab
+4. Implementation agent creates review starter file
+5. User invokes `code-reviewer` agent in new tab
+
+**IMPORTANT**: The code-reviewer must be invoked in a new tab, NOT via Task tool. The Task tool runs agents in a sandbox without filesystem access.
 
 ### Review Verdicts and Actions
 
@@ -246,13 +249,16 @@ After implementation is complete and CI passes, tasks move to `4-in-review/` for
 ```bash
 # After implementation agent completes:
 1. Verify CI: /check-ci main
-2. Move task: git mv delegation/tasks/3-in-progress/ASK-XXXX.md delegation/tasks/4-in-review/
-3. Notify user: "Ready for code review. Invoke code-reviewer agent."
+2. Move task: ./scripts/project move ASK-XXXX in-review
+3. Implementation agent creates: .agent-context/ASK-XXXX-REVIEW-STARTER.md
+4. Tell user: "Ready for code review. Invoke code-reviewer agent in new tab."
 
 # After code-reviewer completes:
-4. Read review: cat .agent-context/reviews/ASK-XXXX-review.md
-5. Act on verdict (see table above)
+5. Read review: cat .agent-context/reviews/ASK-XXXX-review.md
+6. Act on verdict (see table above)
 ```
+
+**Review Starter Files**: Implementation agents create these to provide context for code-reviewer. Template at `.agent-context/templates/review-starter-template.md`.
 
 ### Iteration Limits
 
@@ -269,8 +275,9 @@ Review may be skipped for:
 
 ### Review Files
 
-- **Reports**: `.agent-context/reviews/ASK-XXXX-review.md`
-- **Template**: `.agent-context/templates/review-template.md`
+- **Review Starter Template**: `.agent-context/templates/review-starter-template.md`
+- **Review Starters**: `.agent-context/ASK-XXXX-REVIEW-STARTER.md` (created by implementation agents)
+- **Review Reports**: `.agent-context/reviews/ASK-XXXX-review.md`
 - **Agent**: `.claude/agents/code-reviewer.md`
 
 ## Documentation Areas

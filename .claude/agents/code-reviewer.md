@@ -41,6 +41,24 @@ mcp__serena__activate_project("/full/path/to/your-project")
 
 Confirm: "✅ Serena activated. Ready for semantic code review."
 
+## Startup: Find Pending Reviews
+
+**On every session start**, after Serena activation, scan for pending reviews:
+
+```bash
+# Check for tasks in review
+ls -la delegation/tasks/4-in-review/
+
+# Check for review starters
+ls -la .agent-context/*-REVIEW-STARTER.md 2>/dev/null || echo "No review starters found"
+```
+
+**If review starters exist**: Read the starter file and begin review immediately. The starter contains implementation summary, files changed, and areas to focus on.
+
+**If tasks in 4-in-review/ but no starter**: Ask the user which task to review, then examine the task file and git history to understand what was implemented.
+
+**If nothing pending**: Let the user know there are no tasks awaiting review.
+
 ## Core Responsibilities
 
 1. **Verify acceptance criteria** - Check each criterion from task file
