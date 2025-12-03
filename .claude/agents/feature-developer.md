@@ -274,6 +274,7 @@ Copy template from `.agent-context/templates/review-starter-template.md` to `.ag
 **Task**: <TASK-ID> - [Task Title]
 **Task File**: `delegation/tasks/4-in-review/<TASK-ID>-*.md`
 **Branch**: [feature-branch] → main
+**PR**: [URL if applicable]
 
 ## Implementation Summary
 - [What was built]
@@ -290,6 +291,9 @@ Copy template from `.agent-context/templates/review-starter-template.md` to `.ag
 ## Areas for Review Focus
 - [Any concerns you have]
 - [Tricky implementations]
+
+## Related ADRs
+- [List relevant ADRs, e.g., KIT-ADR-0014]
 
 ---
 **Ready for code-reviewer agent in new tab**
