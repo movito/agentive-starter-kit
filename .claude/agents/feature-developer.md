@@ -326,12 +326,49 @@ The code-reviewer agent will:
 
 ### Handling Review Feedback
 
-- **APPROVED**: Move task to `5-done`, commit completion
-- **CHANGES REQUESTED**:
-  1. Address feedback
-  2. Commit fixes
-  3. Re-request review (repeat until approved)
-- **REJECTED**: Discuss with coordinator, may need task revision
+- **APPROVED**: Move task to `5-done` with `./project complete <TASK-ID>`
+- **CHANGES_REQUESTED**: See "Handling Fix Prompts" below
+- **ESCALATE_TO_HUMAN**: Wait for user decision
+
+## Handling Fix Prompts (Review Fixes)
+
+When you receive a **fix prompt** from the planner (after CHANGES_REQUESTED verdict), follow this streamlined process:
+
+**📖 Full workflow**: `.agent-context/workflows/REVIEW-FIX-WORKFLOW.md`
+
+### Fix Prompt Structure
+
+You'll receive something like:
+
+```markdown
+## Review Fix: [TASK-ID]
+
+**Review File**: `.agent-context/reviews/[TASK-ID]-review.md`
+**Task File**: `delegation/tasks/4-in-review/[TASK-ID]-*.md`
+
+### Required Changes
+[HIGH severity findings to address]
+
+### Optional Improvements
+[MEDIUM/LOW - nice to have]
+```
+
+### Your Process
+
+1. **Read the review file** - understand all findings in detail
+2. **Read the original task file** - refresh on acceptance criteria
+3. **Address required changes** - focus on HIGH severity first
+4. **Run tests**: `pytest tests/ -v`
+5. **Verify CI**: `/check-ci` or `./scripts/verify-ci.sh`
+6. **Update review-starter** - note what was fixed
+7. **Notify user** - ready for re-review (Round 2)
+
+### Key Points
+
+- **Task stays in `4-in-review/`** - don't move it
+- **Max 2 review rounds** - Round 2 is final
+- **Update, don't create new** review-starter file
+- Reference the review file in your work
 
 ### Why Code Review Is Required
 

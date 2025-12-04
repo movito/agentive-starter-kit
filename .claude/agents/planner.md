@@ -243,8 +243,50 @@ After implementation is complete and CI passes, tasks move to `4-in-review/` for
 | Verdict | Planner Action |
 |---------|----------------|
 | APPROVED | Move task to `5-done/` |
-| CHANGES_REQUESTED | Move task to `3-in-progress/`, notify implementation agent |
+| CHANGES_REQUESTED | Create fix prompt, keep task in `4-in-review/` |
 | ESCALATE_TO_HUMAN | Notify user, await decision |
+
+**📖 For CHANGES_REQUESTED**: See `.agent-context/workflows/REVIEW-FIX-WORKFLOW.md` for the complete fix process.
+
+### Creating a Fix Prompt (CHANGES_REQUESTED)
+
+When code-reviewer returns CHANGES_REQUESTED, create a lightweight fix prompt instead of a full task starter:
+
+```markdown
+## Review Fix: [TASK-ID]
+
+**Review Verdict**: CHANGES_REQUESTED
+**Review File**: `.agent-context/reviews/[TASK-ID]-review.md`
+**Task File**: `delegation/tasks/4-in-review/[TASK-ID]-*.md`
+
+### Required Changes
+
+[List HIGH severity findings from review]
+
+1. **[Finding Title]**
+   - File: `path/to/file.py`
+   - Issue: [What's wrong]
+   - Fix: [What to do]
+
+### Optional Improvements
+
+[MEDIUM/LOW findings - nice to have]
+
+### After Fixing
+
+1. Run tests: `pytest tests/ -v`
+2. Verify CI: `/check-ci`
+3. Update review-starter
+4. Request re-review
+
+---
+**Invoke feature-developer in new tab with this prompt**
+```
+
+**Key points**:
+- Task stays in `4-in-review/` (don't move back to `3-in-progress/`)
+- Max 2 review rounds - then escalate to human
+- Review file is source of truth for what needs fixing
 
 ### Review Coordination
 
