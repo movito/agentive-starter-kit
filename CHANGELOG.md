@@ -7,9 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-12-04
+
+### Added
+
+- **Structured knowledge capture from code reviews** (KIT-ADR-0019) - Code review insights are now captured in `.agent-context/REVIEW-INSIGHTS.md`, organized by module with recommended patterns and anti-patterns. Future agents can learn from past reviews.
+- **Mandatory code review workflow** (KIT-ADR-0014) - Implementation agents now create review starters and request code review before task completion. Reviews are versioned (round 1, round 2) to preserve history.
+- **Review fix workflow** - Streamlined process for handling CHANGES_REQUESTED verdicts with lightweight fix prompts instead of full task starters.
+
+### Changed
+
+- **Removed Thematic project-specific content** - Cleaned DaVinci Resolve, SMPTE, Electron references from agent templates for cleaner starter kit experience.
+- **Improved Serena activation instructions** - Code-reviewer and other agents now have clearer, more direct activation instructions.
+
 ### Fixed
 
 - **Reconfigure command handles upstream project name** - `./scripts/project reconfigure` now uses regex to replace any `activate_project()` call, not just the `"your-project"` placeholder. This fixes the case where downstream projects merge upstream and get `"agentive-starter-kit"` in their agent files instead of their configured project name.
+- **Code-reviewer no longer overwrites existing reviews** - Reviews are now versioned (`-round2.md` suffix) to preserve review history.
 
 ## [0.2.0] - 2025-12-03
 
@@ -48,5 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Agent handoff protocol via `.agent-context/`
 - Pre-configured Claude Code settings and permissions
 
+[0.2.1]: https://github.com/movito/agentive-starter-kit/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/movito/agentive-starter-kit/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/movito/agentive-starter-kit/releases/tag/v0.1.0
