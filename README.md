@@ -409,7 +409,7 @@ git merge upstream/main
 ./scripts/project reconfigure
 ```
 
-The `reconfigure` command updates agent files that may have placeholder values after pulling upstream changes. It reads your project name from `.serena/project.yml` and applies it to all agent files.
+The `reconfigure` command updates Serena activation calls in agent files after pulling upstream changes. It replaces any `activate_project("...")` value (whether it's the placeholder `"your-project"` or upstream's `"agentive-starter-kit"`) with your project name from `.serena/project.yml`.
 
 **How merging works:**
 - Files **only you changed** → your changes preserved
