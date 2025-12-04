@@ -497,12 +497,63 @@ User will:
 
 **Complete example**: See `.claude/agents/TASK-STARTER-TEMPLATE.md`
 
-## Version Management
-- Follow semantic versioning (MAJOR.MINOR.PATCH)
-- Track versions in: `pyproject.toml`, `package.json` (if applicable)
-- Create GitHub releases with release notes
-- Update `current-state.json` with version info
-- Document all changes in task completion summaries
+## Version Management & Releases
+
+Follow semantic versioning (MAJOR.MINOR.PATCH):
+- **MAJOR**: Breaking changes
+- **MINOR**: New features, backward compatible
+- **PATCH**: Bug fixes, minor improvements
+
+### CHANGELOG Maintenance
+
+**Always update `CHANGELOG.md`** when making notable changes:
+
+1. Add entries under `## [Unreleased]` as you work
+2. Group by type: `### Added`, `### Changed`, `### Fixed`, `### Removed`
+3. Format: `- **Feature name** - Brief description`
+
+**Example entry**:
+```markdown
+## [Unreleased]
+
+### Added
+- **Structured knowledge capture** (KIT-ADR-0019) - Review insights now captured in REVIEW-INSIGHTS.md
+
+### Fixed
+- **Reconfigure handles upstream** - Now uses regex to match any project name
+```
+
+### Release Workflow
+
+When ready to release:
+
+```bash
+# 1. Move [Unreleased] entries to new version section
+#    Edit CHANGELOG.md: [Unreleased] → [X.Y.Z] - YYYY-MM-DD
+
+# 2. Update version in pyproject.toml
+#    version = "X.Y.Z"
+
+# 3. Update version in README.md footer
+#    **Version**: X.Y.Z
+
+# 4. Add version link at bottom of CHANGELOG.md
+#    [X.Y.Z]: https://github.com/movito/agentive-starter-kit/compare/vPREV...vX.Y.Z
+
+# 5. Commit release
+git add CHANGELOG.md pyproject.toml README.md
+git commit -m "chore: Release vX.Y.Z"
+
+# 6. Create and push tag
+git tag -a vX.Y.Z -m "Release vX.Y.Z - Brief description"
+git push origin main && git push origin vX.Y.Z
+```
+
+### Version Files to Update
+- `CHANGELOG.md` - Release notes and history
+- `pyproject.toml` - Package version
+- `README.md` - Footer version display
+- `current-state.json` - Project state (optional)
 
 ## Quick Reference Documentation
 
