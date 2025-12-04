@@ -1,6 +1,6 @@
 # ASK-0027: Add Project Reconfigure Command
 
-**Status**: In Review
+**Status**: Done
 **Priority**: High
 **Assigned To**: feature-developer
 **Estimated Effort**: 2-3 hours
