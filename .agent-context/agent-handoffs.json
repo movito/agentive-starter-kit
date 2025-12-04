@@ -1,18 +1,18 @@
 {
   "planner": {
     "status": "completed",
-    "current_task": "ASK-0025",
-    "task_started": "2025-11-29",
-    "brief_note": "✅ COMPLETE: Task starter prepared for ASK-0025 - Linear Sync Verification",
-    "details_link": ".agent-context/ASK-0025-HANDOFF-feature-developer.md",
-    "handoff_file": ".agent-context/ASK-0025-HANDOFF-feature-developer.md"
+    "current_task": "ASK-0027",
+    "task_started": "2025-12-04",
+    "brief_note": "✅ COMPLETE: Task starter prepared for ASK-0027 - Project Reconfigure Command",
+    "details_link": "delegation/tasks/2-todo/ASK-0027-project-reconfigure-command.md",
+    "handoff_file": ".agent-context/ASK-0027-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
-    "status": "in_progress",
-    "current_task": "ASK-0025",
-    "task_started": "2025-11-29",
-    "brief_note": "Working on Linear Sync Verification - sync-status command + docs",
-    "details_link": "delegation/tasks/2-todo/ASK-0025-linear-sync-verification.md"
+    "status": "awaiting_assignment",
+    "current_task": "ASK-0027",
+    "task_started": null,
+    "brief_note": "Ready for ASK-0027 - Project Reconfigure Command",
+    "details_link": "delegation/tasks/2-todo/ASK-0027-project-reconfigure-command.md"
   },
   "test-runner": {
     "status": "idle",

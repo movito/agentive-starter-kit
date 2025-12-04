@@ -36,7 +36,7 @@ mcp__serena__activate_project("agentive-starter-kit")
 **If activation fails with "project not found"**: Use the full project path instead:
 
 ```
-mcp__serena__activate_project("/full/path/to/your-project")
+mcp__serena__activate_project("agentive-starter-kit")
 ```
 
 This configures Python, TypeScript, and Swift LSP servers. Confirm activation in your response: "✅ Serena activated: [languages]. Ready for code navigation."
