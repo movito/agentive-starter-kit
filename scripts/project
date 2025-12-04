@@ -171,10 +171,15 @@ def validate_all_tasks(project_dir: Path) -> bool:
 def reconfigure_project(project_dir: Path) -> bool:
     """Reconfigure agent files with the correct project name.
 
-    This updates .claude/agents/*.md files, replacing the 'your-project'
-    placeholder with the actual project name from .serena/project.yml.
+    This updates .claude/agents/*.md files, replacing any activate_project()
+    calls with the actual project name from .serena/project.yml.
 
-    Useful after fetching upstream updates that introduce placeholder values.
+    Handles multiple scenarios:
+    - Fresh clone with "your-project" placeholder
+    - After upstream merge with "agentive-starter-kit"
+    - Any other project name that needs updating
+
+    Useful after fetching upstream updates that overwrite agent files.
     """
     serena_config = project_dir / ".serena" / "project.yml"
     agents_dir = project_dir / ".claude" / "agents"
@@ -222,16 +227,32 @@ def reconfigure_project(project_dir: Path) -> bool:
 
     updated = 0
     skipped = 0
-    placeholder = 'activate_project("your-project")'
+
+    # Regex pattern to match any activate_project call
+    # This handles both placeholder ("your-project") and upstream ("agentive-starter-kit")
+    pattern = re.compile(r'activate_project\("([^"]+)"\)')
     replacement = f'activate_project("{project_name}")'
 
     for agent_file in sorted(agent_files):
         try:
             content = agent_file.read_text()
-            if placeholder in content:
-                new_content = content.replace(placeholder, replacement)
+
+            # Find all current project names in the file
+            matches = pattern.findall(content)
+
+            if not matches:
+                print(f"  · {agent_file.name} - no activation calls found")
+                skipped += 1
+                continue
+
+            # Check if any match is NOT the current project name
+            needs_update = any(m != project_name for m in matches)
+
+            if needs_update:
+                new_content = pattern.sub(replacement, content)
                 agent_file.write_text(new_content)
-                print(f"  ✓ {agent_file.name} - updated")
+                old_names = set(m for m in matches if m != project_name)
+                print(f"  ✓ {agent_file.name} - updated (was: {', '.join(old_names)})")
                 updated += 1
             else:
                 print(f"  · {agent_file.name} - already configured")
