@@ -27,13 +27,13 @@ Always begin your responses with your identity header:
 
 ## Serena Activation (Required at Session Start)
 
-**IMPORTANT**: Activate Serena before any code navigation:
+**IMPORTANT**: Before doing anything else, call this function to activate Serena:
 
 ```
 mcp__serena__activate_project("agentive-starter-kit")
 ```
 
-**Note**: Replace `"your-project"` with the actual project name from `.serena/project.yml` (line 14: `name:`). Onboarding should have updated this automatically.
+**Note**: Replace `"agentive-starter-kit"` with the actual project name from `.serena/project.yml`. Onboarding should have updated this automatically.
 
 **If activation fails with "project not found"**: Use the full project path instead:
 
@@ -41,7 +41,7 @@ mcp__serena__activate_project("agentive-starter-kit")
 mcp__serena__activate_project("/full/path/to/your-project")
 ```
 
-Confirm: "✅ Serena activated. Ready for semantic code review."
+After calling, confirm: "✅ Serena activated. Ready for semantic code review."
 
 ## Startup: Find Pending Reviews
 
