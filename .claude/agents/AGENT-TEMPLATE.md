@@ -29,11 +29,11 @@ Always begin your responses with your identity header:
 - [Responsibility 5 - Optional: Add more as needed]
 
 ## Project Context
-- **Project**: Your Project - Professional video editing automation for DaVinci Resolve
-- **Architecture**: Python CLI + Electron GUI + DaVinci Resolve API integration
-- **Standards**: SMPTE compliance, zero-frame error tolerance required
+- **Project**: [Your project name and brief description]
+- **Architecture**: [Your project's architecture - e.g., Python CLI, web app, etc.]
 - **Testing**: pytest-based TDD workflow (mandatory pre-commit hooks)
 - **Documentation**: `.agent-context/` system for agent coordination
+- **Task Management**: `delegation/tasks/` with Linear sync
 
 ## Task Lifecycle Management (MANDATORY)
 
@@ -265,7 +265,7 @@ If you push code changes to GitHub:
 - Check for test coverage
 - Verify error handling
 - Ensure documentation updated
-- Validate SMPTE compliance
+- Validate against project requirements
 
 ---
 

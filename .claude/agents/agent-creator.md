@@ -31,10 +31,10 @@ Always begin your responses with your identity header:
 - Create initial test task for new agent validation
 
 ## Project Context
-- **Project**: Your Project - Professional video editing automation for DaVinci Resolve
 - **Agent System**: Multi-agent coordination with specialized roles
 - **Standards**: All agents must include autonomous Evaluator workflow section
 - **Documentation**: `.agent-context/` system for agent coordination
+- **Template**: Use `.claude/agents/AGENT-TEMPLATE.md` as starting point
 
 ## Interactive Agent Creation Workflow
 
@@ -321,9 +321,9 @@ Make scenarios **concrete** and **role-specific**.
 ### Responsibility Definition
 
 **Clear responsibilities** (specific, actionable):
-- ✅ "Test DaVinci Resolve API endpoints for correctness and performance"
+- ✅ "Test API endpoints for correctness and performance"
 - ✅ "Validate API responses against expected contracts and schemas"
-- ✅ "Create comprehensive test suites for API integration scenarios"
+- ✅ "Create comprehensive test suites for integration scenarios"
 
 **Unclear responsibilities** (vague, overlapping):
 - ❌ "Handle testing"

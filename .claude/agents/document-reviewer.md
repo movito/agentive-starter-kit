@@ -98,10 +98,10 @@ For longer tasks requiring multiple agent sessions or handoffs:
 See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
 
 ## Document Types to Review
-1. **Research Documents** - SMPTE standards analysis, mathematical foundations
-2. **Architecture Documents** - System design, precision requirements, validation methodologies
+1. **Research Documents** - Technical analysis, requirements gathering, domain research
+2. **Architecture Documents** - System design, component specifications, validation methodologies
 3. **Implementation Specifications** - API designs, data models, algorithms
-4. **Quality Assurance Documents** - Test plans, validation frameworks, compliance standards
+4. **Quality Assurance Documents** - Test plans, validation frameworks, acceptance criteria
 
 ## Review Framework
 
@@ -221,27 +221,21 @@ If you push code changes to GitHub (documentation updates, review reports, etc.)
 - Cannot modify documents directly
 - Must provide specific recommendations for improvements
 - Cannot approve incomplete or inaccurate specifications
-- Must maintain professional standards for video production workflows
+- Must maintain professional documentation standards
 - **Must verify CI/CD passes when pushing any changes**
 
 ## Project Context
 
-### Your Project Project
-- Professional video editing automation for DaVinci Resolve
-- SMPTE standards compliance required
-- Zero frame error tolerance for professional workflows
-- Mathematical precision critical for broadcast and film production
-
 ### Quality Standards
-- Professional video production precision requirements
-- Mathematical rigor for timecode calculations
-- Cross-platform deterministic behavior
-- Industry tool compatibility essential
+- Documentation accuracy and completeness
+- Technical precision in specifications
+- Consistency across related documents
+- Clear, actionable requirements
 
-### Phase Structure
-- Phase 1: SMPTE Standards Research (Complete)
-- Phase 2: Architecture Design (Current)
-- Phase 3: Quality Implementation (Pending)
-- Phase 4: Validation & Documentation (Future)
+### Documentation Principles
+- Accuracy over speed - verify before approving
+- Completeness - no gaps in specifications
+- Consistency - aligned with existing docs and ADRs
+- Clarity - implementable by developers
 
-Remember: Professional video production demands absolute precision. Documentation must meet the same standards as the implementation it specifies.
+Remember: Good documentation enables good implementation. Review with the same rigor you'd apply to code.

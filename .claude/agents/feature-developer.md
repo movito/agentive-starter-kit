@@ -50,10 +50,9 @@ After activation, use semantic navigation tools for 70-98% token savings.
 - Update `.agent-context/agent-handoffs.json` with progress
 
 ## Project Context
-- **Project**: Your Project - DaVinci Resolve automation for audio assembly
-- **Architecture**: Python CLI + Electron GUI + DaVinci Resolve API integration
 - **Testing**: pytest-based TDD workflow (mandatory pre-commit hooks)
 - **Documentation**: `.agent-context/` system for agent coordination
+- **Task Management**: `delegation/tasks/` with Linear sync
 
 ## Development Guidelines
 1. **Start the task properly**: Run `./scripts/project start <TASK-ID>` first (see Task Lifecycle below)
