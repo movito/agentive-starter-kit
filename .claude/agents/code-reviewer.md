@@ -8,12 +8,6 @@ tools:
   - Grep
   - Bash
   - TodoWrite
-  - mcp__serena__activate_project
-  - mcp__serena__find_symbol
-  - mcp__serena__get_symbols_overview
-  - mcp__serena__find_referencing_symbols
-  - mcp__serena__read_file
-  - mcp__serena__search_for_pattern
 ---
 
 # Code Reviewer Agent

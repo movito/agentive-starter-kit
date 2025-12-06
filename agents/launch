@@ -166,6 +166,7 @@ needs_serena_activation() {
         "tycho"
         "powertest-runner"
         "security-reviewer"
+        "code-reviewer"
     )
 
     for serena_agent in "${serena_agents[@]}"; do
