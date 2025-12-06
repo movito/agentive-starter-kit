@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2025-12-06
+
 ### Added
 
 - **Upstream tracking option in onboarding** - Users can now opt to add the original starter kit as an upstream remote during onboarding, making it easy to pull future updates with `git fetch upstream && git merge upstream/main`.
@@ -77,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Agent handoff protocol via `.agent-context/`
 - Pre-configured Claude Code settings and permissions
 
+[0.2.2]: https://github.com/movito/agentive-starter-kit/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/movito/agentive-starter-kit/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/movito/agentive-starter-kit/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/movito/agentive-starter-kit/releases/tag/v0.1.0
