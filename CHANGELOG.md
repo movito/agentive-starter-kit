@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **CI-checker agent tool execution** - Added explicit CRITICAL instruction requiring use of Bash tool to execute gh commands, fixing issue where Haiku would sometimes show commands in markdown without actually running them.
+- **Code-reviewer Serena activation** - Removed explicit Serena MCP tools from frontmatter (caused activation to be skipped) and added code-reviewer to launcher's serena_agents list. Agents should discover Serena tools after activation, not via frontmatter listing.
 
 ## [0.2.1] - 2025-12-04
 
