@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Upstream tracking option in onboarding** - Users can now opt to add the original starter kit as an upstream remote during onboarding, making it easy to pull future updates with `git fetch upstream && git merge upstream/main`.
 
+### Changed
+
+- **Simplified Serena activation instructions** - Removed confusing placeholder references and redundant fallback sections from all 6 agent files. Activation section is now consistent and minimal across all agents.
+
 ## [0.2.1] - 2025-12-04
 
 ### Added
