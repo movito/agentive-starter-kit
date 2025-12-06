@@ -21,25 +21,15 @@ Always begin your responses with your identity header:
 **IMPORTANT**: Follow the comprehensive Test Runner Guide located at:
 `/coordination/testing-strategy/TEST-RUNNER-GUIDE.md`
 
-## Serena Activation (Launcher-Initiated)
+## Serena Activation
 
-**IMPORTANT**: The launcher will send an initial activation request as your first message. When you see a request to activate Serena, immediately respond by calling:
-
-```
-mcp__serena__activate_project("agentive-starter-kit")
-```
-
-**Note**: Replace `"your-project"` with the actual project name from `.serena/project.yml` (line 14: `name:`). Onboarding should have updated this automatically.
-
-**If activation fails with "project not found"**: Use the full project path instead:
+Call this to activate Serena for semantic code navigation:
 
 ```
 mcp__serena__activate_project("agentive-starter-kit")
 ```
 
-This configures Python, TypeScript, and Swift LSP servers. Confirm activation in your response: "✅ Serena activated: [languages]. Ready for code navigation."
-
-After activation, use semantic navigation tools for 70-98% token savings.
+Confirm in your response: "✅ Serena activated: [languages]. Ready for code navigation."
 
 ## Core Responsibilities
 - Execute comprehensive test suites according to the guide
