@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Simplified Serena activation instructions** - Removed confusing placeholder references and redundant fallback sections from all 6 agent files. Activation section is now consistent and minimal across all agents.
+- **Enhanced CI verification script** - `verify-ci.sh` now uses jq for proper JSON parsing, filters to push events only, reports on latest commit SHA, and provides clear verdicts (PASS/FAIL/IN PROGRESS/MIXED). Added `--wait` flag to block until workflows complete. Exit codes: 0 for pass, 1 for fail.
+- **CI-checker model upgraded to Sonnet** - Switched from Haiku to Sonnet (`claude-sonnet-4-20250514`) for more reliable tool invocation behavior.
+
+### Fixed
+
+- **CI-checker agent tool execution** - Added explicit CRITICAL instruction requiring use of Bash tool to execute gh commands, fixing issue where Haiku would sometimes show commands in markdown without actually running them.
 
 ## [0.2.1] - 2025-12-04
 
