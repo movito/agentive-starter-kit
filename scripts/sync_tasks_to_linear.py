@@ -156,8 +156,7 @@ class LinearClient:
 
     def get_default_team(self) -> str:
         """Get the default team ID."""
-        query = gql(
-            """
+        query = gql("""
             query {
               teams {
                 nodes {
@@ -166,8 +165,7 @@ class LinearClient:
                 }
               }
             }
-        """
-        )
+        """)
 
         result = self.client.execute(query)
         teams = result["teams"]["nodes"]
@@ -201,8 +199,7 @@ class LinearClient:
             return team_identifier
 
         # Otherwise, treat it as a team KEY and look it up
-        query = gql(
-            """
+        query = gql("""
             query {
               teams {
                 nodes {
@@ -212,8 +209,7 @@ class LinearClient:
                 }
               }
             }
-        """
-        )
+        """)
 
         result = self.client.execute(query)
         teams = result["teams"]["nodes"]
@@ -233,8 +229,7 @@ class LinearClient:
 
     def find_issue_by_identifier(self, task_id: str) -> Optional[Dict[str, Any]]:
         """Find existing Linear issue by task ID in title."""
-        query = gql(
-            """
+        query = gql("""
             query FindTaskIssue($taskId: String!) {
               issues(filter: { title: { contains: $taskId } }) {
                 nodes {
@@ -245,8 +240,7 @@ class LinearClient:
                 }
               }
             }
-        """
-        )
+        """)
 
         try:
             result = self.client.execute(query, variable_values={"taskId": task_id})
@@ -264,8 +258,7 @@ class LinearClient:
 
     def create_issue(self, task: TaskData, team_id: str) -> Dict[str, Any]:
         """Create a new Linear issue."""
-        mutation = gql(
-            """
+        mutation = gql("""
             mutation CreateIssue(
                 $teamId: String!,
                 $title: String!,
@@ -289,8 +282,7 @@ class LinearClient:
                 }
               }
             }
-        """
-        )
+        """)
 
         state_id = self._get_state_id(team_id, task.linear_status)
 
@@ -316,8 +308,7 @@ class LinearClient:
         self, issue_id: str, task: TaskData, team_id: str
     ) -> Dict[str, Any]:
         """Update an existing Linear issue."""
-        mutation = gql(
-            """
+        mutation = gql("""
             mutation UpdateIssue(
                 $issueId: String!,
                 $title: String,
@@ -343,8 +334,7 @@ class LinearClient:
                 }
               }
             }
-        """
-        )
+        """)
 
         state_id = self._get_state_id(team_id, task.linear_status)
 
@@ -367,8 +357,7 @@ class LinearClient:
 
     def _get_state_id(self, team_id: str, status_name: str) -> Optional[str]:
         """Get the workflow state ID for a given status name."""
-        query = gql(
-            """
+        query = gql("""
             query GetWorkflowStates($teamId: String!) {
               team(id: $teamId) {
                 states {
@@ -380,8 +369,7 @@ class LinearClient:
                 }
               }
             }
-        """
-        )
+        """)
 
         result = self.client.execute(query, variable_values={"teamId": team_id})
         states = result["team"]["states"]["nodes"]
