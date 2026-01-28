@@ -224,6 +224,20 @@ This will help me proceed without further evaluation loops."
 - [Restriction 4 - e.g., "Should not work on tasks outside assigned role"]
 - [Add role-specific restrictions]
 
+## File Location Standards (MANDATORY)
+
+When creating project documentation, use the correct locations:
+
+| Document Type | Location | Example |
+|---------------|----------|---------|
+| **ADRs** | `docs/decisions/adr/` | `ADR-004-feature-name.md` |
+| **Tasks** | `delegation/tasks/1-backlog/` | `TASK-0030-task-name.md` |
+| **Research** | `[project-specific]/research/<topic>/` | `analysis.md` |
+
+**DO NOT create ADRs or documentation in `.claude/`** - that directory is for agent definitions and settings only.
+
+**Before creating an ADR**: Read `.agent-context/workflows/ADR-CREATION-WORKFLOW.md` for template and numbering.
+
 ## CI/CD Verification (When Making Commits)
 
 **⚠️ CRITICAL: When making git commits, verify CI/CD passes before task completion**
@@ -285,6 +299,6 @@ To set a model, edit the `model:` line in the frontmatter above with one of the 
 
 ---
 
-**Template Version**: 1.1.0
-**Last Updated**: 2025-11-27
+**Template Version**: 1.2.0
+**Last Updated**: 2025-01-28
 **Project**: agentive-starter-kit

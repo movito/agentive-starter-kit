@@ -1,7 +1,7 @@
 # Operational Rules for All Agents
 
-**Version**: 2.0
-**Last Updated**: 2025-11-12
+**Version**: 2.1
+**Last Updated**: 2025-01-28
 **Applies To**: ALL agents in this project
 
 ---
@@ -108,3 +108,47 @@ If any verification fails, check:
 ## Questions?
 
 If subagents report creating files but nothing appears on disk, check `.claude/settings.local.json` permissions first.
+
+---
+
+## 📁 File Location Standards
+
+### ADRs (Architecture Decision Records)
+
+**Correct location**: `docs/decisions/adr/ADR-NNNN-short-title.md`
+
+**DO NOT create ADRs in**:
+- ❌ `.claude/` (agent/settings directory, not for project documentation)
+- ❌ Root directory
+- ❌ `.agent-context/` (coordination files only)
+
+**Before creating an ADR**: Read `.agent-context/workflows/ADR-CREATION-WORKFLOW.md` for template and numbering.
+
+### Tasks
+
+**Correct location**: `delegation/tasks/[status-folder]/TASK-NNNN-title.md`
+
+Status folders:
+- `1-backlog/` - Planned but not started
+- `2-todo/` - Ready for work
+- `3-in-progress/` - Currently being worked on
+- `5-done/` - Completed
+
+### Research Documents
+
+**Correct location**: Project-specific research folder (e.g., `docs/research/`, `research/`, or project-defined location)
+
+### Agent Definitions
+
+**Correct location**: `.claude/agents/[agent-name].md`
+
+This is the ONLY documentation type that belongs in `.claude/`.
+
+---
+
+## Why File Locations Matter
+
+1. **Discoverability**: Standard locations make it easy to find documents
+2. **Tool Integration**: Linear sync, ADR numbering, and other tools expect specific paths
+3. **Separation of Concerns**: Agent definitions (`.claude/`) vs. project documentation (`docs/`)
+4. **Template Inheritance**: New agents copy the template; correct locations propagate automatically
