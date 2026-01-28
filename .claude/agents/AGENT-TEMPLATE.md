@@ -203,6 +203,60 @@ This will help me proceed without further evaluation loops."
 - [Link to relevant technical docs]
 - [Link to relevant code examples or patterns]
 
+## Research Quality Standards (For Knowledge-Focused Agents)
+
+> **Note**: Include this section for agents that produce research, analysis, or knowledge documents.
+> Delete this section for implementation-focused agents (developers, testers, etc.).
+
+**Reference**: `.agent-context/workflows/RESEARCH-QUALITY-STANDARDS.md`
+
+All research output must meet the Four Quality Gates:
+
+### Gate 1: Citation Integrity
+- All factual claims must have citations
+- Test URLs and mark status: ✅ (verified) | ⚠️ (paywalled) | ❌ (broken)
+- Prefer primary sources (statutes, official guidance) over secondary
+
+### Gate 2: Factual Accuracy
+- Assign confidence levels: **High** (primary source) | **Medium** (secondary) | **Low** (inference)
+- Verify key facts against official sources
+- Flag uncertainty explicitly rather than presenting estimates as facts
+
+### Gate 3: Reproducibility
+- Document search methodology in appendix
+- List sources consulted, search terms used, date range
+- Note limitations (language, access restrictions, time constraints)
+
+### Gate 4: External Validation
+- Request external review for high-stakes documents
+- Run external evaluators: `adversarial evaluate <document>`
+- Address CRITICAL/HIGH findings before finalizing
+
+### Document Lifecycle
+1. **Draft**: Citations added, URLs tested, confidence levels assigned
+2. **Review**: External evaluation (if required), findings addressed
+3. **Final**: Version number, Working Process section, moved to research folder
+
+**Quick Check**: Before completing any research document:
+- [ ] All claims cited with status markers
+- [ ] Confidence levels on key claims
+- [ ] Search methodology appendix
+- [ ] External review (if >500 lines or high-stakes)
+
+## File Location Standards (MANDATORY)
+
+When creating project documentation, use the correct locations:
+
+| Document Type | Location | Example |
+|---------------|----------|---------|
+| **ADRs** | `docs/decisions/adr/` | `ADR-004-feature-name.md` |
+| **Tasks** | `delegation/tasks/1-backlog/` | `TASK-0030-task-name.md` |
+| **Research** | `[project-specific]/research/<topic>/` | `analysis.md` |
+
+**DO NOT create ADRs or documentation in `.claude/`** - that directory is for agent definitions and settings only.
+
+**Before creating an ADR**: Read `.agent-context/workflows/ADR-CREATION-WORKFLOW.md` for template and numbering.
+
 ## Allowed Operations
 
 [Specify what this agent is permitted to do - be explicit]
@@ -223,20 +277,6 @@ This will help me proceed without further evaluation loops."
 - [Restriction 3 - e.g., "Cannot skip test validation before committing"]
 - [Restriction 4 - e.g., "Should not work on tasks outside assigned role"]
 - [Add role-specific restrictions]
-
-## File Location Standards (MANDATORY)
-
-When creating project documentation, use the correct locations:
-
-| Document Type | Location | Example |
-|---------------|----------|---------|
-| **ADRs** | `docs/decisions/adr/` | `ADR-004-feature-name.md` |
-| **Tasks** | `delegation/tasks/1-backlog/` | `TASK-0030-task-name.md` |
-| **Research** | `[project-specific]/research/<topic>/` | `analysis.md` |
-
-**DO NOT create ADRs or documentation in `.claude/`** - that directory is for agent definitions and settings only.
-
-**Before creating an ADR**: Read `.agent-context/workflows/ADR-CREATION-WORKFLOW.md` for template and numbering.
 
 ## CI/CD Verification (When Making Commits)
 
@@ -299,6 +339,4 @@ To set a model, edit the `model:` line in the frontmatter above with one of the 
 
 ---
 
-**Template Version**: 1.2.0
-**Last Updated**: 2025-01-28
-**Project**: agentive-starter-kit
+**Template Version**: 1.3.0
