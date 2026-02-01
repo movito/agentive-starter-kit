@@ -1,6 +1,6 @@
 # ASK-0031: Improve Virtual Environment Activation UX
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: Medium
 **Assigned To**: feature-developer
 **Estimated Effort**: 2 hours
@@ -33,15 +33,15 @@ Clear "next steps" section at the end with copy-pasteable command.
 
 ### Must Have
 
-- [ ] Move activation instruction to END of setup output (not beginning)
-- [ ] Add clear visual separator and "Next Steps" header
-- [ ] Make the command copy-pasteable (no extra formatting)
-- [ ] Detect if already in venv and skip the instruction
+- [x] Move activation instruction to END of setup output (not beginning)
+- [x] Add clear visual separator and "Next Steps" header
+- [x] Make the command copy-pasteable (no extra formatting)
+- [x] Detect if already in venv and skip the instruction
 
 ### Should Have
 
-- [ ] Add activation reminder to onboarding agent flow
-- [ ] Detect shell type and show correct command (bash/zsh vs fish)
+- [x] Add activation reminder to onboarding agent flow
+- [x] Detect shell type and show correct command (bash/zsh vs fish)
 
 ### Nice to Have
 
