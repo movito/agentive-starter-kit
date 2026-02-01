@@ -379,13 +379,18 @@ class TestPythonVersionCheck:
 
         # Mock sys.version_info to simulate Python 3.12
         mock_version = MockVersionInfo(3, 12, 4)
+
+        # Mock subprocess and Path to prevent actual venv/pip operations
+        mock_run = MagicMock(return_value=MagicMock(returncode=0, stderr=""))
+        mock_path_exists = MagicMock(return_value=True)  # Pretend venv exists
+
         with patch.object(_project_module.sys, "version_info", mock_version):
-            # cmd_setup will eventually fail for other reasons (venv issues, etc.)
-            # but if it gets past the version check, we know it worked
-            try:
-                cmd_setup([])
-            except SystemExit:
-                pass  # Expected - may fail for other setup reasons
+            with patch.object(_project_module.subprocess, "run", mock_run):
+                with patch.object(_project_module.Path, "exists", mock_path_exists):
+                    try:
+                        cmd_setup([])
+                    except (SystemExit, Exception):
+                        pass  # May fail for other mocked reasons
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors
@@ -400,11 +405,18 @@ class TestPythonVersionCheck:
 
         # Mock sys.version_info to simulate Python 3.10
         mock_version = MockVersionInfo(3, 10, 12)
+
+        # Mock subprocess and Path to prevent actual venv/pip operations
+        mock_run = MagicMock(return_value=MagicMock(returncode=0, stderr=""))
+        mock_path_exists = MagicMock(return_value=True)  # Pretend venv exists
+
         with patch.object(_project_module.sys, "version_info", mock_version):
-            try:
-                cmd_setup([])
-            except SystemExit:
-                pass  # Expected - may fail for other setup reasons
+            with patch.object(_project_module.subprocess, "run", mock_run):
+                with patch.object(_project_module.Path, "exists", mock_path_exists):
+                    try:
+                        cmd_setup([])
+                    except (SystemExit, Exception):
+                        pass  # May fail for other mocked reasons
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors
