@@ -156,9 +156,9 @@ adversarial list-evaluators
 **Example output:**
 ```
 Built-in Evaluators:
-  evaluate       Plan evaluation (GPT-4o)
-  proofread      Teaching content review (GPT-4o)
-  review         Code review (GPT-4o)
+  evaluate       Plan evaluation (OpenAI)
+  proofread      Teaching content review (OpenAI)
+  review         Code review (OpenAI)
 
 Local Evaluators:
   security       Security-focused code review
@@ -359,25 +359,25 @@ adversarial evaluate delegation/tasks/2-todo/TASK-XXXX-description.md
 # For large files (>500 lines) requiring interactive confirmation:
 echo y | adversarial evaluate delegation/tasks/2-todo/TASK-XXXX-description.md
 ```
-- This invokes Aider with GPT-4o model
-- GPT-4o analyzes plan using evaluation criteria
+- This invokes Aider with the configured evaluator model
+- The evaluator analyzes the plan using evaluation criteria
 - Output saved to `.adversarial/logs/TASK-XXXX-PLAN-EVALUATION.md`
 
-**3. Planner reads GPT-4o evaluation output**
+**3. Planner reads evaluation output**
 ```bash
 # Read evaluation results
 cat .adversarial/logs/TASK-XXXX-PLAN-EVALUATION.md
 ```
 
 **4. Planner addresses CRITICAL and HIGH priority feedback**
-- Fix design flaws identified by GPT-4o
+- Fix design flaws identified by the evaluator
 - Add missing requirements
 - Clarify ambiguous specifications
 - Address risk concerns
 
 **5. Planner updates task file based on recommendations**
 - Edit task specification in `delegation/tasks/2-todo/`
-- Incorporate GPT-4o's suggestions
+- Incorporate the evaluator's suggestions
 - Improve clarity and completeness
 
 **6. If NEEDS_REVISION: Repeat steps 2-5**
@@ -410,11 +410,11 @@ adversarial proofread docs/agentive-development/01-foundation/01-structured-ai-c
 # For large files (>500 lines) requiring interactive confirmation:
 echo y | adversarial proofread docs/agentive-development/01-foundation/01-structured-ai-collaboration/concept.md
 ```
-- This invokes Aider with GPT-4o model
-- GPT-4o analyzes content using proofreading criteria
+- This invokes Aider with the configured evaluator model
+- The evaluator analyzes content using proofreading criteria
 - Output saved to `.adversarial/logs/concept-PROOFREADING.md`
 
-**3. Agent reads GPT-4o proofreading output**
+**3. Agent reads proofreading output**
 ```bash
 # Read proofreading results
 cat .adversarial/logs/concept-PROOFREADING.md
@@ -427,7 +427,7 @@ cat .adversarial/logs/concept-PROOFREADING.md
 - Address style guide/glossary inconsistencies
 
 **5. Agent updates document based on recommendations**
-- Edit teaching content based on GPT-4o's suggestions
+- Edit teaching content based on the evaluator's suggestions
 - Add better examples if needed
 - Improve pedagogical flow
 - Ensure terminology consistency
@@ -465,11 +465,11 @@ adversarial review src/feature/
 # Review with context from task spec:
 adversarial review src/feature/ --context delegation/tasks/3-in-progress/TASK-0001.md
 ```
-- This invokes Aider with GPT-4o model
-- GPT-4o analyzes code using review criteria
+- This invokes Aider with the configured evaluator model
+- The evaluator analyzes code using review criteria
 - Output saved to `.adversarial/logs/<identifier>-CODE-REVIEW.md`
 
-**3. Read GPT-4o code review output**
+**3. Read code review output**
 ```bash
 # Read review results
 cat .adversarial/logs/new_module-CODE-REVIEW.md
@@ -500,7 +500,7 @@ cat .adversarial/logs/new_module-CODE-REVIEW.md
 
 ## Evaluation Criteria (Code Plans)
 
-GPT-4o evaluates plans using these criteria:
+The evaluator analyzes plans using these criteria:
 
 ### 1. **Completeness Check**
 - Does the plan address ALL requirements?
@@ -536,7 +536,7 @@ GPT-4o evaluates plans using these criteria:
 
 ## Proofreading Criteria (Teaching Content)
 
-GPT-4o proofreads teaching content using these criteria:
+The evaluator proofreads teaching content using these criteria:
 
 ### 1. **Clarity**
 - Are explanations clear and understandable?
@@ -595,7 +595,7 @@ GPT-4o proofreads teaching content using these criteria:
 
 ## Code Review Criteria
 
-GPT-4o reviews implemented code using these criteria:
+The evaluator reviews implemented code using these criteria:
 
 ### 1. **Correctness**
 - Does the code do what it's supposed to do?
@@ -637,7 +637,7 @@ GPT-4o reviews implemented code using these criteria:
 
 ## Verdict Types
 
-GPT-4o will provide one of three verdicts (applies to both `evaluate` and `proofread`):
+The evaluator will provide one of three verdicts (applies to all evaluation modes):
 
 ### ✅ APPROVED
 - **Meaning**: Content is sound, proceed to next step
@@ -664,10 +664,12 @@ GPT-4o will provide one of three verdicts (applies to both `evaluate` and `proof
 
 ## Cost Expectations
 
+**Note:** Costs vary by evaluator. Built-in evaluators use OpenAI; custom evaluators may use different providers with different pricing.
+
 ### Evaluation (`adversarial evaluate`)
 
-**Per Evaluation:**
-- $0.04-0.05 (GPT-4o via OpenAI API)
+**Per Evaluation (built-in):**
+- $0.04-0.05 typical
 
 **Typical Workflow:**
 - $0.10-0.15 (2-3 evaluation rounds)
@@ -680,8 +682,8 @@ GPT-4o will provide one of three verdicts (applies to both `evaluate` and `proof
 
 ### Proofreading (`adversarial proofread`)
 
-**Per Proofreading:**
-- $0.01-0.02 (GPT-4o via OpenAI API, typically smaller documents)
+**Per Proofreading (built-in):**
+- $0.01-0.02 typical (smaller documents)
 
 **Typical Workflow:**
 - $0.02-0.04 (1-2 proofreading rounds, teaching content stabilizes faster)
@@ -695,8 +697,8 @@ GPT-4o will provide one of three verdicts (applies to both `evaluate` and `proof
 
 ### Code Review (`adversarial review`)
 
-**Per Review:**
-- $0.02-0.05 (GPT-4o via OpenAI API, depends on code size)
+**Per Review (built-in):**
+- $0.02-0.05 typical (depends on code size)
 
 **Typical Workflow:**
 - $0.04-0.10 (1-2 review rounds, code often has concrete fixes)
@@ -715,14 +717,14 @@ GPT-4o will provide one of three verdicts (applies to both `evaluate` and `proof
 **When to Stop Iterating:**
 
 1. ✅ All CRITICAL/HIGH concerns addressed
-2. ✅ GPT-4o asking for implementation-level details (beyond planning scope)
+2. ✅ Evaluator asking for implementation-level details (beyond planning scope)
 3. ✅ Diminishing returns on planning detail
 4. ✅ Manual planner review approves plan (planner override)
 
 **Planner Override:**
 The planner can approve NEEDS_REVISION plans when:
 - Remaining issues are implementation-level details
-- GPT-4o is requesting specifics that will be resolved during coding
+- Evaluator is requesting specifics that will be resolved during coding
 - 2-3 rounds completed and plan is "good enough"
 - User needs to start implementation for time-sensitive work
 
@@ -740,7 +742,7 @@ The planner can approve NEEDS_REVISION plans when:
 **Agent Override:**
 Agents can approve NEEDS_REVISION content when:
 - Remaining issues are minor style preferences
-- GPT-4o is suggesting cosmetic changes
+- Evaluator is suggesting cosmetic changes
 - 1-2 rounds completed and content teaches effectively
 - Time-sensitive publication needed
 
@@ -751,7 +753,7 @@ Agents can approve NEEDS_REVISION content when:
 ## Known Issues
 
 ### 1. Wrapper Verdict Bug
-**Issue**: CLI wrapper may report "✅ Evaluation approved!" even when GPT-4o verdict is NEEDS_REVISION
+**Issue**: CLI wrapper may report "✅ Evaluation approved!" even when the actual verdict is NEEDS_REVISION
 **Solution**: **Always check the log file** for the actual verdict
 **File**: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md`
 
@@ -786,14 +788,14 @@ Agents can approve NEEDS_REVISION content when:
 **For Plan Evaluation:**
 - Use `evaluate` for **high-level plan validation** (not implementation details)
 - Address **CRITICAL and HIGH priority feedback** first
-- Focus on **GPT-4o's questions**, not just the verdict
-- Manual **planner approval supersedes** GPT-4o verdict when appropriate
+- Focus on **the evaluator's questions**, not just the verdict
+- Manual **planner approval supersedes** evaluator verdict when appropriate
 
 **For Proofreading:**
 - Use `proofread` for **teaching content** (not code plans)
 - Address **clarity and accuracy issues** first
 - Focus on **pedagogical effectiveness**
-- Manual **agent approval supersedes** GPT-4o verdict when appropriate
+- Manual **agent approval supersedes** evaluator verdict when appropriate
 
 **For Both:**
 - Always check `.adversarial/logs/` file for actual verdict (wrapper may lie)
@@ -808,12 +810,12 @@ Agents can approve NEEDS_REVISION content when:
 
 ### ❌ DON'T:
 
-- Don't use Task tool to invoke these commands (GPT-4o is external via CLI, not a Claude agent)
-- Don't confuse "new tabs" instruction (for manual user review) with adversarial workflow (external GPT-4o)
+- Don't use Task tool to invoke these commands (evaluators are external via CLI, not Claude agents)
+- Don't confuse "new tabs" instruction (for manual user review) with adversarial workflow (external evaluator)
 - Don't use `evaluate` on teaching content (use `proofread`)
 - Don't use `proofread` on code plans (use `evaluate`)
 - Don't skip for complex/risky content
-- Don't ignore CRITICAL concerns from GPT-4o
+- Don't ignore CRITICAL concerns from the evaluator
 
 ---
 
@@ -879,7 +881,7 @@ Markdown with structured sections:
 ## Documentation References
 
 ### Configuration:
-- **Config file**: `.adversarial/config.yml` (evaluator_model: gpt-4o)
+- **Config file**: `.adversarial/config.yml`
 - **CLI location**: `/Library/Frameworks/Python.framework/Versions/3.11/bin/adversarial`
 
 ### Related Documentation:
@@ -929,6 +931,6 @@ adversarial review --help                # Get code review help
 
 ---
 
-**Last Updated**: 2025-01-27
+**Last Updated**: 2026-02-01
 **Maintained By**: Planner and feature-developer agents
 **Questions?** See PROCEDURAL-KNOWLEDGE-INDEX.md or ask user
