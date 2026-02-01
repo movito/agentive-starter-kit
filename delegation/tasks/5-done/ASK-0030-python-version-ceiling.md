@@ -1,6 +1,6 @@
 # ASK-0030: Add Python Version Ceiling Check
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: High
 **Assigned To**: feature-developer
 **Estimated Effort**: 1 hour
