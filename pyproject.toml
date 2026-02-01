@@ -38,7 +38,7 @@ dev = [
     "isort>=5.13.0",
     "pre-commit>=3.5.0",
     # Adversarial evaluation (AI reviews task specs)
-    "adversarial-workflow>=0.7.0",  # Multi-evaluator support, configurable timeouts
+    "adversarial-workflow>=0.6.6",  # Multi-evaluator support (pending v0.7.0)
 ]
 
 [tool.pytest.ini_options]

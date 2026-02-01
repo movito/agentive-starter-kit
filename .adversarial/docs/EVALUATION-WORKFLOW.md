@@ -4,7 +4,7 @@
 **Updated**: 2026-02-01 (multi-evaluator architecture, provider-agnostic)
 **Purpose**: Complete guide to using the adversarial evaluation workflow
 **Audience**: All agents (especially Planner)
-**Tool**: `adversarial` CLI (v0.7.0+)
+**Tool**: `adversarial` CLI (v0.6.6+)
 **Evaluator**: External AI via adversarial-workflow (built-in or custom)
 
 ---
