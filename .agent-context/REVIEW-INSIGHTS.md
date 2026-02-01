@@ -36,6 +36,12 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **ASK-0025**: Limit verbose output lists (e.g., show max 5 missing tasks, then "and N more...")
 - **ASK-0027**: Progress reporting pattern - show status for each file/item processed
 - **ASK-0027**: Idempotent commands - safe to run multiple times without unintended side effects
+- **ASK-0028**: Subprocess calls should use `capture_output=True, text=True` for proper error capture
+- **ASK-0028**: Truncate long error output (e.g., `stderr[-500:]`) with manual remediation instructions
+- **ASK-0028**: Detect corrupted state (e.g., missing venv python) and suggest `--force` flag
+- **ASK-0029**: Library installers should track version + commit hash in `.installed-version` for auditability
+- **ASK-0029**: Pin external content installers to specific versions (tags), not just "latest"
+- **ASK-0029**: Support `--force` for reinstallation and `--ref <tag>` for version override
 
 ### Tests (`tests/`)
 
@@ -55,6 +61,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Robust Error Handling**: Graceful handling of missing files without swallowing errors (ASK-0027)
 - **Type Hints + Docstrings**: Include for maintainability in all new code (ASK-0027)
 - **Progress Reporting**: Show per-item status for batch operations (ASK-0027)
+- **Optional Dependencies**: Use `GQL_AVAILABLE` flag pattern instead of `sys.exit(1)` at import time (ASK-0028, KIT-ADR-0005)
+- **Subprocess Error Capture**: Always use `capture_output=True, text=True` and check return codes (ASK-0028)
+- **Provider-Agnostic Design**: Avoid hard-coded model/provider names in documentation; use generic terms with "see docs for options" (ASK-0029)
+- **Version Pinning for External Content**: Pin to tags by default, record commit hash for auditability (ASK-0029)
 
 ### Anti-Patterns to Avoid
 
@@ -68,6 +78,8 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 - **Linear Sync**: Use `./scripts/project sync-status` after commits to verify Linear is updated (ASK-0025)
 - **Upstream Merges**: Run `./scripts/project reconfigure` after pulling upstream changes to update agent files (ASK-0027)
+- **New Project Setup**: Run `./scripts/project setup` to create venv and install dependencies (ASK-0028)
+- **Evaluator Installation**: Run `./scripts/project install-evaluators` to add additional evaluation providers (ASK-0029)
 
 ---
 
@@ -77,4 +89,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2025-12-04 by planner*
+*Last updated: 2026-02-01 by planner*
