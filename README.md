@@ -53,7 +53,7 @@ If you'd like to try this kit, here are the tools you'll need:
 
 | Requirement | Purpose | How to Get |
 |-------------|---------|------------|
-| **OpenAI API Key** | Adversarial evaluation (~$0.04 per evaluation) | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **OpenAI API Key** | Adversarial evaluation (built-in evaluators) | [platform.openai.com](https://platform.openai.com/api-keys) |
 | **Linear Integration** | Task sync with Linear issues | See [Linear Integration](#linear-integration) section below |
 
 ### Not sure if you have everythng you need?
@@ -95,13 +95,26 @@ This creates a new folder with everything inside. **Don't create the folder firs
 
 Then open the folder in your IDE (VS Code, Cursor, etc.).
 
-### 2. Run First-Time Onboarding
+### 2. Set Up Development Environment
+
+```bash
+./scripts/project setup
+source .venv/bin/activate
+```
+
+This creates a virtual environment with all dependencies. The `setup` command:
+- Verifies Python 3.9+ is available
+- Creates `.venv/` if it doesn't exist
+- Installs project dependencies
+- Configures pre-commit hooks
+
+### 3. Run First-Time Onboarding
 
 ```bash
 agents/onboarding
 ```
 
-### 3. Follow Interactive Setup
+### 4. Follow Interactive Setup
 
 The onboarding agent will guide you through:
 
@@ -167,9 +180,12 @@ adversarial proofread docs/guide.md
 
 # Discover all available evaluators
 adversarial list-evaluators
+
+# Install additional evaluators (Gemini, Mistral, more)
+./scripts/project install-evaluators
 ```
 
-Cost: ~$0.02-0.10 per evaluation. Results saved to `.adversarial/logs/`.
+Built-in evaluators use OpenAI. Custom evaluators can use other providers (Google, Mistral, Anthropic). Results saved to `.adversarial/logs/`.
 
 ### Serena Integration (`.serena/`)
 
@@ -453,7 +469,7 @@ MIT
 
 ## Acknowledgments
 
-Developed through real-world use on production projects. Special thanks to the Claude and GPT-4o teams for making agentive development possible.
+Developed through real-world use on production projects. Special thanks to the Claude team and all AI provider teams for making agentive development possible.
 
 ---
 

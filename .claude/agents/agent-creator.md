@@ -75,7 +75,7 @@ Ask the user clarifying questions to understand the new agent's role:
 5. **Evaluator Scenarios**:
    ```
    When should this agent request external evaluation?
-   Give me 4-6 specific scenarios where this agent might need validation from GPT-4o.
+   Give me 4-6 specific scenarios where this agent might need validation from the Evaluator.
 
    Examples:
    - "Ambiguous test coverage requirements"

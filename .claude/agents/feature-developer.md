@@ -370,7 +370,7 @@ You'll receive something like:
 
 ## Evaluator Workflow (When You Need Design Clarification)
 
-Sometimes during implementation you may encounter ambiguities or need design clarification. You can run evaluation autonomously via the external GPT-4o Evaluator.
+Sometimes during implementation you may encounter ambiguities or need design clarification. You can run evaluation autonomously via the external Evaluator.
 
 **📖 Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 
@@ -388,13 +388,13 @@ adversarial evaluate delegation/tasks/3-in-progress/TASK-FILE.md
 # For large files (>500 lines) requiring confirmation:
 echo y | adversarial evaluate delegation/tasks/3-in-progress/TASK-FILE.md
 
-# Read GPT-4o feedback
+# Read evaluator feedback
 cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 ```
 
 **Iteration Limits**: Max 2-3 evaluations per task. Escalate to user if contradictory feedback or after 2 NEEDS_REVISION verdicts.
 
-**Technical**: External GPT-4o via Aider, non-interactive, ~$0.04/eval
+**Technical**: External AI via adversarial-workflow, non-interactive, cost varies by evaluator
 
 ## Task Starter Protocol (Multi-Session Workflows)
 

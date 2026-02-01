@@ -102,7 +102,7 @@ Your mission: [Clear, action-oriented statement of the agent's goal]
 - Starting point suggestions
 
 [If task was evaluated, mention it:]
-- This spec has been evaluated by GPT-4o and revised (cost: $X.XX)
+- This spec has been evaluated by Evaluator and revised (cost: $X.XX)
 - All [CRITICAL/HIGH/etc.] feedback addressed
 - See handoff file for detailed implementation guidance
 
@@ -173,7 +173,7 @@ Your mission: Follow the RED-GREEN-REFACTOR TDD cycle to create a properly teste
 
 ### Notes
 
-- This spec has been evaluated by GPT-4o and revised (cost: $0.03)
+- This spec has been evaluated by Evaluator and revised (cost: $0.03)
 - All critical feedback addressed (rate limiting, dependencies, documentation)
 - See handoff file for starting point and implementation details
 - Follow `tests/test_linear_comments.py` as TDD example pattern

@@ -178,7 +178,7 @@ These enable the full agentive workflow:
 | Service   | Purpose              | Required? | Cost        |
 |-----------|----------------------|-----------|-------------|
 | Anthropic | Claude Code agents   | Yes*      | Pay per use |
-| OpenAI    | GPT-4o Evaluator     | Optional  | ~$0.04/eval |
+| OpenAI    | AI Evaluator         | Optional  | Varies by evaluator |
 | Linear    | Task sync            | Optional  | Free tier   |
 
 * You're already authenticated via Claude Code!
@@ -188,8 +188,9 @@ These enable the full agentive workflow:
 ```
 **OpenAI API Key** (for adversarial evaluation)
 
-The evaluation system uses GPT-4o to review task specs before implementation.
-Cost: ~$0.04-0.08 per evaluation.
+The evaluation system uses AI to review task specs before implementation.
+Built-in evaluators require OpenAI. Custom evaluators can use other providers.
+Cost: Varies by evaluator (see `adversarial list-evaluators`).
 
 Do you have an OpenAI API key?
 1. Yes, I have a key
@@ -359,6 +360,44 @@ You can launch it with: agents/launch [agent-name]
 ---
 
 ## Phase 6: Configuration & Summary
+
+### Set Up Development Environment
+
+First, set up the virtual environment and install dependencies:
+
+```bash
+./scripts/project setup
+```
+
+This command:
+- Verifies Python 3.9+ is available
+- Creates `.venv/` if it doesn't exist
+- Installs project dependencies (`pip install -e ".[dev]"`)
+- Configures pre-commit hooks
+
+Tell the user:
+```
+**Setting up development environment...**
+
+Running: ./scripts/project setup
+
+[Show output from the command]
+
+✅ Virtual environment created!
+
+To activate it, run:
+  source .venv/bin/activate
+
+(You'll need to activate this each time you open a new terminal)
+```
+
+If the command fails, show the error and suggest:
+```
+Setup failed. Try running manually:
+  python3 -m venv .venv
+  source .venv/bin/activate
+  pip install -e ".[dev]"
+```
 
 Now create the configuration files:
 
@@ -652,6 +691,62 @@ Then you can pull updates with:
 
 ---
 
+## Phase 7.5: Evaluator Setup (Optional)
+
+The adversarial workflow reviews task specifications before implementation.
+
+```
+**ONBOARDING** | Phase: Evaluators
+
+**Would you like to install additional evaluators?**
+
+The evaluation system can use different AI providers:
+
+1. **Built-in only** (default)
+   - Uses OpenAI (requires OPENAI_API_KEY)
+   - Evaluators: evaluate, proofread, review
+
+2. **Install evaluator library**
+   - Adds Google Gemini, Mistral, and more OpenAI evaluators
+   - Use providers you already have API keys for
+
+3. **Skip for now**
+   - Can add later with: ./scripts/project install-evaluators
+```
+
+### If user chooses option 2 (Install library):
+
+```bash
+./scripts/project install-evaluators
+```
+
+Tell the user:
+```
+**Evaluators installed!**
+
+Run `adversarial list-evaluators` to see all available evaluators.
+
+Each evaluator uses a different API key:
+- OPENAI_API_KEY  - OpenAI evaluators
+- GOOGLE_API_KEY  - Gemini evaluators
+- MISTRAL_API_KEY - Mistral evaluators
+
+Only set keys for providers you want to use.
+```
+
+### If user skips:
+
+```
+No problem! Built-in evaluators work with OPENAI_API_KEY.
+
+To install additional evaluators later:
+  ./scripts/project install-evaluators
+
+Custom evaluators can be added to .adversarial/evaluators/
+```
+
+---
+
 ## Phase 8: Complete
 
 ### Display Summary
@@ -667,7 +762,7 @@ Configuration Summary:
 - README: [Updated with project description / Placeholder added]
 - GitHub Repo: [URL if created, or "Not set up yet"]
 - Upstream Tracking: [Enabled / Not configured]
-- OpenAI Evaluator: [Enabled / Not configured]
+- Evaluator Library: [Installed / Built-in only]
 - Linear Sync: [Enabled / Not configured]
 - Pre-commit Hooks: [Enabled / Not configured]
 

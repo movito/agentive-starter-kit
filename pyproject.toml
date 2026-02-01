@@ -37,8 +37,8 @@ dev = [
     "ruff>=0.1.0",
     "isort>=5.13.0",
     "pre-commit>=3.5.0",
-    # Adversarial evaluation (GPT-4o reviews task specs)
-    "adversarial-workflow>=0.6.2",  # Includes aider-chat + plugin architecture + multiple evaluators
+    # Adversarial evaluation (AI reviews task specs)
+    "adversarial-workflow>=0.7.0",  # Multi-evaluator support, configurable timeouts
 ]
 
 [tool.pytest.ini_options]
@@ -55,6 +55,7 @@ markers = [
     "slow: marks tests as slow (>1s runtime, deselect with '-m \"not slow\"')",
     "integration: integration tests requiring external services",
     "unit: fast unit tests (default)",
+    "requires_gql: tests requiring gql package for Linear API (skip with '-m \"not requires_gql\"')",
 ]
 
 [tool.black]

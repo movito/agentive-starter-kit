@@ -18,7 +18,12 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+
+# Default version tag for reproducibility
+EVALUATOR_LIBRARY_VERSION = "v0.2.2"
+EVALUATOR_LIBRARY_REPO = "https://github.com/movito/adversarial-evaluator-library.git"
 
 # Status to folder mapping
 STATUS_FOLDER_MAP = {
@@ -264,6 +269,235 @@ def reconfigure_project(project_dir: Path) -> bool:
     return True
 
 
+def cmd_setup(args):
+    """Set up virtual environment and install dependencies."""
+    project_dir = Path(__file__).resolve().parent.parent
+    venv_dir = project_dir / ".venv"
+    force = "--force" in args
+
+    # 1. Verify Python version (3.9+ required)
+    version = sys.version_info
+    if version < (3, 9):
+        print(f"❌ Python 3.9+ required, found {version.major}.{version.minor}")
+        print("   Install Python 3.9+ and try again")
+        sys.exit(1)
+    print(f"✅ Python {version.major}.{version.minor}.{version.micro}")
+
+    # 2. Handle existing venv
+    if venv_dir.exists():
+        if force:
+            print(f"🗑️  Removing existing venv: {venv_dir}")
+            try:
+                shutil.rmtree(venv_dir)
+            except Exception as e:
+                print(f"❌ Failed to remove venv: {e}")
+                print("   Try: rm -rf .venv")
+                sys.exit(1)
+        else:
+            # Verify venv is valid (has python executable)
+            venv_python = venv_dir / "bin" / "python"
+            if not venv_python.exists():
+                print("⚠️  Corrupted venv detected (missing python)")
+                print(
+                    "   Run with --force to recreate: ./scripts/project setup --force"
+                )
+                sys.exit(1)
+            print(f"✅ Virtual environment exists: {venv_dir}")
+            print("   (use --force to recreate)")
+
+    # 3. Create venv if needed
+    if not venv_dir.exists():
+        print("\n📦 Creating virtual environment...")
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "venv", str(venv_dir)],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0:
+                print(f"❌ Failed to create venv: {result.stderr}")
+                sys.exit(1)
+            print(f"✅ Created: {venv_dir}")
+        except Exception as e:
+            print(f"❌ Failed to create venv: {e}")
+            sys.exit(1)
+
+    # 4. Install dependencies
+    pip = venv_dir / "bin" / "pip"
+    print("\n📦 Installing dependencies...")
+    try:
+        result = subprocess.run(
+            [str(pip), "install", "-e", ".[dev]"],
+            capture_output=True,
+            text=True,
+            cwd=project_dir,
+        )
+        if result.returncode != 0:
+            print("❌ Failed to install dependencies:")
+            # Show last 500 chars of stderr for debugging
+            stderr = result.stderr
+            print(stderr[-500:] if len(stderr) > 500 else stderr)
+            print("\nTry manually: source .venv/bin/activate && pip install -e '.[dev]'")
+            sys.exit(1)
+        print("✅ Dependencies installed")
+    except Exception as e:
+        print(f"❌ Failed to install dependencies: {e}")
+        sys.exit(1)
+
+    # 5. Install pre-commit hooks (optional - skip if pre-commit not installed)
+    pre_commit = venv_dir / "bin" / "pre-commit"
+    if pre_commit.exists():
+        print("\n🔧 Installing pre-commit hooks...")
+        try:
+            result = subprocess.run(
+                [str(pre_commit), "install"],
+                capture_output=True,
+                text=True,
+                cwd=project_dir,
+            )
+            if result.returncode == 0:
+                print("✅ Pre-commit hooks installed")
+            else:
+                print(f"⚠️  Pre-commit install failed (non-critical): {result.stderr}")
+        except Exception as e:
+            print(f"⚠️  Pre-commit install failed (non-critical): {e}")
+    else:
+        print("\n⚠️  pre-commit not found in venv (install manually if needed)")
+
+    # 6. Print success and activation instructions
+    print("\n" + "=" * 60)
+    print("✅ Setup complete!")
+    print("\nTo activate the virtual environment:")
+    print(f"  source {venv_dir}/bin/activate")
+    print("\nTo verify setup:")
+    print("  ./scripts/verify-setup.sh")
+
+
+def cmd_install_evaluators(args, project_dir):
+    """Install evaluators from adversarial-evaluator-library."""
+    # Parse arguments
+    force = "--force" in args
+    version = EVALUATOR_LIBRARY_VERSION
+
+    # Check for --ref flag (e.g., --ref v0.3.0 or --ref main)
+    for i, arg in enumerate(args):
+        if arg == "--ref" and i + 1 < len(args):
+            version = args[i + 1]
+            break
+
+    # 1. Check for git (required for cloning)
+    git_check = subprocess.run(
+        ["git", "--version"], capture_output=True, text=True
+    )
+    if git_check.returncode != 0:
+        print("❌ Git is required but not found")
+        print()
+        print("Install git:")
+        print("  macOS:  brew install git")
+        print("  Ubuntu: sudo apt install git")
+        print("  Windows: https://git-scm.com/download/win")
+        sys.exit(1)
+
+    evaluators_dir = project_dir / ".adversarial" / "evaluators"
+    evaluators_dir.mkdir(parents=True, exist_ok=True)
+
+    print("📦 Adversarial Evaluator Library Installer")
+    print("=" * 50)
+    print(f"   Version: {version}")
+    print()
+
+    # 2. Check if already installed
+    version_file = evaluators_dir / ".installed-version"
+    if version_file.exists() and not force:
+        installed = version_file.read_text().strip()
+        print(f"⚠️  Evaluators already installed (version: {installed})")
+        print("   Use --force to reinstall")
+        print("   Use --ref <version> to install a different version")
+        return
+
+    # 3. Clone specific version
+    with tempfile.TemporaryDirectory() as tmpdir:
+        print(f"📥 Cloning evaluator library @ {version}...")
+        try:
+            result = subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--depth",
+                    "1",
+                    "--branch",
+                    version,
+                    EVALUATOR_LIBRARY_REPO,
+                    tmpdir,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+        except subprocess.TimeoutExpired:
+            print("❌ Clone timed out (network issue?)")
+            print("   Check your internet connection and try again")
+            sys.exit(1)
+
+        if result.returncode != 0:
+            if "Could not resolve host" in result.stderr:
+                print("❌ Network error - check your internet connection")
+            elif "not found" in result.stderr.lower():
+                print(f"❌ Version '{version}' not found")
+                print(
+                    "   Available versions: "
+                    "https://github.com/movito/adversarial-evaluator-library/tags"
+                )
+            else:
+                print(f"❌ Failed to clone: {result.stderr.strip()}")
+            sys.exit(1)
+
+        # Get actual commit hash for reproducibility
+        hash_result = subprocess.run(
+            ["git", "-C", tmpdir, "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+        )
+        commit_hash = (
+            hash_result.stdout.strip()[:8]
+            if hash_result.returncode == 0
+            else "unknown"
+        )
+
+        # Copy evaluators
+        src = Path(tmpdir) / "evaluators"
+        if not src.exists():
+            print("❌ No evaluators directory in library")
+            sys.exit(1)
+
+        installed_count = 0
+        for provider_dir in src.iterdir():
+            if provider_dir.is_dir() and provider_dir.name not in (
+                "__pycache__",
+                ".git",
+            ):
+                dest = evaluators_dir / provider_dir.name
+                if dest.exists():
+                    shutil.rmtree(dest)
+                shutil.copytree(provider_dir, dest)
+                print(f"  ✅ {provider_dir.name}/")
+                installed_count += 1
+
+        # Write version file for tracking
+        version_file.write_text(f"{version} ({commit_hash})\n")
+
+    print()
+    print("=" * 50)
+    print(f"✅ Installed {installed_count} provider(s) from {version} ({commit_hash})")
+    print()
+    print("List evaluators:  adversarial list-evaluators")
+    print()
+    print("API keys needed (add to .env):")
+    print("  OPENAI_API_KEY   - OpenAI evaluators")
+    print("  GOOGLE_API_KEY   - Gemini evaluators")
+    print("  MISTRAL_API_KEY  - Mistral evaluators")
+
+
 def main():
     """Launch project commands."""
     # Get the project directory (parent of scripts/)
@@ -419,6 +653,16 @@ except Exception as e:
         # Reconfigure agent files with project name
         success = reconfigure_project(project_dir)
         sys.exit(0 if success else 1)
+
+    elif command == "setup":
+        # Set up virtual environment and install dependencies
+        cmd_setup(sys.argv[2:])
+        sys.exit(0)
+
+    elif command == "install-evaluators":
+        # Install evaluators from adversarial-evaluator-library
+        cmd_install_evaluators(sys.argv[2:], project_dir)
+        sys.exit(0)
 
     elif command == "sync-status":
         # Check Linear sync status
@@ -635,6 +879,11 @@ Project CLI - Agentive Starter Kit
 ==================================
 
 Usage: ./scripts/project <command> [options]
+
+Setup:
+  setup [--force]        Create venv and install dependencies
+  install-evaluators     Install evaluators from adversarial-evaluator-library
+                         Options: --force (reinstall), --ref <tag> (version)
 
 Task Management:
   move <id> <status>   Move task to folder and update Status field

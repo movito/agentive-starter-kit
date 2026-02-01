@@ -132,7 +132,7 @@ cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 
 **When to Ask User**: Business decisions, contradictory feedback, or strategic test priorities.
 
-**Technical**: External GPT-4o via Aider (`--yes` flag), cost ~$0.04/eval, fully autonomous.
+**Technical**: External AI via adversarial-workflow (`--yes` flag), cost varies by evaluator, fully autonomous.
 
 ## Primary Testing Protocol
 1. **ALWAYS** start by reading the TEST-RUNNER-GUIDE.md

@@ -150,7 +150,7 @@ Confirm in your response: "✅ Serena activated: [languages]. Ready for code nav
 
 ## Evaluation Workflow
 
-Request external validation from GPT-4o when facing:
+Request external validation from Evaluator when facing:
 
 ### Technical Decisions
 - Ambiguous test coverage requirements for complex interactions

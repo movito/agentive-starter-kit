@@ -1,11 +1,11 @@
 # Adversarial Evaluation Workflow
 
 **Created**: 2025-11-01
-**Updated**: 2025-01-27 (added review evaluator, list-evaluators, custom evaluators)
-**Purpose**: Complete guide to using the adversarial evaluation workflow with GPT-4o
+**Updated**: 2026-02-01 (multi-evaluator architecture, provider-agnostic)
+**Purpose**: Complete guide to using the adversarial evaluation workflow
 **Audience**: All agents (especially Planner)
-**Tool**: `adversarial` CLI (v0.6.2+)
-**Evaluator**: GPT-4o via Aider (external agent)
+**Tool**: `adversarial` CLI (v0.7.0+)
+**Evaluator**: External AI via adversarial-workflow (built-in or custom)
 
 ---
 
@@ -37,7 +37,7 @@
 
 ## Overview
 
-The adversarial workflow provides independent quality assurance using **GPT-4o** (via Aider CLI) for three types of content:
+The adversarial workflow provides independent quality assurance using **external AI** (via Aider CLI) for three types of content:
 
 1. **Plan Evaluation** (`adversarial evaluate`) - Review implementation plans and architectural decisions
 2. **Proofreading** (`adversarial proofread`) - Review teaching/documentation content quality
@@ -49,7 +49,7 @@ The adversarial workflow provides independent quality assurance using **GPT-4o**
 
 ## Available Evaluators
 
-As of adversarial-workflow v0.6.2, three built-in evaluators are available:
+As of adversarial-workflow v0.7.0, three built-in evaluators are available (require OPENAI_API_KEY):
 
 | Command | Purpose | Best For |
 |---------|---------|----------|
@@ -188,7 +188,8 @@ mkdir -p .adversarial/evaluators
 ```yaml
 name: security
 description: Security-focused code review
-model: gpt-4o
+model: gpt-4o  # Or: gemini/gemini-2.0-flash, mistral/mistral-large-latest, etc.
+api_key_env: OPENAI_API_KEY  # Environment variable for API key
 
 prompt: |
   You are a security expert reviewing code for vulnerabilities.
@@ -222,7 +223,8 @@ adversarial security src/auth/login.py
 |-------|----------|-------------|
 | `name` | Yes | Command name (lowercase, no spaces) |
 | `description` | Yes | Short description shown in `list-evaluators` |
-| `model` | No | AI model to use (default: gpt-4o) |
+| `model` | No | AI model to use (see aider docs for formats) |
+| `api_key_env` | No | Environment variable for API key |
 | `prompt` | Yes | System prompt for the evaluator |
 | `output_suffix` | No | Suffix for output files (default: EVALUATION) |
 
@@ -234,33 +236,58 @@ adversarial security src/auth/login.py
 - **API review**: Validate REST/GraphQL design patterns
 - **Database review**: Check query efficiency and schema design
 
+### Evaluator Library
+
+Pre-built evaluators for multiple providers are available:
+
+```bash
+# Install evaluators from the evaluator library
+./scripts/project install-evaluators
+
+# See all available evaluators (built-in + custom + library)
+adversarial list-evaluators
+```
+
+**Installed providers include:**
+- OpenAI (gpt-4o, gpt-4o-mini, o3, gpt-5.2)
+- Google (gemini-flash, gemini-pro, gemini-deep)
+- Mistral (mistral-fast, mistral-content, codestral-code)
+
+Each provider requires its own API key (set in `.env`):
+- `OPENAI_API_KEY` for OpenAI evaluators
+- `GOOGLE_API_KEY` for Gemini evaluators
+- `MISTRAL_API_KEY` for Mistral evaluators
+
+**Documentation**: `.adversarial/evaluators/README.md`
+**Library**: https://github.com/movito/adversarial-evaluator-library
+
 ---
 
 ## What It Is (and Isn't)
 
 ### ✅ What It IS:
 
-- **External GPT-4o agent** invoked via `adversarial evaluate` or `adversarial proofread` CLI commands
-- Uses Aider to call OpenAI's GPT-4o API
+- **External AI evaluator** invoked via `adversarial evaluate` or `adversarial proofread` CLI commands
+- Uses Aider to call external AI APIs (OpenAI, Google, Mistral, etc.)
 - Saves output to `.adversarial/logs/` with different suffixes:
   - Evaluation: `TASK-*-PLAN-EVALUATION.md`
   - Proofreading: `<doc-name>-PROOFREADING.md`
-- Independent critical review from a different AI model (GPT-4o, not Claude)
+- Independent critical review from a different AI model (external evaluator, not Claude)
 
 ### ❌ What It is NOT:
 
 - **NOT** Claude in a new UI tab (that's for manual user review)
 - **NOT** a Claude Code Task tool agent (those create phantom work that doesn't persist)
-- **NOT** a Claude Code subagent (GPT-4o is external, via OpenAI API)
+- **NOT** a Claude Code subagent (evaluators are external, via CLI)
 - **NOT** a replacement for human review (it's a complement)
 
 ### 🔍 Critical Clarification:
 
-The `.claude/CLAUDE.md` instruction "Always launch agents in new tabs" refers to opening **Claude Desktop UI tabs** for manual review by the user. This is **NOT** the same as the adversarial workflow, which is an external GPT-4o agent invoked via CLI.
+The `.claude/CLAUDE.md` instruction "Always launch agents in new tabs" refers to opening **Claude Desktop UI tabs** for manual review by the user. This is **NOT** the same as the adversarial workflow, which is an external AI evaluator invoked via CLI.
 
 **Confusion Prevention:**
-- "Give this to Evaluator" = Run `adversarial evaluate` command (GPT-4o via CLI)
-- "Proofread this document" = Run `adversarial proofread` command (GPT-4o via CLI)
+- "Give this to Evaluator" = Run `adversarial evaluate` command (external AI via CLI)
+- "Proofread this document" = Run `adversarial proofread` command (external AI via CLI)
 - "Open in new tab for review" = User opens Claude Desktop tab for manual review
 - They are completely different workflows!
 

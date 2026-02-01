@@ -96,7 +96,7 @@ This moves the task to `5-done/` and updates status to `Done`.
 
 ## Evaluator Workflow (Autonomous [Role-Specific] Validation)
 
-Request independent evaluation from an external GPT-4o agent when you encounter [role-specific scenarios requiring external validation].
+Request independent evaluation from an external evaluator agent when you encounter [role-specific scenarios requiring external validation].
 
 **📖 Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 
@@ -179,10 +179,10 @@ This will help me proceed without further evaluation loops."
 ```
 
 **Technical Details**:
-- **Evaluator**: External GPT-4o agent (via Aider CLI)
+- **Evaluator**: External AI via adversarial-workflow
 - **Runs**: Non-interactively with `aider --yes` flag
-- **API Key**: Uses OPENAI_API_KEY from `.env`
-- **Cost**: ~$0.04-0.05 per evaluation (user's OpenAI account)
+- **API Key**: Varies by evaluator (see `adversarial list-evaluators`)
+- **Cost**: Varies by evaluator (see `adversarial list-evaluators`)
 - **No User Required**: Fully autonomous workflow (with escalation safety valve)
 
 ## Quick Reference Documentation

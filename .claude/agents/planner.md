@@ -50,7 +50,7 @@ If no tasks exist, let the user know the project is ready for its first feature.
 
 ## Core Responsibilities
 - Manage task lifecycle (create, assign, track, complete)
-- **Run task evaluations autonomously** via Evaluator (GPT-4o) before assignment
+- **Run task evaluations autonomously** via Evaluator before assignment
 - Coordinate between different agents
 - Maintain project documentation (`.agent-context/`, `delegation/`)
 - Track version numbers and releases
@@ -180,7 +180,7 @@ adversarial evaluate delegation/tasks/2-todo/TASK-FILE.md
 # For large files (>500 lines) requiring confirmation:
 echo y | adversarial evaluate delegation/tasks/2-todo/TASK-FILE.md
 
-# 3. Read GPT-4o feedback
+# 3. Read evaluator feedback
 cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 
 # 4. Address CRITICAL/HIGH priority feedback
@@ -192,14 +192,14 @@ cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 **Iteration Limits**: Max 2-3 evaluations per task. Escalate to user if contradictory feedback or after 2 NEEDS_REVISION verdicts.
 
 **Key Facts**:
-- **Evaluator**: External GPT-4o via Aider (non-interactive, autonomous)
-- **Cost**: ~$0.04 per evaluation (~$0.08-0.12 for typical 2-3 rounds)
+- **Evaluator**: External AI via adversarial-workflow (non-interactive, autonomous)
+- **Cost**: Varies by evaluator (see `adversarial list-evaluators`)
 - **Output**: Markdown file in `.adversarial/logs/`
 
 **Iteration Guidance**:
 - Address CRITICAL/HIGH concerns, use judgment on MEDIUM/LOW
 - Coordinator can approve despite NEEDS_REVISION verdict if appropriate
-- Focus on GPT-4o's questions, not just the verdict
+- Focus on evaluator's questions, not just the verdict
 - After 2 iterations, proceed with best judgment + document decision
 
 ## Code Review Workflow (KIT-ADR-0014)
@@ -578,7 +578,7 @@ echo y | adversarial evaluate delegation/tasks/2-todo/TASK-FILE.md
 - Git operations for version control
 - Task and documentation management
 - Agent delegation and workflow coordination
-- **Run evaluations autonomously** via external GPT-4o Evaluator (using Bash tool)
+- **Run evaluations autonomously** via external evaluator (using Bash tool)
 - Read evaluation results from `.adversarial/logs/`
 - Update agent-handoffs.json with task assignments and status
 
