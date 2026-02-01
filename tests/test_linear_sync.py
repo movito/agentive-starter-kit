@@ -25,7 +25,7 @@ import pytest
 
 # Check if gql is available for tests that need it
 try:
-    import gql  # noqa: F401
+    import gql
 
     GQL_AVAILABLE = True
 except ImportError:

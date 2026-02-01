@@ -388,10 +388,14 @@ Running: ./scripts/project setup
 
 **IMPORTANT**: After the setup command finishes, remind the user to activate the virtual environment:
 
-```
+```text
 📋 **Next step** - activate the virtual environment:
 
     source .venv/bin/activate
+
+    # Alternative commands for other shells:
+    # fish:  source .venv/bin/activate.fish
+    # csh:   source .venv/bin/activate.csh
 
 You'll need to activate this each time you open a new terminal.
 

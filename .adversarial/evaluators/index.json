@@ -1,7 +1,15 @@
 {
   "version": "1.0.0",
-  "updated": "2025-01-31",
+  "updated": "2026-02-01",
   "evaluators": [
+    {
+      "name": "claude-adversarial",
+      "provider": "anthropic",
+      "path": "anthropic/claude-adversarial/evaluator.yml",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "category": "adversarial",
+      "description": "Critical adversarial review and stress-testing"
+    },
     {
       "name": "gemini-flash",
       "provider": "google",
@@ -84,6 +92,10 @@
     "code-review": "Code and configuration analysis"
   },
   "providers": {
+    "anthropic": {
+      "api_key_env": "ANTHROPIC_API_KEY",
+      "evaluators": ["claude-adversarial"]
+    },
     "google": {
       "api_key_env": "GEMINI_API_KEY",
       "evaluators": ["gemini-flash", "gemini-pro", "gemini-deep"]

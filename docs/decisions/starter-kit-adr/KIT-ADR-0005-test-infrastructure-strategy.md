@@ -286,10 +286,10 @@ SKIP_TESTS=1 git commit -m "WIP"
 ## Revision History
 
 - 2025-11-28: Initial decision (Accepted)
-- 2025-02-01: Added Optional Dependency Pattern for graceful handling of missing packages
+- 2026-02-01: Added Optional Dependency Pattern for graceful handling of missing packages
 
 ---
 
 **Template Version**: 1.1.0
-**Last Updated**: 2025-02-01
+**Last Updated**: 2026-02-01
 **Project**: agentive-starter-kit
