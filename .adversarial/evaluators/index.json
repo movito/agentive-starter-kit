@@ -1,0 +1,100 @@
+{
+  "version": "1.0.0",
+  "updated": "2025-01-31",
+  "evaluators": [
+    {
+      "name": "gemini-flash",
+      "provider": "google",
+      "path": "google/gemini-flash/evaluator.yml",
+      "model": "gemini/gemini-2.5-flash",
+      "category": "quick-check",
+      "description": "Fast, cost-effective document assessment"
+    },
+    {
+      "name": "gemini-pro",
+      "provider": "google",
+      "path": "google/gemini-pro/evaluator.yml",
+      "model": "gemini/gemini-3-pro",
+      "category": "knowledge-synthesis",
+      "description": "Large-context knowledge synthesis (1M tokens)"
+    },
+    {
+      "name": "gemini-deep",
+      "provider": "google",
+      "path": "google/gemini-deep/evaluator.yml",
+      "model": "gemini/gemini-2.5-flash",
+      "category": "deep-reasoning",
+      "description": "Extended reasoning for complex analysis"
+    },
+    {
+      "name": "gpt52-reasoning",
+      "provider": "openai",
+      "path": "openai/gpt52-reasoning/evaluator.yml",
+      "model": "gpt-5.2",
+      "category": "adversarial",
+      "description": "Deep adversarial reasoning for critical review"
+    },
+    {
+      "name": "o3-chain",
+      "provider": "openai",
+      "path": "openai/o3-chain/evaluator.yml",
+      "model": "o3",
+      "category": "deep-reasoning",
+      "description": "Chain-of-thought for numerical verification"
+    },
+    {
+      "name": "fast-check",
+      "provider": "openai",
+      "path": "openai/fast-check/evaluator.yml",
+      "model": "gpt-4o-mini",
+      "category": "quick-check",
+      "description": "Fast validation for formatting and basic issues"
+    },
+    {
+      "name": "mistral-content",
+      "provider": "mistral",
+      "path": "mistral/mistral-content/evaluator.yml",
+      "model": "mistral/mistral-large-2411",
+      "category": "cognitive-diversity",
+      "description": "Content review with European perspective"
+    },
+    {
+      "name": "mistral-fast",
+      "provider": "mistral",
+      "path": "mistral/mistral-fast/evaluator.yml",
+      "model": "mistral/mistral-small-2409",
+      "category": "quick-check",
+      "description": "Fast Mistral review for large documents"
+    },
+    {
+      "name": "codestral-code",
+      "provider": "mistral",
+      "path": "mistral/codestral-code/evaluator.yml",
+      "model": "mistral/codestral-latest",
+      "category": "code-review",
+      "description": "Code-focused review for scripts and configs"
+    }
+  ],
+  "categories": {
+    "quick-check": "Fast, cost-effective evaluators for initial review",
+    "deep-reasoning": "Extended analysis for complex content",
+    "adversarial": "Stress-testing and critical review",
+    "knowledge-synthesis": "Large-context cross-referencing",
+    "cognitive-diversity": "Alternative model perspectives",
+    "code-review": "Code and configuration analysis"
+  },
+  "providers": {
+    "google": {
+      "api_key_env": "GEMINI_API_KEY",
+      "evaluators": ["gemini-flash", "gemini-pro", "gemini-deep"]
+    },
+    "openai": {
+      "api_key_env": "OPENAI_API_KEY",
+      "evaluators": ["gpt52-reasoning", "o3-chain", "fast-check"]
+    },
+    "mistral": {
+      "api_key_env": "MISTRAL_API_KEY",
+      "evaluators": ["mistral-content", "mistral-fast", "codestral-code"]
+    }
+  }
+}

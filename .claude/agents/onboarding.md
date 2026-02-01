@@ -383,12 +383,23 @@ Running: ./scripts/project setup
 
 [Show output from the command]
 
-✅ Virtual environment created!
+✅ Setup complete!
+```
 
-To activate it, run:
-  source .venv/bin/activate
+**IMPORTANT**: After the setup command finishes, remind the user to activate the virtual environment:
 
-(You'll need to activate this each time you open a new terminal)
+```
+📋 **Next step** - activate the virtual environment:
+
+    source .venv/bin/activate
+
+You'll need to activate this each time you open a new terminal.
+
+**How to verify activation:**
+- Your shell prompt shows `(.venv)` prefix
+- Running `which python` points to `.venv/bin/python`
+
+If you forget to activate, you'll see "command not found" errors for project tools like `pytest` or `adversarial`.
 ```
 
 If the command fails, show the error and suggest:

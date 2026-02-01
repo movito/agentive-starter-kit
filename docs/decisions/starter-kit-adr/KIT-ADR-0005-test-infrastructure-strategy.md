@@ -82,6 +82,69 @@ tests/
 - `@pytest.mark.unit` - Fast, isolated tests (default)
 - `@pytest.mark.integration` - Tests requiring external services
 - `@pytest.mark.slow` - Tests taking >1 second
+- `@pytest.mark.requires_gql` - Tests requiring `gql` package (Linear sync)
+
+### Optional Dependency Pattern
+
+Scripts with optional dependencies (like `gql` for Linear sync) must handle missing packages gracefully to prevent breaking test collection.
+
+**Problem**: Using `sys.exit(1)` at import time breaks pytest collection:
+
+```python
+# ❌ BAD: Breaks test collection when gql not installed
+try:
+    from gql import Client, gql
+except ImportError:
+    logger.error("gql package not installed")
+    sys.exit(1)  # Kills pytest during import!
+```
+
+**Solution**: Defer exit to runtime, use skip markers in tests:
+
+```python
+# ✅ GOOD: Graceful handling in module
+GQL_AVAILABLE = False
+Client = None
+gql = None
+
+try:
+    from gql import Client, gql
+    GQL_AVAILABLE = True
+except ImportError:
+    pass  # Checked at runtime
+
+class LinearClient:
+    def __init__(self, api_key: str):
+        if not GQL_AVAILABLE:
+            raise ImportError("gql package not installed. Run: pip install gql[requests]")
+        # ... rest of init
+
+if __name__ == "__main__":
+    if not GQL_AVAILABLE:
+        logger.error("❌ Error: gql package not installed")
+        sys.exit(1)
+    main()
+```
+
+```python
+# ✅ GOOD: Skip markers in tests
+try:
+    import gql  # noqa: F401
+    GQL_AVAILABLE = True
+except ImportError:
+    GQL_AVAILABLE = False
+
+requires_gql = pytest.mark.skipif(
+    not GQL_AVAILABLE,
+    reason="gql package not installed (pip install gql[requests])",
+)
+
+@requires_gql
+class TestLinearClient:
+    ...
+```
+
+**Result**: Tests skip gracefully instead of failing during collection.
 
 ### Pre-commit Integration
 
@@ -223,9 +286,10 @@ SKIP_TESTS=1 git commit -m "WIP"
 ## Revision History
 
 - 2025-11-28: Initial decision (Accepted)
+- 2025-02-01: Added Optional Dependency Pattern for graceful handling of missing packages
 
 ---
 
 **Template Version**: 1.1.0
-**Last Updated**: 2025-11-28
+**Last Updated**: 2025-02-01
 **Project**: agentive-starter-kit

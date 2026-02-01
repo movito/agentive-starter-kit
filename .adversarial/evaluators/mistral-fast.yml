@@ -1,0 +1,28 @@
+# Mistral Small Fast Evaluator
+# Fast review for larger documents
+#
+# Provider: mistral
+# Use cases:
+#   - Fast review for larger documents
+#   - When mistral-large times out
+#   - Quick cognitive diversity check
+
+name: mistral-fast
+description: Fast content review using Mistral Small
+model: mistral/mistral-small-2409
+api_key_env: MISTRAL_API_KEY
+output_suffix: -mistral-fast.md
+timeout: 300
+
+prompt: |
+  You are a senior content reviewer. Provide a concise review.
+
+  {content}
+
+  ## Review Criteria
+  1. Argument clarity and structure
+  2. Evidence quality
+  3. Completeness
+  4. Recommendations for improvement
+
+  Keep response focused and actionable.

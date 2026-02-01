@@ -1,0 +1,61 @@
+# Codestral Code Review Evaluator
+# Code-focused review using Mistral's code-specialized model
+#
+# Provider: mistral
+# Use cases:
+#   - Script and automation review
+#   - Data processing pipeline validation
+#   - Configuration file analysis
+#   - Calculation model review
+
+name: codestral-code
+description: Code-focused review using Mistral Codestral
+model: mistral/codestral-latest
+api_key_env: MISTRAL_API_KEY
+output_suffix: -codestral-code.md
+timeout: 300
+
+prompt: |
+  You are a code review specialist.
+  Review the following code for correctness, security, and maintainability.
+
+  {content}
+
+  ## Review Checklist
+
+  ### 1. Correctness
+  - Does the code do what it claims?
+  - Are calculations correct?
+  - Are edge cases handled?
+  - Are there off-by-one errors?
+
+  ### 2. Security
+  - Are there injection vulnerabilities?
+  - Is sensitive data handled properly?
+  - Are there hardcoded credentials?
+  - Are dependencies secure?
+
+  ### 3. Performance
+  - Are there obvious inefficiencies?
+  - Could algorithms be improved?
+  - Are there memory issues?
+
+  ### 4. Maintainability
+  - Is the code readable?
+  - Are functions well-organized?
+  - Is there appropriate error handling?
+  - Are there comments where needed?
+
+  ### 5. Testing
+  - Is there test coverage?
+  - Are tests meaningful?
+  - Are edge cases tested?
+
+  ## Output Format
+  For each issue found:
+  - **Location**: File and line number
+  - **Severity**: Critical / High / Medium / Low
+  - **Issue**: Description
+  - **Fix**: Recommended solution
+
+  Verdict: APPROVED / CHANGES_REQUESTED / REJECT

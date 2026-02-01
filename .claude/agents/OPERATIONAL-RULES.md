@@ -152,3 +152,48 @@ This is the ONLY documentation type that belongs in `.claude/`.
 2. **Tool Integration**: Linear sync, ADR numbering, and other tools expect specific paths
 3. **Separation of Concerns**: Agent definitions (`.claude/`) vs. project documentation (`docs/`)
 4. **Template Inheritance**: New agents copy the template; correct locations propagate automatically
+
+---
+
+## 🐍 Virtual Environment Handling
+
+### Before Running pip Commands
+
+1. **Check if venv exists**: `ls .venv/bin/activate 2>/dev/null`
+2. **If not, suggest setup**: `./scripts/project setup`
+3. **Always use venv pip**: `.venv/bin/pip install ...`
+
+### Why This Matters
+
+macOS Homebrew Python is "externally managed" and blocks system-wide pip installs:
+```
+error: externally-managed-environment
+× This environment is externally managed
+```
+
+**Never run `pip install` with system Python on macOS.**
+
+### Quick Reference
+
+```bash
+# Set up venv (first time or if missing)
+./scripts/project setup
+
+# Activate venv (each terminal session)
+source .venv/bin/activate
+
+# Install dependencies (when venv is active)
+pip install -e ".[dev]"
+
+# Force recreate venv (if corrupted)
+./scripts/project setup --force
+```
+
+### Detecting Corrupted venv
+
+If you see:
+```
+⚠️  Corrupted venv detected (missing python)
+```
+
+Run: `./scripts/project setup --force`

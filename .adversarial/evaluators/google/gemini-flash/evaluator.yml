@@ -1,0 +1,30 @@
+# Gemini 2.5 Flash Fast Evaluator
+# Fast, cost-effective evaluator for quick document assessment
+#
+# Provider: google
+# Use cases:
+#   - Quick document reviews and assessments
+#   - Fast preliminary evaluations
+#   - Cost-effective bulk processing
+#   - Initial quality checks
+
+name: gemini-flash
+description: Fast evaluation using Gemini 2.5 Flash
+model: gemini/gemini-2.5-flash
+api_key_env: GEMINI_API_KEY
+output_suffix: -gemini-flash.md
+timeout: 180  # Fast model, 3 minutes sufficient
+
+prompt: |
+  You are a fast document evaluator optimized for quick assessment.
+
+  Review the following content:
+
+  {content}
+
+  Provide a concise evaluation covering:
+  1. Key points and structure
+  2. Obvious gaps or issues
+  3. Quick recommendations
+
+  Keep response focused and actionable.

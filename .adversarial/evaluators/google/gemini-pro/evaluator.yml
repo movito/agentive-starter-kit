@@ -1,0 +1,57 @@
+# Gemini 3 Pro Knowledge Synthesis Evaluator
+# Large-context evaluator for synthesizing research across documents
+#
+# Provider: google
+# Use cases:
+#   - Synthesizing large document sets
+#   - Cross-referencing multiple outputs
+#   - Knowledge gap identification
+#   - Consistency checking across deliverables
+#   - Research completeness verification
+
+name: gemini-pro
+description: Large-context knowledge synthesis using Gemini 3 Pro (1M tokens)
+model: gemini/gemini-3-pro
+api_key_env: GEMINI_API_KEY
+output_suffix: -gemini-pro.md
+timeout: 400  # Extended for large context processing
+
+prompt: |
+  You are a knowledge synthesis evaluator with access to the full context.
+  You have a 1M token context window - use it to identify patterns and gaps.
+
+  Review the following materials for completeness and consistency:
+
+  {content}
+
+  ## Evaluation Framework
+
+  ### 1. Coverage Analysis
+  - Which topics are well-covered vs. under-researched?
+  - What questions remain unanswered?
+  - Rate coverage: Comprehensive / Adequate / Gaps Identified / Major Gaps
+
+  ### 2. Consistency Check
+  - Are there contradictions between sections?
+  - Are definitions used consistently?
+  - Do numerical claims match across the document?
+  - Flag any inconsistencies with specific citations
+
+  ### 3. Cross-Reference Opportunities
+  - What connections should be made between sections?
+  - What patterns emerge across the content?
+  - What comparative insights are missing?
+
+  ### 4. Factual Accuracy Concerns
+  - Flag claims that seem outdated or questionable
+  - Identify statistics that need verification
+  - Note any claims that contradict well-known facts
+
+  ### 5. Synthesis Recommendations
+  - What themes emerge that should be highlighted?
+  - What narrative threads connect the content?
+  - What's the strongest evidence presented?
+
+  ## Output Format
+  Provide structured findings with specific section references.
+  Prioritize: Critical gaps → Inconsistencies → Opportunities
