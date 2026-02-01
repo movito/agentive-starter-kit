@@ -51,18 +51,18 @@ Users without OpenAI keys can still use the evaluation system by installing cust
 
 ### Must Have
 
-- [ ] Bump `adversarial-workflow>=0.7.0` in pyproject.toml
-- [ ] Update `.adversarial/config.yml.template` to be model-agnostic
-- [ ] Create `.adversarial/evaluators/.gitkeep` directory
-- [ ] Update agent prompts to remove "GPT-4o" specificity (planner.md, others)
-- [ ] Add `./scripts/project install-evaluators` command
-- [ ] Update onboarding agent with evaluator setup phase
+- [x] Bump `adversarial-workflow>=0.7.0` in pyproject.toml
+- [x] Update `.adversarial/config.yml.template` to be model-agnostic
+- [x] Create `.adversarial/evaluators/.gitkeep` directory
+- [x] Update agent prompts to remove "GPT-4o" specificity (planner.md, others)
+- [x] Add `./scripts/project install-evaluators` command
+- [x] Update onboarding agent with evaluator setup phase
 
 ### Should Have
 
-- [ ] Update README adversarial section to mention multiple evaluators
-- [ ] Update `.adversarial/docs/EVALUATION-WORKFLOW.md` for multi-evaluator
-- [ ] Add evaluator selection guidance (when to use which)
+- [x] Update README adversarial section to mention multiple evaluators
+- [x] Update `.adversarial/docs/EVALUATION-WORKFLOW.md` for multi-evaluator
+- [x] Add evaluator selection guidance (when to use which)
 
 ### Nice to Have
 
