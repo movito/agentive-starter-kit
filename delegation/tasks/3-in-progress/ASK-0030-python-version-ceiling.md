@@ -47,7 +47,7 @@ Users get a cryptic pip error instead of a clear version warning upfront.
 ### Should Have
 
 - [x] Update `pyproject.toml` to add `requires-python = ">=3.10,<3.13"`
-- [ ] Add version check to `./scripts/verify-setup.sh`
+- [x] Add version check to `./scripts/verify-setup.sh`
 
 ### Nice to Have
 
