@@ -14,6 +14,7 @@ Usage:
     ./project help           - Show help
 """
 
+import os
 import re
 import shutil
 import subprocess
@@ -269,19 +270,59 @@ def reconfigure_project(project_dir: Path) -> bool:
     return True
 
 
+def get_activate_command(venv_dir: Path) -> str:
+    """Return shell-appropriate activate command.
+
+    Detects the user's shell and returns the correct activation script:
+    - fish shell: .venv/bin/activate.fish
+    - csh/tcsh shell: .venv/bin/activate.csh
+    - bash/zsh/sh/others: .venv/bin/activate (default)
+    """
+    shell = os.environ.get("SHELL", "")
+    if "fish" in shell:
+        return f"source {venv_dir}/bin/activate.fish"
+    elif "csh" in shell or "tcsh" in shell:
+        return f"source {venv_dir}/bin/activate.csh"
+    else:
+        # Default: works for bash, zsh, sh, and most POSIX shells
+        return f"source {venv_dir}/bin/activate"
+
+
 def cmd_setup(args):
     """Set up virtual environment and install dependencies."""
     project_dir = Path(__file__).resolve().parent.parent
     venv_dir = project_dir / ".venv"
     force = "--force" in args
 
-    # 1. Verify Python version (3.9+ required)
-    version = sys.version_info
-    if version < (3, 9):
-        print(f"❌ Python 3.9+ required, found {version.major}.{version.minor}")
-        print("   Install Python 3.9+ and try again")
+    # 1. Verify Python version (3.10+ required, <3.13 due to aider-chat constraint)
+    major, minor = sys.version_info[:2]
+    version_str = f"{major}.{minor}.{sys.version_info[2]}"
+
+    # Lower bound
+    if (major, minor) < (3, 10):
+        print(f"❌ Python {version_str} is too old")
+        print("   Minimum required: Python 3.10")
+        print()
+        print("   Install a newer Python version:")
+        print("   - pyenv: pyenv install 3.12")
+        print("   - brew:  brew install python@3.12")
         sys.exit(1)
-    print(f"✅ Python {version.major}.{version.minor}.{version.micro}")
+
+    # Upper bound (aider-chat constraint: Python <3.13)
+    if (major, minor) >= (3, 13):
+        print(f"❌ Python {version_str} is not yet supported")
+        print("   adversarial-workflow requires Python >=3.10,<3.13")
+        print("   (constraint from aider-chat dependency)")
+        print()
+        print("   Options:")
+        print("   - Use pyenv: pyenv install 3.12 && pyenv local 3.12")
+        print("   - Use brew:  brew install python@3.12")
+        print("   - Download:  https://www.python.org/downloads/")
+        print()
+        print("   Then run: python3.12 scripts/project setup")
+        sys.exit(1)
+
+    print(f"✅ Python {version_str}")
 
     # 2. Handle existing venv
     if venv_dir.exists():
@@ -364,13 +405,27 @@ def cmd_setup(args):
     else:
         print("\n⚠️  pre-commit not found in venv (install manually if needed)")
 
-    # 6. Print success and activation instructions
-    print("\n" + "=" * 60)
+    # 6. Print success and Next Steps section
+    print()
+    print("=" * 50)
     print("✅ Setup complete!")
-    print("\nTo activate the virtual environment:")
-    print(f"  source {venv_dir}/bin/activate")
-    print("\nTo verify setup:")
-    print("  ./scripts/verify-setup.sh")
+    print("=" * 50)
+    print()
+
+    # Check if already in a virtual environment
+    if os.environ.get("VIRTUAL_ENV"):
+        print("You're already in a virtual environment.")
+        print("Run: pip install -e '.[dev]'  # if needed")
+    else:
+        activate_cmd = get_activate_command(venv_dir)
+        print("📋 Next step - activate the virtual environment:")
+        print()
+        print(f"    {activate_cmd}")
+        print()
+        print("Then you can run:")
+        print("    pytest tests/ -v          # Run tests")
+        print("    adversarial --help        # Evaluation CLI")
+        print("    ./scripts/project help    # Project commands")
 
 
 def cmd_install_evaluators(args, project_dir):

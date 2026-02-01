@@ -18,7 +18,9 @@ _spec = importlib.util.spec_from_loader("project_script", loader=None)
 _project_module = importlib.util.module_from_spec(_spec)
 
 # Read and execute the script to get the functions
+# Inject __file__ so Path(__file__) works in cmd_setup
 with open(_script_path) as f:
+    _project_module.__dict__["__file__"] = str(_script_path)
     exec(f.read(), _project_module.__dict__)
 
 
@@ -158,3 +160,255 @@ class TestInstallEvaluatorsCommand:
 
         captured = capsys.readouterr()
         assert "Network error" in captured.out
+
+
+class TestSetupNextSteps:
+    """Tests for the 'Next Steps' section in setup output."""
+
+    @pytest.fixture
+    def mock_project_dir(self, tmp_path):
+        """Create a temporary project directory structure."""
+        return tmp_path
+
+    def test_setup_shows_next_steps_when_not_in_venv(self, capsys, monkeypatch):
+        """Setup should show 'Next step' with activate command when not in venv."""
+        cmd_setup = _project_module.cmd_setup
+
+        # Ensure VIRTUAL_ENV is not set
+        monkeypatch.delenv("VIRTUAL_ENV", raising=False)
+
+        # Mock the setup to succeed and only run the final output
+        mock_version = MockVersionInfo(3, 12, 0)
+        with patch.object(_project_module.sys, "version_info", mock_version):
+            with patch.object(_project_module, "Path") as mock_path:
+                mock_venv = MagicMock()
+                mock_venv.exists.return_value = True
+                mock_venv.__truediv__ = lambda self, x: mock_venv
+                mock_venv.__str__ = lambda self: "/fake/.venv"
+                mock_path.return_value.__truediv__ = lambda self, x: mock_venv
+                mock_path.return_value.resolve.return_value.parent.parent = Path(
+                    "/fake"
+                )
+
+                with patch.object(_project_module, "subprocess") as mock_subprocess:
+                    mock_subprocess.run.return_value = MagicMock(returncode=0)
+
+                    try:
+                        cmd_setup([])
+                    except SystemExit:
+                        pass
+
+        captured = capsys.readouterr()
+        assert "Next step" in captured.out
+        assert "activate" in captured.out
+        assert "Setup complete!" in captured.out
+
+    def test_setup_detects_active_venv(self, capsys, monkeypatch):
+        """Setup should detect if already in venv and show different message."""
+        cmd_setup = _project_module.cmd_setup
+
+        # Set VIRTUAL_ENV to simulate being in an active venv
+        monkeypatch.setenv("VIRTUAL_ENV", "/some/path/.venv")
+
+        mock_version = MockVersionInfo(3, 12, 0)
+        with patch.object(_project_module.sys, "version_info", mock_version):
+            with patch.object(_project_module, "Path") as mock_path:
+                mock_venv = MagicMock()
+                mock_venv.exists.return_value = True
+                mock_venv.__truediv__ = lambda self, x: mock_venv
+                mock_venv.__str__ = lambda self: "/fake/.venv"
+                mock_path.return_value.__truediv__ = lambda self, x: mock_venv
+                mock_path.return_value.resolve.return_value.parent.parent = Path(
+                    "/fake"
+                )
+
+                with patch.object(_project_module, "subprocess") as mock_subprocess:
+                    mock_subprocess.run.return_value = MagicMock(returncode=0)
+
+                    try:
+                        cmd_setup([])
+                    except SystemExit:
+                        pass
+
+        captured = capsys.readouterr()
+        assert "already in a virtual environment" in captured.out
+        # Should NOT show the activation command
+        assert "Next step" not in captured.out
+
+
+class TestGetActivateCommand:
+    """Tests for shell-specific activate command detection."""
+
+    def test_default_shell_uses_activate(self, monkeypatch):
+        """Default (bash/zsh/sh) uses standard activate script."""
+        get_activate_command = _project_module.get_activate_command
+
+        monkeypatch.setenv("SHELL", "/bin/bash")
+        result = get_activate_command(Path(".venv"))
+        assert "activate" in result
+        assert "activate.fish" not in result
+        assert "activate.csh" not in result
+
+    def test_fish_shell_uses_activate_fish(self, monkeypatch):
+        """Fish shell uses activate.fish script."""
+        get_activate_command = _project_module.get_activate_command
+
+        monkeypatch.setenv("SHELL", "/usr/local/bin/fish")
+        result = get_activate_command(Path(".venv"))
+        assert "activate.fish" in result
+
+    def test_csh_shell_uses_activate_csh(self, monkeypatch):
+        """C shell uses activate.csh script."""
+        get_activate_command = _project_module.get_activate_command
+
+        monkeypatch.setenv("SHELL", "/bin/csh")
+        result = get_activate_command(Path(".venv"))
+        assert "activate.csh" in result
+
+    def test_tcsh_shell_uses_activate_csh(self, monkeypatch):
+        """Tcsh shell uses activate.csh script."""
+        get_activate_command = _project_module.get_activate_command
+
+        monkeypatch.setenv("SHELL", "/bin/tcsh")
+        result = get_activate_command(Path(".venv"))
+        assert "activate.csh" in result
+
+    def test_no_shell_env_uses_default(self, monkeypatch):
+        """Missing SHELL env var falls back to default activate."""
+        get_activate_command = _project_module.get_activate_command
+
+        monkeypatch.delenv("SHELL", raising=False)
+        result = get_activate_command(Path(".venv"))
+        assert "activate" in result
+        assert "activate.fish" not in result
+        assert "activate.csh" not in result
+
+
+class MockVersionInfo:
+    """Mock sys.version_info that supports both tuple comparison and attribute access."""
+
+    def __init__(self, major, minor, micro):
+        self.major = major
+        self.minor = minor
+        self.micro = micro
+        self._tuple = (major, minor, micro)
+
+    def __lt__(self, other):
+        if isinstance(other, tuple):
+            return self._tuple[: len(other)] < other
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, tuple):
+            return self._tuple[: len(other)] >= other
+        return NotImplemented
+
+    def __getitem__(self, key):
+        return self._tuple[key]
+
+
+class TestPythonVersionCheck:
+    """Tests for Python version checking in setup command."""
+
+    @pytest.fixture
+    def mock_project_dir(self, tmp_path):
+        """Create a temporary project directory structure."""
+        return tmp_path
+
+    def test_python_too_old_error(self, mock_project_dir, capsys):
+        """Python <3.10 shows clear error with upgrade instructions."""
+        cmd_setup = _project_module.cmd_setup
+
+        # Mock sys.version_info to simulate Python 3.9
+        mock_version = MockVersionInfo(3, 9, 0)
+        with patch.object(_project_module.sys, "version_info", mock_version):
+            with pytest.raises(SystemExit) as exc_info:
+                cmd_setup([])
+
+            assert exc_info.value.code == 1
+
+        captured = capsys.readouterr()
+        assert "3.9.0" in captured.out
+        assert "too old" in captured.out
+        assert "3.10" in captured.out
+        # Should include installation options
+        assert "pyenv" in captured.out
+        assert "brew" in captured.out
+
+    def test_python_too_new_error(self, mock_project_dir, capsys):
+        """Python >=3.13 shows clear error with constraint explanation."""
+        cmd_setup = _project_module.cmd_setup
+
+        # Mock sys.version_info to simulate Python 3.13
+        mock_version = MockVersionInfo(3, 13, 0)
+        with patch.object(_project_module.sys, "version_info", mock_version):
+            with pytest.raises(SystemExit) as exc_info:
+                cmd_setup([])
+
+            assert exc_info.value.code == 1
+
+        captured = capsys.readouterr()
+        assert "3.13.0" in captured.out
+        assert "not yet supported" in captured.out or "not supported" in captured.out
+        # Should explain the constraint source
+        assert "aider-chat" in captured.out or "adversarial-workflow" in captured.out
+        # Should include remediation options
+        assert "pyenv" in captured.out
+        assert "brew" in captured.out
+        assert "python.org" in captured.out
+
+    def test_python_future_version_error(self, mock_project_dir, capsys):
+        """Python 3.14+ also shows clear error (future-proofing)."""
+        cmd_setup = _project_module.cmd_setup
+
+        # Mock sys.version_info to simulate Python 3.14
+        mock_version = MockVersionInfo(3, 14, 1)
+        with patch.object(_project_module.sys, "version_info", mock_version):
+            with pytest.raises(SystemExit) as exc_info:
+                cmd_setup([])
+
+            assert exc_info.value.code == 1
+
+        captured = capsys.readouterr()
+        assert "3.14.1" in captured.out
+        assert "not yet supported" in captured.out or "not supported" in captured.out
+
+    def test_python_3_12_proceeds(self, mock_project_dir, capsys):
+        """Python 3.12 is valid and proceeds past version check."""
+        cmd_setup = _project_module.cmd_setup
+
+        # Mock sys.version_info to simulate Python 3.12
+        mock_version = MockVersionInfo(3, 12, 4)
+        with patch.object(_project_module.sys, "version_info", mock_version):
+            # cmd_setup will eventually fail for other reasons (venv issues, etc.)
+            # but if it gets past the version check, we know it worked
+            try:
+                cmd_setup([])
+            except SystemExit:
+                pass  # Expected - may fail for other setup reasons
+
+        captured = capsys.readouterr()
+        # Should NOT show version rejection errors
+        assert "too old" not in captured.out
+        assert "not yet supported" not in captured.out
+        # Should show version was accepted (the checkmark line)
+        assert "3.12.4" in captured.out
+
+    def test_python_3_10_proceeds(self, mock_project_dir, capsys):
+        """Python 3.10 (minimum) is valid and proceeds past version check."""
+        cmd_setup = _project_module.cmd_setup
+
+        # Mock sys.version_info to simulate Python 3.10
+        mock_version = MockVersionInfo(3, 10, 12)
+        with patch.object(_project_module.sys, "version_info", mock_version):
+            try:
+                cmd_setup([])
+            except SystemExit:
+                pass  # Expected - may fail for other setup reasons
+
+        captured = capsys.readouterr()
+        # Should NOT show version rejection errors
+        assert "too old" not in captured.out
+        assert "not yet supported" not in captured.out
+        # Should show version was accepted
+        assert "3.10.12" in captured.out
