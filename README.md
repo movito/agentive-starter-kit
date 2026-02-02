@@ -46,7 +46,7 @@ If you'd like to try this kit, here are the tools you'll need:
 
 | Requirement | How to Check | How to Get |
 |-------------|--------------|------------|
-| **Python 3.9+** | `python3 --version` | [python.org](https://www.python.org/downloads/) or `brew install python` |
+| **Python 3.10-3.12** | `python3 --version` | [python.org](https://www.python.org/downloads/) or `brew install python@3.12` |
 | **uvx or pipx** | `uvx --version` or `pipx --version` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 
 ### Evaluation and planning support
@@ -95,26 +95,13 @@ This creates a new folder with everything inside. **Don't create the folder firs
 
 Then open the folder in your IDE (VS Code, Cursor, etc.).
 
-### 2. Set Up Development Environment
-
-```bash
-./scripts/project setup
-source .venv/bin/activate
-```
-
-This creates a virtual environment with all dependencies. The `setup` command:
-- Verifies Python 3.9+ is available
-- Creates `.venv/` if it doesn't exist
-- Installs project dependencies
-- Configures pre-commit hooks
-
-### 3. Run First-Time Onboarding
+### 2. Run First-Time Onboarding
 
 ```bash
 agents/onboarding
 ```
 
-### 4. Follow Interactive Setup
+### 3. Follow Interactive Setup
 
 The onboarding agent will guide you through:
 
@@ -473,5 +460,5 @@ Developed through real-world use on production projects. Special thanks to the C
 
 ---
 
-**Version**: 0.3.0
+**Version**: 0.3.1
 **Last Updated**: 2026-02-01

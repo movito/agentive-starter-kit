@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-02-02
+
+### Added
+
+- **Multi-provider evaluator configs** - 10 pre-configured evaluators across 4 providers (Anthropic, Google, Mistral, OpenAI) with index.json registry
+- **Anthropic evaluator support** - Added claude-adversarial evaluator for critical review
+
+### Fixed
+
+- **Python version ceiling check** (ASK-0030) - Setup now validates `>=3.10,<3.13` upfront with clear error messages and remediation options (pyenv, brew, python.org). Prevents cryptic pip errors on Python 3.13+ due to aider-chat constraint.
+- **Shell-aware venv activation** - Onboarding now shows fish/csh alternatives alongside bash/zsh
+- **Python version references** - Updated all documentation from "3.9+" to "3.10+" to match actual constraints
+
+### Changed
+
+- **Simplified README setup** - Removed redundant "Set Up Development Environment" section; onboarding handles setup automatically
+
 ## [0.3.0] - 2026-02-01
 
 ### Changed
@@ -100,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Agent handoff protocol via `.agent-context/`
 - Pre-configured Claude Code settings and permissions
 
+[0.3.1]: https://github.com/movito/agentive-starter-kit/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/movito/agentive-starter-kit/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/movito/agentive-starter-kit/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/movito/agentive-starter-kit/compare/v0.2.0...v0.2.1
