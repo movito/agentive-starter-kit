@@ -370,7 +370,7 @@ First, set up the virtual environment and install dependencies:
 ```
 
 This command:
-- Verifies Python 3.9+ is available
+- Verifies Python 3.10+ is available (and <3.13 due to aider-chat constraint)
 - Creates `.venv/` if it doesn't exist
 - Installs project dependencies (`pip install -e ".[dev]"`)
 - Configures pre-commit hooks
