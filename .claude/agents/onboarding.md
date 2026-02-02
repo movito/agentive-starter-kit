@@ -370,7 +370,7 @@ First, set up the virtual environment and install dependencies:
 ```
 
 This command:
-- Verifies Python 3.9+ is available
+- Verifies Python 3.10+ is available (and <3.13 due to aider-chat constraint)
 - Creates `.venv/` if it doesn't exist
 - Installs project dependencies (`pip install -e ".[dev]"`)
 - Configures pre-commit hooks
@@ -383,12 +383,27 @@ Running: ./scripts/project setup
 
 [Show output from the command]
 
-✅ Virtual environment created!
+✅ Setup complete!
+```
 
-To activate it, run:
-  source .venv/bin/activate
+**IMPORTANT**: After the setup command finishes, remind the user to activate the virtual environment:
 
-(You'll need to activate this each time you open a new terminal)
+```text
+📋 **Next step** - activate the virtual environment:
+
+    source .venv/bin/activate
+
+    # Alternative commands for other shells:
+    # fish:  source .venv/bin/activate.fish
+    # csh:   source .venv/bin/activate.csh
+
+You'll need to activate this each time you open a new terminal.
+
+**How to verify activation:**
+- Your shell prompt shows `(.venv)` prefix
+- Running `which python` points to `.venv/bin/python`
+
+If you forget to activate, you'll see "command not found" errors for project tools like `pytest` or `adversarial`.
 ```
 
 If the command fails, show the error and suggest:

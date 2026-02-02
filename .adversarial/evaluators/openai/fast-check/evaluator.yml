@@ -1,0 +1,61 @@
+# GPT-4o-mini Fast Check Evaluator
+# Quick validation for formatting and basic issues
+#
+# Provider: openai
+# Use cases:
+#   - Quick formatting checks
+#   - Basic consistency validation
+#   - Link and reference verification
+#   - Spelling and grammar
+#   - Pre-submission sanity check
+
+name: fast-check
+description: Fast validation using GPT-4o-mini
+model: gpt-4o-mini
+api_key_env: OPENAI_API_KEY
+output_suffix: -fast-check.md
+timeout: 180  # Validated: typical 10-15s
+
+prompt: |
+  Quickly check this document for basic issues. Keep your response brief and actionable.
+
+  {content}
+
+  ## Quick Checks
+
+  ### Formatting
+  - [ ] Consistent heading styles
+  - [ ] Proper list formatting
+  - [ ] Table alignment
+  - [ ] Code block formatting
+
+  ### References
+  - [ ] All citations have sources
+  - [ ] No broken internal references
+  - [ ] Dates are current/valid
+
+  ### Language
+  - [ ] Spelling errors
+  - [ ] Grammar issues
+  - [ ] Inconsistent terminology
+
+  ### Obvious Issues
+  - [ ] Placeholder text remaining
+  - [ ] TODO markers
+  - [ ] Incomplete sections
+  - [ ] Duplicate content
+
+  ## Output
+
+  If NO issues found:
+  ✅ PASSED - Document ready for review
+
+  If issues found:
+  ⚠️ ISSUES FOUND
+
+  [List each issue briefly]
+  - Line/Section: [location]
+  - Issue: [brief description]
+  - Fix: [one-line fix]
+
+  Total issues: X (Critical: X, Minor: X)

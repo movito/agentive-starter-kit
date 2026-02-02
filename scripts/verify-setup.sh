@@ -10,12 +10,20 @@ echo
 ERRORS=0
 WARNINGS=0
 
-# Check Python version
-echo -n "Python 3.9+: "
-if python3 --version 2>/dev/null | grep -qE "Python 3\.(9|1[0-9])"; then
-    echo "✅ $(python3 --version 2>&1)"
+# Check Python version (>=3.10, <3.13 required for adversarial-workflow)
+echo -n "Python 3.10-3.12: "
+PY_VERSION=$(python3 --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
+PY_MAJOR=$(echo "$PY_VERSION" | cut -d. -f1)
+PY_MINOR=$(echo "$PY_VERSION" | cut -d. -f2)
+
+if [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -ge 10 ] && [ "$PY_MINOR" -lt 13 ]; then
+    echo "✅ Python $PY_VERSION"
+elif [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 10 ]; }; then
+    echo "❌ Python $PY_VERSION is too old (3.10+ required)"
+    ERRORS=$((ERRORS + 1))
 else
-    echo "❌ Python 3.9+ required"
+    echo "❌ Python $PY_VERSION is too new (<3.13 required)"
+    echo "   adversarial-workflow requires Python >=3.10,<3.13"
     ERRORS=$((ERRORS + 1))
 fi
 

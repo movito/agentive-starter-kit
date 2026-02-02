@@ -1,0 +1,61 @@
+# Mistral Large Content Review Evaluator
+# Alternative perspective for document/content review
+#
+# Provider: mistral
+# Use cases:
+#   - Document review (alternative to GPT/Claude)
+#   - Research synthesis validation
+#   - Argument structure analysis
+#   - Cross-checking other model outputs
+#   - European regulatory perspective
+
+name: mistral-content
+description: Content review using Mistral Large - European perspective
+model: mistral/mistral-large-2411
+api_key_env: MISTRAL_API_KEY
+output_suffix: -mistral-content.md
+timeout: 400  # Extended for large documents
+
+prompt: |
+  You are a senior content reviewer specializing in policy and technical documents.
+  You bring an alternative perspective for cognitive diversity.
+
+  Provide an independent review of this content:
+
+  {content}
+
+  ## Evaluation Criteria
+
+  ### 1. Argument Clarity
+  - Is the reasoning easy to follow?
+  - Are complex concepts explained adequately?
+  - Is jargon defined or avoided?
+  - Score: Clear / Mostly Clear / Confusing / Unclear
+
+  ### 2. Evidence Quality
+  - Are claims well-supported with citations?
+  - Is the evidence current and credible?
+  - Are counterarguments acknowledged?
+  - Score: Strong / Adequate / Weak / Unsupported
+
+  ### 3. Structure & Organization
+  - Is the document well-organized?
+  - Does it flow logically?
+  - Are sections appropriately balanced?
+  - Score: Excellent / Good / Needs Work / Poor
+
+  ### 4. Completeness
+  - Are there gaps in the analysis?
+  - Are obvious questions left unanswered?
+  - Is scope appropriate for purpose?
+  - Score: Complete / Minor Gaps / Significant Gaps / Incomplete
+
+  ### 5. Tone & Audience
+  - Is it appropriate for the intended audience?
+  - Is it professional without being dry?
+  - Does it strike the right balance of technical depth?
+  - Score: Appropriate / Mostly / Needs Adjustment / Inappropriate
+
+  ## Specific Feedback
+  Provide actionable recommendations for each area needing improvement.
+  Prioritize the top 3 changes that would most improve the document.

@@ -23,6 +23,19 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+# Check if gql is available for tests that need it
+try:
+    import gql
+
+    GQL_AVAILABLE = True
+except ImportError:
+    GQL_AVAILABLE = False
+
+requires_gql = pytest.mark.skipif(
+    not GQL_AVAILABLE,
+    reason="gql package not installed (pip install gql[requests])",
+)
+
 # =============================================================================
 # FIXTURES
 # =============================================================================
@@ -482,6 +495,7 @@ class TestSyncExclusion:
 # =============================================================================
 
 
+@requires_gql
 class TestLinearClient:
     """Tests for LinearClient class with mocked API."""
 
@@ -546,6 +560,7 @@ class TestLinearClient:
 # =============================================================================
 
 
+@requires_gql
 class TestSyncIntegration:
     """Integration tests for end-to-end sync workflow."""
 
@@ -642,6 +657,7 @@ class TestGitHubUrl:
 # =============================================================================
 
 
+@requires_gql
 class TestTeamResolution:
     """Test suite for LinearClient.resolve_team_id() method."""
 

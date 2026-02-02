@@ -16,7 +16,7 @@ name = "your-project-name"  # TODO: Change this to your project name
 version = "0.3.0"
 description = "Your project description"  # TODO: Update description
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10,<3.13"
 license = {text = "MIT"}
 authors = [
     {name = "Your Name", email = "you@example.com"},  # TODO: Update author
@@ -60,12 +60,12 @@ markers = [
 
 [tool.black]
 line-length = 88
-target-version = ["py39", "py310", "py311"]
+target-version = ["py310", "py311", "py312"]
 include = '\.pyi?$'
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
