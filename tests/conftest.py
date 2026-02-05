@@ -2,9 +2,10 @@
 Shared pytest fixtures and utilities for the agentive-starter-kit test suite.
 """
 
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 
@@ -64,7 +65,7 @@ class MockVersionInfo:
 
 @contextmanager
 def mock_project_path(
-    module: Any, tmp_path: Path, venv_exists: bool = False
+    module: Any, tmp_path: Path, *, venv_exists: bool = False
 ) -> Generator[MagicMock, None, None]:
     """Context manager that mocks Path for project script tests.
 

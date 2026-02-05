@@ -282,7 +282,7 @@ class TestSetupWithUvIntegration:
 class TestNoRegressionPython312:
     """Tests to ensure Python 3.10-3.12 behavior is unchanged."""
 
-    def test_python312_does_not_use_uv(self, capsys, monkeypatch, tmp_path):
+    def test_python312_does_not_use_uv(self, capsys, tmp_path):
         """Python 3.12 should use standard venv, not uv."""
         cmd_setup = _project_module.cmd_setup
 
@@ -292,7 +292,7 @@ class TestNoRegressionPython312:
         # Track if detect_uv was called
         detect_uv_called = []
 
-        def mock_detect_uv():
+        def mock_detect_uv() -> bool:
             detect_uv_called.append(True)
             return True  # Even if uv is available, shouldn't be used
 
@@ -321,7 +321,7 @@ class TestNoRegressionPython312:
         assert "too old" not in captured.out
         assert "not yet supported" not in captured.out
 
-    def test_python310_proceeds_normally(self, capsys, monkeypatch, tmp_path):
+    def test_python310_proceeds_normally(self, capsys, tmp_path):
         """Python 3.10 should proceed with normal venv creation."""
         cmd_setup = _project_module.cmd_setup
 
