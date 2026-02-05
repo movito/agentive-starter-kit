@@ -73,7 +73,7 @@ def mock_project_path(
     - venv_dir.exists() to return venv_exists
     - Path division operations (__truediv__) to return the mock venv
     - str() conversion to return tmp_path / ".venv"
-    - resolve().parent.parent to return tmp_path (project root)
+    - resolve().parent.parent to return a mock project dir
 
     Args:
         module: The project module to patch (e.g., _project_module)
@@ -93,6 +93,12 @@ def mock_project_path(
         mock_venv.exists.return_value = venv_exists
         mock_venv.__truediv__ = lambda self, x: mock_venv
         mock_venv.__str__ = lambda self: str(tmp_path / ".venv")
+
+        # Create mock project_dir that returns mock_venv when divided
+        # This ensures venv_dir.exists() uses mock_venv.exists(), not filesystem
+        mock_project_dir = MagicMock()
+        mock_project_dir.__truediv__ = lambda self, x: mock_venv
+
         mock_path.return_value.__truediv__ = lambda self, x: mock_venv
-        mock_path.return_value.resolve.return_value.parent.parent = tmp_path
+        mock_path.return_value.resolve.return_value.parent.parent = mock_project_dir
         yield mock_path
