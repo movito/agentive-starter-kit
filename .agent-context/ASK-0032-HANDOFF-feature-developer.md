@@ -106,7 +106,8 @@ def create_venv_with_uv(venv_dir: Path, python_version: str = "3.12") -> bool:
 ### 3. Integration into cmd_setup()
 
 Current flow (lines ~297-322 in `scripts/project`):
-```
+
+```text
 1. Check Python version
 2. If <3.10: fail with "too old"
 3. If >=3.13: fail with "not yet supported"
@@ -114,7 +115,8 @@ Current flow (lines ~297-322 in `scripts/project`):
 ```
 
 New flow:
-```
+
+```text
 1. Check Python version
 2. If <3.10: fail with "too old"
 3. If >=3.13:

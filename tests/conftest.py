@@ -32,9 +32,24 @@ class MockVersionInfo:
             return self._tuple[: len(other)] < other
         return NotImplemented
 
+    def __le__(self, other):
+        if isinstance(other, tuple):
+            return self._tuple[: len(other)] <= other
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, tuple):
+            return self._tuple[: len(other)] > other
+        return NotImplemented
+
     def __ge__(self, other):
         if isinstance(other, tuple):
             return self._tuple[: len(other)] >= other
+        return NotImplemented
+
+    def __eq__(self, other):
+        if isinstance(other, tuple):
+            return self._tuple[: len(other)] == other
         return NotImplemented
 
     def __getitem__(self, key):

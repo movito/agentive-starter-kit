@@ -404,7 +404,15 @@ def cmd_setup(args):
                         text=True,
                     )
                     venv_version = result.stdout.strip()
-                    if result.returncode != 0 or not venv_version.startswith("3.12"):
+                    # Parse version robustly: expect "major.minor" format
+                    version_parts = venv_version.split(".")
+                    is_valid_312 = (
+                        result.returncode == 0
+                        and len(version_parts) >= 2
+                        and version_parts[0] == "3"
+                        and version_parts[1] == "12"
+                    )
+                    if not is_valid_312:
                         print(f"⚠️  Existing venv uses Python {venv_version}, need 3.12")
                         print(
                             "   Run with --force to recreate: ./scripts/project setup --force"

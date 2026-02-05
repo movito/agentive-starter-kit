@@ -248,7 +248,7 @@ After implementation is complete and CI passes, you **MUST** create a PR and add
 
 ### Task Status Flow
 
-```
+```text
 2-todo → 3-in-progress → [PR + Automated Review] → 4-in-review → 5-done
          (implement)      (BugBot/CodeRabbit)       (human review)  (complete)
 ```
