@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from conftest import MockVersionInfo
+from conftest import MockVersionInfo, mock_project_path
 
 # Load the project script as a module (same pattern as test_project_script.py)
 _script_path = Path(__file__).parent.parent / "scripts" / "project"
@@ -192,17 +192,10 @@ class TestSetupWithUvIntegration:
                 with patch.object(
                     _project_module, "create_venv_with_uv", mock_create_venv_with_uv
                 ):
-                    # Mock Path to use tmp_path
-                    with patch.object(_project_module, "Path") as mock_path:
-                        mock_venv = MagicMock()
-                        mock_venv.exists.return_value = False  # venv doesn't exist yet
-                        mock_venv.__truediv__ = lambda self, x: mock_venv
-                        mock_venv.__str__ = lambda self: str(tmp_path / ".venv")
-                        mock_path.return_value.__truediv__ = lambda self, x: mock_venv
-                        mock_path.return_value.resolve.return_value.parent.parent = (
-                            tmp_path
-                        )
-
+                    # Mock Path to use tmp_path (venv doesn't exist yet)
+                    with mock_project_path(
+                        _project_module, tmp_path, venv_exists=False
+                    ):
                         # Mock subprocess for pip install
                         with patch.object(
                             _project_module, "subprocess"
@@ -270,16 +263,9 @@ class TestSetupWithUvIntegration:
                     _project_module, "create_venv_with_uv", return_value=False
                 ):
                     # Mock Path to use tmp_path
-                    with patch.object(_project_module, "Path") as mock_path:
-                        mock_venv = MagicMock()
-                        mock_venv.exists.return_value = False
-                        mock_venv.__truediv__ = lambda self, x: mock_venv
-                        mock_venv.__str__ = lambda self: str(tmp_path / ".venv")
-                        mock_path.return_value.__truediv__ = lambda self, x: mock_venv
-                        mock_path.return_value.resolve.return_value.parent.parent = (
-                            tmp_path
-                        )
-
+                    with mock_project_path(
+                        _project_module, tmp_path, venv_exists=False
+                    ):
                         with pytest.raises(SystemExit) as exc_info:
                             cmd_setup([])
 
@@ -312,15 +298,8 @@ class TestNoRegressionPython312:
 
         with patch.object(_project_module.sys, "version_info", mock_version):
             with patch.object(_project_module, "detect_uv", mock_detect_uv):
-                # Mock Path and subprocess
-                with patch.object(_project_module, "Path") as mock_path:
-                    mock_venv = MagicMock()
-                    mock_venv.exists.return_value = True  # venv exists
-                    mock_venv.__truediv__ = lambda self, x: mock_venv
-                    mock_venv.__str__ = lambda self: str(tmp_path / ".venv")
-                    mock_path.return_value.__truediv__ = lambda self, x: mock_venv
-                    mock_path.return_value.resolve.return_value.parent.parent = tmp_path
-
+                # Mock Path (venv exists) and subprocess
+                with mock_project_path(_project_module, tmp_path, venv_exists=True):
                     with patch.object(_project_module, "subprocess") as mock_subprocess:
                         mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
                         mock_subprocess.run.return_value = MagicMock(
@@ -350,14 +329,7 @@ class TestNoRegressionPython312:
         mock_version = MockVersionInfo(3, 10, 12)
 
         with patch.object(_project_module.sys, "version_info", mock_version):
-            with patch.object(_project_module, "Path") as mock_path:
-                mock_venv = MagicMock()
-                mock_venv.exists.return_value = True
-                mock_venv.__truediv__ = lambda self, x: mock_venv
-                mock_venv.__str__ = lambda self: str(tmp_path / ".venv")
-                mock_path.return_value.__truediv__ = lambda self, x: mock_venv
-                mock_path.return_value.resolve.return_value.parent.parent = tmp_path
-
+            with mock_project_path(_project_module, tmp_path, venv_exists=True):
                 with patch.object(_project_module, "subprocess") as mock_subprocess:
                     mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
                     mock_subprocess.run.return_value = MagicMock(
@@ -427,16 +399,9 @@ class TestEdgeCases:
                 with patch.object(
                     _project_module, "create_venv_with_uv", mock_create_venv_with_uv
                 ):
-                    with patch.object(_project_module, "Path") as mock_path:
-                        mock_venv = MagicMock()
-                        mock_venv.exists.return_value = False
-                        mock_venv.__truediv__ = lambda self, x: mock_venv
-                        mock_venv.__str__ = lambda self: str(tmp_path / ".venv")
-                        mock_path.return_value.__truediv__ = lambda self, x: mock_venv
-                        mock_path.return_value.resolve.return_value.parent.parent = (
-                            tmp_path
-                        )
-
+                    with mock_project_path(
+                        _project_module, tmp_path, venv_exists=False
+                    ):
                         with patch.object(
                             _project_module, "subprocess"
                         ) as mock_subprocess:

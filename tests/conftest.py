@@ -2,9 +2,10 @@
 Shared pytest fixtures and utilities for the agentive-starter-kit test suite.
 """
 
-from typing import Any
-
-import pytest
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Generator
+from unittest.mock import MagicMock, patch
 
 
 class MockVersionInfo:
@@ -59,3 +60,39 @@ class MockVersionInfo:
 
     def __repr__(self) -> str:
         return f"MockVersionInfo({self.major}, {self.minor}, {self.micro})"
+
+
+@contextmanager
+def mock_project_path(
+    module: Any, tmp_path: Path, venv_exists: bool = False
+) -> Generator[MagicMock, None, None]:
+    """Context manager that mocks Path for project script tests.
+
+    This fixture creates a mock Path setup commonly needed when testing
+    the project script's setup command. It mocks:
+    - venv_dir.exists() to return venv_exists
+    - Path division operations (__truediv__) to return the mock venv
+    - str() conversion to return tmp_path / ".venv"
+    - resolve().parent.parent to return tmp_path (project root)
+
+    Args:
+        module: The project module to patch (e.g., _project_module)
+        tmp_path: pytest tmp_path fixture for temporary directory
+        venv_exists: Whether the mock venv should report as existing
+
+    Yields:
+        MagicMock: The mock Path class for additional assertions
+
+    Example:
+        with mock_project_path(module, tmp_path, venv_exists=False) as mp:
+            cmd_setup([])
+            # mp can be used for assertions if needed
+    """
+    with patch.object(module, "Path") as mock_path:
+        mock_venv = MagicMock()
+        mock_venv.exists.return_value = venv_exists
+        mock_venv.__truediv__ = lambda self, x: mock_venv
+        mock_venv.__str__ = lambda self: str(tmp_path / ".venv")
+        mock_path.return_value.__truediv__ = lambda self, x: mock_venv
+        mock_path.return_value.resolve.return_value.parent.parent = tmp_path
+        yield mock_path
