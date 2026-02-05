@@ -595,12 +595,16 @@ First, check if `gh` CLI is authenticated:
 gh auth status
 ```
 
-**If authenticated**, create the repo:
+**If authenticated**, prepare and create the repo:
+
 ```bash
-# Remove the old origin pointing to starter kit
+# Step 1: Increase Git buffer for large pushes (prevents HTTP 400 errors)
+git config http.postBuffer 524288000
+
+# Step 2: Remove the old origin pointing to starter kit
 git remote remove origin
 
-# Create new repo (private by default) and push
+# Step 3: Create new repo (private by default) and push
 gh repo create [project-name] --private --source=. --push
 ```
 
@@ -621,6 +625,57 @@ Your project is now saved to your own GitHub repository!
 
 Note: I've set this repo as the default for `gh` commands.
 This ensures ci-checker and other tools work correctly.
+```
+
+### Handling Push Failures (HTTP 400 / RPC errors)
+
+If `gh repo create` succeeds but push fails with errors like:
+- `error: RPC failed; HTTP 400`
+- `send-pack: unexpected disconnect while reading sideband packet`
+- `fatal: the remote end hung up unexpectedly`
+
+**The repo was created but the push failed.** Try these steps:
+
+```bash
+# 1. Verify/increase the buffer (may not have taken effect)
+git config http.postBuffer 524288000
+
+# 2. Try pushing again
+git push -u origin main
+```
+
+**If HTTPS push continues to fail**, try SSH:
+
+```bash
+# Get the SSH URL for the repo
+gh repo view --json sshUrl -q .sshUrl
+
+# Change remote to SSH
+git remote set-url origin git@github.com:[username]/[project-name].git
+
+# Push via SSH (more reliable for large repos)
+git push -u origin main
+```
+
+**If SSH also fails** (rare), offer manual steps:
+```
+The push is having trouble. This can happen with larger repositories.
+
+Try these options:
+
+**Option A: Push in smaller chunks**
+  git push -u origin main --verbose
+
+**Option B: Use GitHub Desktop**
+  Download from https://desktop.github.com/
+  Open your project folder and push from there
+
+**Option C: Wait and retry**
+  Sometimes GitHub has temporary issues. Wait a few minutes and try:
+  git push -u origin main
+
+Your repo exists at: https://github.com/[username]/[project-name]
+The code just needs to be pushed to it.
 ```
 
 **If NOT authenticated**, guide them:
