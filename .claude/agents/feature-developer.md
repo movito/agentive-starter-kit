@@ -240,30 +240,99 @@ You: [Reads logs, updates test, commits, pushes]
      Verifying CI again... ✅ Passed! Task complete.
 ```
 
-## Code Review Workflow (MANDATORY)
+## Pull Request & Automated Review Workflow (MANDATORY)
 
-**⚠️ CRITICAL: Do NOT mark task complete until code review passes**
+**⚠️ CRITICAL: Create PR and address automated feedback BEFORE human code review**
 
-After implementation is complete and CI passes, you **MUST** request code review before moving task to `5-done`.
+After implementation is complete and CI passes, you **MUST** create a PR and address feedback from automated reviewers (BugBot, CodeRabbit) before requesting human code review.
 
 ### Task Status Flow
 
 ```
-2-todo → 3-in-progress → 4-in-review → 5-done
-         (implement)      (code review)   (complete)
+2-todo → 3-in-progress → [PR + Automated Review] → 4-in-review → 5-done
+         (implement)      (BugBot/CodeRabbit)       (human review)  (complete)
 ```
 
-**Never skip `4-in-review`** - all implementation work requires peer review.
+### PR & Automated Review Process
 
-### Code Review Process
+1. **Complete implementation**: All acceptance criteria met, tests pass locally
+2. **Verify CI passes**: Use `/check-ci` or `./scripts/ci-check.sh`
+3. **Create Pull Request**:
+   ```bash
+   gh pr create --title "[TASK-ID]: Brief description" --body "## Summary
+   - What was implemented
+   - Key changes
 
-1. **Complete implementation**: All acceptance criteria met, tests pass
-2. **Verify CI passes**: Use `/check-ci` or `./scripts/verify-ci.sh`
-3. **Move task to 4-in-review**: `./project move <TASK-ID> in-review`
-4. **Create review starter**: Write `.agent-context/<TASK-ID>-REVIEW-STARTER.md`
-5. **Notify user**: Tell them to invoke code-reviewer in a new tab
-6. **Address feedback**: Fix any issues raised by reviewer
-7. **After approval**: Move to `5-done` with `./project complete <TASK-ID>`
+   ## Test Plan
+   - How to verify
+
+   Closes #[issue-number-if-applicable]"
+   ```
+4. **Wait for automated reviewers**: BugBot and CodeRabbit will comment on your PR
+5. **Check for feedback** (run this after a few minutes):
+   ```bash
+   # List all PR comments
+   gh pr view --comments
+
+   # Or get comments in JSON for detailed review
+   gh api repos/{owner}/{repo}/pulls/{pr-number}/comments
+   ```
+6. **Address automated feedback**: Fix issues raised by BugBot/CodeRabbit
+7. **Push fixes and repeat**: Continue until automated reviewers are satisfied
+8. **THEN proceed to human code review** (see below)
+
+### Checking Automated Review Status
+
+**After creating PR, always check for BugBot/CodeRabbit feedback:**
+
+```bash
+# Quick check - view PR with all comments
+gh pr view --comments
+
+# Check PR review status
+gh pr checks
+
+# Get detailed comments (if many)
+gh pr view --json comments --jq '.comments[] | "\(.author.login): \(.body[:200])"'
+```
+
+**What to look for:**
+- **BugBot**: Security issues, potential bugs, code smells
+- **CodeRabbit**: Code quality, patterns, suggestions, potential issues
+
+**Iterate until clean:**
+1. Read each comment carefully
+2. Fix the issues or respond explaining why not applicable
+3. Commit and push: `git add . && git commit -m "fix: Address review feedback" && git push`
+4. Wait for re-review (automated reviewers re-run on new commits)
+5. Check again: `gh pr view --comments`
+
+### When to Proceed to Human Review
+
+Move to human code review **ONLY when**:
+- ✅ CI passes (all checks green)
+- ✅ BugBot has no unresolved issues
+- ✅ CodeRabbit has approved or has no blocking comments
+- ✅ You've addressed or responded to all automated feedback
+
+---
+
+## Human Code Review Workflow (MANDATORY)
+
+**⚠️ CRITICAL: Do NOT mark task complete until human code review passes**
+
+After automated review is complete, you **MUST** request human code review before moving task to `5-done`.
+
+**Never skip `4-in-review`** - all implementation work requires human peer review.
+
+### Human Code Review Process
+
+1. **Verify automated review is complete**: PR has no unresolved BugBot/CodeRabbit issues
+2. **Move task to 4-in-review**: `./scripts/project move <TASK-ID> in-review`
+3. **Create review starter**: Write `.agent-context/<TASK-ID>-REVIEW-STARTER.md`
+4. **Notify user**: Tell them to invoke code-reviewer in a new tab
+5. **Address feedback**: Fix any issues raised by human reviewer
+6. **After approval**: Move to `5-done` with `./scripts/project complete <TASK-ID>`
 
 ### Creating Review Starter
 
