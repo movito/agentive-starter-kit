@@ -1,6 +1,6 @@
 # ASK-0032: Add UV Auto-Detection for Python Version Management
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: High
 **Assigned To**: feature-developer
 **Estimated Effort**: 2-3 hours
