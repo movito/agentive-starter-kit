@@ -311,7 +311,7 @@ def create_venv_with_uv(venv_dir: Path, python_version: str = "3.12") -> bool:
     """
     try:
         result = subprocess.run(
-            ["uv", "venv", str(venv_dir), "--python", python_version],
+            ["uv", "venv", str(venv_dir), "--python", python_version, "--seed"],
             capture_output=True,
             text=True,
         )
@@ -391,6 +391,31 @@ def cmd_setup(args):
                     "   Run with --force to recreate: ./scripts/project setup --force"
                 )
                 sys.exit(1)
+            # If we need Python 3.12 (use_uv case), verify existing venv has it
+            if use_uv:
+                try:
+                    result = subprocess.run(
+                        [
+                            str(venv_python),
+                            "-c",
+                            "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}')",
+                        ],
+                        capture_output=True,
+                        text=True,
+                    )
+                    venv_version = result.stdout.strip()
+                    if result.returncode != 0 or not venv_version.startswith("3.12"):
+                        print(f"⚠️  Existing venv uses Python {venv_version}, need 3.12")
+                        print(
+                            "   Run with --force to recreate: ./scripts/project setup --force"
+                        )
+                        sys.exit(1)
+                except Exception as e:
+                    print(f"⚠️  Could not verify venv Python version: {e}")
+                    print(
+                        "   Run with --force to recreate: ./scripts/project setup --force"
+                    )
+                    sys.exit(1)
             print(f"✅ Virtual environment exists: {venv_dir}")
             print("   (use --force to recreate)")
 

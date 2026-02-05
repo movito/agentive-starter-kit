@@ -3,7 +3,7 @@
 **Date**: 2026-02-05
 **From**: Planner
 **To**: feature-developer
-**Task**: delegation/tasks/2-todo/ASK-0032-uv-auto-detection.md
+**Task**: delegation/tasks/3-in-progress/ASK-0032-uv-auto-detection.md
 **Status**: Ready for implementation
 **Evaluation**: N/A (straightforward enhancement)
 
@@ -170,10 +170,10 @@ if (major, minor) >= (3, 13):
 1. **Create branch**: `git checkout -b feature/ASK-0032-uv-auto-detection`
 2. **Start task**: `./scripts/project start ASK-0032` to move task to in-progress
 3. **Read**: `scripts/project` lines 290-360 to understand current flow
-3. **Create**: `tests/test_uv_detection.py` with failing tests
-4. **Implement**: Add functions to `scripts/project`
-5. **Test**: Run `pytest tests/test_uv_detection.py -v`
-6. **Verify**: Run `./scripts/ci-check.sh`
+4. **Create**: `tests/test_uv_detection.py` with failing tests
+5. **Implement**: Add functions to `scripts/project`
+6. **Test**: Run `pytest tests/test_uv_detection.py -v`
+7. **Verify**: Run `./scripts/ci-check.sh`
 
 ## Questions for Planner
 
@@ -224,6 +224,6 @@ $ python3 scripts/project setup
 
 ---
 
-**Task File**: `delegation/tasks/2-todo/ASK-0032-uv-auto-detection.md`
+**Task File**: `delegation/tasks/3-in-progress/ASK-0032-uv-auto-detection.md`
 **Handoff Date**: 2026-02-05
 **Coordinator**: Planner

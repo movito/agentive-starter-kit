@@ -13,11 +13,12 @@ These tests verify:
 """
 
 import importlib.util
-import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+from conftest import MockVersionInfo
 
 # Load the project script as a module (same pattern as test_project_script.py)
 _script_path = Path(__file__).parent.parent / "scripts" / "project"
@@ -27,29 +28,6 @@ _project_module = importlib.util.module_from_spec(_spec)
 with open(_script_path) as f:
     _project_module.__dict__["__file__"] = str(_script_path)
     exec(f.read(), _project_module.__dict__)
-
-
-class MockVersionInfo:
-    """Mock sys.version_info that supports both tuple comparison and attribute access."""
-
-    def __init__(self, major, minor, micro):
-        self.major = major
-        self.minor = minor
-        self.micro = micro
-        self._tuple = (major, minor, micro)
-
-    def __lt__(self, other):
-        if isinstance(other, tuple):
-            return self._tuple[: len(other)] < other
-        return NotImplemented
-
-    def __ge__(self, other):
-        if isinstance(other, tuple):
-            return self._tuple[: len(other)] >= other
-        return NotImplemented
-
-    def __getitem__(self, key):
-        return self._tuple[key]
 
 
 class TestDetectUv:

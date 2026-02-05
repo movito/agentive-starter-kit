@@ -12,6 +12,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from conftest import MockVersionInfo
+
 # Load the project script as a module
 _script_path = Path(__file__).parent.parent / "scripts" / "project"
 _spec = importlib.util.spec_from_loader("project_script", loader=None)
@@ -282,29 +284,6 @@ class TestGetActivateCommand:
         assert "activate" in result
         assert "activate.fish" not in result
         assert "activate.csh" not in result
-
-
-class MockVersionInfo:
-    """Mock sys.version_info that supports both tuple comparison and attribute access."""
-
-    def __init__(self, major, minor, micro):
-        self.major = major
-        self.minor = minor
-        self.micro = micro
-        self._tuple = (major, minor, micro)
-
-    def __lt__(self, other):
-        if isinstance(other, tuple):
-            return self._tuple[: len(other)] < other
-        return NotImplemented
-
-    def __ge__(self, other):
-        if isinstance(other, tuple):
-            return self._tuple[: len(other)] >= other
-        return NotImplemented
-
-    def __getitem__(self, key):
-        return self._tuple[key]
 
 
 class TestPythonVersionCheck:
