@@ -171,7 +171,7 @@ class TestCreateVenvWithUv:
 class TestSetupWithUvIntegration:
     """Integration tests for setup command with uv detection."""
 
-    def test_python313_with_uv_creates_venv(self, capsys, monkeypatch, tmp_path):
+    def test_python313_with_uv_creates_venv(self, capsys, tmp_path):
         """Python 3.13 with uv available should auto-create 3.12 venv."""
         cmd_setup = _project_module.cmd_setup
 
@@ -226,7 +226,7 @@ class TestSetupWithUvIntegration:
         assert "uv" in captured.out.lower()
         assert "3.12" in captured.out
 
-    def test_python313_without_uv_shows_improved_error(self, capsys, monkeypatch):
+    def test_python313_without_uv_shows_improved_error(self, capsys):
         """Python 3.13 without uv should show improved error with uv recommendation."""
         cmd_setup = _project_module.cmd_setup
 
@@ -255,9 +255,7 @@ class TestSetupWithUvIntegration:
         assert "pyenv" in captured.out
         assert "brew" in captured.out
 
-    def test_python313_uv_venv_creation_fails_shows_error(
-        self, capsys, monkeypatch, tmp_path
-    ):
+    def test_python313_uv_venv_creation_fails_shows_error(self, capsys, tmp_path):
         """If uv venv creation fails, should show helpful error."""
         cmd_setup = _project_module.cmd_setup
 
@@ -382,16 +380,16 @@ class TestNoRegressionPython312:
 class TestEdgeCases:
     """Edge case tests for uv detection and venv creation."""
 
-    def test_uv_in_path_but_not_executable(self, monkeypatch):
-        """Handle case where uv is in PATH but returns error."""
+    def test_detect_uv_checks_path_presence(self, monkeypatch):
+        """Verify detect_uv() returns True when uv is present in PATH."""
         detect_uv = _project_module.detect_uv
 
-        # shutil.which returns path, but uv exists
+        # shutil.which returns path when uv is found
         monkeypatch.setattr(
             _project_module.shutil, "which", lambda x: "/usr/local/bin/uv"
         )
 
-        # detect_uv should still return True (it just checks PATH)
+        # detect_uv should return True (it checks PATH presence)
         assert detect_uv() is True
 
     def test_create_venv_with_uv_with_custom_version(self, tmp_path):
@@ -411,7 +409,7 @@ class TestEdgeCases:
         call_args = mock_subprocess.run.call_args
         assert "3.11" in call_args[0][0]
 
-    def test_python314_also_tries_uv(self, capsys, monkeypatch, tmp_path):
+    def test_python314_also_tries_uv(self, tmp_path):
         """Future Python versions (3.14+) should also try uv."""
         cmd_setup = _project_module.cmd_setup
 
