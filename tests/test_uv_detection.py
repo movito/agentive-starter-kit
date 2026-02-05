@@ -13,6 +13,7 @@ These tests verify:
 """
 
 import importlib.util
+import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -83,6 +84,7 @@ class TestCreateVenvWithUv:
         venv_dir = tmp_path / ".venv"
 
         with patch.object(_project_module, "subprocess") as mock_subprocess:
+            mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
             mock_subprocess.run.return_value = MagicMock(
                 returncode=0, stdout="", stderr=""
             )
@@ -105,6 +107,7 @@ class TestCreateVenvWithUv:
         venv_dir = tmp_path / ".venv"
 
         with patch.object(_project_module, "subprocess") as mock_subprocess:
+            mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
             mock_subprocess.run.return_value = MagicMock(
                 returncode=1, stdout="", stderr="Python 3.12 not found"
             )
@@ -120,6 +123,7 @@ class TestCreateVenvWithUv:
         venv_dir = tmp_path / ".venv"
 
         with patch.object(_project_module, "subprocess") as mock_subprocess:
+            mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
             mock_subprocess.run.side_effect = OSError("uv not executable")
 
             result = create_venv_with_uv(venv_dir, "3.12")
@@ -133,6 +137,7 @@ class TestCreateVenvWithUv:
         venv_dir = tmp_path / ".venv"
 
         with patch.object(_project_module, "subprocess") as mock_subprocess:
+            mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
             mock_subprocess.run.return_value = MagicMock(
                 returncode=0, stdout="", stderr=""
             )
@@ -299,6 +304,7 @@ class TestNoRegressionPython312:
                     mock_path.return_value.resolve.return_value.parent.parent = tmp_path
 
                     with patch.object(_project_module, "subprocess") as mock_subprocess:
+                        mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
                         mock_subprocess.run.return_value = MagicMock(
                             returncode=0, stderr=""
                         )
@@ -335,6 +341,7 @@ class TestNoRegressionPython312:
                 mock_path.return_value.resolve.return_value.parent.parent = tmp_path
 
                 with patch.object(_project_module, "subprocess") as mock_subprocess:
+                    mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
                     mock_subprocess.run.return_value = MagicMock(
                         returncode=0, stderr=""
                     )
@@ -374,6 +381,7 @@ class TestEdgeCases:
         venv_dir = tmp_path / ".venv"
 
         with patch.object(_project_module, "subprocess") as mock_subprocess:
+            mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
             mock_subprocess.run.return_value = MagicMock(
                 returncode=0, stdout="", stderr=""
             )

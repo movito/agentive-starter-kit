@@ -314,11 +314,16 @@ def create_venv_with_uv(venv_dir: Path, python_version: str = "3.12") -> bool:
             ["uv", "venv", str(venv_dir), "--python", python_version, "--seed"],
             capture_output=True,
             text=True,
+            timeout=600,  # 10 minutes for Python download if needed
         )
         if result.returncode != 0:
             print(f"⚠️  uv failed: {result.stderr.strip()}")
             return False
         return True
+    except subprocess.TimeoutExpired:
+        print("⚠️  uv timed out after 600s")
+        print("   Try running manually: uv venv .venv --python 3.12")
+        return False
     except Exception as e:
         print(f"⚠️  uv error: {e}")
         return False

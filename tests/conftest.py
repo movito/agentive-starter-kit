@@ -2,6 +2,8 @@
 Shared pytest fixtures and utilities for the agentive-starter-kit test suite.
 """
 
+from typing import Any
+
 import pytest
 
 
@@ -21,39 +23,39 @@ class MockVersionInfo:
         assert mock_version[1] == 12
     """
 
-    def __init__(self, major: int, minor: int, micro: int):
+    def __init__(self, major: int, minor: int, micro: int) -> None:
         self.major = major
         self.minor = minor
         self.micro = micro
         self._tuple = (major, minor, micro)
 
-    def __lt__(self, other):
+    def __lt__(self, other: Any) -> bool:
         if isinstance(other, tuple):
             return self._tuple[: len(other)] < other
         return NotImplemented
 
-    def __le__(self, other):
+    def __le__(self, other: Any) -> bool:
         if isinstance(other, tuple):
             return self._tuple[: len(other)] <= other
         return NotImplemented
 
-    def __gt__(self, other):
+    def __gt__(self, other: Any) -> bool:
         if isinstance(other, tuple):
             return self._tuple[: len(other)] > other
         return NotImplemented
 
-    def __ge__(self, other):
+    def __ge__(self, other: Any) -> bool:
         if isinstance(other, tuple):
             return self._tuple[: len(other)] >= other
         return NotImplemented
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, tuple):
             return self._tuple[: len(other)] == other
         return NotImplemented
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: int) -> int:
         return self._tuple[key]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"MockVersionInfo({self.major}, {self.minor}, {self.micro})"

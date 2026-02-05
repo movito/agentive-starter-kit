@@ -258,6 +258,7 @@ After implementation is complete and CI passes, you **MUST** create a PR and add
 1. **Complete implementation**: All acceptance criteria met, tests pass locally
 2. **Verify CI passes**: Use `/check-ci` or `./scripts/ci-check.sh`
 3. **Create Pull Request**:
+
    ```bash
    gh pr create --title "[TASK-ID]: Brief description" --body "## Summary
    - What was implemented
@@ -268,8 +269,10 @@ After implementation is complete and CI passes, you **MUST** create a PR and add
 
    Closes #[issue-number-if-applicable]"
    ```
+
 4. **Wait for automated reviewers**: BugBot and CodeRabbit will comment on your PR
 5. **Check for feedback** (run this after a few minutes):
+
    ```bash
    # List all PR comments
    gh pr view --comments
@@ -277,6 +280,7 @@ After implementation is complete and CI passes, you **MUST** create a PR and add
    # Or get comments in JSON for detailed review
    gh api repos/{owner}/{repo}/pulls/{pr-number}/comments
    ```
+
 6. **Address automated feedback**: Fix issues raised by BugBot/CodeRabbit
 7. **Push fixes and repeat**: Continue until automated reviewers are satisfied
 8. **THEN proceed to human code review** (see below)
