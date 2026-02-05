@@ -549,7 +549,7 @@ git push origin main && git push origin vX.Y.Z
 
 **Coordinator Procedures** (in order of usage):
 1. **Evaluation Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
-2. **Task Creation**: `delegation/templates/TASK-TEMPLATE.md`
+2. **Task Creation**: `delegation/tasks/9-reference/templates/task-template.md`
 3. **Agent Assignment**: `.agent-context/agent-handoffs.json` updates
 4. **Code Review Workflow**: `docs/decisions/starter-kit-adr/KIT-ADR-0014-code-review-workflow.md`
 5. **Knowledge Extraction**: `docs/decisions/starter-kit-adr/KIT-ADR-0019-review-knowledge-extraction.md`
