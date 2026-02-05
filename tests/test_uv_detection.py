@@ -130,6 +130,26 @@ class TestCreateVenvWithUv:
 
         assert result is False
 
+    def test_create_venv_with_uv_handles_timeout(self, tmp_path, capsys):
+        """Should return False and print timeout message when uv times out."""
+        create_venv_with_uv = _project_module.create_venv_with_uv
+
+        venv_dir = tmp_path / ".venv"
+
+        with patch.object(_project_module, "subprocess") as mock_subprocess:
+            mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
+            mock_subprocess.run.side_effect = subprocess.TimeoutExpired(
+                cmd="uv venv", timeout=600
+            )
+
+            result = create_venv_with_uv(venv_dir, "3.12")
+
+        assert result is False
+
+        captured = capsys.readouterr()
+        assert "timed out" in captured.out.lower()
+        assert "600" in captured.out
+
     def test_create_venv_with_uv_default_version(self, tmp_path):
         """Should default to Python 3.12 if no version specified."""
         create_venv_with_uv = _project_module.create_venv_with_uv
