@@ -65,19 +65,31 @@ When you pick up a task, you **MUST** move it to the correct folder and update i
 **FIRST THING when beginning work** on a task from `2-todo/`:
 
 ```bash
+# 1. Create a feature branch (MANDATORY)
+git checkout -b feature/<TASK-ID>-short-description
+
+# 2. Start the task (updates status and syncs to Linear)
 ./scripts/project start <TASK-ID>
 ```
 
-This command:
-1. Moves the task file from `2-todo/` to `3-in-progress/`
-2. Updates `**Status**: Todo` → `**Status**: In Progress` in the file header
-3. Syncs to Linear (if task monitor daemon is running)
+**Step 1 - Create Branch**:
+- Always work on a feature branch, never directly on `main`
+- Branch naming: `feature/<TASK-ID>-short-description` (e.g., `feature/ASK-0032-uv-auto-detection`)
+- This enables clean PRs and isolated development
+
+**Step 2 - Start Task**:
+- Moves the task file from `2-todo/` to `3-in-progress/`
+- Updates `**Status**: Todo` → `**Status**: In Progress` in the file header
+- Syncs to Linear (if task monitor daemon is running)
 
 **Example**:
 ```bash
+git checkout -b feature/ASK-0042-add-caching
 ./scripts/project start ASK-0042
 # Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
 ```
+
+**⚠️ Never skip branch creation** - working directly on `main` makes code review and rollback difficult.
 
 ### Task Status Flow
 

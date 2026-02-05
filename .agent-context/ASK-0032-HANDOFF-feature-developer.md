@@ -167,8 +167,9 @@ if (major, minor) >= (3, 13):
 
 ## Starting Point
 
-1. **Run**: `./scripts/project start ASK-0032` to move task to in-progress
-2. **Read**: `scripts/project` lines 290-360 to understand current flow
+1. **Create branch**: `git checkout -b feature/ASK-0032-uv-auto-detection`
+2. **Start task**: `./scripts/project start ASK-0032` to move task to in-progress
+3. **Read**: `scripts/project` lines 290-360 to understand current flow
 3. **Create**: `tests/test_uv_detection.py` with failing tests
 4. **Implement**: Add functions to `scripts/project`
 5. **Test**: Run `pytest tests/test_uv_detection.py -v`
