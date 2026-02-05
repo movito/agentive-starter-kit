@@ -288,11 +288,53 @@ def get_activate_command(venv_dir: Path) -> str:
         return f"source {venv_dir}/bin/activate"
 
 
+def detect_uv() -> bool:
+    """Check if uv is available on the system.
+
+    Returns True if uv is in PATH, False otherwise.
+    uv is a modern Python package manager that can auto-install Python versions.
+    """
+    return shutil.which("uv") is not None
+
+
+def create_venv_with_uv(venv_dir: Path, python_version: str = "3.12") -> bool:
+    """Create a virtual environment using uv with the specified Python version.
+
+    uv will automatically download the Python version if not cached locally.
+
+    Args:
+        venv_dir: Path to the virtual environment directory to create.
+        python_version: Python version to use (default: "3.12").
+
+    Returns:
+        True if venv creation succeeded, False otherwise.
+    """
+    try:
+        result = subprocess.run(
+            ["uv", "venv", str(venv_dir), "--python", python_version, "--seed"],
+            capture_output=True,
+            text=True,
+            timeout=600,  # 10 minutes for Python download if needed
+        )
+        if result.returncode != 0:
+            print(f"⚠️  uv failed: {result.stderr.strip()}")
+            return False
+        return True
+    except subprocess.TimeoutExpired:
+        print("⚠️  uv timed out after 600s")
+        print("   Try running manually: uv venv .venv --python 3.12")
+        return False
+    except Exception as e:
+        print(f"⚠️  uv error: {e}")
+        return False
+
+
 def cmd_setup(args):
     """Set up virtual environment and install dependencies."""
     project_dir = Path(__file__).resolve().parent.parent
     venv_dir = project_dir / ".venv"
     force = "--force" in args
+    use_uv = False  # Flag to track if we need uv for venv creation
 
     # 1. Verify Python version (3.10+ required, <3.13 due to aider-chat constraint)
     major, minor = sys.version_info[:2]
@@ -310,19 +352,30 @@ def cmd_setup(args):
 
     # Upper bound (aider-chat constraint: Python <3.13)
     if (major, minor) >= (3, 13):
-        print(f"❌ Python {version_str} is not yet supported")
-        print("   adversarial-workflow requires Python >=3.10,<3.13")
-        print("   (constraint from aider-chat dependency)")
-        print()
-        print("   Options:")
-        print("   - Use pyenv: pyenv install 3.12 && pyenv local 3.12")
-        print("   - Use brew:  brew install python@3.12")
-        print("   - Download:  https://www.python.org/downloads/")
-        print()
-        print("   Then run: python3.12 scripts/project setup")
-        sys.exit(1)
-
-    print(f"✅ Python {version_str}")
+        if detect_uv():
+            # uv is available - we can auto-create a 3.12 venv
+            print(f"⚠️  Python {version_str} detected (requires <3.13)")
+            print("   uv found - will create venv with Python 3.12")
+            use_uv = True
+        else:
+            # uv not available - show helpful error with uv as primary recommendation
+            print(f"❌ Python {version_str} is not yet supported")
+            print("   adversarial-workflow requires Python >=3.10,<3.13")
+            print("   (constraint from aider-chat dependency)")
+            print()
+            print("   Recommended: Install uv (auto-manages Python versions)")
+            print("   curl -LsSf https://astral.sh/uv/install.sh | sh")
+            print("   Then run: ./scripts/project setup")
+            print()
+            print("   Alternative options:")
+            print("   - Use pyenv: pyenv install 3.12 && pyenv local 3.12")
+            print("   - Use brew:  brew install python@3.12")
+            print("   - Download:  https://www.python.org/downloads/")
+            print()
+            print("   Then run: python3.12 scripts/project setup")
+            sys.exit(1)
+    else:
+        print(f"✅ Python {version_str}")
 
     # 2. Handle existing venv
     if venv_dir.exists():
@@ -343,25 +396,69 @@ def cmd_setup(args):
                     "   Run with --force to recreate: ./scripts/project setup --force"
                 )
                 sys.exit(1)
+            # If we need Python 3.12 (use_uv case), verify existing venv has it
+            if use_uv:
+                try:
+                    result = subprocess.run(
+                        [
+                            str(venv_python),
+                            "-c",
+                            "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}')",
+                        ],
+                        capture_output=True,
+                        text=True,
+                    )
+                    venv_version = result.stdout.strip()
+                    # Parse version robustly: expect "major.minor" format
+                    version_parts = venv_version.split(".")
+                    is_valid_312 = (
+                        result.returncode == 0
+                        and len(version_parts) >= 2
+                        and version_parts[0] == "3"
+                        and version_parts[1] == "12"
+                    )
+                    if not is_valid_312:
+                        print(f"⚠️  Existing venv uses Python {venv_version}, need 3.12")
+                        print(
+                            "   Run with --force to recreate: ./scripts/project setup --force"
+                        )
+                        sys.exit(1)
+                except Exception as e:
+                    print(f"⚠️  Could not verify venv Python version: {e}")
+                    print(
+                        "   Run with --force to recreate: ./scripts/project setup --force"
+                    )
+                    sys.exit(1)
             print(f"✅ Virtual environment exists: {venv_dir}")
             print("   (use --force to recreate)")
 
     # 3. Create venv if needed
     if not venv_dir.exists():
-        print("\n📦 Creating virtual environment...")
-        try:
-            result = subprocess.run(
-                [sys.executable, "-m", "venv", str(venv_dir)],
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode != 0:
-                print(f"❌ Failed to create venv: {result.stderr}")
+        if use_uv:
+            # Use uv to create venv with Python 3.12
+            print("\n📦 Creating virtual environment with uv (Python 3.12)...")
+            if create_venv_with_uv(venv_dir, "3.12"):
+                print(f"✅ Created venv with Python 3.12 (via uv): {venv_dir}")
+            else:
+                print("❌ Failed to create venv with uv")
+                print("   Try manually: uv venv .venv --python 3.12")
                 sys.exit(1)
-            print(f"✅ Created: {venv_dir}")
-        except Exception as e:
-            print(f"❌ Failed to create venv: {e}")
-            sys.exit(1)
+        else:
+            # Standard venv creation with system Python
+            print("\n📦 Creating virtual environment...")
+            try:
+                result = subprocess.run(
+                    [sys.executable, "-m", "venv", str(venv_dir)],
+                    capture_output=True,
+                    text=True,
+                )
+                if result.returncode != 0:
+                    print(f"❌ Failed to create venv: {result.stderr}")
+                    sys.exit(1)
+                print(f"✅ Created: {venv_dir}")
+            except Exception as e:
+                print(f"❌ Failed to create venv: {e}")
+                sys.exit(1)
 
     # 4. Install dependencies
     pip = venv_dir / "bin" / "pip"
