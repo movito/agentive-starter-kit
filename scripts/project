@@ -796,6 +796,15 @@ except Exception as e:
         success = move_task(task_id, "blocked", project_dir)
         sys.exit(0 if success else 1)
 
+    elif command == "create-agent":
+        # Create a new agent using the create-agent.sh script
+        create_agent_script = project_dir / "scripts" / "create-agent.sh"
+        if not create_agent_script.exists():
+            print("❌ create-agent.sh not found")
+            sys.exit(1)
+        args = sys.argv[2:] if len(sys.argv) > 2 else []
+        cmd = ["bash", str(create_agent_script)] + args
+
     elif command == "validate":
         # Validate all task statuses match folders
         success = validate_all_tasks(project_dir)
@@ -1043,6 +1052,11 @@ Task Management:
   start <id>           Move task to in-progress (shorthand)
   block <id>           Move task to blocked (shorthand)
   validate             Validate all task statuses match folders
+
+Agent Management:
+  create-agent         Create a new agent from template
+                       Usage: create-agent <name> "description" [--model MODEL] [--emoji EMOJI]
+                       See: ./scripts/create-agent.sh --help for all options
 
 Configuration:
   reconfigure          Update agent files with project name after upstream merge
