@@ -573,7 +573,9 @@ class TestCleanup:
                 )
 
                 # Script should fail because launcher is not writable
-                assert result.returncode != 0, "Script should fail with read-only launcher"
+                assert (
+                    result.returncode != 0
+                ), "Script should fail with read-only launcher"
 
                 # Agent file may have been created before the launcher update failed
                 # The script's cleanup should remove it, OR it should not exist
