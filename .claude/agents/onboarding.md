@@ -658,7 +658,7 @@ git push -u origin main
 ```
 
 **If SSH also fails** (rare), offer manual steps:
-```
+```text
 The push is having trouble. This can happen with larger repositories.
 
 Try these options:
@@ -679,7 +679,7 @@ The code just needs to be pushed to it.
 ```
 
 **If NOT authenticated**, guide them:
-```
+```text
 The GitHub CLI isn't authenticated yet. You have two options:
 
 **Option A: Authenticate gh CLI (recommended)**

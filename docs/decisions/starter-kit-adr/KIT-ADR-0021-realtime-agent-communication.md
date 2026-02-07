@@ -14,7 +14,7 @@ The agentive-starter-kit architecture uses file-based coordination (`agent-hando
 
 Human operators are forced to act as message routers between agents, creating a bottleneck that doesn't scale and is exhausting to maintain. We need a mechanism for agents to address and communicate with each other directly while preserving human visibility and intervention capability.
 
-```
+```text
 Current Flow:
 ┌─────────────┐     ┌─────────┐     ┌─────────────┐
 │ Agent A     │ ──► │  Human  │ ──► │ Agent B     │
@@ -123,8 +123,8 @@ INBOX=".agent-context/messages/inbox-${AGENT_NAME}.jsonl"
 
 while true; do
   UNREAD=$(jq -s '[.[] | select(.status == "unread")]' "$INBOX")
-  if [ "$(echo $UNREAD | jq length)" -gt 0 ]; then
-    MSG_TEXT=$(echo $UNREAD | jq -r '.[] | "@\(.from): \(.content)"')
+  if [ "$(printf '%s' "$UNREAD" | jq length)" -gt 0 ]; then
+    MSG_TEXT=$(printf '%s' "$UNREAD" | jq -r '.[] | "@\(.from): \(.content)"')
     tmux send-keys -t "$AGENT_NAME" "$MSG_TEXT" Enter
   fi
   sleep 5
