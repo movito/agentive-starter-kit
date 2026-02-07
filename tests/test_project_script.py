@@ -338,7 +338,7 @@ class TestPythonVersionCheck:
         assert "pyenv" in captured.out
         assert "brew" in captured.out
 
-    def test_python_future_version_error(self, mock_project_dir, capsys):
+    def test_python_future_version_error(self, capsys):
         """Python 3.14+ without uv also shows clear error (future-proofing)."""
         cmd_setup = _project_module.cmd_setup
 

@@ -2,11 +2,15 @@
 Shared pytest fixtures and utilities for the agentive-starter-kit test suite.
 """
 
+import shutil
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
+
+# Get project root for accessing templates and launchers
+PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class MockVersionInfo:
@@ -103,3 +107,85 @@ def mock_project_path(
         mock_path.return_value.__truediv__ = lambda self, x: mock_venv
         mock_path.return_value.resolve.return_value.parent.parent = mock_project_dir
         yield mock_path
+
+
+def setup_temp_project(
+    tmp_path: Path,
+    *,
+    include_template: bool = True,
+    include_logs_dir: bool = True,
+) -> None:
+    """Set up a minimal temporary project structure for testing.
+
+    This is a shared utility for agent creation tests.
+
+    Args:
+        tmp_path: Temporary directory path.
+        include_template: Whether to include the agent template.
+        include_logs_dir: Whether to create logs directory.
+    """
+    # Create directory structure
+    agents_dir = tmp_path / ".claude" / "agents"
+    agents_dir.mkdir(parents=True)
+
+    launcher_dir = tmp_path / "agents"
+    launcher_dir.mkdir(parents=True)
+
+    if include_logs_dir:
+        logs_dir = tmp_path / "logs"
+        logs_dir.mkdir(parents=True)
+
+    # Copy template if needed
+    if include_template:
+        template_src = PROJECT_ROOT / ".claude" / "agents" / "AGENT-TEMPLATE.md"
+        if template_src.exists():
+            shutil.copy(template_src, agents_dir / "AGENT-TEMPLATE.md")
+        else:
+            # Create minimal template for testing
+            (agents_dir / "AGENT-TEMPLATE.md").write_text(
+                """---
+name: [agent-name]
+description: [One sentence description of agent role and primary responsibility]
+model: claude-sonnet-4-20250514
+tools:
+  - Read
+  - Write
+---
+
+# [Agent Name] Agent
+
+You are a specialized [role description] agent.
+"""
+            )
+
+    # Copy launcher or create minimal version
+    launcher_src = PROJECT_ROOT / "agents" / "launch"
+    if launcher_src.exists():
+        shutil.copy(launcher_src, launcher_dir / "launch")
+    else:
+        # Create minimal launcher for testing
+        (launcher_dir / "launch").write_text(
+            """#!/bin/bash
+# Minimal test launcher
+
+local agent_order=(
+    "planner"
+    "feature-developer"
+)
+
+local serena_agents=(
+    "planner"
+    "feature-developer"
+)
+
+get_agent_icon() {
+    local name="$1"
+    local icon="⚡"
+    [[ "$name" == *"planner"* ]] && icon="📋"
+    echo "$icon"
+}
+"""
+        )
+
+    # Make launcher executable
+    (launcher_dir / "launch").chmod(0o755)

@@ -400,7 +400,7 @@ The code-reviewer agent will:
 
 ### Handling Review Feedback
 
-- **APPROVED**: Move task to `5-done` with `./project complete <TASK-ID>`
+- **APPROVED**: Move task to `5-done` with `./scripts/project complete <TASK-ID>`
 - **CHANGES_REQUESTED**: See "Handling Fix Prompts" below
 - **ESCALATE_TO_HUMAN**: Wait for user decision
 
