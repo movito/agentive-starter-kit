@@ -53,6 +53,13 @@ DEFAULT_EMOJI="⚡"
 # Logging Functions
 # =============================================================================
 
+# Escape a string for JSON (handles quotes, backslashes, newlines)
+escape_json_string() {
+    local input="$1"
+    # Escape backslashes first, then quotes, then newlines/tabs
+    printf '%s' "$input" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g' | tr '\n' ' '
+}
+
 log_json() {
     local level="$1"
     local operation="$2"
@@ -64,13 +71,15 @@ log_json() {
     # Ensure logs directory exists
     mkdir -p "$LOG_DIR"
 
-    # Create JSON log entry
-    local log_entry
-    log_entry=$(cat <<EOF
-{"timestamp":"${timestamp}","level":"${level}","agent_name":"${AGENT_NAME:-unknown}","operation":"${operation}","status":"${status}","message":"${message}"}
-EOF
-)
-    echo "$log_entry" >> "$LOG_FILE"
+    # Escape values that might contain special characters
+    local escaped_message
+    escaped_message=$(escape_json_string "$message")
+    local escaped_agent
+    escaped_agent=$(escape_json_string "${AGENT_NAME:-unknown}")
+
+    # Create JSON log entry with escaped values
+    printf '{"timestamp":"%s","level":"%s","agent_name":"%s","operation":"%s","status":"%s","message":"%s"}\n' \
+        "$timestamp" "$level" "$escaped_agent" "$operation" "$status" "$escaped_message" >> "$LOG_FILE"
 }
 
 log_info() {
