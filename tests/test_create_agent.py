@@ -562,22 +562,27 @@ class TestCleanup:
             tmp_path = Path(tmpdir)
             setup_temp_project(tmp_path)
 
-            # Corrupt the launcher to cause failure during launcher update
+            # Make the launcher unwritable to cause failure during launcher update
             launcher_file = tmp_path / "agents" / "launch"
-            launcher_file.write_text("#!/bin/bash\n# corrupted")
+            launcher_file.chmod(0o444)  # Read-only
 
-            result = run_script(
-                ["cleanup-test-agent", "Testing cleanup on failure"],
-                cwd=tmp_path,
-            )
+            try:
+                result = run_script(
+                    ["cleanup-test-agent", "Testing cleanup on failure"],
+                    cwd=tmp_path,
+                )
 
-            # The launcher is corrupted, so the script may fail
-            # Cleanup behavior depends on when the failure occurs
-            agent_file = tmp_path / ".claude" / "agents" / "cleanup-test-agent.md"
-            if result.returncode != 0:
-                # Agent file may or may not exist depending on failure point
-                # The important thing is the script doesn't crash
-                assert True  # Script handled the error gracefully
+                # Script should fail because launcher is not writable
+                assert result.returncode != 0, "Script should fail with read-only launcher"
+
+                # Agent file may have been created before the launcher update failed
+                # The script's cleanup should remove it, OR it should not exist
+                agent_file = tmp_path / ".claude" / "agents" / "cleanup-test-agent.md"
+                # Note: The key assertion is that the script handles the error gracefully
+                # (exits with non-zero code, verified above)
+            finally:
+                # Restore launcher permissions for cleanup
+                launcher_file.chmod(0o755)
 
 
 class TestDryRunMode:

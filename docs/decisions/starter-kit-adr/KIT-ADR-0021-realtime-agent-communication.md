@@ -105,6 +105,7 @@ For fully local operation without platform dependency:
 ```
 
 **Message format:**
+
 ```json
 {
   "id": "msg_01abc123",
