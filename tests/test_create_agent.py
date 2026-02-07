@@ -57,7 +57,7 @@ def run_script(
         run_env.update(env)
 
     return subprocess.run(
-        ["bash", str(SCRIPT_PATH)] + args,
+        ["bash", str(SCRIPT_PATH), *args],
         capture_output=True,
         text=True,
         cwd=cwd,
@@ -80,8 +80,8 @@ class TestScriptExists:
     def test_script_has_valid_shebang(self):
         """Script has valid bash shebang."""
         content = SCRIPT_PATH.read_text()
-        assert content.startswith("#!/bin/bash") or content.startswith(
-            "#!/usr/bin/env bash"
+        assert content.startswith(
+            ("#!/bin/bash", "#!/usr/bin/env bash")
         ), "Script missing bash shebang"
 
 

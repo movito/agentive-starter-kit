@@ -456,43 +456,70 @@ update_launcher() {
     local content
     content=$(cat "$launcher_file")
 
-    # 1. Update agent_order array
-    # Find the last entry in agent_order and add after it
-    content=$(echo "$content" | awk -v agent="$agent_name" '
-        /agent_order=\(/ { in_array=1 }
-        in_array && /\)/ {
-            # Insert new agent before closing paren
-            sub(/\)/, "        \"" agent "\"\n    )")
-            in_array=0
-        }
-        { print }
-    ')
-
-    # 2. Update serena_agents array if requested
-    if [[ "$add_serena" == "true" ]]; then
-        content=$(echo "$content" | awk -v agent="$agent_name" '
-            /serena_agents=\(/ { in_array=1 }
-            in_array && /\)/ {
-                # Insert new agent before closing paren
-                sub(/\)/, "        \"" agent "\"\n    )")
-                in_array=0
-            }
-            { print }
-        ')
+    # 1. Update agent_order array (skip if agent already exists)
+    # First check if agent already exists in agent_order
+    if ! echo "$content" | grep -q "agent_order=" | grep -q "\"$agent_name\""; then
+        # Check within the agent_order block
+        if ! echo "$content" | awk -v agent="$agent_name" '
+            /agent_order=\(/ { in_array=1 }
+            in_array && index($0, "\"" agent "\"") { found=1; exit }
+            in_array && /\)/ { exit }
+            END { exit !found }
+        '; then
+            # Agent not found, add it
+            content=$(echo "$content" | awk -v agent="$agent_name" '
+                /agent_order=\(/ { in_array=1 }
+                in_array && /\)/ {
+                    sub(/\)/, "        \"" agent "\"\n    )")
+                    in_array=0
+                }
+                { print }
+            ')
+        fi
     fi
 
-    # 3. Update get_agent_icon function
+    # 2. Update serena_agents array if requested (skip if agent already exists)
+    if [[ "$add_serena" == "true" ]]; then
+        # Check if agent already exists in serena_agents
+        if ! echo "$content" | awk -v agent="$agent_name" '
+            /serena_agents=\(/ { in_array=1 }
+            in_array && index($0, "\"" agent "\"") { found=1; exit }
+            in_array && /\)/ { exit }
+            END { exit !found }
+        '; then
+            # Agent not found, add it
+            content=$(echo "$content" | awk -v agent="$agent_name" '
+                /serena_agents=\(/ { in_array=1 }
+                in_array && /\)/ {
+                    sub(/\)/, "        \"" agent "\"\n    )")
+                    in_array=0
+                }
+                { print }
+            ')
+        fi
+    fi
+
+    # 3. Update get_agent_icon function (skip if mapping already exists)
     # Add new icon mapping before the final echo "$icon"
     # Note: The pattern must be unquoted on the right side of == for glob matching to work
     local icon_line="    [[ \"\$name\" == *\"${agent_name}\"* ]] && icon=\"${emoji}\""
 
-    content=$(echo "$content" | awk -v icon_line="$icon_line" '
+    # Check if icon mapping already exists
+    if ! echo "$content" | awk -v agent="$agent_name" '
         /get_agent_icon\(\)/ { in_func=1 }
-        in_func && /echo "\$icon"/ {
-            print icon_line
-        }
-        { print }
-    ')
+        in_func && index($0, "\"" agent "\"") { found=1; exit }
+        in_func && /^}/ { exit }
+        END { exit !found }
+    '; then
+        # Icon mapping not found, add it
+        content=$(echo "$content" | awk -v icon_line="$icon_line" '
+            /get_agent_icon\(\)/ { in_func=1 }
+            in_func && /echo "\$icon"/ {
+                print icon_line
+            }
+            { print }
+        ')
+    fi
 
     # Write to temp file
     echo "$content" > "$temp_file"
@@ -554,7 +581,10 @@ main() {
             --position)
                 # Note: Position flag is accepted but not yet implemented
                 # Agent is always appended at the end of agent_order
-                position="${2:-end}"
+                if [[ -z "${2:-}" || "$2" == -* ]]; then
+                    user_error "--position requires a numeric value"
+                fi
+                position="$2"
                 if [[ "$position" != "end" ]]; then
                     echo "Warning: --position is not yet fully implemented. Agent will be appended at end." >&2
                 fi
