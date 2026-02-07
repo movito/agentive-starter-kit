@@ -200,6 +200,18 @@ EOF
 }
 
 # =============================================================================
+# String Escaping
+# =============================================================================
+
+# Escape special characters for sed replacement strings
+# This prevents issues with descriptions containing &, /, \, etc.
+escape_sed_replacement() {
+    local input="$1"
+    # Escape backslash first, then ampersand, then forward slash
+    printf '%s' "$input" | sed -e 's/\\/\\\\/g' -e 's/&/\\&/g' -e 's/\//\\\//g'
+}
+
+# =============================================================================
 # Input Validation
 # =============================================================================
 
@@ -278,24 +290,29 @@ acquire_lock() {
 
     # Check if flock is available (not available by default on macOS)
     if ! command -v flock &> /dev/null; then
-        # Fallback: use simple lock file mechanism
-        # This is less robust but works for basic use cases
+        # Fallback: use atomic lock file creation with noclobber
+        # This prevents TOCTOU race conditions
         log_info "locking" "fallback" "flock not available, using file-based lock"
 
         local wait_time=0
-        while [[ -f "$LOCK_FILE" && $wait_time -lt $LOCK_TIMEOUT ]]; do
+        local lock_acquired=false
+
+        while [[ $wait_time -lt $LOCK_TIMEOUT ]]; do
+            # Use noclobber (set -C) for atomic file creation
+            # This prevents race conditions between check and create
+            if (set -C; echo "$$" > "$LOCK_FILE") 2>/dev/null; then
+                lock_acquired=true
+                break
+            fi
             sleep 1
             wait_time=$((wait_time + 1))
         done
 
-        if [[ -f "$LOCK_FILE" && $wait_time -ge $LOCK_TIMEOUT ]]; then
+        if [[ "$lock_acquired" != "true" ]]; then
             system_error "Could not acquire lock after ${LOCK_TIMEOUT}s. Another agent creation may be in progress."
         fi
 
-        # Create lock file
-        echo "$$" > "$LOCK_FILE"
         LOCK_ACQUIRED="file"
-
         log_info "locking" "completed" "File-based lock acquired"
         return 0
     fi
@@ -353,19 +370,23 @@ process_template() {
     local agent_name_title
     agent_name_title=$(echo "$agent_name" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1')
 
+    # Escape description for sed replacement (handles &, /, \ etc.)
+    local description_escaped
+    description_escaped=$(escape_sed_replacement "$description")
+
     # Process template with sed
     # Using a temp file to ensure atomic writes
     local temp_file
     temp_file=$(mktemp)
     TEMP_FILES+=("$temp_file")
 
-    # Replace placeholders
+    # Replace placeholders (use escaped description to handle special chars)
     sed -e "s/\[agent-name\]/${agent_name}/g" \
         -e "s/\[Agent Name\]/${agent_name_title}/g" \
         -e "s/\[AGENT-NAME-UPPERCASE\]/${agent_name_upper}/g" \
         -e "s/\[EMOJI\]/${emoji}/g" \
-        -e "s/\[One sentence description of agent role and primary responsibility\]/${description}/g" \
-        -e "s/\[One sentence description[^]]*\]/${description}/g" \
+        -e "s/\[One sentence description of agent role and primary responsibility\]/${description_escaped}/g" \
+        -e "s/\[One sentence description[^]]*\]/${description_escaped}/g" \
         -e "s/claude-sonnet-4-20250514/${model}/g" \
         "$template_file" > "$temp_file"
 
@@ -522,7 +543,12 @@ main() {
                 shift
                 ;;
             --position)
+                # Note: Position flag is accepted but not yet implemented
+                # Agent is always appended at the end of agent_order
                 position="${2:-end}"
+                if [[ "$position" != "end" ]]; then
+                    echo "Warning: --position is not yet fully implemented. Agent will be appended at end." >&2
+                fi
                 shift 2
                 ;;
             --force)

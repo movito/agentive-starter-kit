@@ -211,10 +211,12 @@ class TestLockRecovery:
             # Should fail (no launcher)
             assert result.returncode != 0
 
-            # Agent file cleanup depends on when failure occurs
+            # When launcher is missing, script fails before creating agent file
+            # So agent file should not exist (cleanup not needed because creation didn't start)
             agent_file = tmp_path / ".claude" / "agents" / "cleanup-test.md"
-            # Verify script handled error - file may or may not exist
-            assert not agent_file.exists() or result.returncode != 0
+            assert (
+                not agent_file.exists()
+            ), "Agent file should not exist when launcher is missing"
 
 
 class TestEndToEndWorkflow:

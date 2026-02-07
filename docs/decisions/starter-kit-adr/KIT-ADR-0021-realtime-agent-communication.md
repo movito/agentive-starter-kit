@@ -117,6 +117,7 @@ For fully local operation without platform dependency:
 ```
 
 **Agent polling wrapper:**
+
 ```bash
 AGENT_NAME="feature-developer"
 INBOX=".agent-context/messages/inbox-${AGENT_NAME}.jsonl"

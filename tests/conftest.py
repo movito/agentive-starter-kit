@@ -164,16 +164,17 @@ You are a specialized [role description] agent.
         shutil.copy(launcher_src, launcher_dir / "launch")
     else:
         # Create minimal launcher for testing
+        # Note: No 'local' keyword at top level (only valid inside functions)
         (launcher_dir / "launch").write_text(
             """#!/bin/bash
 # Minimal test launcher
 
-local agent_order=(
+agent_order=(
     "planner"
     "feature-developer"
 )
 
-local serena_agents=(
+serena_agents=(
     "planner"
     "feature-developer"
 )
