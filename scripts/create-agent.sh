@@ -313,6 +313,20 @@ acquire_lock() {
                 lock_acquired=true
                 break
             fi
+
+            # Check for stale lock (crashed process)
+            if [[ -f "$LOCK_FILE" ]]; then
+                local lock_pid
+                lock_pid=$(cat "$LOCK_FILE" 2>/dev/null || echo "")
+                if [[ -n "$lock_pid" ]] && ! kill -0 "$lock_pid" 2>/dev/null; then
+                    # Process no longer exists, remove stale lock
+                    log_info "locking" "stale_detected" "Removing stale lock from PID $lock_pid"
+                    rm -f "$LOCK_FILE"
+                    # Try again immediately
+                    continue
+                fi
+            fi
+
             sleep 1
             wait_time=$((wait_time + 1))
         done

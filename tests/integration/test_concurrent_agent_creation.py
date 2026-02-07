@@ -187,20 +187,42 @@ class TestConcurrentExecution:
 class TestLockRecovery:
     """Tests for lock file recovery scenarios."""
 
-    def test_stale_lock_file_detection(self):
-        """Script handles stale lock files from crashed processes."""
+    def test_stale_lock_file_recovery(self):
+        """Script recovers from stale lock files left by crashed processes."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
             setup_temp_project(tmp_path)
 
-            # Create a stale lock file (simulating crashed process)
-            # Note: The script uses file-based locking on macOS which
-            # can detect if the process that created the file is gone
+            # Create a stale lock file with a non-existent PID
+            # Use PID 99999 which is unlikely to exist (and will be checked)
+            stale_pid = 99999
+            # Find an unused PID by checking if it exists
+            while True:
+                try:
+                    import os
 
-            result = run_create_agent(tmp_path, "recovery-test", "Recovery test")
+                    os.kill(stale_pid, 0)
+                    stale_pid += 1  # PID exists, try another
+                except OSError:
+                    break  # PID doesn't exist, use it
 
-            # Should succeed (lock file cleaned by run_create_agent helper)
-            assert result.returncode == 0, f"Failed with stale lock: {result.stderr}"
+            LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+            LOCK_FILE.write_text(str(stale_pid))
+
+            # Run script - it should detect stale lock and recover
+            result = subprocess.run(
+                ["bash", str(SCRIPT_PATH), "recovery-test", "Recovery test"],
+                capture_output=True,
+                text=True,
+                cwd=tmp_path,
+                timeout=60,
+            )
+
+            # Should succeed by detecting and removing stale lock
+            assert result.returncode == 0, f"Failed to recover from stale lock: {result.stderr}"
+
+            # Verify agent was created
+            assert (tmp_path / ".claude" / "agents" / "recovery-test.md").exists()
 
     def test_cleanup_on_script_failure(self):
         """Partial files are cleaned up when script fails."""
