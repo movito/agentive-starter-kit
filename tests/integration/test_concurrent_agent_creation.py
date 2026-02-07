@@ -7,6 +7,7 @@ concurrent access safely using file locking.
 CRITICAL: These tests are essential for production safety.
 """
 
+import os
 import subprocess
 
 # Import shared test utilities
@@ -199,8 +200,6 @@ class TestLockRecovery:
             # Find an unused PID by checking if it exists
             while True:
                 try:
-                    import os
-
                     os.kill(stale_pid, 0)
                     stale_pid += 1  # PID exists, try another
                 except OSError:
@@ -219,7 +218,9 @@ class TestLockRecovery:
             )
 
             # Should succeed by detecting and removing stale lock
-            assert result.returncode == 0, f"Failed to recover from stale lock: {result.stderr}"
+            assert (
+                result.returncode == 0
+            ), f"Failed to recover from stale lock: {result.stderr}"
 
             # Verify agent was created
             assert (tmp_path / ".claude" / "agents" / "recovery-test.md").exists()
