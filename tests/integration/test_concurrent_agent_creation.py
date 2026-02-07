@@ -29,8 +29,13 @@ LOCK_FILE = Path("/tmp/agent-creation-launcher.lock")
 def run_create_agent(
     cwd: Path, agent_name: str, description: str
 ) -> subprocess.CompletedProcess:
-    """Run create-agent.sh and return the result."""
-    # Clean up lock file first
+    """Run create-agent.sh and return the result.
+
+    Note: This helper cleans up the lock file before each run for test isolation.
+    For tests that specifically verify locking behavior under concurrent access,
+    use subprocess.Popen directly (see test_lock_prevents_simultaneous_writes).
+    """
+    # Clean up lock file for test isolation (not for concurrent lock tests)
     try:
         LOCK_FILE.unlink(missing_ok=True)
     except (PermissionError, OSError):

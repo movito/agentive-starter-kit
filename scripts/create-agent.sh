@@ -483,8 +483,8 @@ update_launcher() {
 
     # 3. Update get_agent_icon function
     # Add new icon mapping before the final echo "$icon"
-    local icon_pattern="*${agent_name}*"
-    local icon_line="    [[ \"\$name\" == \"${icon_pattern}\" ]] && icon=\"${emoji}\""
+    # Note: The pattern must be unquoted on the right side of == for glob matching to work
+    local icon_line="    [[ \"\$name\" == *\"${agent_name}\"* ]] && icon=\"${emoji}\""
 
     content=$(echo "$content" | awk -v icon_line="$icon_line" '
         /get_agent_icon\(\)/ { in_func=1 }
