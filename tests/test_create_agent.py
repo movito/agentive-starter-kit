@@ -321,9 +321,9 @@ class TestTemplateProcessing:
                 # Use regex to detect [placeholder] patterns properly
                 placeholder_pattern = r"\[[^\]]+\]"
                 placeholders = re.findall(placeholder_pattern, frontmatter_text)
-                assert not placeholders, (
-                    f"Frontmatter has unresolved placeholders: {placeholders}"
-                )
+                assert (
+                    not placeholders
+                ), f"Frontmatter has unresolved placeholders: {placeholders}"
 
 
 class TestLauncherIntegration:
