@@ -209,7 +209,9 @@ class TestLockRecovery:
                     found_unused_pid = True
                     break  # PID doesn't exist, use it
 
-            assert found_unused_pid, f"Could not find unused PID after {max_tries} tries"
+            assert (
+                found_unused_pid
+            ), f"Could not find unused PID after {max_tries} tries"
 
             LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
             LOCK_FILE.write_text(str(stale_pid))
