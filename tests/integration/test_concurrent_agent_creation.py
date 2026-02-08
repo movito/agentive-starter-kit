@@ -195,15 +195,21 @@ class TestLockRecovery:
             setup_temp_project(tmp_path)
 
             # Create a stale lock file with a non-existent PID
-            # Use PID 99999 which is unlikely to exist (and will be checked)
+            # Start with high PID (99999) which is unlikely to exist
             stale_pid = 99999
+            max_tries = 100  # Prevent infinite loop
+            found_unused_pid = False
+
             # Find an unused PID by checking if it exists
-            while True:
+            for _ in range(max_tries):
                 try:
                     os.kill(stale_pid, 0)
                     stale_pid += 1  # PID exists, try another
                 except OSError:
+                    found_unused_pid = True
                     break  # PID doesn't exist, use it
+
+            assert found_unused_pid, f"Could not find unused PID after {max_tries} tries"
 
             LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
             LOCK_FILE.write_text(str(stale_pid))
