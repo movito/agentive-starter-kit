@@ -9,6 +9,7 @@ TDD Approach: Tests written first, script implementation follows.
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -317,9 +318,12 @@ class TestTemplateProcessing:
                         frontmatter.append(line)
 
                 frontmatter_text = "\n".join(frontmatter)
-                assert (
-                    "[" not in frontmatter_text or "]" not in frontmatter_text
-                ), f"Frontmatter has unresolved placeholders: {frontmatter_text}"
+                # Use regex to detect [placeholder] patterns properly
+                placeholder_pattern = r"\[[^\]]+\]"
+                placeholders = re.findall(placeholder_pattern, frontmatter_text)
+                assert not placeholders, (
+                    f"Frontmatter has unresolved placeholders: {placeholders}"
+                )
 
 
 class TestLauncherIntegration:
