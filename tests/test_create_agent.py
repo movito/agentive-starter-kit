@@ -325,6 +325,32 @@ class TestTemplateProcessing:
                     not placeholders
                 ), f"Frontmatter has unresolved placeholders: {placeholders}"
 
+    def test_description_with_special_characters(self):
+        """Descriptions with sed-special chars (/, &, \\) are handled correctly."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            setup_temp_project(tmp_path)
+
+            # Description contains all sed-special characters: / & \
+            special_desc = "Handles I/O & file\\path operations"
+            result = run_script(
+                ["special-char-agent", special_desc],
+                cwd=tmp_path,
+            )
+
+            assert result.returncode == 0, f"Failed with special chars: {result.stderr}"
+
+            agent_file = tmp_path / ".claude" / "agents" / "special-char-agent.md"
+            assert agent_file.exists(), "Agent file should be created"
+
+            content = agent_file.read_text()
+            # The description should appear exactly as provided
+            assert "I/O" in content, "Forward slash should be preserved in description"
+            assert "&" in content, "Ampersand should be preserved in description"
+            assert (
+                "file\\path" in content or "file\\\\path" in content
+            ), "Backslash should be preserved in description"
+
 
 class TestLauncherIntegration:
     """Tests for launcher file updates."""

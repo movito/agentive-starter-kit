@@ -28,19 +28,29 @@ LOCK_FILE = Path("/tmp/agent-creation-launcher.lock")
 
 
 def run_create_agent(
-    cwd: Path, agent_name: str, description: str
+    cwd: Path,
+    agent_name: str,
+    description: str,
+    *,
+    cleanup_lock: bool = True,
 ) -> subprocess.CompletedProcess:
     """Run create-agent.sh and return the result.
 
-    Note: This helper cleans up the lock file before each run for test isolation.
-    For tests that specifically verify locking behavior under concurrent access,
-    use subprocess.Popen directly (see test_lock_prevents_simultaneous_writes).
+    Args:
+        cwd: Working directory for the subprocess.
+        agent_name: Name of the agent to create.
+        description: Description of the agent.
+        cleanup_lock: If True, delete the lock file before running.
+            Set to False for concurrent tests where lock contention is expected.
+
+    Note: For tests that specifically verify locking behavior under concurrent access,
+    set cleanup_lock=False and clean up the lock file once at test setup.
     """
-    # Clean up lock file for test isolation (not for concurrent lock tests)
-    try:
-        LOCK_FILE.unlink(missing_ok=True)
-    except (PermissionError, OSError):
-        pass
+    if cleanup_lock:
+        try:
+            LOCK_FILE.unlink(missing_ok=True)
+        except (PermissionError, OSError):
+            pass
 
     return subprocess.run(
         ["bash", str(SCRIPT_PATH), agent_name, description],
@@ -110,13 +120,23 @@ class TestConcurrentExecution:
             tmp_path = Path(tmpdir)
             setup_temp_project(tmp_path)
 
+            # Clean up lock file once at test setup, not per-invocation
+            # This ensures concurrent processes actually contend for the lock
+            try:
+                LOCK_FILE.unlink(missing_ok=True)
+            except (PermissionError, OSError):
+                pass
+
             results = []
             num_agents = 5
 
             def create_agent(i: int) -> subprocess.CompletedProcess:
                 # Small random delay to increase concurrency overlap
                 time.sleep(0.05 * (i % 3))
-                return run_create_agent(tmp_path, f"concurrent-{i}", f"Agent {i}")
+                # Don't cleanup lock per-call - let processes contend for it
+                return run_create_agent(
+                    tmp_path, f"concurrent-{i}", f"Agent {i}", cleanup_lock=False
+                )
 
             # Run creations concurrently
             with ThreadPoolExecutor(max_workers=num_agents) as executor:
