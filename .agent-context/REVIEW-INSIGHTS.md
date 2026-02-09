@@ -29,6 +29,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **ASK-0025**: For large inline scripts (185+ lines), consider extracting to separate module (e.g., `scripts/check_sync_status.py`) for testability
 - **ASK-0027**: Support multiple YAML field names (e.g., both `name:` and `project_name:`) with first-match-wins logic
 - **ASK-0027**: Watch for path resolution bugs in `project_dir` handling - use `Path.resolve()` consistently
+- **ASK-0033**: Dual locking strategy (flock + file-based fallback) provides robust concurrency on macOS where flock may not be available
+- **ASK-0033**: Implement stale lock detection with timeout - delete locks older than configured threshold
+- **ASK-0033**: Sed escaping for templates: escape `&`, `/`, and newlines in replacement strings to prevent injection
+- **ASK-0033**: Use trap with cleanup function for atomic operations - restore backups on failure, remove partial files
 
 ### CLI (`scripts/project`)
 
@@ -65,6 +69,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Subprocess Error Capture**: Always use `capture_output=True, text=True` and check return codes (ASK-0028)
 - **Provider-Agnostic Design**: Avoid hard-coded model/provider names in documentation; use generic terms with "see docs for options" (ASK-0029)
 - **Version Pinning for External Content**: Pin to tags by default, record commit hash for auditability (ASK-0029)
+- **Dual Locking Strategy**: Use flock where available, fallback to file-based locking for cross-platform compatibility (ASK-0033)
+- **Atomic File Operations**: Backup before modify, validate result, cleanup on failure via trap (ASK-0033)
+- **Input Validation in Shell**: Validate names, descriptions, and paths before processing - fail fast with clear errors (ASK-0033)
 
 ### Anti-Patterns to Avoid
 
@@ -89,4 +96,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-02-01 by planner*
+*Last updated: 2026-02-09 by planner (ASK-0033 insights added)*
