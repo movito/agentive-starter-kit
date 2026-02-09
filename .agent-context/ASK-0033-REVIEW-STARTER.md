@@ -13,6 +13,7 @@
 - Updated `tests/conftest.py` with shared test utilities
 
 ### Key Features Implemented
+
 - Template processing with placeholder replacement
 - Launcher file updates (agent_order, serena_agents, icon mappings)
 - Duplicate entry prevention (even with --force flag)
