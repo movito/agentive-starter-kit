@@ -42,11 +42,16 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **ASK-0029**: Library installers should track version + commit hash in `.installed-version` for auditability
 - **ASK-0029**: Pin external content installers to specific versions (tags), not just "latest"
 - **ASK-0029**: Support `--force` for reinstallation and `--ref <tag>` for version override
+- **ASK-0032**: Use `shutil.which()` for tool detection - simple and reliable
+- **ASK-0032**: Provide primary recommendation with alternatives in error messages (uv → pyenv → manual)
+- **ASK-0032**: Use generous timeouts (600s) for operations that may download large files
 
 ### Tests (`tests/`)
 
 - **ASK-0025**: CLI entry points excluded from coverage (pyproject.toml), but core logic should be extractable into testable functions
 - **ASK-0025**: Consider extracting comparison/validation logic from CLI commands into utility modules for unit testing
+- **ASK-0032**: Use `conftest.py` for shared fixtures - improves test maintainability
+- **ASK-0032**: MockVersionInfo class pattern: handle both tuple comparison (`>=`) and attribute access (`.major`)
 
 ---
 
@@ -65,6 +70,8 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Subprocess Error Capture**: Always use `capture_output=True, text=True` and check return codes (ASK-0028)
 - **Provider-Agnostic Design**: Avoid hard-coded model/provider names in documentation; use generic terms with "see docs for options" (ASK-0029)
 - **Version Pinning for External Content**: Pin to tags by default, record commit hash for auditability (ASK-0029)
+- **Non-Intrusive Feature Flags**: New features should only activate for relevant scenarios (e.g., Python 3.13+ only) (ASK-0032)
+- **Tiered Error Messages**: Primary recommendation → alternatives → manual fallback (ASK-0032)
 
 ### Anti-Patterns to Avoid
 
@@ -89,4 +96,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-02-01 by planner*
+*Last updated: 2026-02-09 by planner (ASK-0032 insights added)*
