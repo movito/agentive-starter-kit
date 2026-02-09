@@ -1,18 +1,25 @@
 {
   "planner": {
-    "status": "idle",
-    "current_task": null,
-    "task_started": null,
-    "brief_note": "✅ ASK-0029 completed and approved (multi-evaluator architecture)",
-    "details_link": null,
+    "status": "active",
+    "current_task": "ASK-0032 completion",
+    "task_started": "2026-02-09",
+    "brief_note": "✅ ASK-0032 APPROVED - moved to done, extracting insights",
+    "details_link": "delegation/tasks/5-done/ASK-0032-uv-auto-detection.md",
     "handoff_file": null
   },
   "feature-developer": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "✅ ASK-0029 completed - Multi-Evaluator Architecture",
+    "brief_note": "✅ ASK-0032 complete - ready for next task",
     "details_link": null
+  },
+  "code-reviewer": {
+    "status": "completed",
+    "current_task": "ASK-0032",
+    "task_started": "2026-02-09",
+    "brief_note": "✅ ASK-0032 APPROVED - excellent implementation, 92% coverage",
+    "details_link": ".agent-context/reviews/ASK-0032-review.md"
   },
   "test-runner": {
     "status": "idle",

@@ -12,6 +12,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from conftest import MockVersionInfo
+
 # Load the project script as a module
 _script_path = Path(__file__).parent.parent / "scripts" / "project"
 _spec = importlib.util.spec_from_loader("project_script", loader=None)
@@ -284,29 +286,6 @@ class TestGetActivateCommand:
         assert "activate.csh" not in result
 
 
-class MockVersionInfo:
-    """Mock sys.version_info that supports both tuple comparison and attribute access."""
-
-    def __init__(self, major, minor, micro):
-        self.major = major
-        self.minor = minor
-        self.micro = micro
-        self._tuple = (major, minor, micro)
-
-    def __lt__(self, other):
-        if isinstance(other, tuple):
-            return self._tuple[: len(other)] < other
-        return NotImplemented
-
-    def __ge__(self, other):
-        if isinstance(other, tuple):
-            return self._tuple[: len(other)] >= other
-        return NotImplemented
-
-    def __getitem__(self, key):
-        return self._tuple[key]
-
-
 class TestPythonVersionCheck:
     """Tests for Python version checking in setup command."""
 
@@ -336,38 +315,42 @@ class TestPythonVersionCheck:
         assert "brew" in captured.out
 
     def test_python_too_new_error(self, mock_project_dir, capsys):
-        """Python >=3.13 shows clear error with constraint explanation."""
+        """Python >=3.13 without uv shows clear error with constraint explanation."""
         cmd_setup = _project_module.cmd_setup
 
         # Mock sys.version_info to simulate Python 3.13
         mock_version = MockVersionInfo(3, 13, 0)
         with patch.object(_project_module.sys, "version_info", mock_version):
-            with pytest.raises(SystemExit) as exc_info:
-                cmd_setup([])
+            # Mock detect_uv to return False (uv not available)
+            with patch.object(_project_module, "detect_uv", return_value=False):
+                with pytest.raises(SystemExit) as exc_info:
+                    cmd_setup([])
 
-            assert exc_info.value.code == 1
+                assert exc_info.value.code == 1
 
         captured = capsys.readouterr()
         assert "3.13.0" in captured.out
         assert "not yet supported" in captured.out or "not supported" in captured.out
         # Should explain the constraint source
         assert "aider-chat" in captured.out or "adversarial-workflow" in captured.out
-        # Should include remediation options
+        # Should include remediation options (uv is now primary recommendation)
+        assert "uv" in captured.out
         assert "pyenv" in captured.out
         assert "brew" in captured.out
-        assert "python.org" in captured.out
 
     def test_python_future_version_error(self, mock_project_dir, capsys):
-        """Python 3.14+ also shows clear error (future-proofing)."""
+        """Python 3.14+ without uv also shows clear error (future-proofing)."""
         cmd_setup = _project_module.cmd_setup
 
         # Mock sys.version_info to simulate Python 3.14
         mock_version = MockVersionInfo(3, 14, 1)
         with patch.object(_project_module.sys, "version_info", mock_version):
-            with pytest.raises(SystemExit) as exc_info:
-                cmd_setup([])
+            # Mock detect_uv to return False (uv not available)
+            with patch.object(_project_module, "detect_uv", return_value=False):
+                with pytest.raises(SystemExit) as exc_info:
+                    cmd_setup([])
 
-            assert exc_info.value.code == 1
+                assert exc_info.value.code == 1
 
         captured = capsys.readouterr()
         assert "3.14.1" in captured.out

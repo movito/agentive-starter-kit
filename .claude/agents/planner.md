@@ -366,18 +366,26 @@ Format as entries for REVIEW-INSIGHTS.md index with task ID.
 
 ## Task Lifecycle Management (When Assigning Tasks)
 
-**⚠️ IMPORTANT: Instruct implementation agents to update task status**
+**⚠️ IMPORTANT: Instruct implementation agents to create branch AND update task status**
 
 When assigning tasks to implementation agents, always remind them to run:
 
 ```bash
+# 1. Create feature branch (MANDATORY - never work on main)
+git checkout -b feature/<TASK-ID>-short-description
+
+# 2. Start the task
 ./scripts/project start <TASK-ID>
 ```
 
-This command:
-1. Moves the task file from `2-todo/` to `3-in-progress/`
-2. Updates `**Status**: Todo` → `**Status**: In Progress` in the file header
-3. Syncs to Linear (if task monitor daemon is running)
+**Step 1 - Create Branch**:
+- Always work on a feature branch, never directly on `main`
+- Branch naming: `feature/<TASK-ID>-short-description`
+
+**Step 2 - Start Task**:
+- Moves the task file from `2-todo/` to `3-in-progress/`
+- Updates `**Status**: Todo` → `**Status**: In Progress` in the file header
+- Syncs to Linear (if task monitor daemon is running)
 
 ### Available Commands
 
@@ -473,6 +481,10 @@ See `.claude/agents/TASK-STARTER-TEMPLATE.md` for handoff structure.
 - [Evaluation status]
 - [Key context]
 
+**⚠️ FIRST ACTIONS** (in order):
+1. `git checkout -b feature/[TASK-ID]-short-description`
+2. `./scripts/project start [TASK-ID]`
+
 ---
 **Ready to assign to `[agent-name]` agent when you are.**
 ```
@@ -549,7 +561,7 @@ git push origin main && git push origin vX.Y.Z
 
 **Coordinator Procedures** (in order of usage):
 1. **Evaluation Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
-2. **Task Creation**: `delegation/templates/TASK-TEMPLATE.md`
+2. **Task Creation**: `delegation/tasks/9-reference/templates/task-template.md`
 3. **Agent Assignment**: `.agent-context/agent-handoffs.json` updates
 4. **Code Review Workflow**: `docs/decisions/starter-kit-adr/KIT-ADR-0014-code-review-workflow.md`
 5. **Knowledge Extraction**: `docs/decisions/starter-kit-adr/KIT-ADR-0019-review-knowledge-extraction.md`
