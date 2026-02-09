@@ -113,7 +113,7 @@ class TestConcurrentExecution:
             results = []
             num_agents = 5
 
-            def create_agent(i: int):
+            def create_agent(i: int) -> subprocess.CompletedProcess:
                 # Small random delay to increase concurrency overlap
                 time.sleep(0.05 * (i % 3))
                 return run_create_agent(tmp_path, f"concurrent-{i}", f"Agent {i}")
