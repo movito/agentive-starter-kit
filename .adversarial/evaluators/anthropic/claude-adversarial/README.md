@@ -1,22 +1,22 @@
-# Claude Adversarial Evaluator
+# Claude 4 Opus Adversarial Evaluator
 
-Critical review and stress-testing evaluator using Claude Sonnet for high-stakes documents.
+Rigorous adversarial review using Claude 4 Opus for critical analysis and stress-testing.
 
 ## Use Cases
 
 - Final document review before publication
 - Critical argument stress-testing
-- Policy and strategy validation
-- Adversarial red-team reviews
-- High-stakes deliverable assessment
+- High-stakes deliverable validation
+- Adversarial red-teaming
+- Finding logical weaknesses and gaps
 
 ## Performance
 
 | Metric | Value |
-|--------|-------|
+| -------- | ----- |
 | Typical response time | 30-60 seconds |
 | Timeout setting | 180 seconds |
-| Cost | ~$0.02-0.06 per evaluation |
+| Cost | ~$0.03-0.10 per evaluation |
 
 ## When to Use
 
@@ -28,37 +28,39 @@ Critical review and stress-testing evaluator using Claude Sonnet for high-stakes
 - Validating critical decisions
 
 **Not ideal for:**
-- Quick preliminary checks (use claude-quick)
-- Code-specific reviews (use claude-code)
-- Very large documents >50k tokens (consider chunking)
+- Quick checks (use claude-quick)
+- Code-specific review (use claude-code)
+- Very large documents (use gemini-pro)
 
 ## Cognitive Diversity Note
 
-This evaluator provides an Anthropic perspective on adversarial review. For maximum blind-spot coverage, use alongside:
-- `gpt52-reasoning` (OpenAI adversarial)
-- `gemini-deep` (Google deep reasoning)
+This evaluator provides Anthropic's perspective on adversarial analysis. Use alongside OpenAI's gpt52-reasoning for maximum blind-spot coverage through multi-provider review.
 
 ## Configuration
 
 ```yaml
 api_key_env: ANTHROPIC_API_KEY
+model: claude-4-opus-20260115
 ```
-
-Get your API key at: https://console.anthropic.com/settings/keys
 
 ## Example Usage
 
 ```bash
-# Review a task specification
-adversarial claude-adversarial delegation/tasks/2-todo/my-task.md
-
-# Review a design document
-adversarial claude-adversarial docs/architecture.md
+adversarial evaluate --evaluator claude-adversarial policy-doc.md
 ```
+
+## Output Format
+
+Findings use standardized severity labels:
+- **CRITICAL**: Must fix before proceeding
+- **HIGH**: Significant issues requiring attention
+- **MEDIUM**: Should address but not blocking
+- **LOW**: Minor improvements
+
+Each finding includes location, issue description, and remediation steps.
 
 ## Related Evaluators
 
-- `gpt52-reasoning` - OpenAI adversarial (alternative perspective)
-- `claude-code` - Code-focused Anthropic review
-- `claude-quick` - Fast Anthropic assessment
-- `gemini-deep` - Google deep reasoning
+- `gpt52-reasoning` - OpenAI alternative for adversarial review
+- `claude-code` - Code-focused review (same provider)
+- `o3-chain` - For step-by-step logical verification
