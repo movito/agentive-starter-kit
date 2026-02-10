@@ -1001,6 +1001,18 @@ except Exception as e:
 """,
         ]
 
+    elif command == "create-agent":
+        # Create a new Claude Code agent from template
+        script = project_dir / "scripts" / "create-agent.sh"
+        if not script.exists():
+            print("❌ scripts/create-agent.sh not found")
+            sys.exit(1)
+        result = subprocess.run(
+            ["bash", str(script)] + sys.argv[2:],
+            env={**os.environ, "CREATE_AGENT_PROJECT_ROOT": str(project_dir)},
+        )
+        sys.exit(result.returncode)
+
     else:
         print(f"❌ Unknown command: {command}")
         print("Run './project help' for available commands.")
@@ -1043,6 +1055,11 @@ Task Management:
   start <id>           Move task to in-progress (shorthand)
   block <id>           Move task to blocked (shorthand)
   validate             Validate all task statuses match folders
+
+Agent Management:
+  create-agent         Create a new Claude Code agent from template
+                       Usage: create-agent <name> <description> [options]
+                       Run: create-agent --help for full options
 
 Configuration:
   reconfigure          Update agent files with project name after upstream merge

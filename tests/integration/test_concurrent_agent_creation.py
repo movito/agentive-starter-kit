@@ -116,12 +116,19 @@ class TestConcurrentExecution:
     def test_concurrent_creation_only_one_succeeds(self):
         """5 concurrent agents: exactly 1 succeeds, rest get lock error (exit 2)."""
         agents = [f"concurrent-agent-{i}" for i in range(5)]
+        # WORK_DELAY=3 ensures lock holder keeps lock while others try
+        # LOCK_WAIT_SECS=0 ensures losers fail immediately instead of retrying
+        concurrent_env = {
+            "CREATE_AGENT_LOCK_WAIT_SECS": "0",
+            "CREATE_AGENT_WORK_DELAY": "3",
+        }
 
         def create_agent(name):
             return run_script(
                 [name, f"Test agent {name}"],
                 self.project_dir,
                 cleanup_lock=False,  # Don't clean per-call (T2)
+                env=concurrent_env,
             )
 
         with ThreadPoolExecutor(max_workers=5) as executor:
@@ -141,12 +148,17 @@ class TestConcurrentExecution:
     def test_concurrent_winner_file_exists(self):
         """The one agent that wins the lock should have its file created."""
         agents = [f"race-agent-{i}" for i in range(3)]
+        concurrent_env = {
+            "CREATE_AGENT_LOCK_WAIT_SECS": "0",
+            "CREATE_AGENT_WORK_DELAY": "3",
+        }
 
         def create_agent(name):
             return run_script(
                 [name, f"Test agent {name}"],
                 self.project_dir,
                 cleanup_lock=False,
+                env=concurrent_env,
             )
 
         with ThreadPoolExecutor(max_workers=3) as executor:
@@ -163,12 +175,17 @@ class TestConcurrentExecution:
     def test_concurrent_launcher_not_corrupted(self):
         """After concurrent attempts, launcher file is still valid bash."""
         agents = [f"corrupt-check-{i}" for i in range(5)]
+        concurrent_env = {
+            "CREATE_AGENT_LOCK_WAIT_SECS": "0",
+            "CREATE_AGENT_WORK_DELAY": "3",
+        }
 
         def create_agent(name):
             return run_script(
                 [name, f"Test agent {name}"],
                 self.project_dir,
                 cleanup_lock=False,
+                env=concurrent_env,
             )
 
         with ThreadPoolExecutor(max_workers=5) as executor:
@@ -248,6 +265,7 @@ class TestLockRecovery:
             ["blocked-agent", "Should be blocked"],
             self.project_dir,
             cleanup_lock=False,
+            env={"CREATE_AGENT_LOCK_WAIT_SECS": "2"},
         )
         assert (
             result.returncode == 2
