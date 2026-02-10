@@ -1,0 +1,93 @@
+# OpenAI o1-mini Code Review Evaluator
+# Cost-effective reasoning-based code review
+#
+# Provider: openai
+# Use cases:
+#   - PR code reviews
+#   - Bug detection
+#   - Logic verification
+#   - Test coverage analysis
+#   - Refactoring suggestions
+
+name: o1-mini-code
+description: Cost-effective reasoning code review using o1-mini
+model: o1-mini
+api_key_env: OPENAI_API_KEY
+model_requirement:
+  family: o
+  tier: mini
+  min_version: "1"
+output_suffix: -o1-mini-code.md
+timeout: 300
+
+prompt: |
+  You are a thorough code reviewer. Analyze this code systematically,
+  reasoning through potential issues step by step.
+
+  {content}
+
+  ## Review Process
+
+  ### 1. Code Understanding
+  First, understand what this code does:
+  - Main purpose
+  - Key functions/methods
+  - Data flow
+
+  ### 2. Bug Detection
+  Look for common bugs by reasoning through execution:
+
+  - **Null/undefined handling**: What happens with missing data?
+  - **Boundary conditions**: First item, last item, empty list?
+  - **Type issues**: Are types consistent? Implicit conversions?
+  - **Error paths**: What if operations fail?
+  - **Resource management**: Are resources properly cleaned up?
+
+  ### 3. Logic Verification
+  Trace through the logic:
+
+  - Does the code do what comments/names suggest?
+  - Are conditionals correct (especially negations)?
+  - Are loops bounded correctly?
+  - Is state managed consistently?
+
+  ### 4. Security Quick Check
+  - Input validation present?
+  - Obvious injection risks?
+  - Hardcoded secrets?
+  - Proper error messages (no sensitive data)?
+
+  ### 5. Quality Assessment
+  - Is the code readable?
+  - Is there unnecessary complexity?
+  - Could anything be simplified?
+
+  ## Output
+
+  ### Issues Found
+
+  For each issue:
+  ```
+  **[SEVERITY]** Issue Title
+  - Location: [file:line or function name]
+  - Problem: [What's wrong]
+  - Reasoning: [Why this is an issue]
+  - Fix: [How to fix it]
+  ```
+
+  Severity levels:
+  - 🔴 **CRITICAL**: Security flaw or data loss risk
+  - 🟠 **HIGH**: Bug that will cause failures
+  - 🟡 **MEDIUM**: Bug in edge cases or code smell
+  - 🟢 **LOW**: Style/maintainability suggestion
+
+  ### Summary
+
+  - Total issues: X (Critical: X, High: X, Medium: X, Low: X)
+  - Test coverage concerns: [Yes/No - details]
+  - Refactoring opportunities: [Brief list]
+
+  ### Verdict
+  **APPROVED** | **CHANGES_REQUESTED** | **REJECT**
+
+  [1-2 sentence summary]

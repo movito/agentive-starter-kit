@@ -23,7 +23,7 @@ import tempfile
 from pathlib import Path
 
 # Default version tag for reproducibility
-EVALUATOR_LIBRARY_VERSION = "v0.2.2"
+EVALUATOR_LIBRARY_VERSION = "v0.4.0"
 EVALUATOR_LIBRARY_REPO = "https://github.com/movito/adversarial-evaluator-library.git"
 
 # Status to folder mapping
@@ -418,7 +418,9 @@ def cmd_setup(args):
                         and version_parts[1] == "12"
                     )
                     if not is_valid_312:
-                        print(f"⚠️  Existing venv uses Python {venv_version}, need 3.12")
+                        print(
+                            f"⚠️  Existing venv uses Python {venv_version}, need 3.12"
+                        )
                         print(
                             "   Run with --force to recreate: ./scripts/project setup --force"
                         )
@@ -475,7 +477,9 @@ def cmd_setup(args):
             # Show last 500 chars of stderr for debugging
             stderr = result.stderr
             print(stderr[-500:] if len(stderr) > 500 else stderr)
-            print("\nTry manually: source .venv/bin/activate && pip install -e '.[dev]'")
+            print(
+                "\nTry manually: source .venv/bin/activate && pip install -e '.[dev]'"
+            )
             sys.exit(1)
         print("✅ Dependencies installed")
     except Exception as e:
@@ -538,9 +542,7 @@ def cmd_install_evaluators(args, project_dir):
             break
 
     # 1. Check for git (required for cloning)
-    git_check = subprocess.run(
-        ["git", "--version"], capture_output=True, text=True
-    )
+    git_check = subprocess.run(["git", "--version"], capture_output=True, text=True)
     if git_check.returncode != 0:
         print("❌ Git is required but not found")
         print()
@@ -611,9 +613,7 @@ def cmd_install_evaluators(args, project_dir):
             text=True,
         )
         commit_hash = (
-            hash_result.stdout.strip()[:8]
-            if hash_result.returncode == 0
-            else "unknown"
+            hash_result.stdout.strip()[:8] if hash_result.returncode == 0 else "unknown"
         )
 
         # Copy evaluators
@@ -1001,6 +1001,19 @@ except Exception as e:
 """,
         ]
 
+    elif command == "create-agent":
+        # Create a new Claude Code agent from template
+        script = project_dir / "scripts" / "create-agent.sh"
+        if not script.exists():
+            print("❌ scripts/create-agent.sh not found")
+            sys.exit(1)
+        result = subprocess.run(
+            ["bash", str(script)] + sys.argv[2:],
+            cwd=str(project_dir),
+            env={**os.environ, "CREATE_AGENT_PROJECT_ROOT": str(project_dir)},
+        )
+        sys.exit(result.returncode)
+
     else:
         print(f"❌ Unknown command: {command}")
         print("Run './project help' for available commands.")
@@ -1043,6 +1056,11 @@ Task Management:
   start <id>           Move task to in-progress (shorthand)
   block <id>           Move task to blocked (shorthand)
   validate             Validate all task statuses match folders
+
+Agent Management:
+  create-agent         Create a new Claude Code agent from template
+                       Usage: create-agent <name> <description> [options]
+                       Run: create-agent --help for full options
 
 Configuration:
   reconfigure          Update agent files with project name after upstream merge
