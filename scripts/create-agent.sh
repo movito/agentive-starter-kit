@@ -57,7 +57,8 @@ log_json() {
     local error="${4:-}"
     local now
     now=$(date +%s%N 2>/dev/null || python3 -c "import time; print(int(time.time()*1e9))")
-    local duration_ms=$(( (now - START_TIME) / 1000000 ))
+    local duration_ms
+    duration_ms=$(python3 -c "print(($now - $START_TIME) // 1000000)")
 
     mkdir -p "$LOG_DIR"
     python3 -c "
@@ -177,6 +178,8 @@ escape_sed() {
     text="${text//\\/\\\\}"   # \ → \\
     text="${text//&/\\&}"     # & → \&
     text="${text//|/\\|}"     # | → \|
+    # Strip newlines — descriptions are single-sentence
+    text="${text//$'\n'/ }"
     echo "$text"
 }
 

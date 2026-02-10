@@ -22,50 +22,16 @@ Bug ledger coverage:
 """
 
 import json
-import os
 import re
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
 
+from conftest import CREATE_AGENT_LOCK_DIR as LOCK_DIR
+from conftest import CREATE_AGENT_SCRIPT as SCRIPT_PATH
+from conftest import run_create_agent_script as run_script
 from conftest import setup_temp_project
-
-# ---------------------------------------------------------------------------
-# Script location
-# ---------------------------------------------------------------------------
-SCRIPT_PATH = Path(__file__).resolve().parent.parent / "scripts" / "create-agent.sh"
-LOCK_DIR = Path("/tmp/agent-creation.lock")
-
-
-# ---------------------------------------------------------------------------
-# Helper: run the create-agent.sh script in an isolated project dir
-# ---------------------------------------------------------------------------
-def run_script(
-    args: list[str],
-    project_dir: Path,
-    cleanup_lock: bool = True,
-    env: dict | None = None,
-) -> subprocess.CompletedProcess:
-    """Run create-agent.sh with given args in a temp project dir."""
-    if cleanup_lock and LOCK_DIR.exists():
-        shutil.rmtree(LOCK_DIR)
-
-    run_env = os.environ.copy()
-    run_env["CREATE_AGENT_PROJECT_ROOT"] = str(project_dir)
-    run_env["CREATE_AGENT_LOCK_DIR"] = str(LOCK_DIR)
-    if env:
-        run_env.update(env)
-
-    return subprocess.run(
-        ["bash", str(SCRIPT_PATH)] + args,
-        capture_output=True,
-        text=True,
-        timeout=30,
-        env=run_env,
-    )
-
 
 # ---------------------------------------------------------------------------
 # JSON log required fields (from plan's JSON Log Schema)

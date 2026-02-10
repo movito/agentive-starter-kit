@@ -21,41 +21,11 @@ from pathlib import Path
 
 import pytest
 
+from conftest import CREATE_AGENT_LOCK_DIR as LOCK_DIR
+from conftest import run_create_agent_script as run_script
 from conftest import setup_temp_project
 
 pytestmark = pytest.mark.slow
-
-LOCK_DIR = Path("/tmp/agent-creation.lock")
-
-
-def run_script(
-    args: list[str],
-    project_dir: Path,
-    cleanup_lock: bool = True,
-    env: dict | None = None,
-) -> subprocess.CompletedProcess:
-    """Run create-agent.sh with given args in a temp project dir."""
-    script = (
-        Path(__file__).resolve().parent.parent.parent / "scripts" / "create-agent.sh"
-    )
-
-    if cleanup_lock:
-        if LOCK_DIR.exists():
-            shutil.rmtree(LOCK_DIR)
-
-    run_env = os.environ.copy()
-    run_env["CREATE_AGENT_PROJECT_ROOT"] = str(project_dir)
-    run_env["CREATE_AGENT_LOCK_DIR"] = str(LOCK_DIR)
-    if env:
-        run_env.update(env)
-
-    return subprocess.run(
-        ["bash", str(script)] + args,
-        capture_output=True,
-        text=True,
-        timeout=30,
-        env=run_env,
-    )
 
 
 class TestSequentialCreation:

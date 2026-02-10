@@ -59,7 +59,7 @@ prompt: |
 
   ### 5. Quality Assessment
   - Is the code readable?
-  - Are there unnecessary complexity?
+  - Is there unnecessary complexity?
   - Could anything be simplified?
 
   ## Output

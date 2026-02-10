@@ -48,7 +48,7 @@ For comprehensive security analysis, use claude-code or o1-code-review.
 
 ```yaml
 api_key_env: ANTHROPIC_API_KEY
-model: claude-4-haiku-20260115
+model: anthropic/claude-haiku-4-5
 ```
 
 ## Example Usage

@@ -51,7 +51,7 @@ This evaluator provides Google's perspective on code security. Combine with clau
 
 ```yaml
 api_key_env: GEMINI_API_KEY
-model: gemini-3-pro-20260101
+model: gemini/gemini-3-pro-20260101
 ```
 
 ## Example Usage
