@@ -165,9 +165,9 @@ git commit --allow-empty -m "Test hooks"
 
 ### OpenAI API Key
 
-**When needed**: For adversarial evaluation (GPT-4o reviews your task specs).
+**When needed**: For adversarial evaluation (built-in evaluators review your task specs).
 
-**Cost**: ~$0.04-0.08 per evaluation. A typical task has 2-3 evaluations.
+**Cost**: Varies by evaluator. Run `adversarial list-evaluators` to see options.
 
 **To get a key**:
 1. Go to https://platform.openai.com/api-keys
