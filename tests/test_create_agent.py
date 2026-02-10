@@ -54,6 +54,7 @@ def run_script(
 
     run_env = os.environ.copy()
     run_env["CREATE_AGENT_PROJECT_ROOT"] = str(project_dir)
+    run_env["CREATE_AGENT_LOCK_DIR"] = str(LOCK_DIR)
     if env:
         run_env.update(env)
 

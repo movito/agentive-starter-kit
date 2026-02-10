@@ -18,8 +18,6 @@ set -euo pipefail
 # =============================================================================
 # Configuration
 # =============================================================================
-LOCK_DIR="/tmp/agent-creation.lock"
-LOCK_INFO="$LOCK_DIR/owner"
 LOCK_STALE_SECS="${CREATE_AGENT_LOCK_STALE_SECS:-60}"
 LOCK_WAIT_SECS="${CREATE_AGENT_LOCK_WAIT_SECS:-30}"
 DEFAULT_MODEL="claude-sonnet-4-5-20250929"
@@ -30,6 +28,15 @@ if [[ -n "${CREATE_AGENT_PROJECT_ROOT:-}" ]]; then
 else
     PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 fi
+
+# Per-project lock dir to avoid cross-repo collisions (env var overrides)
+if [[ -n "${CREATE_AGENT_LOCK_DIR:-}" ]]; then
+    LOCK_DIR="$CREATE_AGENT_LOCK_DIR"
+else
+    _project_hash=$(printf '%s' "$PROJECT_ROOT" | md5 -q 2>/dev/null || printf '%s' "$PROJECT_ROOT" | md5sum 2>/dev/null | cut -c1-12 || echo "default")
+    LOCK_DIR="/tmp/agent-creation-${_project_hash}.lock"
+fi
+LOCK_INFO="$LOCK_DIR/owner"
 
 TEMPLATE_FILE="$PROJECT_ROOT/.claude/agents/AGENT-TEMPLATE.md"
 LAUNCHER_FILE="$PROJECT_ROOT/agents/launch"
@@ -219,11 +226,12 @@ Options:
 
 Exit Codes:
   0  Success
-  1  User error (invalid input, duplicate name, missing template)
-  2  System error (lock timeout, file I/O failure, missing dependencies)
+  1  User error (invalid input, duplicate name)
+  2  System error (lock timeout, file I/O failure, missing template/dependencies)
 
 Environment:
   CREATE_AGENT_PROJECT_ROOT    Override project root directory
+  CREATE_AGENT_LOCK_DIR        Override lock directory path (default: per-project)
   CREATE_AGENT_LOCK_STALE_SECS Lock stale threshold in seconds (default: 60)
   CREATE_AGENT_LOCK_WAIT_SECS  Max seconds to wait for lock (default: 30)
 USAGE
@@ -368,8 +376,8 @@ update_agent_icon() {
         ' "$launcher" > "${launcher}.tmp" && mv "${launcher}.tmp" "$launcher"
     fi
 
-    # Check if already present in get_agent_icon function
-    if awk '/get_agent_icon\(\)/,/^}/' "$launcher" | grep -q "$name"; then
+    # Check if already present in get_agent_icon function (match literal *name* pattern)
+    if awk '/get_agent_icon\(\)/,/^}/' "$launcher" | grep -qF "*${name}*"; then
         return 0
     fi
 
@@ -527,6 +535,12 @@ main() {
     # Acquire lock
     acquire_lock
 
+    # Re-check duplicate after lock (prevents TOCTOU between pre-check and lock)
+    if [[ -f "$agent_file" ]] && [[ "$force" != "true" ]]; then
+        release_lock
+        user_error "Agent '$name' was created by another process while waiting for lock."
+    fi
+
     # Process template
     log_json "INFO" "template" "started" ""
     process_template "$name" "$description" "$model" "$agent_file"
@@ -542,13 +556,14 @@ main() {
     update_agent_icon "$name" "$emoji" "$LAUNCHER_FILE" "$force"
     log_json "INFO" "launcher" "completed" ""
 
-    # Release lock
-    release_lock
-
-    # Verify launcher is still valid bash
+    # Verify launcher is still valid bash (while still holding lock)
     if ! bash -n "$LAUNCHER_FILE" 2>/dev/null; then
+        release_lock
         system_error "Launcher syntax validation failed after modification"
     fi
+
+    # Release lock after validation
+    release_lock
 
     log_json "INFO" "cleanup" "completed" ""
 

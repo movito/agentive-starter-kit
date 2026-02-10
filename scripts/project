@@ -1009,6 +1009,7 @@ except Exception as e:
             sys.exit(1)
         result = subprocess.run(
             ["bash", str(script)] + sys.argv[2:],
+            cwd=str(project_dir),
             env={**os.environ, "CREATE_AGENT_PROJECT_ROOT": str(project_dir)},
         )
         sys.exit(result.returncode)
