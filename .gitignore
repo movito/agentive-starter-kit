@@ -152,3 +152,9 @@ logs/
 
 # Serena config (generated from template)
 .serena/project.yml
+
+# Adversarial Workflow
+# Evaluators are installed via: ./scripts/project install-evaluators
+.adversarial/evaluators/
+
+# Adversarial Workflow

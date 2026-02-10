@@ -1,5 +1,6 @@
 #!/bin/bash
-# Phase 4: Test Validation - Reviewer validates implementation
+# SCRIPT_VERSION: 0.9.8
+# Phase 4: Test Validation - Evaluator validates implementation
 
 # ANSI color codes
 RED='\033[91m'
@@ -67,8 +68,10 @@ if [ ! -f .adversarial/config.yml ]; then
   exit 1
 fi
 
-# Parse config
-EVALUATOR_MODEL=$(grep 'evaluator_model:' .adversarial/config.yml | awk '{print $2}')
+# Parse config using grep/awk (simple YAML parsing)
+# Note: evaluator_model is deprecated. Consider using 'adversarial evaluate' CLI instead.
+EVALUATOR_MODEL=$(grep 'evaluator_model:' .adversarial/config.yml 2>/dev/null | awk '{print $2}')
+EVALUATOR_MODEL=${EVALUATOR_MODEL:-gpt-4o}  # Default fallback if not configured
 TASK_DIR=$(grep 'task_directory:' .adversarial/config.yml | awk '{print $2}')
 LOG_DIR=$(grep 'log_directory:' .adversarial/config.yml | awk '{print $2}')
 ARTIFACTS_DIR=$(grep 'artifacts_directory:' .adversarial/config.yml | awk '{print $2}')
@@ -140,6 +143,7 @@ echo ""
 aider \
   --model "$EVALUATOR_MODEL" \
   --yes \
+  --no-detect-urls \
   --no-gitignore \
   --read "$TASK_FILE" "${ARTIFACTS_DIR}${TASK_NUM}-final-implementation.diff" "${ARTIFACTS_DIR}${TASK_NUM}-test-output.txt" \
   --message "You are a REVIEWER performing test validation and analysis.

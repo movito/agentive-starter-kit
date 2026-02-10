@@ -1,4 +1,5 @@
 #!/bin/bash
+# SCRIPT_VERSION: 0.9.8
 # Proofreader: Teaching Content Quality Review
 
 # ANSI color codes
@@ -68,7 +69,9 @@ if [ ! -f .adversarial/config.yml ]; then
 fi
 
 # Parse config using grep/awk (simple YAML parsing)
-EVALUATOR_MODEL=$(grep 'evaluator_model:' .adversarial/config.yml | awk '{print $2}')
+# Note: evaluator_model is deprecated. Consider using 'adversarial evaluate' CLI instead.
+EVALUATOR_MODEL=$(grep 'evaluator_model:' .adversarial/config.yml 2>/dev/null | awk '{print $2}')
+EVALUATOR_MODEL=${EVALUATOR_MODEL:-gpt-4o}  # Default fallback if not configured
 LOG_DIR=$(grep 'log_directory:' .adversarial/config.yml | awk '{print $2}')
 
 DOC_FILE="$1"
@@ -129,6 +132,7 @@ fi
 aider \
   --model "$EVALUATOR_MODEL" \
   --yes \
+  --no-detect-urls \
   --no-git \
   --map-tokens 0 \
   --no-gitignore \

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Agent models upgraded to Opus 4.6** - Updated planner, feature-developer, security-reviewer, and AGENT-TEMPLATE to use `claude-opus-4-6`
+- **Evaluators now installed via library** - Evaluators directory (`.adversarial/evaluators/`) is now gitignored; install with `./scripts/project install-evaluators`
+- **Removed deprecated `evaluator_model` config** - Use `adversarial list-evaluators` and `--evaluator NAME` flag instead
+
+### Added
+
+- **UV auto-detection** (ASK-0032) - Setup script automatically detects UV package manager and uses it to create Python 3.12 venvs on Python 3.13+ systems
+- **Agent creation automation** (ASK-0033) - New `scripts/create-agent.sh` with concurrent-safe locking, icon patterns, and force overwrite support
+
 ## [0.3.1] - 2026-02-02
 
 ### Added

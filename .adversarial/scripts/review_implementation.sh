@@ -1,5 +1,6 @@
 #!/bin/bash
-# Phase 3: Implementation Review - Reviewer analyzes actual code changes
+# SCRIPT_VERSION: 0.9.8
+# Phase 3: Implementation Review - Evaluator analyzes actual code changes
 
 # ANSI color codes
 RED='\033[91m'
@@ -67,8 +68,10 @@ if [ ! -f .adversarial/config.yml ]; then
   exit 1
 fi
 
-# Parse config
-EVALUATOR_MODEL=$(grep 'evaluator_model:' .adversarial/config.yml | awk '{print $2}')
+# Parse config using grep/awk (simple YAML parsing)
+# Note: evaluator_model is deprecated. Consider using 'adversarial evaluate' CLI instead.
+EVALUATOR_MODEL=$(grep 'evaluator_model:' .adversarial/config.yml 2>/dev/null | awk '{print $2}')
+EVALUATOR_MODEL=${EVALUATOR_MODEL:-gpt-4o}  # Default fallback if not configured
 TASK_DIR=$(grep 'task_directory:' .adversarial/config.yml | awk '{print $2}')
 LOG_DIR=$(grep 'log_directory:' .adversarial/config.yml | awk '{print $2}')
 ARTIFACTS_DIR=$(grep 'artifacts_directory:' .adversarial/config.yml | awk '{print $2}')
@@ -137,13 +140,6 @@ echo ""
 echo "=== REVIEWER ($EVALUATOR_MODEL) ANALYZING IMPLEMENTATION ==="
 echo ""
 
-# Ensure log and artifacts directories exist
-mkdir -p "$LOG_DIR"
-mkdir -p "$ARTIFACTS_DIR"
-
-# Create review output file
-REVIEW_OUTPUT="${LOG_DIR}${TASK_NUM}-IMPLEMENTATION-REVIEW.md"
-
 # Build read files list
 READ_FILES="${ARTIFACTS_DIR}${TASK_NUM}-implementation.diff ${ARTIFACTS_DIR}${TASK_NUM}-change-summary.txt ${ARTIFACTS_DIR}${TASK_NUM}-file-status.txt $TASK_FILE"
 if [ "$PLAN_AVAILABLE" = "yes" ]; then
@@ -153,6 +149,7 @@ fi
 aider \
   --model "$EVALUATOR_MODEL" \
   --yes \
+  --no-detect-urls \
   --no-gitignore \
   --read $READ_FILES \
   --message "You are a REVIEWER performing critical code review.
@@ -266,12 +263,10 @@ Real, working code is required. TODOs and comments are not implementation.
 If code is fundamentally sound with minor issues → APPROVED with caveats
 If code has significant gaps or bugs → NEEDS_REVISION with specific fixes
 If code is mostly TODOs or doesn't address requirements → REJECT" \
-  --no-auto-commits 2>&1 | tee "$REVIEW_OUTPUT"
+  --no-auto-commits
 
 echo ""
 echo "=== Implementation review complete ==="
-echo ""
-echo "Review saved to: $REVIEW_OUTPUT"
 echo ""
 echo "Next steps:"
 echo "1. Review evaluation output above"

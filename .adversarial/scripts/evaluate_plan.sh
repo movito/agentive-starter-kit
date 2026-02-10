@@ -1,4 +1,5 @@
 #!/bin/bash
+# SCRIPT_VERSION: 0.9.8
 # Phase 1: Plan Evaluation - Critical design review
 
 # ANSI color codes
@@ -68,7 +69,9 @@ if [ ! -f .adversarial/config.yml ]; then
 fi
 
 # Parse config using grep/awk (simple YAML parsing)
-EVALUATOR_MODEL=$(grep 'evaluator_model:' .adversarial/config.yml | awk '{print $2}')
+# Note: evaluator_model is deprecated. Consider using 'adversarial evaluate' CLI instead.
+EVALUATOR_MODEL=$(grep 'evaluator_model:' .adversarial/config.yml 2>/dev/null | awk '{print $2}')
+EVALUATOR_MODEL=${EVALUATOR_MODEL:-gpt-4o}  # Default fallback if not configured
 TASK_DIR=$(grep 'task_directory:' .adversarial/config.yml | awk '{print $2}')
 LOG_DIR=$(grep 'log_directory:' .adversarial/config.yml | awk '{print $2}')
 
@@ -104,12 +107,10 @@ EVAL_OUTPUT="${LOG_DIR}${TASK_NUM}-PLAN-EVALUATION.md"
 echo "=== REVIEWER ($EVALUATOR_MODEL) ANALYZING PLAN ==="
 echo ""
 
-# Ensure log directory exists
-mkdir -p "$LOG_DIR"
-
 aider \
   --model "$EVALUATOR_MODEL" \
   --yes \
+  --no-detect-urls \
   --no-git \
   --map-tokens 0 \
   --no-gitignore \
@@ -199,7 +200,7 @@ Be thorough, be critical, but be constructive. Your goal is to improve the plan,
 If the plan is fundamentally sound but has minor issues, mark as APPROVED with caveats.
 If the plan has significant gaps or risks, mark as NEEDS_REVISION with specific fixes.
 Only use REJECT if the entire approach is flawed." \
-  --no-auto-commits 2>&1 | tee "$EVAL_OUTPUT"
+  --no-auto-commits
 
 echo ""
 echo "=== Plan evaluation complete ==="

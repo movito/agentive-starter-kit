@@ -1,7 +1,7 @@
 ---
 name: security-reviewer
 description: Security analysis and hardening specialist
-model: claude-opus-4-5-20251101
+model: claude-opus-4-6
 tools:
   - Read
   - Grep

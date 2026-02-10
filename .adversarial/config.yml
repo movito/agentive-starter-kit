@@ -1,40 +1,23 @@
 # Adversarial Workflow Configuration
-# ==================================
-# This file configures the adversarial evaluation system.
-# Copy to config.yml after setup.
-#
-# The adversarial workflow uses GPT-4o to review task specifications
-# before implementation, catching design flaws early.
-#
-# Requirements:
-# - OPENAI_API_KEY in .env
-# - aider CLI installed (pip install aider-chat)
-#
-# Cost: ~$0.04-0.08 per evaluation
+# This file configures the adversarial workflow for your project
 
-# Model used for evaluation (GPT-4o recommended)
+# Model Configuration
 evaluator_model: gpt-4o
 
-# Directory containing task specifications
-task_directory: delegation/tasks/
-
-# Directory for evaluation logs
+# Directory Structure
+task_directory: tasks/
 log_directory: .adversarial/logs/
-
-# Directory for temporary artifacts
 artifacts_directory: .adversarial/artifacts/
 
-# Command to run tests (for test validation phase)
-test_command: pytest tests/ -v
+# Test Configuration
+test_command: pytest
 
 # Workflow Settings
-# -----------------
-
-# Auto-run evaluations (set to true for CI integration)
+# Enable/disable automatic script execution
 auto_run: false
 
-# Enable git integration (commit tracking)
+# Git integration (requires git repo)
 git_integration: true
 
-# Save artifacts after each evaluation phase
+# Save artifacts after each phase
 save_artifacts: true

@@ -329,11 +329,11 @@ Choose your model based on task complexity:
 
 | Model | Model ID | Cost | Best For |
 |-------|----------|------|----------|
-| **Opus 4.5** | `claude-opus-4-5-20251101` | $5/$25 per 1M tokens | Complex planning, code generation, security analysis |
+| **Opus 4.6** | `claude-opus-4-6` | $5/$25 per 1M tokens | Complex planning, code generation, security analysis |
 | **Sonnet 4.5** | `claude-sonnet-4-5-20250929` | $3/$15 per 1M tokens | Documentation, testing, agent creation, day-to-day tasks |
-| **Haiku 3.5** | `claude-3-5-haiku-20241022` | $1/$5 per 1M tokens | CI checks, simple validation, fast operations |
+| **Haiku 4.5** | `claude-haiku-4-5-20251001` | $1/$5 per 1M tokens | CI checks, simple validation, fast operations |
 
-**Note**: Opus 4.5 uses ~50% fewer tokens for the same quality output, often making total cost similar to Sonnet despite higher per-token price.
+**Note**: Opus 4.6 uses ~50% fewer tokens for the same quality output, often making total cost similar to Sonnet despite higher per-token price.
 
 To set a model, edit the `model:` line in the frontmatter above with one of the Model IDs.
 
