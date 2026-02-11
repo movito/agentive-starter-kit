@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Agent launcher delegates to standalone scripts** - `agents/launch onboard` now correctly delegates to `agents/onboarding` instead of launching a blank session without the initial prompt
+
 ## [0.3.2] - 2026-02-11
 
 ### Changed
