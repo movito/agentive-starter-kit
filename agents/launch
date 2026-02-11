@@ -192,6 +192,14 @@ launch_agent() {
     local name=$(get_agent_name "$agent_file")
     local model=$(get_agent_model "$agent_file")
 
+    # Delegate to standalone script if one exists (e.g. agents/onboarding)
+    # Standalone scripts handle their own preflight, context, and initial prompts
+    local standalone_script="$SCRIPT_DIR/$name"
+    if [[ -x "$standalone_script" && "$standalone_script" != "$SCRIPT_DIR/launch" ]]; then
+        echo -e "${GREEN}Launching agent: ${YELLOW}$name${NC} (via standalone script)"
+        exec "$standalone_script"
+    fi
+
     # Read full markdown content (including frontmatter and documentation)
     local full_agent_content=$(cat "$agent_file")
 
