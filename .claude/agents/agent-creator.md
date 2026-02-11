@@ -122,7 +122,7 @@ Once confirmed, execute the creation:
 
 1. **Run automation script**:
    ```bash
-   .agent-context/scripts/create-agent.sh [agent-name] "[description]"
+   scripts/create-agent.sh [agent-name] "[description]"
    ```
 
 2. **Customize template file**: Use Edit tool to update `.claude/agents/[agent-name].md`:
@@ -352,7 +352,7 @@ cat .claude/agents/AGENT-TEMPLATE.md
 cat .agent-context/workflows/AGENT-CREATION-WORKFLOW.md
 
 # Run automation script
-.agent-context/scripts/create-agent.sh agent-name "description"
+scripts/create-agent.sh agent-name "description"
 
 # Edit agent launcher (for adding new agents to launcher list)
 # File: agents/universal-agent-launcher.sh
@@ -432,7 +432,7 @@ Would you like me to invoke Evaluator to review this agent definition? [y/n]
 If agent creation fails:
 1. **Check if agent already exists**: Read `.claude/agents/` directory
 2. **Validate name format**: Must be kebab-case
-3. **Verify script exists**: `.agent-context/scripts/create-agent.sh`
+3. **Verify script exists**: `scripts/create-agent.sh`
 4. **Check permissions**: Ensure write access to `.claude/agents/`
 5. **Report error clearly**: Tell user what went wrong and how to fix it
 
