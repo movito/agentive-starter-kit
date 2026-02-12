@@ -304,12 +304,128 @@ gh pr view --json comments --jq '.comments[] | "\(.author.login): \(.body[:200])
 - **BugBot**: Security issues, potential bugs, code smells
 - **CodeRabbit**: Code quality, patterns, suggestions, potential issues
 
-**Iterate until clean:**
-1. Read each comment carefully
-2. Fix the issues or respond explaining why not applicable
-3. Commit and push: `git add . && git commit -m "fix: Address review feedback" && git push`
-4. Wait for re-review (automated reviewers re-run on new commits)
-5. Check again: `gh pr view --comments`
+**Iterate until clean** — follow the triage-reply-resolve workflow below.
+
+### Triaging, Replying to, and Resolving Review Comments
+
+After each push, automated reviewers (BugBot, CodeRabbit) may post new
+review comments. You **MUST** respond to every comment thread — either by
+fixing the issue or by explaining why it won't be fixed — then resolve
+the thread. Never leave threads dangling.
+
+#### Step 1: Fetch all review comments
+
+```bash
+# One-line summary of every comment (who, where, what)
+gh api repos/{owner}/{repo}/pulls/{pr}/comments --paginate \
+  --jq '.[] | "ID: \(.id) | Reply-To: \(.in_reply_to_id // "none") | User: \(.user.login) | Path: \(.path):\(.line // .original_line) | Body: \(.body[0:200])"'
+```
+
+#### Step 2: Check which threads are resolved vs open
+
+```bash
+gh api graphql -f query='
+{
+  repository(owner: "{owner}", name: "{repo}") {
+    pullRequest(number: {pr}) {
+      reviewThreads(first: 50) {
+        nodes {
+          id
+          isResolved
+          comments(first: 1) {
+            nodes { databaseId author { login } }
+          }
+        }
+      }
+    }
+  }
+}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] |
+  "\(.isResolved)\t\(.comments.nodes[0].databaseId)\t\(.comments.nodes[0].author.login)\t\(.id)"'
+```
+
+This gives you a table of `isResolved`, the root comment `databaseId` (used
+for posting replies), the author, and the GraphQL `id` (used for resolving).
+
+#### Step 3: Triage each unresolved thread
+
+For each open thread, decide one of:
+
+| Verdict | Criteria | Action |
+|---------|----------|--------|
+| **Fix** | Real bug, compatibility issue, or race condition | Implement fix, commit, push |
+| **Won't fix** | Theoretical concern that cannot occur on our target platforms, or adds complexity for no practical benefit | Post a reply explaining why |
+
+**Triage guidelines:**
+- **Fix** anything that is a real bug or affects a supported platform
+- **Fix** anything that breaks the graceful-degradation contract
+- **Won't fix** concerns that are POSIX-only irrelevant (e.g., Windows CRLF)
+  or physically impossible (e.g., `os.write` short counts on regular files)
+- When in doubt, fix it — it's cheaper than debating
+
+#### Step 4: Post a reply on each thread
+
+For threads where you **fixed** the issue:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/comments/{comment_id}/replies \
+  -f body='Fixed in {commit_sha}: {1-2 sentence description of what changed and where}.'
+```
+
+For threads you are **declining to fix**:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/comments/{comment_id}/replies \
+  -f body='Acknowledged, but won'\''t fix: {clear technical justification}.'
+```
+
+**Reply format rules:**
+- Always reference the commit SHA where the fix was made
+- Cite specific line numbers in the current code
+- Keep it to 1-3 sentences — the code diff speaks for itself
+
+#### Step 5: Resolve each thread
+
+After posting a reply, resolve the thread using its GraphQL node ID:
+
+```bash
+gh api graphql -f query='
+  mutation {
+    resolveReviewThread(input: {threadId: "{thread_node_id}"}) {
+      thread { isResolved }
+    }
+  }' --jq '.data.resolveReviewThread.thread.isResolved'
+```
+
+You can batch-resolve multiple threads in a loop:
+
+```bash
+for thread_id in PRRT_abc123 PRRT_def456 PRRT_ghi789; do
+  gh api graphql -f query="mutation { resolveReviewThread(input: {threadId: \"$thread_id\"}) { thread { isResolved } } }" \
+    --jq '.data.resolveReviewThread.thread.isResolved'
+done
+```
+
+#### Step 6: Verify zero unresolved threads
+
+```bash
+gh api graphql -f query='
+{
+  repository(owner: "{owner}", name: "{repo}") {
+    pullRequest(number: {pr}) {
+      reviewThreads(first: 50) {
+        nodes { isResolved }
+      }
+    }
+  }
+}' --jq '[.data.repository.pullRequest.reviewThreads.nodes[].isResolved] |
+  {total: length, resolved: (map(select(. == true)) | length), unresolved: (map(select(. == false)) | length)}'
+```
+
+Target: `"unresolved": 0` before proceeding.
+
+**Important**: Automated reviewers re-run on each push and may open *new*
+threads. Repeat this workflow after every push until all threads are resolved
+and CI is green.
 
 ### When to Proceed to Human Review
 
