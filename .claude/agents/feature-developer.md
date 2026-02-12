@@ -156,31 +156,25 @@ After pushing code to GitHub, you **MUST** verify CI passes:
 ### Verification Process
 
 1. **Push your changes**: `git push origin <branch>`
-2. **Invoke ci-checker agent**: Request CI verification (DO NOT proceed until response)
-3. **Wait for result**: ci-checker monitors GitHub Actions and reports back
-4. **Handle failures**: If CI fails, fix issues and repeat
+2. **Run CI verification script**: `./scripts/verify-ci.sh <branch> --wait`
+3. **Handle failures**: If CI fails, fix issues and repeat
 
-### Invocation Pattern
+### How to Verify
 
-After pushing, invoke the ci-checker agent using the Task tool:
+After pushing, run the verification script directly via Bash:
 
-```
-Use the Task tool with these parameters:
-- subagent_type: "ci-checker"
-- description: "Verify CI for branch <branch-name>"
-- prompt: "Please verify CI status for branch '<branch-name>' after my recent push. Check the latest workflow runs and report PASS/FAIL/TIMEOUT status."
+```bash
+./scripts/verify-ci.sh <branch-name> --wait
 ```
 
-**Example invocation**: After `git push origin feature/new-feature`, use the Task tool to invoke ci-checker with the branch name.
+The script will:
+- Check GitHub Actions workflow status via `gh` CLI
+- Filter to push-triggered workflows only
+- Wait for in-progress workflows to complete (`--wait` flag)
+- Report ✅ PASS / ❌ FAIL / ⏳ IN PROGRESS / ⚠️ MIXED status
+- Exit with non-zero status on failure
 
-The ci-checker agent will:
-- Monitor GitHub Actions workflows
-- Report ✅ PASS / ❌ FAIL / ⏱️ TIMEOUT status
-- Provide failure summaries if workflows fail
-- Return control to you with recommendations
-
-**Cost**: ~$0.001-0.003 per check (Haiku-powered ci-checker agent)
-**Duration**: 20 seconds to 10 minutes (depending on workflow)
+**Note**: Do NOT use the ci-checker subagent via Task tool — it fails due to Bash permission denial in background subagents. Always call `verify-ci.sh` directly.
 
 ### Why This Is Critical
 
@@ -196,7 +190,8 @@ Even if `ci-check.sh` passes locally, CI can still fail due to:
 
 - If CI **PASSES**: ✅ Proceed with task completion
 - If CI **FAILS**: ❌ **Offer to fix automatically** (see below)
-- If CI **TIMEOUT**: ⏱️ Check manually, use judgment (document decision)
+- If CI **IN PROGRESS**: ⏳ Re-run with `--wait` or check back later
+- If CI **MIXED**: ⚠️ Review which workflows passed/failed, use judgment (document decision)
 
 **Never skip CI verification** - it prevents broken code in repository.
 
