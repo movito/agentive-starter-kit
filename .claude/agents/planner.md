@@ -641,7 +641,8 @@ Even if `ci-check.sh` passes locally, CI can still fail due to:
 
 - If CI **PASSES**: ✅ Proceed with work
 - If CI **FAILS**: ❌ **Offer to fix automatically** (see below)
-- If CI **TIMEOUT**: ⏱️ Check manually, use judgment (document decision)
+- If CI **IN PROGRESS**: ⏳ Re-run with `--wait` or check back later
+- If CI **MIXED**: ⚠️ Review which workflows passed/failed, use judgment (document decision)
 
 **Never skip CI verification** - it prevents broken code in repository.
 

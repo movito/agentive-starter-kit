@@ -378,7 +378,7 @@ The script reports ✅ PASS / ❌ FAIL / ⏳ IN PROGRESS / ⚠️ MIXED status a
 
 **Proactive CI Fix**: When CI fails, offer to analyze logs and implement fix. See COMMIT-PROTOCOL.md for full workflow.
 
-**Soft Block**: Fix CI failures before task completion, but use judgment for timeout situations (document decision).
+**Soft Block**: Fix CI failures before task completion. For IN PROGRESS status, re-run with `--wait`. For MIXED status, review and use judgment (document decision).
 
 **Reference**: `.agent-context/workflows/COMMIT-PROTOCOL.md`
 
