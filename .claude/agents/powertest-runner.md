@@ -359,22 +359,20 @@ Every test should have:
 After pushing code to GitHub, you **MUST** verify CI passes:
 
 1. **Push your changes**: `git push origin <branch>`
-2. **Invoke ci-checker agent**: Request CI verification using Task tool
-3. **Wait for result**: ci-checker monitors GitHub Actions and reports back
-4. **Handle failures**: If CI fails, **offer to fix automatically**
+2. **Run CI verification script**: `./scripts/verify-ci.sh <branch> --wait`
+3. **Handle failures**: If CI fails, **offer to fix automatically**
 
-**Invocation Pattern**:
+**How to Verify**:
 
-After pushing, invoke the ci-checker agent using the Task tool:
+After pushing, run the verification script directly via Bash:
 
-```
-Use the Task tool with these parameters:
-- subagent_type: "ci-checker"
-- description: "Verify CI for branch <branch-name>"
-- prompt: "Please verify CI status for branch '<branch-name>' after my recent push. Check the latest workflow runs and report PASS/FAIL/TIMEOUT status."
+```bash
+./scripts/verify-ci.sh <branch-name> --wait
 ```
 
-The ci-checker will monitor GitHub Actions and report back with ✅ PASS / ❌ FAIL / ⏱️ TIMEOUT status.
+The script reports ✅ PASS / ❌ FAIL / ⏳ IN PROGRESS / ⚠️ MIXED status and exits non-zero on failure.
+
+**Note**: Do NOT use the ci-checker subagent via Task tool — it fails due to Bash permission denial in background subagents. Always call `verify-ci.sh` directly.
 
 **Why Critical**: Environment differences, race conditions, and GitHub Actions-specific issues can cause failures not caught locally. Tests must pass in CI/CD environment, not just locally.
 
@@ -402,7 +400,7 @@ After implementation is complete and CI passes, you **MUST** request code review
 ### Code Review Process
 
 1. **Complete implementation**: All acceptance criteria met, tests pass (TDD complete)
-2. **Verify CI passes**: Use ci-checker agent (see above)
+2. **Verify CI passes**: Run `./scripts/verify-ci.sh <branch> --wait` (see above)
 3. **Move task to 4-in-review**: `./scripts/project move <TASK-ID> in-review`
 4. **Request code review**: Invoke code-reviewer agent (see below)
 5. **Address feedback**: Fix any issues raised by reviewer
@@ -456,7 +454,7 @@ You must NOT:
 - Run destructive tests on production systems
 - Make architectural decisions (escalate to coordinator)
 - Use sleep() for timing (use proper wait conditions)
-- **Complete task without verifying CI/CD passes on GitHub via ci-checker agent**
+- **Complete task without verifying CI/CD passes on GitHub via `./scripts/verify-ci.sh`**
 
 ## Success Metrics
 

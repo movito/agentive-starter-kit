@@ -142,26 +142,7 @@ gpush  # Runs CI check + pushes if passes
 
 After pushing to GitHub, you **MUST** verify that GitHub Actions CI/CD passes:
 
-### Option 1: Use ci-checker Agent (Recommended for Agents)
-
-Agents should invoke the **ci-checker** sub-agent using the Task tool:
-
-```
-Use the Task tool with these parameters:
-- subagent_type: "ci-checker"
-- description: "Verify CI for branch <branch-name>"
-- prompt: "Please verify CI status for branch '<branch-name>' after my recent push. Check the latest workflow runs and report PASS/FAIL/TIMEOUT status."
-```
-
-The ci-checker agent will:
-- Monitor GitHub Actions workflows via `gh` CLI
-- Report ✅ PASS / ❌ FAIL / ⏱️ TIMEOUT status
-- Provide failure summaries if needed
-- Take ~20s-10min depending on workflow duration
-
-**Cost**: ~$0.001-0.003 per check (Haiku model)
-
-### Option 2: Use verify-ci.sh Script (Manual or Agent)
+### Use verify-ci.sh Script (Recommended)
 
 ```bash
 ./scripts/verify-ci.sh [branch-name] [timeout-seconds]
@@ -255,9 +236,9 @@ If CI is still running after timeout:
 ✅ Tests pass locally
 ✅ ci-check.sh passed
 ✅ Pushed to GitHub
-⏳ Waiting for CI verification... (ci-checker monitoring)
+⏳ Waiting for CI verification... (verify-ci.sh --wait)
 
-[Wait for ci-checker to report back]
+[Wait for verify-ci.sh to report back]
 
 ✅ CI/CD passed on GitHub
 ✅ Task complete!
@@ -283,7 +264,6 @@ git commit -m "message"      # Formatting + linting + fast tests ✅
 ./scripts/ci-check.sh        # MANDATORY pre-push verification ✅
 git push origin main         # Push to GitHub ✅
 ./scripts/verify-ci.sh       # MANDATORY post-push CI verification ✅
-# OR invoke ci-checker agent and wait for result
 ```
 
 **Key changes**:
