@@ -1,6 +1,6 @@
 # ASK-0035: Make Linear Dependencies Optional
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: medium
 **Assigned To**: feature-developer
 **Estimated Effort**: 1-2 hours

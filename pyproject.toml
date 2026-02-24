@@ -21,13 +21,13 @@ license = {text = "MIT"}
 authors = [
     {name = "Your Name", email = "you@example.com"},  # TODO: Update author
 ]
-dependencies = [
-    # Linear sync (included by default - most projects use it)
+dependencies = []
+
+[project.optional-dependencies]
+linear = [
     "gql[requests]>=3.4.0",    # GraphQL client for Linear API
     "python-dotenv>=1.0.0",    # Load .env files
 ]
-
-[project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
