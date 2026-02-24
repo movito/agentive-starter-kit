@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # create-agent.sh — Agent Creation Automation Script
-# Part of Agentive Starter Kit (ASK-0033 v2)
+# Agent creation automation script
 #
 # Creates a new Claude Code agent from AGENT-TEMPLATE.md and registers it
 # in the agents/launch launcher script.
