@@ -1,0 +1,64 @@
+version: 1
+interfaces:
+  agent_dir: .claude/agents/
+  spawn_command: agents/launch $AGENT_NAME
+  bus_file: .dispatch/bus.jsonl
+  starter_dir: .agent-context/
+  task_dir: delegation/tasks/
+  session_manager: tmux
+  notification: terminal
+transitions:
+- name: planning-to-development
+  when:
+    type: phase_complete
+    source_agent: planner
+  gates:
+  - type: human
+  then:
+    spawn: feature-developer
+    starter_from: payload.starter_path
+  mode: approve
+- name: development-ci-review
+  when:
+    type: phase_complete
+    source_agent: feature-developer
+  gates:
+  - type: ci
+  - type: external
+  then:
+    notify: feature-developer
+  mode: notify
+- name: development-to-code-review
+  when:
+    type: phase_complete
+    source_agent: feature-developer
+  gates:
+  - type: human
+  then:
+    spawn: code-reviewer
+    starter_from: payload.starter_path
+  mode: approve
+- name: code-review-approved
+  when:
+    type: phase_complete
+    source_agent: code-reviewer
+  gates: []
+  then:
+    notify: planner
+  mode: notify
+- name: code-review-changes-requested
+  when:
+    type: changes_requested
+    source_agent: code-reviewer
+  gates: []
+  then:
+    notify: feature-developer
+  mode: notify
+
+# Trust escalation (optional, for gradual autonomy)
+# Add transition names here to run them automatically (skip approval prompt).
+# These settings belong in config.local.yml so they're personal, not team-wide.
+# Manage with: dispatch trust --list | dispatch trust <name> auto|reset
+# Example: auto_transitions: [development-to-review]
+trust:
+  auto_transitions: []

@@ -675,6 +675,17 @@ Even if `ci-check.sh` passes locally, CI can still fail due to:
 
 **Reference**: See `.agent-context/workflows/COMMIT-PROTOCOL.md` for full protocol.
 
+## Bus Integration
+
+When a task is ready for implementation, emit:
+
+```bash
+dispatch emit phase_complete --agent planner \
+  --task $TASK_ID \
+  --starter .agent-context/$TASK_ID-HANDOFF-feature-developer.md \
+  --summary "Task ready for implementation"
+```
+
 ## Restrictions
 - Should not modify evaluation logs (read-only outputs from `.adversarial/logs/`)
 - Must follow TDD requirements when creating tasks

@@ -544,6 +544,24 @@ You have full development permissions including:
 - Using git for version control (following commit protocol)
 - Requesting evaluations for clarification
 
+## Bus Integration
+
+When you complete your work, emit a phase_complete event:
+
+```bash
+dispatch emit phase_complete --agent feature-developer \
+  --task $TASK_ID \
+  --summary "Brief description of what was done"
+```
+
+If changes are requested during review, emit after fixing:
+
+```bash
+dispatch emit changes_addressed --agent feature-developer \
+  --task $TASK_ID \
+  --summary "Addressed review feedback"
+```
+
 ## Restrictions
 - Never modify `.env` files directly (use `.env.example`)
 - Don't change core architecture without coordinator approval

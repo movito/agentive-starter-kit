@@ -341,6 +341,22 @@ If CI is failing, verdict should be CHANGES_REQUESTED regardless of code quality
 - Check git history and diffs
 - Write review reports to `.agent-context/reviews/`
 
+## Bus Integration
+
+After completing a review, emit one of:
+
+```bash
+# If approved:
+dispatch emit phase_complete --agent code-reviewer \
+  --task $TASK_ID \
+  --summary "Code review approved"
+
+# If changes requested:
+dispatch emit changes_requested --agent code-reviewer \
+  --task $TASK_ID \
+  --summary "Changes requested: brief description"
+```
+
 ## Restrictions
 
 - Cannot modify implementation code (read-only review)
