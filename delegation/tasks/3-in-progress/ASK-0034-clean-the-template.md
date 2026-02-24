@@ -1,6 +1,6 @@
 # ASK-0034: Clean the Template
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: medium
 **Assigned To**: feature-developer
 **Estimated Effort**: 1-2 hours

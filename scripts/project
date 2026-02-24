@@ -754,7 +754,7 @@ except Exception as e:
 
     elif command == "version":
         print("Project CLI v1.1.0")
-        print("Part of Agentive Starter Kit")
+        print("Project CLI")
         sys.exit(0)
 
     elif command == "move":
