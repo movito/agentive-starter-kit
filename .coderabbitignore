@@ -1,0 +1,15 @@
+# CodeRabbit ignore file
+# Prevents CodeRabbit from reviewing non-code artifacts that generate noise
+
+# Adversarial evaluator artifacts (inputs and logs)
+.adversarial/inputs/
+.adversarial/logs/
+.adversarial/artifacts/
+
+# Agent review artifacts (evaluator outputs, review starters)
+.agent-context/reviews/
+.agent-context/*-REVIEW-STARTER.md
+.agent-context/*-HANDOFF-*.md
+
+# Task specs (markdown, not code)
+delegation/tasks/

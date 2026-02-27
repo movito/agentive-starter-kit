@@ -67,6 +67,17 @@ Include:
 
 ## Step 2: Run the Evaluator
 
+### Available evaluators
+
+| Command | Model | Cost | API Key Env Var |
+|---------|-------|------|-----------------|
+| `adversarial code-reviewer` | o1 (OpenAI) | ~$0.33/run | `OPENAI_API_KEY` |
+| `adversarial code-reviewer-fast` | Gemini Flash | ~$0.004/run | `GEMINI_API_KEY` |
+
+**Note**: `spec-compliance-fast` is NOT available — use manual spec checks or `/check-spec` (Gemini Flash via API) instead.
+
+If the required API key is missing, fall back to the other evaluator. If neither key is set, document the failure and proceed to human review.
+
 ```bash
 # Deep analysis (recommended for substantial PRs)
 adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md
