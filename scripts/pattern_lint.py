@@ -252,31 +252,13 @@ def check_dk004(tree: ast.AST, source_lines: list[str], path: str) -> list[Viola
 def _is_swallowed(body: list[ast.stmt]) -> bool:
     """Check if an except handler body silently swallows the exception.
 
-    Returns True if the body is empty or contains only ``pass``.
-    Returns False if the body contains raise, return, logging calls,
-    or any other meaningful statement.
+    Returns True only when the body is empty or contains nothing but ``pass``.
+    Any other statement (raise, return, logging, assignment, etc.) means
+    the exception is being handled in some way.
     """
     if not body:
         return True
-
-    # Body contains only 'pass' statement(s)
-    if all(isinstance(stmt, ast.Pass) for stmt in body):
-        return True
-
-    # Check if body contains meaningful handling
-    for stmt in body:
-        if isinstance(stmt, ast.Raise):
-            return False
-        if isinstance(stmt, ast.Return):
-            return False
-        if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
-            func = stmt.value.func
-            # logger.error(...), logging.warning(...), etc.
-            if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
-                if func.value.id in ("logger", "logging", "log"):
-                    return False
-
-    return False
+    return all(isinstance(stmt, ast.Pass) for stmt in body)
 
 
 def _extract_name(node: ast.AST) -> str | None:
