@@ -23,7 +23,7 @@ import tempfile
 from pathlib import Path
 
 # Default version tag for reproducibility
-EVALUATOR_LIBRARY_VERSION = "v0.4.0"
+EVALUATOR_LIBRARY_VERSION = "v0.5.0"
 EVALUATOR_LIBRARY_REPO = "https://github.com/movito/adversarial-evaluator-library.git"
 
 # Status to folder mapping
