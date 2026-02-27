@@ -1,6 +1,6 @@
 # ASK-0037: Workflow Verification — Docs-Only Path
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: medium
 **Assigned To**: feature-developer-v3
 **Estimated Effort**: 15-30 minutes
