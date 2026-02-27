@@ -208,6 +208,8 @@ See template structure below for creating handoff files.
 ```markdown
 # [TASK-ID]: [Task Title] - Implementation Handoff
 
+**You are the [agent-type]. Implement this task directly. Do not delegate or spawn other agents.**
+
 **Date**: YYYY-MM-DD
 **From**: [Coordinator Name]
 **To**: [Agent Type] ([specific agent if known])
