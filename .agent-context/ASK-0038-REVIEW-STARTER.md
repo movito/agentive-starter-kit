@@ -62,5 +62,5 @@ This task was also a verification exercise. Phases exercised:
 
 ## Files to Review
 
-- `/Users/broadcaster_three/Github/agentive-starter-kit/CLAUDE.md`
-- `/Users/broadcaster_three/Github/agentive-starter-kit/delegation/tasks/4-in-review/ASK-0038-workflow-verify-architecture-overview.md`
+- `CLAUDE.md`
+- `delegation/tasks/4-in-review/ASK-0038-workflow-verify-architecture-overview.md`

@@ -100,4 +100,4 @@ Full listing: `.claude/agents/` -- see `AGENT-TEMPLATE.md` for creating new agen
 
 ## Version
 
-Current: 0.3.2 (see `pyproject.toml`)
+See `pyproject.toml` for the current version.
