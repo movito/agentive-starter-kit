@@ -346,7 +346,7 @@ Reference: `.agent-context/workflows/WORKFLOW-FREEZE-POLICY.md`
 
 ## Restrictions
 
-- Never modify `.env` files (use `.env.example`)
+- Never modify `.env` files (use `.env.template`)
 - Don't change core architecture without coordinator approval
 - Always preserve backward compatibility
 - Don't skip pre-commit hooks

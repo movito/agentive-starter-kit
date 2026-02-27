@@ -1,6 +1,6 @@
 # ASK-0040: Consolidate .env.example and .env.template
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: low
 **Assigned To**: feature-developer-v3
 **Estimated Effort**: 30 min
