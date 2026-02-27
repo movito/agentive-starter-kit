@@ -30,7 +30,8 @@ tests/                pytest test suite
 - **Testing**: pytest with TDD workflow (write tests before implementation)
 - **Coverage target**: 80% for new code (`fail_under` in pyproject.toml)
 - **Pre-commit hooks**: trailing-whitespace, end-of-file-fixer, yaml/toml checks,
-  black, isort, flake8, pattern lint (DK rules), task-status-validation, fast pytest
+  black, isort, flake8, pattern-lint (DK rules -- custom defensive coding patterns),
+  validate-task-status, pytest-fast
 
 ### Branching and CI
 
