@@ -14,6 +14,7 @@ are found. Operates on AST for accuracy — no regex hacks.
 Rules:
   DK001  str.replace() used for extension/suffix removal
   DK003  'in' used for identifier comparison without '# substring:' comment
+  DK004  Bare 'except Exception/BaseException' with pass/empty body
 """
 
 from __future__ import annotations
@@ -190,6 +191,94 @@ def check_dk003(tree: ast.AST, source_lines: list[str], path: str) -> list[Viola
     return violations
 
 
+def check_dk004(tree: ast.AST, source_lines: list[str], path: str) -> list[Violation]:
+    """DK004: Bare 'except Exception/BaseException' with pass or empty body.
+
+    Detects patterns like:
+      except Exception: pass
+      except BaseException: pass
+      except Exception as e: pass
+
+    Does NOT flag:
+      except Exception as e: logger.error(e)   (logged)
+      except Exception: raise                   (re-raised)
+      except Exception as e: return None        (explicit return)
+      except ValueError: pass                   (specific exception)
+      except: pass                              (bare except without type)
+
+    Suppressed by '# noqa: DK004' comment on the except line.
+    """
+    violations = []
+    broad_exceptions = {"Exception", "BaseException"}
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ExceptHandler):
+            continue
+
+        # Only flag broad exception types (Exception, BaseException)
+        if node.type is None:
+            # Bare 'except:' without a type — not in scope
+            continue
+        if not isinstance(node.type, ast.Name):
+            continue
+        if node.type.id not in broad_exceptions:
+            continue
+
+        # Check if body is pass-only or empty
+        if not _is_swallowed(node.body):
+            continue
+
+        # Check for noqa suppression
+        line = source_lines[node.lineno - 1] if node.lineno <= len(source_lines) else ""
+        if "# noqa: DK004" in line:
+            continue
+
+        violations.append(
+            Violation(
+                rule="DK004",
+                path=path,
+                line=node.lineno,
+                message=(
+                    f"Bare 'except {node.type.id}' with pass/empty body"
+                    " silently swallows errors."
+                    " Log, re-raise, or add '# noqa: DK004'."
+                ),
+            )
+        )
+
+    return violations
+
+
+def _is_swallowed(body: list[ast.stmt]) -> bool:
+    """Check if an except handler body silently swallows the exception.
+
+    Returns True if the body is empty or contains only ``pass``.
+    Returns False if the body contains raise, return, logging calls,
+    or any other meaningful statement.
+    """
+    if not body:
+        return True
+
+    # Body contains only 'pass' statement(s)
+    if all(isinstance(stmt, ast.Pass) for stmt in body):
+        return True
+
+    # Check if body contains meaningful handling
+    for stmt in body:
+        if isinstance(stmt, ast.Raise):
+            return False
+        if isinstance(stmt, ast.Return):
+            return False
+        if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
+            func = stmt.value.func
+            # logger.error(...), logging.warning(...), etc.
+            if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+                if func.value.id in ("logger", "logging", "log"):
+                    return False
+
+    return False
+
+
 def _extract_name(node: ast.AST) -> str | None:
     """Extract a readable name from an AST node."""
     if isinstance(node, ast.Name):
@@ -219,6 +308,7 @@ def lint_file(path: str) -> list[Violation]:
     violations = []
     violations.extend(check_dk001(tree, source_lines, path))
     violations.extend(check_dk003(tree, source_lines, path))
+    violations.extend(check_dk004(tree, source_lines, path))
 
     return violations
 

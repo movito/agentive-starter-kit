@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
-from pattern_lint import check_dk001, check_dk003
+from pattern_lint import check_dk001, check_dk003, check_dk004
 
 
 def _parse(code: str) -> tuple[ast.AST, list[str]]:
@@ -130,6 +130,158 @@ class TestDK003:
         assert len(violations) == 0
 
 
+# ── DK004: bare except Exception with pass/empty body ──────────────
+
+
+class TestDK004:
+    def test_catches_except_exception_pass(self):
+        """Bare except Exception: pass should be flagged."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except Exception:
+                pass
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 1
+        assert violations[0].rule == "DK004"
+        assert "silently swallows" in violations[0].message
+
+    def test_catches_except_base_exception_pass(self):
+        """Bare except BaseException: pass should be flagged."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except BaseException:
+                pass
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 1
+        assert "BaseException" in violations[0].message
+
+    def test_does_not_flag_logged_exception(self):
+        """except Exception as e: logger.error(e) is not bare."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except Exception as e:
+                logger.error(e)
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_does_not_flag_reraised(self):
+        """except Exception: raise is not bare."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except Exception:
+                raise
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_noqa_suppresses(self):
+        """# noqa: DK004 suppresses the violation."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except Exception:  # noqa: DK004
+                pass
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_does_not_flag_specific_exception(self):
+        """except ValueError: pass is OK — only broad exceptions flagged."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except ValueError:
+                pass
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_does_not_flag_explicit_return(self):
+        """except Exception as e: return None is not bare."""
+        tree, lines = _parse(
+            """\
+            def func():
+                try:
+                    do_something()
+                except Exception as e:
+                    return None
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_does_not_flag_bare_except_without_type(self):
+        """Bare 'except:' (no type) is not in scope — only Exception/BaseException."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except:
+                pass
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_catches_except_exception_as_with_pass(self):
+        """except Exception as e: pass should be flagged (name bound but unused)."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except Exception as e:
+                pass
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 1
+
+    def test_does_not_flag_logging_call(self):
+        """except Exception as e: logging.warning(...) is not bare."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except Exception as e:
+                logging.warning("Error: %s", e)
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_does_not_flag_tuple_exception_with_pass(self):
+        """except (Exception, ValueError): pass uses tuple — not a Name node."""
+        tree, lines = _parse(
+            """\
+            try:
+                do_something()
+            except (Exception, ValueError):
+                pass
+            """
+        )
+        violations = check_dk004(tree, lines, "test.py")
+        assert len(violations) == 0
+
+
 # ── Integration ─────────────────────────────────────────────────────
 
 
@@ -139,20 +291,9 @@ class TestIntegration:
             """\
             x = f.replace(".md", "")
             if task_id in event_id: pass
-        """
-        ).strip()
-        tree = ast.parse(code)
-        lines = code.splitlines()
-        v1 = check_dk001(tree, lines, "test.py")
-        v3 = check_dk003(tree, lines, "test.py")
-        assert len(v1) == 1
-        assert len(v3) == 1
-
-    def test_clean_code_has_no_violations(self):
-        code = textwrap.dedent(
-            """\
-            x = filename.removesuffix(".md")
-            if task_id == event.task:
+            try:
+                risky()
+            except Exception:
                 pass
         """
         ).strip()
@@ -160,5 +301,28 @@ class TestIntegration:
         lines = code.splitlines()
         v1 = check_dk001(tree, lines, "test.py")
         v3 = check_dk003(tree, lines, "test.py")
+        v4 = check_dk004(tree, lines, "test.py")
+        assert len(v1) == 1
+        assert len(v3) == 1
+        assert len(v4) == 1
+
+    def test_clean_code_has_no_violations(self):
+        code = textwrap.dedent(
+            """\
+            x = filename.removesuffix(".md")
+            if task_id == event.task:
+                pass
+            try:
+                risky()
+            except Exception as e:
+                logger.error(e)
+        """
+        ).strip()
+        tree = ast.parse(code)
+        lines = code.splitlines()
+        v1 = check_dk001(tree, lines, "test.py")
+        v3 = check_dk003(tree, lines, "test.py")
+        v4 = check_dk004(tree, lines, "test.py")
         assert len(v1) == 0
         assert len(v3) == 0
+        assert len(v4) == 0
