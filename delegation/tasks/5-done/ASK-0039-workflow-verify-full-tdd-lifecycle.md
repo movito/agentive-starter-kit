@@ -128,3 +128,12 @@ After completion, check:
 - **If workflow breaks**: Document EXACTLY which phase, skill, or command failed,
   what error was shown, and what the agent tried to do. This is the most
   important output of this task.
+
+## Review
+
+- **PR**: https://github.com/movito/agentive-starter-kit/pull/22
+- **Review Starter**: `.agent-context/ASK-0039-REVIEW-STARTER.md`
+- **Evaluator Review**: `.agent-context/reviews/ASK-0039-evaluator-review.md`
+- **CI**: All 3 runs passed (commits 71f1065, 93ab1a9, a8c1d69)
+- **Bot Threads**: 6 total, 6 resolved, 0 unresolved
+- **Commits**: 3 (feat, chore-artifacts, fix-bugbot)
