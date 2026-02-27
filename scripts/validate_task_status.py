@@ -50,7 +50,7 @@ def get_status_from_file(file_path: Path) -> Optional[str]:
         match = re.search(r"\*\*Status\*\*:\s*(\w+(?:\s+\w+)?)", content)
         if match:
             return match.group(1).strip()
-    except Exception:
+    except (OSError, UnicodeDecodeError):
         pass
     return None
 
