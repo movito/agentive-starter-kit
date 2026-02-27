@@ -24,7 +24,7 @@ else
   echo "     adversarial init --interactive"
   echo ""
   echo "   Option 2: Copy example and add your keys manually"
-  echo "     cp .env.example .env"
+  echo "     cp .env.template .env"
   echo "     # Then edit .env and add your API keys"
   echo ""
   echo -e "${BOLD}GET API KEYS:${RESET}"

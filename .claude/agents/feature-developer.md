@@ -563,7 +563,7 @@ dispatch emit changes_addressed --agent feature-developer \
 ```
 
 ## Restrictions
-- Never modify `.env` files directly (use `.env.example`)
+- Never modify `.env` files directly (use `.env.template`)
 - Don't change core architecture without coordinator approval
 - Always preserve backward compatibility
 - Don't skip pre-commit hooks (use `SKIP_TESTS=1` only for WIP commits)
