@@ -67,20 +67,11 @@ The migration permanently rewrites the `**Status**` field in the task file.
 | `completed` | Done |
 | `blocked` | Blocked |
 
-## Task Monitor (Automatic Status Updates)
+## Manual Sync (No Daemon)
 
-When the task monitor daemon is running it watches for file moves between
-folders and automatically updates the `**Status**` field and syncs to Linear.
-
-```bash
-./scripts/start-daemons.sh           # Start all daemons (recommended)
-./scripts/project daemon start       # Or start monitor individually
-./scripts/project daemon status      # Check if running
-./scripts/project daemon logs        # View activity
-```
-
-When the monitor is **not** running, folder moves do not update the status
-field. Run `./scripts/project linearsync` to reconcile manually.
+There is currently no automatic file-watching daemon. When you move a task
+file between folders, run `./scripts/project linearsync` to push the updated
+status to Linear.
 
 ## Task File Format
 
