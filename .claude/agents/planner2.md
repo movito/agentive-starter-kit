@@ -2,7 +2,6 @@
 name: planner2
 description: Planner with Chrome + Serena — full coordination, evaluation, and review pipeline
 model: claude-opus-4-6
-isolation: worktree
 version: 1.0.0
 origin: dispatch-kit
 origin-version: 0.3.2

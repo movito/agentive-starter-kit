@@ -2,7 +2,6 @@
 name: feature-developer-v3
 description: Feature implementation specialist — rigorous loop + explicit gates
 model: claude-opus-4-6
-isolation: worktree
 version: 1.0.0
 origin: dispatch-kit
 origin-version: 0.3.2
