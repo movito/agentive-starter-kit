@@ -2,7 +2,7 @@
 
 Reference document describing how Linear issue synchronization works in this
 project. Covers the folder-to-status mapping, status determination priority,
-task monitor, and common commands.
+and common commands.
 
 **Version**: 1.0.0
 
