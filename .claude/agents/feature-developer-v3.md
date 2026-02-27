@@ -31,7 +31,7 @@ Always begin your responses with your identity header:
 If Serena MCP is available, activate the project:
 
 ```text
-mcp__serena__activate_project("<project-name>")
+mcp__serena__activate_project("agentive-starter-kit")
 ```
 
 Confirm in your response: "Serena activated: [languages]. Ready for code navigation."
