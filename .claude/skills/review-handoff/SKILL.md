@@ -24,7 +24,9 @@ After automated review is complete, you **MUST** request human code review befor
 
 ## Creating Review Starter
 
-Copy template from `.agent-context/templates/review-starter-template.md` to `.agent-context/<TASK-ID>-REVIEW-STARTER.md` and fill in:
+Copy template from `.agent-context/templates/review-starter-template.md` to `.agent-context/<TASK-ID>-REVIEW-STARTER.md` and fill in.
+
+**IMPORTANT**: All file paths in the review starter MUST be repo-relative (e.g., `CLAUDE.md`, `scripts/pattern_lint.py`). Never use absolute paths like `/Users/.../project/file.py` — they leak local machine info and are non-portable.
 
 ```markdown
 # Review Starter: <TASK-ID>
@@ -39,7 +41,7 @@ Copy template from `.agent-context/templates/review-starter-template.md` to `.ag
 - [Key decisions made]
 
 ## Files Changed
-- path/to/file.py (new/modified)
+- path/to/file.py (new/modified)   ← MUST be repo-relative paths (never absolute)
 - ...
 
 ## Test Results

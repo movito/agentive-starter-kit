@@ -20,6 +20,8 @@
       "Bash(tmux *)",
       "Bash(which *)",
       "Bash(brew *)",
+      "Bash(ruff *)",
+      "Bash(pre-commit *)",
       "Read",
       "Write",
       "Edit",
