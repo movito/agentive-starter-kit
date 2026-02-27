@@ -1,17 +1,17 @@
 {
   "planner": {
     "status": "completed",
-    "current_task": "ASK-0039",
+    "current_task": "ASK-0040",
     "task_started": "2026-02-27",
-    "brief_note": "COMPLETE: ASK-0039 handoff ready. Evaluators installed, retro actions applied.",
-    "details_link": "delegation/tasks/2-todo/ASK-0039-workflow-verify-full-tdd-lifecycle.md",
-    "handoff_file": ".agent-context/ASK-0039-HANDOFF-feature-developer-v3.md"
+    "brief_note": "COMPLETE: ASK-0040 handoff ready. Consolidate .env.example and .env.template.",
+    "details_link": "delegation/tasks/2-todo/ASK-0040-consolidate-env-templates.md",
+    "handoff_file": ".agent-context/ASK-0040-HANDOFF-feature-developer-v3.md"
   },
   "feature-developer": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "✅ ASK-0037 (PR #20) + ASK-0038 (PR #21) merged. Ready for ASK-0039.",
+    "brief_note": "ASK-0037/0038/0039 all merged. Ready for ASK-0040.",
     "details_link": null
   },
   "code-reviewer": {
