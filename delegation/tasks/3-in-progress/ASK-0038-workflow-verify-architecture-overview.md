@@ -1,6 +1,6 @@
 # ASK-0038: Workflow Verification — Architecture Overview (Pre-Impl + Bot Triage)
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: medium
 **Assigned To**: feature-developer-v3
 **Estimated Effort**: 30-60 minutes
