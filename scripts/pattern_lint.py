@@ -125,6 +125,7 @@ def check_dk003(tree: ast.AST, source_lines: list[str], path: str) -> list[Viola
         "_auto",
         "_counts",
         "_sessions",
+        "_statuses",
     )
 
     for node in ast.walk(tree):

@@ -1,0 +1,405 @@
+# Pattern Registry — defensive coding patterns
+# version: 1.0.0
+# origin: dispatch-kit
+# origin-version: 0.3.2
+# last-updated: 2026-02-27
+# created-by: "@movito with planner2"
+#
+# Consult BEFORE writing any new utility function.
+# If a canonical implementation exists, import it — do not rewrite.
+
+# Canonical implementations — project-specific
+# Add your project's canonical patterns here:
+patterns:
+  extension_removal:
+    canonical: str.removesuffix
+    notes: >
+      NEVER use str.replace(".ext", "") to remove file extensions.
+      Use removesuffix(".ext") which only strips the trailing suffix.
+      Available in Python 3.9+.
+
+# Defensive coding patterns — learned from automated bot findings
+defensive:
+  external_cli_integration:
+    rule: >
+      Before writing subprocess.run() for any external CLI tool, read
+      its --help or docs for the specific subcommand. Enumerate all
+      flags (especially filter/query flags) and all possible output
+      values for status/state fields. Do not rely on assumptions about
+      what the tool returns. See also: subprocess_text_decode for the
+      full exception surface when using text=True.
+    examples:
+      - "gh run list: --workflow flag exists for server-side filtering"
+      - "gh run list: status field has 7 possible values, not 2"
+      - "adversarial CLI: output file path derived from input+evaluator, not parsed from stdout"
+    caught_by: "BugBot, CodeRabbit"
+
+  mirror_type_guards:
+    rule: >
+      When you add isinstance() or type-checking guard in one code
+      path, search for all parallel code paths that consume the same
+      value and apply the same guard. Common pattern: a function has
+      a fast path (default fallback) and a slow path (configurable);
+      the slow path gets the guard, the fast path doesn't.
+    examples:
+      - "dotted-path walker had isinstance(str) check, default fallback didn't"
+      - "workflow param validated in one checker class but not in sibling"
+    caught_by: "BugBot, CodeRabbit"
+
+  json_shape_validation:
+    rule: >
+      After json.loads(), validate the top-level type AND the shape of
+      items before indexing. json.loads can return any JSON type — dict,
+      list, str, int, None. Never assume list[dict] without checking.
+    pattern: |
+      data = json.loads(text)
+      if not isinstance(data, list):   # validate top-level
+          return error
+      item = data[0]
+      if not isinstance(item, dict):   # validate item shape
+          return error
+    caught_by: "code-review evaluator"
+
+  empty_string_substring:
+    rule: >
+      When using `x in s` for substring matching, verify that x is
+      non-empty first. Python's `"" in any_string` is always True.
+      If the search term comes from config or user input, an empty
+      string silently matches everything — bypassing the check entirely.
+    pattern: |
+      # Bad: empty login matches all authors
+      if tool.login in review_login:  # "" in "coderabbitai" → True
+          ...
+
+      # Good: guard against empty
+      if tool.login and tool.login in review_login:
+          ...
+    caught_by: "BugBot"
+
+  empty_iterable_all:
+    rule: >
+      Python's all() returns True on an empty iterable (vacuous truth).
+      When using all() as a gate/validation check, verify the iterable
+      is non-empty first — otherwise an empty result set silently passes.
+    pattern: |
+      # Bad: empty list → gate satisfied
+      if all(t.status == "completed" for t in review_status.tools):
+          return satisfied  # True when tools == []
+
+      # Good: verify count matches expectation
+      if review_status.tools and all(t.status == "completed" for t in review_status.tools):
+          return satisfied
+
+      # Also good: explicit length check
+      if len(review_status.tools) == len(tool_specs) and all(...):
+          return satisfied
+    caught_by: "BugBot"
+
+  fallback_status_semantics:
+    rule: >
+      When a function returns status strings (e.g., "completed",
+      "pending", "missing", "error"), define every reachable status
+      BEFORE implementing. Fallback/else paths are where status values
+      get misused — a found-but-failed result is not "missing", and
+      an in-progress result is not "missing". Each status value must
+      have a clear, non-overlapping definition. When copying status
+      handling from a sibling implementation, copy the FULL status set
+      — not just the common ones.
+    pattern: |
+      # Bad: "missing" used for two different situations
+      if run.conclusion == "success":
+          return "completed"
+      return "missing"  # could be in_progress, failure, or truly absent
+
+      # Good: distinct status for each situation, FULL status set
+      if run.conclusion == "success":
+          return "completed"
+      if run.status in ("in_progress", "queued", "waiting", "requested", "pending"):
+          return "pending"
+      if run.conclusion in ("failure", "cancelled"):
+          return "error"
+      return "missing"  # genuinely not found
+    caught_by: "BugBot, CodeRabbit"
+
+  sentinel_cache:
+    rule: >
+      When caching a value that may legitimately be None (e.g., a failed
+      lookup), use an object() sentinel to distinguish "not yet fetched"
+      from "fetched and got None". Without a sentinel, the cache check
+      `if cached is None: fetch()` re-fetches on every call when the
+      result is genuinely None.
+    pattern: |
+      # Bad: None means both "not fetched" and "fetch returned None"
+      _repo_cache = None
+      if _repo_cache is None:
+          _repo_cache = expensive_call()  # re-fetches every time if result is None
+
+      # Good: sentinel distinguishes the two states
+      _NOT_FETCHED = object()
+      _repo_cache = _NOT_FETCHED
+      if _repo_cache is _NOT_FETCHED:
+          _repo_cache = expensive_call()  # only fetches once
+    caught_by: "BugBot"
+
+  none_vs_falsy:
+    rule: >
+      When checking if a config/param value is absent, use `x is None`
+      not `not x`. YAML is permissive — values like 0, "", [], {},
+      False are all falsy but are valid user-provided values, not
+      absence. `not x` silently treats them as missing.
+    pattern: |
+      # Bad: rejects valid falsy values from YAML config
+      tools_raw = params.get("tools")
+      if not tools_raw:    # rejects [], 0, "", False
+          return default
+
+      # Good: only treat None (absent key) as missing
+      tools_raw = params.get("tools")
+      if tools_raw is None:    # absent key
+          return default
+      if not isinstance(tools_raw, list):  # wrong type
+          return error
+      if len(tools_raw) == 0:   # explicitly empty
+          return vacuously_satisfied
+    caught_by: "CodeRabbit"
+
+  yaml_config_exception_tuple:
+    rule: >
+      All modules that load YAML config files must catch the full
+      exception tuple: (ValueError, OSError, yaml.YAMLError). ValueError
+      covers invalid config structure, OSError covers file permission
+      issues, yaml.YAMLError covers malformed YAML. Check sibling
+      modules for the canonical pattern. Never catch only ValueError —
+      it misses the file I/O and YAML parse failure paths.
+    pattern: |
+      # Bad: incomplete exception handling
+      try:
+          config = load_config(config_path=config_path)
+      except ValueError as exc:
+          print(f"Error: {exc}", file=sys.stderr)
+          return 1
+
+      # Good: full exception tuple
+      try:
+          config = load_config(config_path=config_path)
+      except (ValueError, OSError, yaml.YAMLError) as exc:
+          print(f"Error: {exc}", file=sys.stderr)
+          return 1
+    caught_by: "BugBot"
+
+  subprocess_text_decode:
+    rule: >
+      When using subprocess.run(text=True), catch UnicodeDecodeError
+      alongside FileNotFoundError, TimeoutExpired, and OSError.
+      text=True decodes stdout/stderr internally using the locale
+      encoding; non-UTF-8 bytes raise UnicodeDecodeError which is a
+      subclass of ValueError, NOT OSError — so a bare `except OSError`
+      will not catch it. The process will crash on binary output.
+    pattern: |
+      # Bad: UnicodeDecodeError escapes
+      try:
+          result = subprocess.run(cmd, text=True, capture_output=True)
+      except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+          ...  # UnicodeDecodeError not caught
+
+      # Good: catch the full exception surface
+      try:
+          result = subprocess.run(cmd, text=True, capture_output=True)
+      except FileNotFoundError:
+          ...  # CLI not on PATH
+      except subprocess.TimeoutExpired:
+          ...  # timed out
+      except OSError as exc:
+          ...  # permission denied, etc.
+      except UnicodeDecodeError as exc:
+          ...  # non-UTF-8 subprocess output
+    caught_by: "CodeRabbit, code-review evaluator"
+
+  config_value_clamping:
+    rule: >
+      After validating the type and sign of numeric config params,
+      clamp to a reasonable maximum before passing to system calls.
+      Python integers are unbounded — an extremely large timeout or
+      retry count from YAML passes isinstance(x, int) but can exhaust
+      system resources (e.g., subprocess.run timeout, sleep duration).
+      Define an upper bound and use min().
+    pattern: |
+      # Bad: unbounded config value passed to system call
+      timeout = params.get("timeout", 300)
+      subprocess.run(cmd, timeout=timeout)  # timeout=999999999
+
+      # Good: clamp to max after validation
+      MAX_TIMEOUT = 3600
+      timeout_raw = params.get("timeout")
+      if isinstance(timeout_raw, int) and not isinstance(timeout_raw, bool) and timeout_raw >= 0:
+          timeout = min(timeout_raw, MAX_TIMEOUT)
+      else:
+          timeout = 300  # default
+    caught_by: "code-review evaluator"
+
+  path_traversal_sanitization:
+    rule: >
+      When constructing file paths from user/config-provided names
+      (evaluator names, tool names, agent names), sanitize with
+      Path(name).name to strip directory components. Without this,
+      a value like "../../etc/passwd" can escape the intended directory.
+      This applies to ANY path derived from external input — not just
+      user-facing CLI args but also YAML config values.
+    pattern: |
+      # Bad: name used directly in path
+      output = f"logs/{stem}--{evaluator_name}.md"
+      # evaluator_name="../../etc/passwd" → "logs/stem--../../etc/passwd.md"
+
+      # Good: strip directory components
+      safe_name = Path(evaluator_name).name  # "../../etc/passwd" → "passwd"
+      output = f"logs/{stem}--{safe_name}.md"
+    caught_by: "CodeRabbit"
+
+  none_in_fstrings:
+    rule: >
+      Before interpolating a potentially-None value in an f-string,
+      explicitly check for None. f"result: {value}" silently produces
+      "result: None" — a valid-looking but misleading string that
+      downstream code or humans may misinterpret as a real value.
+      This is especially dangerous in status/details messages where
+      None means "unknown" but the string "None" looks like a verdict.
+    pattern: |
+      # Bad: None becomes the string "None"
+      details = f"evaluator verdict: {result.verdict}"
+      # When verdict is None → "evaluator verdict: None"
+
+      # Good: explicit None check
+      if result.verdict is not None:
+          details = f"evaluator verdict: {result.verdict}"
+      else:
+          details = "no verdict found in evaluator output"
+    caught_by: "CodeRabbit"
+
+  shared_helper_over_copy:
+    rule: >
+      When the spec says "mirror function X for new purpose Y", create
+      a shared parameterized helper instead of copy-pasting. Duplicated
+      logic means bug fixes must be applied twice. Extract the common
+      algorithm and parameterize the differences.
+    pattern: |
+      # Bad: copy-paste with minor diffs
+      def _resolve_branch(gate, event): ...  # 35 lines
+      def _resolve_pr(gate, event): ...      # 35 lines, 3 diffs
+
+      # Good: shared helper, parameterized
+      def _resolve_payload_value(gate, event, *, param_name, default_key, accepted_types): ...
+      def _resolve_branch(gate, event):
+          return _resolve_payload_value(gate, event, param_name="branch_from", ...)
+      def _resolve_pr(gate, event):
+          return _resolve_payload_value(gate, event, param_name="pr_from", ...)
+    caught_by: "BugBot"
+
+# Shell script patterns — learned from bot findings on setup/infra scripts
+shell:
+  set_e_suppressed_commands:
+    rule: >
+      In a set -e script, any command whose failure is acceptable MUST have
+      || true appended. Redirecting stderr (>/dev/null 2>&1) does NOT prevent
+      set -e from exiting on non-zero return code. This applies to pip upgrade,
+      optional tool checks, and any "nice to have" command.
+    pattern: |
+      # Bad: script exits if pip upgrade fails (e.g., uv-created venvs without pip)
+      .venv/bin/pip install --upgrade pip >/dev/null 2>&1
+
+      # Good: failure is acceptable, don't exit
+      .venv/bin/pip install --upgrade pip >/dev/null 2>&1 || true
+    caught_by: "BugBot"
+
+  uv_explicit_python_target:
+    rule: >
+      When running uv pip install in scripts, always pass
+      --python .venv/bin/python to explicitly target the project venv.
+      Without it, uv respects VIRTUAL_ENV from an activated outer venv
+      and installs to the wrong environment. This is especially dangerous
+      in setup scripts that may be run from within another activated venv.
+    pattern: |
+      # Bad: uv may install to outer venv if VIRTUAL_ENV is set
+      uv pip install -e .
+
+      # Good: explicit target prevents VIRTUAL_ENV hijack
+      uv pip install -e . --python .venv/bin/python
+    caught_by: "BugBot"
+
+  jq_interpolation_slice:
+    rule: >
+      In jq string interpolation, slice operators like [0:120] must be
+      INSIDE the \(...) block, not after it. \(.field)[0:120] places the
+      literal text "[0:120]" in the output string — it does NOT slice the
+      field. This is a jq-specific gotcha with no equivalent in other
+      languages.
+    pattern: |
+      # Bad: [0:120] is literal text outside the interpolation
+      "\(.body | gsub("\n"; " "))[0:120]"
+      # Output: "some long body text[0:120]"
+
+      # Good: slice inside the interpolation
+      "\(.body | gsub("\n"; " ") | .[0:120])"
+      # Output: "some long body te"
+    caught_by: "BugBot, CodeRabbit"
+
+  tsv_output_sanitization:
+    rule: >
+      When producing tab-separated (TSV) output from jq, all field values
+      must be sanitized to preserve the delimiter contract: (1) replace
+      newlines with spaces (gsub("\n"; " ")), (2) replace tabs with spaces
+      (gsub("\t"; " ")), (3) handle null values with fallback defaults
+      (// "unknown"). Without these, a multi-line body or a deleted author
+      (null) breaks downstream parsing that splits on \t.
+    pattern: |
+      # Bad: raw body may contain \n and \t, null author crashes
+      "\(.author.login)\t\(.body)"
+
+      # Good: sanitize all fields
+      "\(.author.login // "unknown")\t\(.body | gsub("[\n\t]"; " ") | .[0:120])"
+    caught_by: "BugBot, CodeRabbit"
+
+# Refactoring patterns — learned from module splits
+refactoring:
+  mock_patch_late_binding:
+    rule: >
+      When converting module.py to module/__init__.py + submodules,
+      mock.patch("module.function") breaks because the patch modifies
+      __init__.__dict__ while the function runs in submodule.__dict__.
+      Fix with late import: inside the calling method, do
+      `import module as _pkg; _pkg.function(...)` so the call resolves
+      through __init__ at call time, where mock.patch intercepts it.
+    pattern: |
+      # Bad: direct reference cached at import time
+      from mypackage.submodule import helper_func
+      class Foo:
+          def bar(self):
+              return helper_func(...)  # mock.patch won't intercept
+
+      # Good: late import resolves through __init__ at call time
+      class Foo:
+          def bar(self):
+              import mypackage as _pkg
+              return _pkg.helper_func(...)
+    caught_by: "test failures during refactoring"
+
+# Error handling strategies by layer
+error_strategies:
+  domain_modules:
+    style: raise
+    description: "Caller handles errors (core logic, config parsing)"
+
+  cli_modules:
+    style: return_empty
+    description: "Handle internally, return empty/default (status, log, listing)"
+
+  fire_and_forget:
+    style: log_and_continue
+    description: "Emit events, log warnings, never block (bus writes, event emission)"
+
+# String comparison defaults
+string_matching:
+  default: exact  # ==
+  rule: >
+    Use == for identifiers (task IDs, event types, agent names).
+    Use 'in' only with a '# substring:' comment explaining why.
+    Use re.match only when explicitly needed.

@@ -53,6 +53,16 @@ repos:
           '--select=E9,F63,F7,F82'
         ]
 
+  # Project-specific pattern lint (catches recurring bot-finding patterns)
+  - repo: local
+    hooks:
+      - id: pattern-lint
+        name: Check for common code patterns (DK rules)
+        entry: python3 scripts/pattern_lint.py
+        language: system
+        types: [python]
+        stages: [pre-commit]
+
   # Validate task status matches folder
   - repo: local
     hooks:

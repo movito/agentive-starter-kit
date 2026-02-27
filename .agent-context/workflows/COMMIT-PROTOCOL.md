@@ -91,7 +91,9 @@ EOF
 - ✅ check-yaml: Validate YAML syntax
 - ✅ check-added-large-files: Prevent large file commits
 - ✅ black: Python code formatting
-- ✅ ruff: Python linting
+- ✅ isort: Import sorting
+- ✅ flake8: Critical linting errors
+- ✅ pattern-lint: Project-specific DK rules (DK001, DK003)
 
 ### Manual (you should do):
 - ✅ Run pytest: Ensure tests pass
@@ -289,6 +291,8 @@ git push origin main         # Push to GitHub ✅
 - Don't commit generated files (unless required)
 - Don't use --no-verify (bypasses hooks) without good reason
 - Don't make massive commits mixing unrelated changes
+- Don't mix planner artifacts (task specs, handoffs) with implementation code in the same PR (see `PR-SIZE-WORKFLOW.md`)
+- Don't push planner artifacts to feature branches — every push restarts bot reviews. Planner commits go to main only (see planner agent Branch Isolation Policy)
 
 ---
 
