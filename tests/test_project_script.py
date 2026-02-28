@@ -620,7 +620,7 @@ class TestReconfigureExpanded:
     def test_logging_config_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
         content = (mock_project / "scripts" / "logging_config.py").read_text()
-        assert "my-cool-project" in content
+        assert "infrastructure for the my-cool-project" in content
         assert "agentive-starter-kit" not in content
 
     def test_planner_url_replaced(self, mock_project):
@@ -723,7 +723,7 @@ class TestReconfigureExpanded:
         assert "Verifying" in captured.out
         assert "identity leak" in captured.out.lower()
 
-    def test_verify_returns_false_when_leaks_remain(self, tmp_path, capsys):
+    def test_verify_returns_false_when_leaks_remain(self, tmp_path):
         """--verify returns False (exit 1) when leaks are detected."""
         serena_dir = tmp_path / ".serena"
         serena_dir.mkdir()

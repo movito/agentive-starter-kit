@@ -419,8 +419,8 @@ def reconfigure_project(project_dir: Path, *, verify: bool = False) -> bool:
         ),
         (
             "scripts/logging_config.py",
-            r"agentive-starter-kit",
-            project_name,
+            r"infrastructure for the agentive-starter-kit",
+            f"infrastructure for the {project_name}",
             "project name",
         ),
     ]
