@@ -211,6 +211,9 @@ def _derive_repo_url(project_dir: Path) -> str | None:
         url = url.removeprefix("https://")
     elif url.startswith("http://"):
         url = url.removeprefix("http://")
+    else:
+        # Unrecognized format (ssh://, git://, local path, etc.)
+        return None
 
     url = url.removesuffix(".git")
     return url
@@ -262,8 +265,13 @@ def _verify_identity_leaks(project_dir: Path) -> int:
             rel_path = filepath.relative_to(project_dir)
             rel_str = str(rel_path)
 
-            # Skip excluded paths and files
-            if any(excl in rel_str for excl in exclude_path_parts):
+            # Skip excluded paths (match on path segments, not substrings)
+            if any(
+                rel_str == excl
+                or rel_str.startswith(excl + "/")
+                or ("/" + excl + "/") in rel_str
+                for excl in exclude_path_parts
+            ):
                 continue
             if filename in exclude_files:
                 continue

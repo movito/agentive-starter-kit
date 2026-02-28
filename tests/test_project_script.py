@@ -493,6 +493,17 @@ class TestDeriveRepoUrl:
         derive = _project_module._derive_repo_url
         assert derive(tmp_path) is None
 
+    def test_unrecognized_url_format_returns_none(self, tmp_path):
+        """Unrecognized URL formats (ssh://, git://) return None."""
+        derive = _project_module._derive_repo_url
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+        subprocess.run(
+            ["git", "remote", "add", "origin", "ssh://git@github.com/owner/repo.git"],
+            cwd=tmp_path,
+            capture_output=True,
+        )
+        assert derive(tmp_path) is None
+
 
 class TestReconfigureExpanded:
     """Tests for expanded reconfigure with 8 new identity patterns."""
@@ -819,3 +830,12 @@ class TestVerifyIdentityLeaks:
         verify = _project_module._verify_identity_leaks
         count = verify(tmp_path)
         assert count == 0
+
+    def test_exclusion_uses_path_segments_not_substrings(self, tmp_path):
+        """Exclusion matches path segments, not substrings of filenames."""
+        # A file with "tests" in its name (not in a tests/ directory)
+        # should NOT be excluded
+        (tmp_path / "my_tests_helper.py").write_text("agentive-starter-kit reference\n")
+        verify = _project_module._verify_identity_leaks
+        count = verify(tmp_path)
+        assert count == 1
