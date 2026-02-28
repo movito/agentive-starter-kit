@@ -839,3 +839,14 @@ class TestVerifyIdentityLeaks:
         verify = _project_module._verify_identity_leaks
         count = verify(tmp_path)
         assert count == 1
+
+    def test_excludes_upstream_prefix_files(self, tmp_path):
+        """docs/UPSTREAM prefix matches files like UPSTREAM-CHANGES-*.md."""
+        docs_dir = tmp_path / "docs"
+        docs_dir.mkdir()
+        (docs_dir / "UPSTREAM-CHANGES-2025-01-28.md").write_text(
+            "agentive-starter-kit reference\n"
+        )
+        verify = _project_module._verify_identity_leaks
+        count = verify(tmp_path)
+        assert count == 0

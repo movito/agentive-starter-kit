@@ -265,11 +265,15 @@ def _verify_identity_leaks(project_dir: Path) -> int:
             rel_path = filepath.relative_to(project_dir)
             rel_str = str(rel_path)
 
-            # Skip excluded paths (match on path segments, not substrings)
+            # Skip excluded paths: segment match for single-component
+            # names (e.g. "tests"), prefix match for multi-component
+            # paths (e.g. "docs/UPSTREAM" matches "docs/UPSTREAM-*.md")
             if any(
-                rel_str == excl
-                or rel_str.startswith(excl + "/")
-                or ("/" + excl + "/") in rel_str
+                (
+                    excl in rel_path.parts
+                    if "/" not in excl
+                    else rel_str.startswith(excl)
+                )
                 for excl in exclude_path_parts
             ):
                 continue
@@ -1030,6 +1034,11 @@ except Exception as e:
     elif command == "reconfigure":
         # Reconfigure project files with correct identity
         args = sys.argv[2:]
+        unknown = [a for a in args if a.startswith("-") and a != "--verify"]
+        if unknown:
+            print(f"❌ Unknown option(s): {', '.join(unknown)}")
+            print("Usage: ./scripts/project reconfigure [--verify]")
+            sys.exit(1)
         verify = "--verify" in args
         success = reconfigure_project(project_dir, verify=verify)
         sys.exit(0 if success else 1)
