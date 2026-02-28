@@ -174,21 +174,146 @@ def validate_all_tasks(project_dir: Path) -> bool:
     return True
 
 
-def reconfigure_project(project_dir: Path) -> bool:
-    """Reconfigure agent files with the correct project name.
+def _derive_repo_url(project_dir: Path) -> str | None:
+    """Extract GitHub repo URL path from git remote origin.
 
-    This updates .claude/agents/*.md files, replacing any activate_project()
-    calls with the actual project name from .serena/project.yml.
+    Handles SSH (git@github.com:owner/repo.git) and HTTPS formats.
+    Returns path like 'github.com/owner/repo' or None on failure.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            cwd=project_dir,
+            timeout=10,
+        )
+    except (
+        FileNotFoundError,
+        OSError,
+        UnicodeDecodeError,
+        subprocess.TimeoutExpired,
+    ):
+        return None
+
+    if result.returncode != 0:
+        return None
+
+    url = result.stdout.strip()
+    if not url:
+        return None
+
+    # SSH format: git@github.com:owner/repo.git
+    if url.startswith("git@"):
+        url = url.removeprefix("git@").replace(":", "/", 1)
+    # HTTPS format
+    elif url.startswith("https://"):
+        url = url.removeprefix("https://")
+    elif url.startswith("http://"):
+        url = url.removeprefix("http://")
+    else:
+        # Unrecognized format (ssh://, git://, local path, etc.)
+        return None
+
+    url = url.removesuffix(".git")
+    return url
+
+
+def _title_case_project(name: str) -> str:
+    """Convert 'my-project-name' to 'My Project Name'."""
+    return name.replace("-", " ").replace("_", " ").title()
+
+
+def _verify_identity_leaks(project_dir: Path) -> int:
+    """Scan for remaining identity leaks after reconfigure.
+
+    Returns count of remaining leaks (0 = clean).
+    """
+    print("\n🔍 Verifying — checking for remaining identity leaks...\n")
+
+    extensions = {".md", ".toml", ".py", ".sh"}
+
+    # Directories to exclude (legitimate references)
+    exclude_dirs = {".git", ".venv", ".aider"}
+    exclude_path_parts = [
+        ".adversarial",
+        ".agent-context",
+        "docs/decisions",
+        "docs/archive",
+        "docs/UPSTREAM",
+        "delegation/tasks",
+        "tests",
+    ]
+    exclude_files = {"onboarding.md"}
+
+    leak_pattern = re.compile(r"agentive-starter-kit|Agentive Starter Kit")
+
+    leaks = []
+
+    for root, dirs, files in os.walk(project_dir):
+        # Skip excluded directories
+        rel_root = os.path.relpath(root, project_dir)
+        if any(part in exclude_dirs for part in Path(rel_root).parts):
+            dirs.clear()
+            continue
+
+        for filename in files:
+            if Path(filename).suffix not in extensions:
+                continue
+
+            filepath = Path(root) / filename
+            rel_path = filepath.relative_to(project_dir)
+            rel_str = str(rel_path)
+
+            # Skip excluded paths: segment match for single-component
+            # names (e.g. "tests"), prefix match for multi-component
+            # paths (e.g. "docs/UPSTREAM" matches "docs/UPSTREAM-*.md")
+            if any(
+                (
+                    excl in rel_path.parts
+                    if "/" not in excl
+                    else rel_str.startswith(excl)
+                )
+                for excl in exclude_path_parts
+            ):
+                continue
+            if filename in exclude_files:
+                continue
+
+            try:
+                content = filepath.read_text()
+                for i, line in enumerate(content.splitlines(), 1):
+                    if leak_pattern.search(line):
+                        leaks.append(f"  {rel_path}:{i}: {line.strip()}")
+            except Exception:
+                continue
+
+    if not leaks:
+        print("  ✅ No identity leaks found")
+        return 0
+
+    print(f"  ⚠ Found {len(leaks)} remaining identity leak(s):")
+    for leak in leaks:
+        print(f"  {leak}")
+    return len(leaks)
+
+
+def reconfigure_project(project_dir: Path, *, verify: bool = False) -> bool:
+    """Reconfigure project files with the correct project identity.
+
+    This updates:
+    - .claude/agents/*.md: activate_project() calls
+    - pyproject.toml, CLAUDE.md, README.md, CHANGELOG.md, etc.: identity refs
+    - Comparison URLs: derived from git remote origin
 
     Handles multiple scenarios:
     - Fresh clone with "your-project" placeholder
     - After upstream merge with "agentive-starter-kit"
     - Any other project name that needs updating
 
-    Useful after fetching upstream updates that overwrite agent files.
+    Useful after fetching upstream updates that overwrite project files.
     """
     serena_config = project_dir / ".serena" / "project.yml"
-    agents_dir = project_dir / ".claude" / "agents"
 
     # Check .serena/project.yml exists
     if not serena_config.exists():
@@ -217,56 +342,161 @@ def reconfigure_project(project_dir: Path) -> bool:
         print("Check your Serena configuration.")
         return False
 
+    # Derive additional identity data
+    repo_url = _derive_repo_url(project_dir)
+    project_title = _title_case_project(project_name)
+
     print(f"\n🔧 Reconfiguring project: {project_name}\n")
+
+    total_updated = 0
+    total_skipped = 0
+    total_errored = 0
+
+    # --- Phase 1: Agent files (activate_project calls) ---
     print("Checking agent files...")
+    agents_dir = project_dir / ".claude" / "agents"
 
-    # Check if agents directory exists
     if not agents_dir.exists():
-        print("Warning: No agent files found in .claude/agents/")
-        return True  # Success - nothing to do
+        print("  ⚠ No agent files found in .claude/agents/")
+    else:
+        agent_files = list(agents_dir.glob("*.md"))
+        if not agent_files:
+            print("  ⚠ No .md files found in .claude/agents/")
+        else:
+            activate_pattern = re.compile(r'activate_project\("([^"]+)"\)')
+            activate_replacement = f'activate_project("{project_name}")'
 
-    # Find and update agent files
-    agent_files = list(agents_dir.glob("*.md"))
-    if not agent_files:
-        print("Warning: No .md files found in .claude/agents/")
-        return True  # Success - nothing to do
+            for agent_file in sorted(agent_files):
+                try:
+                    content = agent_file.read_text()
+                    matches = activate_pattern.findall(content)
 
-    updated = 0
-    skipped = 0
+                    if not matches:
+                        print(f"  · {agent_file.name} - no activation calls found")
+                        total_skipped += 1
+                        continue
 
-    # Regex pattern to match any activate_project call
-    # This handles both placeholder ("your-project") and upstream ("agentive-starter-kit")
-    pattern = re.compile(r'activate_project\("([^"]+)"\)')
-    replacement = f'activate_project("{project_name}")'
+                    needs_update = any(m != project_name for m in matches)
 
-    for agent_file in sorted(agent_files):
+                    if needs_update:
+                        new_content = activate_pattern.sub(
+                            activate_replacement, content
+                        )
+                        agent_file.write_text(new_content)
+                        old_names = set(m for m in matches if m != project_name)
+                        print(
+                            f"  ✓ {agent_file.name} - updated"
+                            f" (was: {', '.join(old_names)})"
+                        )
+                        total_updated += 1
+                    else:
+                        print(f"  · {agent_file.name} - already configured")
+                        total_skipped += 1
+                except Exception as e:
+                    print(f"  ✗ {agent_file.name} - error: {e}")
+                    total_errored += 1
+
+    # --- Phase 2: Project files (identity references) ---
+    print("\nChecking project files...")
+
+    replacements = [
+        (
+            "pyproject.toml",
+            r"# Project configuration for[^\n]*Agentive Starter Kit",
+            f"# Project configuration for {project_name}",
+            "comment",
+        ),
+        (
+            "tests/conftest.py",
+            r"agentive-starter-kit test suite",
+            f"{project_name} test suite",
+            "docstring",
+        ),
+        (
+            "CHANGELOG.md",
+            r"All notable changes to the Agentive Starter Kit",
+            f"All notable changes to {project_title}",
+            "header",
+        ),
+        (
+            "CLAUDE.md",
+            r"# Agentive Starter Kit",
+            f"# {project_title}",
+            "title",
+        ),
+        (
+            "README.md",
+            r"# Agentive Starter Kit",
+            f"# {project_title}",
+            "title",
+        ),
+        (
+            "scripts/logging_config.py",
+            r"infrastructure for the agentive-starter-kit",
+            f"infrastructure for the {project_name}",
+            "project name",
+        ),
+    ]
+
+    # URL replacements (only if repo_url is available)
+    if repo_url is not None:
+        replacements.extend(
+            [
+                (
+                    "CHANGELOG.md",
+                    r"github\.com/movito/agentive-starter-kit",
+                    repo_url,
+                    "comparison URLs",
+                ),
+                (
+                    ".claude/agents/planner.md",
+                    r"github\.com/movito/agentive-starter-kit",
+                    repo_url,
+                    "URL",
+                ),
+            ]
+        )
+    else:
+        print("  ⚠ Git remote not available — skipping URL replacements")
+
+    for rel_path, pattern, repl, desc in replacements:
+        filepath = project_dir / rel_path
+        if not filepath.exists():
+            print(f"  · {rel_path} - not found (skipped)")
+            total_skipped += 1
+            continue
+
         try:
-            content = agent_file.read_text()
+            content = filepath.read_text()
+            new_content = re.sub(pattern, repl, content)
 
-            # Find all current project names in the file
-            matches = pattern.findall(content)
-
-            if not matches:
-                print(f"  · {agent_file.name} - no activation calls found")
-                skipped += 1
-                continue
-
-            # Check if any match is NOT the current project name
-            needs_update = any(m != project_name for m in matches)
-
-            if needs_update:
-                new_content = pattern.sub(replacement, content)
-                agent_file.write_text(new_content)
-                old_names = set(m for m in matches if m != project_name)
-                print(f"  ✓ {agent_file.name} - updated (was: {', '.join(old_names)})")
-                updated += 1
+            if new_content != content:
+                filepath.write_text(new_content)
+                print(f"  ✓ {rel_path} - {desc}")
+                total_updated += 1
             else:
-                print(f"  · {agent_file.name} - already configured")
-                skipped += 1
+                print(f"  · {rel_path} - already configured")
+                total_skipped += 1
         except Exception as e:
-            print(f"  ✗ {agent_file.name} - error: {e}")
+            print(f"  ✗ {rel_path} - error: {e}")
+            total_errored += 1
 
-    print(f"\n✅ Reconfigured {updated} files ({skipped} already correct)")
+    # Summary
+    if total_errored:
+        summary = f"\n⚠️  Done: {total_updated} updated, {total_skipped} already correct, {total_errored} errors"
+    else:
+        summary = f"\n✅ Done: {total_updated} updated, {total_skipped} already correct"
+    print(summary)
+
+    if total_errored:
+        return False
+
+    # Verify if requested
+    if verify:
+        leak_count = _verify_identity_leaks(project_dir)
+        if leak_count > 0:
+            return False
+
     return True
 
 
@@ -802,8 +1032,15 @@ except Exception as e:
         sys.exit(0 if success else 1)
 
     elif command == "reconfigure":
-        # Reconfigure agent files with project name
-        success = reconfigure_project(project_dir)
+        # Reconfigure project files with correct identity
+        args = sys.argv[2:]
+        unknown = [a for a in args if a.startswith("-") and a != "--verify"]
+        if unknown:
+            print(f"❌ Unknown option(s): {', '.join(unknown)}")
+            print("Usage: ./scripts/project reconfigure [--verify]")
+            sys.exit(1)
+        verify = "--verify" in args
+        success = reconfigure_project(project_dir, verify=verify)
         sys.exit(0 if success else 1)
 
     elif command == "setup":
@@ -1063,7 +1300,8 @@ Agent Management:
                        Run: create-agent --help for full options
 
 Configuration:
-  reconfigure          Update agent files with project name after upstream merge
+  reconfigure          Update project files with correct identity after upstream merge
+  reconfigure --verify Same as above, then audit for remaining identity leaks
 
 Linear Sync:
   linearsync, sync     Sync task files to Linear
@@ -1078,7 +1316,8 @@ Examples:
   ./project complete ASK-0001    Move task to done, update Status
   ./project move ASK-0002 todo   Move task to todo folder
   ./project validate             Check all statuses match folders
-  ./project reconfigure          Update agents after pulling upstream
+  ./project reconfigure          Update project identity after pulling upstream
+  ./project reconfigure --verify Same + verify no leaks remain
   ./project linearsync           Sync all tasks to Linear
 
 Valid statuses for 'move':
