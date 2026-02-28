@@ -186,8 +186,14 @@ def _derive_repo_url(project_dir: Path) -> str | None:
             capture_output=True,
             text=True,
             cwd=project_dir,
+            timeout=10,
         )
-    except (FileNotFoundError, OSError, UnicodeDecodeError):
+    except (
+        FileNotFoundError,
+        OSError,
+        UnicodeDecodeError,
+        subprocess.TimeoutExpired,
+    ):
         return None
 
     if result.returncode != 0:
@@ -470,7 +476,9 @@ def reconfigure_project(project_dir: Path, *, verify: bool = False) -> bool:
 
     # Verify if requested
     if verify:
-        _verify_identity_leaks(project_dir)
+        leak_count = _verify_identity_leaks(project_dir)
+        if leak_count > 0:
+            return False
 
     return True
 

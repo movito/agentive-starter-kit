@@ -717,10 +717,33 @@ class TestReconfigureExpanded:
 
     def test_verify_flag_runs_audit(self, mock_project, capsys):
         """--verify flag triggers identity leak audit."""
-        self._run_reconfigure(mock_project, verify=True)
+        result = self._run_reconfigure(mock_project, verify=True)
+        assert result is True  # No leaks after reconfigure
         captured = capsys.readouterr()
         assert "Verifying" in captured.out
         assert "identity leak" in captured.out.lower()
+
+    def test_verify_returns_false_when_leaks_remain(self, tmp_path, capsys):
+        """--verify returns False (exit 1) when leaks are detected."""
+        serena_dir = tmp_path / ".serena"
+        serena_dir.mkdir()
+        (serena_dir / "project.yml").write_text("name: test-project\n")
+
+        agents_dir = tmp_path / ".claude" / "agents"
+        agents_dir.mkdir(parents=True)
+
+        # Create a file with a leak that reconfigure won't fix
+        # (not in the replacement list)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir()
+        (scripts_dir / "other.py").write_text(
+            "# references agentive-starter-kit somewhere\n"
+        )
+
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+
+        result = self._run_reconfigure(tmp_path, verify=True)
+        assert result is False
 
 
 class TestVerifyIdentityLeaks:
@@ -745,7 +768,7 @@ class TestVerifyIdentityLeaks:
         captured = capsys.readouterr()
         assert "remaining identity leak" in captured.out.lower()
 
-    def test_excludes_legitimate_references(self, tmp_path, capsys):
+    def test_excludes_legitimate_references(self, tmp_path):
         """Legitimate reference locations are excluded from scan."""
         # Create excluded directories with upstream references
         adversarial_dir = tmp_path / ".adversarial"
