@@ -528,7 +528,7 @@ class TestReconfigureExpanded:
         tests_dir = tmp_path / "tests"
         tests_dir.mkdir()
         (tests_dir / "conftest.py").write_text(
-            '"""\nShared fixtures for the' " agentive-starter-kit test suite.\n" '"""\n'
+            '"""\nShared fixtures for the agentive-starter-kit test suite.\n"""\n'
         )
 
         # CHANGELOG.md
@@ -745,6 +745,25 @@ class TestReconfigureExpanded:
         result = self._run_reconfigure(tmp_path, verify=True)
         assert result is False
 
+    def test_returns_false_when_file_errors(self, tmp_path, capsys):
+        """reconfigure_project returns False when file operations error."""
+        serena_dir = tmp_path / ".serena"
+        serena_dir.mkdir()
+        (serena_dir / "project.yml").write_text("name: test-project\n")
+
+        agents_dir = tmp_path / ".claude" / "agents"
+        agents_dir.mkdir(parents=True)
+
+        # Create pyproject.toml as a directory to trigger an error
+        (tmp_path / "pyproject.toml").mkdir()
+
+        subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
+
+        result = self._run_reconfigure(tmp_path)
+        assert result is False
+        captured = capsys.readouterr()
+        assert "error" in captured.out.lower()
+
 
 class TestVerifyIdentityLeaks:
     """Tests for _verify_identity_leaks function."""
@@ -789,6 +808,13 @@ class TestVerifyIdentityLeaks:
 
         # onboarding.md at any location
         (tmp_path / "onboarding.md").write_text("agentive-starter-kit reference\n")
+
+        # tests/ directory (test fixtures contain upstream strings)
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        (tests_dir / "test_project_script.py").write_text(
+            "agentive-starter-kit reference in fixture\n"
+        )
 
         verify = _project_module._verify_identity_leaks
         count = verify(tmp_path)

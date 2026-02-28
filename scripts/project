@@ -239,6 +239,7 @@ def _verify_identity_leaks(project_dir: Path) -> int:
         "docs/archive",
         "docs/UPSTREAM",
         "delegation/tasks",
+        "tests",
     ]
     exclude_files = {"onboarding.md"}
 
@@ -469,10 +470,14 @@ def reconfigure_project(project_dir: Path, *, verify: bool = False) -> bool:
             total_errored += 1
 
     # Summary
-    summary = f"\n✅ Done: {total_updated} updated, {total_skipped} already correct"
     if total_errored:
-        summary += f", {total_errored} errors"
+        summary = f"\n⚠️  Done: {total_updated} updated, {total_skipped} already correct, {total_errored} errors"
+    else:
+        summary = f"\n✅ Done: {total_updated} updated, {total_skipped} already correct"
     print(summary)
+
+    if total_errored:
+        return False
 
     # Verify if requested
     if verify:
