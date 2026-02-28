@@ -3,7 +3,7 @@ description: Run a structured session retrospective after completing a task
 version: 1.0.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-02-28
 created-by: "@movito with planner2"
 ---
 
@@ -76,9 +76,19 @@ If none, state "None." This data is used by the planner to proactively expand th
 
 List action items as unchecked checkboxes. The planner will check them off as they're implemented.
 
-## Step 4: Output the retro
+## Step 4: Save the retro
 
-Format the complete retro as a single markdown block. Use this exact structure:
+Format the complete retro as a single markdown block using the structure below, then **save it to a file**:
+
+**File path**: `.agent-context/retros/[TASK-ID]-retro.md`
+
+Create the `.agent-context/retros/` directory if it doesn't exist:
+
+```bash
+mkdir -p .agent-context/retros
+```
+
+Use this exact structure for the file content:
 
 ```text
 ## [TASK-ID] — [Task Title] (PR #[number])
@@ -108,7 +118,7 @@ Format the complete retro as a single markdown block. Use this exact structure:
 - [ ] [Action item]
 ```
 
-Print the formatted retro so the user can copy it to the planner session for archival.
+After saving, confirm the file path so the planner can find and review it.
 
 ## Guidelines
 
