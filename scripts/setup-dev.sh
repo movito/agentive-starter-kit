@@ -39,7 +39,7 @@ SUMMARY=()
 # ─────────────────────────────────────────
 # Step 1: Find suitable Python (3.10-3.12)
 # ─────────────────────────────────────────
-echo "1/5 🐍 Finding Python 3.10-3.12..."
+echo "1/6 🐍 Finding Python 3.10-3.12..."
 
 PYTHON=""
 
@@ -90,7 +90,7 @@ echo
 # ─────────────────────────────────────────
 # Step 2: Create .venv (prefer uv)
 # ─────────────────────────────────────────
-echo "2/5 📦 Setting up virtual environment..."
+echo "2/6 📦 Setting up virtual environment..."
 
 if [ -d ".venv" ]; then
     # Check existing venv's Python version
@@ -128,9 +128,39 @@ fi
 echo
 
 # ─────────────────────────────────────────
-# Step 3: Install project (editable)
+# Step 3: Install dispatch-kit (local)
 # ─────────────────────────────────────────
-echo "3/5 📥 Installing $PROJECT_NAME..."
+echo "3/6 🚀 Installing dispatch-kit..."
+
+# dispatch-kit is not yet on PyPI — install from local clone.
+# Override the path with DISPATCH_KIT_PATH env var if needed.
+DISPATCH_KIT_PATH="${DISPATCH_KIT_PATH:-$HOME/Github/dispatch-kit}"
+
+if .venv/bin/python -c "import dispatch_kit" 2>/dev/null; then
+    DK_VER=$(.venv/bin/python -c "from importlib.metadata import version; print(version('dispatch-kit'))" 2>/dev/null || echo "unknown")
+    echo "✅ dispatch-kit $DK_VER already installed"
+    SUMMARY+=("dispatch-kit: already installed ($DK_VER)")
+elif [ -d "$DISPATCH_KIT_PATH" ] && [ -f "$DISPATCH_KIT_PATH/pyproject.toml" ]; then
+    echo "  Installing from $DISPATCH_KIT_PATH..."
+    if command -v uv >/dev/null 2>&1; then
+        uv pip install -e "$DISPATCH_KIT_PATH" --python .venv/bin/python
+    else
+        .venv/bin/pip install -e "$DISPATCH_KIT_PATH"
+    fi
+    DK_VER=$(.venv/bin/python -c "from importlib.metadata import version; print(version('dispatch-kit'))" 2>/dev/null || echo "unknown")
+    echo "✅ dispatch-kit $DK_VER installed from local repo"
+    SUMMARY+=("dispatch-kit: installed from local ($DK_VER)")
+else
+    echo "⚠️  dispatch-kit not found (optional — needed for agent coordination)"
+    echo "   Set DISPATCH_KIT_PATH or clone to ~/Github/dispatch-kit/"
+    SUMMARY+=("dispatch-kit: NOT FOUND (optional)")
+fi
+echo
+
+# ─────────────────────────────────────────
+# Step 4: Install project (editable)
+# ─────────────────────────────────────────
+echo "4/6 📥 Installing $PROJECT_NAME..."
 
 # Use full paths — don't rely on source activate
 if command -v uv >/dev/null 2>&1; then
@@ -147,9 +177,9 @@ echo "✅ $PROJECT_NAME installed in editable mode"
 echo
 
 # ─────────────────────────────────────────
-# Step 4: Check tmux availability
+# Step 5: Check tmux availability
 # ─────────────────────────────────────────
-echo "4/5 🖥️  Checking tmux..."
+echo "5/6 🖥️  Checking tmux..."
 
 if command -v tmux >/dev/null 2>&1; then
     TMUX_VERSION=$(tmux -V 2>/dev/null || echo "unknown")
@@ -163,9 +193,9 @@ fi
 echo
 
 # ─────────────────────────────────────────
-# Step 5: Project-specific initialization
+# Step 6: Project-specific initialization
 # ─────────────────────────────────────────
-echo "5/5 ⚙️  Checking project configuration..."
+echo "6/6 ⚙️  Checking project configuration..."
 
 # dispatch-kit: run dispatch init if config is missing
 if command -v dispatch >/dev/null 2>&1 || [ -x ".venv/bin/dispatch" ]; then

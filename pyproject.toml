@@ -39,6 +39,8 @@ dev = [
     "pre-commit>=3.5.0",
     # Adversarial evaluation (AI reviews task specs)
     "adversarial-workflow>=0.7.0",  # Multi-evaluator support, citation verification
+    # Agent coordination (event bus, transition matching, spawning)
+    "dispatch-kit>=0.4.0",         # Install locally: pip install -e /path/to/dispatch-kit
 ]
 
 [tool.pytest.ini_options]
