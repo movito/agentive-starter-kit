@@ -59,7 +59,7 @@ Lessons from ASK-0037 and ASK-0038:
 
 1. **Always use repo-relative paths** in review starters (never `/Users/...`)
 2. **Wait for bots to finish BEFORE claiming ready** — run `/check-bots` until CURRENT
-3. **Black is pinned to 23.12.1** — use `pre-commit run black --files` not bare `black`
+3. **Black is pinned to 26.1.0** — use `pre-commit run black --files` not bare `black`
 4. **`ruff format`** after every Serena symbol edit
 5. **Don't hardcode version numbers** in generated docs — reference `pyproject.toml`
 

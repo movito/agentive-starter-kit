@@ -24,7 +24,7 @@ tests/                pytest test suite
 
 ### Python (v3.10-3.12)
 
-- **Formatter**: Black (v23.12.1, line-length=88)
+- **Formatter**: Black (v26.1.0, line-length=88)
 - **Import sorting**: isort (profile=black)
 - **Linting**: Ruff (E, F, I, N, W rules), flake8
 - **Testing**: pytest with TDD workflow (write tests before implementation)
