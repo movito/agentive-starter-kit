@@ -460,5 +460,5 @@ Developed through real-world use on production projects. Special thanks to the C
 
 ---
 
-**Version**: 0.3.2
-**Last Updated**: 2026-02-01
+**Version**: 0.3.3
+**Last Updated**: 2026-03-04

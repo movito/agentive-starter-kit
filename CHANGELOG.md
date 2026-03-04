@@ -7,10 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-03-04
+
+### Added
+
+- **Project bootstrap script and agent** - New `scripts/bootstrap.sh` overlays starter kit scaffolding onto existing projects; bootstrap agent reads design materials, configures pyproject.toml, agents, Serena, and creates initial backlog tasks
+- **DK004 lint rule for bare except** (ASK-0039) - Pattern lint now flags `except Exception: pass` and `except BaseException: pass` that silently swallow errors, with noqa suppression support
+- **Root-level CLAUDE.md architecture overview** (ASK-0038) - Primary entry point for agents entering the project, covering directory structure, project rules, agent context, and key scripts
+- **Linear sync behavior reference** (ASK-0037) - Documentation of Linear sync status determination, task monitor behavior, and legacy status migration
+- **Retro command saves to file** - `/retro` now persists retrospective output to `.agent-context/retros/`
+- **Dispatch-kit workflow integration** - Skills, commands, scripts, and agents ported from dispatch-kit for event-driven coordination
+
+### Changed
+
+- **Expanded reconfigure to catch all identity leaks** (ASK-0036) - `reconfigure_project()` now replaces 8 additional identity patterns (pyproject.toml, conftest.py, CHANGELOG URLs, CLAUDE.md, README, logging config, planner URL). Adds `--verify` flag, git remote URL derivation, and title-case project names
+- **Canonical env template consolidated** (ASK-0040) - `.env.template` is now the single source of truth; `.env.example` synced with header comment, all references updated
+- **Linear dependencies made optional** (ASK-0035) - `gql[requests]` and `python-dotenv` moved to `[linear]` extra; base install no longer requires them
+- **Template cleaned for downstream use** (ASK-0034) - Archived 34 completed tasks, removed starter-kit-specific SETUP.md and branding, moved legacy docs to `docs/archive/`
+- **dispatch-kit moved to optional `[local]` extra** - Prevents CI failures since dispatch-kit is not on PyPI
+
 ### Fixed
 
 - **Agent launcher delegates to standalone scripts** - `agents/launch onboard` now correctly delegates to `agents/onboarding` instead of launching a blank session without the initial prompt
 - **Corrected create-agent.sh path references** - Agent-creator and workflow docs pointed to old `.agent-context/scripts/` location instead of `scripts/`
+- **Corrected evaluator names in agent definitions** - Replaced non-existent `architecture-planner` / `architecture-planner-fast` with actual library names `arch-review` / `arch-review-fast`
+- **Prevented feature-developer-v3 self-delegation** - Anti-delegation instructions added so the agent implements tasks directly instead of trying to spawn another instance of itself
+- **CI coverage restored** - Added pattern lint tests that were missing after refactoring
 
 ## [0.3.2] - 2026-02-11
 
@@ -135,6 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Agent handoff protocol via `.agent-context/`
 - Pre-configured Claude Code settings and permissions
 
+[0.3.3]: https://github.com/movito/agentive-starter-kit/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/movito/agentive-starter-kit/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/movito/agentive-starter-kit/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/movito/agentive-starter-kit/compare/v0.2.2...v0.3.0

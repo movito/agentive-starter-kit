@@ -1,6 +1,6 @@
 # ASK-0036: Expand Reconfigure to Catch All Identity Leaks
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: high
 **Assigned To**: feature-developer-v3
 **Estimated Effort**: 2-3 hours
