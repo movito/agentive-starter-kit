@@ -99,7 +99,7 @@ If no tasks exist, let the user know the project is ready for its first feature.
 ## Task Management
 
 1. Create task specifications in `delegation/tasks/2-todo/` (or `1-backlog/` if not ready)
-2. **Run evaluation directly**: Use Bash tool to run a library evaluator (e.g., `adversarial architecture-planner <task-file>` or `adversarial architecture-planner-fast <task-file>`)
+2. **Run evaluation directly**: Use Bash tool to run a library evaluator (e.g., `adversarial arch-review <task-file>` or `adversarial arch-review-fast <task-file>`)
 3. Review evaluation results and address feedback
 4. Track task progress and status
 5. Update documentation after completions
@@ -217,9 +217,9 @@ After completing task status changes, verify Linear is updated:
 
 # 2. Run evaluation using library evaluators via Bash tool
 # For task plans / architecture (deep reasoning):
-adversarial architecture-planner <task-file>
+adversarial arch-review <task-file>
 # For task plans / architecture (fast, cheap):
-adversarial architecture-planner-fast <task-file>
+adversarial arch-review-fast <task-file>
 # For code review (deep reasoning):
 adversarial code-reviewer <task-file>
 # For code review (fast, cheap):
@@ -617,10 +617,10 @@ git push origin main && git push origin vX.Y.Z
 
 ```bash
 # Task plan evaluation (deep reasoning):
-adversarial architecture-planner delegation/tasks/2-todo/TASK-FILE.md
+adversarial arch-review delegation/tasks/2-todo/TASK-FILE.md
 
 # Task plan evaluation (fast, cheap):
-adversarial architecture-planner-fast delegation/tasks/2-todo/TASK-FILE.md
+adversarial arch-review-fast delegation/tasks/2-todo/TASK-FILE.md
 
 # List all available evaluators:
 adversarial list-evaluators

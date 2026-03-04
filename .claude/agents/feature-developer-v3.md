@@ -331,8 +331,8 @@ When to use: Python code in source and test directories. When NOT to use: Markdo
 ## Evaluator (Design Clarification)
 
 ```bash
-adversarial architecture-planner <task-file>       # Deep (o1)
-adversarial architecture-planner-fast <task-file>   # Fast (Gemini)
+adversarial arch-review <task-file>       # Deep (o1)
+adversarial arch-review-fast <task-file>   # Fast (Gemini)
 ```
 
 Max 2-3 evaluations per task.
