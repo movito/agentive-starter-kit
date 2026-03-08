@@ -23,7 +23,7 @@ import tempfile
 from pathlib import Path
 
 # Default version tag for reproducibility
-EVALUATOR_LIBRARY_VERSION = "v0.5.0"
+EVALUATOR_LIBRARY_VERSION = "v0.5.2"
 EVALUATOR_LIBRARY_REPO = "https://github.com/movito/adversarial-evaluator-library.git"
 
 # Status to folder mapping
@@ -1275,8 +1275,7 @@ except Exception as e:
 
 def print_help():
     """Print help message."""
-    print(
-        """
+    print("""
 Project CLI - Agentive Starter Kit
 ==================================
 
@@ -1324,8 +1323,7 @@ Valid statuses for 'move':
   backlog, todo, in-progress, in-review, done, canceled, blocked
 
 For more information, see README.md
-"""
-    )
+""")
 
 
 if __name__ == "__main__":
