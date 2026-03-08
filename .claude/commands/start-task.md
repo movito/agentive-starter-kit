@@ -48,7 +48,7 @@ ls delegation/tasks/3-in-progress/ 2>/dev/null | head -10 || echo "None in progr
 3. **Start the task**:
 
    ```bash
-   ./scripts/project start $ARGUMENTS
+   ./scripts/core/project start $ARGUMENTS
    ```
 
    This moves the task from `2-todo/` to `3-in-progress/` and updates the status field.

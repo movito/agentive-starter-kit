@@ -97,7 +97,7 @@ manual pacing instead.
 
 ```bash
 git checkout -b feature/<TASK-ID>-short-description
-./scripts/project start <TASK-ID>
+./scripts/core/project start <TASK-ID>
 ```
 
 - Read task file: `delegation/tasks/3-in-progress/<TASK-ID>-*.md`
@@ -174,7 +174,7 @@ After writing each function (not after writing all functions):
 
 ```bash
 pytest tests/<relevant_test_file>.py -v
-python3 scripts/pattern_lint.py <changed_source_files>
+python3 scripts/core/pattern_lint.py <changed_source_files>
 ruff format <changed-files>    # ALWAYS run after Serena symbol edits
 ```
 
@@ -231,7 +231,7 @@ Do NOT skip this step — it prevents bot review cascades caused by omitted requ
 ## Phase 6: Ship
 
 ```bash
-./scripts/ci-check.sh          # Full CI locally
+./scripts/core/ci-check.sh          # Full CI locally
 git add <specific files>        # Never git add -A
 git commit                      # Pre-commit runs pattern lint + tests
 git branch --show-current             # note the branch name
@@ -289,7 +289,7 @@ Run `/preflight` — verify all 7 completion gates pass. Fix any failures before
 
 Follow the review-handoff skill:
 
-1. Move task: `./scripts/project move <TASK-ID> in-review`
+1. Move task: `./scripts/core/project move <TASK-ID> in-review`
 2. Create review starter: `.agent-context/<TASK-ID>-REVIEW-STARTER.md`
 3. Add Review section to task file
 4. Notify user with thread count proof
@@ -323,7 +323,7 @@ When to use: Python code in source and test directories. When NOT to use: Markdo
 ## Testing
 
 - **Pre-commit**: pattern lint + fast tests (blocking)
-- **Pre-push**: `./scripts/ci-check.sh` (full suite)
+- **Pre-push**: `./scripts/core/ci-check.sh` (full suite)
 - **Post-push**: `/check-ci`
 - **Coverage**: maintain or improve existing baseline
 - **Property tests**: required for new pure functions
@@ -342,7 +342,7 @@ Max 2-3 evaluations per task.
 | Resource | Location |
 |----------|----------|
 | Pattern registry | `.agent-context/patterns.yml` |
-| Pattern lint | `scripts/pattern_lint.py` |
+| Pattern lint | `scripts/core/pattern_lint.py` |
 | Task specs | `delegation/tasks/` |
 | Commit protocol | `.agent-context/workflows/COMMIT-PROTOCOL.md` |
 | Testing workflow | `.agent-context/workflows/TESTING-WORKFLOW.md` |
@@ -363,6 +363,6 @@ Reference: `.agent-context/workflows/WORKFLOW-FREEZE-POLICY.md`
 - Don't change core architecture without coordinator approval
 - Always preserve backward compatibility
 - Don't skip pre-commit hooks
-- Don't push without `./scripts/ci-check.sh`
+- Don't push without `./scripts/core/ci-check.sh`
 - Don't mark complete without CI green on GitHub
 - Don't edit workflow definitions during active feature tasks

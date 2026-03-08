@@ -30,9 +30,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **ASK-0027**: Support multiple YAML field names (e.g., both `name:` and `project_name:`) with first-match-wins logic
 - **ASK-0027**: Watch for path resolution bugs in `project_dir` handling - use `Path.resolve()` consistently
 
-### CLI (`scripts/project`)
+### CLI (`scripts/core/project`)
 
-- **ASK-0025**: User-friendly output should include actionable next steps (e.g., "Run ./scripts/project linearsync to sync")
+- **ASK-0025**: User-friendly output should include actionable next steps (e.g., "Run ./scripts/core/project linearsync to sync")
 - **ASK-0025**: Limit verbose output lists (e.g., show max 5 missing tasks, then "and N more...")
 - **ASK-0027**: Progress reporting pattern - show status for each file/item processed
 - **ASK-0027**: Idempotent commands - safe to run multiple times without unintended side effects
@@ -83,10 +83,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ## Integration Notes
 
-- **Linear Sync**: Use `./scripts/project sync-status` after commits to verify Linear is updated (ASK-0025)
-- **Upstream Merges**: Run `./scripts/project reconfigure` after pulling upstream changes to update agent files (ASK-0027)
-- **New Project Setup**: Run `./scripts/project setup` to create venv and install dependencies (ASK-0028)
-- **Evaluator Installation**: Run `./scripts/project install-evaluators` to add additional evaluation providers (ASK-0029)
+- **Linear Sync**: Use `./scripts/core/project sync-status` after commits to verify Linear is updated (ASK-0025)
+- **Upstream Merges**: Run `./scripts/core/project reconfigure` after pulling upstream changes to update agent files (ASK-0027)
+- **New Project Setup**: Run `./scripts/core/project setup` to create venv and install dependencies (ASK-0028)
+- **Evaluator Installation**: Run `./scripts/core/project install-evaluators` to add additional evaluation providers (ASK-0029)
 
 ---
 

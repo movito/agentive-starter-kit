@@ -15,13 +15,13 @@ import pytest
 from conftest import MockVersionInfo
 
 # Load the project script as a module
-_script_path = Path(__file__).parent.parent / "scripts" / "project"
+_script_path = Path(__file__).parent.parent / "scripts" / "core" / "project"
 _spec = importlib.util.spec_from_loader("project_script", loader=None)
 _project_module = importlib.util.module_from_spec(_spec)
 
 # Read and execute the script to get the functions
 # Inject __file__ so Path(__file__) works in cmd_setup
-with open(_script_path) as f:
+with open(_script_path, encoding="utf-8") as f:
     _project_module.__dict__["__file__"] = str(_script_path)
     exec(f.read(), _project_module.__dict__)
 
@@ -60,7 +60,7 @@ class TestInstallEvaluatorsCommand:
         # Create .installed-version file
         evaluators_dir = mock_project_dir / ".adversarial" / "evaluators"
         version_file = evaluators_dir / ".installed-version"
-        version_file.write_text("v0.2.2 (abc12345)\n")
+        version_file.write_text("v0.2.2 (abc12345)\n", encoding="utf-8")
 
         # Mock subprocess.run - git check should succeed
         with patch.object(_project_module, "subprocess") as mock_subprocess:
@@ -81,7 +81,7 @@ class TestInstallEvaluatorsCommand:
         # Create .installed-version file
         evaluators_dir = mock_project_dir / ".adversarial" / "evaluators"
         version_file = evaluators_dir / ".installed-version"
-        version_file.write_text("v0.2.2 (abc12345)\n")
+        version_file.write_text("v0.2.2 (abc12345)\n", encoding="utf-8")
 
         # Mock subprocess.run for git check and clone
         with patch.object(_project_module, "subprocess") as mock_subprocess:
@@ -514,32 +514,37 @@ class TestReconfigureExpanded:
         # .serena/project.yml
         serena_dir = tmp_path / ".serena"
         serena_dir.mkdir()
-        (serena_dir / "project.yml").write_text("name: my-cool-project\n")
+        (serena_dir / "project.yml").write_text(
+            "name: my-cool-project\n", encoding="utf-8"
+        )
 
         # .claude/agents/
         agents_dir = tmp_path / ".claude" / "agents"
         agents_dir.mkdir(parents=True)
         (agents_dir / "feature-developer-v3.md").write_text(
-            'mcp__serena__activate_project("agentive-starter-kit")\n'
+            'mcp__serena__activate_project("agentive-starter-kit")\n', encoding="utf-8"
         )
         (agents_dir / "planner.md").write_text(
             "# Planner\n\n"
             "#    [X.Y.Z]: https://github.com/movito/"
-            "agentive-starter-kit/compare/vPREV...vX.Y.Z\n"
+            "agentive-starter-kit/compare/vPREV...vX.Y.Z\n",
+            encoding="utf-8",
         )
 
         # pyproject.toml
         (tmp_path / "pyproject.toml").write_text(
             "# Project configuration for Python projects"
             " using the Agentive Starter Kit\n"
-            '[build-system]\nrequires = ["setuptools>=61.0"]\n'
+            '[build-system]\nrequires = ["setuptools>=61.0"]\n',
+            encoding="utf-8",
         )
 
         # tests/conftest.py
         tests_dir = tmp_path / "tests"
         tests_dir.mkdir()
         (tests_dir / "conftest.py").write_text(
-            '"""\nShared fixtures for the agentive-starter-kit test suite.\n"""\n'
+            '"""\nShared fixtures for the agentive-starter-kit test suite.\n"""\n',
+            encoding="utf-8",
         )
 
         # CHANGELOG.md
@@ -551,16 +556,19 @@ class TestReconfigureExpanded:
             "[0.3.2]: https://github.com/movito/"
             "agentive-starter-kit/compare/v0.3.1...v0.3.2\n"
             "[0.3.1]: https://github.com/movito/"
-            "agentive-starter-kit/compare/v0.3.0...v0.3.1\n"
+            "agentive-starter-kit/compare/v0.3.0...v0.3.1\n",
+            encoding="utf-8",
         )
 
         # CLAUDE.md
         (tmp_path / "CLAUDE.md").write_text(
-            "# Agentive Starter Kit\n\nSome description.\n"
+            "# Agentive Starter Kit\n\nSome description.\n", encoding="utf-8"
         )
 
         # README.md
-        (tmp_path / "README.md").write_text("# Agentive Starter Kit\n\nMore content.\n")
+        (tmp_path / "README.md").write_text(
+            "# Agentive Starter Kit\n\nMore content.\n", encoding="utf-8"
+        )
 
         # scripts/logging_config.py
         scripts_dir = tmp_path / "scripts"
@@ -569,7 +577,8 @@ class TestReconfigureExpanded:
             '"""\nLogging Configuration\n\n'
             "Configurable logging infrastructure for the"
             " agentive-starter-kit.\n"
-            '"""\n'
+            '"""\n',
+            encoding="utf-8",
         )
 
         # Initialize git repo with fake remote
@@ -594,49 +603,53 @@ class TestReconfigureExpanded:
 
     def test_pyproject_comment_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
-        content = (mock_project / "pyproject.toml").read_text()
+        content = (mock_project / "pyproject.toml").read_text(encoding="utf-8")
         assert "# Project configuration for my-cool-project" in content
         assert "Agentive Starter Kit" not in content
 
     def test_conftest_docstring_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
-        content = (mock_project / "tests" / "conftest.py").read_text()
+        content = (mock_project / "tests" / "conftest.py").read_text(encoding="utf-8")
         assert "my-cool-project test suite" in content
         assert "agentive-starter-kit test suite" not in content
 
     def test_changelog_header_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
-        content = (mock_project / "CHANGELOG.md").read_text()
+        content = (mock_project / "CHANGELOG.md").read_text(encoding="utf-8")
         assert "All notable changes to My Cool Project" in content
         assert "Agentive Starter Kit" not in content
 
     def test_changelog_urls_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
-        content = (mock_project / "CHANGELOG.md").read_text()
+        content = (mock_project / "CHANGELOG.md").read_text(encoding="utf-8")
         assert "github.com/testuser/my-cool-project/compare/" in content
         assert "github.com/movito/agentive-starter-kit" not in content
 
     def test_claude_md_title_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
-        content = (mock_project / "CLAUDE.md").read_text()
+        content = (mock_project / "CLAUDE.md").read_text(encoding="utf-8")
         assert "# My Cool Project" in content
         assert "# Agentive Starter Kit" not in content
 
     def test_readme_title_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
-        content = (mock_project / "README.md").read_text()
+        content = (mock_project / "README.md").read_text(encoding="utf-8")
         assert "# My Cool Project" in content
         assert "# Agentive Starter Kit" not in content
 
     def test_logging_config_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
-        content = (mock_project / "scripts" / "logging_config.py").read_text()
+        content = (mock_project / "scripts" / "logging_config.py").read_text(
+            encoding="utf-8"
+        )
         assert "infrastructure for the my-cool-project" in content
         assert "agentive-starter-kit" not in content
 
     def test_planner_url_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
-        content = (mock_project / ".claude" / "agents" / "planner.md").read_text()
+        content = (mock_project / ".claude" / "agents" / "planner.md").read_text(
+            encoding="utf-8"
+        )
         assert "github.com/testuser/my-cool-project" in content
         assert "github.com/movito/agentive-starter-kit" not in content
 
@@ -645,7 +658,7 @@ class TestReconfigureExpanded:
         self._run_reconfigure(mock_project)
         content = (
             mock_project / ".claude" / "agents" / "feature-developer-v3.md"
-        ).read_text()
+        ).read_text(encoding="utf-8")
         assert 'activate_project("my-cool-project")' in content
 
     def test_idempotent(self, mock_project):
@@ -661,7 +674,9 @@ class TestReconfigureExpanded:
                 ".py",
                 ".yml",
             }:
-                files_after_first[str(f.relative_to(mock_project))] = f.read_text()
+                files_after_first[str(f.relative_to(mock_project))] = f.read_text(
+                    encoding="utf-8"
+                )
 
         # Run again
         self._run_reconfigure(mock_project)
@@ -670,7 +685,7 @@ class TestReconfigureExpanded:
         for rel_path, first_content in files_after_first.items():
             filepath = mock_project / rel_path
             assert (
-                filepath.read_text() == first_content
+                filepath.read_text(encoding="utf-8") == first_content
             ), f"File changed on second run: {rel_path}"
 
     def test_missing_files_skipped(self, tmp_path, capsys):
@@ -678,7 +693,9 @@ class TestReconfigureExpanded:
         # Minimal project: only .serena/project.yml and .claude/agents
         serena_dir = tmp_path / ".serena"
         serena_dir.mkdir()
-        (serena_dir / "project.yml").write_text("name: test-project\n")
+        (serena_dir / "project.yml").write_text(
+            "name: test-project\n", encoding="utf-8"
+        )
 
         agents_dir = tmp_path / ".claude" / "agents"
         agents_dir.mkdir(parents=True)
@@ -695,7 +712,9 @@ class TestReconfigureExpanded:
         """URL replacements skipped when git remote unavailable."""
         serena_dir = tmp_path / ".serena"
         serena_dir.mkdir()
-        (serena_dir / "project.yml").write_text("name: test-project\n")
+        (serena_dir / "project.yml").write_text(
+            "name: test-project\n", encoding="utf-8"
+        )
 
         agents_dir = tmp_path / ".claude" / "agents"
         agents_dir.mkdir(parents=True)
@@ -703,7 +722,8 @@ class TestReconfigureExpanded:
         # Create CHANGELOG with upstream URLs
         (tmp_path / "CHANGELOG.md").write_text(
             "[0.3.2]: https://github.com/movito/"
-            "agentive-starter-kit/compare/v0.3.1...v0.3.2\n"
+            "agentive-starter-kit/compare/v0.3.1...v0.3.2\n",
+            encoding="utf-8",
         )
 
         # Init git but NO remote
@@ -712,7 +732,7 @@ class TestReconfigureExpanded:
         self._run_reconfigure(tmp_path)
 
         # CHANGELOG URLs should NOT be replaced
-        content = (tmp_path / "CHANGELOG.md").read_text()
+        content = (tmp_path / "CHANGELOG.md").read_text(encoding="utf-8")
         assert "github.com/movito/agentive-starter-kit" in content
 
         captured = capsys.readouterr()
@@ -738,7 +758,9 @@ class TestReconfigureExpanded:
         """--verify returns False (exit 1) when leaks are detected."""
         serena_dir = tmp_path / ".serena"
         serena_dir.mkdir()
-        (serena_dir / "project.yml").write_text("name: test-project\n")
+        (serena_dir / "project.yml").write_text(
+            "name: test-project\n", encoding="utf-8"
+        )
 
         agents_dir = tmp_path / ".claude" / "agents"
         agents_dir.mkdir(parents=True)
@@ -748,7 +770,7 @@ class TestReconfigureExpanded:
         scripts_dir = tmp_path / "scripts"
         scripts_dir.mkdir()
         (scripts_dir / "other.py").write_text(
-            "# references agentive-starter-kit somewhere\n"
+            "# references agentive-starter-kit somewhere\n", encoding="utf-8"
         )
 
         subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
@@ -760,7 +782,9 @@ class TestReconfigureExpanded:
         """reconfigure_project returns False when file operations error."""
         serena_dir = tmp_path / ".serena"
         serena_dir.mkdir()
-        (serena_dir / "project.yml").write_text("name: test-project\n")
+        (serena_dir / "project.yml").write_text(
+            "name: test-project\n", encoding="utf-8"
+        )
 
         agents_dir = tmp_path / ".claude" / "agents"
         agents_dir.mkdir(parents=True)
@@ -782,7 +806,7 @@ class TestVerifyIdentityLeaks:
     def test_clean_project_reports_zero(self, tmp_path, capsys):
         """No leaks when project has been reconfigured."""
         # Create a file with no upstream references
-        (tmp_path / "README.md").write_text("# My Project\n")
+        (tmp_path / "README.md").write_text("# My Project\n", encoding="utf-8")
         verify = _project_module._verify_identity_leaks
         count = verify(tmp_path)
         assert count == 0
@@ -791,7 +815,9 @@ class TestVerifyIdentityLeaks:
 
     def test_detects_remaining_leaks(self, tmp_path, capsys):
         """Reports files that still contain upstream references."""
-        (tmp_path / "leaked.py").write_text("# This references agentive-starter-kit\n")
+        (tmp_path / "leaked.py").write_text(
+            "# This references agentive-starter-kit\n", encoding="utf-8"
+        )
         verify = _project_module._verify_identity_leaks
         count = verify(tmp_path)
         assert count == 1
@@ -803,28 +829,38 @@ class TestVerifyIdentityLeaks:
         # Create excluded directories with upstream references
         adversarial_dir = tmp_path / ".adversarial"
         adversarial_dir.mkdir()
-        (adversarial_dir / "config.md").write_text("agentive-starter-kit reference\n")
+        (adversarial_dir / "config.md").write_text(
+            "agentive-starter-kit reference\n", encoding="utf-8"
+        )
 
         agent_ctx = tmp_path / ".agent-context"
         agent_ctx.mkdir()
-        (agent_ctx / "handoff.md").write_text("agentive-starter-kit reference\n")
+        (agent_ctx / "handoff.md").write_text(
+            "agentive-starter-kit reference\n", encoding="utf-8"
+        )
 
         decisions_dir = tmp_path / "docs" / "decisions"
         decisions_dir.mkdir(parents=True)
-        (decisions_dir / "adr.md").write_text("agentive-starter-kit reference\n")
+        (decisions_dir / "adr.md").write_text(
+            "agentive-starter-kit reference\n", encoding="utf-8"
+        )
 
         tasks_dir = tmp_path / "delegation" / "tasks"
         tasks_dir.mkdir(parents=True)
-        (tasks_dir / "ASK-0036.md").write_text("agentive-starter-kit reference\n")
+        (tasks_dir / "ASK-0036.md").write_text(
+            "agentive-starter-kit reference\n", encoding="utf-8"
+        )
 
         # onboarding.md at any location
-        (tmp_path / "onboarding.md").write_text("agentive-starter-kit reference\n")
+        (tmp_path / "onboarding.md").write_text(
+            "agentive-starter-kit reference\n", encoding="utf-8"
+        )
 
         # tests/ directory (test fixtures contain upstream strings)
         tests_dir = tmp_path / "tests"
         tests_dir.mkdir()
         (tests_dir / "test_project_script.py").write_text(
-            "agentive-starter-kit reference in fixture\n"
+            "agentive-starter-kit reference in fixture\n", encoding="utf-8"
         )
 
         verify = _project_module._verify_identity_leaks
@@ -835,7 +871,9 @@ class TestVerifyIdentityLeaks:
         """Exclusion matches path segments, not substrings of filenames."""
         # A file with "tests" in its name (not in a tests/ directory)
         # should NOT be excluded
-        (tmp_path / "my_tests_helper.py").write_text("agentive-starter-kit reference\n")
+        (tmp_path / "my_tests_helper.py").write_text(
+            "agentive-starter-kit reference\n", encoding="utf-8"
+        )
         verify = _project_module._verify_identity_leaks
         count = verify(tmp_path)
         assert count == 1
@@ -845,7 +883,7 @@ class TestVerifyIdentityLeaks:
         docs_dir = tmp_path / "docs"
         docs_dir.mkdir()
         (docs_dir / "UPSTREAM-CHANGES-2025-01-28.md").write_text(
-            "agentive-starter-kit reference\n"
+            "agentive-starter-kit reference\n", encoding="utf-8"
         )
         verify = _project_module._verify_identity_leaks
         count = verify(tmp_path)

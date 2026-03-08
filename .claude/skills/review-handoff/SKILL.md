@@ -15,18 +15,18 @@ After automated review is complete, you **MUST** request human code review befor
 ## Process
 
 1. **Verify automated review is complete**: PR has no unresolved threads, evaluator run persisted
-2. **Move task**: `./scripts/project move <TASK-ID> in-review`
+2. **Move task**: `./scripts/core/project move <TASK-ID> in-review`
 3. **Create review starter**: Write `.agent-context/<TASK-ID>-REVIEW-STARTER.md`
 4. **Add Review section to task file**: Append review index to the task file
 5. **Notify user**: Include thread count proof (mandatory)
 6. **Address feedback**: Fix any issues from human reviewer
-7. **After approval**: `./scripts/project complete <TASK-ID>`
+7. **After approval**: `./scripts/core/project complete <TASK-ID>`
 
 ## Creating Review Starter
 
 Copy template from `.agent-context/templates/review-starter-template.md` to `.agent-context/<TASK-ID>-REVIEW-STARTER.md` and fill in.
 
-**IMPORTANT**: All file paths in the review starter MUST be repo-relative (e.g., `CLAUDE.md`, `scripts/pattern_lint.py`). Never use absolute paths like `/Users/.../project/file.py` — they leak local machine info and are non-portable.
+**IMPORTANT**: All file paths in the review starter MUST be repo-relative (e.g., `CLAUDE.md`, `scripts/core/pattern_lint.py`). Never use absolute paths like `/Users/.../project/file.py` — they leak local machine info and are non-portable.
 
 ```markdown
 # Review Starter: <TASK-ID>
@@ -105,7 +105,7 @@ If you cannot produce "0 unresolved", do NOT send this notification — go back 
 
 | Verdict | Action |
 |---------|--------|
-| **Approved** | Move task to `5-done` with `./scripts/project complete <TASK-ID>` |
+| **Approved** | Move task to `5-done` with `./scripts/core/project complete <TASK-ID>` |
 | **Changes requested** | See fix process below |
 
 ## Handling Fix Prompts

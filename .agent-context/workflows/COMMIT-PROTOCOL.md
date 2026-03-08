@@ -53,7 +53,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 4. **Write commit message** following format above
 5. **Create commit**: Use HEREDOC format (see example below)
 6. **Verify commit**: `git log -1 --format='%an %ae %s'`
-7. **Run CI check**: `./scripts/ci-check.sh` (MANDATORY before push)
+7. **Run CI check**: `./scripts/core/ci-check.sh` (MANDATORY before push)
 8. **Push to remote**: `git push` (only after ci-check passes)
 9. **Verify CI/CD**: Monitor GitHub Actions until pass/fail (MANDATORY - see below)
 
@@ -107,7 +107,7 @@ EOF
 **Always run CI check before pushing**:
 
 ```bash
-./scripts/ci-check.sh
+./scripts/core/ci-check.sh
 ```
 
 ### What It Does
@@ -128,7 +128,7 @@ Runs the **SAME checks** as GitHub Actions:
 
 Add to `~/.bashrc` or `~/.zshrc`:
 ```bash
-alias gpush="./scripts/ci-check.sh && git push origin main"
+alias gpush="./scripts/core/ci-check.sh && git push origin main"
 ```
 
 Then use:
@@ -147,13 +147,13 @@ After pushing to GitHub, you **MUST** verify that GitHub Actions CI/CD passes:
 ### Use verify-ci.sh Script (Recommended)
 
 ```bash
-./scripts/verify-ci.sh [branch-name] [--wait] [--timeout seconds]
+./scripts/core/verify-ci.sh [branch-name] [--wait] [--timeout seconds]
 
 # Examples:
-./scripts/verify-ci.sh                              # Current branch, report status
-./scripts/verify-ci.sh --wait                        # Current branch, wait for completion
-./scripts/verify-ci.sh feature/xyz --wait            # Specific branch, wait (default 300s timeout)
-./scripts/verify-ci.sh feature/xyz --wait --timeout 600  # Custom timeout
+./scripts/core/verify-ci.sh                              # Current branch, report status
+./scripts/core/verify-ci.sh --wait                        # Current branch, wait for completion
+./scripts/core/verify-ci.sh feature/xyz --wait            # Specific branch, wait (default 300s timeout)
+./scripts/core/verify-ci.sh feature/xyz --wait --timeout 600  # Custom timeout
 ```
 
 **What It Does**:
@@ -265,9 +265,9 @@ git push origin main     # Hope CI passes 🤞
 ```bash
 git add .
 git commit -m "message"      # Formatting + linting + fast tests ✅
-./scripts/ci-check.sh        # MANDATORY pre-push verification ✅
+./scripts/core/ci-check.sh        # MANDATORY pre-push verification ✅
 git push origin main         # Push to GitHub ✅
-./scripts/verify-ci.sh       # MANDATORY post-push CI verification ✅
+./scripts/core/verify-ci.sh       # MANDATORY post-push CI verification ✅
 ```
 
 **Key changes**:
@@ -330,12 +330,12 @@ After pushing changes that affect task files (status changes, new tasks, complet
 - After completing tasks (moving to `5-done/`)
 - After creating new tasks
 - After any task status changes
-- After `./scripts/project linearsync` runs in CI
+- After `./scripts/core/project linearsync` runs in CI
 
 ### How to Verify
 
 ```bash
-./scripts/project sync-status
+./scripts/core/project sync-status
 ```
 
 **Expected Output (In Sync)**:
@@ -363,21 +363,21 @@ Status: ⚠️  Mismatch detected (2 missing in Linear)
 
 Missing in Linear: ASK-0025, ASK-0026
 
-Run: ./scripts/project linearsync
+Run: ./scripts/core/project linearsync
 ```
 
 ### Handling Mismatches
 
-1. **If local > Linear**: Run `./scripts/project linearsync` to sync missing tasks
+1. **If local > Linear**: Run `./scripts/core/project linearsync` to sync missing tasks
 2. **If Linear > local**: Normal if issues were created directly in Linear
 3. **Persistent mismatch**: Check `.env` for `LINEAR_API_KEY` and `LINEAR_TEAM_ID`
 
 ### Integration with CI
 
-The GitHub Actions workflow runs `./scripts/project linearsync` on push. After CI passes:
+The GitHub Actions workflow runs `./scripts/core/project linearsync` on push. After CI passes:
 
 1. Wait ~30 seconds for Linear to update
-2. Run `./scripts/project sync-status` to verify
+2. Run `./scripts/core/project sync-status` to verify
 3. If mismatch, investigate or re-run sync
 
 ---

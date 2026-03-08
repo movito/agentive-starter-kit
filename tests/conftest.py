@@ -212,7 +212,7 @@ def setup_temp_project(base_dir: Path | None = None) -> Path:
     if real_template.exists():
         shutil.copy2(real_template, dest_template)
     else:
-        dest_template.write_text(MINIMAL_TEMPLATE)
+        dest_template.write_text(MINIMAL_TEMPLATE, encoding="utf-8")
 
     # Copy or create agents/launch
     real_launcher = PROJECT_ROOT / "agents" / "launch"
@@ -220,7 +220,7 @@ def setup_temp_project(base_dir: Path | None = None) -> Path:
     if real_launcher.exists():
         shutil.copy2(real_launcher, dest_launcher)
     else:
-        dest_launcher.write_text(MINIMAL_LAUNCHER)
+        dest_launcher.write_text(MINIMAL_LAUNCHER, encoding="utf-8")
     dest_launcher.chmod(0o755)
 
     return base_dir
@@ -229,7 +229,7 @@ def setup_temp_project(base_dir: Path | None = None) -> Path:
 # ---------------------------------------------------------------------------
 # Shared create-agent.sh test helper
 # ---------------------------------------------------------------------------
-CREATE_AGENT_SCRIPT = PROJECT_ROOT / "scripts" / "create-agent.sh"
+CREATE_AGENT_SCRIPT = PROJECT_ROOT / "scripts" / "optional" / "create-agent.sh"
 CREATE_AGENT_LOCK_DIR = Path("/tmp/agent-creation.lock")
 
 

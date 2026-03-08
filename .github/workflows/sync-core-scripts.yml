@@ -1,0 +1,82 @@
+name: Sync Core Scripts to Downstream
+
+on:
+  push:
+    paths: ['scripts/core/**']
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repo:
+          - movito/dispatch-kit
+          - movito/adversarial-workflow
+          - movito/adversarial-evaluator-library
+    steps:
+      - name: Checkout source (agentive-starter-kit)
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout target (${{ matrix.repo }})
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repo }}
+          token: ${{ secrets.CROSS_REPO_TOKEN }}
+          path: target
+
+      - name: Sync core scripts
+        run: |
+          VERSION=$(cat source/scripts/core/VERSION)
+          BRANCH="chore/core-scripts-sync-v${VERSION}-$(date +%Y%m%d)"
+
+          cd target
+          git checkout -b "$BRANCH"
+
+          # Copy core scripts
+          rm -rf scripts/core
+          cp -r ../source/scripts/core scripts/core
+
+          # Update manifest
+          cat > scripts/.core-manifest.json <<MANIFEST
+          {
+            "core_version": "$VERSION",
+            "source": "agentive-starter-kit",
+            "source_repo": "movito/agentive-starter-kit",
+            "synced_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          MANIFEST
+
+          # Check if anything changed
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No changes to sync"
+            exit 0
+          fi
+
+          git add scripts/core/ scripts/.core-manifest.json
+          git commit -m "chore: Sync core scripts v${VERSION} from agentive-starter-kit"
+          git push -u origin "$BRANCH"
+
+      - name: Create PR
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+        run: |
+          VERSION=$(cat source/scripts/core/VERSION)
+          cd target
+          BRANCH=$(git branch --show-current)
+
+          # Only create PR if branch was pushed (changes existed)
+          if git log origin/main.."$BRANCH" --oneline | grep -q .; then
+            gh pr create \
+              --title "chore: Sync core scripts v${VERSION} from agentive-starter-kit" \
+              --body "Automated sync of \`scripts/core/\` from agentive-starter-kit v${VERSION}.
+
+          Review the changes and merge when ready.
+
+          **Source**: movito/agentive-starter-kit@main
+          **Core version**: ${VERSION}" \
+              --base main
+          fi

@@ -90,7 +90,7 @@ cp .claude/agents/AGENT-TEMPLATE.md .claude/agents/your-agent-name.md
 
 **Option B: Automation Script (Recommended)**
 ```bash
-scripts/create-agent.sh your-agent-name "One sentence description"
+scripts/optional/create-agent.sh your-agent-name "One sentence description"
 ```
 
 The automation script will:
@@ -472,7 +472,7 @@ Let's walk through creating an "api-tester" agent from start to finish.
 
 ```bash
 # Use automation script
-scripts/create-agent.sh api-tester "API testing and validation specialist for DaVinci Resolve integration"
+scripts/optional/create-agent.sh api-tester "API testing and validation specialist for DaVinci Resolve integration"
 
 # Output:
 # ✅ Created .claude/agents/api-tester.md
@@ -741,7 +741,7 @@ Before committing new agent, verify:
 
 ## Using the Automation Script
 
-The automation script (`scripts/create-agent.sh`) streamlines agent creation.
+The automation script (`scripts/optional/create-agent.sh`) streamlines agent creation.
 
 ### Basic Usage
 
@@ -750,10 +750,10 @@ The automation script (`scripts/create-agent.sh`) streamlines agent creation.
 cd /path/to/your-project
 
 # Run script with agent name and description
-scripts/create-agent.sh agent-name "One sentence description"
+scripts/optional/create-agent.sh agent-name "One sentence description"
 
 # Example:
-scripts/create-agent.sh api-tester "API testing and validation specialist for DaVinci Resolve integration"
+scripts/optional/create-agent.sh api-tester "API testing and validation specialist for DaVinci Resolve integration"
 ```
 
 ### What the Script Does
@@ -947,7 +947,7 @@ grep -n '\[' .claude/agents/your-agent.md
 - **Procedural Index**: `.agent-context/PROCEDURAL-KNOWLEDGE-INDEX.md` (central reference)
 - **Agent System Guide**: `.agent-context/AGENT-SYSTEM-GUIDE.md` (overall architecture)
 - **ADR-0011**: `docs/decisions/adr/0011-adversarial-workflow-integration.md` (decision rationale)
-- **Automation Script**: `scripts/create-agent.sh` (agent creation automation)
+- **Automation Script**: `scripts/optional/create-agent.sh` (agent creation automation)
 
 ---
 

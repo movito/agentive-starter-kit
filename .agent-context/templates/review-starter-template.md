@@ -52,7 +52,7 @@ Before requesting review, verify:
 
 - [ ] All acceptance criteria from task file are implemented
 - [ ] Tests written and passing
-- [ ] CI passes (`/check-ci` or `./scripts/verify-ci.sh`)
+- [ ] CI passes (`/check-ci` or `./scripts/core/verify-ci.sh`)
 - [ ] Task moved to `4-in-review/`
 - [ ] No debug code or console.logs left behind
 - [ ] Docstrings for public APIs

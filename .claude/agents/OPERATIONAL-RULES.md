@@ -160,7 +160,7 @@ This is the ONLY documentation type that belongs in `.claude/`.
 ### Before Running pip Commands
 
 1. **Check if venv exists**: `ls .venv/bin/activate 2>/dev/null`
-2. **If not, suggest setup**: `./scripts/project setup`
+2. **If not, suggest setup**: `./scripts/core/project setup`
 3. **Always use venv pip**: `.venv/bin/pip install ...`
 
 ### Why This Matters
@@ -177,7 +177,7 @@ error: externally-managed-environment
 
 ```bash
 # Set up venv (first time or if missing)
-./scripts/project setup
+./scripts/core/project setup
 
 # Activate venv (each terminal session)
 source .venv/bin/activate
@@ -186,7 +186,7 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 
 # Force recreate venv (if corrupted)
-./scripts/project setup --force
+./scripts/core/project setup --force
 ```
 
 ### Detecting Corrupted venv
@@ -196,4 +196,4 @@ If you see:
 ⚠️  Corrupted venv detected (missing python)
 ```
 
-Run: `./scripts/project setup --force`
+Run: `./scripts/core/project setup --force`

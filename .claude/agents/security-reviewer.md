@@ -119,7 +119,7 @@ See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
 If you push code changes to GitHub (security reports, review documentation, etc.):
 
 1. **Push your changes**: `git push origin <branch>`
-2. **Verify CI**: Use `/check-ci` slash command or run `./scripts/verify-ci.sh <branch>`
+2. **Verify CI**: Use `/check-ci` slash command or run `./scripts/core/verify-ci.sh <branch>`
 3. **Wait for result**: Check CI passes before marking work complete
 4. **Handle failures**: If CI fails, fix issues and repeat
 
@@ -130,7 +130,7 @@ If you push code changes to GitHub (security reports, review documentation, etc.
 /check-ci main
 
 # Option 2: Direct script
-./scripts/verify-ci.sh <branch-name>
+./scripts/core/verify-ci.sh <branch-name>
 ```
 
 **Proactive CI Fix**: When CI fails, offer to analyze logs and implement fix. Report failure clearly to user and ask if you should fix it.

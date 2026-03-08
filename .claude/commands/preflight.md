@@ -15,7 +15,7 @@ Run all 7 completion gates and present a PASS/FAIL table.
 ## Step 1: Run the preflight script
 
 ```bash
-./scripts/preflight-check.sh $ARGUMENTS
+./scripts/core/preflight-check.sh $ARGUMENTS
 ```
 
 The script outputs structured `GATE:<number>:<name>:PASS|FAIL:<detail>` lines and exits 0 (all pass) or 1 (any fail).
@@ -44,7 +44,7 @@ Parse the `GATE:` lines and format as a PASS/FAIL table:
   - Gate 4 fails: "Run `/triage-threads` to resolve open threads"
   - Gate 5 fails: "Run the code-review evaluator and persist output"
   - Gate 6 fails: "Create the review starter file"
-  - Gate 7 fails: "Run `./scripts/project move <TASK-ID> in-review`"
+  - Gate 7 fails: "Run `./scripts/core/project move <TASK-ID> in-review`"
 
 ## Step 3: Emit milestone event (optional, fire-and-forget — requires dispatch-kit)
 

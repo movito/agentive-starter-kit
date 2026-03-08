@@ -45,7 +45,7 @@ def get_folder_from_path(file_path: Path) -> Optional[str]:
 def get_status_from_file(file_path: Path) -> Optional[str]:
     """Extract the Status field from a task file."""
     try:
-        content = file_path.read_text()
+        content = file_path.read_text(encoding="utf-8")
         # Match **Status**: Value or **Status:** Value
         match = re.search(r"\*\*Status\*\*:\s*(\w+(?:\s+\w+)?)", content)
         if match:

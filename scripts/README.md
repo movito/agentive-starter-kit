@@ -1,65 +1,32 @@
-# Scripts Directory
+# Scripts
 
-Utility scripts for development and CI/CD operations.
+## Directory Layout
 
-## Available Scripts
+### `core/` — Shared scripts (synced from agentive-starter-kit)
 
-### `verify-setup.sh`
+These scripts are shared across all agentive projects. **Do not edit locally in
+downstream repos** — changes are made here in agentive-starter-kit and synced
+via automated PRs.
 
-Verifies project setup is complete and working:
-- Python version check (3.9+)
-- Virtual environment status
-- Dependencies installed (pytest, pre-commit)
-- Pre-commit hooks installed
-- Tests directory exists
+Current version: see `core/VERSION`
 
-**Usage:**
+### `local/` — Project-specific scripts
+
+Scripts unique to this project. Never synced or overwritten.
+
+### `optional/` — Opt-in scripts
+
+Scripts that downstream projects can copy to their `local/` directory if needed.
+Not synced automatically.
+
+## Sync Mechanism
+
+When `scripts/core/` changes on `main`, a GitHub Action opens PRs in:
+- movito/dispatch-kit
+- movito/adversarial-workflow
+- movito/adversarial-evaluator-library
+
+Downstream repos can also check sync status manually:
 ```bash
-./scripts/verify-setup.sh
-```
-
-### `verify-ci.sh`
-
-Checks GitHub Actions CI status for a branch:
-- Lists recent workflow runs
-- Shows pass/fail status
-- Provides commands to watch specific runs
-
-**Usage:**
-```bash
-./scripts/verify-ci.sh [branch-name]
-# Default: current branch
-```
-
-**Prerequisites:** GitHub CLI (`gh`) must be installed and authenticated.
-
-## Adding New Scripts
-
-1. Create script in this directory
-2. Add shebang: `#!/bin/bash`
-3. Make executable: `chmod +x scripts/your-script.sh`
-4. Add documentation to this README
-5. Test on fresh clone if possible
-
-## Common Patterns
-
-### Exit on Error
-```bash
-set -e  # Exit immediately if a command fails
-```
-
-### Check for Dependencies
-```bash
-if ! command -v gh &> /dev/null; then
-    echo "❌ GitHub CLI (gh) not installed"
-    exit 1
-fi
-```
-
-### Color Output
-```bash
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m'  # No Color
-echo -e "${GREEN}✅ Success${NC}"
+./scripts/core/check-sync.sh
 ```

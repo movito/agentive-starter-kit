@@ -106,16 +106,16 @@ Priority 3: Default to "Backlog"
 **Starting the Monitor**:
 ```bash
 # When opening project (recommended):
-./scripts/start-daemons.sh
+./scripts/local/start-daemons.sh
 
 # Or manually:
-./scripts/project daemon start
-./scripts/project daemon status    # Check if running
-./scripts/project daemon logs      # View activity
+./scripts/core/project daemon start
+./scripts/core/project daemon status    # Check if running
+./scripts/core/project daemon logs      # View activity
 ```
 
 **If Monitor is NOT Running**:
-- Manual sync: `./scripts/project linearsync`
+- Manual sync: `./scripts/core/project linearsync`
 - Status field and folder can get out of sync temporarily
 - Priority system still applies (Status field > folder location)
 
@@ -131,18 +131,18 @@ Priority 3: Default to "Backlog"
 After completing task status changes, verify Linear is updated:
 
 ```bash
-./scripts/project sync-status
+./scripts/core/project sync-status
 ```
 
 **When to Verify**:
 - After completing tasks (moving to `5-done/`)
 - After creating new tasks
 - After any task status changes
-- After CI runs `./scripts/project linearsync`
+- After CI runs `./scripts/core/project linearsync`
 
 **If Mismatch Detected**:
-1. Run `./scripts/project linearsync` to sync missing tasks
-2. Re-verify with `./scripts/project sync-status`
+1. Run `./scripts/core/project linearsync` to sync missing tasks
+2. Re-verify with `./scripts/core/project sync-status`
 3. If persistent, check `.env` for `LINEAR_API_KEY` and `LINEAR_TEAM_ID`
 
 **Reference**: `.agent-context/workflows/COMMIT-PROTOCOL.md` → "Post-Push Linear Sync Verification"
@@ -207,7 +207,7 @@ cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 When assigning tasks to implementation agents, remind them to run:
 
 ```bash
-./scripts/project start <TASK-ID>
+./scripts/core/project start <TASK-ID>
 ```
 
 This command:
@@ -218,11 +218,11 @@ This command:
 ### Available Commands
 
 ```bash
-./scripts/project start <TASK-ID>             # Move to 3-in-progress/
-./scripts/project move <TASK-ID> in-review    # Move to 4-in-review/
-./scripts/project complete <TASK-ID>          # Move to 5-done/
-./scripts/project move <TASK-ID> blocked      # Move to 7-blocked/
-./scripts/project move <TASK-ID> todo         # Return to 2-todo/
+./scripts/core/project start <TASK-ID>             # Move to 3-in-progress/
+./scripts/core/project move <TASK-ID> in-review    # Move to 4-in-review/
+./scripts/core/project complete <TASK-ID>          # Move to 5-done/
+./scripts/core/project move <TASK-ID> blocked      # Move to 7-blocked/
+./scripts/core/project move <TASK-ID> todo         # Return to 2-todo/
 ```
 
 ### Why This Matters
@@ -240,7 +240,7 @@ This command:
 4. Address evaluator feedback
 5. **Create task starter and handoff** (see Task Starter Protocol below)
 6. Assign to appropriate agents (user invokes in new tab)
-7. **Remind agent to run `./scripts/project start <TASK-ID>`** when beginning work
+7. **Remind agent to run `./scripts/core/project start <TASK-ID>`** when beginning work
 8. Monitor progress via agent-handoffs.json
 9. Verify completion
 10. Update documentation and current-state.json
@@ -378,7 +378,7 @@ echo y | adversarial evaluate delegation/tasks/2-todo/TASK-FILE.md
 If you push code changes to GitHub (coordination commits, documentation updates, etc.):
 
 1. **Push your changes**: `git push origin <branch>`
-2. **Verify CI**: Run `./scripts/verify-ci.sh <branch>` to monitor GitHub Actions
+2. **Verify CI**: Run `./scripts/core/verify-ci.sh <branch>` to monitor GitHub Actions
 3. **Wait for result**: Check CI passes before marking coordination work complete
 4. **Handle failures**: If CI fails, fix issues and repeat
 
@@ -387,7 +387,7 @@ If you push code changes to GitHub (coordination commits, documentation updates,
 Run the verification script directly using Bash tool:
 
 ```bash
-./scripts/verify-ci.sh <branch-name>
+./scripts/core/verify-ci.sh <branch-name>
 ```
 
 Note: Tycho runs verification directly via Bash, not via ci-checker agent (which is for implementation agents).

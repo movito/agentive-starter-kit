@@ -159,16 +159,16 @@ Priority 3: Default to "Backlog"
 
 ```bash
 # When opening project (recommended):
-./scripts/start-daemons.sh
+./scripts/local/start-daemons.sh
 
 # Or manually:
-./scripts/project daemon start
-./scripts/project daemon status    # Check if running
-./scripts/project daemon logs      # View activity
+./scripts/core/project daemon start
+./scripts/core/project daemon status    # Check if running
+./scripts/core/project daemon logs      # View activity
 ```
 
 **If Monitor is NOT Running**:
-- Manual sync: `./scripts/project linearsync`
+- Manual sync: `./scripts/core/project linearsync`
 - Status field and folder can get out of sync temporarily
 - Priority system still applies (Status field > folder location)
 
@@ -184,18 +184,18 @@ Priority 3: Default to "Backlog"
 After completing task status changes, verify Linear is updated:
 
 ```bash
-./scripts/project sync-status
+./scripts/core/project sync-status
 ```
 
 **When to Verify**:
 - After completing tasks (moving to `5-done/`)
 - After creating new tasks
 - After any task status changes
-- After CI runs `./scripts/project linearsync`
+- After CI runs `./scripts/core/project linearsync`
 
 **If Mismatch Detected**:
-1. Run `./scripts/project linearsync` to sync missing tasks
-2. Re-verify with `./scripts/project sync-status`
+1. Run `./scripts/core/project linearsync` to sync missing tasks
+2. Re-verify with `./scripts/core/project sync-status`
 3. If persistent, check `.env` for `LINEAR_API_KEY` and `LINEAR_TEAM_ID`
 
 **Reference**: `.agent-context/workflows/COMMIT-PROTOCOL.md` -> "Post-Push Linear Sync Verification"
@@ -331,7 +331,7 @@ When human reviewer requests changes, create a lightweight fix prompt:
 # After implementation agent completes:
 1. Verify CI: /check-ci
 2. Confirm evaluator review is persisted
-3. Move task: ./scripts/project move <TASK-ID> in-review
+3. Move task: ./scripts/core/project move <TASK-ID> in-review
 4. Tell user: "PR ready for human review."
 
 # After human review:
@@ -416,7 +416,7 @@ When assigning tasks to implementation agents, always remind them to run:
 git checkout -b feature/<TASK-ID>-short-description
 
 # 2. Start the task
-./scripts/project start <TASK-ID>
+./scripts/core/project start <TASK-ID>
 ```
 
 **Step 1 - Create Branch**:
@@ -431,11 +431,11 @@ git checkout -b feature/<TASK-ID>-short-description
 ### Available Commands
 
 ```bash
-./scripts/project start <TASK-ID>             # Move to 3-in-progress/
-./scripts/project move <TASK-ID> in-review    # Move to 4-in-review/
-./scripts/project complete <TASK-ID>          # Move to 5-done/
-./scripts/project move <TASK-ID> blocked      # Move to 7-blocked/
-./scripts/project move <TASK-ID> todo         # Return to 2-todo/
+./scripts/core/project start <TASK-ID>             # Move to 3-in-progress/
+./scripts/core/project move <TASK-ID> in-review    # Move to 4-in-review/
+./scripts/core/project complete <TASK-ID>          # Move to 5-done/
+./scripts/core/project move <TASK-ID> blocked      # Move to 7-blocked/
+./scripts/core/project move <TASK-ID> todo         # Return to 2-todo/
 ```
 
 **Include this reminder in Task Starter messages** when assigning to agents.
@@ -450,7 +450,7 @@ git checkout -b feature/<TASK-ID>-short-description
 6. Address evaluator feedback
 7. **Create task starter and handoff** (see Task Starter Protocol below)
 8. Assign to appropriate agents (user invokes in new tab)
-9. **Remind agent to run `./scripts/project start <TASK-ID>`** when beginning work
+9. **Remind agent to run `./scripts/core/project start <TASK-ID>`** when beginning work
 10. Monitor progress via agent-handoffs.json
 11. Verify completion
 12. Update documentation and current-state.json
@@ -646,7 +646,7 @@ Planner commits (documentation, coordination, upstream merges, formatting fixes)
 
 ### Verification Process
 
-1. **Run local checks first**: `./scripts/ci-check.sh` before pushing
+1. **Run local checks first**: `./scripts/core/ci-check.sh` before pushing
 2. **Push your changes**: `git push origin <branch>`
 3. **Run verify-ci.sh**: Check GitHub Actions status
 4. **Handle failures**: If CI fails, fix issues and repeat
@@ -656,7 +656,7 @@ Planner commits (documentation, coordination, upstream merges, formatting fixes)
 After pushing, run the verification script directly:
 
 ```bash
-./scripts/verify-ci.sh [branch-name] --wait
+./scripts/core/verify-ci.sh [branch-name] --wait
 ```
 
 This will:

@@ -74,4 +74,4 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 scripts/ tests/ --max-line-length=88 --extend-ignore=E203,W503 --select=E9,F63,F7,F82
+          flake8 scripts/ tests/ --exclude=scripts/optional --max-line-length=88 --extend-ignore=E203,W503 --select=E9,F63,F7,F82

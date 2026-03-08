@@ -9,7 +9,7 @@ import sys
 import textwrap
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts" / "core"))
 
 from pattern_lint import check_dk001, check_dk003, check_dk004
 
