@@ -34,6 +34,8 @@ jobs:
           BRANCH="chore/core-scripts-sync-v${VERSION}-$(date +%Y%m%d%H%M%S)"
 
           cd target
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
 
           # Copy core scripts

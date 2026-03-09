@@ -105,10 +105,6 @@ Priority 3: Default to "Backlog"
 
 **Starting the Monitor**:
 ```bash
-# When opening project (recommended):
-./scripts/local/start-daemons.sh
-
-# Or manually:
 ./scripts/core/project daemon start
 ./scripts/core/project daemon status    # Check if running
 ./scripts/core/project daemon logs      # View activity
