@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-09
+
+### Changed
+
+- **BREAKING: Scripts restructured into `core/` + `local/` + `optional/`** (ASK-0042) - All shared scripts moved from `scripts/` to `scripts/core/`, project-specific scripts to `scripts/local/`, and opt-in scripts to `scripts/optional/`. See `docs/UPGRADE-0.4.0.md` for migration guide.
+- **Core scripts versioned independently** - `scripts/core/VERSION` tracks the shared scripts version (currently 1.2.0), decoupled from the project version
+- **`verify-setup.sh` reads Python constraints from `pyproject.toml`** - No longer hardcoded; dynamically reads `requires-python` for version range and project name
+- **`verify-ci.sh` self-references corrected** - Help text now points to `./scripts/core/verify-ci.sh`
+- **Black upgraded to v26.1.0** - Formatter updated via Dependabot
+- **`actions/upload-artifact` upgraded to v7** - CI workflow updated via Dependabot
+- **Evaluator library bumped to v0.5.2** - Fixes gemini-3-pro deprecation
+
+### Added
+
+- **Cross-repo sync workflow** - GitHub Action (`.github/workflows/sync-core-scripts.yml`) auto-opens PRs in downstream repos when `scripts/core/` changes on main
+- **Core manifest** - `scripts/.core-manifest.json` tracks core version, source repo, and file inventory for sync verification
+- **Drift detection script** - `scripts/core/check-sync.sh` compares local core scripts against upstream, reports drift in both directions
+- **DK002 lint rule** - Pattern lint now flags `open()`, `.read_text()`, and `.write_text()` without explicit `encoding=` kwarg
+- **DK002 test coverage** - 12 new tests covering all DK002 scenarios (bare open, text mode, binary mode, read_text, write_text, noqa suppression)
+- **Python 3.10 compatibility** - `verify-setup.sh` and `project` script use `tomllib`/`tomli` fallback for Python < 3.11
+
+### Fixed
+
+- **`project_dir` path resolution** - `scripts/core/project` now correctly resolves repo root via `.parent.parent.parent` (was `.parent.parent` before the move)
+- **Nonexistent `start-daemons.sh` references removed** - Three agent files (planner, planner2, tycho) referenced a script that never existed
+- **`feature-developer.md` stale path** - Updated `./project complete` to `./scripts/core/project complete`
+- **Sync workflow correctness** - Uses `git status --porcelain` (not `git diff`) to detect untracked files; sets git user identity for commits; uses step outputs for conditional PR creation
+
 ## [0.3.3] - 2026-03-04
 
 ### Added
@@ -157,6 +185,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Agent handoff protocol via `.agent-context/`
 - Pre-configured Claude Code settings and permissions
 
+[0.4.0]: https://github.com/movito/agentive-starter-kit/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/movito/agentive-starter-kit/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/movito/agentive-starter-kit/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/movito/agentive-starter-kit/compare/v0.3.0...v0.3.1
