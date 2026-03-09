@@ -68,4 +68,5 @@ if [[ -d "$ASK_CORE" ]]; then
 else
     echo "⚠️  ASK repo not found at $ASK_CORE"
     echo "   Verify ASK_REPO points to a valid agentive-starter-kit checkout"
+    exit 1
 fi

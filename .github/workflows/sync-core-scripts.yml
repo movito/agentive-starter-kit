@@ -28,6 +28,7 @@ jobs:
           path: target
 
       - name: Sync core scripts
+        id: sync
         run: |
           VERSION=$(cat source/scripts/core/VERSION)
           BRANCH="chore/core-scripts-sync-v${VERSION}-$(date +%Y%m%d%H%M%S)"
@@ -39,21 +40,23 @@ jobs:
           rm -rf scripts/core
           cp -r ../source/scripts/core scripts/core
 
-          # Update manifest
-          printf '{\n  "core_version": "%s",\n  "source": "agentive-starter-kit",\n  "source_repo": "movito/agentive-starter-kit",\n  "synced_at": "%s"\n}\n' "$VERSION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > scripts/.core-manifest.json
+          # Copy source manifest and update dynamic fields
+          cp ../source/scripts/.core-manifest.json scripts/.core-manifest.json
 
           # Check if anything changed
           if git diff --quiet && git diff --cached --quiet; then
             echo "No changes to sync"
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
           git add scripts/core/ scripts/.core-manifest.json
           git commit -m "chore: Sync core scripts v${VERSION} from agentive-starter-kit"
           git push -u origin "$BRANCH"
 
       - name: Create PR
-        if: success()
+        if: steps.sync.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
         run: |
@@ -61,15 +64,12 @@ jobs:
           cd target
           BRANCH=$(git branch --show-current)
 
-          # Only create PR if branch was pushed (changes existed)
-          if git log origin/main.."$BRANCH" --oneline | grep -q .; then
-            gh pr create \
-              --title "chore: Sync core scripts v${VERSION} from agentive-starter-kit" \
-              --body "Automated sync of \`scripts/core/\` from agentive-starter-kit v${VERSION}.
+          gh pr create \
+            --title "chore: Sync core scripts v${VERSION} from agentive-starter-kit" \
+            --body "Automated sync of \`scripts/core/\` from agentive-starter-kit v${VERSION}.
 
           Review the changes and merge when ready.
 
           **Source**: movito/agentive-starter-kit@main
           **Core version**: ${VERSION}" \
-              --base main
-          fi
+            --base main
