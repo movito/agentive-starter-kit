@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts" / "core"))
 
-from pattern_lint import check_dk001, check_dk003, check_dk004
+from pattern_lint import check_dk001, check_dk002, check_dk003, check_dk004
 
 
 def _parse(code: str) -> tuple[ast.AST, list[str]]:
@@ -61,6 +61,75 @@ class TestDK001:
     def test_ignores_removesuffix(self):
         tree, lines = _parse('x = filename.removesuffix(".md")')
         violations = check_dk001(tree, lines, "test.py")
+        assert len(violations) == 0
+
+
+# ── DK002: missing encoding= in file I/O ─────────────────────────────
+
+
+class TestDK002:
+    def test_catches_bare_open(self):
+        tree, lines = _parse('f = open("file.txt")')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 1
+        assert violations[0].rule == "DK002"
+        assert "encoding" in violations[0].message
+
+    def test_catches_open_text_mode(self):
+        tree, lines = _parse('f = open("file.txt", "r")')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 1
+
+    def test_ignores_open_with_encoding(self):
+        tree, lines = _parse('f = open("file.txt", encoding="utf-8")')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_ignores_open_binary_mode(self):
+        tree, lines = _parse('f = open("file.txt", "rb")')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_ignores_open_binary_mode_kwarg(self):
+        tree, lines = _parse('f = open("file.txt", mode="rb")')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_catches_read_text_without_encoding(self):
+        tree, lines = _parse('x = Path("f").read_text()')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 1
+        assert "read_text" in violations[0].message
+
+    def test_catches_write_text_without_encoding(self):
+        tree, lines = _parse('p.write_text("data")')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 1
+        assert "write_text" in violations[0].message
+
+    def test_ignores_read_text_with_encoding(self):
+        tree, lines = _parse('x = Path("f").read_text(encoding="utf-8")')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_ignores_write_text_with_encoding(self):
+        tree, lines = _parse('p.write_text("data", encoding="utf-8")')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_noqa_suppresses(self):
+        tree, lines = _parse('f = open("file.txt")  # noqa: DK002')
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_ignores_os_open(self):
+        tree, lines = _parse("fd = os.open(path, os.O_RDONLY)")
+        violations = check_dk002(tree, lines, "test.py")
+        assert len(violations) == 0
+
+    def test_noqa_suppresses_read_text(self):
+        tree, lines = _parse("x = p.read_text()  # noqa: DK002")
+        violations = check_dk002(tree, lines, "test.py")
         assert len(violations) == 0
 
 
@@ -267,6 +336,7 @@ class TestIntegration:
     def test_multiple_violations_in_one_file(self):
         code = textwrap.dedent("""\
             x = f.replace(".md", "")
+            y = open("file.txt")
             if task_id in event_id: pass
             try:
                 risky()
@@ -276,15 +346,18 @@ class TestIntegration:
         tree = ast.parse(code)
         lines = code.splitlines()
         v1 = check_dk001(tree, lines, "test.py")
+        v2 = check_dk002(tree, lines, "test.py")
         v3 = check_dk003(tree, lines, "test.py")
         v4 = check_dk004(tree, lines, "test.py")
         assert len(v1) == 1
+        assert len(v2) == 1
         assert len(v3) == 1
         assert len(v4) == 1
 
     def test_clean_code_has_no_violations(self):
         code = textwrap.dedent("""\
             x = filename.removesuffix(".md")
+            f = open("data.txt", encoding="utf-8")
             if task_id == event.task:
                 pass
             try:
@@ -295,8 +368,10 @@ class TestIntegration:
         tree = ast.parse(code)
         lines = code.splitlines()
         v1 = check_dk001(tree, lines, "test.py")
+        v2 = check_dk002(tree, lines, "test.py")
         v3 = check_dk003(tree, lines, "test.py")
         v4 = check_dk004(tree, lines, "test.py")
         assert len(v1) == 0
+        assert len(v2) == 0
         assert len(v3) == 0
         assert len(v4) == 0
