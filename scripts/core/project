@@ -578,7 +578,7 @@ def create_venv_with_uv(venv_dir: Path, python_version: str = "3.12") -> bool:
 
 def cmd_setup(args):
     """Set up virtual environment and install dependencies."""
-    project_dir = Path(__file__).resolve().parent.parent
+    project_dir = Path(__file__).resolve().parent.parent.parent
     venv_dir = project_dir / ".venv"
     force = "--force" in args
     use_uv = False  # Flag to track if we need uv for venv creation
@@ -899,8 +899,8 @@ def cmd_install_evaluators(args, project_dir):
 
 def main():
     """Launch project commands."""
-    # Get the project directory (parent of scripts/)
-    project_dir = Path(__file__).resolve().parent.parent
+    # Get the project directory (parent of scripts/core/)
+    project_dir = Path(__file__).resolve().parent.parent.parent
 
     # Use venv Python if available, otherwise system Python
     venv_python = project_dir / "venv" / "bin" / "python3"

@@ -81,7 +81,7 @@ def mock_project_path(
     - venv_dir.exists() to return venv_exists
     - Path division operations (__truediv__) to return the mock venv
     - str() conversion to return tmp_path / ".venv"
-    - resolve().parent.parent to return a mock project dir
+    - resolve().parent.parent.parent to return a mock project dir
 
     Args:
         module: The project module to patch (e.g., _project_module)
@@ -108,7 +108,9 @@ def mock_project_path(
         mock_project_dir.__truediv__ = lambda self, x: mock_venv
 
         mock_path.return_value.__truediv__ = lambda self, x: mock_venv
-        mock_path.return_value.resolve.return_value.parent.parent = mock_project_dir
+        mock_path.return_value.resolve.return_value.parent.parent.parent = (
+            mock_project_dir
+        )
         yield mock_path
 
 
