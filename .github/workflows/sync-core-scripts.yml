@@ -45,8 +45,8 @@ jobs:
           # Copy source manifest and update dynamic fields
           cp ../source/scripts/.core-manifest.json scripts/.core-manifest.json
 
-          # Check if anything changed
-          if git diff --quiet && git diff --cached --quiet; then
+          # Check if anything changed (--porcelain catches untracked files too)
+          if [ -z "$(git status --porcelain scripts/)" ]; then
             echo "No changes to sync"
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
