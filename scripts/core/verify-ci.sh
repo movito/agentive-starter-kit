@@ -56,7 +56,7 @@ fi
 
 if [ -z "$BRANCH" ]; then
     echo "❌ Could not determine branch"
-    echo "Usage: ./scripts/verify-ci.sh [branch-name] [--wait]"
+    echo "Usage: ./scripts/core/verify-ci.sh [branch-name] [--wait]"
     exit 1
 fi
 
@@ -212,7 +212,7 @@ if [ "$ANY_IN_PROGRESS" = true ]; then
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo
         echo "To wait for completion:"
-        echo "  ./scripts/verify-ci.sh $BRANCH --wait"
+        echo "  ./scripts/core/verify-ci.sh $BRANCH --wait"
         _CI_EMIT_SUMMARY="IN_PROGRESS — Workflows still running ($BRANCH)"
         exit 0
     fi

@@ -16,9 +16,13 @@ PY_MAX=13
 PROJECT_NAME="this project"
 if [ -f "pyproject.toml" ]; then
     _PY_REQUIRES=$(python3 -c "
-import tomllib, pathlib, re
+import pathlib, re
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 p = pathlib.Path('pyproject.toml')
-data = tomllib.loads(p.read_text())
+data = tomllib.loads(p.read_text(encoding='utf-8'))
 req = data.get('project', {}).get('requires-python', '')
 print(req)
 " 2>/dev/null || true)
@@ -29,9 +33,13 @@ print(req)
         [ -n "$_MAX" ] && PY_MAX="$_MAX"
     fi
     PROJECT_NAME=$(python3 -c "
-import tomllib, pathlib
+import pathlib
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 p = pathlib.Path('pyproject.toml')
-print(tomllib.loads(p.read_text()).get('project', {}).get('name', 'this project'))
+print(tomllib.loads(p.read_text(encoding='utf-8')).get('project', {}).get('name', 'this project'))
 " 2>/dev/null || echo "this project")
 fi
 

@@ -36,7 +36,7 @@ def _get_evaluator_library_version():
             .get("adversarial", {})
             .get("library_version", "v0.5.3")
         )
-    except (FileNotFoundError, KeyError):
+    except (FileNotFoundError, ImportError):
         return "v0.5.3"
 
 

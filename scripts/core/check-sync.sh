@@ -22,13 +22,20 @@ echo "Core scripts version: $LOCAL_VERSION"
 echo "Manifest: $MANIFEST"
 
 # If ASK repo is available locally, compare
-ASK_CORE="${ASK_REPO:-/Users/broadcaster_three/Github/agentive-starter-kit}/scripts/core"
+if [[ -z "${ASK_REPO:-}" ]]; then
+    echo "⚠️  ASK_REPO not set. Set it to your agentive-starter-kit checkout path."
+    echo "   Example: ASK_REPO=~/Github/agentive-starter-kit ./scripts/core/check-sync.sh"
+    exit 1
+fi
+
+ASK_CORE="$ASK_REPO/scripts/core"
 if [[ -d "$ASK_CORE" ]]; then
     ASK_VERSION=$(cat "$ASK_CORE/VERSION" 2>/dev/null || echo "unknown")
     echo "Upstream version: $ASK_VERSION"
     echo ""
 
     DRIFT=0
+    # Check local files against upstream
     for f in "$SCRIPT_DIR"/*; do
         fname=$(basename "$f")
         [[ "$fname" == "VERSION" || "$fname" == "check-sync.sh" ]] && continue
@@ -40,14 +47,24 @@ if [[ -d "$ASK_CORE" ]]; then
         fi
     done
 
+    # Check for upstream files missing locally
+    for f in "$ASK_CORE"/*; do
+        fname=$(basename "$f")
+        [[ "$fname" == "VERSION" || "$fname" == "check-sync.sh" ]] && continue
+        if [[ ! -f "$SCRIPT_DIR/$fname" ]]; then
+            echo "⚠️  MISSING: $fname exists upstream but not locally"
+            DRIFT=$((DRIFT + 1))
+        fi
+    done
+
     if [[ $DRIFT -eq 0 ]]; then
         echo "✅ All core scripts match upstream ($ASK_VERSION)"
     else
         echo ""
         echo "❌ $DRIFT file(s) have drifted from upstream"
-        echo "   Run with --apply to pull latest from ASK"
+        echo "   Copy the latest files from $ASK_CORE to $SCRIPT_DIR"
     fi
 else
     echo "⚠️  ASK repo not found at $ASK_CORE"
-    echo "   Set ASK_REPO env var to point to agentive-starter-kit checkout"
+    echo "   Verify ASK_REPO points to a valid agentive-starter-kit checkout"
 fi
