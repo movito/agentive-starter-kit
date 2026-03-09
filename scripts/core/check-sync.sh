@@ -63,6 +63,7 @@ if [[ -d "$ASK_CORE" ]]; then
         echo ""
         echo "❌ $DRIFT file(s) have drifted from upstream"
         echo "   Copy the latest files from $ASK_CORE to $SCRIPT_DIR"
+        exit 1
     fi
 else
     echo "⚠️  ASK repo not found at $ASK_CORE"

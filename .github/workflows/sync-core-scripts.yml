@@ -30,7 +30,7 @@ jobs:
       - name: Sync core scripts
         run: |
           VERSION=$(cat source/scripts/core/VERSION)
-          BRANCH="chore/core-scripts-sync-v${VERSION}-$(date +%Y%m%d)"
+          BRANCH="chore/core-scripts-sync-v${VERSION}-$(date +%Y%m%d%H%M%S)"
 
           cd target
           git checkout -b "$BRANCH"
