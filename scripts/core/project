@@ -22,8 +22,25 @@ import sys
 import tempfile
 from pathlib import Path
 
-# Default version tag for reproducibility
-EVALUATOR_LIBRARY_VERSION = "v0.5.2"
+
+# Default version tag for reproducibility — reads from pyproject.toml if available
+def _get_evaluator_library_version():
+    """Read evaluator library version from pyproject.toml, with fallback."""
+    try:
+        import tomllib
+
+        with open("pyproject.toml", "rb") as f:
+            config = tomllib.load(f)
+        return (
+            config.get("tool", {})
+            .get("adversarial", {})
+            .get("library_version", "v0.5.3")
+        )
+    except (FileNotFoundError, ImportError):
+        return "v0.5.3"
+
+
+EVALUATOR_LIBRARY_VERSION = _get_evaluator_library_version()
 EVALUATOR_LIBRARY_REPO = "https://github.com/movito/adversarial-evaluator-library.git"
 
 # Status to folder mapping

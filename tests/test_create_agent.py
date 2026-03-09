@@ -58,7 +58,7 @@ class TestScriptExists:
     def test_script_has_bash_shebang(self):
         """Script starts with #!/bin/bash shebang line."""
         assert SCRIPT_PATH.exists(), f"Script not found at {SCRIPT_PATH}"
-        first_line = SCRIPT_PATH.read_text().split("\n", 1)[0]
+        first_line = SCRIPT_PATH.read_text(encoding="utf-8").split("\n", 1)[0]
         assert first_line.startswith(
             "#!/bin/bash"
         ), f"Expected #!/bin/bash shebang, got: {first_line!r}"
@@ -210,7 +210,8 @@ class TestDuplicateDetection:
             "description: Pre-existing agent\n"
             "model: claude-sonnet-4-5-20250929\n"
             "---\n"
-            f"# {name}\n"
+            f"# {name}\n",
+            encoding="utf-8",
         )
 
     def test_duplicate_name_rejected(self):
@@ -233,7 +234,7 @@ class TestDuplicateDetection:
             result.returncode == 0
         ), f"Expected exit 0 with --force, got {result.returncode}: {result.stderr}"
         agent_file = self.project_dir / ".claude" / "agents" / "existing-agent.md"
-        content = agent_file.read_text()
+        content = agent_file.read_text(encoding="utf-8")
         assert (
             "Replacement description" in content
         ), f"Agent file not updated with new description:\n{content}"
@@ -274,7 +275,7 @@ class TestTemplateProcessing:
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
         agent_file = self.project_dir / ".claude" / "agents" / "test-agent.md"
         assert agent_file.exists(), f"Agent file not created at {agent_file}"
-        content = agent_file.read_text()
+        content = agent_file.read_text(encoding="utf-8")
         # T7 regression: use regex, not string containment
         unresolved = re.findall(r"\[[A-Z][A-Za-z -]+\]", content)
         assert len(unresolved) == 0, f"Unresolved placeholders: {unresolved}"
@@ -293,7 +294,7 @@ class TestTemplateProcessing:
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
         agent_file = self.project_dir / ".claude" / "agents" / "placeholder-check.md"
         assert agent_file.exists(), f"Agent file not created at {agent_file}"
-        content = agent_file.read_text()
+        content = agent_file.read_text(encoding="utf-8")
         # T7: Must use regex for reliable detection
         unresolved = re.findall(r"\[[A-Z][A-Za-z -]+\]", content)
         assert len(unresolved) == 0, f"Unresolved placeholders found: {unresolved}"
@@ -312,7 +313,7 @@ class TestTemplateProcessing:
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
         agent_file = self.project_dir / ".claude" / "agents" / "special-chars-agent.md"
         assert agent_file.exists(), f"Agent file not created at {agent_file}"
-        content = agent_file.read_text()
+        content = agent_file.read_text(encoding="utf-8")
         assert (
             "input/output" in content
         ), f"Forward slash in description was mangled:\n{content}"
@@ -329,7 +330,7 @@ class TestTemplateProcessing:
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
         agent_file = self.project_dir / ".claude" / "agents" / "frontmatter-agent.md"
         assert agent_file.exists(), f"Agent file not created at {agent_file}"
-        content = agent_file.read_text()
+        content = agent_file.read_text(encoding="utf-8")
         assert (
             "name: frontmatter-agent" in content
         ), f"Agent name not in frontmatter:\n{content}"
@@ -355,7 +356,7 @@ class TestLauncherIntegration:
         assert (
             result.returncode == 0
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
-        launcher = (self.project_dir / "agents" / "launch").read_text()
+        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
         assert (
             '"order-test-agent"' in launcher
         ), f"Agent not added to launcher agent_order:\n{launcher}"
@@ -368,7 +369,7 @@ class TestLauncherIntegration:
         assert (
             result.returncode == 0
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
-        launcher = (self.project_dir / "agents" / "launch").read_text()
+        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
         # Find the serena_agents block and check our agent is in it
         assert '"serena-test"' in launcher, f"Agent not found in launcher:\n{launcher}"
         # Verify it's in the serena_agents section specifically
@@ -388,7 +389,7 @@ class TestLauncherIntegration:
         assert (
             result.returncode == 0
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
-        launcher = (self.project_dir / "agents" / "launch").read_text()
+        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
         # Should have an icon pattern matching this agent
         assert (
             "icon-test-agent" in launcher
@@ -406,7 +407,7 @@ class TestLauncherIntegration:
         assert (
             result.returncode == 0
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
-        launcher = (self.project_dir / "agents" / "launch").read_text()
+        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
 
         # Verify agent_order entry indentation (8 spaces)
         order_pattern = re.compile(r'^        "golden-agent"$', re.MULTILINE)
@@ -442,7 +443,7 @@ class TestLauncherIntegration:
             result2.returncode == 0
         ), f"Force recreation failed: {result2.returncode}: {result2.stderr}"
 
-        launcher = (self.project_dir / "agents" / "launch").read_text()
+        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
         # Count occurrences of the agent in agent_order array
         occurrences = launcher.count('"dup-check"')
         assert occurrences == 1, (
@@ -533,7 +534,7 @@ class TestLogging:
         log_file = self.project_dir / "logs" / "agent-creation.log"
         assert log_file.exists(), f"Log file not created at {log_file}"
 
-        lines = log_file.read_text().strip().splitlines()
+        lines = log_file.read_text(encoding="utf-8").strip().splitlines()
         assert len(lines) > 0, "Log file is empty"
         for i, line in enumerate(lines):
             try:
@@ -552,7 +553,7 @@ class TestLogging:
         log_file = self.project_dir / "logs" / "agent-creation.log"
         assert log_file.exists(), f"Log file not created at {log_file}"
 
-        lines = log_file.read_text().strip().splitlines()
+        lines = log_file.read_text(encoding="utf-8").strip().splitlines()
         assert len(lines) > 0, "Log file is empty"
         for i, line in enumerate(lines):
             entry = json.loads(line)
@@ -576,7 +577,9 @@ class TestDryRun:
 
     def test_dry_run_no_files_modified(self):
         """--dry-run does not create the agent file or modify the launcher."""
-        launcher_before = (self.project_dir / "agents" / "launch").read_text()
+        launcher_before = (self.project_dir / "agents" / "launch").read_text(
+            encoding="utf-8"
+        )
 
         result = run_script(
             ["dry-run-agent", "Dry run test agent", "--dry-run"], self.project_dir
@@ -590,7 +593,9 @@ class TestDryRun:
         assert not agent_file.exists(), f"--dry-run created agent file at {agent_file}"
 
         # Launcher should be unchanged
-        launcher_after = (self.project_dir / "agents" / "launch").read_text()
+        launcher_after = (self.project_dir / "agents" / "launch").read_text(
+            encoding="utf-8"
+        )
         assert launcher_before == launcher_after, "--dry-run modified the launcher file"
 
     def test_dry_run_reports_planned_actions(self):

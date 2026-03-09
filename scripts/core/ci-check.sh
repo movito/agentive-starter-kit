@@ -84,7 +84,8 @@ echo "4/5 🔍 Running pattern lint (DK rules)..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 PY_FILES=$(find scripts/ tests/ -name '*.py' 2>/dev/null)
 if [ -n "$PY_FILES" ]; then
-    if python3 scripts/pattern_lint.py $PY_FILES 2>&1; then
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    if python3 "$SCRIPT_DIR/pattern_lint.py" $PY_FILES 2>&1; then
         echo "✅ Pattern lint: No DK violations"
     else
         echo "❌ Pattern lint: DK violations found"

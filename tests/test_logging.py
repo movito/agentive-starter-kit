@@ -25,7 +25,7 @@ from unittest.mock import patch
 
 import pytest
 
-from scripts.logging_config import performance_logged, setup_logging
+from scripts.core.logging_config import performance_logged, setup_logging
 
 # =============================================================================
 # FIXTURES
@@ -171,7 +171,7 @@ class TestFileLogging:
         for handler in logger.handlers:
             handler.flush()
 
-        content = log_file.read_text()
+        content = log_file.read_text(encoding="utf-8")
         assert "Test message" in content
 
 

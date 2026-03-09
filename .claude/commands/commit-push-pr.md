@@ -105,7 +105,7 @@ Replace `TASK_ID`, `PR_NUMBER`, `PR_URL`, and `BRANCH_NAME` with the actual valu
 Run preflight to see which completion gates are satisfied:
 
 ```bash
-./scripts/preflight-check.sh --pr PR_NUMBER --task TASK_ID
+./scripts/core/preflight-check.sh --pr PR_NUMBER --task TASK_ID
 ```
 
 Parse the `GATE:` lines and present the PASS/FAIL table (same format as `/preflight`).

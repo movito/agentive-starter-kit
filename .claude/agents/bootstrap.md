@@ -113,7 +113,7 @@ grep -ri "agentive.starter.kit\|agentive-starter-kit" \
 2. **Replace branding references** — these should use the project name:
    - `CLAUDE.md` header and description
    - Agent file descriptions and comments (e.g., "for the agentive-starter-kit")
-   - `scripts/logging_config.py` docstring
+   - `scripts/core/logging_config.py` docstring
    - `tests/conftest.py` docstring
    - `.adversarial/docs/` descriptions
 
@@ -157,7 +157,7 @@ Write a README based on the design materials:
 \```bash
 source .venv/bin/activate
 pytest tests/ -v
-./scripts/ci-check.sh
+./scripts/core/ci-check.sh
 \```
 
 ## Getting Started

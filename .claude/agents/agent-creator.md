@@ -122,7 +122,7 @@ Once confirmed, execute the creation:
 
 1. **Run automation script**:
    ```bash
-   scripts/create-agent.sh [agent-name] "[description]"
+   scripts/optional/create-agent.sh [agent-name] "[description]"
    ```
 
 2. **Customize template file**: Use Edit tool to update `.claude/agents/[agent-name].md`:
@@ -352,7 +352,7 @@ cat .claude/agents/AGENT-TEMPLATE.md
 cat .agent-context/workflows/AGENT-CREATION-WORKFLOW.md
 
 # Run automation script
-scripts/create-agent.sh agent-name "description"
+scripts/optional/create-agent.sh agent-name "description"
 
 # Edit agent launcher (for adding new agents to launcher list)
 # File: agents/universal-agent-launcher.sh
@@ -432,7 +432,7 @@ Would you like me to invoke Evaluator to review this agent definition? [y/n]
 If agent creation fails:
 1. **Check if agent already exists**: Read `.claude/agents/` directory
 2. **Validate name format**: Must be kebab-case
-3. **Verify script exists**: `scripts/create-agent.sh`
+3. **Verify script exists**: `scripts/optional/create-agent.sh`
 4. **Check permissions**: Ensure write access to `.claude/agents/`
 5. **Report error clearly**: Tell user what went wrong and how to fix it
 
@@ -449,7 +449,7 @@ If user is uncertain about requirements:
 If you push code changes to GitHub (new agent files, template updates, etc.):
 
 1. **Push your changes**: `git push origin <branch>`
-2. **Verify CI**: Use `/check-ci` slash command or run `./scripts/verify-ci.sh <branch>`
+2. **Verify CI**: Use `/check-ci` slash command or run `./scripts/core/verify-ci.sh <branch>`
 3. **Wait for result**: Check CI passes before marking work complete
 4. **Handle failures**: If CI fails, fix issues and repeat
 
@@ -460,7 +460,7 @@ If you push code changes to GitHub (new agent files, template updates, etc.):
 /check-ci main
 
 # Option 2: Direct script
-./scripts/verify-ci.sh <branch-name>
+./scripts/core/verify-ci.sh <branch-name>
 ```
 
 **Proactive CI Fix**: When CI fails, offer to analyze logs and implement fix. Report failure clearly to user and ask if you should fix it.

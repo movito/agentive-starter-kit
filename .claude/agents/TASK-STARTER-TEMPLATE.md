@@ -108,7 +108,7 @@ Your mission: [Clear, action-oriented statement of the agent's goal]
 
 **⚠️ FIRST ACTIONS** (in order):
 1. `git checkout -b feature/[TASK-ID]-short-description` (create feature branch)
-2. `./scripts/project start [TASK-ID]` (move task to `3-in-progress/`)
+2. `./scripts/core/project start [TASK-ID]` (move task to `3-in-progress/`)
 ```
 
 ### Footer
@@ -182,7 +182,7 @@ Your mission: Follow the RED-GREEN-REFACTOR TDD cycle to create a properly teste
 
 **⚠️ FIRST ACTIONS** (in order):
 1. `git checkout -b feature/TASK-0102-linear-sync-tdd`
-2. `./scripts/project start TASK-0102`
+2. `./scripts/core/project start TASK-0102`
 
 ---
 
@@ -312,7 +312,7 @@ Before sending task starter to user:
 - [ ] Time estimate is realistic and broken down by phase
 - [ ] Evaluation status mentioned (if applicable)
 - [ ] Both task file and handoff file links included
-- [ ] **FIRST ACTION reminder included** (`./scripts/project start <TASK-ID>`)
+- [ ] **FIRST ACTION reminder included** (`./scripts/core/project start <TASK-ID>`)
 - [ ] Recommended agent type specified
 - [ ] agent-handoffs.json updated with task assignment
 - [ ] Message is concise enough to fit in viewport
@@ -335,7 +335,7 @@ After creating task specification and addressing evaluation feedback:
 
 When receiving task starter:
 1. **Create feature branch**: `git checkout -b feature/<TASK-ID>-short-description`
-2. **Start task**: `./scripts/project start <TASK-ID>` to move task to `3-in-progress/`
+2. **Start task**: `./scripts/core/project start <TASK-ID>` to move task to `3-in-progress/`
 3. Read task file for full specification
 4. Read handoff file for implementation guidance
 5. Update `agent-handoffs.json` status to "in_progress"

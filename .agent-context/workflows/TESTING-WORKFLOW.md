@@ -193,7 +193,7 @@ See `tests/test_template.py` for a ready-to-use template with examples:
 **Always run CI check before pushing to GitHub**:
 
 ```bash
-./scripts/ci-check.sh
+./scripts/core/ci-check.sh
 ```
 
 ### What ci-check.sh Does
@@ -218,7 +218,7 @@ Runs the **SAME checks** as GitHub Actions CI:
 **Before EVERY push**:
 ```bash
 # Check passes ✅
-./scripts/ci-check.sh
+./scripts/core/ci-check.sh
 
 # Only push if check passes ✅
 git push origin main
@@ -227,8 +227,8 @@ git push origin main
 **Recommended alias** (add to `~/.bashrc` or `~/.zshrc`):
 ```bash
 # Add these aliases for convenience
-alias gci="./scripts/ci-check.sh"
-alias gpush="./scripts/ci-check.sh && git push origin main"
+alias gci="./scripts/core/ci-check.sh"
+alias gpush="./scripts/core/ci-check.sh && git push origin main"
 
 # Then use:
 gpush  # Runs CI check + pushes if passes
@@ -239,7 +239,7 @@ gpush  # Runs CI check + pushes if passes
 If the script fails:
 1. **Read error output** - Shows which check failed (tests/coverage/hooks)
 2. **Fix the issue** - Address test failures or coverage drops
-3. **Run again** - Verify fix with `./scripts/ci-check.sh`
+3. **Run again** - Verify fix with `./scripts/core/ci-check.sh`
 4. **Push** - Only after check passes
 
 **DO NOT** bypass ci-check.sh by pushing directly. This defeats the purpose of local verification.

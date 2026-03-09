@@ -45,7 +45,7 @@ Confirm in your response: "✅ Serena activated: [languages]. Ready for code nav
 - **Task Management**: `delegation/tasks/` with Linear sync
 
 ## Development Guidelines
-1. **Start the task properly**: Run `./scripts/project start <TASK-ID>` first (see Task Lifecycle below)
+1. **Start the task properly**: Run `./scripts/core/project start <TASK-ID>` first (see Task Lifecycle below)
 2. **Read task specifications**: `delegation/tasks/3-in-progress/TASK-*.md` after starting
 3. **Follow TDD workflow**: Write tests before implementation (see `.agent-context/workflows/TESTING-WORKFLOW.md`)
 4. **Always read existing code** before making changes
@@ -69,7 +69,7 @@ When you pick up a task, you **MUST** move it to the correct folder and update i
 git checkout -b feature/<TASK-ID>-short-description
 
 # 2. Start the task (updates status and syncs to Linear)
-./scripts/project start <TASK-ID>
+./scripts/core/project start <TASK-ID>
 ```
 
 **Step 1 - Create Branch**:
@@ -85,7 +85,7 @@ git checkout -b feature/<TASK-ID>-short-description
 **Example**:
 ```bash
 git checkout -b feature/ASK-0042-add-caching
-./scripts/project start ASK-0042
+./scripts/core/project start ASK-0042
 # Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
 ```
 
@@ -95,16 +95,16 @@ git checkout -b feature/ASK-0042-add-caching
 
 ```
 2-todo → 3-in-progress → 4-in-review → 5-done
-         ./scripts/project start  ./scripts/project move  ./scripts/project complete
+         ./scripts/core/project start  ./scripts/core/project move  ./scripts/core/project complete
                           <id> in-review  <id>
 ```
 
 ### Other Status Commands
 
 ```bash
-./scripts/project move <TASK-ID> in-review   # After implementation, before code review
-./scripts/project complete <TASK-ID>          # After code review approved
-./scripts/project move <TASK-ID> blocked      # If blocked by dependencies
+./scripts/core/project move <TASK-ID> in-review   # After implementation, before code review
+./scripts/core/project complete <TASK-ID>          # After code review approved
+./scripts/core/project move <TASK-ID> blocked      # If blocked by dependencies
 ```
 
 ### Why This Matters
@@ -113,7 +113,7 @@ git checkout -b feature/ASK-0042-add-caching
 - **Linear sync**: Status changes sync to Linear for project tracking
 - **Coordination**: Other agents/humans know what's in progress
 
-**Never skip `./scripts/project start`** - it's the first command you run when picking up a task.
+**Never skip `./scripts/core/project start`** - it's the first command you run when picking up a task.
 
 ## Code Navigation Tools
 
@@ -141,7 +141,7 @@ git checkout -b feature/ASK-0042-add-caching
 
 ## Testing Requirements
 - **Pre-commit**: Tests run automatically (fast tests only)
-- **Pre-push**: Run `./scripts/ci-check.sh` before pushing (full test suite)
+- **Pre-push**: Run `./scripts/core/ci-check.sh` before pushing (full test suite)
 - **Post-push**: Verify CI/CD passes (see CI Verification below)
 - **Manual**: `pytest tests/ -v` for local verification
 - **Coverage**: Maintain or improve coverage baseline (53%+)
@@ -156,7 +156,7 @@ After pushing code to GitHub, you **MUST** verify CI passes:
 ### Verification Process
 
 1. **Push your changes**: `git push origin <branch>`
-2. **Run CI verification script**: `./scripts/verify-ci.sh <branch> --wait`
+2. **Run CI verification script**: `./scripts/core/verify-ci.sh <branch> --wait`
 3. **Handle failures**: If CI fails, fix issues and repeat
 
 ### How to Verify
@@ -164,7 +164,7 @@ After pushing code to GitHub, you **MUST** verify CI passes:
 After pushing, run the verification script directly via Bash:
 
 ```bash
-./scripts/verify-ci.sh <branch-name> --wait
+./scripts/core/verify-ci.sh <branch-name> --wait
 ```
 
 The script will:
@@ -251,7 +251,7 @@ After implementation is complete and CI passes, you **MUST** create a PR and add
 ### PR & Automated Review Process
 
 1. **Complete implementation**: All acceptance criteria met, tests pass locally
-2. **Verify CI passes**: Use `/check-ci` or `./scripts/ci-check.sh`
+2. **Verify CI passes**: Use `/check-ci` or `./scripts/core/ci-check.sh`
 3. **Create Pull Request**:
 
    ```bash
@@ -327,11 +327,11 @@ After automated review is complete, you **MUST** request human code review befor
 ### Human Code Review Process
 
 1. **Verify automated review is complete**: PR has no unresolved BugBot/CodeRabbit issues
-2. **Move task to 4-in-review**: `./scripts/project move <TASK-ID> in-review`
+2. **Move task to 4-in-review**: `./scripts/core/project move <TASK-ID> in-review`
 3. **Create review starter**: Write `.agent-context/<TASK-ID>-REVIEW-STARTER.md`
 4. **Notify user**: Tell them to invoke code-reviewer in a new tab
 5. **Address feedback**: Fix any issues raised by human reviewer
-6. **After approval**: Move to `5-done` with `./scripts/project complete <TASK-ID>`
+6. **After approval**: Move to `5-done` with `./scripts/core/project complete <TASK-ID>`
 
 ### Creating Review Starter
 
@@ -395,7 +395,7 @@ The code-reviewer agent will:
 
 ### Handling Review Feedback
 
-- **APPROVED**: Move task to `5-done` with `./project complete <TASK-ID>`
+- **APPROVED**: Move task to `5-done` with `./scripts/core/project complete <TASK-ID>`
 - **CHANGES_REQUESTED**: See "Handling Fix Prompts" below
 - **ESCALATE_TO_HUMAN**: Wait for user decision
 
@@ -428,7 +428,7 @@ You'll receive something like:
 2. **Read the original task file** - refresh on acceptance criteria
 3. **Address required changes** - focus on HIGH severity first
 4. **Run tests**: `pytest tests/ -v`
-5. **Verify CI**: `/check-ci` or `./scripts/verify-ci.sh`
+5. **Verify CI**: `/check-ci` or `./scripts/core/verify-ci.sh`
 6. **Update review-starter** - note what was fixed
 7. **Notify user** - ready for re-review (Round 2)
 
@@ -568,7 +568,7 @@ dispatch emit changes_addressed --agent feature-developer \
 - Always preserve backward compatibility
 - Don't skip pre-commit hooks (use `SKIP_TESTS=1` only for WIP commits)
 - Don't commit without tests for new features (TDD required)
-- Don't push without running `./scripts/ci-check.sh` first
+- Don't push without running `./scripts/core/ci-check.sh` first
 - **Don't mark task complete without verifying CI/CD passes on GitHub**
 
 Remember: Test-driven development, clear documentation, and thorough testing are mandatory. When in doubt, request evaluation.

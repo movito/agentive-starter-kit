@@ -22,11 +22,11 @@ import pytest
 from conftest import MockVersionInfo, mock_project_path
 
 # Load the project script as a module (same pattern as test_project_script.py)
-_script_path = Path(__file__).parent.parent / "scripts" / "project"
+_script_path = Path(__file__).parent.parent / "scripts" / "core" / "project"
 _spec = importlib.util.spec_from_loader("project_script", loader=None)
 _project_module = importlib.util.module_from_spec(_spec)
 
-with open(_script_path) as f:
+with open(_script_path, encoding="utf-8") as f:
     _project_module.__dict__["__file__"] = str(_script_path)
     exec(f.read(), _project_module.__dict__)
 

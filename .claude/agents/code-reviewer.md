@@ -327,7 +327,7 @@ Before approving, verify CI has passed:
 # Check CI status
 /check-ci main
 # OR
-./scripts/verify-ci.sh main
+./scripts/core/verify-ci.sh main
 ```
 
 If CI is failing, verdict should be CHANGES_REQUESTED regardless of code quality.

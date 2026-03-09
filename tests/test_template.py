@@ -52,10 +52,10 @@ class TestFeatureName:
         """
         # Arrange
         test_file = tmp_path / "test.txt"
-        test_file.write_text("hello")
+        test_file.write_text("hello", encoding="utf-8")
 
         # Act
-        content = test_file.read_text()
+        content = test_file.read_text(encoding="utf-8")
 
         # Assert
         assert content == "hello"

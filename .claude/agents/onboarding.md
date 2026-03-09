@@ -366,7 +366,7 @@ You can launch it with: agents/launch [agent-name]
 First, set up the virtual environment and install dependencies:
 
 ```bash
-./scripts/project setup
+./scripts/core/project setup
 ```
 
 This command:
@@ -379,7 +379,7 @@ Tell the user:
 ```
 **Setting up development environment...**
 
-Running: ./scripts/project setup
+Running: ./scripts/core/project setup
 
 [Show output from the command]
 
@@ -781,13 +781,13 @@ The evaluation system can use different AI providers:
    - Use providers you already have API keys for
 
 3. **Skip for now**
-   - Can add later with: ./scripts/project install-evaluators
+   - Can add later with: ./scripts/core/project install-evaluators
 ```
 
 ### If user chooses option 2 (Install library):
 
 ```bash
-./scripts/project install-evaluators
+./scripts/core/project install-evaluators
 ```
 
 Tell the user:
@@ -810,7 +810,7 @@ Only set keys for providers you want to use.
 No problem! Built-in evaluators work with OPENAI_API_KEY.
 
 To install additional evaluators later:
-  ./scripts/project install-evaluators
+  ./scripts/core/project install-evaluators
 
 Custom evaluators can be added to .adversarial/evaluators/
 ```

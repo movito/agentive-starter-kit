@@ -2,10 +2,10 @@
 """Project-specific lint rules that catch recurring bot-finding patterns.
 
 Metadata:
-    version: 1.0.0
+    version: 1.2.0
     origin: dispatch-kit
     origin-version: 0.3.2
-    last-updated: 2026-02-27
+    last-updated: 2026-03-01
     created-by: "@movito with planner2"
 
 Runs as a pre-commit hook and in CI. Returns exit code 1 if any violations
@@ -13,6 +13,7 @@ are found. Operates on AST for accuracy — no regex hacks.
 
 Rules:
   DK001  str.replace() used for extension/suffix removal
+  DK002  open() without explicit encoding= kwarg (text mode only)
   DK003  'in' used for identifier comparison without '# substring:' comment
   DK004  Bare 'except Exception/BaseException' with pass/empty body
 """
@@ -85,6 +86,102 @@ def check_dk001(tree: ast.AST, source_lines: list[str], path: str) -> list[Viola
                             f'str.replace("{first_arg.value}", "")'
                             f" removes all occurrences."
                             f' Use removesuffix("{first_arg.value}").'
+                        ),
+                    )
+                )
+
+    return violations
+
+
+def check_dk002(tree: ast.AST, source_lines: list[str], path: str) -> list[Violation]:
+    """DK002: open() / .read_text() / .write_text() without explicit encoding= kwarg.
+
+    Detects patterns like:
+      open("file.txt")                — bare open without encoding
+      open("file.txt", "r")           — text-mode open without encoding
+      Path("f").read_text()           — read_text without encoding
+      p.write_text("data")            — write_text without encoding
+
+    Does NOT flag:
+      open("file.txt", encoding="utf-8")          — encoding kwarg present
+      open("file.txt", "rb")                       — binary mode
+      os.open(path, flags)                          — low-level, different API
+      Path("f").read_text(encoding="utf-8")         — encoding kwarg present
+      Path("f").read_bytes() / .write_bytes()       — binary methods, no encoding param
+
+    Fix: add encoding="utf-8" to all text-mode I/O calls.
+    """
+    violations = []
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        # Check for .read_text() / .write_text() without encoding=
+        if isinstance(node.func, ast.Attribute) and node.func.attr in {
+            "read_text",
+            "write_text",
+        }:
+            if any(kw.arg == "encoding" for kw in node.keywords):
+                continue
+            line = (
+                source_lines[node.lineno - 1]
+                if node.lineno <= len(source_lines)
+                else ""
+            )
+            if "# noqa: DK002" not in line:
+                violations.append(
+                    Violation(
+                        rule="DK002",
+                        path=path,
+                        line=node.lineno,
+                        message=(
+                            f".{node.func.attr}() without explicit encoding= kwarg."
+                            ' Add encoding="utf-8" for consistent behavior.'
+                        ),
+                    )
+                )
+            continue
+
+        # Only match bare `open(...)`, not `os.open(...)`, `os.fdopen(...)`, etc.
+        if not (isinstance(node.func, ast.Name) and node.func.id == "open"):
+            continue
+        # Skip if `encoding=` kwarg is present
+        if any(kw.arg == "encoding" for kw in node.keywords):
+            continue
+        # Skip binary mode: 2nd positional arg contains 'b'
+        if len(node.args) >= 2:
+            mode_arg = node.args[1]
+            if (
+                isinstance(mode_arg, ast.Constant)
+                and isinstance(mode_arg.value, str)
+                and "b" in mode_arg.value
+            ):
+                continue
+        # Check mode kwarg as well (e.g., open("f", mode="rb"))
+        for kw in node.keywords:
+            if (
+                kw.arg == "mode"
+                and isinstance(kw.value, ast.Constant)
+                and isinstance(kw.value.value, str)
+                and "b" in kw.value.value
+            ):
+                break
+        else:
+            # No binary mode kwarg found — this is a text-mode open() without encoding
+            line = (
+                source_lines[node.lineno - 1]
+                if node.lineno <= len(source_lines)
+                else ""
+            )
+            if "# noqa: DK002" not in line:
+                violations.append(
+                    Violation(
+                        rule="DK002",
+                        path=path,
+                        line=node.lineno,
+                        message=(
+                            "open() without explicit encoding= kwarg."
+                            ' Add encoding="utf-8" for consistent behavior.'
                         ),
                     )
                 )
@@ -289,6 +386,7 @@ def lint_file(path: str) -> list[Violation]:
 
     violations = []
     violations.extend(check_dk001(tree, source_lines, path))
+    violations.extend(check_dk002(tree, source_lines, path))
     violations.extend(check_dk003(tree, source_lines, path))
     violations.extend(check_dk004(tree, source_lines, path))
 

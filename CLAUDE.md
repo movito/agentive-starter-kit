@@ -16,7 +16,7 @@ evaluation, and architectural decision records. For full details, see `README.md
 agents/               Agent launcher scripts (launch, onboarding, preflight)
 delegation/tasks/     Task specs by status: 1-backlog/ through 9-reference/
 docs/                 Documentation, ADRs (starter-kit-adr/ and your adr/)
-scripts/              Project management and CI scripts
+scripts/              Project scripts: core/ (shared), local/ (ASK-specific), optional/
 tests/                pytest test suite
 ```
 
@@ -36,16 +36,16 @@ tests/                pytest test suite
 ### Branching and CI
 
 - Feature branches: `feature/<TASK-ID>-short-description`
-- Run `./scripts/ci-check.sh` before pushing
-- Verify CI on GitHub after push (`/check-ci` or `./scripts/verify-ci.sh`)
+- Run `./scripts/core/ci-check.sh` before pushing
+- Verify CI on GitHub after push (`/check-ci` or `./scripts/core/verify-ci.sh`)
 - All PRs require passing CI and code review before merge
 
 ### Task Workflow
 
 - Status flow: `2-todo` -> `3-in-progress` -> `4-in-review` -> `5-done`
 - Task files live in `delegation/tasks/<status-folder>/`
-- Use `./scripts/project start|move|complete <TASK-ID>` to manage status
-- Optional Linear sync: `./scripts/project linearsync`
+- Use `./scripts/core/project start|move|complete <TASK-ID>` to manage status
+- Optional Linear sync: `./scripts/core/project linearsync`
 
 ### Defensive Coding
 
@@ -54,7 +54,7 @@ tests/                pytest test suite
 - Use `str.removesuffix()` for extension removal (never `.replace()`)
 - Follow error strategy by layer: domain modules raise, CLI modules return empty,
   fire-and-forget modules log and continue (see `patterns.yml` -> `error_strategies`)
-- Run `python3 scripts/pattern_lint.py <files>` to check for pattern violations
+- Run `python3 scripts/core/pattern_lint.py <files>` to check for pattern violations
 
 ## Agent Context
 
@@ -87,14 +87,14 @@ Full listing: `.claude/agents/` -- see `AGENT-TEMPLATE.md` for creating new agen
 
 | Script | Purpose |
 |--------|---------|
-| `./scripts/project start <ID>` | Move task to in-progress |
-| `./scripts/project move <ID> <status>` | Move task to any status |
-| `./scripts/project complete <ID>` | Move task to done |
-| `./scripts/project linearsync` | Sync tasks to Linear |
-| `./scripts/ci-check.sh` | Full CI check (local) |
-| `./scripts/verify-ci.sh` | Verify CI status on GitHub |
-| `./scripts/pattern_lint.py` | Check for defensive coding violations |
-| `./scripts/create-agent.sh` | Create a new agent definition |
+| `./scripts/core/project start <ID>` | Move task to in-progress |
+| `./scripts/core/project move <ID> <status>` | Move task to any status |
+| `./scripts/core/project complete <ID>` | Move task to done |
+| `./scripts/core/project linearsync` | Sync tasks to Linear |
+| `./scripts/core/ci-check.sh` | Full CI check (local) |
+| `./scripts/core/verify-ci.sh` | Verify CI status on GitHub |
+| `./scripts/core/pattern_lint.py` | Check for defensive coding violations |
+| `./scripts/optional/create-agent.sh` | Create a new agent definition |
 | `agents/launch` | Interactive agent launcher |
 | `agents/onboarding` | First-time project setup |
 

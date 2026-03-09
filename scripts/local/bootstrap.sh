@@ -120,7 +120,7 @@ echo
 echo "3/4 🔧 Running setup-dev.sh..."
 echo
 
-bash scripts/setup-dev.sh
+bash scripts/optional/setup-dev.sh
 
 echo
 

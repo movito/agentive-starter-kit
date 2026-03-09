@@ -14,7 +14,7 @@ Reviewing v0.3.0 release containing ASK-0028 (project setup command) and ASK-002
 ## Release Criteria Verification
 
 ### ✅ Version Consistency - PASSED
-- [x] **pyproject.toml:16** - `version = "0.3.0"` 
+- [x] **pyproject.toml:16** - `version = "0.3.0"`
 - [x] **CHANGELOG.md:10** - `[0.3.0] - 2026-02-01`
 - [x] **README.md:476** - `Version: 0.3.0, Last Updated: 2026-02-01`
 

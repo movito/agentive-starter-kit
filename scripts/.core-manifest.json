@@ -1,0 +1,22 @@
+{
+  "core_version": "1.2.0",
+  "source": "agentive-starter-kit",
+  "source_repo": "movito/agentive-starter-kit",
+  "synced_at": "2026-03-08T00:00:00Z",
+  "files": [
+    "core/__init__.py",
+    "core/check-bots.sh",
+    "core/ci-check.sh",
+    "core/gh-review-helper.sh",
+    "core/logging_config.py",
+    "core/pattern_lint.py",
+    "core/preflight-check.sh",
+    "core/project",
+    "core/validate_task_status.py",
+    "core/verify-ci.sh",
+    "core/verify-setup.sh",
+    "core/wait-for-bots.sh",
+    "core/check-sync.sh",
+    "core/VERSION"
+  ]
+}

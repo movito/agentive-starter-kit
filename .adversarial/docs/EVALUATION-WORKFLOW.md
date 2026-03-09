@@ -193,20 +193,20 @@ api_key_env: OPENAI_API_KEY  # Environment variable for API key
 
 prompt: |
   You are a security expert reviewing code for vulnerabilities.
-  
+
   Focus on:
   - OWASP Top 10 vulnerabilities
   - Input validation and sanitization
   - Authentication and authorization flaws
   - Secrets and credential exposure
   - Injection vulnerabilities (SQL, command, XSS)
-  
+
   For each issue found, provide:
   - Severity (CRITICAL/HIGH/MEDIUM/LOW)
   - Location (file:line)
   - Description of the vulnerability
   - Recommended fix
-  
+
   End with a verdict: APPROVED, NEEDS_REVISION, or REJECT
 
 output_suffix: SECURITY-REVIEW
@@ -242,7 +242,7 @@ Pre-built evaluators for multiple providers are available:
 
 ```bash
 # Install evaluators from the evaluator library
-./scripts/project install-evaluators
+./scripts/core/project install-evaluators
 
 # See all available evaluators (built-in + custom + library)
 adversarial list-evaluators

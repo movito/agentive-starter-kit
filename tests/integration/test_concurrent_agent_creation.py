@@ -62,7 +62,9 @@ class TestSequentialCreation:
             result = run_script([name, f"Description for {name}"], self.project_dir)
             assert result.returncode == 0, f"{name} failed: {result.stderr}"
 
-        launcher_text = (self.project_dir / "agents" / "launch").read_text()
+        launcher_text = (self.project_dir / "agents" / "launch").read_text(
+            encoding="utf-8"
+        )
         for name in names:
             assert name in launcher_text, f"{name} missing from launcher"
 
@@ -211,7 +213,8 @@ class TestLockRecovery:
         # Write stale lock metadata with dead PID
         owner_file = LOCK_DIR / "owner"
         owner_file.write_text(
-            f"pid={dead_pid}\ntoken=deadbeef\ntime={int(time.time()) - 120}\n"
+            f"pid={dead_pid}\ntoken=deadbeef\ntime={int(time.time()) - 120}\n",
+            encoding="utf-8",
         )
 
         result = run_script(
@@ -229,7 +232,8 @@ class TestLockRecovery:
         live_pid = os.getpid()
         owner_file = LOCK_DIR / "owner"
         owner_file.write_text(
-            f"pid={live_pid}\ntoken=livetoken\ntime={int(time.time())}\n"
+            f"pid={live_pid}\ntoken=livetoken\ntime={int(time.time())}\n",
+            encoding="utf-8",
         )
 
         result = run_script(
@@ -269,7 +273,9 @@ class TestEndToEnd:
         assert agent_file.exists(), "Agent file not created"
 
         # Launcher should reference the agent
-        launcher_text = (self.project_dir / "agents" / "launch").read_text()
+        launcher_text = (self.project_dir / "agents" / "launch").read_text(
+            encoding="utf-8"
+        )
         assert "e2e-agent" in launcher_text, "Agent not in launcher"
 
     def test_force_update_and_dry_run(self):

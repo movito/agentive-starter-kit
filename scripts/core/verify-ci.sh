@@ -8,6 +8,21 @@
 
 set -e
 
+# Progress event emission (fire-and-forget via EXIT trap)
+# The trap preserves the original exit code — do NOT call exit inside the function.
+# When exec "$0" re-invokes the script (wait mode), the trap fires before exec with
+# an empty summary (no event emitted). The re-exec'd process handles its own emit.
+_EMIT_TASK=""
+_CI_EMIT_SUMMARY=""
+_emit_ci_progress() {
+    if [ -n "$_CI_EMIT_SUMMARY" ] && command -v dispatch >/dev/null 2>&1; then
+        dispatch emit ci_checked --agent verify-ci \
+            ${_EMIT_TASK:+--task "$_EMIT_TASK"} \
+            --summary "$_CI_EMIT_SUMMARY" >/dev/null 2>&1 || true
+    fi
+}
+trap _emit_ci_progress EXIT
+
 BRANCH=""
 WAIT_MODE=false
 TIMEOUT=300
@@ -41,9 +56,12 @@ fi
 
 if [ -z "$BRANCH" ]; then
     echo "❌ Could not determine branch"
-    echo "Usage: ./scripts/verify-ci.sh [branch-name] [--wait]"
+    echo "Usage: ./scripts/core/verify-ci.sh [branch-name] [--wait]"
     exit 1
 fi
+
+# Derive task ID from branch for progress event
+_EMIT_TASK=$(echo "$BRANCH" | sed -n 's|^feature/\([A-Z][A-Z]*-[0-9][0-9]*\).*|\1|p') || true
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔍 CI Status Check: $BRANCH"
@@ -96,6 +114,7 @@ if [ -z "$RUNS_JSON" ] || [ "$RUNS_JSON" = "[]" ]; then
     echo "  1. Branch hasn't been pushed yet"
     echo "  2. Workflows are configured to ignore this path"
     echo "  3. No workflows defined in .github/workflows/"
+    _CI_EMIT_SUMMARY="NO_RUNS — No CI runs found for $BRANCH"
     exit 0
 fi
 
@@ -106,6 +125,7 @@ RUN_COUNT=$(echo "$PUSH_RUNS" | jq 'length')
 if [ "$RUN_COUNT" -eq 0 ]; then
     echo "⚠️  No push-triggered workflows found for branch '$BRANCH'"
     echo "    (Found workflows triggered by other events)"
+    _CI_EMIT_SUMMARY="NO_RUNS — No push-triggered workflows for $BRANCH"
     exit 0
 fi
 
@@ -168,7 +188,10 @@ if [ "$ANY_IN_PROGRESS" = true ]; then
         IN_PROGRESS_ID=$(echo "$LATEST_RUNS" | jq -r '[.[] | select(.status == "in_progress" or .status == "queued")][0].databaseId')
 
         if gh run watch "$IN_PROGRESS_ID" --exit-status 2>/dev/null; then
-            # Re-check status after waiting
+            # Re-check status after waiting.
+            # Note: exec replaces this process, so the EXIT trap fires before
+            # re-exec with an empty _CI_EMIT_SUMMARY (no event emitted). The
+            # re-exec'd process will set its own summary and emit on its exit.
             exec "$0" "$BRANCH"
         else
             echo
@@ -178,6 +201,7 @@ if [ "$ANY_IN_PROGRESS" = true ]; then
             echo
             echo "Workflow failed. View details:"
             echo "  gh run view $IN_PROGRESS_ID --log-failed"
+            _CI_EMIT_SUMMARY="FAIL — Workflow failed in wait mode ($BRANCH)"
             exit 1
         fi
     else
@@ -188,7 +212,8 @@ if [ "$ANY_IN_PROGRESS" = true ]; then
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo
         echo "To wait for completion:"
-        echo "  ./scripts/verify-ci.sh $BRANCH --wait"
+        echo "  ./scripts/core/verify-ci.sh $BRANCH --wait"
+        _CI_EMIT_SUMMARY="IN_PROGRESS — Workflows still running ($BRANCH)"
         exit 0
     fi
 fi
@@ -205,6 +230,7 @@ if [ "$ANY_FAILED" = true ]; then
     echo "View failure details:"
     FAILED_ID=$(echo "$LATEST_RUNS" | jq -r '[.[] | select(.conclusion == "failure")][0].databaseId')
     echo "  gh run view $FAILED_ID --log-failed"
+    _CI_EMIT_SUMMARY="FAIL — One or more workflows failed ($BRANCH)"
     exit 1
 elif [ "$ALL_PASSED" = true ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -212,6 +238,7 @@ elif [ "$ALL_PASSED" = true ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo
     echo "All workflows passed. Safe to proceed."
+    _CI_EMIT_SUMMARY="PASS — All workflows passed ($BRANCH)"
     exit 0
 else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -219,5 +246,6 @@ else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo
     echo "Some workflows did not pass. Review above."
+    _CI_EMIT_SUMMARY="MIXED — Some workflows did not pass ($BRANCH)"
     exit 0
 fi

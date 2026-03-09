@@ -29,17 +29,17 @@ gh pr view --json number,url,headRefOid --jq '"PR #\(.number) | URL: \(.url) | H
 
 ```bash
 # All review comments — use the PR number from above
-./scripts/gh-review-helper.sh comments PR_NUMBER
+./scripts/core/gh-review-helper.sh comments PR_NUMBER
 ```
 
 ```bash
 # Thread resolution status (resolved, comment-ID, author, GraphQL-ID, body excerpt)
-./scripts/gh-review-helper.sh threads PR_NUMBER
+./scripts/core/gh-review-helper.sh threads PR_NUMBER
 ```
 
 ```bash
 # Thread summary
-./scripts/gh-review-helper.sh summary PR_NUMBER
+./scripts/core/gh-review-helper.sh summary PR_NUMBER
 ```
 
 Replace `PR_NUMBER` with the actual number from the first command.
@@ -74,7 +74,7 @@ Ask for confirmation before proceeding with fixes.
 ### Reply to threads
 
 ```bash
-./scripts/gh-review-helper.sh reply PR_NUMBER COMMENT_ID 'Fixed in {sha}: {description}.'
+./scripts/core/gh-review-helper.sh reply PR_NUMBER COMMENT_ID 'Fixed in {sha}: {description}.'
 ```
 
 - `COMMENT_ID` is the numeric ID from the `threads` or `comments` output (e.g., `2861292837`)
@@ -83,7 +83,7 @@ Ask for confirmation before proceeding with fixes.
 ### Resolve threads
 
 ```bash
-./scripts/gh-review-helper.sh resolve PRRT_node_id
+./scripts/core/gh-review-helper.sh resolve PRRT_node_id
 ```
 
 After push: Run `/check-bots` to wait for re-scan, then re-run `/triage-threads` if new findings appear.

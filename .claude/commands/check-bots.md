@@ -15,7 +15,7 @@ Check bot review status for the current PR (or PR `$ARGUMENTS` if specified).
 ## Step 1: Run the check-bots script
 
 ```bash
-./scripts/check-bots.sh $ARGUMENTS
+./scripts/core/check-bots.sh $ARGUMENTS
 ```
 
 The script outputs structured lines and exits 0 (both bots reviewed HEAD) or 1 (missing/stale).

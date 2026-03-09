@@ -10,7 +10,7 @@ on:
       - 'delegation/tasks/5-done/*.md'
       - 'delegation/tasks/6-canceled/*.md'
       - 'delegation/tasks/7-blocked/*.md'
-      - 'scripts/sync_tasks_to_linear.py'
+      - 'scripts/optional/sync_tasks_to_linear.py'
     branches:
       - main
       - develop
@@ -52,7 +52,7 @@ jobs:
       - name: Sync tasks to Linear
         if: steps.check-secret.outputs.skip != 'true'
         run: |
-          python scripts/sync_tasks_to_linear.py
+          python scripts/optional/sync_tasks_to_linear.py
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           LINEAR_TEAM_ID: ${{ secrets.LINEAR_TEAM_ID }}

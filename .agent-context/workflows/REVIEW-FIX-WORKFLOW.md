@@ -59,7 +59,7 @@ When code-reviewer returns `CHANGES_REQUESTED`, the planner creates a **lightwei
 ### After Fixing
 
 1. Run tests: `pytest tests/ -v`
-2. Verify CI: `/check-ci` or `./scripts/verify-ci.sh`
+2. Verify CI: `/check-ci` or `./scripts/core/verify-ci.sh`
 3. Create new review-starter (or update existing)
 4. Request re-review from code-reviewer
 

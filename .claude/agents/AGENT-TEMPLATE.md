@@ -46,7 +46,7 @@ When you pick up a task, you **MUST** move it to the correct folder and update i
 When you begin working on a task from `2-todo/`:
 
 ```bash
-./scripts/project start <TASK-ID>
+./scripts/core/project start <TASK-ID>
 ```
 
 This command:
@@ -56,7 +56,7 @@ This command:
 
 **Example**:
 ```bash
-./scripts/project start ASK-0042
+./scripts/core/project start ASK-0042
 # Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
 ```
 
@@ -65,7 +65,7 @@ This command:
 After CI passes and code review is approved:
 
 ```bash
-./scripts/project complete <TASK-ID>
+./scripts/core/project complete <TASK-ID>
 ```
 
 This moves the task to `5-done/` and updates status to `Done`.
@@ -73,9 +73,9 @@ This moves the task to `5-done/` and updates status to `Done`.
 ### Other Status Transitions
 
 ```bash
-./scripts/project move <TASK-ID> in-review   # After implementation, before code review
-./scripts/project move <TASK-ID> blocked     # If blocked by dependencies
-./scripts/project move <TASK-ID> todo        # Return to todo if pausing work
+./scripts/core/project move <TASK-ID> in-review   # After implementation, before code review
+./scripts/core/project move <TASK-ID> blocked     # If blocked by dependencies
+./scripts/core/project move <TASK-ID> todo        # Return to todo if pausing work
 ```
 
 ### Why This Matters
@@ -285,7 +285,7 @@ When creating project documentation, use the correct locations:
 If you push code changes to GitHub:
 
 1. **Push your changes**: `git push origin <branch>`
-2. **Verify CI**: Use `/check-ci` slash command or run `./scripts/verify-ci.sh <branch>`
+2. **Verify CI**: Use `/check-ci` slash command or run `./scripts/core/verify-ci.sh <branch>`
 3. **Wait for result**: Check CI passes before marking work complete
 4. **Handle failures**: If CI fails, fix issues and repeat
 
@@ -296,7 +296,7 @@ If you push code changes to GitHub:
 /check-ci main
 
 # Option 2: Direct script
-./scripts/verify-ci.sh <branch-name>
+./scripts/core/verify-ci.sh <branch-name>
 ```
 
 **Proactive CI Fix**: When CI fails, offer to analyze logs and implement fix. Report failure clearly to user and ask if you should fix it.
@@ -311,7 +311,7 @@ If you push code changes to GitHub:
 
 ### Example: Testing Requirements (for implementation agents)
 - Pre-commit: Tests run automatically (fast tests only)
-- Pre-push: Run `./scripts/ci-check.sh` before pushing (full test suite)
+- Pre-push: Run `./scripts/core/ci-check.sh` before pushing (full test suite)
 - Manual: `pytest tests/ -v` for local verification
 - Coverage: Maintain or improve coverage baseline
 
