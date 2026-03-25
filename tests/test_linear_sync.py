@@ -501,15 +501,15 @@ class TestLinearClient:
 
     def test_client_initialization(self):
         """LinearClient should initialize with API key."""
-        from scripts.sync_tasks_to_linear import LinearClient
+        from scripts.optional.sync_tasks_to_linear import LinearClient
 
-        with patch("scripts.sync_tasks_to_linear.Client"):
+        with patch("scripts.optional.sync_tasks_to_linear.Client"):
             client = LinearClient("test-api-key")
             assert client is not None
 
     def test_find_issue_by_task_id(self):
         """Should find existing issue by task ID in title."""
-        from scripts.sync_tasks_to_linear import LinearClient
+        from scripts.optional.sync_tasks_to_linear import LinearClient
 
         # Arrange
         mock_client = MagicMock()
@@ -525,7 +525,9 @@ class TestLinearClient:
             }
         }
 
-        with patch("scripts.sync_tasks_to_linear.Client", return_value=mock_client):
+        with patch(
+            "scripts.optional.sync_tasks_to_linear.Client", return_value=mock_client
+        ):
             client = LinearClient("test-api-key")
             client.client = mock_client
 
@@ -538,13 +540,15 @@ class TestLinearClient:
 
     def test_find_issue_returns_none_when_not_found(self):
         """Should return None when issue not found."""
-        from scripts.sync_tasks_to_linear import LinearClient
+        from scripts.optional.sync_tasks_to_linear import LinearClient
 
         # Arrange
         mock_client = MagicMock()
         mock_client.execute.return_value = {"issues": {"nodes": []}}
 
-        with patch("scripts.sync_tasks_to_linear.Client", return_value=mock_client):
+        with patch(
+            "scripts.optional.sync_tasks_to_linear.Client", return_value=mock_client
+        ):
             client = LinearClient("test-api-key")
             client.client = mock_client
 
@@ -566,7 +570,7 @@ class TestSyncIntegration:
 
     def test_sync_creates_new_issue(self, tmp_task_file):
         """Sync should create new Linear issue for new task."""
-        from scripts.sync_tasks_to_linear import sync_task
+        from scripts.optional.sync_tasks_to_linear import sync_task
 
         # Arrange
         mock_client = MagicMock()
@@ -585,7 +589,7 @@ class TestSyncIntegration:
 
     def test_sync_updates_existing_issue(self, tmp_task_file):
         """Sync should update existing Linear issue."""
-        from scripts.sync_tasks_to_linear import sync_task
+        from scripts.optional.sync_tasks_to_linear import sync_task
 
         # Arrange
         mock_client = MagicMock()
@@ -604,7 +608,7 @@ class TestSyncIntegration:
 
     def test_sync_skips_archive_task(self, tmp_task_file_archive):
         """Sync should skip tasks in archive folder."""
-        from scripts.sync_tasks_to_linear import sync_task
+        from scripts.optional.sync_tasks_to_linear import sync_task
 
         # Arrange
         mock_client = MagicMock()
@@ -663,9 +667,9 @@ class TestTeamResolution:
 
     def test_resolve_team_id_with_uuid(self):
         """Should return UUID as-is when given a UUID."""
-        from scripts.sync_tasks_to_linear import LinearClient
+        from scripts.optional.sync_tasks_to_linear import LinearClient
 
-        with patch("scripts.sync_tasks_to_linear.Client"):
+        with patch("scripts.optional.sync_tasks_to_linear.Client"):
             client = LinearClient("test-api-key")
             uuid = "89b26800-e1e6-4998-bedf-04195e592cd9"
             result = client.resolve_team_id(uuid)
@@ -674,9 +678,9 @@ class TestTeamResolution:
 
     def test_resolve_team_id_with_key(self):
         """Should look up UUID when given a team KEY."""
-        from scripts.sync_tasks_to_linear import LinearClient
+        from scripts.optional.sync_tasks_to_linear import LinearClient
 
-        with patch("scripts.sync_tasks_to_linear.Client"):
+        with patch("scripts.optional.sync_tasks_to_linear.Client"):
             client = LinearClient("test-api-key")
             mock_gql_client = MagicMock()
             client.client = mock_gql_client
@@ -698,9 +702,9 @@ class TestTeamResolution:
 
     def test_resolve_team_id_with_none(self):
         """Should call get_default_team() when given None."""
-        from scripts.sync_tasks_to_linear import LinearClient
+        from scripts.optional.sync_tasks_to_linear import LinearClient
 
-        with patch("scripts.sync_tasks_to_linear.Client"):
+        with patch("scripts.optional.sync_tasks_to_linear.Client"):
             client = LinearClient("test-api-key")
             mock_gql_client = MagicMock()
             client.client = mock_gql_client
@@ -721,9 +725,9 @@ class TestTeamResolution:
 
     def test_resolve_team_id_unknown_key_raises(self):
         """Should raise ValueError when team KEY not found."""
-        from scripts.sync_tasks_to_linear import LinearClient
+        from scripts.optional.sync_tasks_to_linear import LinearClient
 
-        with patch("scripts.sync_tasks_to_linear.Client"):
+        with patch("scripts.optional.sync_tasks_to_linear.Client"):
             client = LinearClient("test-api-key")
             mock_gql_client = MagicMock()
             client.client = mock_gql_client
@@ -746,9 +750,9 @@ class TestTeamResolution:
 
     def test_resolve_team_id_empty_string_uses_default(self):
         """Should treat empty string as None and use default team."""
-        from scripts.sync_tasks_to_linear import LinearClient
+        from scripts.optional.sync_tasks_to_linear import LinearClient
 
-        with patch("scripts.sync_tasks_to_linear.Client"):
+        with patch("scripts.optional.sync_tasks_to_linear.Client"):
             client = LinearClient("test-api-key")
             mock_gql_client = MagicMock()
             client.client = mock_gql_client

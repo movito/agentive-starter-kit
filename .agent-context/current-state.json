@@ -1,23 +1,29 @@
 {
   "project": {
-    "name": "${PROJECT_NAME}",
-    "version": "0.1.0",
-    "description": "Project description here",
-    "created": "${CREATED_DATE}",
-    "languages": []
+    "name": "agentive-starter-kit",
+    "version": "0.4.0",
+    "description": "Structured starter kit for agentive software development with Claude Code",
+    "created": "2025-11-01",
+    "languages": ["python"]
   },
   "configuration": {
-    "serena_enabled": false,
-    "evaluator_enabled": false,
-    "linear_enabled": false,
-    "task_prefix": "TASK"
+    "serena_enabled": true,
+    "evaluator_enabled": true,
+    "linear_enabled": true,
+    "task_prefix": "ASK"
   },
   "metrics": {
-    "tasks_created": 0,
-    "tasks_completed": 0,
+    "tasks_created": 45,
+    "tasks_completed": 8,
     "agents_active": 0,
     "test_pass_rate": null,
     "coverage": null
   },
-  "recent_activity": []
+  "recent_activity": [
+    {"date": "2026-03-25", "action": "Status audit and handoffs cleanup"},
+    {"date": "2026-03-25", "action": "Created backlog tasks ASK-0043/0044/0045 from issue triage"},
+    {"date": "2026-03-09", "action": "Released v0.4.0 — scripts restructure (ASK-0042)"},
+    {"date": "2026-03-08", "action": "Created KIT-0024 cross-project tracker"},
+    {"date": "2026-02-28", "action": "Completed ASK-0036 expand reconfigure (PR #24)"}
+  ]
 }

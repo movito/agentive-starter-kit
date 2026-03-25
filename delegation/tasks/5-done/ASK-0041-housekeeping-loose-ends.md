@@ -1,6 +1,6 @@
 # ASK-0041: Housekeeping — Loose Ends Cleanup
 
-**Status**: Todo
+**Status**: Done
 **Priority**: Low
 **Created**: 2026-03-04
 

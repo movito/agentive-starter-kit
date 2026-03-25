@@ -22,9 +22,9 @@ from typing import Any, Dict, Optional
 
 # Import logging configuration - support both direct script execution and package import
 try:
-    from scripts.logging_config import setup_logging
+    from scripts.core.logging_config import setup_logging
 except ImportError:
-    from logging_config import setup_logging
+    from core.logging_config import setup_logging
 
 # Initialize logger
 logger = setup_logging("agentive.utils")
