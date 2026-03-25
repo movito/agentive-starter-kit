@@ -157,5 +157,6 @@ logs/
 # Evaluators are installed via: ./scripts/project install-evaluators
 .adversarial/evaluators/
 
-# Adversarial Workflow
+# Dispatch (runtime artifacts)
 .dispatch/config.local.yml
+.dispatch/bus.jsonl
