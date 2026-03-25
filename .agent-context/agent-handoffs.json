@@ -1,17 +1,17 @@
 {
   "planner": {
-    "status": "idle",
-    "current_task": null,
-    "task_started": null,
-    "brief_note": "Evaluator library bumped to v0.5.2 (issue #29). Committed & pushed, CI green. Issue #29 still open — close it next session. ASK-0036 handoff still ready for assignment.",
-    "details_link": null,
-    "handoff_file": ".agent-context/ASK-0036-HANDOFF-feature-developer-v3.md"
+    "status": "completed",
+    "current_task": "ASK-0045",
+    "task_started": "2026-03-25",
+    "brief_note": "COMPLETE: ASK-0045 evaluated (APPROVED), promoted to todo, handoff created for feature-developer-v5.",
+    "details_link": "delegation/tasks/2-todo/ASK-0045-linear-sync-test-imports.md",
+    "handoff_file": ".agent-context/ASK-0045-HANDOFF-feature-developer-v5.md"
   },
   "feature-developer": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "ASK-0037/0038/0039/0040 all merged. Ready for ASK-0036.",
+    "brief_note": "ASK-0034 through ASK-0042 all done. Ready for next assignment.",
     "details_link": null
   },
   "code-reviewer": {
