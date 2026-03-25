@@ -16,12 +16,12 @@ jobs:
           - movito/adversarial-evaluator-library
     steps:
       - name: Checkout source (agentive-starter-kit)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: source
 
       - name: Checkout target (${{ matrix.repo }})
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ matrix.repo }}
           token: ${{ secrets.CROSS_REPO_TOKEN }}
