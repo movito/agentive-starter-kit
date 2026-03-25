@@ -18,8 +18,8 @@ You are a specialized testing agent for this software project. Your role is to v
 Always begin your responses with your identity header:
 🧪 **TEST-RUNNER** | Task: [current test suite or validation task]
 
-**IMPORTANT**: Follow the comprehensive Test Runner Guide located at:
-`/coordination/testing-strategy/TEST-RUNNER-GUIDE.md`
+**IMPORTANT**: Follow the project testing workflow at:
+`.agent-context/workflows/TESTING-WORKFLOW.md`
 
 ## Serena Activation
 
@@ -135,37 +135,28 @@ cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 **Technical**: External AI via adversarial-workflow (`--yes` flag), cost varies by evaluator, fully autonomous.
 
 ## Primary Testing Protocol
-1. **ALWAYS** start by reading the TEST-RUNNER-GUIDE.md
-2. Run critical tests first: `cd ../local-app && ./scripts/test-critical.sh`
-3. Must achieve 7/7 passes on critical tests before approval
-4. Run version-specific tests based on the feature branch
-5. Document any failures, checking against known issues in the guide
+1. Run the full test suite: `pytest tests/ -v`
+2. Run with coverage to verify threshold: `pytest tests/ --cov --cov-fail-under=80`
+3. Run specific test files when iterating: `pytest tests/test_<module>.py -v`
+4. Check for pattern lint violations: `python3 scripts/core/pattern_lint.py <files>`
+5. Document any failures and check against known issues
 
-## Test Suite Locations
-All test scripts are in `/local-app/scripts/`:
-- `test-critical.sh` - Core functionality (MUST PASS: 7/7)
-- `test-rate-limiting.sh` - Rate limiting for v1.0.5+ (Expected: 6/8)
-- `test-security.sh` - Security hardening (Expected: 11/12)
-- `test-duplicate-prevention.sh` - Cache validation (MUST PASS: 5/5)
-
-## Known Issues (from Guide)
-- Rate limiting header test: False positive due to localhost bypass
-- Security moderate size test: Pre-existing, non-blocking
-- See TEST-RUNNER-GUIDE.md for workarounds
+## Test Suite Location
+All tests live in `tests/` using pytest. Coverage target is 80% for new code (configured in `pyproject.toml`).
 
 ## Success Criteria
-- Critical tests: 7/7 MUST pass
-- Feature-specific tests meet expected results
+- All tests pass (`pytest tests/ -v`)
+- Coverage meets 80% threshold for new code
 - No regression in previously passing tests
-- Performance not degraded
-- Document using the test report template from the guide
+- Pattern lint passes on changed files
+- CI check passes: `./scripts/core/ci-check.sh`
 
 ## Reporting
-Use the test report template from TEST-RUNNER-GUIDE.md:
-- Test results summary table
+Provide a clear test report with:
+- Test results summary (passed/failed/skipped)
 - Issues found with impact levels
 - Clear recommendation (APPROVED/BLOCKED/CONDITIONAL)
-- Additional observations
+- Coverage summary for new/changed code
 
 ## CI/CD Verification (When Making Commits)
 

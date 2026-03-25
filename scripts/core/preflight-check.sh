@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --pr)
             if [ -z "${2:-}" ] || [[ "$2" == -* ]]; then
-                echo "ERROR:--pr requires a PR number"
+                echo "ERROR: --pr requires a PR number"
                 exit 1
             fi
             PR_NUMBER="$2"
@@ -56,7 +56,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --task)
             if [ -z "${2:-}" ] || [[ "$2" == -* ]]; then
-                echo "ERROR:--task requires a task ID"
+                echo "ERROR: --task requires a task ID"
                 exit 1
             fi
             TASK_ID="$2"
@@ -77,14 +77,14 @@ done
 
 # Check gh CLI is available
 if ! command -v gh &> /dev/null; then
-    echo "ERROR:gh CLI (gh) not installed"
+    echo "ERROR: gh CLI (gh) not installed"
     echo "Install: https://cli.github.com/"
     exit 1
 fi
 
 # Check gh is authenticated
 if ! gh auth status &> /dev/null; then
-    echo "ERROR:gh CLI not authenticated"
+    echo "ERROR: gh CLI not authenticated"
     echo "Run: gh auth login"
     exit 1
 fi
@@ -92,7 +92,7 @@ fi
 # Detect repo owner/name
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
 if [ -z "$REPO" ]; then
-    echo "ERROR:Could not determine GitHub repository"
+    echo "ERROR: Could not determine GitHub repository"
     echo "Run: gh repo set-default"
     exit 1
 fi
@@ -103,7 +103,7 @@ NAME=$(echo "$REPO" | cut -d/ -f2)
 # Detect branch
 BRANCH=$(git branch --show-current 2>/dev/null)
 if [ -z "$BRANCH" ]; then
-    echo "ERROR:Could not determine current branch"
+    echo "ERROR: Could not determine current branch"
     exit 1
 fi
 
@@ -111,7 +111,7 @@ fi
 if [ -z "$TASK_ID" ]; then
     TASK_ID=$(echo "$BRANCH" | sed -n 's|^feature/\([A-Z][A-Z]*-[0-9][0-9]*\).*|\1|p')
     if [ -z "$TASK_ID" ]; then
-        echo "ERROR:Could not derive task ID from branch '$BRANCH'"
+        echo "ERROR: Could not derive task ID from branch '$BRANCH'"
         echo "Use --task TASK_ID to specify manually."
         exit 1
     fi
@@ -121,7 +121,7 @@ fi
 if [ -z "$PR_NUMBER" ]; then
     PR_NUMBER=$(gh pr view --json number --jq .number 2>/dev/null || true)
     if [ -z "$PR_NUMBER" ]; then
-        echo "ERROR:No PR found for branch '$BRANCH'"
+        echo "ERROR: No PR found for branch '$BRANCH'"
         echo "Push your branch and open a PR first, or use --pr PR_NUMBER."
         exit 1
     fi
@@ -130,7 +130,7 @@ fi
 # Get PR head SHA for review checks
 LATEST_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid --jq .headRefOid 2>/dev/null || true)
 if [ -z "$LATEST_SHA" ]; then
-    echo "ERROR:Could not fetch PR #$PR_NUMBER head SHA"
+    echo "ERROR: Could not fetch PR #$PR_NUMBER head SHA"
     exit 1
 fi
 
@@ -143,7 +143,7 @@ ANY_FAILED=false
 
 # Verify origin/main is available for the commit range query
 if ! git rev-parse --verify origin/main &>/dev/null; then
-    echo "ERROR:origin/main not found. Run: git fetch origin main"
+    echo "ERROR: origin/main not found. Run: git fetch origin main"
     exit 1
 fi
 

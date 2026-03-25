@@ -78,14 +78,14 @@ done
 
 # Check gh CLI is available
 if ! command -v gh &> /dev/null; then
-    echo "ERROR:gh CLI (gh) not installed"
+    echo "ERROR: gh CLI (gh) not installed"
     echo "Install: https://cli.github.com/"
     exit 1
 fi
 
 # Check gh is authenticated
 if ! gh auth status &> /dev/null; then
-    echo "ERROR:gh CLI not authenticated"
+    echo "ERROR: gh CLI not authenticated"
     echo "Run: gh auth login"
     exit 1
 fi
@@ -93,7 +93,7 @@ fi
 # Detect repo owner/name
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
 if [ -z "$REPO" ]; then
-    echo "ERROR:Could not determine GitHub repository"
+    echo "ERROR: Could not determine GitHub repository"
     echo "Run: gh repo set-default"
     exit 1
 fi
@@ -108,7 +108,7 @@ _EMIT_TASK=$(git branch --show-current 2>/dev/null | sed -n 's|^feature/\([A-Z][
 if [ -z "$PR_NUMBER" ]; then
     PR_NUMBER=$(gh pr view --json number --jq .number 2>/dev/null || true)
     if [ -z "$PR_NUMBER" ]; then
-        echo "ERROR:No PR found for current branch"
+        echo "ERROR: No PR found for current branch"
         echo "Push your branch and open a PR first."
         exit 1
     fi
@@ -117,7 +117,7 @@ fi
 # Get PR info (single call: metadata + headRefOid + reviews with commit SHAs)
 PR_JSON=$(gh pr view "$PR_NUMBER" --json number,url,title,reviewDecision,headRefOid,reviews 2>/dev/null || true)
 if [ -z "$PR_JSON" ]; then
-    echo "ERROR:Could not fetch PR #$PR_NUMBER"
+    echo "ERROR: Could not fetch PR #$PR_NUMBER"
     exit 1
 fi
 

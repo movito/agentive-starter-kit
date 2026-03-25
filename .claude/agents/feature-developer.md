@@ -551,7 +551,7 @@ When you complete your work, emit a phase_complete event:
 ```bash
 dispatch emit phase_complete --agent feature-developer \
   --task $TASK_ID \
-  --summary "Brief description of what was done"
+  --summary "Brief description of what was done" 2>/dev/null || true
 ```
 
 If changes are requested during review, emit after fixing:
@@ -559,7 +559,7 @@ If changes are requested during review, emit after fixing:
 ```bash
 dispatch emit changes_addressed --agent feature-developer \
   --task $TASK_ID \
-  --summary "Addressed review feedback"
+  --summary "Addressed review feedback" 2>/dev/null || true
 ```
 
 ## Restrictions
