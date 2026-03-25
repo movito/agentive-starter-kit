@@ -23,6 +23,6 @@ Clean up loose ends identified after the v0.3.3 release.
 
 ## Acceptance Criteria
 
-- [ ] PR #14 resolved (merged or closed with explanation)
-- [ ] `.agent-context/retros/` either committed or gitignored
-- [ ] `.dispatch/bus.jsonl` gitignored
+- [x] PR #14 resolved (merged or closed with explanation)
+- [x] `.agent-context/retros/` either committed or gitignored
+- [x] `.dispatch/bus.jsonl` gitignored

@@ -39,11 +39,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Import logging configuration - support both direct script execution and package import
+# Import logging configuration - support both package import and direct execution
 try:
     from scripts.core.logging_config import setup_logging
 except ImportError:
-    from core.logging_config import setup_logging
+    import logging
+
+    def setup_logging(name):
+        return logging.getLogger(name)
+
 
 # Initialize logger
 logger = setup_logging("agentive.sync")
