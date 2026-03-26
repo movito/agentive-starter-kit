@@ -2,7 +2,10 @@ name: Sync Core Scripts to Downstream
 
 on:
   push:
-    paths: ['scripts/core/**']
+    paths:
+      - 'scripts/core/**'
+      - '.claude/commands/**'
+      - 'scripts/.core-manifest.json'
     branches: [main]
 
 jobs:
@@ -27,33 +30,112 @@ jobs:
           token: ${{ secrets.CROSS_REPO_TOKEN }}
           path: target
 
-      - name: Sync core scripts
+      - name: Sync from manifest
         id: sync
         run: |
+          set -euo pipefail
+
           VERSION=$(cat source/scripts/core/VERSION)
           BRANCH="chore/core-scripts-sync-v${VERSION}-$(date +%Y%m%d%H%M%S)"
+          UPSTREAM_MANIFEST="source/scripts/.core-manifest.json"
+          DOWNSTREAM_MANIFEST="target/scripts/.core-manifest.json"
+          WARNINGS=""
+
+          # ── Read downstream opted_in (preserve across sync) ──
+          DOWNSTREAM_OPTED_IN="[]"
+          if [ -f "$DOWNSTREAM_MANIFEST" ]; then
+            DOWNSTREAM_OPTED_IN=$(jq -r '.opted_in // []' "$DOWNSTREAM_MANIFEST")
+          fi
+
+          # ── Helper: check if a tier should be synced ──
+          # Core tiers (*_core) always sync. Optional tiers sync if opted in.
+          should_sync_tier() {
+            local tier="$1"
+            # Core tiers always sync
+            if echo "$tier" | grep -q '_core$'; then
+              return 0
+            fi
+            # Check if tier is in downstream opted_in
+            if echo "$DOWNSTREAM_OPTED_IN" | jq -e "index(\"$tier\")" > /dev/null 2>&1; then
+              return 0
+            fi
+            return 1
+          }
+
+          # ── Helper: resolve source and target paths for a tier ──
+          resolve_paths() {
+            local tier="$1"
+            local entry="$2"
+            case "$tier" in
+              scripts_core)
+                echo "source/scripts/${entry}" "target/scripts/${entry}"
+                ;;
+              commands_*)
+                echo "source/.claude/commands/${entry}" "target/.claude/commands/${entry}"
+                ;;
+              *)
+                echo "source/${entry}" "target/${entry}"
+                ;;
+            esac
+          }
 
           cd target
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
+          cd ..
 
-          # Copy core scripts
-          rm -rf scripts/core
-          cp -r ../source/scripts/core scripts/core
+          # ── Iterate manifest tiers and sync file-by-file ──
+          TIERS=$(jq -r '.files | keys[]' "$UPSTREAM_MANIFEST")
+          for tier in $TIERS; do
+            if ! should_sync_tier "$tier"; then
+              echo "Skipping tier: $tier (not opted in)"
+              continue
+            fi
 
-          # Copy source manifest and update dynamic fields
-          cp ../source/scripts/.core-manifest.json scripts/.core-manifest.json
+            echo "Syncing tier: $tier"
+            ENTRIES=$(jq -r ".files[\"$tier\"][]" "$UPSTREAM_MANIFEST")
+            for entry in $ENTRIES; do
+              read -r src_path tgt_path <<< "$(resolve_paths "$tier" "$entry")"
 
-          # Check if anything changed (--porcelain catches untracked files too)
-          if [ -z "$(git status --porcelain scripts/)" ]; then
+              # Warn if target exists but was not in any previous manifest tier
+              if [ -f "$tgt_path" ] && [ -f "$DOWNSTREAM_MANIFEST" ]; then
+                IN_OLD_MANIFEST=$(jq -r "[.files[][]?] | index(\"$entry\")" "$DOWNSTREAM_MANIFEST" 2>/dev/null || echo "null")
+                if [ "$IN_OLD_MANIFEST" = "null" ]; then
+                  WARNINGS="${WARNINGS}- **Warning**: Overwriting \`${entry}\` which was not previously in the manifest\n"
+                fi
+              fi
+
+              # Create target directory if needed and copy file
+              mkdir -p "$(dirname "$tgt_path")"
+              cp "$src_path" "$tgt_path"
+            done
+          done
+
+          # ── Update downstream manifest ──
+          # Take upstream files sections, preserve downstream opted_in, update metadata
+          SYNCED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          jq --arg version "$VERSION" \
+             --arg synced_at "$SYNCED_AT" \
+             --argjson opted_in "$DOWNSTREAM_OPTED_IN" \
+             '.core_version = $version | .synced_at = $synced_at | .opted_in = $opted_in' \
+             "$UPSTREAM_MANIFEST" > target/scripts/.core-manifest.json
+
+          # ── Check for changes ──
+          cd target
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No changes to sync"
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
+          # ── Commit and push ──
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          git add scripts/core/ scripts/.core-manifest.json
+          echo "warnings<<EOF" >> "$GITHUB_OUTPUT"
+          echo -e "$WARNINGS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+          git add scripts/core/ scripts/.core-manifest.json .claude/commands/
           git commit -m "chore: Sync core scripts v${VERSION} from agentive-starter-kit"
           git push -u origin "$BRANCH"
 
@@ -63,15 +145,34 @@ jobs:
           GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
         run: |
           VERSION=$(cat source/scripts/core/VERSION)
+          WARNINGS="${{ steps.sync.outputs.warnings }}"
           cd target
           BRANCH=$(git branch --show-current)
 
-          gh pr create \
-            --title "chore: Sync core scripts v${VERSION} from agentive-starter-kit" \
-            --body "Automated sync of \`scripts/core/\` from agentive-starter-kit v${VERSION}.
+          BODY="Automated sync of core scripts and commands from agentive-starter-kit v${VERSION}.
 
-          Review the changes and merge when ready.
+          ## What's synced
+
+          This PR updates files listed in \`.core-manifest.json\`:
+          - **scripts_core**: Core scripts in \`scripts/core/\`
+          - **commands_core**: Slash commands that depend on core scripts
+          - **commands_optional**: Only if your repo has opted in via \`opted_in\` in the manifest
+
+          Files not listed in the manifest are **never touched** by this sync.
+
+          ## Opting in to optional commands
+
+          To receive optional commands (e.g., \`/babysit-pr\`, \`/retro\`), add
+          \`\"commands_optional\"\` to the \`opted_in\` array in \`scripts/.core-manifest.json\`.
+
+          ${WARNINGS:+## Warnings
+          ${WARNINGS}}
 
           **Source**: movito/agentive-starter-kit@main
-          **Core version**: ${VERSION}" \
+          **Core version**: ${VERSION}
+          **ADR**: KIT-ADR-0022 (Manifest-Based Sync Ownership)"
+
+          gh pr create \
+            --title "chore: Sync core scripts v${VERSION} from agentive-starter-kit" \
+            --body "$BODY" \
             --base main
