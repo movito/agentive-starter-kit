@@ -325,6 +325,24 @@ shell:
       uv pip install -e . --python .venv/bin/python
     caught_by: "BugBot"
 
+  pre_commit_black_stash:
+    rule: >
+      When Black is a pre-commit hook and unstaged files exist, pre-commit
+      stashes unstaged changes, Black reformats staged files, pre-commit
+      reports failure (files were modified), then restores the stash —
+      reverting Black's fixes. The workaround: stage ALL files before
+      committing (git add -A or git add specific files). This also applies
+      to isort and any other auto-formatter in pre-commit.
+    pattern: |
+      # Bad: commit with unstaged files present
+      git add src/module.py
+      git commit -m "fix"  # Black reformats, pre-commit fails, stash restores
+
+      # Good: stage everything first
+      git add -A  # or git add all relevant files
+      git commit -m "fix"  # Black reformats, pre-commit passes
+    caught_by: "ASK-0045 retro (pre-commit stash/restore loop)"
+
   jq_interpolation_slice:
     rule: >
       In jq string interpolation, slice operators like [0:120] must be

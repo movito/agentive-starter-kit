@@ -1,6 +1,6 @@
 # ASK-0045: Fix Linear Sync Import Paths After v0.4.0 Restructure
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours

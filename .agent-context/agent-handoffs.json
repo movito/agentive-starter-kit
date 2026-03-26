@@ -1,11 +1,11 @@
 {
   "planner": {
-    "status": "completed",
-    "current_task": "ASK-0045",
-    "task_started": "2026-03-25",
-    "brief_note": "COMPLETE: ASK-0045 evaluated (APPROVED), promoted to todo, handoff created for feature-developer-v5.",
-    "details_link": "delegation/tasks/2-todo/ASK-0045-linear-sync-test-imports.md",
-    "handoff_file": ".agent-context/ASK-0045-HANDOFF-feature-developer-v5.md"
+    "status": "idle",
+    "current_task": null,
+    "task_started": null,
+    "brief_note": "ASK-0045 done (PR #38 merged). Retro processed, patterns.yml updated. Ready for next task.",
+    "details_link": null,
+    "handoff_file": null
   },
   "feature-developer": {
     "status": "idle",
