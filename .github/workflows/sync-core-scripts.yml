@@ -150,9 +150,9 @@ jobs:
         if: steps.sync.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
+          WARNINGS: ${{ steps.sync.outputs.warnings }}
         run: |
           VERSION=$(cat source/scripts/core/VERSION)
-          WARNINGS='${{ steps.sync.outputs.warnings }}'
           cd target
           BRANCH=$(git branch --show-current)
 
