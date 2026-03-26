@@ -4,7 +4,7 @@
     "current_task": "KIT-0024",
     "task_started": "2026-03-26",
     "brief_note": "COMPLETE: KIT-0024 task spec refreshed, KIT-ADR-0022 written, handoff ready for feature-developer-v5.",
-    "details_link": "delegation/tasks/2-todo/KIT-0024-core-scripts-standardization.md",
+    "details_link": "delegation/tasks/3-in-progress/KIT-0024-core-scripts-standardization.md",
     "handoff_file": ".agent-context/KIT-0024-HANDOFF-feature-developer.md"
   },
   "feature-developer": {

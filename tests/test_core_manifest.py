@@ -112,13 +112,13 @@ class TestManifestConsistency:
                 seen.add(entry)
 
     def test_no_duplicate_entries_across_tiers(self, manifest):
-        all_entries = []
+        seen = {}
         for tier, entries in manifest["files"].items():
             for entry in entries:
-                all_entries.append((tier, entry))
-        filenames = [e for _, e in all_entries]
-        dupes = [f for f in filenames if filenames.count(f) > 1]
-        assert not dupes, f"Entries appear in multiple tiers: {set(dupes)}"
+                assert (
+                    entry not in seen
+                ), f"Entry {entry!r} in both {seen[entry]!r} and {tier!r}"
+                seen[entry] = tier
 
     def test_scripts_core_count(self, manifest):
         count = len(manifest["files"]["scripts_core"])

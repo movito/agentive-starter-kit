@@ -44,7 +44,7 @@ jobs:
           # ── Read downstream opted_in (preserve across sync) ──
           DOWNSTREAM_OPTED_IN="[]"
           if [ -f "$DOWNSTREAM_MANIFEST" ]; then
-            DOWNSTREAM_OPTED_IN=$(jq -r '.opted_in // []' "$DOWNSTREAM_MANIFEST")
+            DOWNSTREAM_OPTED_IN=$(jq '.opted_in // []' "$DOWNSTREAM_MANIFEST")
           fi
 
           # ── Helper: check if a tier should be synced ──
@@ -135,7 +135,10 @@ jobs:
           echo -e "$WARNINGS" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-          git add scripts/core/ scripts/.core-manifest.json .claude/commands/
+          git add scripts/core/ scripts/.core-manifest.json
+          if [ -d .claude/commands/ ]; then
+            git add .claude/commands/
+          fi
           git commit -m "chore: Sync core scripts v${VERSION} from agentive-starter-kit"
           git push -u origin "$BRANCH"
 
