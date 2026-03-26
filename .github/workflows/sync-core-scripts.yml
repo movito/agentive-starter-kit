@@ -100,9 +100,13 @@ jobs:
 
               # Warn if target exists but was not in any previous manifest tier
               if [ -f "$tgt_path" ] && [ -f "$DOWNSTREAM_MANIFEST" ]; then
-                IN_OLD_MANIFEST=$(jq -r "[.files[][]?] | index(\"$entry\")" "$DOWNSTREAM_MANIFEST" 2>/dev/null || echo "null")
+                IN_OLD_MANIFEST=$(jq -r '
+                  if (.files | type) == "array" then [.files[]]
+                  else [.files[][]]
+                  end | index("'"$entry"'")
+                ' "$DOWNSTREAM_MANIFEST" 2>/dev/null || echo "null")
                 if [ "$IN_OLD_MANIFEST" = "null" ]; then
-                  WARNINGS="${WARNINGS}- **Warning**: Overwriting \`${entry}\` which was not previously in the manifest\n"
+                  WARNINGS="${WARNINGS}- **Warning**: Overwriting '${entry}' which was not previously in the manifest\n"
                 fi
               fi
 
@@ -148,7 +152,7 @@ jobs:
           GH_TOKEN: ${{ secrets.CROSS_REPO_TOKEN }}
         run: |
           VERSION=$(cat source/scripts/core/VERSION)
-          WARNINGS="${{ steps.sync.outputs.warnings }}"
+          WARNINGS='${{ steps.sync.outputs.warnings }}'
           cd target
           BRANCH=$(git branch --show-current)
 
