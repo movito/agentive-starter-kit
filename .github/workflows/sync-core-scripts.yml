@@ -100,10 +100,10 @@ jobs:
 
               # Warn if target exists but was not in any previous manifest tier
               if [ -f "$tgt_path" ] && [ -f "$DOWNSTREAM_MANIFEST" ]; then
-                IN_OLD_MANIFEST=$(jq -r '
+                IN_OLD_MANIFEST=$(jq -r --arg entry "$entry" '
                   if (.files | type) == "array" then [.files[]]
                   else [.files[][]]
-                  end | index("'"$entry"'")
+                  end | index($entry)
                 ' "$DOWNSTREAM_MANIFEST" 2>/dev/null || echo "null")
                 if [ "$IN_OLD_MANIFEST" = "null" ]; then
                   WARNINGS="${WARNINGS}- **Warning**: Overwriting '${entry}' which was not previously in the manifest\n"
@@ -135,9 +135,11 @@ jobs:
 
           # ── Commit and push ──
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          echo "warnings<<EOF" >> "$GITHUB_OUTPUT"
-          echo -e "$WARNINGS" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          if [ -n "$WARNINGS" ]; then
+            echo "warnings<<EOF" >> "$GITHUB_OUTPUT"
+            echo -e "$WARNINGS" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          fi
 
           git add scripts/core/ scripts/.core-manifest.json
           if [ -d .claude/commands/ ]; then
