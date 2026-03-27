@@ -1,6 +1,6 @@
 # KIT-0024: Core Scripts Standardization — Cross-Project
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: High
 **Type**: Infrastructure
 **Estimated Effort**: 4-6 hours (downstream repos only — Phase 1 complete)
