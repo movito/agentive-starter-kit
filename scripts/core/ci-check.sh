@@ -15,6 +15,10 @@
 
 set -e  # Exit on first error
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT"
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔍 Running local CI checks"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -84,7 +88,6 @@ echo "4/5 🔍 Running pattern lint (DK rules)..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 PY_FILES=$(find scripts/ tests/ -name '*.py' 2>/dev/null)
 if [ -n "$PY_FILES" ]; then
-    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
     if python3 "$SCRIPT_DIR/pattern_lint.py" $PY_FILES 2>&1; then
         echo "✅ Pattern lint: No DK violations"
     else

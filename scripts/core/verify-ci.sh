@@ -8,6 +8,10 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT"
+
 # Progress event emission (fire-and-forget via EXIT trap)
 # The trap preserves the original exit code — do NOT call exit inside the function.
 # When exec "$0" re-invokes the script (wait mode), the trap fires before exec with

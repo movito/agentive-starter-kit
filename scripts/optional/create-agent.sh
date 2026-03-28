@@ -26,8 +26,9 @@ DEFAULT_MODEL="claude-sonnet-4-5-20250929"
 if [[ -n "${CREATE_AGENT_PROJECT_ROOT:-}" ]]; then
     PROJECT_ROOT="$CREATE_AGENT_PROJECT_ROOT"
 else
-    PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+    PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 fi
+cd "$PROJECT_ROOT"
 
 # Per-project lock dir to avoid cross-repo collisions (env var overrides)
 if [[ -n "${CREATE_AGENT_LOCK_DIR:-}" ]]; then
