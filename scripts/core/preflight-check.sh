@@ -16,6 +16,10 @@
 #   0 — All gates pass
 #   1 — One or more gates fail, or error
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT" || exit 1
+
 PR_NUMBER=""
 TASK_ID=""
 

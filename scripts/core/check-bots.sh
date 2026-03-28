@@ -34,6 +34,10 @@
 #   0 — Both bots have reviewed the HEAD commit
 #   1 — One or both bots missing, stale, or error
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT" || exit 1
+
 PR_NUMBER=""
 
 # Parse arguments

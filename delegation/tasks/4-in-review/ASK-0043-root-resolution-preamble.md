@@ -1,6 +1,6 @@
 # ASK-0043: Add Root-Resolution Preamble to Shell Scripts
 
-**Status**: Backlog
+**Status**: In Review
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours
@@ -48,6 +48,8 @@ All shell scripts in `scripts/core/`:
 - `check-bots.sh`
 - `gh-review-helper.sh`
 - `check-sync.sh`
+- `wait-for-bots.sh`
+- `verify-setup.sh`
 
 And `scripts/optional/`:
 - `create-agent.sh`
@@ -65,10 +67,10 @@ And `scripts/local/`:
 ## Acceptance Criteria
 
 ### Must Have
-- [ ] All shell scripts in `scripts/core/` have root-resolution preamble
-- [ ] Scripts work when invoked from any subdirectory
-- [ ] No regressions — scripts still work when invoked from project root
-- [ ] `scripts/optional/` and `scripts/local/` scripts also updated
+- [x] All 8 shell scripts in `scripts/core/` have root-resolution preamble
+- [x] Scripts work when invoked from any subdirectory
+- [x] No regressions — scripts still work when invoked from project root
+- [x] `scripts/optional/` and `scripts/local/` scripts also updated
 
 ## Lessons from Downstream
 

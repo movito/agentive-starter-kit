@@ -19,6 +19,10 @@
 #   0 — Both bots reviewed HEAD commit
 #   1 — Timeout or error
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT" || exit 1
+
 INTERVAL=30
 TIMEOUT=900
 PR_ARG=""
@@ -84,7 +88,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ELAPSED=0
 POLL_COUNT=0
 

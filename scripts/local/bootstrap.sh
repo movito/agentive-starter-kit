@@ -23,10 +23,10 @@ set -e
 # Resolve paths
 # ─────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ASK_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-TARGET="${1:?Usage: $0 <target-directory>}"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Resolve target to absolute path
+# Resolve TARGET before cd — user may pass a relative path from their cwd
+TARGET="${1:?Usage: $0 <target-directory>}"
 if [ ! -d "$TARGET" ]; then
     echo "❌ Target directory does not exist: $TARGET"
     echo "   Create it first and put your design materials in it."
@@ -38,7 +38,7 @@ PROJECT_NAME="$(basename "$TARGET")"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🚀 Bootstrapping: $PROJECT_NAME"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Source:  $ASK_ROOT"
+echo "  Source:  $PROJECT_ROOT"
 echo "  Target:  $TARGET"
 echo
 
@@ -51,46 +51,46 @@ echo "1/4 📂 Copying scaffolding..."
 RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --exclude='__pycache__/' --exclude='.DS_Store')
 
 # .claude/ — agent definitions, commands, skills, settings
-"${RSYNC_BASE[@]}" "$ASK_ROOT/.claude/" "$TARGET/.claude/"
+"${RSYNC_BASE[@]}" "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
 # .adversarial/ — evaluation config, docs, scripts, templates (not logs/artifacts/evaluators)
 "${RSYNC_BASE[@]}" \
     --exclude='logs/' --exclude='artifacts/' --exclude='inputs/' --exclude='evaluators/' \
-    "$ASK_ROOT/.adversarial/" "$TARGET/.adversarial/"
+    "$PROJECT_ROOT/.adversarial/" "$TARGET/.adversarial/"
 
 # .agent-context/ — workflows, templates, patterns (not old handoffs/retros/reviews)
 "${RSYNC_BASE[@]}" \
     --exclude='ASK-*' --exclude='retros/' --exclude='reviews/' --exclude='research/' \
     --exclude='*SESSION-HANDOVER*' --exclude='*LINEAR-SYNC*' --exclude='*MIRIAD*' \
     --exclude='*code-review-lessons*' --exclude='*code-review-test*' \
-    "$ASK_ROOT/.agent-context/" "$TARGET/.agent-context/"
+    "$PROJECT_ROOT/.agent-context/" "$TARGET/.agent-context/"
 
 # .serena/ — setup script and template
 "${RSYNC_BASE[@]}" --exclude='cache/' --exclude='memories/' --exclude='claude-code/' \
-    "$ASK_ROOT/.serena/" "$TARGET/.serena/"
+    "$PROJECT_ROOT/.serena/" "$TARGET/.serena/"
 
 # .github/ — CI workflows, dependabot
-"${RSYNC_BASE[@]}" "$ASK_ROOT/.github/" "$TARGET/.github/"
+"${RSYNC_BASE[@]}" "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
 # agents/ — launcher scripts
-"${RSYNC_BASE[@]}" "$ASK_ROOT/agents/" "$TARGET/agents/"
+"${RSYNC_BASE[@]}" "$PROJECT_ROOT/agents/" "$TARGET/agents/"
 
 # delegation/ — task folder structure and templates (not old task files)
-"${RSYNC_BASE[@]}" --exclude='ASK-*' "$ASK_ROOT/delegation/" "$TARGET/delegation/"
+"${RSYNC_BASE[@]}" --exclude='ASK-*' "$PROJECT_ROOT/delegation/" "$TARGET/delegation/"
 
 # docs/ — only the structural parts (decisions, testing guide)
-"${RSYNC_BASE[@]}" --exclude='proposals/' "$ASK_ROOT/docs/" "$TARGET/docs/"
+"${RSYNC_BASE[@]}" --exclude='proposals/' "$PROJECT_ROOT/docs/" "$TARGET/docs/"
 
 # scripts/ — project management, CI, setup
-"${RSYNC_BASE[@]}" "$ASK_ROOT/scripts/" "$TARGET/scripts/"
+"${RSYNC_BASE[@]}" "$PROJECT_ROOT/scripts/" "$TARGET/scripts/"
 
 # tests/ — conftest and test infrastructure
-"${RSYNC_BASE[@]}" "$ASK_ROOT/tests/" "$TARGET/tests/"
+"${RSYNC_BASE[@]}" "$PROJECT_ROOT/tests/" "$TARGET/tests/"
 
 # Top-level files (only if they don't exist in target)
 for f in CLAUDE.md pyproject.toml .gitignore .pre-commit-config.yaml .env.template .coderabbitignore conftest.py; do
-    if [ -f "$ASK_ROOT/$f" ] && [ ! -f "$TARGET/$f" ]; then
-        cp "$ASK_ROOT/$f" "$TARGET/$f"
+    if [ -f "$PROJECT_ROOT/$f" ] && [ ! -f "$TARGET/$f" ]; then
+        cp "$PROJECT_ROOT/$f" "$TARGET/$f"
     fi
 done
 

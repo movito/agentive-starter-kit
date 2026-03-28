@@ -22,6 +22,10 @@
 #   1 — Input validation error
 #   2 — API error
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT" || exit 1
+
 # ─── Usage ──────────────────────────────────────────────────────────
 print_usage() {
     echo "Usage: ./scripts/gh-review-helper.sh <subcommand> [args...]"

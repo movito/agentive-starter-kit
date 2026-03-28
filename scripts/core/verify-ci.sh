@@ -8,6 +8,11 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+SELF="$SCRIPT_DIR/$(basename "${BASH_SOURCE[0]}")"
+cd "$PROJECT_ROOT"
+
 # Progress event emission (fire-and-forget via EXIT trap)
 # The trap preserves the original exit code — do NOT call exit inside the function.
 # When exec "$0" re-invokes the script (wait mode), the trap fires before exec with
@@ -192,7 +197,7 @@ if [ "$ANY_IN_PROGRESS" = true ]; then
             # Note: exec replaces this process, so the EXIT trap fires before
             # re-exec with an empty _CI_EMIT_SUMMARY (no event emitted). The
             # re-exec'd process will set its own summary and emit on its exit.
-            exec "$0" "$BRANCH"
+            exec "$SELF" "$BRANCH"
         else
             echo
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
