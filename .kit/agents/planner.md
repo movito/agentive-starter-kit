@@ -52,7 +52,7 @@ If no tasks exist, let the user know the project is ready for its first feature.
 - Manage task lifecycle (create, assign, track, complete)
 - **Run task evaluations autonomously** via Evaluator before assignment
 - Coordinate between different agents
-- Maintain project documentation (`.kit/context/`, `delegation/`)
+- Maintain project documentation (`.kit/context/`, `.kit/delegation/`)
 - Track version numbers and releases
 - Ensure smooth development workflow
 - Update `.kit/context/agent-handoffs.json` with current state

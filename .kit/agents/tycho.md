@@ -337,7 +337,7 @@ User will:
 **Tycho Procedures** (in order of usage):
 1. **Evaluation Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
 2. **Task Starter Template**: `.kit/agents/TASK-STARTER-TEMPLATE.md` (NEW STANDARD)
-3. **Task Creation**: `delegation/templates/TASK-TEMPLATE.md`
+3. **Task Creation**: `.kit/delegation/templates/TASK-TEMPLATE.md`
 4. **Agent Assignment**: `.kit/context/agent-handoffs.json` updates
 5. **Commit Protocol**: `.kit/context/workflows/COMMIT-PROTOCOL.md`
 6. **Procedural Index**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
