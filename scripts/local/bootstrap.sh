@@ -24,10 +24,9 @@ set -e
 # ─────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-cd "$PROJECT_ROOT"
-TARGET="${1:?Usage: $0 <target-directory>}"
 
-# Resolve target to absolute path
+# Resolve TARGET before cd — user may pass a relative path from their cwd
+TARGET="${1:?Usage: $0 <target-directory>}"
 if [ ! -d "$TARGET" ]; then
     echo "❌ Target directory does not exist: $TARGET"
     echo "   Create it first and put your design materials in it."
