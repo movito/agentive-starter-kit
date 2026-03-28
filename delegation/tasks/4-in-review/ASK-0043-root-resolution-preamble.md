@@ -67,7 +67,7 @@ And `scripts/local/`:
 ## Acceptance Criteria
 
 ### Must Have
-- [x] All shell scripts in `scripts/core/` have root-resolution preamble (7 scripts + verify-setup.sh)
+- [x] All 8 shell scripts in `scripts/core/` have root-resolution preamble
 - [x] Scripts work when invoked from any subdirectory
 - [x] No regressions — scripts still work when invoked from project root
 - [x] `scripts/optional/` and `scripts/local/` scripts also updated
