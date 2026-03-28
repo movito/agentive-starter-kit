@@ -12,7 +12,7 @@ depth (`..` -> `../..`) in 3 scripts broken by the v0.4.0 restructure.
 
 ## Files to Review (by priority)
 
-1. **scripts/local/bootstrap.sh** — Most complex change. Removed `cd "$PROJECT_ROOT"` entirely (bootstrap operates on two directories). Renamed `ASK_ROOT` -> `PROJECT_ROOT`. Target resolves before any path changes.
+1. **scripts/local/bootstrap.sh** — Most complex change. Renamed `ASK_ROOT` -> `PROJECT_ROOT`. Resolves TARGET to an absolute path before any directory changes, then uses absolute `$PROJECT_ROOT/...` paths for rsync sources (no `cd "$PROJECT_ROOT"` needed). Later does `cd "$TARGET"` for git init.
 
 2. **scripts/core/verify-ci.sh** — Added `SELF` absolute path for `exec` re-invocation (was `exec "$0"` which breaks with relative paths after `cd`).
 

@@ -48,6 +48,8 @@ All shell scripts in `scripts/core/`:
 - `check-bots.sh`
 - `gh-review-helper.sh`
 - `check-sync.sh`
+- `wait-for-bots.sh`
+- `verify-setup.sh`
 
 And `scripts/optional/`:
 - `create-agent.sh`
