@@ -8,11 +8,10 @@ evaluation, and architectural decision records. For full details, see `README.md
 
 ```
 .claude/agents/       Implementation agents (feature-developer-v3, ci-checker, etc.)
-.claude/commands/     Implementation commands (start-task, commit-push-pr, check-ci, etc.)
+.claude/commands/     All slash commands (start-task, babysit-pr, retro, etc.)
 .claude/skills/       Implementation skills (pre-implementation, bot-triage)
 .kit/                 Builder layer (planning, coordination, evaluation)
 ├── agents/           Builder agents (planner, planner2, tycho, code-reviewer, etc.)
-├── commands/         Builder commands (babysit-pr, retro, triage-threads, status, etc.)
 ├── skills/           Builder skills (self-review, review-handoff, code-review-evaluator)
 ├── context/          Agent coordination: handoffs, reviews, patterns.yml, workflows/
 ├── adversarial/      Adversarial evaluation system (config, scripts, docs)

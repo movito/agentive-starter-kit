@@ -23,7 +23,7 @@ KNOWN_TIERS = {"scripts_core", "commands_core", "commands_optional"}
 TIER_BASE_PATHS = {
     "scripts_core": REPO_ROOT / "scripts",
     "commands_core": REPO_ROOT / ".claude" / "commands",
-    "commands_optional": REPO_ROOT / ".kit" / "commands",
+    "commands_optional": REPO_ROOT / ".claude" / "commands",
 }
 
 
