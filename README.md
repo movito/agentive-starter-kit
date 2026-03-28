@@ -61,7 +61,7 @@ If you'd like to try this kit, here are the tools you'll need:
 Clone the repo and run this script to validate your environment:
 
 ```bash
-agents/preflight
+.kit/launchers/preflight
 ```
 
 It will check all requirements and tell you what's missing.
@@ -98,7 +98,7 @@ Then open the folder in your IDE (VS Code, Cursor, etc.).
 ### 2. Run First-Time Onboarding
 
 ```bash
-agents/onboarding
+.kit/launchers/onboarding
 ```
 
 ### 3. Follow Interactive Setup
@@ -134,12 +134,12 @@ Setup takes approximately 5-10 minutes.
 | `ci-checker` | CI/CD verification |
 | `agent-creator` | Create new specialized agents |
 
-### Task Management (`delegation/tasks/`)
+### Task Management (`.kit/delegation/tasks/`)
 
 Linear-compatible folder structure:
 
 ```
-delegation/tasks/
+.kit/delegation/tasks/
 ├── 1-backlog/      → Backlog (planned, not started)
 ├── 2-todo/         → Todo (ready to start)
 ├── 3-in-progress/  → In Progress (active work)
@@ -151,13 +151,13 @@ delegation/tasks/
 └── 9-reference/    → Reference (templates, docs)
 ```
 
-### Adversarial Evaluation (`.adversarial/`)
+### Adversarial Evaluation (`.kit/adversarial/`)
 
 Independent AI review of your plans, code, and documentation:
 
 ```bash
 # Review a task plan before implementation
-adversarial evaluate delegation/tasks/2-todo/TASK-0001-my-task.md
+adversarial evaluate .kit/.kit/delegation/tasks/2-todo/TASK-0001-my-task.md
 
 # Review implemented code before merge
 adversarial review src/feature/
@@ -172,7 +172,7 @@ adversarial list-evaluators
 ./scripts/project install-evaluators
 ```
 
-Built-in evaluators use OpenAI. Custom evaluators can use other providers (Google, Mistral, Anthropic). Results saved to `.adversarial/logs/`.
+Built-in evaluators use OpenAI. Custom evaluators can use other providers (Google, Mistral, Anthropic). Results saved to `.kit/adversarial/logs/`.
 
 ### Serena Integration (`.serena/`)
 
@@ -194,7 +194,7 @@ Reduces token consumption by 70-98% for code navigation tasks.
 The **onboarding agent** handles all configuration automatically:
 
 ```bash
-agents/onboarding
+.kit/launchers/onboarding
 ```
 
 This guides you through setting up:
@@ -207,13 +207,13 @@ This guides you through setting up:
 If you prefer to handle setup yourself, copy these template files and configure manually:
 - `.env.template` → `.env` (API keys)
 - `.serena/project.yml.template` → `.serena/project.yml` (languages)
-- `.adversarial/config.yml.template` → `.adversarial/config.yml` (evaluation settings)
+- `.kit/adversarial/config.yml.template` → `.kit/adversarial/config.yml` (evaluation settings)
 
 ---
 
 ## Linear Integration
 
-The starter kit includes a built-in task management system that helps agents do better work and helps you track progress. Tasks are stored as markdown files in `delegation/tasks/` folders.
+The starter kit includes a built-in task management system that helps agents do better work and helps you track progress. Tasks are stored as markdown files in `.kit/delegation/tasks/` folders.
 
 **You can optionally sync these tasks with [Linear](https://linear.app)** for team visibility and project management. This is more involved than just adding an API key.
 
@@ -258,7 +258,7 @@ LINEAR_TEAM_ID=ABC
 ### How Linear Sync Works
 
 When configured, the task system:
-- Syncs task files in `delegation/tasks/` folders to Linear issues
+- Syncs task files in `.kit/delegation/tasks/` folders to Linear issues
 - Maps folder locations to Linear statuses (e.g., `2-todo/` → "Todo")
 - Adds GitHub links to task files in Linear issue descriptions
 
@@ -286,19 +286,19 @@ Tasks work fine without Linear - they're just markdown files. Agents can create,
 
 ```bash
 # Run onboarding (first time only)
-agents/onboarding
+.kit/launchers/onboarding
 ```
 
 ### Launching Agents (After Setup)
 
 ```bash
 # Interactive menu
-agents/launch
+.kit/launchers/launch
 
 # Launch specific agent
-agents/launch planner
-agents/launch feature-developer
-agents/launch test-runner
+.kit/launchers/launch planner
+.kit/launchers/launch feature-developer
+.kit/launchers/launch test-runner
 ```
 
 ### Creating Tasks
@@ -306,15 +306,15 @@ agents/launch test-runner
 **The easy way:** Just tell `planner` what you want to build. The agent will create and manage tasks for you.
 
 ```bash
-agents/launch planner
+.kit/launchers/launch planner
 # Then: "I want to add user authentication to my app"
 ```
 
 **Manual task creation** (if you prefer):
 
-1. Copy task template: `delegation/tasks/9-reference/templates/task-template.md`
-2. Create task file: `delegation/tasks/2-todo/TASK-0001-my-task.md`
-3. Run evaluation: `adversarial evaluate delegation/tasks/2-todo/TASK-0001-my-task.md`
+1. Copy task template: `.kit/delegation/tasks/9-reference/templates/task-template.md`
+2. Create task file: `.kit/delegation/tasks/2-todo/TASK-0001-my-task.md`
+3. Run evaluation: `adversarial evaluate .kit/.kit/delegation/tasks/2-todo/TASK-0001-my-task.md`
 4. Assign to agent via `planner`
 
 ### Running Tests
@@ -332,10 +332,10 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 ## Documentation
 
 - **Agentive Development Guide**: `docs/agentive-development/README.md`
-- **Agent Template**: `.claude/agents/AGENT-TEMPLATE.md`
-- **Task Template**: `delegation/tasks/9-reference/templates/task-template.md`
-- **Evaluation Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
-- **Starter Kit ADRs**: `docs/decisions/starter-kit-adr/` (18 architectural decisions)
+- **Agent Template**: `.kit/agents/AGENT-TEMPLATE.md`
+- **Task Template**: `.kit/delegation/tasks/9-reference/templates/task-template.md`
+- **Evaluation Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+- **Starter Kit ADRs**: `.kit/decisions/` (18+ architectural decisions)
 - **Your Project ADRs**: `docs/decisions/adr/` (start fresh here)
 
 ---
@@ -345,32 +345,26 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 ```
 your-project/
 ├── .claude/
-│   ├── agents/              # Agent definitions
-│   ├── commands/            # Slash commands
+│   ├── agents/              # Implementation agents
+│   ├── commands/            # Implementation commands
+│   ├── skills/              # Implementation skills
 │   └── settings.local.json  # Claude Code settings
-├── .agent-context/
-│   ├── agent-handoffs.json  # Agent coordination state
-│   ├── current-state.json   # Project state
-│   ├── workflows/           # Workflow documentation
-│   └── templates/           # Handoff templates
+├── .kit/                    # Builder layer
+│   ├── agents/              # Builder agents (planner, code-reviewer, etc.)
+│   ├── commands/            # Builder commands (retro, status, etc.)
+│   ├── skills/              # Builder skills (self-review, etc.)
+│   ├── context/             # Agent coordination, workflows, patterns
+│   ├── adversarial/         # Evaluation config, scripts, docs
+│   ├── delegation/tasks/    # Task files (numbered folders)
+│   ├── decisions/           # Kit ADRs (KIT-ADR-*)
+│   ├── launchers/           # Agent launcher scripts
+│   └── docs/                # Builder documentation
 ├── .serena/
 │   └── project.yml          # Serena configuration
-├── .adversarial/
-│   ├── config.yml           # Evaluation config
-│   ├── scripts/             # Evaluation scripts
-│   └── docs/                # Evaluation docs
-├── delegation/
-│   ├── tasks/               # Task files (numbered folders)
-│   └── handoffs/            # Agent handoff documents
 ├── docs/
-│   ├── agentive-development/# Complete methodology guide
-│   ├── decisions/
-│   │   ├── starter-kit-adr/ # Starter kit ADRs (reference)
-│   │   └── adr/             # Your project ADRs
+│   ├── decisions/adr/       # Your project ADRs
 │   └── prd/                 # Product Requirements Documents
-├── agents/
-│   ├── launch               # Agent launcher (interactive menu)
-│   └── onboarding           # First-run setup (run once)
+├── scripts/                 # Project scripts
 ├── tests/                   # Test suite
 ├── .env                     # Environment variables (git-ignored)
 ├── .pre-commit-config.yaml  # Pre-commit hooks

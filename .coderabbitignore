@@ -2,14 +2,14 @@
 # Prevents CodeRabbit from reviewing non-code artifacts that generate noise
 
 # Adversarial evaluator artifacts (inputs and logs)
-.adversarial/inputs/
-.adversarial/logs/
-.adversarial/artifacts/
+.kit/adversarial/inputs/
+.kit/adversarial/logs/
+.kit/adversarial/artifacts/
 
 # Agent review artifacts (evaluator outputs, review starters)
-.agent-context/reviews/
-.agent-context/*-REVIEW-STARTER.md
-.agent-context/*-HANDOFF-*.md
+.kit/context/reviews/
+.kit/context/*-REVIEW-STARTER.md
+.kit/context/*-HANDOFF-*.md
 
 # Task specs (markdown, not code)
-delegation/tasks/
+.kit/delegation/tasks/

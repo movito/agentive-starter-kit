@@ -115,11 +115,11 @@ grep -ri "agentive.starter.kit\|agentive-starter-kit" \
    - Agent file descriptions and comments (e.g., "for the agentive-starter-kit")
    - `scripts/core/logging_config.py` docstring
    - `tests/conftest.py` docstring
-   - `.adversarial/docs/` descriptions
+   - `.kit/adversarial/docs/` descriptions
 
 3. **Preserve functional references** — do NOT change these:
    - Git remote URLs: `github.com/movito/agentive-starter-kit` (upstream tracking)
-   - `docs/decisions/starter-kit-adr/` — historical ADRs, the directory name is a path
+   - `.kit/decisions/` — historical ADRs, the directory name is a path
    - `docs/UPSTREAM-CHANGES-*.md` — upgrade guides referencing the source repo
    - `docs/archive/agentive-development/` — archive directory path
    - `tests/test_project_script.py` — test fixtures that detect upstream patterns
@@ -164,7 +164,7 @@ pytest tests/ -v
 
 1. Add API keys to `.env` (copy from `.env.template`)
 2. Start a planner session: `claude --agent .claude/agents/planner2.md`
-3. Create your first task in `delegation/tasks/2-todo/`
+3. Create your first task in `.kit/delegation/tasks/2-todo/`
 
 ---
 
@@ -179,7 +179,7 @@ update the project description at the top to match the design materials.
 
 ### Step 9: Create Initial Backlog
 
-Based on the design materials, create 3-8 task files in `delegation/tasks/1-backlog/`.
+Based on the design materials, create 3-8 task files in `.kit/delegation/tasks/1-backlog/`.
 Use the task template format:
 
 ```markdown
@@ -217,7 +217,7 @@ Number tasks starting at 0001. Order by dependency — foundational tasks first.
 
 ### Step 10: Update current-state.json
 
-Write `.agent-context/current-state.json`:
+Write `.kit/context/current-state.json`:
 
 ```json
 {

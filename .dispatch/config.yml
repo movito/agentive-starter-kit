@@ -1,10 +1,10 @@
 version: 1
 interfaces:
   agent_dir: .claude/agents/
-  spawn_command: agents/launch $AGENT_NAME
+  spawn_command: .kit/launchers/launch $AGENT_NAME
   bus_file: .dispatch/bus.jsonl
-  starter_dir: .agent-context/
-  task_dir: delegation/tasks/
+  starter_dir: .kit/context/
+  task_dir: .kit/delegation/tasks/
   session_manager: tmux
   notification: terminal
 transitions:

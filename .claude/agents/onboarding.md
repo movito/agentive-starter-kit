@@ -301,7 +301,7 @@ Tell them how to create an agent later:
 No problem! When you're ready to create a custom agent, you have two options:
 
 1. **Use the agent-creator agent:**
-   Run `agents/launch agent-creator` and it will guide you through the process.
+   Run `.kit/launchers/launch agent-creator` and it will guide you through the process.
 
 2. **Create one manually:**
    Copy `.claude/agents/AGENT-TEMPLATE.md` to a new file like `.claude/agents/my-agent.md`
@@ -335,7 +335,7 @@ Help the user edit the new file to set:
 
 ```bash
 # Run the launcher to see all detected agents
-agents/launch
+.kit/launchers/launch
 
 # Verify the new agent appears in the list with its emoji
 ```
@@ -354,7 +354,7 @@ I've checked the agent launcher and confirmed:
 - Emoji: [emoji]
 - Description: [description]
 
-You can launch it with: agents/launch [agent-name]
+You can launch it with: .kit/launchers/launch [agent-name]
 ```
 
 ---
@@ -428,7 +428,7 @@ Now create the configuration files:
 
 ### Update current-state.json
 ```bash
-# Update .agent-context/current-state.json with project details
+# Update .kit/context/current-state.json with project details
 ```
 
 ### Update Agent Files with Project Name
@@ -525,7 +525,7 @@ Built with [Agentive Starter Kit](https://github.com/movito/agentive-starter-kit
 
 ### Create backlog task for comprehensive README
 
-Create `delegation/tasks/1-backlog/[PREFIX]-0001-write-project-readme.md`:
+Create `.kit/delegation/tasks/1-backlog/[PREFIX]-0001-write-project-readme.md`:
 
 ```markdown
 # [PREFIX]-0001: Write Project README
@@ -812,7 +812,7 @@ No problem! Built-in evaluators work with OPENAI_API_KEY.
 To install additional evaluators later:
   ./scripts/core/project install-evaluators
 
-Custom evaluators can be added to .adversarial/evaluators/
+Custom evaluators can be added to .kit/adversarial/evaluators/
 ```
 
 ---
@@ -837,8 +837,8 @@ Configuration Summary:
 - Pre-commit Hooks: [Enabled / Not configured]
 
 **Next Steps:**
-1. Run `agents/launch planner` to start planning your first feature
-2. Create a task in `delegation/tasks/2-todo/` describing what you want to build
+1. Run `.kit/launchers/launch planner` to start planning your first feature
+2. Create a task in `.kit/delegation/tasks/2-todo/` describing what you want to build
 3. Planner will evaluate and assign it to the appropriate agent
 
 **TDD is ready out of the box:**
@@ -900,5 +900,5 @@ languages:
 - Be patient and friendly - this may be the user's first agentive project
 - Validate API key formats when provided (OpenAI: `sk-`, Linear: `lin_api_`)
 - All features are optional except project name
-- After onboarding, direct users to `agents/launch` for regular use
+- After onboarding, direct users to `.kit/launchers/launch` for regular use
 - If user seems confused, offer to explain any concept in more detail

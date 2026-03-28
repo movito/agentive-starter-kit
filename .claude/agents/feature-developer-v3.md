@@ -100,15 +100,15 @@ git checkout -b feature/<TASK-ID>-short-description
 ./scripts/core/project start <TASK-ID>
 ```
 
-- Read task file: `delegation/tasks/3-in-progress/<TASK-ID>-*.md`
-- Read handoff file (if provided): `.agent-context/<TASK-ID>-HANDOFF-*.md`
+- Read task file: `.kit/delegation/tasks/3-in-progress/<TASK-ID>-*.md`
+- Read handoff file (if provided): `.kit/context/<TASK-ID>-HANDOFF-*.md`
 - If the task spec has `## PR Plan`, implement only the current PR's scope
 
 ## Phase 2: Pre-Implementation Checks (GATE)
 
 **Before writing any code**, run through the pre-implementation skill:
 
-1. **Search before you write**: Grep for existing implementations. Check `.agent-context/patterns.yml` for canonical patterns. If one exists, import it — do NOT rewrite.
+1. **Search before you write**: Grep for existing implementations. Check `.kit/context/patterns.yml` for canonical patterns. If one exists, import it — do NOT rewrite.
 2. **Verify spec against reality**: Docstrings must describe actual behavior, not planned behavior.
 3. **Declare matching semantics**: `==` for identifiers (default), `in` only with justification comment.
 4. **Plan error handling**: Read sibling functions. Follow the same strategy across the module. Check `patterns.yml → error_strategies`.
@@ -124,7 +124,7 @@ separate phases — they are one continuous act of writing correct code.
 
 ### a. Consult the pattern registry
 
-Read `.agent-context/patterns.yml`. If a canonical implementation exists for
+Read `.kit/context/patterns.yml`. If a canonical implementation exists for
 what you're about to write, import it. If the error strategy for this
 module is documented, follow it. Do not deviate without justification.
 
@@ -276,10 +276,10 @@ You MUST address **every** thread before proceeding.
 
 Run the adversarial code-review evaluator (see code-review-evaluator skill):
 
-1. Prepare input file: `.adversarial/inputs/<TASK-ID>-code-review-input.md`
+1. Prepare input file: `.kit/adversarial/inputs/<TASK-ID>-code-review-input.md`
 2. Run: `adversarial code-reviewer <input-file>` (or `code-reviewer-fast`)
 3. Read findings, address FAIL/CONCERNS
-4. Persist output to `.agent-context/reviews/<TASK-ID>-evaluator-review.md`
+4. Persist output to `.kit/context/reviews/<TASK-ID>-evaluator-review.md`
 
 ## Phase 10: Preflight (GATE)
 
@@ -290,7 +290,7 @@ Run `/preflight` — verify all 7 completion gates pass. Fix any failures before
 Follow the review-handoff skill:
 
 1. Move task: `./scripts/core/project move <TASK-ID> in-review`
-2. Create review starter: `.agent-context/<TASK-ID>-REVIEW-STARTER.md`
+2. Create review starter: `.kit/context/<TASK-ID>-REVIEW-STARTER.md`
 3. Add Review section to task file
 4. Notify user with thread count proof
 
@@ -302,7 +302,7 @@ When all work is done:
 dispatch emit phase_complete \
   --agent feature-developer \
   --task $TASK_ID \
-  --starter .agent-context/$TASK_ID-REVIEW-STARTER.md \
+  --starter .kit/context/$TASK_ID-REVIEW-STARTER.md \
   --summary "<brief summary>" 2>/dev/null || true
 ```
 
@@ -341,13 +341,13 @@ Max 2-3 evaluations per task.
 
 | Resource | Location |
 |----------|----------|
-| Pattern registry | `.agent-context/patterns.yml` |
+| Pattern registry | `.kit/context/patterns.yml` |
 | Pattern lint | `scripts/core/pattern_lint.py` |
-| Task specs | `delegation/tasks/` |
-| Commit protocol | `.agent-context/workflows/COMMIT-PROTOCOL.md` |
-| Testing workflow | `.agent-context/workflows/TESTING-WORKFLOW.md` |
-| Review fix workflow | `.agent-context/workflows/REVIEW-FIX-WORKFLOW.md` |
-| PR size workflow | `.agent-context/workflows/PR-SIZE-WORKFLOW.md` |
+| Task specs | `.kit/delegation/tasks/` |
+| Commit protocol | `.kit/context/workflows/COMMIT-PROTOCOL.md` |
+| Testing workflow | `.kit/context/workflows/TESTING-WORKFLOW.md` |
+| Review fix workflow | `.kit/context/workflows/REVIEW-FIX-WORKFLOW.md` |
+| PR size workflow | `.kit/context/workflows/PR-SIZE-WORKFLOW.md` |
 
 ## Workflow Freeze Rule
 
@@ -355,7 +355,7 @@ Do NOT edit workflow definitions (skills, commands, agent files) during an
 active feature task. Changes to workflow definitions are tracked as separate
 `chore` tasks on their own branches.
 
-Reference: `.agent-context/workflows/WORKFLOW-FREEZE-POLICY.md`
+Reference: `.kit/context/workflows/WORKFLOW-FREEZE-POLICY.md`
 
 ## Restrictions
 

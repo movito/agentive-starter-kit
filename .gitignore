@@ -132,8 +132,8 @@ tasks/review_notes.md
 adversarial-workflow/test_venv*/
 
 # Adversarial Workflow
-.adversarial/logs/
-.adversarial/artifacts/
+.kit/adversarial/logs/
+.kit/adversarial/artifacts/
 
 # Audio processing work files (user projects)
 audio-processing/
@@ -154,8 +154,8 @@ logs/
 .serena/project.yml
 
 # Adversarial Workflow
-# Evaluators are installed via: ./scripts/project install-evaluators
-.adversarial/evaluators/
+# Evaluators are installed via: ./scripts/core/project install-evaluators
+.kit/adversarial/evaluators/
 
 # Dispatch (runtime artifacts)
 .dispatch/config.local.yml

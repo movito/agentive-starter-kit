@@ -62,7 +62,7 @@ class TestSequentialCreation:
             result = run_script([name, f"Description for {name}"], self.project_dir)
             assert result.returncode == 0, f"{name} failed: {result.stderr}"
 
-        launcher_text = (self.project_dir / "agents" / "launch").read_text(
+        launcher_text = (self.project_dir / ".kit" / "launchers" / "launch").read_text(
             encoding="utf-8"
         )
         for name in names:
@@ -167,7 +167,7 @@ class TestConcurrentExecution:
                 future.result()  # Wait for all to finish
 
         # Launcher should still be valid bash syntax
-        launcher_path = self.project_dir / "agents" / "launch"
+        launcher_path = self.project_dir / ".kit" / "launchers" / "launch"
         syntax_check = subprocess.run(
             ["bash", "-n", str(launcher_path)],
             capture_output=True,
@@ -273,7 +273,7 @@ class TestEndToEnd:
         assert agent_file.exists(), "Agent file not created"
 
         # Launcher should reference the agent
-        launcher_text = (self.project_dir / "agents" / "launch").read_text(
+        launcher_text = (self.project_dir / ".kit" / "launchers" / "launch").read_text(
             encoding="utf-8"
         )
         assert "e2e-agent" in launcher_text, "Agent not in launcher"
