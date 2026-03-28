@@ -138,7 +138,7 @@ delegation/                        # Task management directory
 
 ---
 
-#### 2. `delegation/` (Task Management)
+#### 2. `.kit/delegation/` (Task Management)
 
 **Purpose**: Task organization and execution tracking
 
@@ -274,7 +274,7 @@ STRATEGIC-REVIEW-*.md
 
 **Key Files**:
 - Test suite (execute)
-- `delegation/handoffs/TASK-*-VERIFICATION.md` (create)
+- `.kit/delegation/handoffs/TASK-*-VERIFICATION.md` (create)
 - `.kit/context/agent-handoffs.json` (update)
 
 **Handoff Pattern**: Receives implementation → Runs tests → Creates report → Returns to coordinator
@@ -742,7 +742,7 @@ Brief summary of what was accomplished (2-3 sentences).
 # 1. Create directory structure
 mkdir -p .kit/context
 mkdir -p .kit/delegation/tasks/{active,completed,analysis,logs}
-mkdir -p delegation/handoffs
+mkdir -p .kit/delegation/handoffs
 
 # 2. Copy template files
 cp /path/to/existing-project/.kit/context/AGENT-SYSTEM-GUIDE.md .kit/context/
@@ -788,11 +788,11 @@ cat >> .gitignore << 'EOF'
 EOF
 
 # 6. Initial commit
-git add .kit/context/ delegation/
+git add .kit/
 git commit -m "feat: Initialize agent coordination system
 
 - Created .kit/context/ with agent-handoffs.json
-- Created delegation/ task management structure
+- Created .kit/delegation/ task management structure
 - Added AGENT-SYSTEM-GUIDE.md for reference"
 ```
 
@@ -1274,7 +1274,7 @@ cp ../thematic-cuts/.kit/context/AGENT-SYSTEM-GUIDE.md .kit/context/
   },
   "test-runner": {
     "current_focus": "✅ TASK-2025-012 VERIFIED - 100% precision pass rate",
-    "task_file": "delegation/handoffs/TASK-2025-012-VERIFICATION.md",
+    "task_file": ".kit/delegation/handoffs/TASK-2025-012-VERIFICATION.md",
     "status": "verification_complete",
     "priority": "completed",
     "dependencies": "None - Verification passed",
@@ -1314,7 +1314,7 @@ This agent coordination system provides:
 - Zero phantom work with verification patterns
 
 **Getting Started**:
-1. Create `.kit/context/` and `delegation/` directories
+1. Create `.kit/context/` and `.kit/delegation/` directories
 2. Initialize `agent-handoffs.json`
 3. Start using identity headers
 4. Update context regularly

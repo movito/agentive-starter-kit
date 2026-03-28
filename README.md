@@ -157,7 +157,7 @@ Independent AI review of your plans, code, and documentation:
 
 ```bash
 # Review a task plan before implementation
-adversarial evaluate .kit/.kit/delegation/tasks/2-todo/TASK-0001-my-task.md
+adversarial evaluate .kit/delegation/tasks/2-todo/TASK-0001-my-task.md
 
 # Review implemented code before merge
 adversarial review src/feature/
@@ -314,7 +314,7 @@ Tasks work fine without Linear - they're just markdown files. Agents can create,
 
 1. Copy task template: `.kit/delegation/tasks/9-reference/templates/task-template.md`
 2. Create task file: `.kit/delegation/tasks/2-todo/TASK-0001-my-task.md`
-3. Run evaluation: `adversarial evaluate .kit/.kit/delegation/tasks/2-todo/TASK-0001-my-task.md`
+3. Run evaluation: `adversarial evaluate .kit/delegation/tasks/2-todo/TASK-0001-my-task.md`
 4. Assign to agent via `planner`
 
 ### Running Tests
