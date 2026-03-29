@@ -495,7 +495,7 @@ class TestExitCodes:
 
         Remove the template file to trigger a system error.
         """
-        template = self.project_dir / ".kit" / "agents" / "AGENT-TEMPLATE.md"
+        template = self.project_dir / ".kit" / "templates" / "AGENT-TEMPLATE.md"
         template.unlink()
         result = run_script(
             ["sys-error-agent", "Should fail with system error"], self.project_dir

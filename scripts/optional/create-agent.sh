@@ -39,7 +39,7 @@ else
 fi
 LOCK_INFO="$LOCK_DIR/owner"
 
-TEMPLATE_FILE="$PROJECT_ROOT/.kit/agents/AGENT-TEMPLATE.md"
+TEMPLATE_FILE="$PROJECT_ROOT/.kit/templates/AGENT-TEMPLATE.md"
 LAUNCHER_FILE="$PROJECT_ROOT/.kit/launchers/launch"
 LOG_DIR="$PROJECT_ROOT/logs"
 LOG_FILE="$LOG_DIR/agent-creation.log"

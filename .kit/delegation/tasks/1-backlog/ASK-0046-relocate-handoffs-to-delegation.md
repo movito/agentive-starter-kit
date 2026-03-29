@@ -31,10 +31,10 @@ there semantically but currently live elsewhere.
 ### Functional Requirements
 1. Move all `*-HANDOFF-*.md` files from `.kit/context/` to `.kit/delegation/handoffs/`
 2. Update all path references to handoff files across the codebase:
-   - Agent definitions (`.claude/agents/*.md`, `.kit/agents/*.md`)
+   - Agent definitions (`.claude/agents/*.md`, `.kit/templates/*.md`)
    - Skills (`.kit/skills/review-handoff/SKILL.md`)
    - Workflows (`.kit/context/workflows/*.md`)
-   - Templates (`.kit/agents/TASK-STARTER-TEMPLATE.md`)
+   - Templates (`.kit/templates/TASK-STARTER-TEMPLATE.md`)
    - Dispatch config (`.dispatch/config.yml` — `starter_dir` may need adjustment)
    - Scripts if any reference the handoff path
 3. Verify grep shows zero stale references
@@ -55,7 +55,7 @@ all references. Expected locations:
 - `.claude/agents/feature-developer-v3.md` — handoff paths
 - `.claude/agents/feature-developer-v5.md` — handoff paths
 - `.claude/agents/powertest-runner.md` — handoff paths
-- `.kit/agents/TASK-STARTER-TEMPLATE.md` — handoff template reference
+- `.kit/templates/TASK-STARTER-TEMPLATE.md` — handoff template reference
 - `.kit/skills/review-handoff/SKILL.md` — handoff creation instructions
 - `.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md` — if referenced
 - `.dispatch/config.yml` — `starter_dir` might need splitting or adjusting

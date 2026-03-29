@@ -54,7 +54,7 @@ cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
 
 ## Task Starter Protocol (Multi-Session Workflows)
 
-**📖 Template**: `.kit/agents/TASK-STARTER-TEMPLATE.md`
+**📖 Template**: `.kit/templates/TASK-STARTER-TEMPLATE.md`
 
 When you receive task assignments, they come in a standardized format with:
 - Task file: Full specification in `.kit/delegation/tasks/[folder]/[TASK-ID].md`
@@ -94,7 +94,7 @@ For longer tasks requiring multiple agent sessions or handoffs:
 
 **Example**: After completing security review, create task starter for feature-developer to implement recommended fixes.
 
-See `.kit/agents/TASK-STARTER-TEMPLATE.md` for complete example.
+See `.kit/templates/TASK-STARTER-TEMPLATE.md` for complete example.
 
 ## Security Focus Areas
 1. Input validation and sanitization

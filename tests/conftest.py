@@ -208,11 +208,11 @@ def setup_temp_project(base_dir: Path | None = None) -> Path:
     logs_dir = base_dir / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy or create AGENT-TEMPLATE.md (needed by create-agent.sh at .kit/agents/)
-    kit_agents_dir = base_dir / ".kit" / "agents"
-    kit_agents_dir.mkdir(parents=True, exist_ok=True)
-    real_template = PROJECT_ROOT / ".kit" / "agents" / "AGENT-TEMPLATE.md"
-    dest_template = kit_agents_dir / "AGENT-TEMPLATE.md"
+    # Copy or create AGENT-TEMPLATE.md (needed by create-agent.sh at .kit/templates/)
+    kit_templates_dir = base_dir / ".kit" / "templates"
+    kit_templates_dir.mkdir(parents=True, exist_ok=True)
+    real_template = PROJECT_ROOT / ".kit" / "templates" / "AGENT-TEMPLATE.md"
+    dest_template = kit_templates_dir / "AGENT-TEMPLATE.md"
     if real_template.exists():
         shutil.copy2(real_template, dest_template)
     else:

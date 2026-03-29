@@ -55,7 +55,7 @@ cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
 
 ## Task Starter Protocol (Multi-Session Workflows)
 
-**📖 Template**: `.kit/agents/TASK-STARTER-TEMPLATE.md`
+**📖 Template**: `.kit/templates/TASK-STARTER-TEMPLATE.md`
 
 When you receive task assignments, they come in a standardized format with:
 - Task file: Full specification in `.kit/delegation/tasks/[folder]/[TASK-ID].md`
@@ -95,7 +95,7 @@ For longer tasks requiring multiple agent sessions or handoffs:
 
 **Example**: After completing Phase 3 of a task, create task starter for document-reviewer to handle Phase 4.
 
-See `.kit/agents/TASK-STARTER-TEMPLATE.md` for complete example.
+See `.kit/templates/TASK-STARTER-TEMPLATE.md` for complete example.
 
 ## Document Types to Review
 1. **Research Documents** - Technical analysis, requirements gathering, domain research

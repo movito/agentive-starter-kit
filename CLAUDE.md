@@ -11,7 +11,7 @@ evaluation, and architectural decision records. For full details, see `README.md
 .claude/commands/     All slash commands (start-task, babysit-pr, retro, etc.)
 .claude/skills/       Implementation skills (pre-implementation, bot-triage)
 .kit/                 Builder layer (planning, coordination, evaluation)
-├── agents/           Builder agents (planner, planner2, code-reviewer, etc.)
+├── templates/        Agent and task templates (AGENT-TEMPLATE, TASK-STARTER-TEMPLATE)
 ├── skills/           Builder skills (self-review, review-handoff, code-review-evaluator)
 ├── context/          Agent coordination: handoffs, reviews, patterns.yml, workflows/
 ├── adversarial/      Adversarial evaluation system (config, scripts, docs)
@@ -73,8 +73,8 @@ tests/                pytest test suite
 | `code-reviewer` | Code quality review |
 | `test-runner` / `powertest-runner` | TDD and testing |
 
-Full listing: `.claude/agents/` (implementation) and `.kit/agents/` (builder).
-See `.kit/agents/AGENT-TEMPLATE.md` for creating new agents.
+Full listing: `.claude/agents/` (all agents live here for Claude Code resolution).
+See `.kit/templates/AGENT-TEMPLATE.md` for creating new agents.
 
 ### Workflow Reference
 

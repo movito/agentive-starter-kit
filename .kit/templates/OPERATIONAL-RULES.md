@@ -140,9 +140,9 @@ Status folders:
 
 ### Agent Definitions
 
-**Correct location**: `.claude/agents/[agent-name].md` (implementation agents) or `.kit/agents/[agent-name].md` (builder/planning agents)
+**Correct location**: `.claude/agents/[agent-name].md` (all agents — Claude Code resolves from this directory)
 
-Implementation agents and all slash commands live in `.claude/`. Builder agents, launchers, and coordination state live in `.kit/`.
+All agent definitions and slash commands live in `.claude/`. Templates, launchers, and coordination state live in `.kit/`.
 
 ---
 

@@ -308,7 +308,7 @@ Review may be skipped for:
 - **Review Starter Template**: `.kit/context/templates/review-starter-template.md`
 - **Review Starters**: `.kit/context/ASK-XXXX-REVIEW-STARTER.md` (created by implementation agents)
 - **Review Reports**: `.kit/context/reviews/ASK-XXXX-review.md`
-- **Agent**: `.kit/agents/code-reviewer.md`
+- **Agent**: `.claude/agents/code-reviewer.md`
 
 ### Knowledge Extraction (On Task Completion)
 
@@ -410,7 +410,7 @@ git checkout -b feature/<TASK-ID>-short-description
 
 ## Task Starter Protocol (NEW STANDARD)
 
-**📖 Template**: `.kit/agents/TASK-STARTER-TEMPLATE.md`
+**📖 Template**: `.kit/templates/TASK-STARTER-TEMPLATE.md`
 
 After task is evaluated and ready for implementation:
 
@@ -423,7 +423,7 @@ Create `.kit/context/[TASK-ID]-HANDOFF-[agent-type].md` with:
 - Resources and references
 - Evaluation history (if applicable)
 
-See `.kit/agents/TASK-STARTER-TEMPLATE.md` for handoff structure.
+See `.kit/templates/TASK-STARTER-TEMPLATE.md` for handoff structure.
 
 ### Step 2: Update agent-handoffs.json
 
@@ -493,7 +493,7 @@ User will:
 3. Agent reads task file + handoff file
 4. Agent begins work
 
-**Complete example**: See `.kit/agents/TASK-STARTER-TEMPLATE.md`
+**Complete example**: See `.kit/templates/TASK-STARTER-TEMPLATE.md`
 
 ## Version Management & Releases
 
