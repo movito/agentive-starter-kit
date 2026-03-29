@@ -3,7 +3,7 @@
 **Version**: 1.0.0
 **Last Updated**: 2025-11-16
 **Purpose**: Standardized format for handing off tasks to implementation agents
-**Used By**: Coordinators (tycho, coordinator) when assigning tasks
+**Used By**: Coordinators (planner, coordinator) when assigning tasks
 
 ---
 
@@ -346,5 +346,5 @@ When receiving task starter:
 
 **Template Version**: 1.0.0
 **Created**: 2025-11-16
-**Maintained By**: Coordinators (tycho, coordinator)
+**Maintained By**: Coordinators (planner, coordinator)
 **Related**: AGENT-TEMPLATE.md, OPERATIONAL-RULES.md

@@ -124,7 +124,6 @@ Setup takes approximately 5-10 minutes.
 | Agent | Purpose |
 |-------|---------|
 | `planner` | Helps you plan, tracks work, keeps things on track |
-| `tycho` | Day-to-day project management |
 | `feature-developer` | Implementation tasks |
 | `test-runner` | TDD and testing |
 | `powertest-runner` | Comprehensive test suites |
