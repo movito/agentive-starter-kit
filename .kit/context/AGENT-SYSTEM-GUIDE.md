@@ -222,7 +222,7 @@ STRATEGIC-REVIEW-*.md
 **Key Files**:
 - `.kit/context/agent-handoffs.json` (read/write)
 - `.kit/context/current-state.json` (read/write)
-- `.kit/delegation/tasks/active/*` (read/write)
+- `.kit/delegation/tasks/3-in-progress/*` (read/write)
 
 **Handoff Pattern**: Creates task → Assigns to specialist → Reviews completion
 
@@ -246,7 +246,7 @@ STRATEGIC-REVIEW-*.md
 ```
 
 **Key Files**:
-- `.kit/delegation/tasks/active/TASK-*.md` (read)
+- `.kit/delegation/tasks/3-in-progress/TASK-*.md` (read)
 - Source code files (write)
 - Test files (write)
 - `.kit/context/agent-handoffs.json` (update progress)
@@ -435,7 +435,7 @@ Merge and archive
 {
   "agent-name": {
     "current_focus": "✅ TASK-ID COMPLETE - Brief description",
-    "task_file": ".kit/delegation/tasks/active/TASK-*.md",
+    "task_file": ".kit/delegation/tasks/3-in-progress/TASK-*.md",
     "status": "task_complete | in_progress | blocked",
     "priority": "high | medium | low",
     "dependencies": "Description of blockers or requirements",
@@ -512,7 +512,7 @@ Merge and archive
 
 ```
 1. CREATED (coordinator)
-   └─→ .kit/delegation/tasks/active/TASK-*.md
+   └─→ .kit/delegation/tasks/3-in-progress/TASK-*.md
 
 2. ASSIGNED (coordinator updates agent-handoffs.json)
    └─→ Agent picks up task
@@ -531,7 +531,7 @@ Merge and archive
    └─→ Create verification report
 
 7. ARCHIVED (coordinator)
-   └─→ Move to .kit/delegation/tasks/completed/
+   └─→ Move to .kit/delegation/tasks/5-done/
    └─→ Update project state
 ```
 
@@ -741,7 +741,7 @@ Brief summary of what was accomplished (2-3 sentences).
 ```bash
 # 1. Create directory structure
 mkdir -p .kit/context
-mkdir -p .kit/delegation/tasks/{active,completed,analysis,logs}
+mkdir -p .kit/delegation/tasks/{1-backlog,2-todo,3-in-progress,4-in-review,5-done,6-canceled,7-blocked,8-archive,9-reference}
 mkdir -p .kit/delegation/handoffs
 
 # 2. Copy template files
@@ -784,7 +784,7 @@ cat >> .gitignore << 'EOF'
 
 # Agent Context (mostly tracked)
 .kit/context/session-logs/*.tmp
-.kit/delegation/tasks/logs/*.tmp
+.kit/adversarial/logs/*.tmp
 EOF
 
 # 6. Initial commit
@@ -804,7 +804,7 @@ If you only want the essentials:
 
 ```bash
 # Just the critical files
-mkdir -p .kit/context .kit/delegation/tasks/active
+mkdir -p .kit/context .kit/delegation/tasks/{1-backlog,2-todo,3-in-progress,4-in-review,5-done}
 
 # agent-handoffs.json (minimal)
 echo '{"coordinator":{"current_focus":"Setup","status":"active","last_updated":"'$(date +%Y-%m-%d)'"}}' > .kit/context/agent-handoffs.json
@@ -828,8 +828,8 @@ rsync -av --exclude='*.tmp' \
   /path/to/new-project/delegation/
 
 # Clean up project-specific content
-rm /path/to/new-project/.kit/delegation/tasks/active/*
-rm /path/to/new-project/.kit/delegation/tasks/completed/*
+rm /path/to/new-project/.kit/delegation/tasks/3-in-progress/*
+rm /path/to/new-project/.kit/delegation/tasks/5-done/*
 
 # Edit agent-handoffs.json to reset state
 ```
@@ -923,8 +923,8 @@ cp /path/to/thematic-cuts/.kit/context/AGENT-SYSTEM-GUIDE.md \
 
 **How**:
 ```bash
-mv .kit/delegation/tasks/active/TASK-*.md \
-   .kit/delegation/tasks/completed/phase-N/
+mv .kit/delegation/tasks/3-in-progress/TASK-*.md \
+   .kit/delegation/tasks/5-done/
 ```
 
 **Update agent-handoffs.json**: Mark as completed with ✅
@@ -1004,7 +1004,7 @@ Ready for coordinator review and merge.
 5. Propose approach
 
 **Deliverable**:
-- .kit/delegation/tasks/active/TASK-NNN-INVESTIGATION-FINDINGS.md
+- .kit/delegation/tasks/3-in-progress/TASK-NNN-INVESTIGATION-FINDINGS.md
 - Update task spec with confirmed approach
 
 ## Phase 1: Implementation (After Investigation)
@@ -1122,7 +1122,7 @@ Proceed with implementation knowing exactly what needs to change.
 - Unclear priorities
 
 **Solution**:
-1. Keep .kit/delegation/tasks/active/ organized
+1. Keep .kit/delegation/tasks/3-in-progress/ organized
 2. Use clear task naming: TASK-YYYY-NNN-description.md
 3. Update agent-handoffs.json task_file field
 4. Archive completed tasks immediately
@@ -1153,7 +1153,7 @@ Proceed with implementation knowing exactly what needs to change.
 
 **Solution**:
 1. Document decisions in technical_notes
-2. Create decision records in .kit/delegation/tasks/analysis/
+2. Create decision records in .kit/delegation/tasks/9-reference/
 3. Commit agent-handoffs.json updates
 4. Use handoff documents for major work
 
@@ -1209,7 +1209,7 @@ delegation/
 **Setup** (copying from thematic-cuts):
 ```bash
 # Copied structure from thematic-cuts
-mkdir -p .kit/context .kit/delegation/tasks/active
+mkdir -p .kit/context .kit/delegation/tasks/{1-backlog,2-todo,3-in-progress,4-in-review,5-done}
 
 # Initialized with minimal agent-handoffs.json
 cp ../thematic-cuts/.kit/context/AGENT-SYSTEM-GUIDE.md .kit/context/
@@ -1241,7 +1241,7 @@ cp ../thematic-cuts/.kit/context/AGENT-SYSTEM-GUIDE.md .kit/context/
 {
   "coordinator": {
     "current_focus": "✅ PHASE 1 COMPLETE - Ready for Phase 2",
-    "task_file": ".kit/delegation/tasks/analysis/PHASE-2-PLAN.md",
+    "task_file": ".kit/delegation/tasks/9-reference/PHASE-2-PLAN.md",
     "status": "phase_transition",
     "priority": "high",
     "dependencies": "None - Phase 1 verified complete",
@@ -1258,7 +1258,7 @@ cp ../thematic-cuts/.kit/context/AGENT-SYSTEM-GUIDE.md .kit/context/
   },
   "feature-developer": {
     "current_focus": "✅ TASK-2025-012 COMPLETE - Precision timecode fixed",
-    "task_file": ".kit/delegation/tasks/completed/TASK-2025-012.md",
+    "task_file": ".kit/delegation/tasks/5-done/TASK-2025-012.md",
     "status": "task_complete",
     "priority": "completed",
     "dependencies": "None - Ready for next assignment",
