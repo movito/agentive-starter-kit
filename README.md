@@ -396,6 +396,33 @@ your-project/
 
 ---
 
+## Two Ways to Use This Kit
+
+### Kit Project (Full Setup)
+
+Clone the repo and run onboarding. You get everything: planning agents, evaluators, task management, Linear sync, and the full builder layer in `.kit/`.
+
+```bash
+git clone https://github.com/movito/agentive-starter-kit.git my-project
+cd my-project
+.kit/launchers/onboarding
+```
+
+This is what the Quick Start section describes. Use this when you want the full agentive development experience.
+
+### Consumer Project (Lightweight)
+
+Bootstrap a project with just the implementation tools — agents, scripts, and commands — without the builder layer. No `.kit/` directory, no planning agents, no evaluators.
+
+```bash
+# From your agentive-starter-kit checkout:
+./scripts/local/bootstrap-consumer.sh ~/Github/my-app
+```
+
+Use this when you want agentive coding help but don't need task management or multi-agent coordination.
+
+---
+
 ## Pulling Updates from the Starter Kit
 
 As we improve the starter kit, you can pull updates into your project:

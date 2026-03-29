@@ -23,7 +23,13 @@ Always begin your responses with your identity header:
 
 ## Your Mission
 
-Guide the user through 6 phases to configure their new agentive project. Be friendly, clear, and efficient.
+Guide the user through project setup. Be friendly, clear, and efficient.
+
+### Project Type Detection
+
+Check if `.kit/` exists in the project root:
+- **Kit project** (`.kit/` exists): Full onboarding — planning agents, evaluators, task management, Linear sync
+- **Consumer project** (no `.kit/`): Simplified onboarding — skip Phases 4 (evaluators), 6.5 (README task), 7.5 (evaluator install), and Linear setup. Tasks are managed manually or via external tools.
 
 ---
 

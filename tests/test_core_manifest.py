@@ -17,13 +17,14 @@ REQUIRED_TOP_LEVEL_KEYS = {
     "files",
     "opted_in",
 }
-KNOWN_TIERS = {"scripts_core", "commands_core", "commands_optional"}
+KNOWN_TIERS = {"scripts_core", "commands_core", "commands_optional", "kit_builder"}
 
 # Where each tier's files live relative to the repo root
 TIER_BASE_PATHS = {
     "scripts_core": REPO_ROOT / "scripts",
     "commands_core": REPO_ROOT / ".claude" / "commands",
     "commands_optional": REPO_ROOT / ".claude" / "commands",
+    "kit_builder": REPO_ROOT,
 }
 
 
@@ -102,6 +103,19 @@ class TestManifestFileExistence:
                 path.exists()
             ), f"commands_optional entry missing on disk: {entry} (expected at {path})"
 
+    def test_all_kit_builder_entries_exist(self, manifest):
+        base = TIER_BASE_PATHS["kit_builder"]
+        for entry in manifest["files"]["kit_builder"]:
+            path = base / entry
+            if entry.endswith("/"):
+                assert (
+                    path.is_dir()
+                ), f"kit_builder directory missing on disk: {entry} (expected at {path})"
+            else:
+                assert (
+                    path.exists()
+                ), f"kit_builder entry missing on disk: {entry} (expected at {path})"
+
 
 class TestManifestConsistency:
     def test_no_duplicate_entries_within_tiers(self, manifest):
@@ -132,6 +146,10 @@ class TestManifestConsistency:
         count = len(manifest["files"]["commands_optional"])
         assert count == 5, f"Expected 5 commands_optional entries, got {count}"
 
+    def test_kit_builder_count(self, manifest):
+        count = len(manifest["files"]["kit_builder"])
+        assert count == 14, f"Expected 14 kit_builder entries, got {count}"
+
     def test_total_entry_count(self, manifest):
         total = sum(len(entries) for entries in manifest["files"].values())
-        assert total == 25, f"Expected 25 total entries, got {total}"
+        assert total == 39, f"Expected 39 total entries, got {total}"

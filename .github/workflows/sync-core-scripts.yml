@@ -5,6 +5,20 @@ on:
     paths:
       - 'scripts/core/**'
       - '.claude/commands/**'
+      - '.kit/templates/**'
+      - '.kit/skills/**'
+      - '.kit/launchers/**'
+      - '.kit/decisions/**'
+      - '.kit/docs/**'
+      - '.kit/adversarial/scripts/**'
+      - '.kit/adversarial/docs/**'
+      - '.kit/adversarial/templates/**'
+      - '.kit/adversarial/config.yml.template'
+      - '.kit/context/workflows/**'
+      - '.kit/context/templates/**'
+      - '.kit/context/patterns.yml'
+      - '.kit/context/AGENT-SYSTEM-GUIDE.md'
+      - '.kit/tasks/9-reference/**'
       - 'scripts/.core-manifest.json'
     branches: [main]
 
@@ -13,10 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        repo:
-          - movito/dispatch-kit
-          - movito/adversarial-workflow
-          - movito/adversarial-evaluator-library
+        include:
+          - repo: movito/dispatch-kit
+            is_kit: true
+          - repo: movito/adversarial-workflow
+            is_kit: true
+          - repo: movito/adversarial-evaluator-library
+            is_kit: true
     steps:
       - name: Checkout source (agentive-starter-kit)
         uses: actions/checkout@v6
@@ -32,6 +49,8 @@ jobs:
 
       - name: Sync from manifest
         id: sync
+        env:
+          IS_KIT: ${{ matrix.is_kit }}
         run: |
           set -euo pipefail
 
@@ -48,12 +67,19 @@ jobs:
           fi
 
           # ── Helper: check if a tier should be synced ──
-          # Core tiers (*_core) always sync. Optional tiers sync if opted in.
+          # Core tiers (*_core) always sync.
+          # kit_builder syncs only to kit repos (is_kit=true).
+          # Optional tiers sync if downstream has opted in.
           should_sync_tier() {
             local tier="$1"
             # Core tiers always sync
             if echo "$tier" | grep -q '_core$'; then
               return 0
+            fi
+            # kit_builder syncs only to kit repos
+            if [ "$tier" = "kit_builder" ]; then
+              [ "${IS_KIT:-false}" = "true" ]
+              return $?
             fi
             # Check if tier is in downstream opted_in
             if echo "$DOWNSTREAM_OPTED_IN" | jq -e "index(\"$tier\")" > /dev/null 2>&1; then
@@ -85,11 +111,11 @@ jobs:
           git checkout -b "$BRANCH"
           cd ..
 
-          # ── Iterate manifest tiers and sync file-by-file ──
+          # ── Iterate manifest tiers and sync ──
           TIERS=$(jq -r '.files | keys[]' "$UPSTREAM_MANIFEST")
           for tier in $TIERS; do
             if ! should_sync_tier "$tier"; then
-              echo "Skipping tier: $tier (not opted in)"
+              echo "Skipping tier: $tier (not opted in or not a kit repo)"
               continue
             fi
 
@@ -97,6 +123,22 @@ jobs:
             ENTRIES=$(jq -r ".files[\"$tier\"][]" "$UPSTREAM_MANIFEST")
             for entry in $ENTRIES; do
               read -r src_path tgt_path <<< "$(resolve_paths "$tier" "$entry")"
+
+              # Directory entries end with /
+              if [[ "$entry" == */ ]]; then
+                if [ -d "$src_path" ]; then
+                  # Remove stale target contents and copy fresh
+                  src_clean="${src_path%/}"
+                  tgt_clean="${tgt_path%/}"
+                  rm -rf "$tgt_clean"
+                  mkdir -p "$(dirname "$tgt_clean")"
+                  cp -r "$src_clean" "$tgt_clean"
+                  echo "  Synced directory: $entry"
+                else
+                  echo "  Warning: Source directory not found: $src_path"
+                fi
+                continue
+              fi
 
               # Warn if target exists but was not in any previous manifest tier
               if [ -f "$tgt_path" ] && [ -f "$DOWNSTREAM_MANIFEST" ]; then
@@ -145,6 +187,9 @@ jobs:
           if [ -d .claude/commands/ ]; then
             git add .claude/commands/
           fi
+          if [ -d .kit/ ]; then
+            git add .kit/
+          fi
           git commit -m "chore: Sync core scripts v${VERSION} from agentive-starter-kit"
           git push -u origin "$BRANCH"
 
@@ -158,7 +203,7 @@ jobs:
           cd target
           BRANCH=$(git branch --show-current)
 
-          BODY="Automated sync of core scripts and commands from agentive-starter-kit v${VERSION}.
+          BODY="Automated sync of core scripts, commands, and builder layer from agentive-starter-kit v${VERSION}.
 
           ## What's synced
 
@@ -166,13 +211,16 @@ jobs:
           - **scripts_core**: Core scripts in \`scripts/core/\`
           - **commands_core**: Slash commands that depend on core scripts
           - **commands_optional**: Only if your repo has opted in via \`opted_in\` in the manifest
+          - **kit_builder**: Builder layer (\`.kit/\`) — only synced to kit repos (\`is_kit: true\`)
 
           Files not listed in the manifest are **never touched** by this sync.
 
-          ## Opting in to optional commands
+          ## Opting in to optional tiers
 
           To receive optional commands (e.g., \`/babysit-pr\`, \`/retro\`), add
           \`\"commands_optional\"\` to the \`opted_in\` array in \`scripts/.core-manifest.json\`.
+
+          The \`kit_builder\` tier syncs automatically to kit repos and does not require opt-in.
 
           ${WARNINGS:+## Warnings
           ${WARNINGS}}
