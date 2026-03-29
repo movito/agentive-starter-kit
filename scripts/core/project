@@ -68,7 +68,7 @@ FOLDER_STATUS_MAP = {
 
 def find_task_file(task_id: str, project_dir: Path) -> Path | None:
     """Find a task file by ID across all workflow folders."""
-    tasks_dir = project_dir / ".kit" / "delegation" / "tasks"
+    tasks_dir = project_dir / ".kit" / "tasks"
 
     # Normalize task ID (handle ASK-0001 or ASK-1)
     task_id_upper = task_id.upper()
@@ -131,7 +131,7 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> bool:
         return True
 
     # Move file
-    target_dir = project_dir / ".kit" / "delegation" / "tasks" / target_folder
+    target_dir = project_dir / ".kit" / "tasks" / target_folder
     target_path = target_dir / task_file.name
 
     try:
@@ -151,7 +151,7 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> bool:
 
 def validate_all_tasks(project_dir: Path) -> bool:
     """Validate all task files have matching Status and folder."""
-    tasks_dir = project_dir / ".kit" / "delegation" / "tasks"
+    tasks_dir = project_dir / ".kit" / "tasks"
     errors = []
     checked = 0
 
