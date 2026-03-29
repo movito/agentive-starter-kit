@@ -550,7 +550,7 @@ mcp__serena__find_symbol(
 
 #### Traditional Approach
 
-**Command**: `grep -r "DaVinci" .kit/delegation/tasks/`
+**Command**: `grep -r "DaVinci" .kit/tasks/`
 
 **Result**: Finds Markdown files with mentions
 

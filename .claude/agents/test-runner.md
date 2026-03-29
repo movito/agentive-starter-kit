@@ -120,9 +120,9 @@ You can run evaluation autonomously when encountering unclear test requirements 
 
 ```bash
 # For files < 500 lines (use appropriate folder):
-adversarial evaluate .kit/delegation/tasks/3-in-progress/TASK-FILE.md
+adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 # For large files (>500 lines) requiring confirmation:
-echo y | adversarial evaluate .kit/delegation/tasks/3-in-progress/TASK-FILE.md
+echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
 # Read results
 cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md

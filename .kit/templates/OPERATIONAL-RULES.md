@@ -126,7 +126,7 @@ If subagents report creating files but nothing appears on disk, check `.claude/s
 
 ### Tasks
 
-**Correct location**: `.kit/delegation/tasks/[status-folder]/TASK-NNNN-title.md`
+**Correct location**: `.kit/tasks/[status-folder]/TASK-NNNN-title.md`
 
 Status folders:
 - `1-backlog/` - Planned but not started

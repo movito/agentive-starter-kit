@@ -1,7 +1,7 @@
 # Review Starter: ASK-0028
 
 **Task**: ASK-0028 - Add Project Setup Command for Virtual Environment
-**Task File**: `.kit/delegation/tasks/4-in-review/ASK-0028-venv-setup-command.md`
+**Task File**: `.kit/tasks/4-in-review/ASK-0028-venv-setup-command.md`
 **Branch**: main (direct implementation)
 **PR**: N/A (local review before commit)
 
@@ -48,7 +48,7 @@ Manual testing verified:
 
 ## Related Documentation
 
-- **Task file**: `.kit/delegation/tasks/4-in-review/ASK-0028-venv-setup-command.md`
+- **Task file**: `.kit/tasks/4-in-review/ASK-0028-venv-setup-command.md`
 - **ADRs**: KIT-ADR-0005 (Test Infrastructure Strategy)
 - **Handoff**: `.kit/context/ASK-0028-HANDOFF-feature-developer.md`
 

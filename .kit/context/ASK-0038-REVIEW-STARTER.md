@@ -63,4 +63,4 @@ This task was also a verification exercise. Phases exercised:
 ## Files to Review
 
 - `CLAUDE.md`
-- `.kit/delegation/tasks/4-in-review/ASK-0038-workflow-verify-architecture-overview.md`
+- `.kit/tasks/4-in-review/ASK-0038-workflow-verify-architecture-overview.md`

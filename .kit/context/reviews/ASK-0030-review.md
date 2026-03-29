@@ -2,7 +2,7 @@
 
 **Reviewer**: code-reviewer
 **Date**: 2026-02-02
-**Task File**: .kit/delegation/tasks/5-done/ASK-0030-python-version-ceiling.md
+**Task File**: .kit/tasks/5-done/ASK-0030-python-version-ceiling.md
 **Verdict**: APPROVED
 **Round**: 1
 

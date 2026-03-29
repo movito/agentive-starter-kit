@@ -3,7 +3,7 @@
 **Date**: 2025-11-29
 **From**: Planner Agent
 **To**: Feature Developer
-**Task**: .kit/delegation/tasks/2-todo/ASK-0025-linear-sync-verification.md
+**Task**: .kit/tasks/2-todo/ASK-0025-linear-sync-verification.md
 **Status**: Ready for implementation
 **Evaluation**: N/A (straightforward enhancement)
 
@@ -185,6 +185,6 @@ And agents including sync verification in their workflows:
 
 ---
 
-**Task File**: `.kit/delegation/tasks/2-todo/ASK-0025-linear-sync-verification.md`
+**Task File**: `.kit/tasks/2-todo/ASK-0025-linear-sync-verification.md`
 **Handoff Date**: 2025-11-29
 **Coordinator**: Planner Agent

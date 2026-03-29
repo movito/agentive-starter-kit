@@ -5,7 +5,7 @@
 **Date**: 2026-03-28
 **From**: Planner (planner2)
 **To**: feature-developer-v5
-**Task**: `.kit/delegation/tasks/2-todo/ASK-0043-root-resolution-preamble.md`
+**Task**: `.kit/tasks/2-todo/ASK-0043-root-resolution-preamble.md`
 **Status**: Ready for implementation
 **Evaluation**: Skipped (mechanical task, low risk, well-defined scope)
 
@@ -87,6 +87,6 @@ preamble too. The task spec lists 6 core scripts but there are 7 `.sh` files.
 
 ---
 
-**Task File**: `.kit/delegation/tasks/2-todo/ASK-0043-root-resolution-preamble.md`
+**Task File**: `.kit/tasks/2-todo/ASK-0043-root-resolution-preamble.md`
 **Handoff Date**: 2026-03-28
 **Coordinator**: Planner (planner2)

@@ -123,7 +123,7 @@ Real-world outcomes:
 ## References
 
 - Related ADRs: [ADR-XXXX](./XXXX-title.md)
-- Task files: `.kit/delegation/tasks/active/TASK-YYYY-####.md`
+- Task files: `.kit/tasks/active/TASK-YYYY-####.md`
 - Commits: abc1234, def5678
 - External docs: Links to libraries, standards, etc.
 

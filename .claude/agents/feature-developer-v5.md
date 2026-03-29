@@ -65,7 +65,7 @@ git checkout -b feature/<TASK-ID>-short-description
 ./scripts/core/project start <TASK-ID>
 ```
 
-- Read task file: `.kit/delegation/tasks/3-in-progress/<TASK-ID>-*.md`
+- Read task file: `.kit/tasks/3-in-progress/<TASK-ID>-*.md`
 - Read handoff file if provided: `.kit/context/<TASK-ID>-HANDOFF-*.md`
 - If the task spec has `## PR Plan`, implement only the current PR's scope
 
@@ -244,7 +244,7 @@ Do NOT use for: Markdown, YAML/JSON, or reading entire files.
 |----------|----------|
 | Pattern registry | `.kit/context/patterns.yml` |
 | Pattern lint | `scripts/core/pattern_lint.py` |
-| Task specs | `.kit/delegation/tasks/` |
+| Task specs | `.kit/tasks/` |
 | Commit protocol | `.kit/context/workflows/COMMIT-PROTOCOL.md` |
 | Testing workflow | `.kit/context/workflows/TESTING-WORKFLOW.md` |
 | Review fix workflow | `.kit/context/workflows/REVIEW-FIX-WORKFLOW.md` |

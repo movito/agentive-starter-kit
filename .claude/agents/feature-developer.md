@@ -33,7 +33,7 @@ mcp__serena__activate_project("agentive-starter-kit")
 Confirm in your response: "✅ Serena activated: [languages]. Ready for code navigation."
 
 ## Core Responsibilities
-- Implement features according to TASK specifications in `.kit/delegation/tasks/` (numbered folders)
+- Implement features according to TASK specifications in `.kit/tasks/` (numbered folders)
 - Write clean, maintainable code following project conventions
 - Test implementations thoroughly (TDD workflow required)
 - Document changes appropriately
@@ -42,11 +42,11 @@ Confirm in your response: "✅ Serena activated: [languages]. Ready for code nav
 ## Project Context
 - **Testing**: pytest-based TDD workflow (mandatory pre-commit hooks)
 - **Documentation**: `.kit/context/` system for agent coordination
-- **Task Management**: `.kit/delegation/tasks/` with Linear sync
+- **Task Management**: `.kit/tasks/` with Linear sync
 
 ## Development Guidelines
 1. **Start the task properly**: Run `./scripts/core/project start <TASK-ID>` first (see Task Lifecycle below)
-2. **Read task specifications**: `.kit/delegation/tasks/3-in-progress/TASK-*.md` after starting
+2. **Read task specifications**: `.kit/tasks/3-in-progress/TASK-*.md` after starting
 3. **Follow TDD workflow**: Write tests before implementation (see `.kit/context/workflows/TESTING-WORKFLOW.md`)
 4. **Always read existing code** before making changes
 5. **Follow established patterns** from existing codebase
@@ -343,7 +343,7 @@ Copy template from `.kit/context/templates/review-starter-template.md` to `.kit/
 # Review Starter: <TASK-ID>
 
 **Task**: <TASK-ID> - [Task Title]
-**Task File**: `.kit/delegation/tasks/4-in-review/<TASK-ID>-*.md`
+**Task File**: `.kit/tasks/4-in-review/<TASK-ID>-*.md`
 **Branch**: [feature-branch] → main
 **PR**: [URL if applicable]
 
@@ -413,7 +413,7 @@ You'll receive something like:
 ## Review Fix: [TASK-ID]
 
 **Review File**: `.kit/context/reviews/[TASK-ID]-review.md`
-**Task File**: `.kit/delegation/tasks/4-in-review/[TASK-ID]-*.md`
+**Task File**: `.kit/tasks/4-in-review/[TASK-ID]-*.md`
 
 ### Required Changes
 [HIGH severity findings to address]
@@ -464,9 +464,9 @@ Sometimes during implementation you may encounter ambiguities or need design cla
 
 ```bash
 # For files < 500 lines (use appropriate folder):
-adversarial evaluate .kit/delegation/tasks/3-in-progress/TASK-FILE.md
+adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 # For large files (>500 lines) requiring confirmation:
-echo y | adversarial evaluate .kit/delegation/tasks/3-in-progress/TASK-FILE.md
+echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
 # Read evaluator feedback
 cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
@@ -481,7 +481,7 @@ cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
 **📖 Template**: `.claude/agents/TASK-STARTER-TEMPLATE.md`
 
 When you receive task assignments, they come in a standardized format with:
-- Task file: Full specification in `.kit/delegation/tasks/[folder]/[TASK-ID].md`
+- Task file: Full specification in `.kit/tasks/[folder]/[TASK-ID].md`
 - Handoff file: Implementation guidance in `.kit/context/[TASK-ID]-HANDOFF-[agent-type].md`
 
 ### Step 1: Receive Task Assignment
@@ -523,7 +523,7 @@ See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
 ## Quick Reference Documentation
 
 **Agent Coordination**:
-- Task specifications: `.kit/delegation/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
+- Task specifications: `.kit/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
 - Agent procedures: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
 - Your role context: `.kit/context/agent-handoffs.json` → `"feature-developer"`
 - Commit protocol: `.kit/context/workflows/COMMIT-PROTOCOL.md`

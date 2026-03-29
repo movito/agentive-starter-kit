@@ -6,7 +6,7 @@ Make `.env.template` the single canonical env template. Sync `.env.example` to m
 
 ## Task File
 
-`.kit/delegation/tasks/2-todo/ASK-0040-consolidate-env-templates.md`
+`.kit/tasks/2-todo/ASK-0040-consolidate-env-templates.md`
 
 ## Scope
 

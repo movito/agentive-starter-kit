@@ -103,7 +103,7 @@ def main():
         # Only validate task files
         if not file_path.name.endswith(".md"):
             continue
-        if ".kit/delegation/tasks/" not in str(file_path):
+        if ".kit/tasks/" not in str(file_path):
             continue
 
         is_valid, error = validate_task(file_path)

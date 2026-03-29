@@ -71,8 +71,8 @@ so this ADR establishes the boundary first.
 
 | Current Location | New Location | Contents |
 |-----------------|-------------|----------|
-| `delegation/tasks/` | `.kit/delegation/tasks/` | Task specs (1-backlog through 9-reference) |
-| `delegation/handoffs/` | `.kit/delegation/handoffs/` | Handoff records |
+| `delegation/tasks/` | `.kit/tasks/` | Task specs (1-backlog through 9-reference) |
+| `delegation/handoffs/` | *(deleted — handoffs stay in `.kit/context/`)* | Handoff records |
 | `.agent-context/` | `.kit/context/` | Coordination state, handoffs, reviews, retros, workflows, patterns.yml |
 | `.adversarial/` | `.kit/adversarial/` | Evaluator system (config, evaluators, inputs, logs, scripts) |
 | `docs/decisions/starter-kit-adr/` | `.kit/decisions/` | Kit ADRs (KIT-ADR-*) |
@@ -116,11 +116,17 @@ so this ADR establishes the boundary first.
 
 Resolution: Keep in `.kit/`, update CLAUDE.md to point implementation agents there.
 
-## PR Plan
+## PR Strategy: Single Atomic PR
 
-### PR 1: Create `.kit/` structure and move builder artifacts (~1.5 days)
+> **Decision (2026-03-29)**: Originally planned as 3 PRs. Collapsed into a single
+> branch after discovering that splitting a structural migration leaves the codebase
+> in a half-migrated state that agents cannot navigate. Agents depend on hardcoded
+> paths in prompts, handoff files, and CLAUDE.md — stale paths cause silent failures.
+> See PR-SIZE-WORKFLOW.md §3 and REVIEW-INSIGHTS.md (ASK-0044 entry).
 
-**Scope**: Directory moves only. No sync changes.
+All work lands on `feature/ASK-0044-kit-boundary` and merges as one PR.
+
+### Phase 1: Directory moves + path rewrites
 
 1. Create `.kit/` directory structure
 2. `git mv` all builder artifacts to `.kit/` (see classification table)
@@ -130,14 +136,8 @@ Resolution: Keep in `.kit/`, update CLAUDE.md to point implementation agents the
 6. Verify no broken references: `grep -r '.agent-context/' .claude/ CLAUDE.md`
 7. Verify no broken references: `grep -r '.adversarial/' .claude/ CLAUDE.md`
 8. Verify no broken references: `grep -r 'delegation/tasks/' .claude/ CLAUDE.md`
-9. Run `./scripts/core/ci-check.sh`
 
-**Risk**: High number of path references to update. The grep verification step
-is critical.
-
-### PR 2: Update sync manifest and workflow (~1 day)
-
-**Scope**: Sync infrastructure changes.
+### Phase 2: Sync manifest + workflow
 
 1. Add `kit_builder` tier to `.core-manifest.json` listing all `.kit/` files
 2. Add `is_kit` flag to sync workflow matrix
@@ -145,17 +145,20 @@ is critical.
    - Send `kit_builder` files only to repos with `is_kit: true`
    - Map `.kit/` paths correctly in downstream copy
 4. Update `check-sync.sh` to verify `.kit/` content in kit repos
-5. Test: dry-run sync against one downstream repo
 
-### PR 3: Consumer project template (~0.5 days)
-
-**Scope**: New project experience.
+### Phase 3: Consumer template
 
 1. Create `scripts/local/bootstrap-consumer.sh` — bootstraps a consumer project
    without `.kit/` (just scripts/core + commands + thin CLAUDE.md)
 2. Update `agents/onboarding` to detect kit vs consumer project
 3. Add `.kit/` to the consumer project `.gitignore` template
 4. Document the two project types in README.md
+
+### Final: CI + verification
+
+1. Run `./scripts/core/ci-check.sh`
+2. Verify no broken path references (grep sweep)
+3. Open single PR for review
 
 ## Sync Manifest (Target State)
 
@@ -169,7 +172,7 @@ is critical.
     "commands_core": ["check-ci.md", "check-bots.md", "..."],
     "commands_optional": ["babysit-pr.md", "retro.md", "..."],
     "kit_builder": [
-      ".kit/delegation/tasks/9-reference/",
+      ".kit/tasks/9-reference/",
       ".kit/context/workflows/",
       ".kit/context/patterns.yml",
       ".kit/context/templates/",

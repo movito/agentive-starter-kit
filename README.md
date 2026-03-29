@@ -133,12 +133,12 @@ Setup takes approximately 5-10 minutes.
 | `ci-checker` | CI/CD verification |
 | `agent-creator` | Create new specialized agents |
 
-### Task Management (`.kit/delegation/tasks/`)
+### Task Management (`.kit/tasks/`)
 
 Linear-compatible folder structure:
 
 ```
-.kit/delegation/tasks/
+.kit/tasks/
 ├── 1-backlog/      → Backlog (planned, not started)
 ├── 2-todo/         → Todo (ready to start)
 ├── 3-in-progress/  → In Progress (active work)
@@ -156,7 +156,7 @@ Independent AI review of your plans, code, and documentation:
 
 ```bash
 # Review a task plan before implementation
-adversarial evaluate .kit/delegation/tasks/2-todo/TASK-0001-my-task.md
+adversarial evaluate .kit/tasks/2-todo/TASK-0001-my-task.md
 
 # Review implemented code before merge
 adversarial review src/feature/
@@ -212,7 +212,7 @@ If you prefer to handle setup yourself, copy these template files and configure 
 
 ## Linear Integration
 
-The starter kit includes a built-in task management system that helps agents do better work and helps you track progress. Tasks are stored as markdown files in `.kit/delegation/tasks/` folders.
+The starter kit includes a built-in task management system that helps agents do better work and helps you track progress. Tasks are stored as markdown files in `.kit/tasks/` folders.
 
 **You can optionally sync these tasks with [Linear](https://linear.app)** for team visibility and project management. This is more involved than just adding an API key.
 
@@ -257,7 +257,7 @@ LINEAR_TEAM_ID=ABC
 ### How Linear Sync Works
 
 When configured, the task system:
-- Syncs task files in `.kit/delegation/tasks/` folders to Linear issues
+- Syncs task files in `.kit/tasks/` folders to Linear issues
 - Maps folder locations to Linear statuses (e.g., `2-todo/` → "Todo")
 - Adds GitHub links to task files in Linear issue descriptions
 
@@ -311,9 +311,9 @@ Tasks work fine without Linear - they're just markdown files. Agents can create,
 
 **Manual task creation** (if you prefer):
 
-1. Copy task template: `.kit/delegation/tasks/9-reference/templates/task-template.md`
-2. Create task file: `.kit/delegation/tasks/2-todo/TASK-0001-my-task.md`
-3. Run evaluation: `adversarial evaluate .kit/delegation/tasks/2-todo/TASK-0001-my-task.md`
+1. Copy task template: `.kit/tasks/9-reference/templates/task-template.md`
+2. Create task file: `.kit/tasks/2-todo/TASK-0001-my-task.md`
+3. Run evaluation: `adversarial evaluate .kit/tasks/2-todo/TASK-0001-my-task.md`
 4. Assign to agent via `planner`
 
 ### Running Tests
@@ -332,7 +332,7 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 
 - **Agentive Development Guide**: `docs/agentive-development/README.md`
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md`
-- **Task Template**: `.kit/delegation/tasks/9-reference/templates/task-template.md`
+- **Task Template**: `.kit/tasks/9-reference/templates/task-template.md`
 - **Evaluation Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
 - **Starter Kit ADRs**: `.kit/decisions/` (18+ architectural decisions)
 - **Your Project ADRs**: `docs/decisions/adr/` (start fresh here)
@@ -354,7 +354,7 @@ your-project/
 │   ├── skills/              # Builder skills (self-review, etc.)
 │   ├── context/             # Agent coordination, workflows, patterns
 │   ├── adversarial/         # Evaluation config, scripts, docs
-│   ├── delegation/tasks/    # Task files (numbered folders)
+│   ├── tasks/               # Task files (numbered folders)
 │   ├── decisions/           # Kit ADRs (KIT-ADR-*)
 │   ├── launchers/           # Agent launcher scripts
 │   └── docs/                # Builder documentation

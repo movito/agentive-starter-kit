@@ -1,6 +1,7 @@
 # ASK-0046: Relocate handoff files to .kit/delegation/handoffs/
 
-**Status**: Backlog
+**Status**: Canceled
+**Canceled Reason**: `.kit/delegation/handoffs/` was deleted in ASK-0044 PR 1/3. Handoffs remain in `.kit/context/` where they co-locate with other agent coordination files. The `.kit/delegation/` directory no longer exists.
 **Priority**: low
 **Assigned To**: feature-developer
 **Estimated Effort**: 1-2 hours

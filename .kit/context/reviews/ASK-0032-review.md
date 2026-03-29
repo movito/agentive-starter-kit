@@ -2,7 +2,7 @@
 
 **Reviewer**: code-reviewer
 **Date**: 2026-02-09
-**Task File**: .kit/delegation/tasks/4-in-review/ASK-0032-uv-auto-detection.md
+**Task File**: .kit/tasks/4-in-review/ASK-0032-uv-auto-detection.md
 **Verdict**: APPROVED
 **Round**: 1
 

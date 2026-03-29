@@ -5,7 +5,7 @@
 **Date**: 2026-03-25
 **From**: Planner2
 **To**: feature-developer-v5
-**Task**: .kit/delegation/tasks/2-todo/ASK-0045-linear-sync-test-imports.md
+**Task**: .kit/tasks/2-todo/ASK-0045-linear-sync-test-imports.md
 **Status**: Ready for implementation
 **Evaluation**: APPROVED by arch-review-fast (Gemini, $0.003)
 
@@ -117,7 +117,7 @@ python3.13 -m pytest tests/ -v
 
 ---
 
-**Task File**: `.kit/delegation/tasks/2-todo/ASK-0045-linear-sync-test-imports.md`
+**Task File**: `.kit/tasks/2-todo/ASK-0045-linear-sync-test-imports.md`
 **Evaluation Log**: `.kit/adversarial/logs/ASK-0045-linear-sync-test-imports--arch-review-fast.md`
 **Handoff Date**: 2026-03-25
 **Coordinator**: Planner2

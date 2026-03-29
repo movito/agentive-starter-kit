@@ -2,7 +2,7 @@
 
 **Reviewer**: code-reviewer
 **Date**: 2026-02-01
-**Task File**: .kit/delegation/tasks/4-in-review/ASK-0029-multi-evaluator-architecture.md
+**Task File**: .kit/tasks/4-in-review/ASK-0029-multi-evaluator-architecture.md
 **Verdict**: APPROVED
 **Round**: 2
 

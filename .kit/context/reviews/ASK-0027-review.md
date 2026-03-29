@@ -2,7 +2,7 @@
 
 **Reviewer**: code-reviewer
 **Date**: 2025-12-04
-**Task File**: .kit/delegation/tasks/4-in-review/ASK-0027-project-reconfigure-command.md
+**Task File**: .kit/tasks/4-in-review/ASK-0027-project-reconfigure-command.md
 **Verdict**: APPROVED
 **Round**: 1
 

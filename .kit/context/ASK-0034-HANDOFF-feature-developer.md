@@ -3,7 +3,7 @@
 **From**: planner
 **To**: feature-developer
 **Date**: 2026-02-09
-**Task File**: `.kit/delegation/tasks/2-todo/ASK-0034-pr12-review-fixes.md`
+**Task File**: `.kit/tasks/2-todo/ASK-0034-pr12-review-fixes.md`
 
 ## Context
 

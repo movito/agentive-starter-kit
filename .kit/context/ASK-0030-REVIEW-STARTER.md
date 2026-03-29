@@ -1,7 +1,7 @@
 # Review Starter: ASK-0030
 
 **Task**: ASK-0030 - Python Version Ceiling Check
-**Task File**: `.kit/delegation/tasks/5-done/ASK-0030-python-version-ceiling.md`
+**Task File**: `.kit/tasks/5-done/ASK-0030-python-version-ceiling.md`
 **Branch**: feature/ASK-0030-python-version-ceiling → main
 **PR**: https://github.com/movito/agentive-starter-kit/pull/10
 
@@ -67,7 +67,7 @@ New tests added:
 
 ## Related Documentation
 
-- **Task file**: `.kit/delegation/tasks/5-done/ASK-0030-python-version-ceiling.md`
+- **Task file**: `.kit/tasks/5-done/ASK-0030-python-version-ceiling.md`
 - **Handoff**: `.kit/context/ASK-0030-HANDOFF-feature-developer.md`
 - **Related tasks**: ASK-0028 (venv setup), ASK-0029 (multi-evaluator), ASK-0031 (activation UX)
 

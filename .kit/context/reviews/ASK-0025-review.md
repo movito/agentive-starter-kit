@@ -2,7 +2,7 @@
 
 **Reviewer**: code-reviewer
 **Date**: 2025-11-29
-**Task File**: .kit/delegation/tasks/4-in-review/ASK-0025-linear-sync-verification.md
+**Task File**: .kit/tasks/4-in-review/ASK-0025-linear-sync-verification.md
 **Verdict**: APPROVED
 **Round**: 1
 

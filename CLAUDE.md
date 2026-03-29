@@ -15,7 +15,7 @@ evaluation, and architectural decision records. For full details, see `README.md
 ├── skills/           Builder skills (self-review, review-handoff, code-review-evaluator)
 ├── context/          Agent coordination: handoffs, reviews, patterns.yml, workflows/
 ├── adversarial/      Adversarial evaluation system (config, scripts, docs)
-├── delegation/tasks/ Task specs by status: 1-backlog/ through 9-reference/
+├── tasks/            Task specs by status: 1-backlog/ through 9-reference/
 ├── decisions/        Kit ADRs (KIT-ADR-*)
 ├── launchers/        Agent launcher scripts (launch, onboarding, preflight)
 └── docs/             Builder documentation
@@ -48,7 +48,7 @@ tests/                pytest test suite
 ### Task Workflow
 
 - Status flow: `2-todo` -> `3-in-progress` -> `4-in-review` -> `5-done`
-- Task files live in `.kit/delegation/tasks/<status-folder>/`
+- Task files live in `.kit/tasks/<status-folder>/`
 - Use `./scripts/core/project start|move|complete <TASK-ID>` to manage status
 - Optional Linear sync: `./scripts/core/project linearsync`
 

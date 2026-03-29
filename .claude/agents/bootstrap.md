@@ -164,7 +164,7 @@ pytest tests/ -v
 
 1. Add API keys to `.env` (copy from `.env.template`)
 2. Start a planner session: `claude --agent .claude/agents/planner2.md`
-3. Create your first task in `.kit/delegation/tasks/2-todo/`
+3. Create your first task in `.kit/tasks/2-todo/`
 
 ---
 
@@ -179,7 +179,7 @@ update the project description at the top to match the design materials.
 
 ### Step 9: Create Initial Backlog
 
-Based on the design materials, create 3-8 task files in `.kit/delegation/tasks/1-backlog/`.
+Based on the design materials, create 3-8 task files in `.kit/tasks/1-backlog/`.
 Use the task template format:
 
 ```markdown

@@ -1,7 +1,7 @@
 # Review Starter: ASK-0032
 
 **Task**: ASK-0032 - Add UV Auto-Detection for Python Version Management
-**Task File**: `.kit/delegation/tasks/4-in-review/ASK-0032-uv-auto-detection.md`
+**Task File**: `.kit/tasks/4-in-review/ASK-0032-uv-auto-detection.md`
 **Branch**: `feature/ASK-0032-uv-auto-detection` → main
 **PR**: https://github.com/movito/agentive-starter-kit/pull/11
 
@@ -52,7 +52,7 @@ tests/test_uv_detection.py:
 
 ## Related Documentation
 
-- **Task file**: `.kit/delegation/tasks/4-in-review/ASK-0032-uv-auto-detection.md`
+- **Task file**: `.kit/tasks/4-in-review/ASK-0032-uv-auto-detection.md`
 - **ADRs**: KIT-ADR-0021 (Real-Time Agent Communication - unrelated but in same branch)
 - **Handoff**: `.kit/context/ASK-0032-HANDOFF-feature-developer.md`
 - **Parent task**: ASK-0030 (Python Version Ceiling Check)

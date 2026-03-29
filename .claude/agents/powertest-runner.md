@@ -169,9 +169,9 @@ Request external validation from Evaluator when facing:
 ### How to Run Evaluation
 ```bash
 # For files < 500 lines (use appropriate folder):
-adversarial evaluate .kit/delegation/tasks/3-in-progress/TASK-FILE.md
+adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 # For large files (>500 lines) requiring confirmation:
-echo y | adversarial evaluate .kit/delegation/tasks/3-in-progress/TASK-FILE.md
+echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
 # Read evaluation results
 cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
@@ -184,7 +184,7 @@ cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
 **📖 Template**: `.claude/agents/TASK-STARTER-TEMPLATE.md`
 
 When you receive task assignments, they come in a standardized format with:
-- Task file: Full specification in `.kit/delegation/tasks/[folder]/[TASK-ID].md`
+- Task file: Full specification in `.kit/tasks/[folder]/[TASK-ID].md`
 - Handoff file: Implementation guidance in `.kit/context/[TASK-ID]-HANDOFF-[agent-type].md`
 
 ### Step 1: Receive Task Assignment
@@ -415,7 +415,7 @@ Use the Task tool with these parameters:
 - subagent_type: "code-reviewer"
 - description: "Code review for <TASK-ID>"
 - prompt: "Please review the implementation for <TASK-ID>.
-  Task file: .kit/delegation/tasks/4-in-review/<TASK-ID>.md
+  Task file: .kit/tasks/4-in-review/<TASK-ID>.md
   Recent commits: [list relevant commit hashes]
   Focus areas: [TDD compliance, test coverage, code quality]"
 ```

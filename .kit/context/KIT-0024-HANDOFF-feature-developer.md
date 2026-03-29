@@ -5,7 +5,7 @@
 **Date**: 2026-03-26
 **From**: Planner (planner2)
 **To**: feature-developer-v5
-**Task**: `.kit/delegation/tasks/2-todo/KIT-0024-core-scripts-standardization.md`
+**Task**: `.kit/tasks/2-todo/KIT-0024-core-scripts-standardization.md`
 **Status**: Ready for implementation
 **Evaluation**: Evaluated by arch-review-fast (REVISION_SUGGESTED, addressed)
 
@@ -182,7 +182,7 @@ on:
 - **KIT-ADR-0022**: `.kit/decisions/KIT-ADR-0022-manifest-based-sync-ownership.md`
 - **Current manifest**: `scripts/.core-manifest.json`
 - **Current sync Action**: `.github/workflows/sync-core-scripts.yml`
-- **Task spec**: `.kit/delegation/tasks/2-todo/KIT-0024-core-scripts-standardization.md`
+- **Task spec**: `.kit/tasks/2-todo/KIT-0024-core-scripts-standardization.md`
 - **Upgrade guide**: `docs/UPGRADE-0.4.0.md` (for context on Phase 1)
 
 ## Time Estimate
@@ -211,7 +211,7 @@ on:
 
 ---
 
-**Task File**: `.kit/delegation/tasks/2-todo/KIT-0024-core-scripts-standardization.md`
+**Task File**: `.kit/tasks/2-todo/KIT-0024-core-scripts-standardization.md`
 **Evaluation Log**: `.kit/adversarial/logs/KIT-0024-core-scripts-standardization--arch-review-fast.md`
 **ADR**: `.kit/decisions/KIT-ADR-0022-manifest-based-sync-ownership.md`
 **Handoff Date**: 2026-03-26

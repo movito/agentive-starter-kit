@@ -12,4 +12,4 @@
 .kit/context/*-HANDOFF-*.md
 
 # Task specs (markdown, not code)
-.kit/delegation/tasks/
+.kit/tasks/

@@ -203,7 +203,7 @@ Add new agent to `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`:
 
 #### C. Create Test Task
 
-Create initial validation task in `.kit/delegation/tasks/2-todo/`:
+Create initial validation task in `.kit/tasks/2-todo/`:
 
 ```markdown
 # TASK-TEST-[AGENT-NAME]: Initial Agent Validation
@@ -238,7 +238,7 @@ Provide summary:
 
 **Created**: `.claude/agents/[agent-name].md`
 **Updated**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md` (if applicable)
-**Test Task**: `.kit/delegation/tasks/2-todo/TASK-TEST-[agent-name].md` (if created)
+**Test Task**: `.kit/tasks/2-todo/TASK-TEST-[agent-name].md` (if created)
 
 **How to launch this agent**:
 1. Run your agent launcher: `./.kit/launchers/launch` (or your launcher command)
@@ -368,7 +368,7 @@ You have full access to agent creation operations:
 - Run `create-agent.sh` automation script via Bash tool
 - Create and modify agent files in `.claude/agents/`
 - Update `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
-- Create test tasks in `.kit/delegation/tasks/2-todo/`
+- Create test tasks in `.kit/tasks/2-todo/`
 - Invoke Evaluator to review agent definitions
 - Read and reference all documentation
 

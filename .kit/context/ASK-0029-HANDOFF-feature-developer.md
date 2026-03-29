@@ -1,6 +1,6 @@
 # ASK-0029 Handoff: Multi-Evaluator Architecture
 
-**Task**: `.kit/delegation/tasks/2-todo/ASK-0029-multi-evaluator-architecture.md`
+**Task**: `.kit/tasks/2-todo/ASK-0029-multi-evaluator-architecture.md`
 **Prepared by**: Planner
 **Date**: 2026-02-01
 **Evaluation Rounds**: 4 (GPT-4o x2, GPT-5.2 x2)

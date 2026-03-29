@@ -65,7 +65,7 @@ agentive-starter-kit/
 ├── agents/
 │   ├── launch             # Agent launcher (updated)
 │   └── onboarding         # First-run script (updated)
-├── .kit/delegation/tasks/      # Task management folders
+├── .kit/tasks/      # Task management folders
 ├── docs/decisions/adr/    # ADRs (1 so far)
 └── ...
 ```
@@ -122,7 +122,7 @@ A sibling project using this starter kit was also set up:
 
 4. **If user has tasks**:
    - Use standard coordination workflow
-   - Create tasks in `.kit/delegation/tasks/`
+   - Create tasks in `.kit/tasks/`
    - Run evaluations if needed
 
 ---

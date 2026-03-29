@@ -12,7 +12,7 @@
 #   adversarial <name> <file>       # Run custom evaluator
 
 # Directory containing task specifications
-task_directory: delegation/tasks/
+task_directory: .kit/tasks/
 
 # Directory for evaluation logs
 log_directory: .adversarial/logs/

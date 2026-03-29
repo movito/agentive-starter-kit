@@ -3,7 +3,7 @@
 **Date**: 2025-02-01
 **From**: Planner
 **To**: feature-developer
-**Task**: .kit/delegation/tasks/2-todo/ASK-0028-venv-setup-command.md
+**Task**: .kit/tasks/2-todo/ASK-0028-venv-setup-command.md
 **Status**: Ready for implementation
 **Evaluation**: 2 rounds, remaining concerns addressed or out-of-scope
 
@@ -122,7 +122,7 @@ else:
 ## Resources for Implementation
 
 - **Existing command pattern**: `scripts/project` - see `cmd_reconfigure()` around line 485
-- **Task specification**: `.kit/delegation/tasks/2-todo/ASK-0028-venv-setup-command.md`
+- **Task specification**: `.kit/tasks/2-todo/ASK-0028-venv-setup-command.md`
 - **Related ADR**: `.kit/decisions/KIT-ADR-0005-test-infrastructure-strategy.md`
 - **Verify script reference**: `scripts/verify-setup.sh` (checks for venv)
 
@@ -191,7 +191,7 @@ python -c "import gql; print('gql available')"
 
 ---
 
-**Task File**: `.kit/delegation/tasks/2-todo/ASK-0028-venv-setup-command.md`
+**Task File**: `.kit/tasks/2-todo/ASK-0028-venv-setup-command.md`
 **Evaluation Logs**: `.kit/adversarial/logs/ASK-0028-venv-setup-command-PLAN-EVALUATION.md`
 **Handoff Date**: 2025-02-01
 **Coordinator**: Planner

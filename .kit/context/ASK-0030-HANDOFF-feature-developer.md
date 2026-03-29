@@ -1,6 +1,6 @@
 # ASK-0030 Handoff: Python Version Ceiling Check
 
-**Task**: `.kit/delegation/tasks/2-todo/ASK-0030-python-version-ceiling.md`
+**Task**: `.kit/tasks/2-todo/ASK-0030-python-version-ceiling.md`
 **Prepared by**: Planner
 **Date**: 2026-02-01
 **Evaluation Rounds**: 1 (GPT-4o) - concerns addressed in task file

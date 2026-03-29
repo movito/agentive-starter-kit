@@ -41,7 +41,7 @@ When code-reviewer returns `CHANGES_REQUESTED`, the planner creates a **lightwei
 
 **Review Verdict**: CHANGES_REQUESTED
 **Review File**: `.kit/context/reviews/[TASK-ID]-review.md`
-**Task File**: `.kit/delegation/tasks/4-in-review/[TASK-ID]-*.md`
+**Task File**: `.kit/tasks/4-in-review/[TASK-ID]-*.md`
 
 ### Required Changes
 
@@ -98,7 +98,7 @@ User invokes code-reviewer again in new tab. Per KIT-ADR-0014:
 
 | File | Purpose |
 |------|---------|
-| `.kit/delegation/tasks/4-in-review/[TASK-ID]-*.md` | Original task spec (stays here until approved) |
+| `.kit/tasks/4-in-review/[TASK-ID]-*.md` | Original task spec (stays here until approved) |
 | `.kit/context/reviews/[TASK-ID]-review.md` | Round 1 review findings |
 | `.kit/context/reviews/[TASK-ID]-review-round2.md` | Round 2 review findings |
 | `.kit/context/[TASK-ID]-REVIEW-STARTER.md` | Review starter (updated for re-review) |

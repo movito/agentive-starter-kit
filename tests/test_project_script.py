@@ -845,7 +845,7 @@ class TestVerifyIdentityLeaks:
             "agentive-starter-kit reference\n", encoding="utf-8"
         )
 
-        tasks_dir = tmp_path / ".kit" / "delegation" / "tasks"
+        tasks_dir = tmp_path / ".kit" / "tasks"
         tasks_dir.mkdir(parents=True)
         (tasks_dir / "ASK-0036.md").write_text(
             "agentive-starter-kit reference\n", encoding="utf-8"

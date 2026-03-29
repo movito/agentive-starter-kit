@@ -74,7 +74,7 @@ Confirm in your response: "Serena activated: [languages]. Ready for code navigat
 **On every session start**, after Serena activation, immediately scan for pending tasks:
 
 ```bash
-ls -la .kit/delegation/tasks/2-todo/
+ls -la .kit/tasks/2-todo/
 ```
 
 If tasks exist in `2-todo/`, briefly summarize what's waiting:
@@ -91,14 +91,14 @@ If no tasks exist, let the user know the project is ready for its first feature.
 - Manage task lifecycle (create, assign, track, complete)
 - **Run task evaluations autonomously** via Evaluator before assignment
 - Coordinate between different agents
-- Maintain project documentation (`.kit/context/`, `delegation/`)
+- Maintain project documentation (`.kit/context/`, `.kit/tasks/`)
 - Track version numbers and releases
 - Ensure smooth development workflow
 - Update `.kit/context/agent-handoffs.json` with current state
 
 ## Task Management
 
-1. Create task specifications in `.kit/delegation/tasks/2-todo/` (or `1-backlog/` if not ready)
+1. Create task specifications in `.kit/tasks/2-todo/` (or `1-backlog/` if not ready)
 2. **Run evaluation directly**: Use Bash tool to run a library evaluator (e.g., `adversarial arch-review <task-file>` or `adversarial arch-review-fast <task-file>`)
 3. Review evaluation results and address feedback
 4. Track task progress and status
@@ -209,7 +209,7 @@ After completing task status changes, verify Linear is updated:
 **How to Run Evaluation (AUTONOMOUS)**:
 
 ```bash
-# 1. Create or update task in .kit/delegation/tasks/2-todo/TASK-*.md (or appropriate folder)
+# 1. Create or update task in .kit/tasks/2-todo/TASK-*.md (or appropriate folder)
 
 # 2. Run evaluation using library evaluators via Bash tool
 # For task plans / architecture (deep reasoning):
@@ -301,7 +301,7 @@ When human reviewer requests changes, create a lightweight fix prompt:
 ## Review Fix: [TASK-ID]
 
 **Review Source**: Human review on PR #[N]
-**Task File**: `.kit/delegation/tasks/4-in-review/[TASK-ID]-*.md`
+**Task File**: `.kit/tasks/4-in-review/[TASK-ID]-*.md`
 
 ### Required Changes
 
@@ -391,7 +391,7 @@ Format as entries for REVIEW-INSIGHTS.md index with task ID.
 
 ## Documentation Areas
 
-- Task specifications: `.kit/delegation/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
+- Task specifications: `.kit/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
 - Agent coordination: `.kit/context/agent-handoffs.json`
 - Evaluation logs: `.kit/adversarial/logs/`
 - Project state: `.kit/context/current-state.json`
@@ -515,7 +515,7 @@ See `.kit/templates/TASK-STARTER-TEMPLATE.md` for handoff structure.
     "status": "completed",
     "current_task": "[TASK-ID]",
     "brief_note": "COMPLETE: [summary]",
-    "details_link": ".kit/delegation/tasks/[folder]/[TASK-ID].md",
+    "details_link": ".kit/tasks/[folder]/[TASK-ID].md",
     "handoff_file": ".kit/context/[TASK-ID]-HANDOFF-[agent-type].md"
   }
 }
@@ -594,7 +594,7 @@ git push origin main && git push origin vX.Y.Z
 
 **Coordinator Procedures** (in order of usage):
 1. **Evaluation Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
-2. **Task Creation**: `.kit/delegation/tasks/9-reference/templates/task-template.md`
+2. **Task Creation**: `.kit/tasks/9-reference/templates/task-template.md`
 3. **Agent Assignment**: `.kit/context/agent-handoffs.json` updates
 4. **Code Review Workflow**: `.kit/decisions/KIT-ADR-0014-code-review-workflow.md`
 5. **Knowledge Extraction**: `.kit/decisions/KIT-ADR-0019-review-knowledge-extraction.md`
@@ -606,17 +606,17 @@ git push origin main && git push origin vX.Y.Z
 - `.kit/context/current-state.json` (project state, metrics, phase tracking)
 - `.kit/context/reviews/` (code review reports)
 - `.kit/context/REVIEW-INSIGHTS.md` (distilled knowledge from reviews — KIT-ADR-0019)
-- `.kit/delegation/tasks/` (task specifications in numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
+- `.kit/tasks/` (task specifications in numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
 - `.kit/adversarial/logs/` (evaluation results - read-only)
 
 **Evaluation Command** (run directly via Bash tool):
 
 ```bash
 # Task plan evaluation (deep reasoning):
-adversarial arch-review .kit/delegation/tasks/2-todo/TASK-FILE.md
+adversarial arch-review .kit/tasks/2-todo/TASK-FILE.md
 
 # Task plan evaluation (fast, cheap):
-adversarial arch-review-fast .kit/delegation/tasks/2-todo/TASK-FILE.md
+adversarial arch-review-fast .kit/tasks/2-todo/TASK-FILE.md
 
 # List all available evaluators:
 adversarial list-evaluators

@@ -35,7 +35,7 @@ Confirm in your response: "✅ Serena activated: [languages]. Ready for code nav
 
 ```bash
 # Check for tasks in review
-ls -la .kit/delegation/tasks/4-in-review/
+ls -la .kit/tasks/4-in-review/
 
 # Check for review starters
 ls -la .kit/context/*-REVIEW-STARTER.md 2>/dev/null || echo "No review starters found"
@@ -61,7 +61,7 @@ ls -la .kit/context/*-REVIEW-STARTER.md 2>/dev/null || echo "No review starters 
 
 ```
 You receive:
-  - Task file: .kit/delegation/tasks/4-in-review/ASK-XXXX.md
+  - Task file: .kit/tasks/4-in-review/ASK-XXXX.md
   - Handoff file: .kit/context/ASK-XXXX-HANDOFF-*.md (if exists)
   - Code changes: Use git diff or Serena to find
 
@@ -193,7 +193,7 @@ Create your review report at `.kit/context/reviews/ASK-XXXX-review.md` (or `-rou
 
 **Reviewer**: code-reviewer
 **Date**: YYYY-MM-DD
-**Task File**: .kit/delegation/tasks/4-in-review/ASK-XXXX.md
+**Task File**: .kit/tasks/4-in-review/ASK-XXXX.md
 **Verdict**: APPROVED | CHANGES_REQUESTED | ESCALATE_TO_HUMAN
 **Round**: 1 | 2
 
@@ -248,7 +248,7 @@ Create your review report at `.kit/context/reviews/ASK-XXXX-review.md` (or `-rou
 ### Step 1: Read Task Specification
 ```bash
 # Read the task file to understand requirements
-Read .kit/delegation/tasks/4-in-review/ASK-XXXX.md
+Read .kit/tasks/4-in-review/ASK-XXXX.md
 ```
 
 ### Step 2: Read Handoff (if exists)

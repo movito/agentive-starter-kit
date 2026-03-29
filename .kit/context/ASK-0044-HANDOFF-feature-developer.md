@@ -5,7 +5,7 @@
 **Date**: 2026-03-28
 **From**: Planner (planner2)
 **To**: feature-developer-v5
-**Task**: `.kit/delegation/tasks/2-todo/ASK-0044-separate-kit-internals.md`
+**Task**: `.kit/tasks/2-todo/ASK-0044-separate-kit-internals.md`
 **Status**: Ready for implementation
 **Evaluation**: arch-review (o1) — APPROVED ($0.23)
 **Scope**: PR 1 only — directory moves and path updates
@@ -143,7 +143,7 @@ Replace all old paths with `.kit/` paths. Key sections to update:
 
 | Old Path | New Path |
 |----------|----------|
-| `.kit/delegation/tasks/` | `.kit/delegation/tasks/` |
+| `.kit/tasks/` | `.kit/tasks/` |
 | `.kit/context/` | `.kit/context/` |
 | `.kit/adversarial/` | `.kit/adversarial/` |
 | `.kit/decisions/` | `.kit/decisions/` |
@@ -158,7 +158,7 @@ Every agent that references old paths needs updating. Search and replace:
 # Find all references to old paths in .claude/ and .kit/
 grep -rn '.kit/context/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
 grep -rn '.kit/adversarial/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
-grep -rn '.kit/delegation/tasks/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
+grep -rn '.kit/tasks/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
 grep -rn '.kit/decisions/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
 grep -rn 'agents/launch' .claude/ .kit/ CLAUDE.md
 ```
@@ -171,10 +171,10 @@ for old paths after updates.
 ```bash
 grep -rn '.kit/context/' scripts/
 grep -rn '.kit/adversarial/' scripts/
-grep -rn '.kit/delegation/tasks/' scripts/
+grep -rn '.kit/tasks/' scripts/
 ```
 
-The `project` script references `.kit/delegation/tasks/` for task management. Update it.
+The `project` script references `.kit/tasks/` for task management. Update it.
 The `validate_task_status.py` script references task folders. Update it.
 
 ### Step 6: Update pyproject.toml
@@ -210,7 +210,7 @@ grep -rn '\.kit/adversarial/' --include='*.md' --include='*.py' --include='*.sh'
    The grep verification in Step 4-5 is your safety net.
 
 2. **`scripts/core/project` is the most complex** — it manages task files in
-   `.kit/delegation/tasks/`. Every task path reference must update to `.kit/delegation/tasks/`.
+   `.kit/tasks/`. Every task path reference must update to `.kit/tasks/`.
 
 3. **`.kit/context/` files reference each other** — handoff files point to task files,
    review starters point to handoffs. Internal cross-references need updating too.
@@ -232,7 +232,7 @@ grep -rn '\.kit/adversarial/' --include='*.md' --include='*.py' --include='*.sh'
 - [ ] Implementation agents/commands/skills stay in `.claude/`
 - [ ] CLAUDE.md uses `.kit/` paths throughout
 - [ ] All agent/command/skill definitions reference `.kit/` paths
-- [ ] `scripts/core/project` works with `.kit/delegation/tasks/`
+- [ ] `scripts/core/project` works with `.kit/tasks/`
 - [ ] Pre-commit hooks pass
 - [ ] `./scripts/core/ci-check.sh` green
 - [ ] Zero grep hits for old paths (excluding `.git/` and `.kit/` internal references)
@@ -248,7 +248,7 @@ grep -rn '\.kit/adversarial/' --include='*.md' --include='*.py' --include='*.sh'
 
 ---
 
-**Task File**: `.kit/delegation/tasks/2-todo/ASK-0044-separate-kit-internals.md`
+**Task File**: `.kit/tasks/2-todo/ASK-0044-separate-kit-internals.md`
 **ADR**: `.kit/decisions/KIT-ADR-0023-builder-project-separation.md`
 **Evaluation Log**: `.kit/adversarial/logs/ASK-0044-separate-kit-internals--arch-review.md`
 **Handoff Date**: 2026-03-28

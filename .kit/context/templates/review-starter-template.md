@@ -1,7 +1,7 @@
 # Review Starter: [TASK-ID]
 
 **Task**: [TASK-ID] - [Task Title]
-**Task File**: `.kit/delegation/tasks/4-in-review/[TASK-ID]-*.md`
+**Task File**: `.kit/tasks/4-in-review/[TASK-ID]-*.md`
 **Branch**: [feature-branch] → main
 **PR**: [URL if applicable]
 
@@ -42,7 +42,7 @@
 
 ## Related Documentation
 
-- **Task file**: `.kit/delegation/tasks/4-in-review/[TASK-ID]-*.md`
+- **Task file**: `.kit/tasks/4-in-review/[TASK-ID]-*.md`
 - **ADRs**: [List relevant ADR numbers, e.g., ADR-0001, ADR-0005]
 - **Handoff**: `.kit/context/[TASK-ID]-HANDOFF-*.md` (if exists)
 

@@ -4,7 +4,7 @@
     "current_task": "ASK-0044",
     "task_started": "2026-03-28",
     "brief_note": "COMPLETE: ASK-0044 spec written, KIT-ADR-0023 drafted, arch-review APPROVED, handoff ready for feature-developer-v5.",
-    "details_link": ".kit/delegation/tasks/2-todo/ASK-0044-separate-kit-internals.md",
+    "details_link": ".kit/tasks/2-todo/ASK-0044-separate-kit-internals.md",
     "handoff_file": ".kit/context/ASK-0044-HANDOFF-feature-developer.md"
   },
   "feature-developer": {

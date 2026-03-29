@@ -3,7 +3,7 @@
 **Date**: 2026-02-10
 **From**: Coordinator (main session)
 **To**: feature-developer
-**Task**: `.kit/delegation/tasks/3-in-progress/ASK-0033-agent-creation-automation.md`
+**Task**: `.kit/tasks/3-in-progress/ASK-0033-agent-creation-automation.md`
 **Plan**: `.kit/adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`
 **Status**: Ready for implementation
 **Evaluation**: Plan evaluated by GPT-5.2 (2 rounds, $0.09 total). Round 2 NEEDS_REVISION on 4 items being addressed during implementation.
@@ -196,6 +196,6 @@ This ensures they're skipped during pre-commit (which only runs fast tests) but 
 
 ---
 
-**Task File**: `.kit/delegation/tasks/3-in-progress/ASK-0033-agent-creation-automation.md`
+**Task File**: `.kit/tasks/3-in-progress/ASK-0033-agent-creation-automation.md`
 **Handoff Date**: 2026-02-10
 **Coordinator**: Main session

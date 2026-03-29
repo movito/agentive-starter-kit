@@ -88,6 +88,7 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Silent Failures**: Operations that can fail silently (like Linear sync) need verification commands (ASK-0025)
 - **Trusting Evaluator Verdicts Without Triage**: o3 code-reviewer can return FAIL based on false positives — always verify individual findings before accepting the overall verdict (KIT-0024)
 - **Blanket rm+copy in Sync Actions**: Use manifest-driven file-by-file copy to preserve local/unowned files in downstream repos (KIT-0024, KIT-ADR-0022)
+- **Splitting structural migrations into multiple PRs**: Mass directory moves + path rewrites create a half-migrated codebase between PRs that agents cannot navigate. Agents depend on hardcoded paths in prompts, handoff files, and CLAUDE.md — stale paths cause silent failures. Structural migrations must land atomically in a single branch/PR, even if large. The evaluator (arch-review) does not assess intermediate state viability — it only reviews the target architecture. The planner must catch this. (ASK-0044)
 
 ---
 

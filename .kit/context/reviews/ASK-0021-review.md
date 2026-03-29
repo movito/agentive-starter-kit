@@ -2,7 +2,7 @@
 
 **Reviewer**: code-reviewer (simulated for learning test)
 **Date**: 2025-11-29
-**Task File**: .kit/delegation/tasks/5-done/ASK-0021-logging-infrastructure-implementation.md
+**Task File**: .kit/tasks/5-done/ASK-0021-logging-infrastructure-implementation.md
 **Verdict**: APPROVED
 **Round**: 1
 **Test Case**: Learning Test 1 - Known Good Implementation

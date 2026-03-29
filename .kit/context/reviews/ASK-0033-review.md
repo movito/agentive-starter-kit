@@ -2,7 +2,7 @@
 
 **Reviewer**: code-reviewer
 **Date**: 2026-02-10
-**Task File**: .kit/delegation/tasks/4-in-review/ASK-0033-agent-creation-automation.md
+**Task File**: .kit/tasks/4-in-review/ASK-0033-agent-creation-automation.md
 **Verdict**: APPROVED
 **Round**: 1
 

@@ -14,19 +14,19 @@ Show the current state of the project.
 ## Step 1: Scan task folders
 
 ```bash
-echo "=== In Progress ===" && ls .kit/delegation/tasks/3-in-progress/ 2>/dev/null || echo "  (none)"
+echo "=== In Progress ===" && ls .kit/tasks/3-in-progress/ 2>/dev/null || echo "  (none)"
 ```
 
 ```bash
-echo "=== Todo ===" && ls .kit/delegation/tasks/2-todo/ 2>/dev/null || echo "  (none)"
+echo "=== Todo ===" && ls .kit/tasks/2-todo/ 2>/dev/null || echo "  (none)"
 ```
 
 ```bash
-echo "=== In Review ===" && ls .kit/delegation/tasks/4-in-review/ 2>/dev/null || echo "  (none)"
+echo "=== In Review ===" && ls .kit/tasks/4-in-review/ 2>/dev/null || echo "  (none)"
 ```
 
 ```bash
-echo "=== Blocked ===" && ls .kit/delegation/tasks/7-blocked/ 2>/dev/null || echo "  (none)"
+echo "=== Blocked ===" && ls .kit/tasks/7-blocked/ 2>/dev/null || echo "  (none)"
 ```
 
 ## Step 2: Check recent activity

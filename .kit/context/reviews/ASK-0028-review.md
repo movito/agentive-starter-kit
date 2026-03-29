@@ -2,7 +2,7 @@
 
 **Reviewer**: code-reviewer
 **Date**: 2025-02-01
-**Task File**: .kit/delegation/tasks/4-in-review/ASK-0028-venv-setup-command.md
+**Task File**: .kit/tasks/4-in-review/ASK-0028-venv-setup-command.md
 **Verdict**: APPROVED
 **Round**: 1
 

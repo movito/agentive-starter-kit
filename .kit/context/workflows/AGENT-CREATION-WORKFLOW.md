@@ -239,7 +239,7 @@ Customize the documentation links for this agent's role:
 ## Quick Reference Documentation
 
 **Agent Coordination**:
-- Task specifications: `.kit/delegation/tasks/active/`
+- Task specifications: `.kit/tasks/active/`
 - Agent procedures: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
 - Your role context: `.kit/context/agent-handoffs.json` → `"api-tester"`
 - Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`
@@ -375,7 +375,7 @@ pytest tests/integration/api/ --cov=thematic_cuts.api --cov-report=html
 
 Before committing, verify agent works:
 
-1. **Create test task specification** in `.kit/delegation/tasks/active/`
+1. **Create test task specification** in `.kit/tasks/active/`
 2. **Launch agent** via your agent system
 3. **Verify agent can**:
    - Access required tools
@@ -613,7 +613,7 @@ pytest tests/integration/api/ -m performance
 
 ### 12. Test Agent
 
-Create `.kit/delegation/tasks/active/TASK-2025-TEST-api-basic-validation.md`:
+Create `.kit/tasks/active/TASK-2025-TEST-api-basic-validation.md`:
 
 ```markdown
 # TASK-2025-TEST: API Basic Validation Test

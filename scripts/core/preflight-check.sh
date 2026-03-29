@@ -43,7 +43,7 @@ while [[ $# -gt 0 ]]; do
             echo "  4. Zero unresolved threads      All review threads resolved"
             echo "  5. Evaluator review persisted   .kit/context/reviews/<TASK>-evaluator-review*.md"
             echo "  6. Review starter exists         .kit/context/<TASK>-REVIEW-STARTER.md"
-            echo "  7. Task in correct folder        .kit/delegation/tasks/3-in-progress or 4-in-review"
+            echo "  7. Task in correct folder        .kit/tasks/3-in-progress or 4-in-review"
             echo ""
             echo "Exit codes:"
             echo "  0  All gates pass"
@@ -152,7 +152,7 @@ if ! git rev-parse --verify origin/main &>/dev/null; then
 fi
 
 CODE_SHA=$(git log --diff-filter=ACDMR --format=%H "origin/main..HEAD" -- \
-    ':!*.md' ':!.kit/context/' ':!.kit/delegation/' 2>/dev/null | head -1 || true)
+    ':!*.md' ':!.kit/context/' ':!.kit/tasks/' 2>/dev/null | head -1 || true)
 
 NO_CODE_CHANGES=false
 if [ -z "$CODE_SHA" ]; then
@@ -321,7 +321,7 @@ fi
 
 # ─── Gate 7: Task in correct folder ─────────────────────────────────
 
-TASK_FILE=$(find .kit/delegation/tasks/3-in-progress .kit/delegation/tasks/4-in-review -name "${TASK_ID}*" 2>/dev/null | head -1 || true)
+TASK_FILE=$(find .kit/tasks/3-in-progress .kit/tasks/4-in-review -name "${TASK_ID}*" 2>/dev/null | head -1 || true)
 
 if [ -n "$TASK_FILE" ]; then
     echo "GATE:7:TaskFolder:PASS:$TASK_FILE"

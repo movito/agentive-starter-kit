@@ -259,7 +259,7 @@ def _verify_identity_leaks(project_dir: Path) -> int:
         ".kit/decisions",
         "docs/archive",
         "docs/UPSTREAM",
-        ".kit/delegation/tasks",
+        ".kit/tasks",
         "tests",
     ]
     exclude_files = {"onboarding.md"}
@@ -1109,7 +1109,7 @@ if not api_key:
     sys.exit(1)
 
 # Count local tasks
-tasks_dir = Path('.kit/delegation/tasks')
+tasks_dir = Path('.kit/tasks')
 workflow_folders = [
     '1-backlog', '2-todo', '3-in-progress', '4-in-review',
     '5-done', '6-canceled', '7-blocked'

@@ -2,7 +2,7 @@
 
 **Reviewer**: code-reviewer
 **Date**: YYYY-MM-DD
-**Task File**: .kit/delegation/tasks/4-in-review/ASK-XXXX.md
+**Task File**: .kit/tasks/4-in-review/ASK-XXXX.md
 **Verdict**: APPROVED | CHANGES_REQUESTED | ESCALATE_TO_HUMAN
 **Round**: 1 | 2
 

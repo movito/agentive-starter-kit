@@ -8,7 +8,7 @@ and common commands.
 
 ## Overview
 
-The project keeps task files as Markdown in `.kit/delegation/tasks/` and
+The project keeps task files as Markdown in `.kit/tasks/` and
 synchronizes them to [Linear](https://linear.app) via the GraphQL API. Each
 numbered subfolder maps to a Linear workflow state so that moving a file
 between folders is equivalent to dragging a card across a Kanban board.
@@ -23,7 +23,7 @@ The CLI wrapper `./scripts/project` exposes these through subcommands (see
 
 ## Folder-to-Status Mapping
 
-Task files live under `.kit/delegation/tasks/<folder>/`. Each folder maps to a
+Task files live under `.kit/tasks/<folder>/`. Each folder maps to a
 Linear status (defined in `linear_sync_utils.FOLDER_STATUS_MAP`):
 
 | Folder | Linear Status | Description |

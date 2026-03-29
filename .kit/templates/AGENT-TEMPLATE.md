@@ -33,7 +33,7 @@ Always begin your responses with your identity header:
 - **Architecture**: [Your project's architecture - e.g., Python CLI, web app, etc.]
 - **Testing**: pytest-based TDD workflow (mandatory pre-commit hooks)
 - **Documentation**: `.kit/context/` system for agent coordination
-- **Task Management**: `.kit/delegation/tasks/` with Linear sync
+- **Task Management**: `.kit/tasks/` with Linear sync
 
 ## Task Lifecycle Management (MANDATORY)
 
@@ -112,10 +112,10 @@ Request independent evaluation from an external evaluator agent when you encount
 ```bash
 # Run evaluation directly (you have Bash tool access)
 # Tasks are in numbered folders: 2-todo/, 3-in-progress/, etc.
-adversarial evaluate .kit/delegation/tasks/2-todo/TASK-FILE.md
+adversarial evaluate .kit/tasks/2-todo/TASK-FILE.md
 
 # Example:
-# adversarial evaluate .kit/delegation/tasks/2-todo/TASK-2025-042-feature-name.md
+# adversarial evaluate .kit/tasks/2-todo/TASK-2025-042-feature-name.md
 ```
 
 **Reading Results**:
@@ -188,7 +188,7 @@ This will help me proceed without further evaluation loops."
 ## Quick Reference Documentation
 
 **Agent Coordination**:
-- Task specifications: `.kit/delegation/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
+- Task specifications: `.kit/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
 - Agent procedures: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
 - Your role context: `.kit/context/agent-handoffs.json` → `"[agent-name]"`
 - [Role-specific workflow documents - e.g., "Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`"]
@@ -250,7 +250,7 @@ When creating project documentation, use the correct locations:
 | Document Type | Location | Example |
 |---------------|----------|---------|
 | **ADRs** | `docs/decisions/adr/` | `ADR-004-feature-name.md` |
-| **Tasks** | `.kit/delegation/tasks/1-backlog/` | `TASK-0030-task-name.md` |
+| **Tasks** | `.kit/tasks/1-backlog/` | `TASK-0030-task-name.md` |
 | **Research** | `[project-specific]/research/<topic>/` | `analysis.md` |
 
 **DO NOT create ADRs or documentation in `.claude/`** - that directory is for agent definitions and settings only.

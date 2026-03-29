@@ -7,7 +7,7 @@
 
 ## Overview
 
-Linear sync enables two-way synchronization between task files (`.kit/delegation/tasks/`) and Linear issues. This checklist ensures bulletproof setup for both single-team and multi-team workspaces.
+Linear sync enables two-way synchronization between task files (`.kit/tasks/`) and Linear issues. This checklist ensures bulletproof setup for both single-team and multi-team workspaces.
 
 ## Key Features
 

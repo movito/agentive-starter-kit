@@ -4,7 +4,7 @@
 
 ## Task File
 
-`.kit/delegation/tasks/2-todo/ASK-0036-expand-reconfigure.md`
+`.kit/tasks/2-todo/ASK-0036-expand-reconfigure.md`
 
 ## Mission
 

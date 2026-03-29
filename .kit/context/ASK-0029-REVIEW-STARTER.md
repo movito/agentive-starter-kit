@@ -1,7 +1,7 @@
 # Review Starter: ASK-0029
 
 **Task**: ASK-0029 - Multi-Evaluator Architecture
-**Task File**: `.kit/delegation/tasks/4-in-review/ASK-0029-multi-evaluator-architecture.md`
+**Task File**: `.kit/tasks/4-in-review/ASK-0029-multi-evaluator-architecture.md`
 **Branch**: feature/ask-0029-multi-evaluator-architecture → main
 **PR**: https://github.com/movito/agentive-starter-kit/pull/9
 

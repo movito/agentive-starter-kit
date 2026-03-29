@@ -4,7 +4,7 @@ interfaces:
   spawn_command: .kit/launchers/launch $AGENT_NAME
   bus_file: .dispatch/bus.jsonl
   starter_dir: .kit/context/
-  task_dir: .kit/delegation/tasks/
+  task_dir: .kit/tasks/
   session_manager: tmux
   notification: terminal
 transitions:

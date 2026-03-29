@@ -1,6 +1,6 @@
 # ASK-0031 Handoff: Virtual Environment Activation UX
 
-**Task**: `.kit/delegation/tasks/2-todo/ASK-0031-venv-activation-ux.md`
+**Task**: `.kit/tasks/2-todo/ASK-0031-venv-activation-ux.md`
 **Prepared by**: Planner
 **Date**: 2026-02-01
 **Evaluation Rounds**: 1 (GPT-4o) - concerns addressed in task file

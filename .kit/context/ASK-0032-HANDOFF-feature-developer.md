@@ -3,7 +3,7 @@
 **Date**: 2026-02-05
 **From**: Planner
 **To**: feature-developer
-**Task**: .kit/delegation/tasks/3-in-progress/ASK-0032-uv-auto-detection.md
+**Task**: .kit/tasks/3-in-progress/ASK-0032-uv-auto-detection.md
 **Status**: Ready for implementation
 **Evaluation**: N/A (straightforward enhancement)
 
@@ -155,7 +155,7 @@ if (major, minor) >= (3, 13):
 ## Resources for Implementation
 
 - **Current setup code**: `scripts/project` lines 290-360
-- **ASK-0030** (completed): `.kit/delegation/tasks/5-done/ASK-0030-python-version-ceiling.md`
+- **ASK-0030** (completed): `.kit/tasks/5-done/ASK-0030-python-version-ceiling.md`
 - **uv documentation**: https://docs.astral.sh/uv/
 - **Test template**: `tests/test_template.py`
 
@@ -226,6 +226,6 @@ $ python3 scripts/project setup
 
 ---
 
-**Task File**: `.kit/delegation/tasks/3-in-progress/ASK-0032-uv-auto-detection.md`
+**Task File**: `.kit/tasks/3-in-progress/ASK-0032-uv-auto-detection.md`
 **Handoff Date**: 2026-02-05
 **Coordinator**: Planner

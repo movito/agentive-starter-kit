@@ -1,7 +1,7 @@
 # ASK-0039 Handoff — Full TDD Lifecycle Verification
 
 **Task**: ASK-0039 — Workflow Verification: Full TDD Lifecycle (All 11 Phases)
-**Task File**: `.kit/delegation/tasks/2-todo/ASK-0039-workflow-verify-full-tdd-lifecycle.md`
+**Task File**: `.kit/tasks/2-todo/ASK-0039-workflow-verify-full-tdd-lifecycle.md`
 **Agent**: feature-developer-v3
 **Created**: 2026-02-27
 

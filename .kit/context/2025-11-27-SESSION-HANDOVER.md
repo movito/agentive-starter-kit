@@ -102,7 +102,7 @@ git merge upstream/main -m "Merge upstream updates"
 **NEW**: Onboarding now creates a first task to guide planner toward TDD practices.
 
 **Files Added**:
-- `.kit/delegation/tasks/9-reference/templates/SETUP-0001-testing-infrastructure.md`
+- `.kit/tasks/9-reference/templates/SETUP-0001-testing-infrastructure.md`
 
 **Onboarding Updated**:
 - Phase 6 creates `[PREFIX]-0001-testing-infrastructure.md` in `2-todo/`
@@ -154,7 +154,7 @@ agentive-starter-kit/
 │   ├── launch                # Agent launcher (documented, fixed)
 │   ├── onboarding            # First-run script
 │   └── preflight             # NEW - Requirement validator
-├── .kit/delegation/tasks/
+├── .kit/tasks/
 │   └── 9-reference/templates/
 │       └── SETUP-0001-testing-infrastructure.md  # NEW - TDD seed task
 └── docs/decisions/adr/
@@ -197,7 +197,7 @@ agentive-starter-kit/
 
 ### If User Has New Tasks
 1. Use planner for coordination
-2. Create tasks in `.kit/delegation/tasks/2-todo/`
+2. Create tasks in `.kit/tasks/2-todo/`
 3. Follow TDD practices (seed task as example)
 
 ### Known Working Projects Using This Kit

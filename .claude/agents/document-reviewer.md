@@ -41,9 +41,9 @@ Run external evaluation autonomously for second opinions or clarification during
 
 ```bash
 # For files < 500 lines (use appropriate folder):
-adversarial evaluate .kit/delegation/tasks/3-in-progress/TASK-FILE.md
+adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 # For large files (>500 lines) requiring confirmation:
-echo y | adversarial evaluate .kit/delegation/tasks/3-in-progress/TASK-FILE.md
+echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
 # Read evaluator feedback
 cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
@@ -58,7 +58,7 @@ cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
 **📖 Template**: `.kit/templates/TASK-STARTER-TEMPLATE.md`
 
 When you receive task assignments, they come in a standardized format with:
-- Task file: Full specification in `.kit/delegation/tasks/[folder]/[TASK-ID].md`
+- Task file: Full specification in `.kit/tasks/[folder]/[TASK-ID].md`
 - Handoff file: Implementation guidance in `.kit/context/[TASK-ID]-HANDOFF-[agent-type].md`
 
 ### Step 1: Receive Task Assignment

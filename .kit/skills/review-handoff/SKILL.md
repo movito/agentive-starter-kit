@@ -32,7 +32,7 @@ Copy template from `.kit/context/templates/review-starter-template.md` to `.kit/
 # Review Starter: <TASK-ID>
 
 **Task**: <TASK-ID> - [Task Title]
-**Task File**: `.kit/delegation/tasks/4-in-review/<TASK-ID>-*.md`
+**Task File**: `.kit/tasks/4-in-review/<TASK-ID>-*.md`
 **Branch**: [feature-branch] -> main
 **PR**: [URL]
 
@@ -66,7 +66,7 @@ Copy template from `.kit/context/templates/review-starter-template.md` to `.kit/
 
 ## Adding Review Section to Task File
 
-Append a `## Review` section to the task file in `.kit/delegation/tasks/4-in-review/`:
+Append a `## Review` section to the task file in `.kit/tasks/4-in-review/`:
 
 ```markdown
 ## Review

@@ -19,7 +19,7 @@ bot findings, require zero fix-commit rounds, and merge on first human review.
 
 Planner artifacts go to `main` as `chore:` or `docs:` commits:
 
-- Task specs (`.kit/delegation/tasks/`)
+- Task specs (`.kit/tasks/`)
 - Architecture assessments (`docs/decisions/adr/`)
 - Handoff files (`.kit/context/`)
 - Evaluator doc updates (`.kit/adversarial/docs/`)
@@ -29,7 +29,7 @@ generate irrelevant bot findings.
 
 ```bash
 # Planner workflow (on main):
-git add .kit/delegation/tasks/2-todo/TASK-XXXX.md .kit/context/TASK-XXXX-HANDOFF-*.md
+git add .kit/tasks/2-todo/TASK-XXXX.md .kit/context/TASK-XXXX-HANDOFF-*.md
 git commit -m "chore: Add TASK-XXXX task spec and handoff"
 git push origin main
 ```
@@ -50,7 +50,30 @@ When a task is estimated to exceed 500 additions, add a `## PR Plan` section:
 **Split heuristic**: If the task touches files in more than one architecture layer
 AND estimated additions exceed 500 lines, pre-define the split.
 
-### 3. Single-PR tasks
+### 3. Structural migrations are always single-PR
+
+**Structural migrations** (mass directory moves, path rewrites, file renames) must
+land as a **single atomic PR**, regardless of size. Do NOT split them.
+
+**Why:** Intermediate states between PRs leave the codebase half-migrated — old paths
+in some files, new paths in others. Human developers can navigate this; agents cannot.
+Agent prompts, handoff files, and CLAUDE.md all contain hardcoded path references that
+break silently when the directory structure is inconsistent.
+
+**Indicators that a task is a structural migration:**
+- Primary work is `git mv` + find-and-replace path updates
+- Most changed files are renames (verifiable via `git diff --stat`)
+- The change is mechanically verifiable, not logically complex
+- Splitting would create a state where path references are inconsistent
+
+**The large-PR concern is mitigated because:**
+- Renames show as renames in `git diff`, not as add/delete
+- Path rewrites are mechanical and grep-verifiable
+- Reviewers can verify with `git diff --stat` + spot-checks
+
+This overrides the 500-line heuristic. Ref: ASK-0044 (learned the hard way).
+
+### 4. Single-PR tasks
 
 Tasks under ~500 estimated additions don't need a PR Plan section. Most bug fixes,
 doc changes, and single-module tasks fall here.
@@ -94,6 +117,7 @@ If implementation reveals the task is larger than estimated:
 | < 500 lines | No | Single PR |
 | 500-1000 lines | Yes | 2 PRs (domain + integration) |
 | > 1000 lines | Yes | 2-3 PRs (consider further decomposition) |
+| Structural migration (any size) | No | Single atomic PR (see §3) |
 
 | Content type | Goes where? |
 |-------------|-------------|

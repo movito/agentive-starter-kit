@@ -1,7 +1,7 @@
 # Review Starter: ASK-0033
 
 **Task**: ASK-0033 - Agent Creation Automation Script
-**Task File**: `.kit/delegation/tasks/4-in-review/ASK-0033-agent-creation-automation.md`
+**Task File**: `.kit/tasks/4-in-review/ASK-0033-agent-creation-automation.md`
 **Branch**: feature/ASK-0033-v2-agent-creation → main
 **PR**: https://github.com/movito/agentive-starter-kit/pull/13
 **Commits**: 7 (099f1cc..58ed0ed)
@@ -100,7 +100,7 @@ The 18 bugs from PR #12 are documented in `.kit/adversarial/artifacts/ASK-0033-v
 
 ## Related Documentation
 
-- **Task file**: `.kit/delegation/tasks/4-in-review/ASK-0033-agent-creation-automation.md`
+- **Task file**: `.kit/tasks/4-in-review/ASK-0033-agent-creation-automation.md`
 - **Reimplementation plan**: `.kit/adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`
 - **Bug ledger**: 18 bugs from PR #12 (S1-S10, T1-T8) in the plan
 - **CodeRabbit triage**: PR comment with full 30-item triage table

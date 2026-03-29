@@ -525,7 +525,7 @@ Built with [Agentive Starter Kit](https://github.com/movito/agentive-starter-kit
 
 ### Create backlog task for comprehensive README
 
-Create `.kit/delegation/tasks/1-backlog/[PREFIX]-0001-write-project-readme.md`:
+Create `.kit/tasks/1-backlog/[PREFIX]-0001-write-project-readme.md`:
 
 ```markdown
 # [PREFIX]-0001: Write Project README
@@ -838,7 +838,7 @@ Configuration Summary:
 
 **Next Steps:**
 1. Run `.kit/launchers/launch planner` to start planning your first feature
-2. Create a task in `.kit/delegation/tasks/2-todo/` describing what you want to build
+2. Create a task in `.kit/tasks/2-todo/` describing what you want to build
 3. Planner will evaluate and assign it to the appropriate agent
 
 **TDD is ready out of the box:**

@@ -9,7 +9,7 @@ the GitHub Action that syncs core scripts to downstream repos.
 
 ## Task File
 
-`.kit/delegation/tasks/2-todo/ASK-0042-scripts-core-restructure.md`
+`.kit/tasks/2-todo/ASK-0042-scripts-core-restructure.md`
 
 ## RULES — Read Before Anything Else
 

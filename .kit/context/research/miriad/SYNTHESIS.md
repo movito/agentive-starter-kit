@@ -404,7 +404,7 @@ scripts/
   🤔 Analyzing task priorities...
 
 [10:30:15] @planner → @feature-developer
-  Task ASK-0050 is now top priority. See .kit/delegation/tasks/2-todo/ASK-0050.md
+  Task ASK-0050 is now top priority. See .kit/tasks/2-todo/ASK-0050.md
 ```
 
 ### Phase 4: Enhanced Features (Week 4)

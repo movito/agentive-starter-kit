@@ -52,7 +52,7 @@ pytest tests/ --durations=10
 3. **Investigation**: For each failure, read traceback, understand root cause
 4. **Verification**: Run targeted tests (`--lf` flag) to confirm fixes
 5. **Coverage**: Check coverage report, identify untested code paths
-6. **Reporting**: Create test results document in `tests/results/` or `delegation/handoffs/`
+6. **Reporting**: Create test results document in `tests/results/` or `.kit/context/`
 7. **Recommendation**: Approve merge, request fixes, or escalate to coordinator
 
 ---

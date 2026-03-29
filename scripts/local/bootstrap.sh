@@ -59,7 +59,7 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
     --exclude='context/ASK-*' --exclude='context/retros/' --exclude='context/reviews/' --exclude='context/research/' \
     --exclude='context/*SESSION-HANDOVER*' --exclude='context/*LINEAR-SYNC*' --exclude='context/*MIRIAD*' \
     --exclude='context/*code-review-lessons*' --exclude='context/*code-review-test*' \
-    --exclude='delegation/tasks/ASK-*' \
+    --exclude='tasks/ASK-*' \
     "$PROJECT_ROOT/.kit/" "$TARGET/.kit/"
 
 # .serena/ — setup script and template

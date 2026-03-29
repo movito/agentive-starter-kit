@@ -1,7 +1,7 @@
 # Review Starter: ASK-0027
 
 **Task**: ASK-0027 - Add Project Reconfigure Command
-**Task File**: `.kit/delegation/tasks/4-in-review/ASK-0027-project-reconfigure-command.md`
+**Task File**: `.kit/tasks/4-in-review/ASK-0027-project-reconfigure-command.md`
 **Branch**: main (direct push)
 **Commit**: 2eee5c0
 

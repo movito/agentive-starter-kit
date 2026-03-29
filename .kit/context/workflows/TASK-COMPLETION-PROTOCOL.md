@@ -10,7 +10,7 @@
 
 - ✅ When all implementation work is complete
 - ✅ Before handing off to coordinator or other agent
-- ✅ Before marking task as COMPLETE in `.kit/delegation/`
+- ✅ Before marking task as COMPLETE in `.kit/tasks/`
 
 ---
 
@@ -22,7 +22,7 @@
 4. ✅ **No regressions introduced** (overall pass rate maintained or improved)
 5. ✅ **Documentation updated** (README, CHANGELOG, ADRs if applicable)
 6. ✅ **CI/CD passing** (GitHub Actions green)
-7. ✅ **Handoff document created** (`.kit/delegation/handoffs/HANDOFF-TO-*.md`)
+7. ✅ **Handoff document created** (`.kit/context/<TASK-ID>-HANDOFF-*.md`)
 
 ---
 
@@ -30,7 +30,7 @@
 
 ### Filename:
 ```
-.kit/delegation/handoffs/HANDOFF-TO-<AGENT>-TASK-YYYY-####.md
+.kit/context/<TASK-ID>-HANDOFF-<agent-type>.md
 ```
 
 ### Required Sections:
@@ -80,7 +80,7 @@ What should the next agent do with this?
 1. **Verify all deliverables complete** (check task file)
 2. **Run full test suite**: `pytest tests/ -v`
 3. **Review git status**: Ensure all changes committed
-4. **Create handoff document** in `.kit/delegation/handoffs/`
+4. **Create handoff document** in `.kit/context/`
 5. **Update `.kit/context/agent-handoffs.json`** with task completion
 6. **Stage and commit** handoff + agent-handoffs.json update
 7. **Push to remote repository**
@@ -108,9 +108,8 @@ What should the next agent do with this?
 ## Example Handoff Document
 
 See existing handoffs for examples:
-- `.kit/delegation/handoffs/SCRIPTWRITER-MVP-IMPLEMENTATION-COMPLETE.md`
-- `.kit/delegation/handoffs/HANDOFF-TO-FEATURE-DEVELOPER-TASK-2025-0037.md`
-- `.kit/delegation/handoffs/TASK-P3-001-IMPLEMENTATION-COMPLETE.md`
+- `.kit/context/ASK-0043-HANDOFF-feature-developer.md`
+- `.kit/context/ASK-0044-HANDOFF-feature-developer.md`
 
 ---
 
@@ -118,8 +117,8 @@ See existing handoffs for examples:
 
 - **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
 - **Full Protocol**: This document
-- **Handoff Examples**: `.kit/delegation/handoffs/*.md`
-- **Task Templates**: `.kit/delegation/templates/TASK-TEMPLATE.md`
+- **Handoff Examples**: `.kit/context/*-HANDOFF-*.md`
+- **Task Templates**: `.kit/templates/TASK-STARTER-TEMPLATE.md`
 
 ---
 
