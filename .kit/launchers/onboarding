@@ -3,7 +3,14 @@
 # Agentive Starter Kit - First-Run Onboarding
 # Launches planner with full context for new project setup
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE="${BASH_SOURCE[0]}"
+# Resolve symlinks so SCRIPT_DIR points to the real file location
+while [[ -L "$SOURCE" ]]; do
+    DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 CLAUDE_AGENTS_DIR="$PROJECT_ROOT/.claude/agents"
 PROJECT_NAME=$(basename "$PROJECT_ROOT")
