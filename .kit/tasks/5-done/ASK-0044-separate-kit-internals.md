@@ -1,6 +1,6 @@
 # ASK-0044: Separate Builder Layer from Project Layer (`.kit/` Boundary)
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: High
 **Assigned To**: unassigned
 **Estimated Effort**: 3-4 days (across 3 PRs)

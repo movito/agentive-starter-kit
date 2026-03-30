@@ -32,6 +32,7 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 ### Scripts (`scripts/`)
 
 - **ASK-0043**: Root-resolution preamble (`SCRIPT_DIR`/`PROJECT_ROOT`/`cd`) is now standard in all shell scripts. Future scripts must include it. Scripts with `set -e` already handle `cd` failure; scripts without it need `|| exit 1` on the `cd` line.
+- **ASK-0044**: Launcher scripts (`launch`, `onboarding`) must self-test `PROJECT_ROOT` resolution — when a script moves to a different directory depth, `dirname` chains silently resolve to the wrong root. Add guard: `[[ -f "$PROJECT_ROOT/pyproject.toml" ]] || exit 1`.
 
 - **ASK-0025**: Inline Python via `-c` in bash scripts follows `teams` command pattern - acceptable for smaller scripts
 - **ASK-0025**: For large inline scripts (185+ lines), consider extracting to separate module (e.g., `scripts/check_sync_status.py`) for testability
@@ -94,6 +95,8 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ## Integration Notes
 
+- **Grep False Positives**: `settings.local.json` (gitignored) contains auto-generated permission allow-list entries with old paths — these trigger grep matches during path audits but are not runtime code. Exclude from path-consistency checks. (ASK-0044)
+- **CI Verification**: `verify-ci.sh` only checks push-triggered workflows but the Tests workflow triggers on `pull_request`. Fall back to `gh run list` for comprehensive status. (ASK-0044)
 - **Linear Sync**: Use `./scripts/core/project sync-status` after commits to verify Linear is updated (ASK-0025)
 - **Upstream Merges**: Run `./scripts/core/project reconfigure` after pulling upstream changes to update agent files (ASK-0027)
 - **New Project Setup**: Run `./scripts/core/project setup` to create venv and install dependencies (ASK-0028)
@@ -107,4 +110,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-03-28 by planner (ASK-0043 insights added)*
+*Last updated: 2026-03-30 by planner (ASK-0044 insights added)*

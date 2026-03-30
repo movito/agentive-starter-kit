@@ -1,17 +1,17 @@
 {
   "planner": {
-    "status": "completed",
-    "current_task": "ASK-0044",
-    "task_started": "2026-03-28",
-    "brief_note": "COMPLETE: ASK-0044 spec written, KIT-ADR-0023 drafted, arch-review APPROVED, handoff ready for feature-developer-v5.",
-    "details_link": ".kit/tasks/2-todo/ASK-0044-separate-kit-internals.md",
-    "handoff_file": ".kit/context/ASK-0044-HANDOFF-feature-developer.md"
+    "status": "idle",
+    "current_task": null,
+    "task_started": null,
+    "brief_note": "ASK-0044 DONE (PR #41 merged). .kit/ boundary established. Retro extracted to REVIEW-INSIGHTS.",
+    "details_link": ".kit/tasks/5-done/ASK-0044-separate-kit-internals.md",
+    "handoff_file": null
   },
   "feature-developer": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "KIT-0024 done (PR #39). ASK-0034 through ASK-0045 all done. Ready for next assignment.",
+    "brief_note": "ASK-0044 done (PR #41). All tasks through ASK-0045 complete. Ready for next assignment.",
     "details_link": null
   },
   "code-reviewer": {
