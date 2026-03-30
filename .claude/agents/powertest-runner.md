@@ -169,12 +169,12 @@ Request external validation from Evaluator when facing:
 ### How to Run Evaluation
 ```bash
 # For files < 500 lines (use appropriate folder):
-adversarial evaluate delegation/tasks/3-in-progress/TASK-FILE.md
+adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 # For large files (>500 lines) requiring confirmation:
-echo y | adversarial evaluate delegation/tasks/3-in-progress/TASK-FILE.md
+echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
 # Read evaluation results
-cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
+cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
 
 # Address feedback and iterate (max 2-3 rounds)
 ```
@@ -184,8 +184,8 @@ cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 **📖 Template**: `.claude/agents/TASK-STARTER-TEMPLATE.md`
 
 When you receive task assignments, they come in a standardized format with:
-- Task file: Full specification in `delegation/tasks/[folder]/[TASK-ID].md`
-- Handoff file: Implementation guidance in `.agent-context/[TASK-ID]-HANDOFF-[agent-type].md`
+- Task file: Full specification in `.kit/tasks/[folder]/[TASK-ID].md`
+- Handoff file: Implementation guidance in `.kit/context/[TASK-ID]-HANDOFF-[agent-type].md`
 
 ### Step 1: Receive Task Assignment
 
@@ -264,7 +264,7 @@ For longer tasks requiring multiple agent sessions or handoffs:
 
 **How to create**:
 1. Read TASK-STARTER-TEMPLATE.md for format
-2. Create handoff file: `.agent-context/[TASK-ID]-HANDOFF-[next-agent].md`
+2. Create handoff file: `.kit/context/[TASK-ID]-HANDOFF-[next-agent].md`
 3. Update agent-handoffs.json with handoff details
 4. Write task starter message with 7 required sections (see template)
 5. Reference both task file and handoff file in starter
@@ -380,7 +380,7 @@ The script reports ✅ PASS / ❌ FAIL / ⏳ IN PROGRESS / ⚠️ MIXED status a
 
 **Soft Block**: Fix CI failures before task completion. For IN PROGRESS status, re-run with `--wait`. For MIXED status, review and use judgment (document decision).
 
-**Reference**: `.agent-context/workflows/COMMIT-PROTOCOL.md`
+**Reference**: `.kit/context/workflows/COMMIT-PROTOCOL.md`
 
 ## Code Review Workflow (MANDATORY)
 
@@ -415,7 +415,7 @@ Use the Task tool with these parameters:
 - subagent_type: "code-reviewer"
 - description: "Code review for <TASK-ID>"
 - prompt: "Please review the implementation for <TASK-ID>.
-  Task file: delegation/tasks/4-in-review/<TASK-ID>.md
+  Task file: .kit/tasks/4-in-review/<TASK-ID>.md
   Recent commits: [list relevant commit hashes]
   Focus areas: [TDD compliance, test coverage, code quality]"
 ```
@@ -442,7 +442,7 @@ The code-reviewer agent will:
 - Ensures consistent code quality and patterns
 - Knowledge sharing across agents
 
-**Reference**: `docs/decisions/starter-kit-adr/KIT-ADR-0014-code-review-workflow.md`
+**Reference**: `.kit/decisions/KIT-ADR-0014-code-review-workflow.md`
 
 ## Restrictions
 

@@ -65,15 +65,15 @@ git checkout -b feature/<TASK-ID>-short-description
 ./scripts/core/project start <TASK-ID>
 ```
 
-- Read task file: `delegation/tasks/3-in-progress/<TASK-ID>-*.md`
-- Read handoff file if provided: `.agent-context/<TASK-ID>-HANDOFF-*.md`
+- Read task file: `.kit/tasks/3-in-progress/<TASK-ID>-*.md`
+- Read handoff file if provided: `.kit/context/<TASK-ID>-HANDOFF-*.md`
 - If the task spec has `## PR Plan`, implement only the current PR's scope
 
 ## Phase 2: Pre-Implementation (GATE)
 
 Run the **pre-implementation skill** in full. Do NOT write code until it passes.
 
-1. **Search before you write**: Grep for existing implementations. Check `.agent-context/patterns.yml` for canonical patterns. If one exists, import it — do NOT rewrite.
+1. **Search before you write**: Grep for existing implementations. Check `.kit/context/patterns.yml` for canonical patterns. If one exists, import it — do NOT rewrite.
 2. **Verify spec against reality**: Docstrings must describe actual behavior, not planned behavior.
 3. **Declare matching semantics**: `==` for identifiers (default), `in` only with justification comment.
 4. **Plan error handling**: Read sibling functions. Follow the same strategy across the module. Check `patterns.yml → error_strategies`.
@@ -84,7 +84,7 @@ Run the **pre-implementation skill** in full. Do NOT write code until it passes.
 
 For each function, in order:
 
-1. **Consult** `.agent-context/patterns.yml` — use canonical patterns, follow documented error strategies
+1. **Consult** `.kit/context/patterns.yml` — use canonical patterns, follow documented error strategies
 2. **Enumerate boundaries** — list every input source (params, dict access, external output, attributes). For external integrations, read the tool's docs and enumerate all possible values
 3. **Write tests first** — property tests (Hypothesis) for pure functions, example tests for impure. Cover: happy path, empty/None/zero, all optional fields, each `if` branch, each boundary with wrong type
 4. **Implement** — match sibling error handling in the module
@@ -177,11 +177,11 @@ single-field calls (e.g., `gh pr view --json number --jq .number`).
 
 Run the **code-review-evaluator skill**:
 
-1. Prepare input: `.adversarial/inputs/<TASK-ID>-code-review-input.md`
+1. Prepare input: `.kit/adversarial/inputs/<TASK-ID>-code-review-input.md`
 2. Run: `adversarial code-reviewer <input-file>` (or `code-reviewer-fast`)
-   - Use evaluator **names** (e.g., `code-reviewer`), NOT file paths like `.adversarial/evaluators/*.yml`
+   - Use evaluator **names** (e.g., `code-reviewer`), NOT file paths like `.kit/adversarial/evaluators/*.yml`
 3. Address FAIL/CONCERNS findings
-4. Persist: `.agent-context/reviews/<TASK-ID>-evaluator-review.md`
+4. Persist: `.kit/context/reviews/<TASK-ID>-evaluator-review.md`
 
 ## Phase 9: Preflight (GATE)
 
@@ -192,7 +192,7 @@ Run `/preflight`. Fix any failures before proceeding.
 Run the **review-handoff skill**:
 
 1. Move task: `./scripts/core/project move <TASK-ID> in-review`
-2. Create review starter: `.agent-context/<TASK-ID>-REVIEW-STARTER.md`
+2. Create review starter: `.kit/context/<TASK-ID>-REVIEW-STARTER.md`
 3. Add Review section to task file
 4. Notify user with thread count proof
 
@@ -242,13 +242,13 @@ Do NOT use for: Markdown, YAML/JSON, or reading entire files.
 
 | Resource | Location |
 |----------|----------|
-| Pattern registry | `.agent-context/patterns.yml` |
+| Pattern registry | `.kit/context/patterns.yml` |
 | Pattern lint | `scripts/core/pattern_lint.py` |
-| Task specs | `delegation/tasks/` |
-| Commit protocol | `.agent-context/workflows/COMMIT-PROTOCOL.md` |
-| Testing workflow | `.agent-context/workflows/TESTING-WORKFLOW.md` |
-| Review fix workflow | `.agent-context/workflows/REVIEW-FIX-WORKFLOW.md` |
-| PR size workflow | `.agent-context/workflows/PR-SIZE-WORKFLOW.md` |
+| Task specs | `.kit/tasks/` |
+| Commit protocol | `.kit/context/workflows/COMMIT-PROTOCOL.md` |
+| Testing workflow | `.kit/context/workflows/TESTING-WORKFLOW.md` |
+| Review fix workflow | `.kit/context/workflows/REVIEW-FIX-WORKFLOW.md` |
+| PR size workflow | `.kit/context/workflows/PR-SIZE-WORKFLOW.md` |
 
 ## Workflow Freeze Rule
 
@@ -256,7 +256,7 @@ Do NOT edit workflow definitions (skills, commands, agent files) during an
 active feature task. Changes to workflow definitions are tracked as separate
 `chore` tasks on their own branches.
 
-Reference: `.agent-context/workflows/WORKFLOW-FREEZE-POLICY.md`
+Reference: `.kit/context/workflows/WORKFLOW-FREEZE-POLICY.md`
 
 ## Restrictions
 

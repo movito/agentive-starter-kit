@@ -337,10 +337,10 @@ class TestTemplateProcessing:
 
 
 # ===================================================================
-# 6. TestLauncherIntegration — agents/launch modifications
+# 6. TestLauncherIntegration — .kit/launchers/launch modifications
 # ===================================================================
 class TestLauncherIntegration:
-    """Verify that agents/launch is correctly updated with new agent entries."""
+    """Verify that .kit/launchers/launch is correctly updated with new agent entries."""
 
     def setup_method(self):
         self.project_dir = setup_temp_project()
@@ -349,14 +349,16 @@ class TestLauncherIntegration:
         shutil.rmtree(self.project_dir, ignore_errors=True)
 
     def test_agent_added_to_agent_order(self):
-        """New agent appears in the agent_order array in agents/launch."""
+        """New agent appears in the agent_order array in .kit/launchers/launch."""
         result = run_script(
             ["order-test-agent", "Agent for order array test"], self.project_dir
         )
         assert (
             result.returncode == 0
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
-        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
+        launcher = (self.project_dir / ".kit" / "launchers" / "launch").read_text(
+            encoding="utf-8"
+        )
         assert (
             '"order-test-agent"' in launcher
         ), f"Agent not added to launcher agent_order:\n{launcher}"
@@ -369,7 +371,9 @@ class TestLauncherIntegration:
         assert (
             result.returncode == 0
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
-        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
+        launcher = (self.project_dir / ".kit" / "launchers" / "launch").read_text(
+            encoding="utf-8"
+        )
         # Find the serena_agents block and check our agent is in it
         assert '"serena-test"' in launcher, f"Agent not found in launcher:\n{launcher}"
         # Verify it's in the serena_agents section specifically
@@ -389,7 +393,9 @@ class TestLauncherIntegration:
         assert (
             result.returncode == 0
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
-        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
+        launcher = (self.project_dir / ".kit" / "launchers" / "launch").read_text(
+            encoding="utf-8"
+        )
         # Should have an icon pattern matching this agent
         assert (
             "icon-test-agent" in launcher
@@ -407,7 +413,9 @@ class TestLauncherIntegration:
         assert (
             result.returncode == 0
         ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
-        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
+        launcher = (self.project_dir / ".kit" / "launchers" / "launch").read_text(
+            encoding="utf-8"
+        )
 
         # Verify agent_order entry indentation (8 spaces)
         order_pattern = re.compile(r'^        "golden-agent"$', re.MULTILINE)
@@ -443,7 +451,9 @@ class TestLauncherIntegration:
             result2.returncode == 0
         ), f"Force recreation failed: {result2.returncode}: {result2.stderr}"
 
-        launcher = (self.project_dir / "agents" / "launch").read_text(encoding="utf-8")
+        launcher = (self.project_dir / ".kit" / "launchers" / "launch").read_text(
+            encoding="utf-8"
+        )
         # Count occurrences of the agent in agent_order array
         occurrences = launcher.count('"dup-check"')
         assert occurrences == 1, (
@@ -485,7 +495,7 @@ class TestExitCodes:
 
         Remove the template file to trigger a system error.
         """
-        template = self.project_dir / ".claude" / "agents" / "AGENT-TEMPLATE.md"
+        template = self.project_dir / ".kit" / "templates" / "AGENT-TEMPLATE.md"
         template.unlink()
         result = run_script(
             ["sys-error-agent", "Should fail with system error"], self.project_dir
@@ -577,9 +587,9 @@ class TestDryRun:
 
     def test_dry_run_no_files_modified(self):
         """--dry-run does not create the agent file or modify the launcher."""
-        launcher_before = (self.project_dir / "agents" / "launch").read_text(
-            encoding="utf-8"
-        )
+        launcher_before = (
+            self.project_dir / ".kit" / "launchers" / "launch"
+        ).read_text(encoding="utf-8")
 
         result = run_script(
             ["dry-run-agent", "Dry run test agent", "--dry-run"], self.project_dir
@@ -593,7 +603,7 @@ class TestDryRun:
         assert not agent_file.exists(), f"--dry-run created agent file at {agent_file}"
 
         # Launcher should be unchanged
-        launcher_after = (self.project_dir / "agents" / "launch").read_text(
+        launcher_after = (self.project_dir / ".kit" / "launchers" / "launch").read_text(
             encoding="utf-8"
         )
         assert launcher_before == launcher_after, "--dry-run modified the launcher file"

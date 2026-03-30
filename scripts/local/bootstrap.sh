@@ -53,17 +53,14 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 # .claude/ — agent definitions, commands, skills, settings
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
-# .adversarial/ — evaluation config, docs, scripts, templates (not logs/artifacts/evaluators)
+# .kit/ — builder layer (adversarial, context, delegation, agents, etc.)
 "${RSYNC_BASE[@]}" \
-    --exclude='logs/' --exclude='artifacts/' --exclude='inputs/' --exclude='evaluators/' \
-    "$PROJECT_ROOT/.adversarial/" "$TARGET/.adversarial/"
-
-# .agent-context/ — workflows, templates, patterns (not old handoffs/retros/reviews)
-"${RSYNC_BASE[@]}" \
-    --exclude='ASK-*' --exclude='retros/' --exclude='reviews/' --exclude='research/' \
-    --exclude='*SESSION-HANDOVER*' --exclude='*LINEAR-SYNC*' --exclude='*MIRIAD*' \
-    --exclude='*code-review-lessons*' --exclude='*code-review-test*' \
-    "$PROJECT_ROOT/.agent-context/" "$TARGET/.agent-context/"
+    --exclude='adversarial/logs/' --exclude='adversarial/artifacts/' --exclude='adversarial/inputs/' --exclude='adversarial/evaluators/' \
+    --exclude='context/ASK-*' --exclude='context/retros/' --exclude='context/reviews/' --exclude='context/research/' \
+    --exclude='context/*SESSION-HANDOVER*' --exclude='context/*LINEAR-SYNC*' --exclude='context/*MIRIAD*' \
+    --exclude='context/*code-review-lessons*' --exclude='context/*code-review-test*' \
+    --exclude='tasks/ASK-*' \
+    "$PROJECT_ROOT/.kit/" "$TARGET/.kit/"
 
 # .serena/ — setup script and template
 "${RSYNC_BASE[@]}" --exclude='cache/' --exclude='memories/' --exclude='claude-code/' \
@@ -71,12 +68,6 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 
 # .github/ — CI workflows, dependabot
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/.github/" "$TARGET/.github/"
-
-# agents/ — launcher scripts
-"${RSYNC_BASE[@]}" "$PROJECT_ROOT/agents/" "$TARGET/agents/"
-
-# delegation/ — task folder structure and templates (not old task files)
-"${RSYNC_BASE[@]}" --exclude='ASK-*' "$PROJECT_ROOT/delegation/" "$TARGET/delegation/"
 
 # docs/ — only the structural parts (decisions, testing guide)
 "${RSYNC_BASE[@]}" --exclude='proposals/' "$PROJECT_ROOT/docs/" "$TARGET/docs/"
@@ -137,15 +128,13 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 # Build context for the agent
 MATERIAL_FILES=$(find "$TARGET" -maxdepth 2 \
     -not -path '*/.claude/*' \
-    -not -path '*/.adversarial/*' \
-    -not -path '*/.agent-context/*' \
+    -not -path '*/.kit/*' \
     -not -path '*/.serena/*' \
     -not -path '*/.github/*' \
     -not -path '*/.git/*' \
     -not -path '*/.venv/*' \
     -not -path '*/delegation/*' \
     -not -path '*/scripts/*' \
-    -not -path '*/agents/*' \
     -not -path '*/tests/*' \
     -not -path '*/docs/decisions/*' \
     -not -path '*/docs/TESTING.md' \

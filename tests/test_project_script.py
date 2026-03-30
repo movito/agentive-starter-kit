@@ -32,7 +32,7 @@ class TestInstallEvaluatorsCommand:
     @pytest.fixture
     def mock_project_dir(self, tmp_path):
         """Create a temporary project directory structure."""
-        evaluators_dir = tmp_path / ".adversarial" / "evaluators"
+        evaluators_dir = tmp_path / ".kit" / "adversarial" / "evaluators"
         evaluators_dir.mkdir(parents=True)
         return tmp_path
 
@@ -58,7 +58,7 @@ class TestInstallEvaluatorsCommand:
         cmd_install_evaluators = _project_module.cmd_install_evaluators
 
         # Create .installed-version file
-        evaluators_dir = mock_project_dir / ".adversarial" / "evaluators"
+        evaluators_dir = mock_project_dir / ".kit" / "adversarial" / "evaluators"
         version_file = evaluators_dir / ".installed-version"
         version_file.write_text("v0.2.2 (abc12345)\n", encoding="utf-8")
 
@@ -79,7 +79,7 @@ class TestInstallEvaluatorsCommand:
         cmd_install_evaluators = _project_module.cmd_install_evaluators
 
         # Create .installed-version file
-        evaluators_dir = mock_project_dir / ".adversarial" / "evaluators"
+        evaluators_dir = mock_project_dir / ".kit" / "adversarial" / "evaluators"
         version_file = evaluators_dir / ".installed-version"
         version_file.write_text("v0.2.2 (abc12345)\n", encoding="utf-8")
 
@@ -827,13 +827,13 @@ class TestVerifyIdentityLeaks:
     def test_excludes_legitimate_references(self, tmp_path):
         """Legitimate reference locations are excluded from scan."""
         # Create excluded directories with upstream references
-        adversarial_dir = tmp_path / ".adversarial"
-        adversarial_dir.mkdir()
+        adversarial_dir = tmp_path / ".kit" / "adversarial"
+        adversarial_dir.mkdir(parents=True)
         (adversarial_dir / "config.md").write_text(
             "agentive-starter-kit reference\n", encoding="utf-8"
         )
 
-        agent_ctx = tmp_path / ".agent-context"
+        agent_ctx = tmp_path / ".kit" / "context"
         agent_ctx.mkdir()
         (agent_ctx / "handoff.md").write_text(
             "agentive-starter-kit reference\n", encoding="utf-8"
@@ -845,7 +845,7 @@ class TestVerifyIdentityLeaks:
             "agentive-starter-kit reference\n", encoding="utf-8"
         )
 
-        tasks_dir = tmp_path / "delegation" / "tasks"
+        tasks_dir = tmp_path / ".kit" / "tasks"
         tasks_dir.mkdir(parents=True)
         (tasks_dir / "ASK-0036.md").write_text(
             "agentive-starter-kit reference\n", encoding="utf-8"

@@ -68,7 +68,7 @@ FOLDER_STATUS_MAP = {
 
 def find_task_file(task_id: str, project_dir: Path) -> Path | None:
     """Find a task file by ID across all workflow folders."""
-    tasks_dir = project_dir / "delegation" / "tasks"
+    tasks_dir = project_dir / ".kit" / "tasks"
 
     # Normalize task ID (handle ASK-0001 or ASK-1)
     task_id_upper = task_id.upper()
@@ -131,7 +131,7 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> bool:
         return True
 
     # Move file
-    target_dir = project_dir / "delegation" / "tasks" / target_folder
+    target_dir = project_dir / ".kit" / "tasks" / target_folder
     target_path = target_dir / task_file.name
 
     try:
@@ -151,7 +151,7 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> bool:
 
 def validate_all_tasks(project_dir: Path) -> bool:
     """Validate all task files have matching Status and folder."""
-    tasks_dir = project_dir / "delegation" / "tasks"
+    tasks_dir = project_dir / ".kit" / "tasks"
     errors = []
     checked = 0
 
@@ -253,12 +253,13 @@ def _verify_identity_leaks(project_dir: Path) -> int:
     # Directories to exclude (legitimate references)
     exclude_dirs = {".git", ".venv", ".aider"}
     exclude_path_parts = [
-        ".adversarial",
-        ".agent-context",
+        ".kit/adversarial",
+        ".kit/context",
         "docs/decisions",
+        ".kit/decisions",
         "docs/archive",
         "docs/UPSTREAM",
-        "delegation/tasks",
+        ".kit/tasks",
         "tests",
     ]
     exclude_files = {"onboarding.md"}
@@ -335,7 +336,7 @@ def reconfigure_project(project_dir: Path, *, verify: bool = False) -> bool:
     # Check .serena/project.yml exists
     if not serena_config.exists():
         print("Error: .serena/project.yml not found")
-        print("Run 'agents/launch onboarding' first to configure your project")
+        print("Run '.kit/launchers/launch onboarding' first to configure your project")
         return False
 
     # Extract project name (supports both 'name:' and 'project_name:')
@@ -799,7 +800,7 @@ def cmd_install_evaluators(args, project_dir):
         print("  Windows: https://git-scm.com/download/win")
         sys.exit(1)
 
-    evaluators_dir = project_dir / ".adversarial" / "evaluators"
+    evaluators_dir = project_dir / ".kit" / "adversarial" / "evaluators"
     evaluators_dir.mkdir(parents=True, exist_ok=True)
 
     print("📦 Adversarial Evaluator Library Installer")
@@ -1108,7 +1109,7 @@ if not api_key:
     sys.exit(1)
 
 # Count local tasks
-tasks_dir = Path('delegation/tasks')
+tasks_dir = Path('.kit/tasks')
 workflow_folders = [
     '1-backlog', '2-todo', '3-in-progress', '4-in-review',
     '5-done', '6-canceled', '7-blocked'

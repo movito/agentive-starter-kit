@@ -33,7 +33,7 @@ Always begin your responses with your identity header:
 ## Project Context
 - **Agent System**: Multi-agent coordination with specialized roles
 - **Standards**: All agents must include autonomous Evaluator workflow section
-- **Documentation**: `.agent-context/` system for agent coordination
+- **Documentation**: `.kit/context/` system for agent coordination
 - **Template**: Use `.claude/agents/AGENT-TEMPLATE.md` as starting point
 
 ## Interactive Agent Creation Workflow
@@ -175,14 +175,14 @@ EOF
 adversarial evaluate /tmp/agent-[name]-definition.md
 
 # Read results
-cat .adversarial/logs/*-PLAN-EVALUATION.md
+cat .kit/adversarial/logs/*-PLAN-EVALUATION.md
 ```
 
 Present evaluation feedback and ask if user wants to make improvements.
 
 #### B. Update Procedural Knowledge Index
 
-Add new agent to `.agent-context/PROCEDURAL-KNOWLEDGE-INDEX.md`:
+Add new agent to `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`:
 
 ```markdown
 ## [Agent Role] Procedures
@@ -203,7 +203,7 @@ Add new agent to `.agent-context/PROCEDURAL-KNOWLEDGE-INDEX.md`:
 
 #### C. Create Test Task
 
-Create initial validation task in `delegation/tasks/2-todo/`:
+Create initial validation task in `.kit/tasks/2-todo/`:
 
 ```markdown
 # TASK-TEST-[AGENT-NAME]: Initial Agent Validation
@@ -237,17 +237,17 @@ Provide summary:
 ## Agent Creation Complete! 🎉
 
 **Created**: `.claude/agents/[agent-name].md`
-**Updated**: `.agent-context/PROCEDURAL-KNOWLEDGE-INDEX.md` (if applicable)
-**Test Task**: `delegation/tasks/2-todo/TASK-TEST-[agent-name].md` (if created)
+**Updated**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md` (if applicable)
+**Test Task**: `.kit/tasks/2-todo/TASK-TEST-[agent-name].md` (if created)
 
 **How to launch this agent**:
-1. Run your agent launcher: `./agents/launch` (or your launcher command)
+1. Run your agent launcher: `./.kit/launchers/launch` (or your launcher command)
 2. Select "[agent-name]" from the list
 3. Agent will load with all configuration and instructions
 
 **Documentation**:
 - Agent file: `.claude/agents/[agent-name].md`
-- Creation workflow: `.agent-context/workflows/AGENT-CREATION-WORKFLOW.md`
+- Creation workflow: `.kit/context/workflows/AGENT-CREATION-WORKFLOW.md`
 - Template reference: `.claude/agents/AGENT-TEMPLATE.md`
 
 **Recommended next steps**:
@@ -336,8 +336,8 @@ Be **specific** about what the agent does.
 
 **Essential Reading** (reference these during agent creation):
 - **Agent Template**: `.claude/agents/AGENT-TEMPLATE.md` (base template)
-- **Creation Workflow**: `.agent-context/workflows/AGENT-CREATION-WORKFLOW.md` (comprehensive guide)
-- **Evaluator Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (for Evaluator section)
+- **Creation Workflow**: `.kit/context/workflows/AGENT-CREATION-WORKFLOW.md` (comprehensive guide)
+- **Evaluator Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (for Evaluator section)
 - **Existing Agents**: `.claude/agents/` (examples to learn from)
 
 **Quick Commands**:
@@ -349,7 +349,7 @@ ls .claude/agents/*.md
 cat .claude/agents/AGENT-TEMPLATE.md
 
 # View creation workflow
-cat .agent-context/workflows/AGENT-CREATION-WORKFLOW.md
+cat .kit/context/workflows/AGENT-CREATION-WORKFLOW.md
 
 # Run automation script
 scripts/optional/create-agent.sh agent-name "description"
@@ -367,8 +367,8 @@ You have full access to agent creation operations:
 - Read all project files and existing agents
 - Run `create-agent.sh` automation script via Bash tool
 - Create and modify agent files in `.claude/agents/`
-- Update `.agent-context/PROCEDURAL-KNOWLEDGE-INDEX.md`
-- Create test tasks in `delegation/tasks/2-todo/`
+- Update `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- Create test tasks in `.kit/tasks/2-todo/`
 - Invoke Evaluator to review agent definitions
 - Read and reference all documentation
 
@@ -467,7 +467,7 @@ If you push code changes to GitHub (new agent files, template updates, etc.):
 
 **Soft Block**: Fix CI failures before completing task, but use judgment for timeout situations.
 
-**Reference**: See `.agent-context/workflows/COMMIT-PROTOCOL.md` for full protocol.
+**Reference**: See `.kit/context/workflows/COMMIT-PROTOCOL.md` for full protocol.
 
 ## Quality Assurance
 

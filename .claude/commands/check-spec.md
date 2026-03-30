@@ -22,12 +22,12 @@ git branch --show-current
 
 ```bash
 # Find the task spec
-ls delegation/tasks/3-in-progress/
+ls .kit/tasks/3-in-progress/
 ```
 
 ## Step 2: Build the evaluator input
 
-Create the input file at `.adversarial/inputs/<TASK-ID>-spec-compliance-input.md` using the template at `.adversarial/templates/spec-compliance-input-template.md`.
+Create the input file at `.kit/adversarial/inputs/<TASK-ID>-spec-compliance-input.md` using the template at `.kit/adversarial/templates/spec-compliance-input-template.md`.
 
 You MUST include:
 
@@ -40,12 +40,12 @@ Use the Bash tool to read files and assemble the input. Do NOT summarize or trun
 ## Step 3: Run the evaluator
 
 ```bash
-adversarial spec-compliance-fast .adversarial/inputs/<TASK-ID>-spec-compliance-input.md
+adversarial spec-compliance-fast .kit/adversarial/inputs/<TASK-ID>-spec-compliance-input.md
 ```
 
 ## Step 4: Read and act on results
 
-The output lands in `.adversarial/logs/`. Read it and:
+The output lands in `.kit/adversarial/logs/`. Read it and:
 
 - **PASS** -> Proceed to `/commit-push-pr`
 - **PARTIAL** -> Fix the gaps, re-run tests, re-run evaluator

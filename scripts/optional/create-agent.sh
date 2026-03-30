@@ -4,13 +4,13 @@
 # Agent creation automation script
 #
 # Creates a new Claude Code agent from AGENT-TEMPLATE.md and registers it
-# in the agents/launch launcher script.
+# in the .kit/launchers/launch launcher script.
 #
 # Uses mkdir-based atomic locking for concurrent safety.
 # NFS caveat: mkdir atomicity is not guaranteed on NFS. This script targets
 # local development and CI runners, not networked filesystems.
 #
-# See: docs/decisions/starter-kit-adr/ for architectural decisions
+# See: .kit/decisions/ for architectural decisions
 # =============================================================================
 
 set -euo pipefail
@@ -39,8 +39,8 @@ else
 fi
 LOCK_INFO="$LOCK_DIR/owner"
 
-TEMPLATE_FILE="$PROJECT_ROOT/.claude/agents/AGENT-TEMPLATE.md"
-LAUNCHER_FILE="$PROJECT_ROOT/agents/launch"
+TEMPLATE_FILE="$PROJECT_ROOT/.kit/templates/AGENT-TEMPLATE.md"
+LAUNCHER_FILE="$PROJECT_ROOT/.kit/launchers/launch"
 LOG_DIR="$PROJECT_ROOT/logs"
 LOG_FILE="$LOG_DIR/agent-creation.log"
 

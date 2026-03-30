@@ -41,9 +41,9 @@ while [[ $# -gt 0 ]]; do
             echo "  2. CodeRabbit reviewed          coderabbitai[bot] reviewed latest code commit"
             echo "  3. BugBot reviewed              cursor[bot] reviewed latest code commit"
             echo "  4. Zero unresolved threads      All review threads resolved"
-            echo "  5. Evaluator review persisted   .agent-context/reviews/<TASK>-evaluator-review*.md"
-            echo "  6. Review starter exists         .agent-context/<TASK>-REVIEW-STARTER.md"
-            echo "  7. Task in correct folder        delegation/tasks/3-in-progress or 4-in-review"
+            echo "  5. Evaluator review persisted   .kit/context/reviews/<TASK>-evaluator-review*.md"
+            echo "  6. Review starter exists         .kit/context/<TASK>-REVIEW-STARTER.md"
+            echo "  7. Task in correct folder        .kit/tasks/3-in-progress or 4-in-review"
             echo ""
             echo "Exit codes:"
             echo "  0  All gates pass"
@@ -152,7 +152,7 @@ if ! git rev-parse --verify origin/main &>/dev/null; then
 fi
 
 CODE_SHA=$(git log --diff-filter=ACDMR --format=%H "origin/main..HEAD" -- \
-    ':!*.md' ':!.agent-context/' ':!delegation/' 2>/dev/null | head -1 || true)
+    ':!*.md' ':!.kit/context/' ':!.kit/tasks/' 2>/dev/null | head -1 || true)
 
 NO_CODE_CHANGES=false
 if [ -z "$CODE_SHA" ]; then
@@ -299,7 +299,7 @@ fi
 
 # ─── Gate 5: Evaluator review persisted ─────────────────────────────
 
-EVAL_FILE=$(find .agent-context/reviews -name "${TASK_ID}-evaluator-review*.md" 2>/dev/null | head -1 || true)
+EVAL_FILE=$(find .kit/context/reviews -name "${TASK_ID}-evaluator-review*.md" 2>/dev/null | head -1 || true)
 
 if [ -n "$EVAL_FILE" ]; then
     echo "GATE:5:Evaluator:PASS:$EVAL_FILE"
@@ -310,7 +310,7 @@ fi
 
 # ─── Gate 6: Review starter exists ──────────────────────────────────
 
-STARTER_FILE=$(find .agent-context -maxdepth 1 -name "${TASK_ID}-REVIEW-STARTER.md" 2>/dev/null | head -1 || true)
+STARTER_FILE=$(find .kit/context -maxdepth 1 -name "${TASK_ID}-REVIEW-STARTER.md" 2>/dev/null | head -1 || true)
 
 if [ -n "$STARTER_FILE" ]; then
     echo "GATE:6:ReviewStarter:PASS:$STARTER_FILE"
@@ -321,7 +321,7 @@ fi
 
 # ─── Gate 7: Task in correct folder ─────────────────────────────────
 
-TASK_FILE=$(find delegation/tasks/3-in-progress delegation/tasks/4-in-review -name "${TASK_ID}*" 2>/dev/null | head -1 || true)
+TASK_FILE=$(find .kit/tasks/3-in-progress .kit/tasks/4-in-review -name "${TASK_ID}*" 2>/dev/null | head -1 || true)
 
 if [ -n "$TASK_FILE" ]; then
     echo "GATE:7:TaskFolder:PASS:$TASK_FILE"

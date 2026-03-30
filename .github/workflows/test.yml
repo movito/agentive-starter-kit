@@ -6,9 +6,9 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
-      - 'delegation/**'
+      - '.kit/tasks/**'
       - '.claude/**'
-      - '.agent-context/**'
+      - '.kit/context/**'
   pull_request:
     branches: [main, develop]
   workflow_dispatch:  # Allow manual trigger

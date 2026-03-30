@@ -35,10 +35,10 @@ Confirm in your response: "✅ Serena activated: [languages]. Ready for code nav
 
 ```bash
 # Check for tasks in review
-ls -la delegation/tasks/4-in-review/
+ls -la .kit/tasks/4-in-review/
 
 # Check for review starters
-ls -la .agent-context/*-REVIEW-STARTER.md 2>/dev/null || echo "No review starters found"
+ls -la .kit/context/*-REVIEW-STARTER.md 2>/dev/null || echo "No review starters found"
 ```
 
 **If review starters exist**: Read the starter file and begin review immediately. The starter contains implementation summary, files changed, and areas to focus on.
@@ -61,12 +61,12 @@ ls -la .agent-context/*-REVIEW-STARTER.md 2>/dev/null || echo "No review starter
 
 ```
 You receive:
-  - Task file: delegation/tasks/4-in-review/ASK-XXXX.md
-  - Handoff file: .agent-context/ASK-XXXX-HANDOFF-*.md (if exists)
+  - Task file: .kit/tasks/4-in-review/ASK-XXXX.md
+  - Handoff file: .kit/context/ASK-XXXX-HANDOFF-*.md (if exists)
   - Code changes: Use git diff or Serena to find
 
 You produce:
-  - Review report: .agent-context/reviews/ASK-XXXX-review.md
+  - Review report: .kit/context/reviews/ASK-XXXX-review.md
   - Verdict: APPROVED | CHANGES_REQUESTED | ESCALATE_TO_HUMAN
 ```
 
@@ -174,11 +174,11 @@ If review exceeds target time, note in report and continue. For very large chang
 **Before creating a review report**, check for existing reviews:
 
 ```bash
-ls -la .agent-context/reviews/ASK-XXXX-review*.md 2>/dev/null
+ls -la .kit/context/reviews/ASK-XXXX-review*.md 2>/dev/null
 ```
 
 **If a previous review exists**:
-- For Round 2: Create `.agent-context/reviews/ASK-XXXX-review-round2.md`
+- For Round 2: Create `.kit/context/reviews/ASK-XXXX-review-round2.md`
 - Never overwrite previous reviews - they document the review history
 
 **Naming convention**:
@@ -186,14 +186,14 @@ ls -la .agent-context/reviews/ASK-XXXX-review*.md 2>/dev/null
 - Round 2: `ASK-XXXX-review-round2.md`
 - (No Round 3 - escalate to human instead)
 
-Create your review report at `.agent-context/reviews/ASK-XXXX-review.md` (or `-round2.md` for second review):
+Create your review report at `.kit/context/reviews/ASK-XXXX-review.md` (or `-round2.md` for second review):
 
 ```markdown
 # Review: ASK-XXXX - [Task Title]
 
 **Reviewer**: code-reviewer
 **Date**: YYYY-MM-DD
-**Task File**: delegation/tasks/4-in-review/ASK-XXXX.md
+**Task File**: .kit/tasks/4-in-review/ASK-XXXX.md
 **Verdict**: APPROVED | CHANGES_REQUESTED | ESCALATE_TO_HUMAN
 **Round**: 1 | 2
 
@@ -248,13 +248,13 @@ Create your review report at `.agent-context/reviews/ASK-XXXX-review.md` (or `-r
 ### Step 1: Read Task Specification
 ```bash
 # Read the task file to understand requirements
-Read delegation/tasks/4-in-review/ASK-XXXX.md
+Read .kit/tasks/4-in-review/ASK-XXXX.md
 ```
 
 ### Step 2: Read Handoff (if exists)
 ```bash
 # Check for implementation notes
-Glob .agent-context/*ASK-XXXX*.md
+Glob .kit/context/*ASK-XXXX*.md
 ```
 
 ### Step 3: Identify Changed Files
@@ -286,8 +286,8 @@ Read docs/decisions/adr/ADR-XXXX.md
 
 ### Step 7: Write Review Report
 Check for existing reviews first (see "Review Report Format" above). Create new file - never overwrite:
-- Round 1: `.agent-context/reviews/ASK-XXXX-review.md`
-- Round 2: `.agent-context/reviews/ASK-XXXX-review-round2.md`
+- Round 1: `.kit/context/reviews/ASK-XXXX-review.md`
+- Round 2: `.kit/context/reviews/ASK-XXXX-review-round2.md`
 
 ### Step 8: Communicate Verdict
 Clearly state the verdict and next steps.
@@ -314,7 +314,7 @@ Clearly state the verdict and next steps.
 1. [Change 1]
 2. [Change 2]
 
-Review report: `.agent-context/reviews/ASK-XXXX-review.md`
+Review report: `.kit/context/reviews/ASK-XXXX-review.md`
 
 Ready for implementation agent to address these findings.
 ```
@@ -339,7 +339,7 @@ If CI is failing, verdict should be CHANGES_REQUESTED regardless of code quality
 - Use Serena for semantic navigation
 - Read ADRs and documentation
 - Check git history and diffs
-- Write review reports to `.agent-context/reviews/`
+- Write review reports to `.kit/context/reviews/`
 
 ## Bus Integration
 
@@ -368,7 +368,7 @@ dispatch emit changes_requested --agent code-reviewer \
 ## Reference Documents
 
 - **KIT-ADR-0014**: Code Review Workflow
-- **Review template**: `.agent-context/templates/review-template.md`
+- **Review template**: `.kit/context/templates/review-template.md`
 - **ADR directory**: `docs/decisions/adr/`
 
 Remember: Your goal is to ensure quality while being constructive. Provide actionable feedback that helps the implementation agent improve the code.

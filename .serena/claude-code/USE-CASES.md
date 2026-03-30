@@ -550,7 +550,7 @@ mcp__serena__find_symbol(
 
 #### Traditional Approach
 
-**Command**: `grep -r "DaVinci" delegation/tasks/`
+**Command**: `grep -r "DaVinci" .kit/tasks/`
 
 **Result**: Finds Markdown files with mentions
 
@@ -908,5 +908,5 @@ mcp__serena__find_referencing_symbols(
 **Questions?** See:
 - `.serena/claude-code/SETUP-GUIDE.md` - Python setup
 - `.serena/claude-code/TYPESCRIPT-SETUP.md` - TypeScript setup ✨ NEW
-- `.agent-context/SERENA-TYPESCRIPT-VALIDATION.md` - TypeScript validation report ✨ NEW
+- `.kit/context/SERENA-TYPESCRIPT-VALIDATION.md` - TypeScript validation report ✨ NEW
 - `docs/decisions/adr/ADR-0040-serena-semantic-code-navigation.md` - Architectural decision

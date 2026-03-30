@@ -21,11 +21,11 @@ git branch --show-current
 ```
 
 ```bash
-ls delegation/tasks/2-todo/ 2>/dev/null | head -10 || echo "No tasks in 2-todo/"
+ls .kit/tasks/2-todo/ 2>/dev/null | head -10 || echo "No tasks in 2-todo/"
 ```
 
 ```bash
-ls delegation/tasks/3-in-progress/ 2>/dev/null | head -10 || echo "None in progress"
+ls .kit/tasks/3-in-progress/ 2>/dev/null | head -10 || echo "None in progress"
 ```
 
 ## Step 2: Preflight checks

@@ -2,7 +2,7 @@
 """
 Sync task files to Linear issues.
 
-This script reads task markdown files from all workflow folders in delegation/tasks/
+This script reads task markdown files from all workflow folders in .kit/tasks/
 and creates/updates corresponding Linear issues using the GraphQL API.
 
 Scans these numbered workflow folders:
@@ -510,7 +510,7 @@ def main():
     team_id = linear.resolve_team_id(os.getenv("LINEAR_TEAM_ID"))
 
     # Find task files from all workflow folders
-    base_dir = Path("delegation/tasks")
+    base_dir = Path(".kit/tasks")
     if not base_dir.exists():
         logger.error("❌ Error: %s not found", base_dir)
         sys.exit(1)

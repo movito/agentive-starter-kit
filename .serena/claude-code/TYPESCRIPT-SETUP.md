@@ -467,7 +467,7 @@ Serena correctly resolves these path aliases defined in `tsconfig.json`:
 
 **Documentation**:
 - This setup guide (`.serena/claude-code/TYPESCRIPT-SETUP.md`)
-- Validation report (`.agent-context/SERENA-TYPESCRIPT-VALIDATION.md`)
+- Validation report (`.kit/context/SERENA-TYPESCRIPT-VALIDATION.md`)
 - Use case matrix (`.serena/claude-code/USE-CASES.md`)
 - Python setup guide (`.serena/claude-code/SETUP-GUIDE.md`) - similar patterns
 
@@ -539,7 +539,7 @@ mcp__serena__activate_project("/path/to/your/project")
 ### Internal Support
 
 - **Documentation**: `.serena/claude-code/` directory
-- **Validation Report**: `.agent-context/SERENA-TYPESCRIPT-VALIDATION.md`
+- **Validation Report**: `.kit/context/SERENA-TYPESCRIPT-VALIDATION.md`
 - **Use Cases**: `.serena/claude-code/USE-CASES.md`
 
 ### External Support

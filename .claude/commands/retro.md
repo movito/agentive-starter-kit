@@ -45,7 +45,7 @@ git log --oneline origin/main..HEAD | wc -l
 
 **Bot round count**: Count the distinct pushes that triggered bot re-reviews. Approximate by counting commits that were followed by bot activity. If uncertain, ask the user.
 
-**Regression count**: How many bot findings were regressions of previously known patterns (from `.agent-context/patterns.yml` if it exists). If uncertain, report 0 and note it.
+**Regression count**: How many bot findings were regressions of previously known patterns (from `.kit/context/patterns.yml` if it exists). If uncertain, report 0 and note it.
 
 ## Step 3: Reflect on the session
 
@@ -80,12 +80,12 @@ List action items as unchecked checkboxes. The planner will check them off as th
 
 Format the complete retro as a single markdown block using the structure below, then **save it to a file**:
 
-**File path**: `.agent-context/retros/[TASK-ID]-retro.md`
+**File path**: `.kit/context/retros/[TASK-ID]-retro.md`
 
-Create the `.agent-context/retros/` directory if it doesn't exist:
+Create the `.kit/context/retros/` directory if it doesn't exist:
 
 ```bash
-mkdir -p .agent-context/retros
+mkdir -p .kit/context/retros
 ```
 
 Use this exact structure for the file content:

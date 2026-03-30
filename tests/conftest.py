@@ -184,8 +184,8 @@ def setup_temp_project(base_dir: Path | None = None) -> Path:
 
     Creates:
         <temp_dir>/
-            .claude/agents/AGENT-TEMPLATE.md  (real or fallback)
-            agents/launch                      (real or fallback, executable)
+            .kit/templates/AGENT-TEMPLATE.md   (real or fallback)
+            .kit/launchers/launch               (real or fallback, executable)
             logs/                              (empty, for log output)
 
     Uses real project files when available, falls back to minimal valid
@@ -201,23 +201,25 @@ def setup_temp_project(base_dir: Path | None = None) -> Path:
         base_dir = Path(tempfile.mkdtemp(prefix="agent-test-"))
 
     # Create directory structure
-    agents_dir = base_dir / "agents"
+    agents_dir = base_dir / ".kit" / "launchers"
     agents_dir.mkdir(parents=True, exist_ok=True)
     claude_agents_dir = base_dir / ".claude" / "agents"
     claude_agents_dir.mkdir(parents=True, exist_ok=True)
     logs_dir = base_dir / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy or create AGENT-TEMPLATE.md
-    real_template = PROJECT_ROOT / ".claude" / "agents" / "AGENT-TEMPLATE.md"
-    dest_template = claude_agents_dir / "AGENT-TEMPLATE.md"
+    # Copy or create AGENT-TEMPLATE.md (needed by create-agent.sh at .kit/templates/)
+    kit_templates_dir = base_dir / ".kit" / "templates"
+    kit_templates_dir.mkdir(parents=True, exist_ok=True)
+    real_template = PROJECT_ROOT / ".kit" / "templates" / "AGENT-TEMPLATE.md"
+    dest_template = kit_templates_dir / "AGENT-TEMPLATE.md"
     if real_template.exists():
         shutil.copy2(real_template, dest_template)
     else:
         dest_template.write_text(MINIMAL_TEMPLATE, encoding="utf-8")
 
-    # Copy or create agents/launch
-    real_launcher = PROJECT_ROOT / "agents" / "launch"
+    # Copy or create .kit/launchers/launch
+    real_launcher = PROJECT_ROOT / ".kit" / "launchers" / "launch"
     dest_launcher = agents_dir / "launch"
     if real_launcher.exists():
         shutil.copy2(real_launcher, dest_launcher)

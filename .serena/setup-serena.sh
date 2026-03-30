@@ -146,7 +146,7 @@ echo
 echo -e "Next steps:"
 echo -e "1. Edit ${CYAN}.serena/project.yml${NC} to enable your languages"
 echo -e "2. ${YELLOW}Restart Claude Code${NC} (quit and reopen, or restart your IDE)"
-echo -e "3. Launch an agent: ${CYAN}./agents/launch planner${NC}"
+echo -e "3. Launch an agent: ${CYAN}./.kit/launchers/launch planner${NC}"
 echo -e "4. Agent will auto-activate Serena on first use"
 echo
 echo -e "To verify Serena is configured:"
