@@ -4,9 +4,9 @@
 # Reads Claude Code native agent definitions from .claude/agents/
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 CLAUDE_AGENTS_DIR="$PROJECT_ROOT/.claude/agents"
-CONTEXT_DIR="$PROJECT_ROOT/.agent-context"
+CONTEXT_DIR="$PROJECT_ROOT/.kit/context"
 PROJECT_NAME=$(basename "$PROJECT_ROOT")
 
 # Colors
@@ -357,7 +357,7 @@ main() {
 
 # Check for project context directory
 if [[ ! -d "$CONTEXT_DIR" ]]; then
-    echo -e "${YELLOW}Warning: No .agent-context/ directory found${NC}"
+    echo -e "${YELLOW}Warning: No .kit/context/ directory found${NC}"
     echo "Agents will launch without project context"
     echo
 fi

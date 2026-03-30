@@ -184,7 +184,7 @@ def setup_temp_project(base_dir: Path | None = None) -> Path:
 
     Creates:
         <temp_dir>/
-            .claude/agents/AGENT-TEMPLATE.md  (real or fallback)
+            .kit/templates/AGENT-TEMPLATE.md   (real or fallback)
             .kit/launchers/launch               (real or fallback, executable)
             logs/                              (empty, for log output)
 

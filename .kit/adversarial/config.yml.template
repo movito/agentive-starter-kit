@@ -15,10 +15,10 @@
 task_directory: .kit/tasks/
 
 # Directory for evaluation logs
-log_directory: .adversarial/logs/
+log_directory: .kit/adversarial/logs/
 
 # Directory for temporary artifacts
-artifacts_directory: .adversarial/artifacts/
+artifacts_directory: .kit/adversarial/artifacts/
 
 # Command to run tests (for test validation phase)
 test_command: pytest tests/ -v

@@ -349,8 +349,7 @@ your-project/
 │   ├── skills/              # Implementation skills
 │   └── settings.local.json  # Claude Code settings
 ├── .kit/                    # Builder layer
-│   ├── agents/              # Builder agents (planner, code-reviewer, etc.)
-│   ├── commands/            # Builder commands (retro, status, etc.)
+│   ├── templates/           # Agent and task templates
 │   ├── skills/              # Builder skills (self-review, etc.)
 │   ├── context/             # Agent coordination, workflows, patterns
 │   ├── adversarial/         # Evaluation config, scripts, docs

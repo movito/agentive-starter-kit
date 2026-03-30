@@ -4,7 +4,7 @@
 # Launches planner with full context for new project setup
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 CLAUDE_AGENTS_DIR="$PROJECT_ROOT/.claude/agents"
 PROJECT_NAME=$(basename "$PROJECT_ROOT")
 
@@ -85,7 +85,7 @@ ONBOARDING_MODEL=$(sed -n '/^---$/,/^---$/p' "$ONBOARDING_AGENT" | sed '1d;$d' |
 ONBOARDING_MODEL="${ONBOARDING_MODEL:-claude-sonnet-4-20250514}"
 
 # Create onboarding state file
-ONBOARDING_STATE="$PROJECT_ROOT/.agent-context/ONBOARDING-STATE.md"
+ONBOARDING_STATE="$PROJECT_ROOT/.kit/context/ONBOARDING-STATE.md"
 cat > "$ONBOARDING_STATE" << 'EOF'
 # Onboarding State
 
