@@ -260,7 +260,7 @@ Reference: `.kit/context/workflows/WORKFLOW-FREEZE-POLICY.md`
 
 ## Restrictions
 
-- Never modify `.env` files (use `.env.example`)
+- Never modify `.env` files (use `.env.template`)
 - Never change core architecture without coordinator approval
 - Always preserve backward compatibility
 - Never skip pre-commit hooks
