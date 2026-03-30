@@ -3,15 +3,15 @@
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "ASK-0044 DONE (PR #41 merged). .kit/ boundary established. Retro extracted to REVIEW-INSIGHTS.",
-    "details_link": ".kit/tasks/5-done/ASK-0044-separate-kit-internals.md",
+    "brief_note": "ASK-0047 DONE (PR #42 merged). ADR dirs flattened. Launcher symlink fix + alias documented.",
+    "details_link": null,
     "handoff_file": null
   },
   "feature-developer": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "ASK-0044 done (PR #41). All tasks through ASK-0045 complete. Ready for next assignment.",
+    "brief_note": "ASK-0047 done (PR #42). Ready for next assignment.",
     "details_link": null
   },
   "code-reviewer": {
