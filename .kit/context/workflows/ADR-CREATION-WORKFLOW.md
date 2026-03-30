@@ -40,7 +40,7 @@
    - Honest trade-offs (pros AND cons)
    - Cross-references to related ADRs, tasks, commits
 
-5. **Update index**: Add new ADR to `docs/adr/README.md`
+5. **Update index**: Add new ADR to `docs/adr/about-adr.md`
 
 6. **Verify cross-references**: Ensure all links work
 
@@ -187,7 +187,7 @@ See existing ADRs for reference:
 
 ## ADR Index Maintenance
 
-Update `docs/adr/README.md`:
+Update `docs/adr/about-adr.md`:
 
 ```markdown
 ## Architecture Decision Records
@@ -204,7 +204,7 @@ Update `docs/adr/README.md`:
 
 - **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
 - **Full Guide**: This document
-- **ADR Index**: `docs/adr/README.md`
+- **ADR Index**: `docs/adr/about-adr.md`
 - **Existing ADRs**: `docs/adr/`
 
 ---
