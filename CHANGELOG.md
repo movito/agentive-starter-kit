@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-30
+
+### Changed
+
+- **Builder/Project separation via `.kit/` boundary** (ASK-0044) — All builder-layer infrastructure (templates, skills, context, tasks, ADRs, launchers, docs) moved into `.kit/`. Implementation-layer files (agents, commands, skills in `.claude/`) stay where Claude Code expects them. Clean separation between "how we build" and "what we build".
+- **ADR directory structure flattened** (ASK-0047) — `docs/decisions/adr/` simplified to `docs/adr/`, `.kit/decisions/starter-kit-adr/` simplified to `.kit/adr/`. Shorter paths, less nesting.
+- **Tiered manifest for cross-repo sync** (KIT-0024) — `.core-manifest.json` upgraded from flat file list to tiered format (`scripts_core`, `commands_core`, `commands_optional`, `kit_builder`). Sync workflow now copies per-tier with directory auto-creation. Core scripts v1.3.0.
+- **`.adversarial/` restored to repo root** — ASK-0044 moved it into `.kit/adversarial/`, but `adversarial-workflow` v0.9.9 hardcodes the path. Moved back until upstream supports configurable directories (ADV-0053, movito/adversarial-workflow#58).
+- **`actions/checkout` upgraded to v6** — CI workflow updated via Dependabot
+
+### Added
+
+- **Root-resolution preamble for all shell scripts** (ASK-0043) — Every shell script now resolves `PROJECT_ROOT` via `SCRIPT_DIR` chain and validates with `pyproject.toml` guard. Prevents silent failures when scripts move to different directory depths.
+- **`/babysit-pr` command** — Monitors PR bot reviews (CodeRabbit, BugBot) and triages findings
+- **KIT-0026 task spec** — Planned: sync agent definitions and skills to downstream repos via new manifest tiers
+- **ADV-0053 task spec** — Planned: make `adversarial-workflow` CLI directory configurable (upstream issue filed)
+
+### Fixed
+
+- **Linear sync import paths** (ASK-0045) — Fixed broken imports in Linear sync modules after v0.4.0 scripts restructure. Added stdlib logging fallback for direct script execution.
+- **Repo root cleanup** — Removed stale `.env.example` (canonical is `.env.template`), archived `UPSTREAM-CHANGES-2025-01-28.md`, relocated `tmux-tips.md` to `.kit/docs/`, added `.ruff_cache/` to `.gitignore`
+- **Test fixture for identity leak scanner** — Updated to match new `.adversarial/` location at repo root
+
 ## [0.4.0] - 2026-03-09
 
 ### Changed
@@ -185,6 +208,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Agent handoff protocol via `.agent-context/`
 - Pre-configured Claude Code settings and permissions
 
+[0.5.0]: https://github.com/movito/agentive-starter-kit/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/movito/agentive-starter-kit/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/movito/agentive-starter-kit/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/movito/agentive-starter-kit/compare/v0.3.1...v0.3.2
