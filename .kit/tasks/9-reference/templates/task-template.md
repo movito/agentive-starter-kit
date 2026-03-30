@@ -376,7 +376,7 @@ pytest tests/api/test_openapi_compliance.py -v
 ```
 
 ### References
-- **ADR-0035**: `docs/decisions/adr/ADR-0035-separate-api-testing-infrastructure.md`
+- **ADR-0035**: `docs/adr/ADR-0035-separate-api-testing-infrastructure.md`
 - **OpenAPI Spec**: `openapi/api-YYYY-MM-DD.yaml` (if applicable)
 - **API Testing Guide**: `.kit/context/workflows/API-TESTING-WORKFLOW.md` (if exists)
 

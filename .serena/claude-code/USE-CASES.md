@@ -909,4 +909,4 @@ mcp__serena__find_referencing_symbols(
 - `.serena/claude-code/SETUP-GUIDE.md` - Python setup
 - `.serena/claude-code/TYPESCRIPT-SETUP.md` - TypeScript setup ✨ NEW
 - `.kit/context/SERENA-TYPESCRIPT-VALIDATION.md` - TypeScript validation report ✨ NEW
-- `docs/decisions/adr/ADR-0040-serena-semantic-code-navigation.md` - Architectural decision
+- `docs/adr/ADR-0040-serena-semantic-code-navigation.md` - Architectural decision

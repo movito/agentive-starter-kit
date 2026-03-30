@@ -136,7 +136,7 @@ MATERIAL_FILES=$(find "$TARGET" -maxdepth 2 \
     -not -path '*/delegation/*' \
     -not -path '*/scripts/*' \
     -not -path '*/tests/*' \
-    -not -path '*/docs/decisions/*' \
+    -not -path '*/docs/adr/*' \
     -not -path '*/docs/TESTING.md' \
     -not -name 'pyproject.toml' \
     -not -name 'CLAUDE.md' \

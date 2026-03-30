@@ -12,7 +12,7 @@ This folder contains ADRs inherited from the **agentive-starter-kit** template. 
 - Logging and configuration architecture
 - And more...
 
-**Your project's ADRs belong in `docs/decisions/adr/`** - start fresh with `ADR-0001`.
+**Your project's ADRs belong in `docs/adr/`** - start fresh with `ADR-0001`.
 
 ## Naming Convention
 
@@ -56,7 +56,7 @@ Reference these KIT-ADRs when:
 
 If you need to change a pattern from the starter kit:
 
-1. **Create a new ADR** in `docs/decisions/adr/` explaining your change
+1. **Create a new ADR** in `docs/adr/` explaining your change
 2. **Reference the KIT-ADR** you're superseding
 3. **Document the rationale** for diverging
 

@@ -21,7 +21,7 @@
 
 ## Workflow Steps
 
-1. **Create ADR file**: `docs/decisions/adr/NNNN-short-title.md`
+1. **Create ADR file**: `docs/adr/NNNN-short-title.md`
    - NNNN = sequential 4-digit number (0001, 0002, etc.)
    - short-title = kebab-case description
    - Example: `0013-gui-electron-integration.md`
@@ -40,7 +40,7 @@
    - Honest trade-offs (pros AND cons)
    - Cross-references to related ADRs, tasks, commits
 
-5. **Update index**: Add new ADR to `docs/decisions/adr/README.md`
+5. **Update index**: Add new ADR to `docs/adr/README.md`
 
 6. **Verify cross-references**: Ensure all links work
 
@@ -179,15 +179,15 @@ Real-world outcomes:
 ## Example ADRs
 
 See existing ADRs for reference:
-- `docs/decisions/adr/0001-exact-timecode-arithmetic.md` (385 lines)
-- `docs/decisions/adr/0002-two-phase-consistent-assembly.md` (498 lines)
-- `docs/decisions/adr/0011-adversarial-workflow-integration.md` (150 lines)
+- `docs/adr/0001-exact-timecode-arithmetic.md` (385 lines)
+- `docs/adr/0002-two-phase-consistent-assembly.md` (498 lines)
+- `docs/adr/0011-adversarial-workflow-integration.md` (150 lines)
 
 ---
 
 ## ADR Index Maintenance
 
-Update `docs/decisions/adr/README.md`:
+Update `docs/adr/README.md`:
 
 ```markdown
 ## Architecture Decision Records
@@ -204,8 +204,8 @@ Update `docs/decisions/adr/README.md`:
 
 - **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
 - **Full Guide**: This document
-- **ADR Index**: `docs/decisions/adr/README.md`
-- **Existing ADRs**: `docs/decisions/adr/`
+- **ADR Index**: `docs/adr/README.md`
+- **Existing ADRs**: `docs/adr/`
 
 ---
 

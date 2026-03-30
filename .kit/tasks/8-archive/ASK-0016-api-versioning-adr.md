@@ -17,7 +17,7 @@
 
 Adapt and document the API Versioning Strategy from thematic-cuts (TC ADR-0034) for the agentive-starter-kit. This ADR establishes date-based versioning (YYYY-MM-DD) with clear deprecation timelines.
 
-**Source**: `thematic-cuts/docs/decisions/adr/ADR-0034-api-versioning-strategy.md`
+**Source**: `thematic-cuts/docs/adr/ADR-0034-api-versioning-strategy.md`
 
 **When Needed**: When the project has external API consumers who need stability guarantees.
 
@@ -96,7 +96,7 @@ async def version_middleware(request, call_next):
 
 1. **Read source ADR** from thematic-cuts
 2. **Adapt for starter-kit** - Generic versioning guidance
-3. **Create ADR** in `docs/decisions/adr/`
+3. **Create ADR** in `docs/adr/`
 
 ## Time Estimate
 
@@ -109,7 +109,7 @@ async def version_middleware(request, call_next):
 
 ## References
 
-- Source: `thematic-cuts/docs/decisions/adr/ADR-0034-api-versioning-strategy.md`
+- Source: `thematic-cuts/docs/adr/ADR-0034-api-versioning-strategy.md`
 - Stripe API versioning: https://stripe.com/docs/api/versioning
 - API versioning best practices: https://www.postman.com/api-platform/api-versioning/
 

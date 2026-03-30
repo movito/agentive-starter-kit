@@ -75,7 +75,7 @@ so this ADR establishes the boundary first.
 | `delegation/handoffs/` | *(deleted — handoffs stay in `.kit/context/`)* | Handoff records |
 | `.agent-context/` | `.kit/context/` | Coordination state, handoffs, reviews, retros, workflows, patterns.yml |
 | `.adversarial/` | `.kit/adversarial/` | Evaluator system (config, evaluators, inputs, logs, scripts) |
-| `docs/decisions/starter-kit-adr/` | `.kit/decisions/` | Kit ADRs (KIT-ADR-*) |
+| `.kit/adr/` | `.kit/adr/` | Kit ADRs (KIT-ADR-*) |
 | `.claude/agents/planner*.md` | `.kit/agents/` | Builder agents (planner, planner2, tycho, code-reviewer, document-reviewer, security-reviewer) |
 | `.claude/agents/AGENT-TEMPLATE.md` | `.kit/agents/` | Agent creation template |
 | `.claude/agents/OPERATIONAL-RULES.md` | `.kit/agents/` | Agent operational rules |
@@ -99,7 +99,7 @@ so this ADR establishes the boundary first.
 | `scripts/optional/` | Opt-in scripts |
 | `tests/` | Project tests |
 | `src/` | Project source (if applicable) |
-| `docs/decisions/adr/` | Project-specific ADRs |
+| `docs/adr/` | Project-specific ADRs |
 | `CLAUDE.md`, `README.md`, `CHANGELOG.md` | Project root docs |
 | `pyproject.toml`, `conftest.py` | Project config |
 | `.serena/` | Serena config (project-specific) |
@@ -184,7 +184,7 @@ All work lands on `feature/ASK-0044-kit-boundary` and merges as one PR.
       ".kit/skills/",
       ".kit/commands/",
       ".kit/launchers/",
-      ".kit/decisions/"
+      ".kit/adr/"
     ]
   },
   "opted_in": ["commands_optional", "kit_builder"]
@@ -232,8 +232,8 @@ strategy:
 
 ## References
 
-- KIT-ADR-0023: `docs/decisions/starter-kit-adr/KIT-ADR-0023-builder-project-separation.md`
-- KIT-ADR-0022: `docs/decisions/starter-kit-adr/KIT-ADR-0022-manifest-based-sync-ownership.md`
+- KIT-ADR-0023: `.kit/adr/KIT-ADR-0023-builder-project-separation.md`
+- KIT-ADR-0022: `.kit/adr/KIT-ADR-0022-manifest-based-sync-ownership.md`
 - GitHub issue: #35
 - Cross-repo audit: Conducted 2026-03-28 (ASK, DSP, ADV, AEL)
 - adversarial-workflow PR #42: Scripts restructure (14 scripts, 56 file updates)

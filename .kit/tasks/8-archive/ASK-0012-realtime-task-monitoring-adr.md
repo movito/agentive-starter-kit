@@ -17,7 +17,7 @@
 
 Adapt and document the Real-Time Task Monitoring pattern from thematic-cuts (TC ADR-0039) for the agentive-starter-kit. This ADR documents live task dashboards with file watching and optional WebSocket updates.
 
-**Source**: `thematic-cuts/docs/decisions/adr/ADR-0039-real-time-task-monitoring.md`
+**Source**: `thematic-cuts/docs/adr/ADR-0039-real-time-task-monitoring.md`
 
 **Why Valuable**: Enables visibility into multi-agent task execution. Users can see task status changes as they happen, improving coordination and debugging.
 
@@ -102,7 +102,7 @@ Dashboard / WebSocket / CLI
 1. **Read source ADR** from thematic-cuts
 2. **Audit existing daemon** in starter-kit (if any)
 3. **Adapt for starter-kit** - Focus on core monitoring
-4. **Create ADR-0010** in `docs/decisions/adr/`
+4. **Create ADR-0010** in `docs/adr/`
 
 ## Success Metrics
 
@@ -126,7 +126,7 @@ Dashboard / WebSocket / CLI
 
 ## References
 
-- Source: `thematic-cuts/docs/decisions/adr/ADR-0039-real-time-task-monitoring.md`
+- Source: `thematic-cuts/docs/adr/ADR-0039-real-time-task-monitoring.md`
 - Daemon docs: `docs/LINEAR-SYNC-BEHAVIOR.md` (Task Monitor section)
 - watchdog: https://pypi.org/project/watchdog/
 

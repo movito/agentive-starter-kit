@@ -334,8 +334,8 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md`
 - **Task Template**: `.kit/tasks/9-reference/templates/task-template.md`
 - **Evaluation Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
-- **Starter Kit ADRs**: `.kit/decisions/` (18+ architectural decisions)
-- **Your Project ADRs**: `docs/decisions/adr/` (start fresh here)
+- **Starter Kit ADRs**: `.kit/adr/` (18+ architectural decisions)
+- **Your Project ADRs**: `docs/adr/` (start fresh here)
 
 ---
 

@@ -344,7 +344,7 @@ Tokens: 4.6k sent, 421 received. Cost: $0.02 message, $0.02 session.
 
 ### Related Documents
 - **Evaluation workflow:** `.adversarial/docs/EVALUATION-WORKFLOW.md`
-- **ADR:** `docs/decisions/adr/ADR-0011-adversarial-workflow-integration.md`
+- **ADR:** `docs/adr/ADR-0011-adversarial-workflow-integration.md`
 
 ---
 

@@ -281,7 +281,7 @@ Read tests/test_feature.py
 ### Step 6: Check ADR Compliance
 ```bash
 # Review relevant ADRs
-Read docs/decisions/adr/ADR-XXXX.md
+Read docs/adr/ADR-XXXX.md
 ```
 
 ### Step 7: Write Review Report
@@ -369,6 +369,6 @@ dispatch emit changes_requested --agent code-reviewer \
 
 - **KIT-ADR-0014**: Code Review Workflow
 - **Review template**: `.kit/context/templates/review-template.md`
-- **ADR directory**: `docs/decisions/adr/`
+- **ADR directory**: `docs/adr/`
 
 Remember: Your goal is to ensure quality while being constructive. Provide actionable feedback that helps the implementation agent improve the code.

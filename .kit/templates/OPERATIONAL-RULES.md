@@ -115,7 +115,7 @@ If subagents report creating files but nothing appears on disk, check `.claude/s
 
 ### ADRs (Architecture Decision Records)
 
-**Correct location**: `docs/decisions/adr/ADR-NNNN-short-title.md`
+**Correct location**: `docs/adr/ADR-NNNN-short-title.md`
 
 **DO NOT create ADRs in**:
 - ❌ `.claude/` (agent/settings directory, not for project documentation)

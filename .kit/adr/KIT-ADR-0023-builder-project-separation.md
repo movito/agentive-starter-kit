@@ -80,7 +80,7 @@ All builder infrastructure moves under `.kit/`:
 │   ├── inputs/
 │   ├── logs/
 │   └── scripts/
-├── decisions/                     ← ADRs (was docs/decisions/starter-kit-adr/)
+├── decisions/                     ← ADRs (was .kit/adr/)
 │   └── KIT-ADR-*.md
 ├── agents/                        ← Builder agents (planner, coordinator, etc.)
 │   ├── planner.md
@@ -143,7 +143,7 @@ scripts/                           ← Stays as-is (already well-separated)
 
 tests/                             ← Project tests
 src/                               ← Project source (if applicable)
-docs/decisions/adr/                ← Project ADRs (not kit ADRs)
+docs/adr/                ← Project ADRs (not kit ADRs)
 ```
 
 ### 3. Classification Principle

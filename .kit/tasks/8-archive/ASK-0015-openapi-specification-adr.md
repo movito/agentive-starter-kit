@@ -17,7 +17,7 @@
 
 Adapt and document the OpenAPI Specification Strategy from thematic-cuts (TC ADR-0033) for the agentive-starter-kit. This ADR establishes contract-first API development using OpenAPI 3.1.
 
-**Source**: `thematic-cuts/docs/decisions/adr/ADR-0033-openapi-specification-strategy.md`
+**Source**: `thematic-cuts/docs/adr/ADR-0033-openapi-specification-strategy.md`
 
 **When Needed**: When the project exposes REST APIs that need documentation, validation, and client generation.
 
@@ -97,7 +97,7 @@ async def validate_openapi(request, call_next):
 
 1. **Read source ADR** from thematic-cuts
 2. **Adapt for starter-kit** - Generic API guidance
-3. **Create ADR** in `docs/decisions/adr/`
+3. **Create ADR** in `docs/adr/`
 
 ## Time Estimate
 
@@ -110,7 +110,7 @@ async def validate_openapi(request, call_next):
 
 ## References
 
-- Source: `thematic-cuts/docs/decisions/adr/ADR-0033-openapi-specification-strategy.md`
+- Source: `thematic-cuts/docs/adr/ADR-0033-openapi-specification-strategy.md`
 - OpenAPI 3.1: https://spec.openapis.org/oas/v3.1.0
 - openapi-core: https://pypi.org/project/openapi-core/
 

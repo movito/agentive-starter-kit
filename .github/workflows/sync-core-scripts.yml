@@ -8,7 +8,7 @@ on:
       - '.kit/templates/**'
       - '.kit/skills/**'
       - '.kit/launchers/**'
-      - '.kit/decisions/**'
+      - '.kit/adr/**'
       - '.kit/docs/**'
       - '.kit/adversarial/scripts/**'
       - '.kit/adversarial/docs/**'

@@ -45,7 +45,7 @@
 | `.kit/launchers/launch` | Added `is_serena_configured()` check |
 | `agents/onboarding` | Now launches onboarding agent |
 | `SETUP.md` | Added Serena installation instructions |
-| `docs/decisions/adr/ADR-0001-*` | NEW - System prompt size ADR |
+| `docs/adr/ADR-0001-*` | NEW - System prompt size ADR |
 
 ---
 
@@ -66,7 +66,7 @@ agentive-starter-kit/
 │   ├── launch             # Agent launcher (updated)
 │   └── onboarding         # First-run script (updated)
 ├── .kit/tasks/      # Task management folders
-├── docs/decisions/adr/    # ADRs (1 so far)
+├── docs/adr/    # ADRs (1 so far)
 └── ...
 ```
 

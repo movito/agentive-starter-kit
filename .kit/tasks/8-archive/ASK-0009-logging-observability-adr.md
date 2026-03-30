@@ -17,7 +17,7 @@
 
 Adapt and document the Logging & Observability Architecture from thematic-cuts (TC ADR-0022) for the agentive-starter-kit. This ADR establishes centralized logging with rotation, structured output, and performance monitoring.
 
-**Source**: `thematic-cuts/docs/decisions/adr/ADR-0022-logging-observability-architecture.md`
+**Source**: `thematic-cuts/docs/adr/ADR-0022-logging-observability-architecture.md`
 
 **Why Essential**: Production-ready logging is crucial for debugging agent behavior and understanding system performance. The pattern supports console output, file rotation, and JSON for APIs.
 
@@ -80,7 +80,7 @@ def slow_operation():
 1. **Read source ADR** from thematic-cuts
 2. **Audit existing logging** in starter-kit
 3. **Adapt for starter-kit** - Create practical pattern
-4. **Create ADR-0007** in `docs/decisions/adr/`
+4. **Create ADR-0007** in `docs/adr/`
 
 ## Success Metrics
 
@@ -104,7 +104,7 @@ def slow_operation():
 
 ## References
 
-- Source: `thematic-cuts/docs/decisions/adr/ADR-0022-logging-observability-architecture.md`
+- Source: `thematic-cuts/docs/adr/ADR-0022-logging-observability-architecture.md`
 - Python logging: https://docs.python.org/3/library/logging.html
 - 12-factor logs: https://12factor.net/logs
 

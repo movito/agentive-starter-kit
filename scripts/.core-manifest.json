@@ -38,7 +38,7 @@
       ".kit/templates/",
       ".kit/skills/",
       ".kit/launchers/",
-      ".kit/decisions/",
+      ".kit/adr/",
       ".kit/docs/",
       ".kit/adversarial/config.yml.template",
       ".kit/adversarial/scripts/",

@@ -289,7 +289,7 @@ TASK-2025-0082-ci-test-remediation.md
 ### Workflows Referenced
 - `.agent-context/workflows/TESTING-WORKFLOW.md` (TDD section)
 - `.agent-context/workflows/COMMIT-PROTOCOL.md` (pre-push requirements)
-- `docs/decisions/adr/ADR-0035-separate-api-testing-infrastructure.md` (API testing)
+- `docs/adr/ADR-0035-separate-api-testing-infrastructure.md` (API testing)
 
 ---
 

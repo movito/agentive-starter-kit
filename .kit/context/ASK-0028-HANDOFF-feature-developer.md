@@ -123,7 +123,7 @@ else:
 
 - **Existing command pattern**: `scripts/project` - see `cmd_reconfigure()` around line 485
 - **Task specification**: `.kit/tasks/2-todo/ASK-0028-venv-setup-command.md`
-- **Related ADR**: `.kit/decisions/KIT-ADR-0005-test-infrastructure-strategy.md`
+- **Related ADR**: `.kit/adr/KIT-ADR-0005-test-infrastructure-strategy.md`
 - **Verify script reference**: `scripts/verify-setup.sh` (checks for venv)
 
 ## Time Estimate

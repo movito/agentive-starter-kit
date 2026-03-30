@@ -276,7 +276,7 @@ grep -n "print(" scripts/linear_sync_utils.py
 
 ## References
 
-- **ADR**: `docs/decisions/adr/ADR-0009-logging-observability.md`
+- **ADR**: `docs/adr/ADR-0009-logging-observability.md`
 - Python logging: https://docs.python.org/3/library/logging.html
 - pytest caplog: https://docs.pytest.org/en/stable/how-to/logging.html
 - RotatingFileHandler: https://docs.python.org/3/library/logging.handlers.html

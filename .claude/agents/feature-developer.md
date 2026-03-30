@@ -446,7 +446,7 @@ You'll receive something like:
 - Knowledge sharing across agents
 - Documents design decisions in review comments
 
-**Reference**: `.kit/decisions/KIT-ADR-0014-code-review-workflow.md`
+**Reference**: `.kit/adr/KIT-ADR-0014-code-review-workflow.md`
 
 ## Evaluator Workflow (When You Need Design Clarification)
 

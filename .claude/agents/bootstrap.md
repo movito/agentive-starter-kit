@@ -119,7 +119,7 @@ grep -ri "agentive.starter.kit\|agentive-starter-kit" \
 
 3. **Preserve functional references** — do NOT change these:
    - Git remote URLs: `github.com/movito/agentive-starter-kit` (upstream tracking)
-   - `.kit/decisions/` — historical ADRs, the directory name is a path
+   - `.kit/adr/` — historical ADRs, the directory name is a path
    - `docs/UPSTREAM-CHANGES-*.md` — upgrade guides referencing the source repo
    - `docs/archive/agentive-development/` — archive directory path
    - `tests/test_project_script.py` — test fixtures that detect upstream patterns

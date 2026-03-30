@@ -17,7 +17,7 @@
 
 Adapt and document the Task Status ↔ Linear Alignment pattern from thematic-cuts (TC ADR-0038) for the agentive-starter-kit. This ADR documents the bidirectional relationship between local task files and Linear issues.
 
-**Source**: `thematic-cuts/docs/decisions/adr/ADR-0038-task-status-linear-alignment.md`
+**Source**: `thematic-cuts/docs/adr/ADR-0038-task-status-linear-alignment.md`
 
 **Why Valuable**: Establishes the authoritative pattern for how task status flows between git-tracked markdown files and Linear. Complements our existing ADR-0003 (Linear Sync vs MCP) with implementation details.
 
@@ -96,7 +96,7 @@ completed           → Done
 1. **Read source ADR** from thematic-cuts
 2. **Review existing docs** (`docs/LINEAR-SYNC-BEHAVIOR.md`, ADR-0003)
 3. **Adapt for starter-kit** - Ensure consistency
-4. **Create ADR-0009** in `docs/decisions/adr/`
+4. **Create ADR-0009** in `docs/adr/`
 
 ## Success Metrics
 
@@ -120,9 +120,9 @@ completed           → Done
 
 ## References
 
-- Source: `thematic-cuts/docs/decisions/adr/ADR-0038-task-status-linear-alignment.md`
+- Source: `thematic-cuts/docs/adr/ADR-0038-task-status-linear-alignment.md`
 - Existing: `docs/LINEAR-SYNC-BEHAVIOR.md`
-- Related: `docs/decisions/adr/ADR-0003-linear-sync-vs-mcp.md`
+- Related: `docs/adr/ADR-0003-linear-sync-vs-mcp.md`
 - Sync script: `scripts/sync_tasks_to_linear.py`
 
 ## Notes

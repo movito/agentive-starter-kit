@@ -20,7 +20,7 @@
 
 Expand `./scripts/project reconfigure` to catch identity leaks beyond Serena activation. Currently the function only replaces `activate_project()` calls in agent `.md` files. After pulling upstream, at least 7 additional files still reference "agentive-starter-kit" or "Agentive Starter Kit", confusing downstream projects.
 
-**Context**: Full audit on 2026-02-28 found references in 40+ files. After excluding legitimate references (onboarding.md, docs/decisions/, .agent-context/, .adversarial/), **8 files** need reconfigure treatment beyond what's already handled.
+**Context**: Full audit on 2026-02-28 found references in 40+ files. After excluding legitimate references (onboarding.md, docs/adr/, .agent-context/, .adversarial/), **8 files** need reconfigure treatment beyond what's already handled.
 
 ## Current State of `reconfigure_project()`
 
@@ -55,8 +55,8 @@ The function already reads `project_name` from `.serena/project.yml`. Additional
 These files SHOULD reference "agentive-starter-kit" even in downstream projects:
 
 - `.claude/agents/onboarding.md` — guides users through setup FROM the starter kit
-- `docs/decisions/starter-kit-adr/` — inherited ADRs documenting kit decisions
-- `docs/decisions/adr/README.md` — explains the inherited ADR pattern
+- `.kit/adr/` — inherited ADRs documenting kit decisions
+- `docs/adr/README.md` — explains the inherited ADR pattern
 - `docs/UPSTREAM-CHANGES-*.md` — upstream merge guides
 - `.agent-context/` — historical handoff/review artifacts
 - `.adversarial/` — evaluator inputs/outputs (read-only)
@@ -144,7 +144,7 @@ grep -rn "agentive-starter-kit\|Agentive Starter Kit" . \
   --include="*.md" --include="*.toml" --include="*.py" --include="*.sh" \
   | grep -v ".git/" | grep -v "5-done/" | grep -v "8-archive/" \
   | grep -v ".venv/" | grep -v ".adversarial/" | grep -v ".agent-context/" \
-  | grep -v ".aider" | grep -v "docs/decisions/" | grep -v "docs/archive/" \
+  | grep -v ".aider" | grep -v "docs/adr/" | grep -v "docs/archive/" \
   | grep -v "docs/UPSTREAM" | grep -v "onboarding.md" | grep -v "ASK-0036"
 ```
 

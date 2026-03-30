@@ -18,7 +18,7 @@
 
 Create ADR-0005 documenting the **architectural decision** to adopt pytest-based testing with pre-commit hooks and CI/CD integration. This ADR captures the "why" behind our testing strategy.
 
-**Source**: `thematic-cuts/docs/decisions/adr/ADR-0012-test-infrastructure-strategy.md`
+**Source**: `thematic-cuts/docs/adr/ADR-0012-test-infrastructure-strategy.md`
 
 **Why Essential**: Establishes testing expectations for contributors - coverage requirements, TDD workflow, and quality gates.
 
@@ -80,7 +80,7 @@ Implementation work is handled by ASK-0019:
 
 ### Must Have
 
-- [ ] ADR-0005 created at `docs/decisions/adr/ADR-0005-test-infrastructure-strategy.md`
+- [ ] ADR-0005 created at `docs/adr/ADR-0005-test-infrastructure-strategy.md`
 - [ ] Follows project ADR template structure
 - [ ] Documents problem (inconsistent testing) and solution (pytest stack)
 - [ ] Defines coverage expectations (80%+ new code, aspirational)
@@ -113,7 +113,7 @@ Implementation work is handled by ASK-0019:
 
 ### Step 2: Create ADR-0005 (45-60 min)
 
-Create `docs/decisions/adr/ADR-0005-test-infrastructure-strategy.md` with:
+Create `docs/adr/ADR-0005-test-infrastructure-strategy.md` with:
 
 **Context Section:**
 - Problem: Need consistent testing approach for starter-kit
@@ -166,8 +166,8 @@ Create `docs/decisions/adr/ADR-0005-test-infrastructure-strategy.md` with:
 
 ## References
 
-- **Source ADR**: `thematic-cuts/docs/decisions/adr/ADR-0012-test-infrastructure-strategy.md`
-- **ADR Template**: `docs/decisions/adr/TEMPLATE-FOR-ADR-FILES.md`
+- **Source ADR**: `thematic-cuts/docs/adr/ADR-0012-test-infrastructure-strategy.md`
+- **ADR Template**: `docs/adr/TEMPLATE-FOR-ADR-FILES.md`
 - **Existing Infrastructure**:
   - `pyproject.toml` (pytest config)
   - `.pre-commit-config.yaml` (hooks)
@@ -193,7 +193,7 @@ Create `docs/decisions/adr/ADR-0005-test-infrastructure-strategy.md` with:
 - ASK-0019 implements the *enforcement* (CI workflow with coverage check)
 
 **File Changes:**
-- Output: `docs/decisions/adr/ADR-0005-test-infrastructure-strategy.md`
+- Output: `docs/adr/ADR-0005-test-infrastructure-strategy.md`
 - No changes to pyproject.toml or .github/workflows/ (that's ASK-0019)
 
 ---

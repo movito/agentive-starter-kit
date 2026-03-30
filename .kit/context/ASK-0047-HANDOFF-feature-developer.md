@@ -8,33 +8,33 @@ Remove unnecessary nesting in ADR directories:
 
 | Old Path | New Path |
 |----------|----------|
-| `docs/decisions/adr/` | `docs/adr/` |
-| `docs/decisions/adr/README.md` | `docs/adr/about-adr.md` |
-| `docs/decisions/adr/TEMPLATE-FOR-ADR-FILES.md` | `docs/adr/TEMPLATE-FOR-ADR-FILES.md` |
-| `.kit/decisions/` | `.kit/adr/` |
-| `.kit/decisions/README.md` | `.kit/adr/about-kit-adr.md` |
-| `docs/decisions/` | *(delete after moves)* |
+| `docs/adr/` | `docs/adr/` |
+| `docs/adr/README.md` | `docs/adr/about-adr.md` |
+| `docs/adr/TEMPLATE-FOR-ADR-FILES.md` | `docs/adr/TEMPLATE-FOR-ADR-FILES.md` |
+| `.kit/adr/` | `.kit/adr/` |
+| `.kit/adr/README.md` | `.kit/adr/about-kit-adr.md` |
+| `docs/adr/` | *(delete after moves)* |
 
 ### Steps
 
 1. **Create branch**: `git checkout -b feature/ASK-0047-flatten-adr-dirs`
 2. **Move project ADRs**:
-   - `git mv docs/decisions/adr/ docs/adr/`
+   - `git mv docs/adr/ docs/adr/`
    - Rename `docs/adr/README.md` → `docs/adr/about-adr.md`
-   - Delete `docs/decisions/` (will be empty)
+   - Delete `docs/adr/` (will be empty)
 3. **Move kit ADRs**:
-   - `git mv .kit/decisions/ .kit/adr/`
-   - Rename `.kit/decisions/README.md` → `.kit/adr/about-kit-adr.md`
+   - `git mv .kit/adr/ .kit/adr/`
+   - Rename `.kit/adr/README.md` → `.kit/adr/about-kit-adr.md`
 4. **Update all path references** — there are ~137 references across 58 files:
-   - `docs/decisions/adr/` → `docs/adr/`
-   - `.kit/decisions/` → `.kit/adr/`
-   - `docs/decisions/` → `docs/adr/` (bare references)
+   - `docs/adr/` → `docs/adr/`
+   - `.kit/adr/` → `.kit/adr/`
+   - `docs/adr/` → `docs/adr/` (bare references)
    - Update internal links in both about-adr.md files
-5. **Update `.core-manifest.json`** if it references `.kit/decisions/`
+5. **Update `.core-manifest.json`** if it references `.kit/adr/`
 6. **Update CLAUDE.md** directory structure table
 7. **Grep verification** — zero matches for:
-   - `grep -r 'docs/decisions/' .claude/ CLAUDE.md README.md scripts/ .kit/ --include='*.md' --include='*.py' --include='*.sh' --include='*.yml' --include='*.json'`
-   - `grep -r '\.kit/decisions/' .claude/ CLAUDE.md README.md scripts/ .kit/ --include='*.md' --include='*.py' --include='*.sh' --include='*.yml' --include='*.json'`
+   - `grep -r 'docs/adr/' .claude/ CLAUDE.md README.md scripts/ .kit/ --include='*.md' --include='*.py' --include='*.sh' --include='*.yml' --include='*.json'`
+   - `grep -r '\.kit/adr/' .claude/ CLAUDE.md README.md scripts/ .kit/ --include='*.md' --include='*.py' --include='*.sh' --include='*.yml' --include='*.json'`
 8. **Run CI**: `./scripts/core/ci-check.sh`
 
 ### Scope
