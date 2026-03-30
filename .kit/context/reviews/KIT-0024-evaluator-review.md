@@ -1,6 +1,6 @@
 # Code Review: KIT-0024
 
-**Source**: .kit/adversarial/inputs/KIT-0024-code-review-input.md
+**Source**: .adversarial/inputs/KIT-0024-code-review-input.md
 **Evaluator**: CodeRabbit + BugBot (automated), manual self-review
 **PR**: #39
 **Generated**: 2026-03-27 UTC

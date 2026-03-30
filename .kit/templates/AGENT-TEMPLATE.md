@@ -98,7 +98,7 @@ This moves the task to `5-done/` and updates status to `Done`.
 
 Request independent evaluation from an external evaluator agent when you encounter [role-specific scenarios requiring external validation].
 
-**📖 Complete Guide**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+**📖 Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 
 **When to Request Evaluation**:
 - [Role-specific scenario 1 - e.g., "Ambiguous requirements in task specification"]
@@ -121,10 +121,10 @@ adversarial evaluate .kit/tasks/2-todo/TASK-FILE.md
 **Reading Results**:
 ```bash
 # Evaluation output automatically saved to:
-# .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
+# .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 
 # Read the evaluation:
-cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
+cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 ```
 
 **Evaluation Output Format**:
@@ -136,7 +136,7 @@ cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
 - **Questions**: Clarifications needed from you
 
 **How to Use Feedback**:
-1. Read evaluation results from `.kit/adversarial/logs/`
+1. Read evaluation results from `.adversarial/logs/`
 2. Address CRITICAL concerns (must fix)
 3. Consider MEDIUM/LOW suggestions (use judgment)
 4. Update task specification if needed
@@ -194,9 +194,9 @@ This will help me proceed without further evaluation loops."
 - [Role-specific workflow documents - e.g., "Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`"]
 
 **Evaluation Workflow**:
-- **Complete guide**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
+- **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
 - Quick command: `adversarial evaluate <task-file>` (you run this directly)
-- Output location: `.kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md`
+- Output location: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md`
 
 **[Role-Specific Documentation]**:
 - [Link to relevant ADRs, e.g., "ADR-0011: Adversarial Workflow Integration"]

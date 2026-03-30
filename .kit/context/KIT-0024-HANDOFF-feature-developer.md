@@ -212,7 +212,7 @@ on:
 ---
 
 **Task File**: `.kit/tasks/2-todo/KIT-0024-core-scripts-standardization.md`
-**Evaluation Log**: `.kit/adversarial/logs/KIT-0024-core-scripts-standardization--arch-review-fast.md`
+**Evaluation Log**: `.adversarial/logs/KIT-0024-core-scripts-standardization--arch-review-fast.md`
 **ADR**: `.kit/adr/KIT-ADR-0022-manifest-based-sync-ownership.md`
 **Handoff Date**: 2026-03-26
 **Coordinator**: Planner (planner2)

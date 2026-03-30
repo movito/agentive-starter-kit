@@ -107,7 +107,7 @@ This command:
 
 You can run evaluation autonomously when encountering unclear test requirements or validation concerns.
 
-**📖 Complete Guide**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+**📖 Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 
 **When to Run Evaluation**:
 - Unclear test acceptance criteria
@@ -125,7 +125,7 @@ adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
 # Read results
-cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
+cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 ```
 
 **Iteration Limits**: Max 2-3 evaluations per task. Escalate to user if feedback is contradictory or after 2 NEEDS_REVISION verdicts.

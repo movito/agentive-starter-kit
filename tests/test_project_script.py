@@ -827,14 +827,14 @@ class TestVerifyIdentityLeaks:
     def test_excludes_legitimate_references(self, tmp_path):
         """Legitimate reference locations are excluded from scan."""
         # Create excluded directories with upstream references
-        adversarial_dir = tmp_path / ".kit" / "adversarial"
+        adversarial_dir = tmp_path / ".adversarial"
         adversarial_dir.mkdir(parents=True)
         (adversarial_dir / "config.md").write_text(
             "agentive-starter-kit reference\n", encoding="utf-8"
         )
 
         agent_ctx = tmp_path / ".kit" / "context"
-        agent_ctx.mkdir()
+        agent_ctx.mkdir(parents=True)
         (agent_ctx / "handoff.md").write_text(
             "agentive-starter-kit reference\n", encoding="utf-8"
         )

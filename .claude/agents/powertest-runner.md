@@ -174,7 +174,7 @@ adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
 # Read evaluation results
-cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
+cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 
 # Address feedback and iterate (max 2-3 rounds)
 ```

@@ -276,7 +276,7 @@ You MUST address **every** thread before proceeding.
 
 Run the adversarial code-review evaluator (see code-review-evaluator skill):
 
-1. Prepare input file: `.kit/adversarial/inputs/<TASK-ID>-code-review-input.md`
+1. Prepare input file: `.adversarial/inputs/<TASK-ID>-code-review-input.md`
 2. Run: `adversarial code-reviewer <input-file>` (or `code-reviewer-fast`)
 3. Read findings, address FAIL/CONCERNS
 4. Persist output to `.kit/context/reviews/<TASK-ID>-evaluator-review.md`

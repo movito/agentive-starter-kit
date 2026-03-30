@@ -4,7 +4,7 @@
 **From**: Coordinator (main session)
 **To**: feature-developer
 **Task**: `.kit/tasks/3-in-progress/ASK-0033-agent-creation-automation.md`
-**Plan**: `.kit/adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`
+**Plan**: `.adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`
 **Status**: Ready for implementation
 **Evaluation**: Plan evaluated by GPT-5.2 (2 rounds, $0.09 total). Round 2 NEEDS_REVISION on 4 items being addressed during implementation.
 
@@ -155,7 +155,7 @@ Exit Codes:
 
 ## Resources
 
-- **Plan**: `.kit/adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md` (full bug ledger, design decisions)
+- **Plan**: `.adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md` (full bug ledger, design decisions)
 - **Existing test patterns**: `tests/test_project_script.py`, `tests/test_uv_detection.py`
 - **Fixture**: `tests/conftest.py` → `setup_temp_project()`
 - **Template**: `.claude/agents/AGENT-TEMPLATE.md`

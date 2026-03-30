@@ -150,7 +150,7 @@ Linear-compatible folder structure:
 └── 9-reference/    → Reference (templates, docs)
 ```
 
-### Adversarial Evaluation (`.kit/adversarial/`)
+### Adversarial Evaluation (`.adversarial/`)
 
 Independent AI review of your plans, code, and documentation:
 
@@ -171,7 +171,7 @@ adversarial list-evaluators
 ./scripts/project install-evaluators
 ```
 
-Built-in evaluators use OpenAI. Custom evaluators can use other providers (Google, Mistral, Anthropic). Results saved to `.kit/adversarial/logs/`.
+Built-in evaluators use OpenAI. Custom evaluators can use other providers (Google, Mistral, Anthropic). Results saved to `.adversarial/logs/`.
 
 ### Serena Integration (`.serena/`)
 
@@ -206,7 +206,7 @@ This guides you through setting up:
 If you prefer to handle setup yourself, copy these template files and configure manually:
 - `.env.template` → `.env` (API keys)
 - `.serena/project.yml.template` → `.serena/project.yml` (languages)
-- `.kit/adversarial/config.yml.template` → `.kit/adversarial/config.yml` (evaluation settings)
+- `.adversarial/config.yml.template` → `.adversarial/config.yml` (evaluation settings)
 
 ---
 
@@ -333,7 +333,7 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 - **Agentive Development Guide**: `docs/agentive-development/README.md`
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md`
 - **Task Template**: `.kit/tasks/9-reference/templates/task-template.md`
-- **Evaluation Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+- **Evaluation Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 - **Starter Kit ADRs**: `.kit/adr/` (18+ architectural decisions)
 - **Your Project ADRs**: `docs/adr/` (start fresh here)
 
@@ -343,6 +343,7 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 
 ```
 your-project/
+├── .adversarial/            # Evaluation config, evaluators, scripts, docs
 ├── .claude/
 │   ├── agents/              # Implementation agents
 │   ├── commands/            # Implementation commands
@@ -352,15 +353,14 @@ your-project/
 │   ├── templates/           # Agent and task templates
 │   ├── skills/              # Builder skills (self-review, etc.)
 │   ├── context/             # Agent coordination, workflows, patterns
-│   ├── adversarial/         # Evaluation config, scripts, docs
 │   ├── tasks/               # Task files (numbered folders)
-│   ├── decisions/           # Kit ADRs (KIT-ADR-*)
+│   ├── adr/                 # Kit ADRs (KIT-ADR-*)
 │   ├── launchers/           # Agent launcher scripts
 │   └── docs/                # Builder documentation
 ├── .serena/
 │   └── project.yml          # Serena configuration
 ├── docs/
-│   ├── decisions/adr/       # Your project ADRs
+│   ├── adr/                 # Your project ADRs
 │   └── prd/                 # Product Requirements Documents
 ├── scripts/                 # Project scripts
 ├── tests/                   # Test suite

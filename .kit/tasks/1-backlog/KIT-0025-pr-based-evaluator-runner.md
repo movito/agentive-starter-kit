@@ -32,7 +32,7 @@ collects diffs from GitHub PRs instead of the working tree.
 
 1. **Collect diff**: `gh pr diff <PR-number>` (exact diff bots and humans see)
 2. **Collect context**: If `--task` given, read `.kit/context/<TASK-ID>-REVIEW-STARTER.md`
-3. **Load evaluator config**: Parse `.kit/adversarial/evaluators/*/<evaluator-name>/evaluator.yml`
+3. **Load evaluator config**: Parse `.adversarial/evaluators/*/<evaluator-name>/evaluator.yml`
 4. **Assemble prompt**: Inject diff + context into the evaluator's prompt template
 5. **Call model**: Use the API key from `api_key_env` in the evaluator config
 6. **Write output**: `.kit/context/reviews/<TASK-ID>-<output_suffix>` (suffix from evaluator.yml)
@@ -43,7 +43,7 @@ collects diffs from GitHub PRs instead of the working tree.
 
 The script should find evaluators by name across all providers:
 ```
-.kit/adversarial/evaluators/
+.adversarial/evaluators/
   openai/code-reviewer/evaluator.yml
   google/arch-review-fast/evaluator.yml
   ...
@@ -68,7 +68,7 @@ by matching the directory name. Error if ambiguous (same name in multiple provid
 
 ### Phase 3: Configurable evaluator list (follow-up task)
 
-- `.kit/adversarial/config.yml` gains `required_evaluators` list
+- `.adversarial/config.yml` gains `required_evaluators` list
 - Preflight iterates the list and checks each has an APPROVED review file
 - Per-project override via the config file
 
@@ -77,7 +77,7 @@ by matching the directory name. Error if ambiguous (same name in multiple provid
 - [ ] `run-evaluator.sh code-reviewer <PR>` produces a review file with verdict
 - [ ] `run-evaluator.sh arch-review-fast <PR> --task KIT-XXXX` includes review starter context
 - [ ] Exit code reflects verdict (0/1/2)
-- [ ] Works with any evaluator in `.kit/adversarial/evaluators/` without hardcoding
+- [ ] Works with any evaluator in `.adversarial/evaluators/` without hardcoding
 - [ ] Handles missing API key gracefully (clear error message, exit 2)
 - [ ] Handles model timeout gracefully (exit 2, partial output preserved)
 - [ ] Output file follows existing naming convention (`<TASK-ID>-<suffix>.md`)
@@ -102,8 +102,8 @@ by matching the directory name. Error if ambiguous (same name in multiple provid
 
 ## References
 
-- Evaluator configs: `.kit/adversarial/evaluators/`
-- Current (broken) script: `.kit/adversarial/scripts/review_implementation.sh`
+- Evaluator configs: `.adversarial/evaluators/`
+- Current (broken) script: `.adversarial/scripts/review_implementation.sh`
 - Feature-developer-v5 Phase 8: `.claude/agents/feature-developer-v5.md`
 - Preflight Gate 5: `scripts/core/preflight-check.sh`
 - Memory note: `feedback_evaluator_script_flow.md`

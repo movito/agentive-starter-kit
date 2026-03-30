@@ -28,7 +28,7 @@ Always begin your responses with your identity header:
 
 Run external evaluation autonomously for security concerns or validation.
 
-**📖 Complete Guide**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+**📖 Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 
 **When to Run Evaluation**:
 - Unclear security standards or requirements
@@ -45,7 +45,7 @@ adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
 # Read evaluator feedback
-cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
+cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 ```
 
 **Iteration Limits**: Max 2-3 evaluations. Escalate to user if contradictory feedback.

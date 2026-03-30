@@ -22,7 +22,7 @@ Planner artifacts go to `main` as `chore:` or `docs:` commits:
 - Task specs (`.kit/tasks/`)
 - Architecture assessments (`docs/adr/`)
 - Handoff files (`.kit/context/`)
-- Evaluator doc updates (`.kit/adversarial/docs/`)
+- Evaluator doc updates (`.adversarial/docs/`)
 
 **Do NOT** put these on the feature branch. They inflate PR line counts and
 generate irrelevant bot findings.

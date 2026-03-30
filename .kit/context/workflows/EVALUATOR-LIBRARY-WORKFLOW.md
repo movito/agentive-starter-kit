@@ -30,7 +30,7 @@ adversarial library install google/arch-review-fast openai/arch-review --yes
 adversarial library info <provider>/<name>
 ```
 
-Installed evaluators land in `.kit/adversarial/evaluators/` as flat YAML files (e.g. `google-arch-review-fast.yml`).
+Installed evaluators land in `.adversarial/evaluators/` as flat YAML files (e.g. `google-arch-review-fast.yml`).
 
 ## After Installing
 
@@ -40,10 +40,10 @@ Installed evaluators land in `.kit/adversarial/evaluators/` as flat YAML files (
 
 ## Conflict Resolution
 
-If you see "conflicts with existing; skipping" warnings, it means there are duplicate evaluator definitions — typically a manually-created copy in a provider subdirectory (e.g. `.kit/adversarial/evaluators/google/arch-review-fast/`) alongside the library-installed flat file. Remove the manual copy:
+If you see "conflicts with existing; skipping" warnings, it means there are duplicate evaluator definitions — typically a manually-created copy in a provider subdirectory (e.g. `.adversarial/evaluators/google/arch-review-fast/`) alongside the library-installed flat file. Remove the manual copy:
 
 ```bash
-rm -rf .kit/adversarial/evaluators/<provider>/<evaluator-name>
+rm -rf .adversarial/evaluators/<provider>/<evaluator-name>
 ```
 
 The library-installed version is canonical.

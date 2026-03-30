@@ -30,7 +30,7 @@ Clean reimplementation of the agent creation automation script after the origina
 - `tests/conftest.py` - Added `setup_temp_project()` fixture, `MINIMAL_LAUNCHER`, `MINIMAL_TEMPLATE`, shared `run_create_agent_script()` helper
 
 ### Also in diff (not part of this feature)
-- `.kit/adversarial/evaluators/**` - Evaluator library v0.4.0 installed via `./scripts/project install-evaluators` (50+ files). Minor fixes applied to grammar and README model name mismatches. These are external library files.
+- `.adversarial/evaluators/**` - Evaluator library v0.4.0 installed via `./scripts/project install-evaluators` (50+ files). Minor fixes applied to grammar and README model name mismatches. These are external library files.
 
 ## Test Results
 
@@ -85,7 +85,7 @@ CI: Lint & Format Check pass, Run Tests pass (all 3 push commits verified).
 
 ## Bug Ledger Coverage
 
-The 18 bugs from PR #12 are documented in `.kit/adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`. Key coverage:
+The 18 bugs from PR #12 are documented in `.adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`. Key coverage:
 
 | Bug | What | How Addressed |
 |-----|------|---------------|
@@ -101,7 +101,7 @@ The 18 bugs from PR #12 are documented in `.kit/adversarial/artifacts/ASK-0033-v
 ## Related Documentation
 
 - **Task file**: `.kit/tasks/4-in-review/ASK-0033-agent-creation-automation.md`
-- **Reimplementation plan**: `.kit/adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`
+- **Reimplementation plan**: `.adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`
 - **Bug ledger**: 18 bugs from PR #12 (S1-S10, T1-T8) in the plan
 - **CodeRabbit triage**: PR comment with full 30-item triage table
 - **Handoffs**: `.kit/context/ASK-0033-HANDOFF-unit-tests.md`, `.kit/context/ASK-0033-HANDOFF-integration-tests.md`

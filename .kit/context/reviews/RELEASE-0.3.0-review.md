@@ -30,7 +30,7 @@ Reviewing v0.3.0 release containing ASK-0028 (project setup command) and ASK-002
 
 ### ❌ Provider-Agnostic - FAILED
 - [x] **Agent prompts** - Successfully removed GPT-4o references from .claude/agents/
-- [ ] **Main documentation** - `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` contains 25+ hard-coded "GPT-4o" references
+- [ ] **Main documentation** - `.adversarial/docs/EVALUATION-WORKFLOW.md` contains 25+ hard-coded "GPT-4o" references
 - [ ] **CHANGELOG claim** - Claims "provider-agnostic documentation" but this isn't fully met
 
 ### ✅ Tests - PASSED
@@ -49,7 +49,7 @@ Reviewing v0.3.0 release containing ASK-0028 (project setup command) and ASK-002
 ## Findings
 
 ### HIGH: Provider-Agnostic Documentation Not Complete
-**File**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+**File**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 **Issue**: Contains 25+ explicit "GPT-4o" references throughout the document
 **Examples**:
 - Lines 159-160: "evaluate Plan evaluation (GPT-4o)", "proofread Teaching content review (GPT-4o)"
@@ -80,10 +80,10 @@ Reviewing v0.3.0 release containing ASK-0028 (project setup command) and ASK-002
 
 **Verdict**: CHANGES_REQUESTED
 
-**Rationale**: While the implementation quality is excellent and both component tasks were previously approved, the documentation doesn't meet the stated goal of being provider-agnostic. The CHANGELOG promises "provider-agnostic documentation" but `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` still contains extensive hard-coded "GPT-4o" references that undermine the multi-evaluator architecture's value proposition.
+**Rationale**: While the implementation quality is excellent and both component tasks were previously approved, the documentation doesn't meet the stated goal of being provider-agnostic. The CHANGELOG promises "provider-agnostic documentation" but `.adversarial/docs/EVALUATION-WORKFLOW.md` still contains extensive hard-coded "GPT-4o" references that undermine the multi-evaluator architecture's value proposition.
 
 **Required Changes**:
-1. Update `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` to use provider-neutral language (replace "GPT-4o" with "External AI evaluator" or similar)
+1. Update `.adversarial/docs/EVALUATION-WORKFLOW.md` to use provider-neutral language (replace "GPT-4o" with "External AI evaluator" or similar)
 2. Consider updating CHANGELOG to be more accurate about scope of provider-agnostic changes
 
 **Release Impact**: This is documentation-only cleanup that doesn't affect functionality. Once addressed, the release will be ready for production.

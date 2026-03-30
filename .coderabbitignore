@@ -2,9 +2,9 @@
 # Prevents CodeRabbit from reviewing non-code artifacts that generate noise
 
 # Adversarial evaluator artifacts (inputs and logs)
-.kit/adversarial/inputs/
-.kit/adversarial/logs/
-.kit/adversarial/artifacts/
+.adversarial/inputs/
+.adversarial/logs/
+.adversarial/artifacts/
 
 # Agent review artifacts (evaluator outputs, review starters)
 .kit/context/reviews/

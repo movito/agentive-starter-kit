@@ -253,7 +253,7 @@ def _verify_identity_leaks(project_dir: Path) -> int:
     # Directories to exclude (legitimate references)
     exclude_dirs = {".git", ".venv", ".aider"}
     exclude_path_parts = [
-        ".kit/adversarial",
+        ".adversarial",
         ".kit/context",
         "docs/adr",
         ".kit/adr",

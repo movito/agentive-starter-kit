@@ -452,7 +452,7 @@ You'll receive something like:
 
 Sometimes during implementation you may encounter ambiguities or need design clarification. You can run evaluation autonomously via the external Evaluator.
 
-**📖 Complete Guide**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+**📖 Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 
 **When to Run Evaluation**:
 - Ambiguous requirements in task spec
@@ -469,7 +469,7 @@ adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
 # Read evaluator feedback
-cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
+cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 ```
 
 **Iteration Limits**: Max 2-3 evaluations per task. Escalate to user if contradictory feedback or after 2 NEEDS_REVISION verdicts.
@@ -530,9 +530,9 @@ See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
 - Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`
 
 **Evaluation Workflow**:
-- **Complete guide**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
+- **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
 - Quick command: `adversarial evaluate <task-file>` (or `echo y | adversarial evaluate <task-file>` for large files)
-- Output location: `.kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md`
+- Output location: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md`
 
 ## Allowed Operations
 You have full development permissions including:

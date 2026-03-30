@@ -27,8 +27,8 @@ This is a **release review** for v0.3.0. The branch contains two completed tasks
 | File | Change |
 |------|--------|
 | `scripts/project` | `install-evaluators` command (~100 lines) |
-| `.kit/adversarial/evaluators/README.md` | Custom evaluator documentation |
-| `.kit/adversarial/config.yml.template` | Deprecated `evaluator_model` field |
+| `.adversarial/evaluators/README.md` | Custom evaluator documentation |
+| `.adversarial/config.yml.template` | Deprecated `evaluator_model` field |
 | `.claude/agents/planner.md` | Provider-agnostic language |
 | `.claude/agents/onboarding.md` | Evaluator setup phase |
 | `tests/test_project_script.py` | 6 new unit tests |

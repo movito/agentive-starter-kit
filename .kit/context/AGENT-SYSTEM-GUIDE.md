@@ -784,7 +784,7 @@ cat >> .gitignore << 'EOF'
 
 # Agent Context (mostly tracked)
 .kit/context/session-logs/*.tmp
-.kit/adversarial/logs/*.tmp
+.adversarial/logs/*.tmp
 EOF
 
 # 6. Initial commit

@@ -13,8 +13,8 @@ The implementation successfully delivers a comprehensive multi-evaluator archite
 ## Acceptance Criteria Verification
 
 - [ ] **`adversarial-workflow>=0.7.0` in pyproject.toml** - NOT MET: Currently uses `>=0.6.6` (pyproject.toml:41)
-- [x] **Config template deprecates `evaluator_model` field** - Verified in `.kit/adversarial/config.yml.template:31-33`
-- [x] **`.kit/adversarial/evaluators/` directory exists with README** - Verified with comprehensive 63-line README
+- [x] **Config template deprecates `evaluator_model` field** - Verified in `.adversarial/config.yml.template:31-33`
+- [x] **`.adversarial/evaluators/` directory exists with README** - Verified with comprehensive 63-line README
 - [x] **`./scripts/project install-evaluators` command** - Fully implemented (scripts/project:376-499):
   - [x] Pins to specific version by default (`v0.2.2`)
   - [x] Supports `--ref <tag>` for version override
@@ -83,7 +83,7 @@ All tests use proper mocking and cover critical edge cases.
 Successfully removed all GPT-4o specific references, making prompts provider-agnostic as required.
 
 ### Configuration Updates
-`.kit/adversarial/config.yml.template` properly deprecates `evaluator_model` field with clear migration guidance.
+`.adversarial/config.yml.template` properly deprecates `evaluator_model` field with clear migration guidance.
 
 ## Decision
 

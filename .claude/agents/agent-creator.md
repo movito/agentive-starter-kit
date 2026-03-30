@@ -175,7 +175,7 @@ EOF
 adversarial evaluate /tmp/agent-[name]-definition.md
 
 # Read results
-cat .kit/adversarial/logs/*-PLAN-EVALUATION.md
+cat .adversarial/logs/*-PLAN-EVALUATION.md
 ```
 
 Present evaluation feedback and ask if user wants to make improvements.
@@ -337,7 +337,7 @@ Be **specific** about what the agent does.
 **Essential Reading** (reference these during agent creation):
 - **Agent Template**: `.claude/agents/AGENT-TEMPLATE.md` (base template)
 - **Creation Workflow**: `.kit/context/workflows/AGENT-CREATION-WORKFLOW.md` (comprehensive guide)
-- **Evaluator Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (for Evaluator section)
+- **Evaluator Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (for Evaluator section)
 - **Existing Agents**: `.claude/agents/` (examples to learn from)
 
 **Quick Commands**:

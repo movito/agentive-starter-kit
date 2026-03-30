@@ -80,7 +80,7 @@ adversarial list-evaluators
 - Error handling, test coverage
 - Dependencies, edge cases
 
-**Output:** `.kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md`
+**Output:** `.adversarial/logs/TASK-*-PLAN-EVALUATION.md`
 
 ---
 
@@ -98,7 +98,7 @@ adversarial list-evaluators
 - Examples quality
 - Style guide/glossary consistency
 
-**Output:** `.kit/adversarial/logs/<doc-name>-PROOFREADING.md`
+**Output:** `.adversarial/logs/<doc-name>-PROOFREADING.md`
 
 ---
 
@@ -118,7 +118,7 @@ adversarial list-evaluators
 - Test coverage adequacy
 - Code style and maintainability
 
-**Output:** `.kit/adversarial/logs/<identifier>-CODE-REVIEW.md`
+**Output:** `.adversarial/logs/<identifier>-CODE-REVIEW.md`
 
 ---
 
@@ -164,7 +164,7 @@ Local Evaluators:
   security       Security-focused code review
   performance    Performance analysis
 
-Create .kit/adversarial/evaluators/*.yml to add custom evaluators.
+Create .adversarial/evaluators/*.yml to add custom evaluators.
 ```
 
 This command shows:
@@ -175,16 +175,16 @@ This command shows:
 
 ## Custom Evaluators
 
-You can create project-specific evaluators by adding YAML files to `.kit/adversarial/evaluators/`.
+You can create project-specific evaluators by adding YAML files to `.adversarial/evaluators/`.
 
 ### Creating a Custom Evaluator
 
 **1. Create the evaluator file:**
 ```bash
-mkdir -p .kit/adversarial/evaluators
+mkdir -p .adversarial/evaluators
 ```
 
-**2. Define the evaluator (e.g., `.kit/adversarial/evaluators/security.yml`):**
+**2. Define the evaluator (e.g., `.adversarial/evaluators/security.yml`):**
 ```yaml
 name: security
 description: Security-focused code review
@@ -258,7 +258,7 @@ Each provider requires its own API key (set in `.env`):
 - `GOOGLE_API_KEY` for Gemini evaluators
 - `MISTRAL_API_KEY` for Mistral evaluators
 
-**Documentation**: `.kit/adversarial/evaluators/README.md`
+**Documentation**: `.adversarial/evaluators/README.md`
 **Library**: https://github.com/movito/adversarial-evaluator-library
 
 ---
@@ -269,7 +269,7 @@ Each provider requires its own API key (set in `.env`):
 
 - **External AI evaluator** invoked via `adversarial evaluate` or `adversarial proofread` CLI commands
 - Uses Aider to call external AI APIs (OpenAI, Google, Mistral, etc.)
-- Saves output to `.kit/adversarial/logs/` with different suffixes:
+- Saves output to `.adversarial/logs/` with different suffixes:
   - Evaluation: `TASK-*-PLAN-EVALUATION.md`
   - Proofreading: `<doc-name>-PROOFREADING.md`
 - Independent critical review from a different AI model (external evaluator, not Claude)
@@ -361,12 +361,12 @@ echo y | adversarial evaluate delegation/tasks/2-todo/TASK-XXXX-description.md
 ```
 - This invokes Aider with the configured evaluator model
 - The evaluator analyzes the plan using evaluation criteria
-- Output saved to `.kit/adversarial/logs/TASK-XXXX-PLAN-EVALUATION.md`
+- Output saved to `.adversarial/logs/TASK-XXXX-PLAN-EVALUATION.md`
 
 **3. Planner reads evaluation output**
 ```bash
 # Read evaluation results
-cat .kit/adversarial/logs/TASK-XXXX-PLAN-EVALUATION.md
+cat .adversarial/logs/TASK-XXXX-PLAN-EVALUATION.md
 ```
 
 **4. Planner addresses CRITICAL and HIGH priority feedback**
@@ -412,12 +412,12 @@ echo y | adversarial proofread docs/agentive-development/01-foundation/01-struct
 ```
 - This invokes Aider with the configured evaluator model
 - The evaluator analyzes content using proofreading criteria
-- Output saved to `.kit/adversarial/logs/concept-PROOFREADING.md`
+- Output saved to `.adversarial/logs/concept-PROOFREADING.md`
 
 **3. Agent reads proofreading output**
 ```bash
 # Read proofreading results
-cat .kit/adversarial/logs/concept-PROOFREADING.md
+cat .adversarial/logs/concept-PROOFREADING.md
 ```
 
 **4. Agent addresses CRITICAL and HIGH priority feedback**
@@ -467,12 +467,12 @@ adversarial review src/feature/ --context delegation/tasks/3-in-progress/TASK-00
 ```
 - This invokes Aider with the configured evaluator model
 - The evaluator analyzes code using review criteria
-- Output saved to `.kit/adversarial/logs/<identifier>-CODE-REVIEW.md`
+- Output saved to `.adversarial/logs/<identifier>-CODE-REVIEW.md`
 
 **3. Read code review output**
 ```bash
 # Read review results
-cat .kit/adversarial/logs/new_module-CODE-REVIEW.md
+cat .adversarial/logs/new_module-CODE-REVIEW.md
 ```
 
 **4. Address CRITICAL and HIGH priority findings**
@@ -755,7 +755,7 @@ Agents can approve NEEDS_REVISION content when:
 ### 1. Wrapper Verdict Bug
 **Issue**: CLI wrapper may report "✅ Evaluation approved!" even when the actual verdict is NEEDS_REVISION
 **Solution**: **Always check the log file** for the actual verdict
-**File**: `.kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md`
+**File**: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md`
 
 ### 2. Large Files & Rate Limiting
 **Issue**: Files >500 lines may fail or trigger authentication issues on Tier 1 OpenAI accounts (30k TPM limit)
@@ -798,7 +798,7 @@ Agents can approve NEEDS_REVISION content when:
 - Manual **agent approval supersedes** evaluator verdict when appropriate
 
 **For Both:**
-- Always check `.kit/adversarial/logs/` file for actual verdict (wrapper may lie)
+- Always check `.adversarial/logs/` file for actual verdict (wrapper may lie)
 - Choose the right mode: `evaluate` for code, `proofread` for teaching
 
 ### ⚠️ USE JUDGMENT:
@@ -823,7 +823,7 @@ Agents can approve NEEDS_REVISION content when:
 
 ### Evaluation Example
 
-**Location:** `.kit/adversarial/logs/TASK-2025-0037-PLAN-EVALUATION.md`
+**Location:** `.adversarial/logs/TASK-2025-0037-PLAN-EVALUATION.md`
 
 **Verdict:** NEEDS_REVISION
 
@@ -836,7 +836,7 @@ Agents can approve NEEDS_REVISION content when:
 
 ### Proofreading Example
 
-**Location:** `.kit/adversarial/logs/concept-PROOFREADING.md`
+**Location:** `.adversarial/logs/concept-PROOFREADING.md`
 
 **Verdict:** NEEDS_REVISION
 
@@ -881,17 +881,17 @@ Markdown with structured sections:
 ## Documentation References
 
 ### Configuration:
-- **Config file**: `.kit/adversarial/config.yml`
+- **Config file**: `.adversarial/config.yml`
 - **CLI location**: `/Library/Frameworks/Python.framework/Versions/3.11/bin/adversarial`
 
 ### Related Documentation:
 - **Verification report**: `.kit/context/ADVERSARIAL-VERIFICATION.md` (280 lines)
 - **Workflow verification**: `delegation/handoffs/EVALUATOR-WORKFLOW-VERIFICATION-2025-10-24.md` (293 lines)
-- **Evaluation logs**: `.kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md` (all evaluations)
-- **Proofreading logs**: `.kit/adversarial/logs/*-PROOFREADING.md` (all proofreading)
-- **Evaluation wrapper script**: `.kit/adversarial/scripts/evaluate_plan.sh`
-- **Proofreading wrapper script**: `.kit/adversarial/scripts/proofread_content.sh`
-- **Bugfix docs**: `.kit/adversarial/docs/BUGFIX-OUTPUT-CAPTURE.md` (tee output capture fix)
+- **Evaluation logs**: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md` (all evaluations)
+- **Proofreading logs**: `.adversarial/logs/*-PROOFREADING.md` (all proofreading)
+- **Evaluation wrapper script**: `.adversarial/scripts/evaluate_plan.sh`
+- **Proofreading wrapper script**: `.adversarial/scripts/proofread_content.sh`
+- **Bugfix docs**: `.adversarial/docs/BUGFIX-OUTPUT-CAPTURE.md` (tee output capture fix)
 - **ADR**: `docs/adr/ADR-0011-adversarial-workflow-integration.md`
 
 ### Quick Reference:
@@ -906,20 +906,20 @@ Markdown with structured sections:
 ```bash
 # Plan Evaluation (for code/architecture)
 adversarial evaluate delegation/tasks/2-todo/TASK-FILE.md
-cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
+cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
 
 # Proofreading (for teaching content)
 adversarial proofread docs/guide/concept.md
-cat .kit/adversarial/logs/concept-PROOFREADING.md
+cat .adversarial/logs/concept-PROOFREADING.md
 
 # Code Review (for implemented code)
 adversarial review src/feature/module.py
 adversarial review src/feature/ --context delegation/tasks/3-in-progress/TASK-0001.md
-cat .kit/adversarial/logs/module-CODE-REVIEW.md
+cat .adversarial/logs/module-CODE-REVIEW.md
 
 # Discovery & Custom Evaluators
 adversarial list-evaluators              # Show all available evaluators
-# Custom evaluators: .kit/adversarial/evaluators/*.yml
+# Custom evaluators: .adversarial/evaluators/*.yml
 
 # System Commands
 adversarial --version                    # Check CLI version

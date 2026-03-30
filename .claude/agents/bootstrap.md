@@ -115,7 +115,7 @@ grep -ri "agentive.starter.kit\|agentive-starter-kit" \
    - Agent file descriptions and comments (e.g., "for the agentive-starter-kit")
    - `scripts/core/logging_config.py` docstring
    - `tests/conftest.py` docstring
-   - `.kit/adversarial/docs/` descriptions
+   - `.adversarial/docs/` descriptions
 
 3. **Preserve functional references** — do NOT change these:
    - Git remote URLs: `github.com/movito/agentive-starter-kit` (upstream tracking)

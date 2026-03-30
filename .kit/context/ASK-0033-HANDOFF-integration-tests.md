@@ -4,7 +4,7 @@
 **From**: Coordinator (main session)
 **To**: feature-developer
 **Task**: `.kit/tasks/3-in-progress/ASK-0033-agent-creation-automation.md`
-**Plan**: `.kit/adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`
+**Plan**: `.adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md`
 **Status**: Ready for implementation
 **Evaluation**: Plan evaluated by GPT-5.2 (2 rounds, $0.09 total). Round 2 NEEDS_REVISION on 4 items being addressed during implementation.
 
@@ -180,7 +180,7 @@ This ensures they're skipped during pre-commit (which only runs fast tests) but 
 
 ## Resources
 
-- **Plan**: `.kit/adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md` (locking design, bug ledger)
+- **Plan**: `.adversarial/artifacts/ASK-0033-v2-reimplementation-plan.md` (locking design, bug ledger)
 - **Existing test patterns**: `tests/test_project_script.py`
 - **Fixture**: `tests/conftest.py` → `setup_temp_project()`
 - **pytest config**: `pyproject.toml` (check marker registration)

@@ -58,7 +58,7 @@ project_title = project_name.replace("-", " ").replace("_", " ").title()
 
 After all replacements, if `--verify` is passed, run the audit grep and report remaining leaks. The audit should exclude:
 - `.git/`, `5-done/`, `8-archive/`, `.venv/`
-- `.kit/adversarial/`, `.kit/context/`, `.aider`
+- `.adversarial/`, `.kit/context/`, `.aider`
 - `docs/adr/`, `docs/archive/`, `docs/UPSTREAM`
 - `onboarding.md`
 

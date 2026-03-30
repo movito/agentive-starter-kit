@@ -21,15 +21,15 @@ The adversarial-workflow package now supports custom evaluators via YAML files. 
    "adversarial-workflow>=0.7.0",  # Multi-evaluator support, configurable timeouts
    ```
 
-2. **`.kit/adversarial/config.yml.template`** - Update to deprecate `evaluator_model`:
+2. **`.adversarial/config.yml.template`** - Update to deprecate `evaluator_model`:
    - See task spec Section 2 for exact content
    - Remove any model-specific fields
    - Add comments about custom evaluators
 
-3. **Create `.kit/adversarial/evaluators/` directory**:
+3. **Create `.adversarial/evaluators/` directory**:
    ```bash
-   mkdir -p .kit/adversarial/evaluators
-   touch .kit/adversarial/evaluators/.gitkeep
+   mkdir -p .adversarial/evaluators
+   touch .adversarial/evaluators/.gitkeep
    ```
    - Add README.md per task spec Section 3
 
@@ -61,7 +61,7 @@ The adversarial-workflow package now supports custom evaluators via YAML files. 
    - Add install-evaluators command
    - See task spec Section 7
 
-8. **Update `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`**:
+8. **Update `.adversarial/docs/EVALUATION-WORKFLOW.md`**:
    - Add multi-evaluator guidance
    - Document custom evaluator creation
 
@@ -77,14 +77,14 @@ The adversarial-workflow package now supports custom evaluators via YAML files. 
 | File | Change |
 |------|--------|
 | `pyproject.toml` | Bump adversarial-workflow to >=0.7.0 |
-| `.kit/adversarial/config.yml.template` | Deprecate evaluator_model, add comments |
-| `.kit/adversarial/evaluators/.gitkeep` | Create directory |
-| `.kit/adversarial/evaluators/README.md` | Create with usage guide |
+| `.adversarial/config.yml.template` | Deprecate evaluator_model, add comments |
+| `.adversarial/evaluators/.gitkeep` | Create directory |
+| `.adversarial/evaluators/README.md` | Create with usage guide |
 | `scripts/project` | Add install-evaluators command |
 | `.claude/agents/planner.md` | Remove GPT-4o references |
 | `.claude/agents/onboarding.md` | Add evaluator setup phase |
 | `README.md` | Update adversarial section |
-| `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` | Add multi-evaluator guidance |
+| `.adversarial/docs/EVALUATION-WORKFLOW.md` | Add multi-evaluator guidance |
 | `tests/test_project_script.py` | Add installer tests |
 
 ## Key Technical Details

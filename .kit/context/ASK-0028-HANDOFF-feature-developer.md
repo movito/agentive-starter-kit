@@ -192,6 +192,6 @@ python -c "import gql; print('gql available')"
 ---
 
 **Task File**: `.kit/tasks/2-todo/ASK-0028-venv-setup-command.md`
-**Evaluation Logs**: `.kit/adversarial/logs/ASK-0028-venv-setup-command-PLAN-EVALUATION.md`
+**Evaluation Logs**: `.adversarial/logs/ASK-0028-venv-setup-command-PLAN-EVALUATION.md`
 **Handoff Date**: 2025-02-01
 **Coordinator**: Planner

@@ -97,5 +97,5 @@ Evaluator concerns were minor - the implementation is straightforward bash scrip
 ## Resources
 
 - Task file: `.kit/tasks/2-todo/ASK-0027-project-reconfigure-command.md`
-- Evaluation logs: `.kit/adversarial/logs/ASK-0027-project-reconfigure-command-PLAN-EVALUATION.md`
+- Evaluation logs: `.adversarial/logs/ASK-0027-project-reconfigure-command-PLAN-EVALUATION.md`
 - Original fix: commit fb2c718

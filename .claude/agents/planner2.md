@@ -198,7 +198,7 @@ After completing task status changes, verify Linear is updated:
 
 ## Evaluation Workflow (Primary Planner Responsibility)
 
-**Complete Guide**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+**Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 
 **When to Run Evaluation**:
 - Before assigning complex tasks (>500 lines) to implementation agents
@@ -225,7 +225,7 @@ adversarial code-reviewer-fast <task-file>
 adversarial list-evaluators
 
 # 3. Read evaluator feedback
-cat .kit/adversarial/logs/<task-name>--<evaluator-name>.md.md
+cat .adversarial/logs/<task-name>--<evaluator-name>.md.md
 
 # 4. Address CRITICAL/HIGH priority feedback
 # 5. Update task specification based on recommendations
@@ -241,7 +241,7 @@ Use library evaluators instead (see `adversarial list-evaluators`).
 **Key Facts**:
 - **Evaluator**: External AI via adversarial-workflow (non-interactive, autonomous)
 - **Cost**: Varies by evaluator (see `adversarial list-evaluators`)
-- **Output**: Markdown file in `.kit/adversarial/logs/`
+- **Output**: Markdown file in `.adversarial/logs/`
 
 **Iteration Guidance**:
 - Address CRITICAL/HIGH concerns, use judgment on MEDIUM/LOW
@@ -393,7 +393,7 @@ Format as entries for REVIEW-INSIGHTS.md index with task ID.
 
 - Task specifications: `.kit/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
 - Agent coordination: `.kit/context/agent-handoffs.json`
-- Evaluation logs: `.kit/adversarial/logs/`
+- Evaluation logs: `.adversarial/logs/`
 - Project state: `.kit/context/current-state.json`
 - Workflows: `.kit/context/workflows/`
 - Test results and validation
@@ -593,7 +593,7 @@ git push origin main && git push origin vX.Y.Z
 ## Quick Reference Documentation
 
 **Coordinator Procedures** (in order of usage):
-1. **Evaluation Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+1. **Evaluation Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 2. **Task Creation**: `.kit/tasks/9-reference/templates/task-template.md`
 3. **Agent Assignment**: `.kit/context/agent-handoffs.json` updates
 4. **Code Review Workflow**: `.kit/adr/KIT-ADR-0014-code-review-workflow.md`
@@ -607,7 +607,7 @@ git push origin main && git push origin vX.Y.Z
 - `.kit/context/reviews/` (code review reports)
 - `.kit/context/REVIEW-INSIGHTS.md` (distilled knowledge from reviews — KIT-ADR-0019)
 - `.kit/tasks/` (task specifications in numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
-- `.kit/adversarial/logs/` (evaluation results - read-only)
+- `.adversarial/logs/` (evaluation results - read-only)
 
 **Evaluation Command** (run directly via Bash tool):
 
@@ -630,7 +630,7 @@ adversarial list-evaluators
 - Task and documentation management
 - Agent delegation and workflow coordination
 - **Run evaluations autonomously** via external evaluator (using Bash tool)
-- Read evaluation results from `.kit/adversarial/logs/`
+- Read evaluation results from `.adversarial/logs/`
 - Update agent-handoffs.json with task assignments and status
 - **Chrome browser automation** for viewing remote sessions, PRs, and web content
 
@@ -730,7 +730,7 @@ This is a no-op if dispatch-kit is not installed.
 
 ## Restrictions
 
-- Should not modify evaluation logs (read-only outputs from `.kit/adversarial/logs/`)
+- Should not modify evaluation logs (read-only outputs from `.adversarial/logs/`)
 - Must follow TDD requirements when creating tasks
 - Must update agent-handoffs.json after significant coordination work
 - **Must verify CI/CD passes when pushing code changes**

@@ -49,7 +49,7 @@ echo "# Evaluator skipped: <N lines logic, no new functions, no external integra
 
 ## Step 1: Prepare Input
 
-Create `.kit/adversarial/inputs/<TASK-ID>-code-review-input.md` using the template at `.kit/adversarial/templates/code-review-input-template.md`.
+Create `.adversarial/inputs/<TASK-ID>-code-review-input.md` using the template at `.adversarial/templates/code-review-input-template.md`.
 
 Use the PR's original task ID. If the input file already exists from a previous run, append `-r2`:
 
@@ -80,22 +80,22 @@ If the required API key is missing, fall back to the other evaluator. If neither
 
 ```bash
 # Deep analysis (recommended for substantial PRs)
-adversarial code-reviewer .kit/adversarial/inputs/<TASK-ID>-code-review-input.md
+adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md
 
 # Fast variant (for small changes or iteration)
-adversarial code-reviewer-fast .kit/adversarial/inputs/<TASK-ID>-code-review-input.md
+adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
 ```
 
 ## Step 3: Read and Address Findings
 
-Output lands in `.kit/adversarial/logs/`:
+Output lands in `.adversarial/logs/`:
 
 ```bash
 # First run:
-cat .kit/adversarial/logs/<TASK-ID>-code-review-input--code-reviewer.md.md
+cat .adversarial/logs/<TASK-ID>-code-review-input--code-reviewer.md.md
 
 # Follow-up:
-cat .kit/adversarial/logs/<TASK-ID>-code-review-input-r2--code-reviewer.md.md
+cat .adversarial/logs/<TASK-ID>-code-review-input-r2--code-reviewer.md.md
 ```
 
 | Verdict | Action |
@@ -110,11 +110,11 @@ Copy to `.kit/context/reviews/` so it's tracked in git:
 
 ```bash
 # First run:
-cp .kit/adversarial/logs/<TASK-ID>-code-review-input--code-reviewer.md.md \
+cp .adversarial/logs/<TASK-ID>-code-review-input--code-reviewer.md.md \
    .kit/context/reviews/<TASK-ID>-evaluator-review.md
 
 # Follow-up:
-cp .kit/adversarial/logs/<TASK-ID>-code-review-input-r2--code-reviewer.md.md \
+cp .adversarial/logs/<TASK-ID>-code-review-input-r2--code-reviewer.md.md \
    .kit/context/reviews/<TASK-ID>-evaluator-review-r2.md
 ```
 

@@ -103,7 +103,7 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Upstream Merges**: Run `./scripts/core/project reconfigure` after pulling upstream changes to update agent files (ASK-0027)
 - **New Project Setup**: Run `./scripts/core/project setup` to create venv and install dependencies (ASK-0028)
 - **Evaluator Installation**: Run `./scripts/core/project install-evaluators` to add additional evaluation providers (ASK-0029)
-- **adversarial-workflow CLI requires `.adversarial/` at repo root**: The CLI (v0.9.9) hardcodes `.adversarial/` as its working directory for config, evaluators, scripts, and logs. After ASK-0044 moved everything to `.kit/adversarial/`, the CLI broke silently (`adversarial check` showed 3 missing-script errors). Workaround: symlink `.adversarial` → `.kit/adversarial` at repo root (committed). Proper fix: patch the CLI to support `--dir` or read from `.kit/adversarial/` — tracked as ADV-0053 / movito/adversarial-workflow#58. (ASK-0044 post-mortem)
+- **adversarial-workflow CLI requires `.adversarial/` at repo root**: The CLI (v0.9.9) hardcodes `.adversarial/` as its working directory. ASK-0044 moved it to `.kit/adversarial/` but this broke the CLI. Reverted: `.adversarial/` now lives at repo root again. Future move requires ADV-0053 (configurable dir) — tracked upstream at movito/adversarial-workflow#58. (ASK-0044 post-mortem)
 
 ---
 

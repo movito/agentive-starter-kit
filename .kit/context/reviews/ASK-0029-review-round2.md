@@ -20,7 +20,7 @@ All findings from Round 1 have been successfully addressed. The implementation n
 
 - [x] **`adversarial-workflow>=0.7.0` in pyproject.toml** - ✅ VERIFIED (pyproject.toml:41)
 - [x] **Config template deprecates `evaluator_model` field** - ✅ VERIFIED
-- [x] **`.kit/adversarial/evaluators/` directory exists with README** - ✅ VERIFIED
+- [x] **`.adversarial/evaluators/` directory exists with README** - ✅ VERIFIED
 - [x] **`./scripts/project install-evaluators` command with all requirements** - ✅ VERIFIED
 - [x] **Onboarding offers evaluator library installation** - ✅ VERIFIED
 - [x] **Agent prompts don't reference specific models** - ✅ VERIFIED

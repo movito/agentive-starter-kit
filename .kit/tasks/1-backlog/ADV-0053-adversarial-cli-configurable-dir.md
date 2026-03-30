@@ -17,14 +17,14 @@
 
 The `adversarial-workflow` CLI (v0.9.9) hardcodes `.adversarial/` as its working directory
 for config, evaluators, scripts, and logs. After ASK-0044 moved all builder infrastructure
-into `.kit/`, the canonical location became `.kit/adversarial/`, breaking the CLI silently.
+into `.kit/`, the canonical location became `.adversarial/`, breaking the CLI silently.
 
 The fix belongs in the `adversarial-workflow` package itself: support a configurable
 directory via `--dir` flag, `ADVERSARIAL_DIR` env var, or `adversarial.dir` in
 `pyproject.toml`, falling back to `.adversarial/` for backward compatibility.
 
 **Context**: This surfaced during KIT-0026 evaluation — `adversarial evaluate --evaluator
-arch-review-fast` couldn't find evaluators because they live in `.kit/adversarial/evaluators/`.
+arch-review-fast` couldn't find evaluators because they live in `.adversarial/evaluators/`.
 
 ## Requirements
 
@@ -49,7 +49,7 @@ This task is scoped to the **adversarial-workflow** repo (movito/adversarial-wor
 not agentive-starter-kit. When complete:
 
 1. Release new adversarial-workflow version
-2. Update agentive-starter-kit `.env` or `pyproject.toml` to set `ADVERSARIAL_DIR=.kit/adversarial`
+2. Once configurable dir is supported, `.adversarial/` can move into `.kit/adversarial/` with a config override
 3. Remove the integration note in `.kit/context/REVIEW-INSIGHTS.md`
 
 ## References

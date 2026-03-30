@@ -74,7 +74,7 @@ so this ADR establishes the boundary first.
 | `delegation/tasks/` | `.kit/tasks/` | Task specs (1-backlog through 9-reference) |
 | `delegation/handoffs/` | *(deleted — handoffs stay in `.kit/context/`)* | Handoff records |
 | `.agent-context/` | `.kit/context/` | Coordination state, handoffs, reviews, retros, workflows, patterns.yml |
-| `.adversarial/` | `.kit/adversarial/` | Evaluator system (config, evaluators, inputs, logs, scripts) |
+| `.adversarial/` | `.adversarial/` | Evaluator system (config, evaluators, inputs, logs, scripts) |
 | `.kit/adr/` | `.kit/adr/` | Kit ADRs (KIT-ADR-*) |
 | `.claude/agents/planner*.md` | `.kit/agents/` | Builder agents (planner, planner2, tycho, code-reviewer, document-reviewer, security-reviewer) |
 | `.claude/agents/AGENT-TEMPLATE.md` | `.kit/agents/` | Agent creation template |
@@ -176,10 +176,10 @@ All work lands on `feature/ASK-0044-kit-boundary` and merges as one PR.
       ".kit/context/workflows/",
       ".kit/context/patterns.yml",
       ".kit/context/templates/",
-      ".kit/adversarial/config.yml",
-      ".kit/adversarial/evaluators/",
-      ".kit/adversarial/scripts/",
-      ".kit/adversarial/docs/",
+      ".adversarial/config.yml",
+      ".adversarial/evaluators/",
+      ".adversarial/scripts/",
+      ".adversarial/docs/",
       ".kit/agents/",
       ".kit/skills/",
       ".kit/commands/",

@@ -9,7 +9,7 @@
 
 - Updated adversarial-workflow dependency to >=0.6.6 (v0.7.0 not yet published)
 - Added `install-evaluators` command to scripts/project with version pinning
-- Created .kit/adversarial/evaluators/README.md with provider documentation
+- Created .adversarial/evaluators/README.md with provider documentation
 - Made agent prompts provider-agnostic (removed GPT-4o specificity from 11 agent files)
 - Added evaluator setup phase to onboarding workflow
 - Updated README.md and EVALUATION-WORKFLOW.md for multi-provider support
@@ -19,8 +19,8 @@
 **Core Changes:**
 - `pyproject.toml` (modified) - Version bump
 - `scripts/project` (modified) - New `install-evaluators` command (~100 lines)
-- `.kit/adversarial/config.yml.template` (modified) - Deprecated evaluator_model field
-- `.kit/adversarial/evaluators/README.md` (new) - Provider documentation
+- `.adversarial/config.yml.template` (modified) - Deprecated evaluator_model field
+- `.adversarial/evaluators/README.md` (new) - Provider documentation
 
 **Agent Prompts:**
 - `.claude/agents/planner.md` (modified)
@@ -37,7 +37,7 @@
 
 **Documentation:**
 - `README.md` (modified)
-- `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (modified)
+- `.adversarial/docs/EVALUATION-WORKFLOW.md` (modified)
 
 **Tests:**
 - `tests/test_project_script.py` (new) - 6 unit tests with mocked subprocess

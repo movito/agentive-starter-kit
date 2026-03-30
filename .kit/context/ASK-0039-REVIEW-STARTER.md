@@ -17,7 +17,7 @@ swallow errors. Also found and fixed a real DK004 violation in `scripts/validate
 | `scripts/pattern_lint.py` | Added `check_dk004()`, `_is_swallowed()`, registered in `lint_file()`, updated docstring | +40 |
 | `tests/test_pattern_lint.py` | Added 11 DK004 tests + updated integration tests | +120 |
 | `scripts/validate_task_status.py` | Narrowed `except Exception` to `except (OSError, UnicodeDecodeError)` | 1 line |
-| `.kit/adversarial/inputs/*` | Evaluator input artifacts | informational |
+| `.adversarial/inputs/*` | Evaluator input artifacts | informational |
 | `.kit/context/reviews/*` | Evaluator review output | informational |
 
 ## What to Review

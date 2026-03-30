@@ -177,9 +177,9 @@ single-field calls (e.g., `gh pr view --json number --jq .number`).
 
 Run the **code-review-evaluator skill**:
 
-1. Prepare input: `.kit/adversarial/inputs/<TASK-ID>-code-review-input.md`
+1. Prepare input: `.adversarial/inputs/<TASK-ID>-code-review-input.md`
 2. Run: `adversarial code-reviewer <input-file>` (or `code-reviewer-fast`)
-   - Use evaluator **names** (e.g., `code-reviewer`), NOT file paths like `.kit/adversarial/evaluators/*.yml`
+   - Use evaluator **names** (e.g., `code-reviewer`), NOT file paths like `.adversarial/evaluators/*.yml`
 3. Address FAIL/CONCERNS findings
 4. Persist: `.kit/context/reviews/<TASK-ID>-evaluator-review.md`
 

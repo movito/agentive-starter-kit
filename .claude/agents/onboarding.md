@@ -818,7 +818,7 @@ No problem! Built-in evaluators work with OPENAI_API_KEY.
 To install additional evaluators later:
   ./scripts/core/project install-evaluators
 
-Custom evaluators can be added to .kit/adversarial/evaluators/
+Custom evaluators can be added to .adversarial/evaluators/
 ```
 
 ---

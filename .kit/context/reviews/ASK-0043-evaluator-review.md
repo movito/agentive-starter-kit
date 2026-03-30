@@ -1,6 +1,6 @@
 #  Code Reviewer Fast
 
-**Source**: .kit/adversarial/inputs/ASK-0043-code-review-input.md
+**Source**: .adversarial/inputs/ASK-0043-code-review-input.md
 **Evaluator**: code-reviewer-fast
 **Model**: gemini/gemini-2.5-flash
 **Generated**: 2026-03-28 10:39 UTC
@@ -12,7 +12,7 @@ Aider v0.86.2
 Model: gemini/gemini-2.5-flash with diff-fenced edit format
 Git repo: none
 Repo-map: disabled
-Added .kit/adversarial/inputs/ASK-0043-code-review-input.md to the chat (read-only).
+Added .adversarial/inputs/ASK-0043-code-review-input.md to the chat (read-only).
 
 Findings
 

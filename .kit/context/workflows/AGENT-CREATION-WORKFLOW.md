@@ -246,9 +246,9 @@ Customize the documentation links for this agent's role:
 - Test suite management: `.kit/context/workflows/TEST-SUITE-WORKFLOW.md`
 
 **Evaluation Workflow**:
-- **Complete guide**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
+- **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
 - Quick command: `adversarial evaluate <task-file>` (you run this directly)
-- Output location: `.kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md`
+- Output location: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md`
 
 **API Testing Documentation**:
 - ADR-0008: DaVinci API Integration
@@ -416,7 +416,7 @@ git push -u origin [branch-name]
 ### Non-Negotiable Elements
 
 1. ✅ **Autonomous workflow** - Agents invoke directly, not via user
-2. ✅ **Complete guide reference** - Link to `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+2. ✅ **Complete guide reference** - Link to `.adversarial/docs/EVALUATION-WORKFLOW.md`
 3. ✅ **Bash command examples** - Show `adversarial evaluate` command
 4. ✅ **Iteration limits** - Max 2-3 evaluations, escalate if stuck
 5. ✅ **Escalation guidance** - When to ask user vs re-evaluate
@@ -713,7 +713,7 @@ Before committing new agent, verify:
 - [ ] Restrictions (explicit)
 
 ### Evaluator Section (Critical)
-- [ ] References `.kit/adversarial/docs/EVALUATION-WORKFLOW.md`
+- [ ] References `.adversarial/docs/EVALUATION-WORKFLOW.md`
 - [ ] Shows `adversarial evaluate` command (autonomous)
 - [ ] Includes iteration limits (2-3 max)
 - [ ] Includes escalation guidance (when to ask user)
@@ -853,7 +853,7 @@ name: api-tester
 2. Check `adversarial` CLI is installed and in PATH
 3. Ensure agent has `Bash` tool in tools list
 4. Test Evaluator manually: `adversarial evaluate [file]`
-5. Check `.kit/adversarial/config.yml` is configured correctly
+5. Check `.adversarial/config.yml` is configured correctly
 
 ---
 
@@ -943,7 +943,7 @@ grep -n '\[' .claude/agents/your-agent.md
 ## Related Documentation
 
 - **Agent Template**: `.claude/agents/AGENT-TEMPLATE.md` (reusable template)
-- **Evaluator Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (complete guide)
+- **Evaluator Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (complete guide)
 - **Procedural Index**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md` (central reference)
 - **Agent System Guide**: `.kit/context/AGENT-SYSTEM-GUIDE.md` (overall architecture)
 - **ADR-0011**: `docs/adr/0011-adversarial-workflow-integration.md` (decision rationale)

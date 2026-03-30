@@ -9,7 +9,7 @@
 
 ## Summary
 
-Round 1 findings have been successfully addressed. The `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` has been made provider-agnostic as required, with only appropriate model examples remaining. The v0.3.0 release is now ready for production with excellent implementation quality and aligned documentation.
+Round 1 findings have been successfully addressed. The `.adversarial/docs/EVALUATION-WORKFLOW.md` has been made provider-agnostic as required, with only appropriate model examples remaining. The v0.3.0 release is now ready for production with excellent implementation quality and aligned documentation.
 
 ## Round 1 Findings Verification
 

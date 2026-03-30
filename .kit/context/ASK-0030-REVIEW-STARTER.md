@@ -22,11 +22,11 @@ This PR also includes:
 - `pyproject.toml` - Added `requires-python = ">=3.10,<3.13"`
 
 ### New Files (Evaluator Configs)
-- `.kit/adversarial/evaluators/anthropic/claude-adversarial/` - Anthropic evaluator
-- `.kit/adversarial/evaluators/google/{gemini-deep,gemini-flash,gemini-pro}/` - Google evaluators
-- `.kit/adversarial/evaluators/mistral/{codestral-code,mistral-content,mistral-fast}/` - Mistral evaluators
-- `.kit/adversarial/evaluators/openai/{fast-check,gpt52-reasoning,o3-chain}/` - OpenAI evaluators
-- `.kit/adversarial/evaluators/index.json` - Evaluator registry
+- `.adversarial/evaluators/anthropic/claude-adversarial/` - Anthropic evaluator
+- `.adversarial/evaluators/google/{gemini-deep,gemini-flash,gemini-pro}/` - Google evaluators
+- `.adversarial/evaluators/mistral/{codestral-code,mistral-content,mistral-fast}/` - Mistral evaluators
+- `.adversarial/evaluators/openai/{fast-check,gpt52-reasoning,o3-chain}/` - OpenAI evaluators
+- `.adversarial/evaluators/index.json` - Evaluator registry
 
 ### Modified Files
 - `.claude/agents/onboarding.md` - Shell-aware venv activation, Python 3.10+ mention
@@ -63,7 +63,7 @@ New tests added:
 
 1. **Version check logic** (`scripts/project:297-323`): Verify the bounds are correct and error messages are helpful
 2. **Test mocking** (`tests/test_project_script.py:376-420`): Ensure subprocess/Path mocks properly isolate tests
-3. **Evaluator registry** (`.kit/adversarial/evaluators/index.json`): Verify all providers and evaluators are correctly indexed
+3. **Evaluator registry** (`.adversarial/evaluators/index.json`): Verify all providers and evaluators are correctly indexed
 
 ## Related Documentation
 

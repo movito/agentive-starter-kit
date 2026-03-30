@@ -49,7 +49,7 @@ Add a new lint rule **DK004** to `scripts/pattern_lint.py` that detects bare
 The adversarial evaluators are installed and ready:
 - `adversarial code-reviewer` — o1 deep review
 - `adversarial code-reviewer-fast` — Gemini Flash quick check
-- Template: `.kit/adversarial/templates/code-review-input-template.md`
+- Template: `.adversarial/templates/code-review-input-template.md`
 
 Both are functional. Use `code-reviewer-fast` for this task (code change is small).
 
@@ -74,6 +74,6 @@ exercised — no skips. Document any phase that fails.
 |------|--------|
 | `scripts/pattern_lint.py` | Add DK004 rule + update docstring |
 | `tests/test_pattern_lint.py` | Add TestDK004 class with 6+ tests |
-| `.kit/adversarial/inputs/ASK-0039-code-review-input.md` | Evaluator input |
+| `.adversarial/inputs/ASK-0039-code-review-input.md` | Evaluator input |
 | `.kit/context/reviews/ASK-0039-evaluator-review.md` | Evaluator output |
 | `.kit/context/ASK-0039-REVIEW-STARTER.md` | Review starter |

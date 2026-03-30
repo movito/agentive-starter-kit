@@ -34,5 +34,5 @@ None. The wrap-up session only used git, gh, and file operations — all within 
 - [x] PR merged
 - [x] Task moved to `5-done`
 - [ ] Add evaluator triage as formal sub-step in Phase 8 (workflow update — separate chore task)
-- [ ] Document known evaluator blind spots in `.kit/adversarial/` config
+- [ ] Document known evaluator blind spots in `.adversarial/` config
 - [ ] Promote KIT-0025 to `2-todo` when ready for implementation

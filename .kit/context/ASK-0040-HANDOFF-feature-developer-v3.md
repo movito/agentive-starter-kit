@@ -19,10 +19,10 @@ Make `.env.template` the single canonical env template. Sync `.env.example` to m
 | 1 | `.env.example` | Replace content with `.env.template` content + sync header comment |
 | 2 | `.claude/agents/feature-developer-v3.md` (line 349) | `.env.example` → `.env.template` |
 | 3 | `.claude/agents/feature-developer.md` (line 566) | `.env.example` → `.env.template` |
-| 4 | `.kit/adversarial/scripts/evaluate_plan.sh` (line 27) | `.env.example` → `.env.template` |
-| 5 | `.kit/adversarial/scripts/proofread_content.sh` (line 27) | `.env.example` → `.env.template` |
-| 6 | `.kit/adversarial/scripts/review_implementation.sh` (line 27) | `.env.example` → `.env.template` |
-| 7 | `.kit/adversarial/scripts/validate_tests.sh` (line 27) | `.env.example` → `.env.template` |
+| 4 | `.adversarial/scripts/evaluate_plan.sh` (line 27) | `.env.example` → `.env.template` |
+| 5 | `.adversarial/scripts/proofread_content.sh` (line 27) | `.env.example` → `.env.template` |
+| 6 | `.adversarial/scripts/review_implementation.sh` (line 27) | `.env.example` → `.env.template` |
+| 7 | `.adversarial/scripts/validate_tests.sh` (line 27) | `.env.example` → `.env.template` |
 
 ## Key Constraints
 

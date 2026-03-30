@@ -36,7 +36,7 @@ the foundational PR — PRs 2 and 3 (sync manifest update, consumer template) fo
 │   ├── reviews/
 │   ├── retros/
 │   └── templates/
-├── adversarial/          ← from .kit/adversarial/
+├── adversarial/          ← from .adversarial/
 │   ├── config.yml
 │   ├── config.yml.template
 │   ├── docs/
@@ -89,7 +89,7 @@ git mv delegation/ .kit/delegation/
 git mv .kit/context/ .kit/context/
 
 # Evaluator system
-git mv .kit/adversarial/ .kit/adversarial/
+git mv .adversarial/ .adversarial/
 
 # Kit ADRs (keep project ADRs in place)
 mkdir -p .kit/adr/
@@ -145,7 +145,7 @@ Replace all old paths with `.kit/` paths. Key sections to update:
 |----------|----------|
 | `.kit/tasks/` | `.kit/tasks/` |
 | `.kit/context/` | `.kit/context/` |
-| `.kit/adversarial/` | `.kit/adversarial/` |
+| `.adversarial/` | `.adversarial/` |
 | `.kit/adr/` | `.kit/adr/` |
 | `.claude/agents/planner*.md` (etc.) | `.kit/agents/` |
 | `agents/launch` | `.kit/launchers/launch` |
@@ -157,7 +157,7 @@ Every agent that references old paths needs updating. Search and replace:
 ```bash
 # Find all references to old paths in .claude/ and .kit/
 grep -rn '.kit/context/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
-grep -rn '.kit/adversarial/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
+grep -rn '.adversarial/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
 grep -rn '.kit/tasks/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
 grep -rn '.kit/adr/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
 grep -rn 'agents/launch' .claude/ .kit/ CLAUDE.md
@@ -170,7 +170,7 @@ for old paths after updates.
 
 ```bash
 grep -rn '.kit/context/' scripts/
-grep -rn '.kit/adversarial/' scripts/
+grep -rn '.adversarial/' scripts/
 grep -rn '.kit/tasks/' scripts/
 ```
 
@@ -186,7 +186,7 @@ Pre-commit hooks reference paths (e.g., `validate-task-status` hook). Update the
 ```bash
 # No old path references remain
 grep -rn '\.kit/context/' --include='*.md' --include='*.py' --include='*.sh' --include='*.json' --include='*.yml' . | grep -v '.git/' | grep -v '.kit/'
-grep -rn '\.kit/adversarial/' --include='*.md' --include='*.py' --include='*.sh' --include='*.json' --include='*.yml' . | grep -v '.git/' | grep -v '.kit/'
+grep -rn '\.adversarial/' --include='*.md' --include='*.py' --include='*.sh' --include='*.json' --include='*.yml' . | grep -v '.git/' | grep -v '.kit/'
 
 # CI passes
 ./scripts/core/ci-check.sh
@@ -250,6 +250,6 @@ grep -rn '\.kit/adversarial/' --include='*.md' --include='*.py' --include='*.sh'
 
 **Task File**: `.kit/tasks/2-todo/ASK-0044-separate-kit-internals.md`
 **ADR**: `.kit/adr/KIT-ADR-0023-builder-project-separation.md`
-**Evaluation Log**: `.kit/adversarial/logs/ASK-0044-separate-kit-internals--arch-review.md`
+**Evaluation Log**: `.adversarial/logs/ASK-0044-separate-kit-internals--arch-review.md`
 **Handoff Date**: 2026-03-28
 **Coordinator**: Planner (planner2)

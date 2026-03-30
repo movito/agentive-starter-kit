@@ -106,7 +106,7 @@ python3.13 -m pytest tests/ -v
 - **Verdict**: APPROVED
 - **Cost**: $0.003
 - **Finding**: One low-risk note about dual-purpose module design (out of scope for this fix)
-- **Log**: `.kit/adversarial/logs/ASK-0045-linear-sync-test-imports--arch-review-fast.md`
+- **Log**: `.adversarial/logs/ASK-0045-linear-sync-test-imports--arch-review-fast.md`
 
 ## Success Looks Like
 
@@ -118,6 +118,6 @@ python3.13 -m pytest tests/ -v
 ---
 
 **Task File**: `.kit/tasks/2-todo/ASK-0045-linear-sync-test-imports.md`
-**Evaluation Log**: `.kit/adversarial/logs/ASK-0045-linear-sync-test-imports--arch-review-fast.md`
+**Evaluation Log**: `.adversarial/logs/ASK-0045-linear-sync-test-imports--arch-review-fast.md`
 **Handoff Date**: 2026-03-25
 **Coordinator**: Planner2

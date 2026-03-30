@@ -1,6 +1,6 @@
 #  Code Reviewer.Md
 
-**Source**: .kit/adversarial/inputs/ASK-0039-code-review-input.md
+**Source**: .adversarial/inputs/ASK-0039-code-review-input.md
 **Evaluator**: code-reviewer
 **Model**: o1
 **Generated**: 2026-02-27 19:52 UTC
@@ -14,7 +14,7 @@ Main model: o1 with diff edit format
 Weak model: gpt-4o-mini
 Git repo: none
 Repo-map: disabled
-Added .kit/adversarial/inputs/ASK-0039-code-review-input.md to the chat (read-only).
+Added .adversarial/inputs/ASK-0039-code-review-input.md to the chat (read-only).
 
 Summary
 
