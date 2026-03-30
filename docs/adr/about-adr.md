@@ -4,14 +4,14 @@ This directory is for **your project's** architectural decisions. Start fresh wi
 
 ## Starter Kit Reference
 
-The agentive-starter-kit includes reference ADRs in `.kit/decisions/`. These document the patterns you inherit:
+The agentive-starter-kit includes reference ADRs in `.kit/adr/`. These document the patterns you inherit:
 
 | Prefix | Location | Purpose |
 |--------|----------|---------|
-| `KIT-ADR-XXXX` | `.kit/decisions/` | Starter kit patterns (reference) |
-| `ADR-XXXX` | `docs/decisions/adr/` (here) | Your project decisions |
+| `KIT-ADR-XXXX` | `.kit/adr/` | Starter kit patterns (reference) |
+| `ADR-XXXX` | `docs/adr/` (here) | Your project decisions |
 
-See [.kit/decisions/README.md](../../../.kit/decisions/README.md) for the full index.
+See [.kit/adr/about-kit-adr.md](../../.kit/adr/about-kit-adr.md) for the full index.
 
 ## What are ADRs?
 

@@ -209,7 +209,7 @@ markers = [
 
 ## References
 
-- **Strategy ADR**: ASK-0007 → `docs/decisions/adr/ADR-0005-test-infrastructure-strategy.md`
+- **Strategy ADR**: ASK-0007 → `docs/adr/ADR-0005-test-infrastructure-strategy.md`
 - **Existing Config**: `pyproject.toml`, `.pre-commit-config.yaml`
 - **Current Workflows**: `.github/workflows/sync-to-linear.yml`
 - **Test Files**: `tests/test_linear_sync.py`, `tests/test_template.py`

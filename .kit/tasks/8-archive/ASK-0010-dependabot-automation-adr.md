@@ -17,7 +17,7 @@
 
 Adapt and document the Dependabot Automation pattern from thematic-cuts (TC ADR-0042) for the agentive-starter-kit. This ADR establishes automated dependency updates with security scanning and testing integration.
 
-**Source**: `thematic-cuts/docs/decisions/adr/ADR-0042-dependabot-automated-dependency-management.md`
+**Source**: `thematic-cuts/docs/adr/ADR-0042-dependabot-automated-dependency-management.md`
 
 **Why Essential**: Automated security updates are a production best practice. Dependabot creates PRs for outdated/vulnerable dependencies, which are then tested by CI before merge.
 
@@ -84,7 +84,7 @@ Tests Pass? → Merge / Review
 1. **Read source ADR** from thematic-cuts
 2. **Check existing Dependabot config** in starter-kit
 3. **Adapt for starter-kit** - Match project structure
-4. **Create ADR-0008** in `docs/decisions/adr/`
+4. **Create ADR-0008** in `docs/adr/`
 
 ## Success Metrics
 
@@ -108,7 +108,7 @@ Tests Pass? → Merge / Review
 
 ## References
 
-- Source: `thematic-cuts/docs/decisions/adr/ADR-0042-dependabot-automated-dependency-management.md`
+- Source: `thematic-cuts/docs/adr/ADR-0042-dependabot-automated-dependency-management.md`
 - GitHub Dependabot: https://docs.github.com/en/code-security/dependabot
 - Example: `.github/dependabot.yml`
 

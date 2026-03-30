@@ -255,8 +255,8 @@ def _verify_identity_leaks(project_dir: Path) -> int:
     exclude_path_parts = [
         ".kit/adversarial",
         ".kit/context",
-        "docs/decisions",
-        ".kit/decisions",
+        "docs/adr",
+        ".kit/adr",
         "docs/archive",
         "docs/UPSTREAM",
         ".kit/tasks",

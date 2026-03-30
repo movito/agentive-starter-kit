@@ -132,7 +132,7 @@ Priority 3: Default to "Backlog"
 - Migration happens once during sync (file is permanently updated)
 - Example: `**Status**: draft` → `**Status**: Backlog`
 
-**Reference**: KIT-ADR-0012 (`.kit/decisions/KIT-ADR-0012-task-status-linear-alignment.md`)
+**Reference**: KIT-ADR-0012 (`.kit/adr/KIT-ADR-0012-task-status-linear-alignment.md`)
 
 ### Linear Sync Verification
 
@@ -200,7 +200,7 @@ cat .kit/adversarial/logs/TASK-*-PLAN-EVALUATION.md
 
 ## Code Review Workflow (KIT-ADR-0014)
 
-**📖 Reference**: `.kit/decisions/KIT-ADR-0014-code-review-workflow.md`
+**📖 Reference**: `.kit/adr/KIT-ADR-0014-code-review-workflow.md`
 
 After implementation is complete and CI passes, tasks move to `4-in-review/` for agent-based code review.
 
@@ -323,7 +323,7 @@ After code review is APPROVED and task moves to `5-done/`:
    - Recommended/anti-patterns
    - Architectural decisions (→ consider ADR)
 3. **Append to `.kit/context/REVIEW-INSIGHTS.md`** under appropriate sections
-4. **If architectural decision warrants it**, create ADR in `docs/decisions/adr/`
+4. **If architectural decision warrants it**, create ADR in `docs/adr/`
 5. **Commit** knowledge artifacts with task completion
 
 **Extraction Prompt**:
@@ -356,7 +356,7 @@ Format as entries for REVIEW-INSIGHTS.md index with task ID.
 - Project state: `.kit/context/current-state.json`
 - Workflows: `.kit/context/workflows/`
 - Test results and validation
-- Decision logs: `docs/decisions/adr/`
+- Decision logs: `docs/adr/`
 
 **📝 Important**: When creating new documentation files in `.kit/context/`, always prefix filenames with YYYY-MM-DD format for chronological organization.
 
@@ -559,8 +559,8 @@ git push origin main && git push origin vX.Y.Z
 1. **Evaluation Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
 2. **Task Creation**: `.kit/tasks/9-reference/templates/task-template.md`
 3. **Agent Assignment**: `.kit/context/agent-handoffs.json` updates
-4. **Code Review Workflow**: `.kit/decisions/KIT-ADR-0014-code-review-workflow.md`
-5. **Knowledge Extraction**: `.kit/decisions/KIT-ADR-0019-review-knowledge-extraction.md`
+4. **Code Review Workflow**: `.kit/adr/KIT-ADR-0014-code-review-workflow.md`
+5. **Knowledge Extraction**: `.kit/adr/KIT-ADR-0019-review-knowledge-extraction.md`
 6. **Commit Protocol**: `.kit/context/workflows/COMMIT-PROTOCOL.md`
 
 **Key Files to Maintain**:

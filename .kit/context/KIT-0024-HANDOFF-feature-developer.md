@@ -179,7 +179,7 @@ on:
 
 ## Resources
 
-- **KIT-ADR-0022**: `.kit/decisions/KIT-ADR-0022-manifest-based-sync-ownership.md`
+- **KIT-ADR-0022**: `.kit/adr/KIT-ADR-0022-manifest-based-sync-ownership.md`
 - **Current manifest**: `scripts/.core-manifest.json`
 - **Current sync Action**: `.github/workflows/sync-core-scripts.yml`
 - **Task spec**: `.kit/tasks/2-todo/KIT-0024-core-scripts-standardization.md`
@@ -213,6 +213,6 @@ on:
 
 **Task File**: `.kit/tasks/2-todo/KIT-0024-core-scripts-standardization.md`
 **Evaluation Log**: `.kit/adversarial/logs/KIT-0024-core-scripts-standardization--arch-review-fast.md`
-**ADR**: `.kit/decisions/KIT-ADR-0022-manifest-based-sync-ownership.md`
+**ADR**: `.kit/adr/KIT-ADR-0022-manifest-based-sync-ownership.md`
 **Handoff Date**: 2026-03-26
 **Coordinator**: Planner (planner2)

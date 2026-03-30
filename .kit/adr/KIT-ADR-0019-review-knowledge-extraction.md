@@ -78,7 +78,7 @@ A single file that grows incrementally with high-signal extracts, organized by m
 When reviews surface architectural decisions worthy of formalization:
 
 ```markdown
-# docs/decisions/adr/ADR-0015-cli-output-pattern.md
+# docs/adr/ADR-0015-cli-output-pattern.md
 
 ## Context
 TASK-0005 review identified need for consistent CLI output handling.

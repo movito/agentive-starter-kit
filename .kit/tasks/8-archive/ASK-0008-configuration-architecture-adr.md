@@ -17,7 +17,7 @@
 
 Adapt and document the Configuration Architecture from thematic-cuts (TC ADR-0027) for the agentive-starter-kit. This ADR establishes a hierarchical configuration system with validation.
 
-**Source**: `thematic-cuts/docs/decisions/adr/ADR-0027-configuration-architecture.md`
+**Source**: `thematic-cuts/docs/adr/ADR-0027-configuration-architecture.md`
 
 **Why Essential**: Provides a consistent, type-safe way to manage settings across environments. The pattern supports: defaults → user config → environment variables → runtime overrides.
 
@@ -81,7 +81,7 @@ pyproject.toml           # Tool configuration
 1. **Read source ADR** from thematic-cuts
 2. **Audit existing config** in starter-kit (.env.template, pyproject.toml)
 3. **Adapt for starter-kit** - Match current patterns
-4. **Create ADR-0006** in `docs/decisions/adr/`
+4. **Create ADR-0006** in `docs/adr/`
 
 ## Success Metrics
 
@@ -105,7 +105,7 @@ pyproject.toml           # Tool configuration
 
 ## References
 
-- Source: `thematic-cuts/docs/decisions/adr/ADR-0027-configuration-architecture.md`
+- Source: `thematic-cuts/docs/adr/ADR-0027-configuration-architecture.md`
 - Existing: `.env.template`, `pyproject.toml`
 - python-dotenv: https://pypi.org/project/python-dotenv/
 

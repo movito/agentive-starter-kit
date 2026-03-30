@@ -946,7 +946,7 @@ grep -n '\[' .claude/agents/your-agent.md
 - **Evaluator Workflow**: `.kit/adversarial/docs/EVALUATION-WORKFLOW.md` (complete guide)
 - **Procedural Index**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md` (central reference)
 - **Agent System Guide**: `.kit/context/AGENT-SYSTEM-GUIDE.md` (overall architecture)
-- **ADR-0011**: `docs/decisions/adr/0011-adversarial-workflow-integration.md` (decision rationale)
+- **ADR-0011**: `docs/adr/0011-adversarial-workflow-integration.md` (decision rationale)
 - **Automation Script**: `scripts/optional/create-agent.sh` (agent creation automation)
 
 ---

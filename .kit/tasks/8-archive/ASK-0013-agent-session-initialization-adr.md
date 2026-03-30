@@ -122,7 +122,7 @@ Agent: "✅ [Tool] activated: [context]. Ready for [capability]."
 
 ### Must Have
 
-- [ ] ADR-0006 created at `docs/decisions/adr/ADR-0006-agent-session-initialization.md`
+- [ ] ADR-0006 created at `docs/adr/ADR-0006-agent-session-initialization.md`
 - [ ] Follows project ADR template structure
 - [ ] Documents the problem (tools without context)
 - [ ] Explains the pattern (launcher-initiated activation)
@@ -154,7 +154,7 @@ Agent: "✅ [Tool] activated: [context]. Ready for [capability]."
 
 ### Step 2: Create ADR-0006 (45-60 min)
 
-Create `docs/decisions/adr/ADR-0006-agent-session-initialization.md`:
+Create `docs/adr/ADR-0006-agent-session-initialization.md`:
 
 **Context Section:**
 - Problem: Tools available globally but lack project context
@@ -208,8 +208,8 @@ Create `docs/decisions/adr/ADR-0006-agent-session-initialization.md`:
 
 ## References
 
-- **Related ADR**: `docs/decisions/adr/ADR-0002-serena-mcp-integration.md` (Serena implementation)
-- **ADR Template**: `docs/decisions/adr/TEMPLATE-FOR-ADR-FILES.md`
+- **Related ADR**: `docs/adr/ADR-0002-serena-mcp-integration.md` (Serena implementation)
+- **ADR Template**: `docs/adr/TEMPLATE-FOR-ADR-FILES.md`
 - **Agent Files**: `.claude/agents/*.md` (current initialization sections)
 - **Launcher Script**: `agents/launch` (if exists)
 - **Future**: ASK-0020 (MCP Tool Addition Pattern)

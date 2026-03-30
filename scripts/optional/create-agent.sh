@@ -10,7 +10,7 @@
 # NFS caveat: mkdir atomicity is not guaranteed on NFS. This script targets
 # local development and CI runners, not networked filesystems.
 #
-# See: .kit/decisions/ for architectural decisions
+# See: .kit/adr/ for architectural decisions
 # =============================================================================
 
 set -euo pipefail

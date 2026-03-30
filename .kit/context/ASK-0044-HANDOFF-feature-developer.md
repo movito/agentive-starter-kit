@@ -45,7 +45,7 @@ the foundational PR — PRs 2 and 3 (sync manifest update, consumer template) fo
 │   ├── logs/
 │   ├── scripts/
 │   └── templates/
-├── decisions/            ← from .kit/decisions/
+├── decisions/            ← from .kit/adr/
 │   └── KIT-ADR-*.md
 ├── agents/               ← builder agents from .claude/agents/
 │   ├── planner.md
@@ -92,9 +92,9 @@ git mv .kit/context/ .kit/context/
 git mv .kit/adversarial/ .kit/adversarial/
 
 # Kit ADRs (keep project ADRs in place)
-mkdir -p .kit/decisions/
-git mv .kit/decisions/KIT-ADR-*.md .kit/decisions/
-# Keep .kit/decisions/README.md or remove empty dir
+mkdir -p .kit/adr/
+git mv .kit/adr/KIT-ADR-*.md .kit/adr/
+# Keep .kit/adr/README.md or remove empty dir
 
 # Builder agents (move individually, leave implementation agents)
 mkdir -p .kit/agents/
@@ -146,7 +146,7 @@ Replace all old paths with `.kit/` paths. Key sections to update:
 | `.kit/tasks/` | `.kit/tasks/` |
 | `.kit/context/` | `.kit/context/` |
 | `.kit/adversarial/` | `.kit/adversarial/` |
-| `.kit/decisions/` | `.kit/decisions/` |
+| `.kit/adr/` | `.kit/adr/` |
 | `.claude/agents/planner*.md` (etc.) | `.kit/agents/` |
 | `agents/launch` | `.kit/launchers/launch` |
 
@@ -159,7 +159,7 @@ Every agent that references old paths needs updating. Search and replace:
 grep -rn '.kit/context/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
 grep -rn '.kit/adversarial/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
 grep -rn '.kit/tasks/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
-grep -rn '.kit/decisions/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
+grep -rn '.kit/adr/' .claude/ .kit/agents/ .kit/commands/ .kit/skills/ CLAUDE.md
 grep -rn 'agents/launch' .claude/ .kit/ CLAUDE.md
 ```
 
@@ -200,7 +200,7 @@ grep -rn '\.kit/adversarial/' --include='*.md' --include='*.py' --include='*.sh'
 - `.claude/settings.json`, `.claude/settings.local.json`
 - `scripts/` (all of it — already well-separated)
 - `tests/`
-- `docs/decisions/adr/` (project ADRs)
+- `docs/adr/` (project ADRs)
 - `.serena/`, `.github/`, root config files
 
 ## Known Risks
@@ -249,7 +249,7 @@ grep -rn '\.kit/adversarial/' --include='*.md' --include='*.py' --include='*.sh'
 ---
 
 **Task File**: `.kit/tasks/2-todo/ASK-0044-separate-kit-internals.md`
-**ADR**: `.kit/decisions/KIT-ADR-0023-builder-project-separation.md`
+**ADR**: `.kit/adr/KIT-ADR-0023-builder-project-separation.md`
 **Evaluation Log**: `.kit/adversarial/logs/ASK-0044-separate-kit-internals--arch-review.md`
 **Handoff Date**: 2026-03-28
 **Coordinator**: Planner (planner2)

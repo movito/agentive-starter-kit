@@ -19,7 +19,7 @@ Added automatic detection of `uv` package manager to handle Python 3.13+ users w
 ### New Files
 - `tests/test_uv_detection.py` - 16 comprehensive tests for uv detection and venv creation
 - `tests/conftest.py` - Shared test fixtures including `mock_project_path`
-- `.kit/decisions/KIT-ADR-0021-realtime-agent-communication.md` - Related ADR
+- `.kit/adr/KIT-ADR-0021-realtime-agent-communication.md` - Related ADR
 
 ### Modified Files
 - `scripts/project` - Added `detect_uv()`, `create_venv_with_uv()`, and integrated into `cmd_setup()`

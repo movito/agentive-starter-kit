@@ -66,7 +66,7 @@ if [[ -d "$ASK_CORE" ]]; then
     if [[ -d "$LOCAL_KIT" && -d "$ASK_KIT" ]]; then
         echo ""
         echo "Checking .kit/ builder layer..."
-        KIT_DIRS=("templates" "skills" "launchers" "decisions" "docs"
+        KIT_DIRS=("templates" "skills" "launchers" "adr" "docs"
                   "adversarial/scripts" "adversarial/docs" "adversarial/templates"
                   "context/workflows" "context/templates")
         for kdir in "${KIT_DIRS[@]}"; do

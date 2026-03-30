@@ -839,9 +839,9 @@ class TestVerifyIdentityLeaks:
             "agentive-starter-kit reference\n", encoding="utf-8"
         )
 
-        decisions_dir = tmp_path / "docs" / "decisions"
-        decisions_dir.mkdir(parents=True)
-        (decisions_dir / "adr.md").write_text(
+        adr_dir = tmp_path / "docs" / "adr"
+        adr_dir.mkdir(parents=True)
+        (adr_dir / "about-adr.md").write_text(
             "agentive-starter-kit reference\n", encoding="utf-8"
         )
 

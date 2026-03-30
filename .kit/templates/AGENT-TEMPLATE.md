@@ -249,7 +249,7 @@ When creating project documentation, use the correct locations:
 
 | Document Type | Location | Example |
 |---------------|----------|---------|
-| **ADRs** | `docs/decisions/adr/` | `ADR-004-feature-name.md` |
+| **ADRs** | `docs/adr/` | `ADR-004-feature-name.md` |
 | **Tasks** | `.kit/tasks/1-backlog/` | `TASK-0030-task-name.md` |
 | **Research** | `[project-specific]/research/<topic>/` | `analysis.md` |
 

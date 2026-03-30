@@ -148,6 +148,6 @@ Moves the file to the correct numbered folder and updates `**Status**`.
 
 ## References
 
-- ADR: `.kit/decisions/KIT-ADR-0012-task-status-linear-alignment.md`
+- ADR: `.kit/adr/KIT-ADR-0012-task-status-linear-alignment.md`
 - Planner agent: `.claude/agents/planner2.md` (Linear Sync section)
 - Commit protocol: `.kit/context/workflows/COMMIT-PROTOCOL.md`

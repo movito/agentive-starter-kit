@@ -18,7 +18,7 @@
 
 Create ADR-0004 documenting the **architectural decision** to adopt investigation-first development with adversarial evaluation. This ADR captures the "why" behind our approach to preventing phantom work in agentic systems.
 
-**Source**: `thematic-cuts/docs/decisions/adr/ADR-0011-adversarial-workflow-integration.md`
+**Source**: `thematic-cuts/docs/adr/ADR-0011-adversarial-workflow-integration.md`
 
 **Why Essential**: This pattern has demonstrated 87% time savings in practice (3 hours vs 2-3 weeks on TASK-2025-017). It prevents agents from implementing features that don't match requirements.
 
@@ -89,7 +89,7 @@ Investigation-First Approach:
 
 ### Functional Requirements
 
-1. Create ADR-0004 following project template (`docs/decisions/adr/TEMPLATE-FOR-ADR-FILES.md`)
+1. Create ADR-0004 following project template (`docs/adr/TEMPLATE-FOR-ADR-FILES.md`)
 2. Document the phantom work problem and investigation-first solution
 3. Include alternatives considered (code-first anti-pattern)
 4. Reference existing infrastructure (don't duplicate operational docs)
@@ -105,7 +105,7 @@ Investigation-First Approach:
 
 ### Must Have
 
-- [ ] ADR-0004 created at `docs/decisions/adr/ADR-0004-adversarial-workflow-integration.md`
+- [ ] ADR-0004 created at `docs/adr/ADR-0004-adversarial-workflow-integration.md`
 - [ ] Follows project ADR template structure
 - [ ] Documents phantom work problem with concrete example
 - [ ] Explains investigation-first solution and core principles
@@ -129,12 +129,12 @@ Investigation-First Approach:
 
 ### Step 1: Review Existing Materials (15 min)
 
-1. Read thematic-cuts ADR-0011 (already reviewed, available at `~/Github/thematic-cuts/docs/decisions/adr/ADR-0011-adversarial-workflow-integration.md`)
+1. Read thematic-cuts ADR-0011 (already reviewed, available at `~/Github/thematic-cuts/docs/adr/ADR-0011-adversarial-workflow-integration.md`)
 2. Confirm scope boundaries with EVALUATION-WORKFLOW.md
 
 ### Step 2: Create ADR-0004 (45-60 min)
 
-Create `docs/decisions/adr/ADR-0004-adversarial-workflow-integration.md` with:
+Create `docs/adr/ADR-0004-adversarial-workflow-integration.md` with:
 
 **Context Section:**
 - Problem: Phantom work in agentic systems
@@ -192,9 +192,9 @@ Create `docs/decisions/adr/ADR-0004-adversarial-workflow-integration.md` with:
 
 ## References
 
-- **Source ADR**: `~/Github/thematic-cuts/docs/decisions/adr/ADR-0011-adversarial-workflow-integration.md`
+- **Source ADR**: `~/Github/thematic-cuts/docs/adr/ADR-0011-adversarial-workflow-integration.md`
 - **Operational Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (600+ lines)
-- **ADR Template**: `docs/decisions/adr/TEMPLATE-FOR-ADR-FILES.md`
+- **ADR Template**: `docs/adr/TEMPLATE-FOR-ADR-FILES.md`
 - **Existing Infrastructure**: `.adversarial/scripts/`, `.adversarial/config.yml.template`
 
 ## Notes
@@ -214,10 +214,10 @@ Create `docs/decisions/adr/ADR-0004-adversarial-workflow-integration.md` with:
 **Metrics Verification:**
 - Real-world metrics (87% time savings, $0.04 cost) come from thematic-cuts ADR-0011
 - These are production-validated metrics from actual task execution (TASK-2025-017)
-- Source ADR available at: `~/Github/thematic-cuts/docs/decisions/adr/ADR-0011-adversarial-workflow-integration.md`
+- Source ADR available at: `~/Github/thematic-cuts/docs/adr/ADR-0011-adversarial-workflow-integration.md`
 
 **File Path Specified:**
-- Output: `docs/decisions/adr/ADR-0004-adversarial-workflow-integration.md`
+- Output: `docs/adr/ADR-0004-adversarial-workflow-integration.md`
 
 ---
 

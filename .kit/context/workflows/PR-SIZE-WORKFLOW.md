@@ -20,7 +20,7 @@ bot findings, require zero fix-commit rounds, and merge on first human review.
 Planner artifacts go to `main` as `chore:` or `docs:` commits:
 
 - Task specs (`.kit/tasks/`)
-- Architecture assessments (`docs/decisions/adr/`)
+- Architecture assessments (`docs/adr/`)
 - Handoff files (`.kit/context/`)
 - Evaluator doc updates (`.kit/adversarial/docs/`)
 

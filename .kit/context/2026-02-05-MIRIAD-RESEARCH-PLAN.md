@@ -147,7 +147,7 @@ Before deep-diving, we need to understand if Miriad's approach is even compatibl
 | Protocol analysis | `.kit/context/research/miriad/TYMBAL-PROTOCOL.md` | Communication details |
 | Pattern catalog | `.kit/context/research/miriad/PATTERNS.md` | Adoptable patterns |
 | Gap analysis | `.kit/context/research/miriad/GAP-ANALYSIS.md` | Our setup vs theirs |
-| ADR revision | `.kit/decisions/KIT-ADR-0021-*.md` | Updated proposal |
+| ADR revision | `.kit/adr/KIT-ADR-0021-*.md` | Updated proposal |
 
 ---
 

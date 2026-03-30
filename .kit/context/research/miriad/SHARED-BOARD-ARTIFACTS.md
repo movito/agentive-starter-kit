@@ -357,7 +357,7 @@ CAS (Compare-And-Swap) prevents lost updates:
 | Channel | Project scope / feature branch |
 | Artifact (doc) | Markdown files in `.kit/context/` |
 | Artifact (task) | Task files in `.kit/tasks/` |
-| Artifact (decision) | ADRs in `docs/decisions/` and `.kit/decisions/` |
+| Artifact (decision) | ADRs in `docs/adr/` and `.kit/adr/` |
 | Artifact (folder) | Directories |
 | Roster | `agent-handoffs.json` |
 

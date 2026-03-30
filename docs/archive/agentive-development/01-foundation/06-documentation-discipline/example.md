@@ -154,11 +154,11 @@ ADR-0038 includes "Real-World Results" section (lines 213-235):
 
 ### Step 4: Make It Findable
 
-**File location:** `docs/decisions/adr/ADR-0038-task-status-linear-alignment.md`
+**File location:** `docs/adr/ADR-0038-task-status-linear-alignment.md`
 
 **Naming convention:** `ADR-{number}-{brief-description}.md`
 
-**ADR index:** Listed in `docs/decisions/adr/README.md` with one-line summary
+**ADR index:** Listed in `docs/adr/README.md` with one-line summary
 
 ---
 

@@ -30,7 +30,7 @@ This PR also includes:
 
 ### Modified Files
 - `.claude/agents/onboarding.md` - Shell-aware venv activation, Python 3.10+ mention
-- `.kit/decisions/KIT-ADR-0005-test-infrastructure-strategy.md` - Date fixes
+- `.kit/adr/KIT-ADR-0005-test-infrastructure-strategy.md` - Date fixes
 - `tests/test_project_script.py` - New version check tests with proper mocking
 - `tests/test_linear_sync.py` - Removed unused noqa directive
 

@@ -69,7 +69,7 @@ While layer content is being developed, you can:
 
 **✅ Review evaluation setup:**
 - See project `.adversarial/docs/EVALUATION-WORKFLOW.md`
-- See project `docs/decisions/adr/ADR-0011-adversarial-workflow-integration.md`
+- See project `docs/adr/ADR-0011-adversarial-workflow-integration.md`
 
 ---
 

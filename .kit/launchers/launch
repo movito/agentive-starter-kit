@@ -3,7 +3,14 @@
 # Agentive Starter Kit - Agent Launcher v1.0.0
 # Reads Claude Code native agent definitions from .claude/agents/
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE="${BASH_SOURCE[0]}"
+# Resolve symlinks so SCRIPT_DIR points to the real file location
+while [[ -L "$SOURCE" ]]; do
+    DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 CLAUDE_AGENTS_DIR="$PROJECT_ROOT/.claude/agents"
 CONTEXT_DIR="$PROJECT_ROOT/.kit/context"

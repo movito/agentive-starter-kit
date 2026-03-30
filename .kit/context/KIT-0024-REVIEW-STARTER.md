@@ -17,7 +17,7 @@ ownership per KIT-ADR-0022.
 | `.github/workflows/sync-core-scripts.yml` | Rewritten: manifest-driven file-by-file sync with tier logic |
 | `scripts/core/VERSION` | `1.2.0` → `1.3.0` |
 | `tests/test_core_manifest.py` | New: 16 tests validating manifest structure, file existence, consistency |
-| `.kit/decisions/KIT-ADR-0022-manifest-based-sync-ownership.md` | ADR for tiered manifest design |
+| `.kit/adr/KIT-ADR-0022-manifest-based-sync-ownership.md` | ADR for tiered manifest design |
 
 ## Review Focus
 

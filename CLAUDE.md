@@ -16,7 +16,7 @@ evaluation, and architectural decision records. For full details, see `README.md
 ├── context/          Agent coordination: handoffs, reviews, patterns.yml, workflows/
 ├── adversarial/      Adversarial evaluation system (config, scripts, docs)
 ├── tasks/            Task specs by status: 1-backlog/ through 9-reference/
-├── decisions/        Kit ADRs (KIT-ADR-*)
+├── adr/             Kit ADRs (KIT-ADR-*)
 ├── launchers/        Agent launcher scripts (launch, onboarding, preflight)
 └── docs/             Builder documentation
 .serena/              Serena MCP configuration (semantic code navigation)

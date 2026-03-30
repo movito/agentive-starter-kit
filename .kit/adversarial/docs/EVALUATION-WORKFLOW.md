@@ -892,7 +892,7 @@ Markdown with structured sections:
 - **Evaluation wrapper script**: `.kit/adversarial/scripts/evaluate_plan.sh`
 - **Proofreading wrapper script**: `.kit/adversarial/scripts/proofread_content.sh`
 - **Bugfix docs**: `.kit/adversarial/docs/BUGFIX-OUTPUT-CAPTURE.md` (tee output capture fix)
-- **ADR**: `docs/decisions/adr/ADR-0011-adversarial-workflow-integration.md`
+- **ADR**: `docs/adr/ADR-0011-adversarial-workflow-integration.md`
 
 ### Quick Reference:
 - **Procedural index**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md` → Planner Procedures → Evaluation Workflow

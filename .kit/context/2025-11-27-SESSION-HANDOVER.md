@@ -157,7 +157,7 @@ agentive-starter-kit/
 ├── .kit/tasks/
 │   └── 9-reference/templates/
 │       └── SETUP-0001-testing-infrastructure.md  # NEW - TDD seed task
-└── docs/decisions/adr/
+└── docs/adr/
     └── ADR-0001-*            # System prompt size
 ```
 

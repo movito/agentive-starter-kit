@@ -120,7 +120,7 @@ Review can be skipped for:
 
 ### Files to Create
 
-- `docs/decisions/adr/ADR-0014-code-review-workflow.md`
+- `docs/adr/ADR-0014-code-review-workflow.md`
 
 ### Integration Points
 

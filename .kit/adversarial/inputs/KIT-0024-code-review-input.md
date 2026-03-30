@@ -53,7 +53,7 @@ Bumped from `1.2.0` to `1.3.0`.
 - `TestManifestFileExistence` (3 tests): all files in each tier exist on disk
 - `TestManifestConsistency` (6 tests): no dupes within/across tiers, correct counts
 
-### `docs/decisions/starter-kit-adr/KIT-ADR-0022-manifest-based-sync-ownership.md`
+### `.kit/adr/KIT-ADR-0022-manifest-based-sync-ownership.md`
 
 ADR documenting the tiered manifest design decision.
 

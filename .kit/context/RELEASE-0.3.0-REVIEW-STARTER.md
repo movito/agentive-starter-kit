@@ -54,7 +54,7 @@ This is a **release review** for v0.3.0. The branch contains two completed tasks
 |------|--------|
 | `scripts/sync_tasks_to_linear.py` | `GQL_AVAILABLE` pattern (ASK-0028 fix) |
 | `tests/test_linear_sync.py` | `@requires_gql` marker |
-| `.kit/decisions/KIT-ADR-0005-test-infrastructure-strategy.md` | Optional dependency pattern |
+| `.kit/adr/KIT-ADR-0005-test-infrastructure-strategy.md` | Optional dependency pattern |
 
 ## Review Focus
 
