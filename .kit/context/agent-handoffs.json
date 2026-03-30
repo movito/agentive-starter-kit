@@ -3,8 +3,8 @@
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "ASK-0047 DONE (PR #42 merged). ADR dirs flattened. Launcher symlink fix + alias documented.",
-    "details_link": null,
+    "brief_note": "KIT-0026 created in backlog: sync agents+skills to downstream repos. All agents idle.",
+    "details_link": ".kit/tasks/1-backlog/KIT-0026-sync-agents-and-skills-to-downstream.md",
     "handoff_file": null
   },
   "feature-developer": {

@@ -103,6 +103,7 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Upstream Merges**: Run `./scripts/core/project reconfigure` after pulling upstream changes to update agent files (ASK-0027)
 - **New Project Setup**: Run `./scripts/core/project setup` to create venv and install dependencies (ASK-0028)
 - **Evaluator Installation**: Run `./scripts/core/project install-evaluators` to add additional evaluation providers (ASK-0029)
+- **adversarial-workflow CLI requires `.adversarial/` at repo root**: The CLI hardcodes `.adversarial/` as its working directory for config, evaluators, scripts, and logs. After ASK-0044 moved everything to `.kit/adversarial/`, the CLI broke silently (`adversarial check` showed 3 missing-script errors). Fixed with a symlink: `.adversarial` → `.kit/adversarial`. Any future structural migration of `.adversarial/` must preserve this symlink or patch the CLI. (ASK-0044 post-mortem)
 
 ---
 
@@ -112,4 +113,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-03-30 by planner (ASK-0047 insights added)*
+*Last updated: 2026-03-30 by planner (adversarial symlink gotcha added)*
