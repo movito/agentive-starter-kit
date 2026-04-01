@@ -138,6 +138,37 @@ class TestExtractYamlFunctionalContent:
         assert "_meta:" not in result
         assert "name: evaluator" in result
 
+    def test_preserves_empty_lines_after_stripped_block(self):
+        """Empty lines after a stripped block should be preserved."""
+        text = textwrap.dedent("""\
+            name: evaluator
+            registry:
+              type: evaluator
+              version: 1.0.0
+
+            prompt: |
+              Do something
+        """)
+        result = extract_yaml_functional_content(text)
+        assert "registry:" not in result
+        # The empty line between blocks should be preserved
+        assert "\n\n" in result
+        assert "name: evaluator" in result
+        assert "prompt: |" in result
+
+    def test_only_strips_top_level_registry(self):
+        """Nested 'registry:' keys should not be stripped."""
+        text = textwrap.dedent("""\
+            name: evaluator
+            config:
+              registry: internal
+              endpoint: https://example.com
+            prompt: hello
+        """)
+        result = extract_yaml_functional_content(text)
+        assert "registry: internal" in result
+        assert "config:" in result
+
     def test_preserves_non_registry_content(self):
         text = textwrap.dedent("""\
             name: test

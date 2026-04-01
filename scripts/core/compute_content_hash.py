@@ -64,12 +64,13 @@ def extract_yaml_functional_content(text: str) -> str:
         current_indent = len(line) - len(stripped)
 
         if skip_block:
-            if stripped == "" or current_indent > skip_indent:
+            # Indented non-empty lines are part of the block — skip them
+            if stripped != "" and current_indent > skip_indent:
                 continue
-            else:
-                skip_block = False
+            # Empty lines or lines at/below skip indent end the block
+            skip_block = False
 
-        if re.match(r"^(registry|_meta)\s*:", stripped):
+        if current_indent == 0 and re.match(r"^(registry|_meta)\s*:", stripped):
             skip_block = True
             skip_indent = current_indent
             continue

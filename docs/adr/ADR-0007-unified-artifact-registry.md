@@ -98,7 +98,7 @@ We adopt a **Unified Artifact Registry** — a single metadata envelope, distrib
 1. **The artifact is the record**: All tracking metadata lives inside the artifact file itself, in its existing frontmatter/header format. No external database, no sidecar files.
 2. **Declare intent, resolve at sync time**: Projects declare what they want (by tier, by name, by version). Sync resolves declarations to concrete files. Runtime reads files as-is.
 3. **Three-layer cascade**: `local > pinned > upstream`. Local always wins. Pinned holds a specific version. Upstream floats to latest.
-4. **Contribution is a first-class operation**: Proposing an artifact back upstream is as simple as `kit propose <artifact>`.
+4. **Contribution is a first-class operation**: Proposing an artifact back upstream is as simple as `kit registry propose <artifact>`.
 5. **Scan-then-execute atomicity**: Sync validates all artifacts before writing any. If validation fails (conflict, hash mismatch, missing source), no files are modified. Inspired by GNU Stow 2.0's two-phase algorithm.
 6. **Idempotent apply**: Running `kit registry sync` twice produces identical results. No side effects on repeated runs. Inspired by Dotbot and chezmoi.
 7. **No templating**: Artifacts are distributed as-is, not rendered per-project. Local customization is a full file replacement (tier: `local`), not conditional template expansion. This is an explicit non-goal — unlike chezmoi, we never transform artifact content during sync.
