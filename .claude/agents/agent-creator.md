@@ -10,6 +10,17 @@ tools:
   - Glob
   - Grep
   - TodoWrite
+registry:
+  type: agent
+  version: 1.0.0
+  tier: optional
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:1af977b50eb6466358aed9eb0107f67c14f42525eb93b9cdb23f6b57d842eca9
+  tags: [tooling, agent-creation]
+  min_kit_version: 0.5.0
 ---
 
 # Agent Creator Agent

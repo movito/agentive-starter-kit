@@ -9,6 +9,17 @@ tools:
   - Bash
   - Glob
   - TodoWrite
+registry:
+  type: agent
+  version: 1.0.0
+  tier: optional
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:977d4a3f3c430ada69887cd20ff346227aaecf2079297a2e8c9cdafe422b2614
+  tags: [setup, onboarding]
+  min_kit_version: 0.5.0
 ---
 
 # Onboarding Agent

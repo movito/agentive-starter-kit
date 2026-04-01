@@ -8,6 +8,17 @@ tools:
   - Glob
   - WebSearch
   - WebFetch
+registry:
+  type: agent
+  version: 1.0.0
+  tier: optional
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:b7d3bd8d00c0a8b54b82d959205c171b3e1d7ce3c368eec7dd1fd38a71ec8f7e
+  tags: [review, documentation]
+  min_kit_version: 0.5.0
 ---
 
 # Document Reviewer Agent

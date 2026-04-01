@@ -7,6 +7,18 @@ origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-02-27
 created-by: "@movito with planner2"
+registry:
+  type: agent
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  origin: dispatch-kit
+  created_by: "@movito with planner2"
+  content_hash: sha256:8ee2d9a92e179703073b5efe4f6ebb39ca6a0486befb2061bb502ed830674807
+  tags: [implementation, tdd, gated-workflow]
+  min_kit_version: 0.5.0
 ---
 
 # Feature Developer Agent (V3 — Rigorous Loop + Gates)

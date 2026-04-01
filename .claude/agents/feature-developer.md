@@ -12,6 +12,17 @@ tools:
   - Write
   - WebFetch
   - WebSearch
+registry:
+  type: agent
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:f5fe1acb920e060109da1bb3c241a945cd5f040b503f046a570c271b868b50e2
+  tags: [implementation]
+  min_kit_version: 0.5.0
 ---
 
 # Feature Developer Agent

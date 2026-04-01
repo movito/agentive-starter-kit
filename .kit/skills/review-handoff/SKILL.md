@@ -6,6 +6,18 @@ origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-02-27
 created-by: "@movito with planner2"
+registry:
+  type: skill
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  origin: dispatch-kit
+  created_by: "@movito with planner2"
+  content_hash: sha256:ece3ebcb5193ccbdedbba8aa597920e52a6281bd861c69e7393394986edd620d
+  tags: [review, handoff]
+  min_kit_version: 0.5.0
 ---
 
 # Review Handoff

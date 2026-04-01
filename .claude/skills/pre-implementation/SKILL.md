@@ -6,6 +6,18 @@ origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-02-27
 created-by: "@movito with planner2"
+registry:
+  type: skill
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  origin: dispatch-kit
+  created_by: "@movito with planner2"
+  content_hash: sha256:f2f7f87a0d01d489c1e0d5054d8aac892f82b5be2cb0ec2322456a8157ac1843
+  tags: [quality, pre-check, patterns]
+  min_kit_version: 0.5.0
 ---
 
 # Pre-Implementation Checklist

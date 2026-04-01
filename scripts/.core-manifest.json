@@ -17,7 +17,8 @@
       "core/verify-ci.sh",
       "core/verify-setup.sh",
       "core/wait-for-bots.sh",
-      "core/VERSION"
+      "core/VERSION",
+      "core/compute_content_hash.py"
     ],
     "commands_core": [
       "check-ci.md",

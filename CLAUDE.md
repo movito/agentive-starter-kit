@@ -32,7 +32,9 @@ tests/                pytest test suite
 - **Formatter**: Black (v26.1.0, line-length=88)
 - **Import sorting**: isort (profile=black)
 - **Linting**: Ruff (E, F, I, N, W rules), flake8
-- **Testing**: pytest with TDD workflow (write tests before implementation)
+- **Testing**: pytest with TDD workflow (write tests before implementation).
+  Run `pytest` directly (not `python3 -m pytest` — the default `python3` may
+  lack pytest).
 - **Coverage target**: 80% for new code (`fail_under` in pyproject.toml)
 - **Pre-commit hooks**: trailing-whitespace, end-of-file-fixer, yaml/toml checks,
   black, isort, flake8, pattern-lint (DK rules -- custom defensive coding patterns),

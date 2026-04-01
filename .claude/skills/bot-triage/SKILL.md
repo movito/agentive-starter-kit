@@ -6,6 +6,18 @@ origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-02-27
 created-by: "@movito with planner2"
+registry:
+  type: skill
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  origin: dispatch-kit
+  created_by: "@movito with planner2"
+  content_hash: sha256:165d58bdf8865b9449dcdb2eafbad637be60bd25ba1b58e63a456a2cf30da6f5
+  tags: [review, bots, triage]
+  min_kit_version: 0.5.0
 ---
 
 # Bot Review Triage

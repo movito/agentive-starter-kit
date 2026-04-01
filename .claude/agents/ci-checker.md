@@ -4,6 +4,17 @@ description: CI/CD pipeline status verification specialist
 model: claude-sonnet-4-20250514
 tools:
   - Bash
+registry:
+  type: agent
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:15674770ddb913053eb2e37dc2dcfd61f69267c690e51d0151d7150bb774ef55
+  tags: [ci, verification]
+  min_kit_version: 0.5.0
 ---
 
 # CI Checker Agent

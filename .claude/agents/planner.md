@@ -11,6 +11,17 @@ tools:
   - Grep
   - TodoWrite
   - WebSearch
+registry:
+  type: agent
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:24a399a48a364f3116c16b09e6d2c96b4228584f9aedce07a04c19f6132b9065
+  tags: [planning, coordination]
+  min_kit_version: 0.5.0
 ---
 
 # Planner Agent

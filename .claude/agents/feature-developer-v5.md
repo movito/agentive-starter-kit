@@ -6,6 +6,19 @@ version: 1.0.0
 origin: feature-developer-v3 (adversarial-workflow)
 last-updated: 2026-03-21
 created-by: "@movito with planner2"
+registry:
+  type: agent
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  origin: feature-developer-v3
+  created_by: "@movito with planner2"
+  content_hash: sha256:7cd1b3b4a6946195d8c7d6957435d9b01f79f4266b8c0debcc25243d24698b14
+  tags: [implementation, tdd, gated-workflow, bot-watcher]
+  min_kit_version: 0.5.0
+  replaces: feature-developer-v3
 ---
 
 # Feature Developer Agent (V5)

@@ -1,6 +1,6 @@
 # ASK-0048: Unified Artifact Registry — Phase 1 (Metadata Adoption)
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 4-6 hours

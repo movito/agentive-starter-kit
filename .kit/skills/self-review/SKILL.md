@@ -6,6 +6,18 @@ origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-02-27
 created-by: "@movito with planner2"
+registry:
+  type: skill
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  origin: dispatch-kit
+  created_by: "@movito with planner2"
+  content_hash: sha256:4e40ed61e918be9c491b31a8396bfd9b0572e2ffadce7446ff79f0a2d9454165
+  tags: [review, quality, boundaries]
+  min_kit_version: 0.5.0
 ---
 
 # Self-Review: Input Boundary Audit
