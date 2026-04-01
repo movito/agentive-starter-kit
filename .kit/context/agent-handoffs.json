@@ -1,11 +1,11 @@
 {
   "planner": {
-    "status": "idle",
-    "current_task": null,
-    "task_started": null,
-    "brief_note": "KIT-0026 created in backlog: sync agents+skills to downstream repos. All agents idle.",
-    "details_link": ".kit/tasks/1-backlog/KIT-0026-sync-agents-and-skills-to-downstream.md",
-    "handoff_file": null
+    "status": "completed",
+    "current_task": "ASK-0048",
+    "task_started": "2026-04-01",
+    "brief_note": "COMPLETE: ASK-0048 task spec + ADR-0007 + task starter committed. Ready for assignment.",
+    "details_link": ".kit/tasks/2-todo/ASK-0048-unified-artifact-registry.md",
+    "handoff_file": "docs/adr/ASK-UNIFIED-REGISTRY-TASK-STARTER.md"
   },
   "feature-developer": {
     "status": "idle",
