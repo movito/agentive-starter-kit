@@ -193,6 +193,14 @@ class TestComputeHash:
         result = compute_hash(yml)
         assert result.startswith("sha256:")
 
+    def test_yaml_extension(self, tmp_path):
+        """Both .yml and .yaml extensions should be handled identically."""
+        yaml_file = tmp_path / "test.yaml"
+        yaml_file.write_text("name: test\nprompt: hello\n", encoding="utf-8")
+        result = compute_hash(yaml_file)
+        assert result.startswith("sha256:")
+        assert len(result) == len("sha256:") + 64
+
     def test_hash_deterministic(self, tmp_path):
         md = tmp_path / "test.md"
         md.write_text("---\nname: test\n---\n\n# Hello\n", encoding="utf-8")
