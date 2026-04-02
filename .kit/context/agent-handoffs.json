@@ -1,11 +1,11 @@
 {
   "planner": {
-    "status": "completed",
-    "current_task": "ASK-0048",
-    "task_started": "2026-04-01",
-    "brief_note": "COMPLETE: ASK-0048 task spec + ADR-0007 + task starter committed. Ready for assignment.",
-    "details_link": ".kit/tasks/2-todo/ASK-0048-unified-artifact-registry.md",
-    "handoff_file": "docs/adr/ASK-UNIFIED-REGISTRY-TASK-STARTER.md"
+    "status": "idle",
+    "current_task": null,
+    "task_started": null,
+    "brief_note": "v0.5.0 released. Migration playbook written. Next: KIT-0026 (manifest tiers) then downstream migrations (AEL → ADV → DSP).",
+    "details_link": ".kit/docs/KIT-MIGRATION-PLAYBOOK.md",
+    "handoff_file": null
   },
   "feature-developer": {
     "status": "idle",
