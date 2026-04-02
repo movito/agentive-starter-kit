@@ -44,7 +44,7 @@ class TestNormalizeContent:
 
     def test_utf8_encoding(self):
         result = normalize_content("héllo\n")
-        assert result == "héllo\n".encode("utf-8")
+        assert result == "héllo\n".encode()
 
     def test_empty_string(self):
         result = normalize_content("")
