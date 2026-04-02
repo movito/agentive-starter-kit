@@ -1,6 +1,5 @@
 """Tests for compute_content_hash.py."""
 
-import hashlib
 import sys
 import textwrap
 from pathlib import Path
