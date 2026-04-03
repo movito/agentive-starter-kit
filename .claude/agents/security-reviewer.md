@@ -7,6 +7,17 @@ tools:
   - Grep
   - Glob
   - WebSearch
+registry:
+  type: agent
+  version: 1.0.0
+  tier: optional
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:adec9efe795a1e353a1862df562a4d80b59bb010fc879481bd4dd09204471253
+  tags: [security, review]
+  min_kit_version: 0.5.0
 ---
 
 # Security Reviewer Agent

@@ -1,0 +1,162 @@
+schema_version: "1.0"
+updated: 2026-04-01
+
+artifacts:
+  # === Agents (core) ===
+
+  - name: ci-checker
+    type: agent
+    version: 1.0.0
+    tier: core
+    path: .claude/agents/ci-checker.md
+    content_hash: sha256:15674770ddb913053eb2e37dc2dcfd61f69267c690e51d0151d7150bb774ef55
+    tags: [ci, verification]
+
+  - name: code-reviewer
+    type: agent
+    version: 1.0.0
+    tier: core
+    path: .claude/agents/code-reviewer.md
+    content_hash: sha256:5eafe6a5177cecfee688ba8c26f7f5bba8d002c197a5b5a7e7e96349350ac715
+    tags: [review, quality]
+
+  - name: feature-developer
+    type: agent
+    version: 1.0.0
+    tier: core
+    path: .claude/agents/feature-developer.md
+    content_hash: sha256:f5fe1acb920e060109da1bb3c241a945cd5f040b503f046a570c271b868b50e2
+    tags: [implementation]
+
+  - name: feature-developer-v3
+    type: agent
+    version: 1.0.0
+    tier: core
+    path: .claude/agents/feature-developer-v3.md
+    content_hash: sha256:8ee2d9a92e179703073b5efe4f6ebb39ca6a0486befb2061bb502ed830674807
+    tags: [implementation, tdd, gated-workflow]
+
+  - name: feature-developer-v5
+    type: agent
+    version: 1.0.0
+    tier: core
+    path: .claude/agents/feature-developer-v5.md
+    content_hash: sha256:7cd1b3b4a6946195d8c7d6957435d9b01f79f4266b8c0debcc25243d24698b14
+    tags: [implementation, tdd, gated-workflow, bot-watcher]
+    replaces: feature-developer-v3
+
+  - name: planner
+    type: agent
+    version: 1.0.0
+    tier: core
+    path: .claude/agents/planner.md
+    content_hash: sha256:24a399a48a364f3116c16b09e6d2c96b4228584f9aedce07a04c19f6132b9065
+    tags: [planning, coordination]
+
+  - name: planner2
+    type: agent
+    version: 1.0.0
+    tier: core
+    path: .claude/agents/planner2.md
+    content_hash: sha256:0666cc13c393a4fa14fb7132dd045eeea8a4caed74c68b34a177f79806c053dc
+    tags: [planning, coordination, browser]
+
+  - name: test-runner
+    type: agent
+    version: 1.0.0
+    tier: core
+    path: .claude/agents/test-runner.md
+    content_hash: sha256:5aac3400de410fddc7089b84798cbcebe2ebef2bcaeffc42c7d0e87ad7b40042
+    tags: [testing, quality]
+
+  # === Agents (optional) ===
+
+  - name: agent-creator
+    type: agent
+    version: 1.0.0
+    tier: optional
+    path: .claude/agents/agent-creator.md
+    content_hash: sha256:1af977b50eb6466358aed9eb0107f67c14f42525eb93b9cdb23f6b57d842eca9
+    tags: [tooling, agent-creation]
+
+  - name: bootstrap
+    type: agent
+    version: 1.0.0
+    tier: optional
+    path: .claude/agents/bootstrap.md
+    content_hash: sha256:f56c69621aa685d59ca99fcd6872082d78da94c0aa497dab9a89bea4f75ff523
+    tags: [setup, onboarding]
+
+  - name: document-reviewer
+    type: agent
+    version: 1.0.0
+    tier: optional
+    path: .claude/agents/document-reviewer.md
+    content_hash: sha256:b7d3bd8d00c0a8b54b82d959205c171b3e1d7ce3c368eec7dd1fd38a71ec8f7e
+    tags: [review, documentation]
+
+  - name: onboarding
+    type: agent
+    version: 1.0.0
+    tier: optional
+    path: .claude/agents/onboarding.md
+    content_hash: sha256:977d4a3f3c430ada69887cd20ff346227aaecf2079297a2e8c9cdafe422b2614
+    tags: [setup, onboarding]
+
+  - name: powertest-runner
+    type: agent
+    version: 1.0.0
+    tier: optional
+    path: .claude/agents/powertest-runner.md
+    content_hash: sha256:10b13565e5e8eb8f23a61140536e18cbadc7ce666214f3f0decde6c414fe3663
+    tags: [testing, tdd, quality]
+
+  - name: security-reviewer
+    type: agent
+    version: 1.0.0
+    tier: optional
+    path: .claude/agents/security-reviewer.md
+    content_hash: sha256:adec9efe795a1e353a1862df562a4d80b59bb010fc879481bd4dd09204471253
+    tags: [security, review]
+
+  # === Skills ===
+
+  - name: bot-triage
+    type: skill
+    version: 1.0.0
+    tier: core
+    path: .claude/skills/bot-triage/SKILL.md
+    content_hash: sha256:165d58bdf8865b9449dcdb2eafbad637be60bd25ba1b58e63a456a2cf30da6f5
+    tags: [review, bots, triage]
+
+  - name: pre-implementation
+    type: skill
+    version: 1.0.0
+    tier: core
+    path: .claude/skills/pre-implementation/SKILL.md
+    content_hash: sha256:f2f7f87a0d01d489c1e0d5054d8aac892f82b5be2cb0ec2322456a8157ac1843
+    tags: [quality, pre-check, patterns]
+
+  - name: code-review-evaluator
+    type: skill
+    version: 1.0.0
+    tier: core
+    path: .kit/skills/code-review-evaluator/SKILL.md
+    content_hash: sha256:723d630d1fde9d4f8154b2b53d32fbb91767fe4c9901dd76d98830f24665e57c
+    tags: [review, evaluator, adversarial]
+
+  - name: review-handoff
+    type: skill
+    version: 1.0.0
+    tier: core
+    path: .kit/skills/review-handoff/SKILL.md
+    content_hash: sha256:ece3ebcb5193ccbdedbba8aa597920e52a6281bd861c69e7393394986edd620d
+    tags: [review, handoff]
+
+  - name: self-review
+    type: skill
+    version: 1.0.0
+    tier: core
+    path: .kit/skills/self-review/SKILL.md
+    content_hash: sha256:4e40ed61e918be9c491b31a8396bfd9b0572e2ffadce7446ff79f0a2d9454165
+    tags: [review, quality, boundaries]

@@ -8,6 +8,17 @@ tools:
   - Grep
   - Bash
   - TodoWrite
+registry:
+  type: agent
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:5eafe6a5177cecfee688ba8c26f7f5bba8d002c197a5b5a7e7e96349350ac715
+  tags: [review, quality]
+  min_kit_version: 0.5.0
 ---
 
 # Code Reviewer Agent

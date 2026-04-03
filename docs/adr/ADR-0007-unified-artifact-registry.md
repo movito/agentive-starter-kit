@@ -9,6 +9,7 @@
 **Implementation home**: agentive-starter-kit. This ADR lives in adversarial-evaluator-library where the design analysis and adversarial review were conducted. The registry tooling (`kit registry` commands) will be implemented in agentive-starter-kit, which owns the `.kit/` directory convention and the `kit` CLI namespace.
 
 ## Glossary
+
 - **Artifact**: A reusable component or asset within the agentive ecosystem, such as agent definitions, evaluator configs, and skills.
 - **Registry**: The metadata index and tooling that tracks artifact identity, version, provenance, and distribution state across projects. Not a hosted service — implemented as YAML files in git repos.
 - **Sync Protocol**: The process by which artifacts are compared against upstream sources and updated locally, governed by the project's manifest policy.
@@ -98,7 +99,7 @@ We adopt a **Unified Artifact Registry** — a single metadata envelope, distrib
 1. **The artifact is the record**: All tracking metadata lives inside the artifact file itself, in its existing frontmatter/header format. No external database, no sidecar files.
 2. **Declare intent, resolve at sync time**: Projects declare what they want (by tier, by name, by version). Sync resolves declarations to concrete files. Runtime reads files as-is.
 3. **Three-layer cascade**: `local > pinned > upstream`. Local always wins. Pinned holds a specific version. Upstream floats to latest.
-4. **Contribution is a first-class operation**: Proposing an artifact back upstream is as simple as `kit propose <artifact>`.
+4. **Contribution is a first-class operation**: Proposing an artifact back upstream is as simple as `kit registry propose <artifact>`.
 5. **Scan-then-execute atomicity**: Sync validates all artifacts before writing any. If validation fails (conflict, hash mismatch, missing source), no files are modified. Inspired by GNU Stow 2.0's two-phase algorithm.
 6. **Idempotent apply**: Running `kit registry sync` twice produces identical results. No side effects on repeated runs. Inspired by Dotbot and chezmoi.
 7. **No templating**: Artifacts are distributed as-is, not rendered per-project. Local customization is a full file replacement (tier: `local`), not conditional template expansion. This is an explicit non-goal — unlike chezmoi, we never transform artifact content during sync.
@@ -368,7 +369,7 @@ kit registry diff planner
 
 When any `kit` command runs (or on session start via a hook), it can compare local `content_hash` + `version` against upstream `index.yml`. If updates exist, emit a one-line notice:
 
-```
+```text
 kit: 3 artifact updates available (2 agents, 1 evaluator). Run `kit registry status` to see details.
 ```
 
@@ -432,7 +433,7 @@ registry:
 
 **Contribution lifecycle:**
 
-```
+```text
 downstream modifies artifact
        ↓
 kit registry propose <name>
@@ -457,7 +458,7 @@ rejected → downstream keeps local version, propose.status = rejected
 
 When an artifact has been modified locally AND upstream has a newer version, `kit registry status` reports it as a conflict:
 
-```
+```text
 planner  1.0.0  ⚡ conflict: locally modified + upstream 1.1.0 available
 ```
 

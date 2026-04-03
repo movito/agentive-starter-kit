@@ -8,6 +8,17 @@ tools:
   - Grep
   - Glob
   - WebFetch
+registry:
+  type: agent
+  version: 1.0.0
+  tier: core
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:5aac3400de410fddc7089b84798cbcebe2ebef2bcaeffc42c7d0e87ad7b40042
+  tags: [testing, quality]
+  min_kit_version: 0.5.0
 ---
 
 # Test Runner Agent

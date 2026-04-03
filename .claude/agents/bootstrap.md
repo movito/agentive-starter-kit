@@ -10,6 +10,17 @@ tools:
   - Glob
   - Grep
   - AskUserQuestion
+registry:
+  type: agent
+  version: 1.0.0
+  tier: optional
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:f56c69621aa685d59ca99fcd6872082d78da94c0aa497dab9a89bea4f75ff523
+  tags: [setup, onboarding]
+  min_kit_version: 0.5.0
 ---
 
 # Bootstrap Agent

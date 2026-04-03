@@ -13,6 +13,17 @@ tools:
   - WebSearch
   - WebFetch
   - Task
+registry:
+  type: agent
+  version: 1.0.0
+  tier: optional
+  source: agentive-starter-kit
+  upstream_version: 1.0.0
+  last_synced: 2026-04-01
+  created_by: "@movito"
+  content_hash: sha256:10b13565e5e8eb8f23a61140536e18cbadc7ce666214f3f0decde6c414fe3663
+  tags: [testing, tdd, quality]
+  min_kit_version: 0.5.0
 ---
 
 # PowerTest-Runner Agent

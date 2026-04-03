@@ -136,7 +136,7 @@ class TestManifestConsistency:
 
     def test_scripts_core_count(self, manifest):
         count = len(manifest["files"]["scripts_core"])
-        assert count == 14, f"Expected 14 scripts_core entries, got {count}"
+        assert count == 15, f"Expected 15 scripts_core entries, got {count}"
 
     def test_commands_core_count(self, manifest):
         count = len(manifest["files"]["commands_core"])
@@ -152,4 +152,4 @@ class TestManifestConsistency:
 
     def test_total_entry_count(self, manifest):
         total = sum(len(entries) for entries in manifest["files"].values())
-        assert total == 39, f"Expected 39 total entries, got {total}"
+        assert total == 40, f"Expected 40 total entries, got {total}"
