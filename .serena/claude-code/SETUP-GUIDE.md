@@ -84,7 +84,7 @@ This guide provides step-by-step instructions for installing and configuring Ser
 
 **Command**:
 ```bash
-claude mcp add-json "serena" '{"command":"uvx","args":["--from","git+https://github.com/oraios/serena","serena-mcp-server"]}'
+claude mcp add-json "serena" '{"command":"uvx","args":["--from","git+https://github.com/oraios/serena","serena","start-mcp-server"]}'
 ```
 
 **Expected Output**:
@@ -208,7 +208,7 @@ Use mcp__serena__find_symbol to find a class named "YourClassName"
 **Solution**:
 ```bash
 # Re-run installation command
-claude mcp add-json "serena" '{"command":"uvx","args":["--from","git+https://github.com/oraios/serena","serena-mcp-server"]}'
+claude mcp add-json "serena" '{"command":"uvx","args":["--from","git+https://github.com/oraios/serena","serena","start-mcp-server"]}'
 
 # Verify
 claude mcp list
@@ -245,7 +245,7 @@ pip install 'python-lsp-server[all]'
 
 **Test Serena manually**:
 ```bash
-uvx --from 'git+https://github.com/oraios/serena' serena-mcp-server
+uvx --from 'git+https://github.com/oraios/serena' serena start-mcp-server
 # Should show Serena server output (Ctrl+C to exit)
 ```
 
@@ -309,7 +309,7 @@ Serena configuration is stored in:
   "servers": {
     "serena": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/oraios/serena", "serena-mcp-server"]
+      "args": ["--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server"]
     }
   }
 }

@@ -48,7 +48,7 @@ We will integrate Serena MCP with **user-level scope** and **launcher-initiated 
 
 ```bash
 # Setup script uses --scope user for global availability
-claude mcp add --scope user serena -- uvx --from "git+https://github.com/oraios/serena" serena-mcp-server
+claude mcp add --scope user serena -- uvx --from "git+https://github.com/oraios/serena" serena start-mcp-server
 ```
 
 **Project Configuration (`.serena/project.yml`):**

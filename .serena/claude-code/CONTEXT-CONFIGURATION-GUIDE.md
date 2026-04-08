@@ -127,7 +127,7 @@ The `--context` parameter tells Serena HOW to behave and which tools to enable:
 
 **Key Parameters**:
 - `command: "uvx"` - Use UV package manager to run Serena
-- `serena` - Executable name (NOT `serena-mcp-server`)
+- `serena` - Executable name (package renamed from `serena` to `serena-agent`)
 - `start-mcp-server` - Subcommand to launch MCP server
 - `--context agent` - **CRITICAL**: Enables agent tab access
 - `--project <path>` - Absolute path to project root
@@ -153,7 +153,8 @@ The `--context` parameter tells Serena HOW to behave and which tools to enable:
       "args": [
         "--from",
         "git+https://github.com/oraios/serena",
-        "serena-mcp-server",
+        "serena",
+        "start-mcp-server",
         "--context",
         "agent",
         "--project",
@@ -166,8 +167,8 @@ The `--context` parameter tells Serena HOW to behave and which tools to enable:
 
 **Key Differences from Repository Config**:
 - `command` uses full path: `/Users/broadcaster_three/.local/bin/uvx`
-- Uses `serena-mcp-server` instead of `serena` + `start-mcp-server`
-- Both forms are valid (different Serena installation methods)
+- Uses `serena` + `start-mcp-server` (same as repository config)
+- `command` must be the full path when used in Claude Desktop
 
 **⚠️ IMPORTANT**: Both files must have matching `--context` values!
 
@@ -264,7 +265,8 @@ vim ~/Library/Application\ Support/Claude/claude_desktop_config.json
 "args": [
   "--from",
   "git+https://github.com/oraios/serena",
-  "serena-mcp-server",
+  "serena",
+        "start-mcp-server",
   "--context",
   "agent",           # ← CRITICAL: Add or verify this
   "--project",
@@ -471,19 +473,16 @@ mcp__serena__search_for_pattern(substring_pattern="class Timeline")
 ### Pitfall 5: Using Wrong Executable Name
 
 **Problem**:
-- Repository config uses `serena` + `start-mcp-server`
-- Claude Desktop config uses `serena-mcp-server`
-- Confusion about which is correct
+- The old `serena-mcp-server` executable no longer exists
+- The package was renamed to `serena-agent` and the entry point is now `serena`
 
 **Why It Happens**:
-- Both forms are valid (different installation methods)
-- No clear documentation on which to use
-- Easy to mix them up
+- Serena upstream renamed the package and executable
+- Old configurations still reference `serena-mcp-server`
 
 **Solution**:
-- **Use `serena-mcp-server` for Claude Desktop** (uvx method)
-- **Use `serena` + `start-mcp-server` for manual setup** (development)
-- Both work, just be consistent
+- **Always use `serena` + `start-mcp-server`** (two args, not one combined executable)
+- Update any config that references `serena-mcp-server` to `serena`, `start-mcp-server`
 
 ### Pitfall 6: Typo in Context Value
 
@@ -556,7 +555,8 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | grep -A 2
    "args": [
      "--from",
      "git+https://github.com/oraios/serena",
-     "serena-mcp-server",
+     "serena",
+        "start-mcp-server",
      "--context",
      "agent",
      "--project",
@@ -570,7 +570,7 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | grep -A 2
    pkill -f "Claude"
 
    # Kill all Serena MCP servers
-   pkill -f "serena-mcp-server"
+   pkill -f "serena.*start-mcp-server"
    pkill -f "serena"
 
    # Wait 10 seconds
@@ -634,7 +634,7 @@ This might be expected behavior if:
 **Symptoms**:
 - Slow Serena responses
 - Inconsistent behavior (sometimes works, sometimes doesn't)
-- High CPU usage from multiple `serena-mcp-server` processes
+- High CPU usage from multiple Serena MCP server processes
 
 **Diagnosis**:
 ```bash
@@ -649,7 +649,7 @@ ps aux | grep serena
 
 1. **Kill all Serena processes**:
    ```bash
-   pkill -f "serena-mcp-server"
+   pkill -f "serena.*start-mcp-server"
    pkill -f "serena"
 
    # Verify killed
@@ -701,7 +701,8 @@ Possible causes:
    "args": [
      "--from",
      "git+https://github.com/oraios/serena",
-     "serena-mcp-server",
+     "serena",
+        "start-mcp-server",
      "--context",      // ← Must be separate item
      "agent",          // ← Must be separate item (not "--context agent")
      "--project",
@@ -722,7 +723,8 @@ Possible causes:
      "mcpServers": {
        "serena": {
          "command": "/Users/broadcaster_three/.local/bin/uvx",
-         "args": ["--from", "git+https://github.com/oraios/serena", "serena-mcp-server", "--context", "agent", "--project", "/path/to/your-project"]
+         "args": ["--from", "git+https://github.com/oraios/serena", "serena",
+        "start-mcp-server", "--context", "agent", "--project", "/path/to/your-project"]
        }
      }
    }
@@ -945,7 +947,8 @@ python3 -m json.tool ~/Library/Application\ Support/Claude/claude_desktop_config
       "args": [
         "--from",
         "git+https://github.com/oraios/serena",
-        "serena-mcp-server",
+        "serena",
+        "start-mcp-server",
         "--context",
         "agent",
         "--project",
@@ -968,7 +971,8 @@ python3 -m json.tool ~/Library/Application\ Support/Claude/claude_desktop_config
       "args": [
         "--from",
         "git+https://github.com/oraios/serena",
-        "serena-mcp-server",
+        "serena",
+        "start-mcp-server",
         "--context",
         "agent",
         "--project",
@@ -980,7 +984,8 @@ python3 -m json.tool ~/Library/Application\ Support/Claude/claude_desktop_config
       "args": [
         "--from",
         "git+https://github.com/oraios/serena",
-        "serena-mcp-server",
+        "serena",
+        "start-mcp-server",
         "--context",
         "agent",
         "--project",

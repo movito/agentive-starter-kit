@@ -19,7 +19,7 @@ WARN="${YELLOW}⚠ WARN${NC}"
 
 # Check 1: Serena process is running
 echo "1. Checking Serena MCP server process..."
-SERENA_PROC=$(ps aux | grep serena-mcp-server | grep -v grep)
+SERENA_PROC=$(ps aux | grep "serena start-mcp-server\|serena-mcp-server" | grep -v grep)
 if [ -n "$SERENA_PROC" ]; then
     echo -e "   $PASS Serena MCP server is running"
     echo "   Process: $(echo $SERENA_PROC | awk '{print $2, $11, $12, $13}')"

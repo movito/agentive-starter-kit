@@ -60,7 +60,7 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | grep -A 2
 python3 -m json.tool ~/Library/Application\ Support/Claude/claude_desktop_config.json
 
 # Check for orphaned MCP server processes (CRITICAL FOR TROUBLESHOOTING)
-ps aux | grep serena-mcp-server | grep -v grep
+ps aux | grep "serena.*start-mcp-server" | grep -v grep
 
 # If any processes shown above, kill them before restarting:
 # kill -9 <PID1> <PID2> ...
@@ -122,11 +122,11 @@ python3 -m json.tool ~/Library/Application\ Support/Claude/claude_desktop_config
 
 ```bash
 # Step 1: Check for orphaned Serena MCP server processes
-ps aux | grep serena-mcp-server | grep -v grep
+ps aux | grep "serena.*start-mcp-server" | grep -v grep
 
 # Example output (these are ORPHANED processes):
-# broadcaster_three 97778  ... /bin/python .../serena-mcp-server
-# broadcaster_three 2269   ... /bin/python .../serena-mcp-server
+# broadcaster_three 97778  ... /bin/python .../serena start-mcp-server
+# broadcaster_three 2269   ... /bin/python .../serena start-mcp-server
 
 # Step 2: Identify the PIDs (first column in output above)
 # In this example: 97778 and 2269
@@ -138,7 +138,7 @@ kill -9 97778 2269
 kill -9 97778 97771 2269 2260
 
 # Step 4: Verify all processes are terminated
-ps aux | grep serena-mcp-server | grep -v grep
+ps aux | grep "serena.*start-mcp-server" | grep -v grep
 # Should return no results
 
 # Step 5: Wait a few seconds
@@ -151,7 +151,7 @@ sleep 5
 **Quick Kill Command** (kills all Serena processes):
 ```bash
 # Nuclear option - kills everything Serena-related
-pkill -9 -f "serena-mcp-server"
+pkill -9 -f "serena.*start-mcp-server"
 
 # Verify clean state
 ps aux | grep serena | grep -v grep
@@ -172,7 +172,7 @@ Before restarting, verify these are all ✅:
 - [ ] Repository config has `"--context", "agent"` (optional but recommended)
 - [ ] JSON syntax is valid (run validation command above)
 - [ ] Both files have matching context values
-- [ ] **Checked for and killed orphaned MCP server processes** (`ps aux | grep serena-mcp-server`)
+- [ ] **Checked for and killed orphaned MCP server processes** (`ps aux | grep "serena.*start-mcp-server"`)
 - [ ] You're ready to quit ALL Claude windows (Cmd+Q)
 - [ ] You know you need to test in a NEW conversation
 

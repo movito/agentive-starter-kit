@@ -81,14 +81,14 @@ else
     # This ensures Serena is available to ALL projects, not just this one
     if [[ "$HAS_UVX" == true ]]; then
         echo -e "  Adding Serena via uvx (global scope)..."
-        claude mcp add --scope user serena -- uvx --from "git+https://github.com/oraios/serena" serena-mcp-server
+        claude mcp add --scope user serena -- uvx --from "git+https://github.com/oraios/serena" serena start-mcp-server
     else
         echo -e "  Adding Serena via pipx (global scope)..."
         # First install with pipx if needed
         if ! pipx list | grep -q serena; then
             pipx install "git+https://github.com/oraios/serena"
         fi
-        claude mcp add --scope user serena -- serena-mcp-server
+        claude mcp add --scope user serena -- serena start-mcp-server
     fi
     echo -e "  ${GREEN}✓${NC} Serena added to Claude Code MCP (user-level, available to all projects)"
 fi

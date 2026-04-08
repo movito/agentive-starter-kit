@@ -75,7 +75,7 @@ claude mcp add --scope local <tool-name> -- <runner> <package> <args>
 
 ```bash
 # Serena (code navigation) - user scope
-claude mcp add --scope user serena -- uvx --from "git+https://github.com/oraios/serena" serena-mcp-server
+claude mcp add --scope user serena -- uvx --from "git+https://github.com/oraios/serena" serena start-mcp-server
 
 # Hypothetical database tool - user scope
 claude mcp add --scope user db-client -- npx @mcp/database-client

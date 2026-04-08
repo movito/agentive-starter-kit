@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Serena MCP server command updated** — Serena upstream renamed the package to `serena-agent` and the executable entry point from `serena-mcp-server` to `serena start-mcp-server`. Updated all setup scripts, documentation, ADRs, and troubleshooting guides to use the new command format.
+
 ## [0.5.0] - 2026-03-30
 
 ### Changed
