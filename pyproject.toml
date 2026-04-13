@@ -25,7 +25,7 @@ dependencies = []
 
 [project.optional-dependencies]
 linear = [
-    "gql[requests]>=3.4.0",    # GraphQL client for Linear API
+    "gql[requests]>=4.0.0",    # GraphQL client for Linear API
     "python-dotenv>=1.0.0",    # Load .env files
 ]
 dev = [
