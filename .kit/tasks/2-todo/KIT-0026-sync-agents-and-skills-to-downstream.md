@@ -1,11 +1,12 @@
 # KIT-0026: Sync Agent Definitions and Skills to Downstream Repos
 
-**Status**: Backlog
+**Status**: Todo
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-4 hours
 **Created**: 2026-03-29
-**Target Completion**: 2026-04-05
+**Target Completion**: TBD
+**Last Updated**: 2026-04-14
 **Linear ID**: (automatically backfilled after first sync)
 
 ## Related Tasks
@@ -49,6 +50,8 @@ constraint) — are the last major category of shared infrastructure not covered
 - [ ] Sync must be backward-compatible: downstream repos without `.claude/agents/` get the directory created
 - [ ] Agent files that are project-specific (e.g., `onboarding.md` which references project name) must be excluded or handled
 - [ ] Existing `opted_in` mechanism must work for new tiers (core tiers always sync)
+- [ ] Sync must respect `origin:` frontmatter — only overwrite agents with `origin: agentive-starter-kit`, never overwrite `origin: <project>` agents
+- [ ] All synced agents must include standardized frontmatter: `name`, `description`, `model`, `version`, `origin`, `last-updated`, `created-by`
 
 ## Tier Design
 
@@ -58,22 +61,28 @@ Not all agents should sync. Some are project-specific (onboarding), some are kit
 (planner2). Proposed split:
 
 **`agents_core`** (always synced — `*_core` tier):
-- `feature-developer.md`
-- `feature-developer-v3.md`
-- `feature-developer-v5.md`
-- `test-runner.md`
-- `powertest-runner.md`
-- `ci-checker.md`
-- `code-reviewer.md`
-- `document-reviewer.md`
-- `security-reviewer.md`
-- `agent-creator.md`
+- `feature-developer-v5.md` — primary implementation agent (Opus)
+- `code-reviewer.md` — code quality review (Sonnet)
+- `document-reviewer.md` — documentation review (Sonnet)
+- `security-reviewer.md` — security analysis (Sonnet)
+- `powertest-runner.md` — advanced TDD (Sonnet)
+- `agent-creator.md` — interactive agent creation (Sonnet)
+- `pypi-publisher.md` — PyPI releases (Sonnet)
 
 **NOT synced** (project-specific or kit-only):
-- `onboarding.md` — references project name, only used in ASK
-- `bootstrap.md` — consumer project bootstrapper, ASK-specific
-- `planner.md` — lightweight planner, project-specific configuration
-- `planner2.md` — heavy planner with Chrome/Serena, kit-only
+- `onboarding.md` — references project name, project-specific setup
+- `planner2.md` — heavy planner with Chrome/Serena, kit-only coordination
+
+**Deleted (no longer exist)**:
+- `feature-developer.md`, `feature-developer-v3.md`, `feature-developer-v4.md` — superseded by v5
+- `test-runner.md` — superseded by powertest-runner
+- `ci-checker.md` — broken as sub-agent, verify-ci.sh used directly
+- `planner.md` — superseded by planner2
+
+**Sync uses `origin` metadata**: Each agent has frontmatter `origin: agentive-starter-kit`
+or `origin: <project>`. Only agents with `origin: agentive-starter-kit` are candidates
+for sync. Project-specific agents (e.g., `origin: adversarial-workflow`) are never
+overwritten by sync.
 
 ### Which skills to sync
 
@@ -95,16 +104,13 @@ Not all agents should sync. Some are project-specific (onboarding), some are kit
     "commands_core": [...],
     "commands_optional": [...],
     "agents_core": [
-      "feature-developer.md",
-      "feature-developer-v3.md",
       "feature-developer-v5.md",
-      "test-runner.md",
-      "powertest-runner.md",
-      "ci-checker.md",
       "code-reviewer.md",
       "document-reviewer.md",
       "security-reviewer.md",
-      "agent-creator.md"
+      "powertest-runner.md",
+      "agent-creator.md",
+      "pypi-publisher.md"
     ],
     "skills_core": [
       "pre-implementation/",
@@ -159,7 +165,7 @@ Not all agents should sync. Some are project-specific (onboarding), some are kit
 ## Acceptance Criteria
 
 ### Must Have
-- [ ] `agents_core` tier in manifest with 10 agent definitions
+- [ ] `agents_core` tier in manifest with 7 agent definitions
 - [ ] `skills_core` tier in manifest with 2 skill directories
 - [ ] Sync workflow triggers on `.claude/agents/**` and `.claude/skills/**` changes
 - [ ] `resolve_paths` correctly maps new tiers to `.claude/agents/` and `.claude/skills/`
