@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **adversarial-workflow upgraded to v1.0.0** — Fixes Gemini evaluator verdict extraction (bold markdown patterns like `**FAIL**` now parsed correctly). No config changes needed.
+
 ### Fixed
 
 - **Serena MCP server command updated** — Serena upstream renamed the package to `serena-agent` and the executable entry point from `serena-mcp-server` to `serena start-mcp-server`. Updated all setup scripts, documentation, ADRs, and troubleshooting guides to use the new command format.
