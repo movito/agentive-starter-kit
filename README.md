@@ -70,17 +70,81 @@ It will check all requirements and tell you what's missing.
 
 ## Quick Start
 
-### 1. Clone the Repository
+There are three ways to spin up a new project from this kit, in order of least to most manual:
 
-Open your terminal and navigate to where you keep projects (e.g., `~/Github` or `~/Projects`):
+- **Option A — From a URL (zero setup)**: open Claude Code anywhere, paste the kit's URL, and ask it to set up a new project. Claude clones the kit and follows the `create-project` recipe itself. Best when you just want it done.
+- **Option B — Agent-driven (deterministic)**: clone the kit yourself, then explicitly invoke the `create-project` agent. Same end result as Option A, but you control where the kit checkout lives. Best for repeat use.
+- **Option C — Launcher-based**: clone the kit straight into your project folder and run the onboarding launcher. Best when you're comfortable inheriting the kit's git history (or plan to re-init).
+
+### Option A — From a URL (Zero Setup)
+
+If you have Claude Code installed, you don't need to clone anything yourself. Just open a Claude Code session in any directory and paste:
+
+```
+https://github.com/movito/agentive-starter-kit
+
+Please set up a new project from this kit.
+```
+
+Claude will:
+
+1. Clone the kit to a working directory (it will pick a sensible location, or ask)
+2. Read `.claude/agents/create-project.md` and follow that recipe
+3. Ask you the same questions the `create-project` agent asks (target directory, project name, task prefix, description, GitHub visibility, optional target codebase)
+4. Run `scripts/optional/create-project.sh`, customize identity files, init adversarial-workflow, install evaluators, and create the GitHub repo
+
+**What you need installed beforehand**:
+
+- Claude Code (`claude --version`)
+- `git`, `gh` (GitHub CLI, authenticated via `gh auth status`)
+- `uvx` or `pipx` (for `adversarial-workflow`)
+
+**Honest caveat**: this path relies on Claude reading the `create-project` agent file and following its instructions in the main session. It's not a deterministic shell script — if anything in the recipe changes, behavior may vary slightly between sessions. For a fully predictable run, use Option B.
+
+### Option B — Agent-Driven Setup (Deterministic)
+
+This path uses the `create-project` agent to create a brand new project on GitHub from a clean export of the kit.
+
+**1. Clone the kit somewhere persistent** (you'll reuse this checkout for future projects):
 
 ```bash
 cd ~/Github
+git clone https://github.com/movito/agentive-starter-kit.git
+cd agentive-starter-kit
 ```
 
-Then clone this starter kit, replacing `your-project-name` with your actual project name:
+**2. Open Claude Code in that directory and invoke the agent**:
+
+```
+> Use the create-project agent to set up a new project for me
+```
+
+**3. Answer the agent's questions**. It will ask for:
+
+- Target directory (e.g., `~/Github/my-new-project`)
+- Project name and one-sentence description
+- Task prefix (2-4 uppercase letters, e.g., `MNP`)
+- GitHub visibility (private or public)
+- Optional: path to an existing codebase if this project will analyze it
+
+**4. The agent does the rest**. It will:
+
+- Run `scripts/optional/create-project.sh` to export a clean copy (via `git archive`, no kit history)
+- Customize `CLAUDE.md`, `pyproject.toml`, and `README.md` with your project identity
+- Initialize `adversarial-workflow` and install the default evaluator library
+- Create the GitHub repo with `gh repo create` and push the first commit
+- Print a summary with next steps (add `.env`, open the new project in Claude, invoke `planner2`)
+
+When it finishes, `cd` into your new project directory and start working.
+
+### Option C — Launcher-Based Onboarding
+
+Use this if you want to clone the kit directly as your project (you'll inherit the kit's git history unless you `rm -rf .git && git init`).
+
+**1. Clone the repository into your project folder**:
 
 ```bash
+cd ~/Github
 git clone https://github.com/movito/agentive-starter-kit.git your-project-name
 cd your-project-name
 ```
@@ -91,19 +155,13 @@ git clone https://github.com/movito/agentive-starter-kit.git weather-app
 cd weather-app
 ```
 
-This creates a new folder with everything inside. **Don't create the folder first** - the clone command does that for you.
-
-Then open the folder in your IDE (VS Code, Cursor, etc.).
-
-### 2. Run First-Time Onboarding
+**2. Run first-time onboarding**:
 
 ```bash
 .kit/launchers/onboarding
 ```
 
-### 3. Follow Interactive Setup
-
-The onboarding agent will guide you through:
+**3. Follow the interactive setup**. The onboarding agent will guide you through:
 
 1. **Project Configuration** - Name your project
 2. **Language Selection** - Configure Serena for your languages
@@ -132,6 +190,7 @@ Setup takes approximately 5-10 minutes.
 | `code-reviewer` | Reviews implementations for quality |
 | `ci-checker` | CI/CD verification |
 | `agent-creator` | Create new specialized agents |
+| `create-project` | Spin up a new project from this kit (clean export, GitHub repo, evaluator install) |
 
 ### Task Management (`.kit/tasks/`)
 
@@ -395,11 +454,26 @@ your-project/
 
 ---
 
-## Two Ways to Use This Kit
+## Four Ways to Use This Kit
 
-### Kit Project (Full Setup)
+### From a URL (Zero Setup)
 
-Clone the repo and run onboarding. You get everything: planning agents, evaluators, task management, Linear sync, and the full builder layer in `.kit/`.
+Open Claude Code anywhere, paste the kit URL, ask Claude to set up a new project. Claude clones the kit and follows the `create-project` recipe. See [Quick Start → Option A](#option-a--from-a-url-zero-setup).
+
+### Agent-Driven Project (Deterministic)
+
+Clone the kit yourself, then explicitly invoke the `create-project` agent. Same end result as the URL flow, but you control where the kit checkout lives.
+
+```bash
+# In a checkout of agentive-starter-kit, open Claude Code and:
+> Use the create-project agent to set up a new project for me
+```
+
+See [Quick Start → Option B](#option-b--agent-driven-setup-deterministic). Use this when starting new projects often and want a stable kit checkout to reuse.
+
+### Kit Project (Full Setup, Manual)
+
+Clone the repo and run the onboarding launcher. You get everything: planning agents, evaluators, task management, Linear sync, and the full builder layer in `.kit/` — but the kit's git history travels with you.
 
 ```bash
 git clone https://github.com/movito/agentive-starter-kit.git my-project
@@ -407,7 +481,7 @@ cd my-project
 .kit/launchers/onboarding
 ```
 
-This is what the Quick Start section describes. Use this when you want the full agentive development experience.
+See [Quick Start → Option C](#option-c--launcher-based-onboarding). Use this when you want full control over the setup steps or are comfortable with the kit history.
 
 ### Consumer Project (Lightweight)
 

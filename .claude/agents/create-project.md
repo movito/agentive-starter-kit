@@ -44,6 +44,12 @@ Infer what you can (e.g., prefix from name, description from context).
 
 ## Procedure
 
+> **Bash CWD note**: In Claude Code, each Bash call resolves CWD independently
+> — `cd` does not persist between calls. From Step 1 onward you'll be working
+> in the new project directory, so prefix every Bash command with
+> `cd <target-dir> && ...` (or use absolute paths). Do not assume CWD carries
+> over.
+
 ### Step 1: Run create-project.sh
 
 The mechanical export and cleanup is handled by a script. Run it from the
@@ -131,31 +137,64 @@ Built with [Agentive Starter Kit](https://github.com/movito/agentive-starter-kit
 **Version**: 0.1.0
 ```
 
-### Step 5: Install adversarial-workflow
+### Step 5: Verify adversarial-workflow setup
 
-Check if `adversarial` CLI is available globally. If so, initialize:
+The export already includes a working `.adversarial/` (config, docs, scripts,
+templates, inputs). **Do not run `adversarial init --force`** — it is
+destructive and will delete the kit's customizations:
+
+- `.adversarial/docs/EVALUATION-WORKFLOW.md`
+- `.adversarial/scripts/{evaluate_plan,proofread_content,review_implementation,validate_tests}.sh`
+- `.adversarial/templates/{arch-assess,code-review,spec-compliance}-input-template.md`
+- `.adversarial/config.yml.template`
+
+Instead, just check that the CLI is installed and the config is present:
 
 ```bash
-adversarial init --force  # --force to overwrite template config
+cd <target-dir> && which adversarial && test -f .adversarial/config.yml && echo "OK"
 ```
 
-If adversarial-workflow is not installed globally, skip this step and note
-it in the summary.
+If the CLI is not installed globally, note it in the summary so the user
+knows they need `pipx install adversarial-workflow` (or `uvx`) before evaluators
+will run. The config files in the export work as-is.
+
+**If you must run `init`** (e.g., the export is somehow missing config.yml):
+back up the kit's customizations first, then restore them after init:
+
+```bash
+cd <target-dir>
+cp -r .adversarial .adversarial.bak
+adversarial init --force
+# Restore kit customizations that init wipes:
+cp -r .adversarial.bak/docs .adversarial/
+cp -r .adversarial.bak/scripts .adversarial/
+cp -r .adversarial.bak/templates .adversarial/
+cp -r .adversarial.bak/inputs .adversarial/
+cp .adversarial.bak/config.yml.template .adversarial/
+rm -rf .adversarial.bak
+```
+
+Note: `adversarial init` also creates `.agent-context/AGENT-SYSTEM-GUIDE.md`
+(~34KB). This is normal — it's a reference doc for agents using the
+adversarial workflow. Mention it in the summary so the user isn't surprised.
 
 ### Step 6: Install evaluator library
 
+The library is cached at `.kit/adversarial/evaluators/` (full mirror of the
+upstream library); active evaluators get copied into `.adversarial/evaluators/`.
+
 ```bash
-./scripts/core/project install-evaluators
+cd <target-dir> && ./scripts/core/project install-evaluators
 ```
 
-Then install the most commonly used evaluators into `.adversarial/evaluators/`
-so `adversarial list-evaluators` finds them:
+Then install the most commonly used evaluators so `adversarial list-evaluators`
+finds them:
 
 ```bash
-adversarial library install google/arch-review-fast --yes
-adversarial library install openai/arch-review --yes
-adversarial library install openai/code-reviewer --yes
-adversarial library install google/code-reviewer-fast --yes
+cd <target-dir> && adversarial library install google/arch-review-fast --yes
+cd <target-dir> && adversarial library install openai/arch-review --yes
+cd <target-dir> && adversarial library install openai/code-reviewer --yes
+cd <target-dir> && adversarial library install google/code-reviewer-fast --yes
 ```
 
 ### Step 7: Configure .env.template
@@ -168,13 +207,18 @@ Leave API key fields empty — the user adds those.
 
 ### Step 8: Create GitHub Repository
 
+Verify the repo name is available before creating:
+
 ```bash
-cd <target-dir>
-gh repo create <repo-name> --private --source=. --push
-gh repo set-default
+gh repo view <github-user>/<repo-name> 2>&1 | head -3   # expect "Could not resolve"
 ```
 
-If `--private` was not requested, use `--public`.
+Then create the repo (private by default; use `--public` if requested):
+
+```bash
+cd <target-dir> && gh repo create <repo-name> --private --source=. --push
+cd <target-dir> && gh repo set-default
+```
 
 If the push fails, it's likely because the export is too large. This should
 NOT happen with the script (no git history), but if it does:
@@ -185,15 +229,16 @@ NOT happen with the script (no git history), but if it does:
 ### Step 9: Commit customizations and push
 
 ```bash
-git add -A
-git commit -m "chore: Configure project identity and install tooling
+cd <target-dir> && git add -A
+cd <target-dir> && git commit -m "chore: Configure project identity and install tooling
 
 Project: <name>
 Task prefix: <PREFIX>
 Evaluator library: installed
-adversarial-workflow: initialized"
+Active evaluators: arch-review-fast, arch-review, code-reviewer, code-reviewer-fast
+adversarial-workflow: <version> verified"
 
-git push origin main
+cd <target-dir> && git push origin main
 ```
 
 ### Step 10: Print Summary
@@ -236,8 +281,10 @@ git push origin main
    over-engineer the initial setup.
 5. **Don't modify agent files** — they're generic and work as-is. The only
    project-specific config is CLAUDE.md and pyproject.toml.
-6. **Work from the ASK repo** for Step 1, then `cd` to the new project for
-   all subsequent steps.
+6. **Work from the ASK repo** for Step 1, then `cd <target-dir> && ...` on
+   every subsequent Bash call (CWD does not persist across calls).
+7. **Never run `adversarial init --force`** when `.adversarial/config.yml`
+   already exists — it deletes the kit's customizations. See Step 5.
 
 ## Error Recovery
 
@@ -245,6 +292,10 @@ If something goes wrong at any step:
 - **Script fails**: Read the error output carefully. Fix the underlying issue.
 - **Push fails**: Should not happen (no history). Check for large files.
 - **Evaluator install fails**: Non-blocking. Note in summary and move on.
-- **adversarial init fails**: Check if `.adversarial/` already exists from
-  the export. Use `--force` flag.
+- **adversarial CLI missing**: Skip the verify check in Step 5 and note in
+  the summary that the user needs `pipx install adversarial-workflow`.
+- **adversarial init was run by mistake** (Step 5 says don't): files in
+  `.adversarial/{docs,scripts,templates,inputs}` and `config.yml.template`
+  may be missing. Restore them by re-running the export script to a temp dir
+  and copying those subdirs back.
 - **User wants to start over**: `rm -rf <target-dir>` and re-run the script.
