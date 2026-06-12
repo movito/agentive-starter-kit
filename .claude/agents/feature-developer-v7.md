@@ -2,7 +2,7 @@
 name: feature-developer-v7
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring
 model: claude-fable-5
-version: 2.1.0
+version: 2.1.1
 origin: agentive-starter-kit
 last-updated: 2026-06-12
 created-by: "@movito with planner2 (KIT-0029 reconciliation)"
@@ -29,21 +29,39 @@ step in `docs/MANIFEST-UPGRADE-GUIDE.md`.
 > bootstrap/onboarding with: tech stack, workspace or repo layout, task
 > prefix, content language, deployment targets, and project rules.
 > A vague agent performs worse than a specific one — fill this in.
->
-> Worked example (fictional project, delete when filling in):
->
-> ```markdown
-> This is the **acme-shop** project:
-> - **Tech Stack**: Astro (frontend) + headless CMS
-> - **Workspaces**: `site/` (frontend), `cms/` (content studio)
-> - **Task Prefix**: ACME-NNNN
-> - **Language**: English content, English code/comments
-> - **Deployment**: Vercel
->
-> **Rules:**
-> - Frontend changes go in `site/`, CMS changes in `cms/`
-> - Create feature branches from `main`
-> ```
+> Below it is filled for this repo (the kit itself) and doubles as the
+> worked example. An unfilled copy of this template lives in
+> `feature-developer-v6.md`.
+
+This is the **agentive-starter-kit** project — the starter kit itself,
+the upstream source for agentive project tooling:
+
+- **Tech Stack**: Python 3.10–3.12 tooling (`scripts/`, `tests/`),
+  bash scripts, markdown agent/command/skill definitions
+- **Layout**: `.kit/tasks/` (status folders `1-backlog` … `5-done`),
+  `.kit/context/` (handoffs, reviews, retros), `.kit/adr/` (KIT-ADRs),
+  `.claude/agents|commands|skills/` (canonical, distributed downstream),
+  `scripts/core/` + `scripts/optional/`, `tests/` (pytest)
+- **Task Prefix**: KIT-NNNN
+- **Language**: English throughout
+- **Topology**: single-repo (planning and code together)
+
+**Rules:**
+
+- Create feature branches from `main` for code changes; doc/task
+  bookkeeping commits may land on `main` when the user approves
+- Kit releases: bump `version` in `pyproject.toml` + CHANGELOG entry
+  (Keep a Changelog format, semver)
+- `scripts/.core-manifest.json` must stay consistent with the actual
+  files in `scripts/core/` and `.claude/commands/` — tests enforce
+  entry counts, so update the manifest in the same commit
+- Canonical agents/commands/skills here are distributed to downstream
+  projects — keep them portable: no downstream project strings
+  (MOSS-, SWP-, LBL-) outside example blocks
+- `feature-developer-v6.md` is the Opus-class copy of v7: improve the
+  workflow in v7 first, then re-copy to v6 (see its banner)
+- The untracked `.kit/adversarial/` directory is user-owned — never
+  stage or delete it
 
 ## Repository Topology
 
@@ -151,7 +169,28 @@ For each change:
 > **EXTENSION POINT (mandatory).** Each project fills in: local test/build
 > commands, framework-specific behaviors (rendering model, data fetching,
 > hydration), CMS/MCP tool distinctions, and anything an implementer
-> coming in cold would get wrong about this stack.
+> coming in cold would get wrong about this stack. Filled for the kit
+> repo below.
+
+- **Test/lint loop**: `pytest` (fast suite also runs as a pre-commit
+  hook), `python3 scripts/core/pattern_lint.py <files>` for DK rules,
+  `black` (line-length 88) + `isort` (black profile) + `flake8`
+- **Pre-commit gauntlet**: trailing-whitespace, end-of-file-fixer,
+  yaml/toml checks, black, isort, flake8, DK pattern lint,
+  validate-task-status (a task's `**Status**:` field must match its
+  folder), pytest-fast (~220 tests, ~11 s). A failing hook aborts the
+  commit — fix and create a NEW commit, never `--amend`
+- **Defensive coding (DK rules)**: `==` for identifier comparison (not
+  `in`), `str.removesuffix()` for extension removal, `encoding=` on
+  text-mode `open()`, no silent `except: pass`
+- **No frontend**: npm/node_modules guidance in Phases 3 and 7 applies
+  to downstream stacks, not here — local verification for kit work is
+  pytest plus running the touched script
+- **Evaluators**: the adversarial library pin lives in `pyproject.toml`
+  (`[tool.adversarial] library_version`); evaluators install to
+  `.adversarial/evaluators/` (NOT `.kit/adversarial/`)
+- **Task lifecycle**: `./scripts/core/project start|move|complete
+  <KIT-NNNN>` moves task files between status folders
 
 ## Phase 4: Self-Review (GATE)
 

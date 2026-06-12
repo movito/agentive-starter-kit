@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`feature-developer-v7` extension points filled for the kit repo
+  itself** (2.1.1) — `## Project Context` and `### Stack Notes` now
+  carry the kit's own conventions (KIT-NNNN, `.kit/` layout, pre-commit
+  gauntlet, DK rules, manifest consistency) so the agent can be
+  launched in this repo. The filled sections double as the worked
+  example; the unfilled template survives in `feature-developer-v6.md`
+  for KIT-0030 distribution.
+
 ## [0.6.0] - 2026-06-12
 
 ### Added
