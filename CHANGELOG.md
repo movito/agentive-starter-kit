@@ -7,13 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-12
+
 ### Changed
 
 - **adversarial-workflow upgraded to v1.0.0** — Fixes Gemini evaluator verdict extraction (bold markdown patterns like `**FAIL**` now parsed correctly). No config changes needed.
+- **Canonical cross-repo pattern doc** (KIT-0028) — `docs/CROSS-REPO-PATTERN.md` absorbed all fork-only content (suwinex-planning's field-testing revisions and the 2026-04-22 adversarial evaluator recipe); project forks in suwinex-planning and label-maker-planning replaced with link stubs carrying only project deltas. `## Provenance` stamps added to the three active planning repos; label-maker-planning regained its machine-readable `## Target Repository` section.
+- **Evaluator library pin bumped to v0.10.0** — was v0.5.3. Adds the `-v2` evaluators (`arch-review-fast-v2`, `code-reviewer-fast-v2`, `claude-arch`, …) which pin explicit model IDs; the v1 names are deprecated upstream.
 
 ### Fixed
 
 - **Serena MCP server command updated** — Serena upstream renamed the package to `serena-agent` and the executable entry point from `serena-mcp-server` to `serena start-mcp-server`. Updated all setup scripts, documentation, ADRs, and troubleshooting guides to use the new command format.
+- **Evaluator installer wrote to a path the CLI never reads** — `install-evaluators` still targeted `.kit/adversarial/evaluators/` after `.adversarial/` was restored to the repo root (0.5.0). Installs silently landed where `adversarial` could not find them, leaving deprecated v0.5.2 evaluators in use. Now installs to `.adversarial/evaluators/`.
+
+### Related
+
+- KIT-0028 channel note: doc canonicalization is convention repair only; the cross-repo helper scripts (`prepare-review-input.sh`, `lib/target_repo.sh`) referenced by the canonical doc still live downstream and upstream via KIT-0026/KIT-0030.
 
 ## [0.5.0] - 2026-03-30
 

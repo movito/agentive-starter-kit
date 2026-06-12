@@ -1,6 +1,6 @@
 # KIT-0028: Canonicalize Cross-Repo Pattern Doc and Repair Conventions (Sync Phase 0)
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours
@@ -96,14 +96,33 @@ moss) — honesty over false precision.
 
 ## Acceptance Criteria
 
-- [ ] Canonical `docs/CROSS-REPO-PATTERN.md` contains the evaluator recipe
+- [x] Canonical `docs/CROSS-REPO-PATTERN.md` contains the evaluator recipe
       and all fork-only content; no information lost from any fork
-- [ ] suwinex-planning and label-maker-planning pattern docs are link stubs
-      (with deltas if any), committed to their `main`
-- [ ] label-maker-planning CLAUDE.md has a working `## Target Repository`
-      section; command auto-detection verified
-- [ ] All three active planning repos have `## Provenance` sections
-- [ ] Kit version bumped (patch) and CHANGELOG updated in this repo
+      (kit commit 624a11e; label-maker's copy was byte-identical to the
+      previous canonical — zero unique deltas)
+- [x] suwinex-planning and label-maker-planning pattern docs are link stubs
+      (with deltas if any), committed to their `main` (e1c7bdb, eea12bb)
+- [x] label-maker-planning CLAUDE.md has a working `## Target Repository`
+      section; auto-detection verified by running suwinex's
+      `lib/target_repo.sh` parser against it with `PROJECT_ROOT` set —
+      resolves `movito/label-maker-code` / `../label-maker-code` correctly
+- [x] All three active planning repos have `## Provenance` sections
+      (moss 24b721f: kit v0.4.0, 2026-03-21 — determined from first commit,
+      better than the anticipated "unknown")
+- [x] Kit version bumped to 0.5.1 and CHANGELOG updated in this repo
+
+## Completion Findings (2026-06-12)
+
+- **label-maker-planning's slash commands are NOT cross-repo aware** — its
+  `.claude/commands/*.md` are the kit's single-repo versions with no
+  `## Target Repository` detection step. The new CLAUDE.md section is
+  parseable (verified above) but inert until the detection-aware commands
+  arrive. Folded into KIT-0030 Requirement 5 (label-maker is the first
+  migration target; the plugin's commands must carry the detection step).
+- The cross-repo helper scripts (`prepare-review-input.sh`,
+  `lib/target_repo.sh`) still live only downstream (suwinex,
+  ixda-services-2.0). The canonical doc notes this; upstreaming is
+  KIT-0026/KIT-0030 scope.
 
 ## Risks
 
