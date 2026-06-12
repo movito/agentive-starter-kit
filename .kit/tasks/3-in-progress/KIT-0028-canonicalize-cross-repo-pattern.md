@@ -1,6 +1,6 @@
 # KIT-0028: Canonicalize Cross-Repo Pattern Doc and Repair Conventions (Sync Phase 0)
 
-**Status**: Backlog
+**Status**: In Progress
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours
