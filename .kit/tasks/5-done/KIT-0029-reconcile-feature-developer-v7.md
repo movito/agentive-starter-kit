@@ -90,8 +90,10 @@ pinned ID + `last-updated` + a line in the kit upgrade checklist.
       canonical file outside example blocks (grep-verified; provenance
       moved from frontmatter to CHANGELOG)
 - [x] Frontmatter conforms to KIT-0026 standard
-- [x] Kit version bumped to 0.6.0; v5/v6 deleted (git history preserves
-      them; no agents manifest tier exists yet — that's KIT-0026)
+- [x] Kit version bumped to 0.6.0; v5 deleted. v6 disposition revised by
+      user 2026-06-12: retained as the Opus-class variant (pin
+      `claude-opus-4-8`, 1.1.1) since not all projects can run
+      claude-fable-5, which v7 pins
 - [x] Downstream adoption explicitly deferred to KIT-0030 (the moss
       wrap-up restore and v6 model bump were separate user-directed
       moss-local commits, not v7 adoption)

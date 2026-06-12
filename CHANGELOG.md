@@ -30,11 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `last-updated`; upgrade procedure documented in
   `docs/MANIFEST-UPGRADE-GUIDE.md` (new "Agent Model Pins" section).
 
+### Changed
+
+- **`feature-developer-v6.md` retained as the Opus-class variant** —
+  model pin bumped to `claude-opus-4-8` (1.1.1). Not all projects can
+  run `claude-fable-5`, which v7 pins; v6 stays the option for
+  Opus-pinned projects, with a header note pointing to v7 where Fable 5
+  is available.
+
 ### Removed
 
-- **`feature-developer-v5.md` and `feature-developer-v6.md`** —
-  superseded by canonical v7. Downstream copies are untouched; adoption
-  is KIT-0030 (plugin) / KIT-0026 (agents manifest tier) scope.
+- **`feature-developer-v5.md`** — superseded by canonical v7. Downstream
+  copies are untouched; adoption is KIT-0030 (plugin) / KIT-0026 (agents
+  manifest tier) scope.
 
 ## [0.5.1] - 2026-06-12
 
