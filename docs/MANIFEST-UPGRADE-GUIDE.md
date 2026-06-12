@@ -241,6 +241,14 @@ command or remove it from the tier's file list in the manifest.
 A: Only add the tiers you want to `opted_in`. Omit `kit_builder` and you'll only get
 scripts + commands.
 
+## Agent Model Pins
+
+Canonical agent files in `.claude/agents/` pin a specific model ID in
+frontmatter (`model:`) with a `last-updated` date, per KIT-0029. Pinned
+IDs go stale: when upgrading the kit, check each canonical agent's
+`model:` against currently available model IDs, bump where needed, and
+update `last-updated` and `version` (semver patch for a pin-only bump).
+
 ## Reference
 
 - **ADR-0008**: `docs/adr/ADR-0008-tiered-manifest-sync.md` — architectural decision

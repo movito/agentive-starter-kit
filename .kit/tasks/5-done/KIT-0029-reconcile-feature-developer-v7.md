@@ -1,6 +1,6 @@
 # KIT-0029: Reconcile feature-developer Variants into Canonical v7 (Sync Phase 1)
 
-**Status**: Backlog
+**Status**: Done
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 3-5 hours
@@ -81,17 +81,20 @@ pinned ID + `last-updated` + a line in the kit upgrade checklist.
 
 ## Acceptance Criteria
 
-- [ ] Canonical `feature-developer-v7.md` in `.claude/agents/` of this repo,
-      portable-only, with extension points documented
-- [ ] All four v7 innovations (above) present and project-agnostic
-- [ ] moss wrap-up deletion and v6 edits investigated; outcome recorded in
-      the task's notes or a retro
-- [ ] No project-specific strings (MOSS-, SWP-, LBL-, stack names) in the
-      canonical file outside example blocks
-- [ ] Frontmatter conforms to KIT-0026 standard
-- [ ] Kit version bumped; v5/v6 disposition decided and executed
-- [ ] Downstream adoption explicitly deferred to KIT-0030 (no downstream
-      edits in this task)
+- [x] Canonical `feature-developer-v7.md` in `.claude/agents/` of this repo,
+      portable-only, with extension points documented (v2.1.0)
+- [x] All four v7 innovations (above) present and project-agnostic
+- [x] moss wrap-up deletion and v6 edits investigated; outcome recorded in
+      the task's notes (see Investigation Outcome below)
+- [x] No project-specific strings (MOSS-, SWP-, LBL-, stack names) in the
+      canonical file outside example blocks (grep-verified; provenance
+      moved from frontmatter to CHANGELOG)
+- [x] Frontmatter conforms to KIT-0026 standard
+- [x] Kit version bumped to 0.6.0; v5/v6 deleted (git history preserves
+      them; no agents manifest tier exists yet — that's KIT-0026)
+- [x] Downstream adoption explicitly deferred to KIT-0030 (the moss
+      wrap-up restore and v6 model bump were separate user-directed
+      moss-local commits, not v7 adoption)
 
 ## Risks
 
@@ -114,3 +117,21 @@ arbitrates if the edits encode an unmerged decision.
 - planner3 (suwinex) vs planner2 (kit) reconciliation is intentionally out
   of scope — separate smaller task if wanted; feature-developer is the
   highest-drift, highest-value agent.
+
+## Investigation Outcome (Requirement 1, 2026-06-12)
+
+- **moss v6 uncommitted edit**: one line — model pin
+  `claude-sonnet-4-20250514` → `claude-opus-4-8`. User confirmed
+  Claude Opus 4.8 is a real model; kept and committed in moss (92aeb50).
+  No workflow decision encoded.
+- **moss wrap-up.md deletion**: local cleanup, not a workflow decision.
+  User asked for restore + retrofit; restored in moss (a103bbe) with
+  MOSS-NNNN placeholders, monorepo note, semver frontmatter, and removal
+  of an unused `gh repo view` step. The newest wrap-up generation
+  (cross-repo Step 0 + planning-repo exception) lives in suwinex v1.3.0 —
+  canonicalizing /wrap-up is KIT-0030 scope, not this task.
+- **moss retros (MOSS-0002..0009)**: two portable learnings not yet in
+  v7, folded into the canonical file: (1) batch same-category bot fixes
+  into one commit to avoid repeated scan rounds; (2) evaluators reliably
+  miss CSS/cascade bugs while catching logic edge cases — flag dual
+  render-path components for manual review.

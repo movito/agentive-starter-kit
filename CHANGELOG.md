@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-12
+
+### Added
+
+- **Canonical `feature-developer-v7` agent** (KIT-0029) — reconciles the
+  forked variants (kit/label-maker v6 1.1.0, suwinex v6 1.3.0, moss v7
+  2.0.0) into one portable definition in `.claude/agents/`. Retains the
+  v7 innovations as portable content: inline CI/bot polling via
+  ScheduleWakeup with prompt-cache-window guidance (bot-watcher
+  sub-agent deprecated), verify-before-believing reflex for evaluator
+  claims, evaluator trio table, and the five-gate phase workflow. Adds
+  topology detection (split mode via `## Target Repository`, single-repo
+  fallback, planning-repo exception) so one file serves both monorepo
+  and cross-repo projects. Project-specific content moved to mandatory
+  extension points (`## Project Context`, `### Stack Notes`,
+  `### Recurring Footguns`) filled at bootstrap/onboarding. Two new
+  portable learnings from downstream retros: batch same-category bot
+  fixes into one commit; evaluators miss CSS/cascade and
+  dual-render-path bugs — flag for manual review.
+- **Agent model-pin policy** — canonical agents pin a model ID plus
+  `last-updated`; upgrade procedure documented in
+  `docs/MANIFEST-UPGRADE-GUIDE.md` (new "Agent Model Pins" section).
+
+### Removed
+
+- **`feature-developer-v5.md` and `feature-developer-v6.md`** —
+  superseded by canonical v7. Downstream copies are untouched; adoption
+  is KIT-0030 (plugin) / KIT-0026 (agents manifest tier) scope.
+
 ## [0.5.1] - 2026-06-12
 
 ### Changed
