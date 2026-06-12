@@ -800,7 +800,8 @@ def cmd_install_evaluators(args, project_dir):
         print("  Windows: https://git-scm.com/download/win")
         sys.exit(1)
 
-    evaluators_dir = project_dir / ".kit" / "adversarial" / "evaluators"
+    # CLI hardcodes .adversarial/ at repo root (see e2465ae) — do not move into .kit/
+    evaluators_dir = project_dir / ".adversarial" / "evaluators"
     evaluators_dir.mkdir(parents=True, exist_ok=True)
 
     print("📦 Adversarial Evaluator Library Installer")

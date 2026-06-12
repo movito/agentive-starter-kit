@@ -80,7 +80,7 @@ profile = "black"
 line_length = 88
 
 [tool.adversarial]
-library_version = "v0.5.3"
+library_version = "v0.10.0"
 
 [tool.coverage.run]
 # Source will be added when your package is created

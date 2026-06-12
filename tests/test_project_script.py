@@ -32,7 +32,7 @@ class TestInstallEvaluatorsCommand:
     @pytest.fixture
     def mock_project_dir(self, tmp_path):
         """Create a temporary project directory structure."""
-        evaluators_dir = tmp_path / ".kit" / "adversarial" / "evaluators"
+        evaluators_dir = tmp_path / ".adversarial" / "evaluators"
         evaluators_dir.mkdir(parents=True)
         return tmp_path
 
@@ -58,7 +58,7 @@ class TestInstallEvaluatorsCommand:
         cmd_install_evaluators = _project_module.cmd_install_evaluators
 
         # Create .installed-version file
-        evaluators_dir = mock_project_dir / ".kit" / "adversarial" / "evaluators"
+        evaluators_dir = mock_project_dir / ".adversarial" / "evaluators"
         version_file = evaluators_dir / ".installed-version"
         version_file.write_text("v0.2.2 (abc12345)\n", encoding="utf-8")
 
@@ -79,7 +79,7 @@ class TestInstallEvaluatorsCommand:
         cmd_install_evaluators = _project_module.cmd_install_evaluators
 
         # Create .installed-version file
-        evaluators_dir = mock_project_dir / ".kit" / "adversarial" / "evaluators"
+        evaluators_dir = mock_project_dir / ".adversarial" / "evaluators"
         version_file = evaluators_dir / ".installed-version"
         version_file.write_text("v0.2.2 (abc12345)\n", encoding="utf-8")
 
