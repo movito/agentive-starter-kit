@@ -92,8 +92,10 @@ pinned ID + `last-updated` + a line in the kit upgrade checklist.
 - [x] Frontmatter conforms to KIT-0026 standard
 - [x] Kit version bumped to 0.6.0; v5 deleted. v6 disposition revised by
       user 2026-06-12: retained as the Opus-class variant (pin
-      `claude-opus-4-8`, 1.1.1) since not all projects can run
-      claude-fable-5, which v7 pins
+      `claude-opus-4-8`) since not all projects can run claude-fable-5,
+      which v7 pins. Subsequently rewritten (1.2.0) as a
+      content-identical copy of v7 v2.1.0 — only frontmatter and banner
+      differ — per user's "open to further improvements"
 - [x] Downstream adoption explicitly deferred to KIT-0030 (the moss
       wrap-up restore and v6 model bump were separate user-directed
       moss-local commits, not v7 adoption)

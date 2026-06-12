@@ -33,10 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **`feature-developer-v6.md` retained as the Opus-class variant** —
-  model pin bumped to `claude-opus-4-8` (1.1.1). Not all projects can
-  run `claude-fable-5`, which v7 pins; v6 stays the option for
-  Opus-pinned projects, with a header note pointing to v7 where Fable 5
-  is available.
+  rewritten (1.2.0) as a content-identical copy of canonical v7 v2.1.0
+  with the model pin `claude-opus-4-8`. Not all projects can run
+  `claude-fable-5`, which v7 pins. The rewrite removes the deprecated
+  bot-watcher sub-agent pattern and stale ixda-services strings that
+  the old 1.1.x lineage carried; a banner instructs editors to improve
+  v7 first and re-copy, so the two files cannot drift on workflow
+  content.
 
 ### Removed
 
