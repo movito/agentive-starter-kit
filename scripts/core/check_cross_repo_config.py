@@ -129,22 +129,30 @@ def parse_target_section(claude_md: str):
         body.append(line)
     section_text = "\n".join(body)
 
+    # Match the runtime contract in scripts/core/lib/target_repo.sh: values
+    # MUST be backticked, and GitHub MUST be an `owner/name` slug. Accepting
+    # looser input here would let CI PASS configs that runtime cross-repo
+    # detection then rejects.
     path_match = re.search(
-        r"^\s*[-*]\s*\*\*Path\*\*:\s*`?([^`\n]+?)`?\s*$",
+        r"^\s*[-*]\s*\*\*Path\*\*:\s*`([^`\n]+)`\s*$",
         section_text,
         re.MULTILINE,
     )
     github_match = re.search(
-        r"^\s*[-*]\s*\*\*GitHub\*\*:\s*`?([^`\n]+?)`?\s*$",
+        r"^\s*[-*]\s*\*\*GitHub\*\*:\s*`([^`\n]+)`\s*$",
         section_text,
         re.MULTILINE,
     )
     if path_match is None or github_match is None:
         return MALFORMED
 
+    github = github_match.group(1).strip()
+    if re.match(r"^[^/\s]+/[^/\s]+$", github) is None:
+        return MALFORMED
+
     return {
         "path": path_match.group(1).strip(),
-        "github": github_match.group(1).strip(),
+        "github": github,
     }
 
 

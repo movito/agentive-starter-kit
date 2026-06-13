@@ -96,10 +96,20 @@ class TestParseTargetSection:
         # GitHub lives under a different heading, so the section is malformed.
         assert parse_target_section(text) == MALFORMED
 
-    def test_unbackticked_values_parse(self):
+    def test_unbackticked_values_are_malformed(self):
+        # Runtime (lib/target_repo.sh) requires backticks; an unbackticked
+        # section must not be treated as valid, or CI would PASS a config
+        # that runtime cross-repo detection rejects.
         text = "## Target Repository\n\n- **Path**: ../x-code\n- **GitHub**: o/x-code\n"
-        result = parse_target_section(text)
-        assert result == {"path": "../x-code", "github": "o/x-code"}
+        assert parse_target_section(text) == MALFORMED
+
+    def test_github_without_owner_name_slug_is_malformed(self):
+        text = (
+            "## Target Repository\n\n"
+            "- **Path**: `../x-code`\n"
+            "- **GitHub**: `not-a-slug`\n"
+        )
+        assert parse_target_section(text) == MALFORMED
 
 
 # ── check (integration) ──────────────────────────────────────────────
