@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.7.0] - 2026-06-13
 
+### Fixed
+
+- **CI lint step** — `flake8` added to the `[dev]` extras in
+  `pyproject.toml`. The `test.yml` Lint job invokes bare `flake8` after
+  `pip install -e ".[dev]"`, but flake8 was missing from the extra, so
+  the lint job failed with exit 127 (`command not found`) on every PR.
+
 ### Added
 
 - **Cross-repo config preflight check** (KIT-0030, KIT-ADR-0024 §2) —

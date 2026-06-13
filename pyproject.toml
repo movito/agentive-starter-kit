@@ -36,6 +36,7 @@ dev = [
     "black==26.3.1",
     "ruff>=0.1.0",
     "isort>=5.13.0",
+    "flake8>=6.0.0",           # CI lint step (test.yml) invokes bare flake8
     "pre-commit>=3.5.0",
     # Adversarial evaluation (AI reviews task specs)
     "adversarial-workflow>=0.7.0",  # Multi-evaluator support, citation verification
