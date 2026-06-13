@@ -9,7 +9,7 @@
 #   2. isort import sorting check
 #   3. flake8 linting
 #   4. Pattern lint (project-specific DK rules)
-#   5. Full test suite with coverage (80% threshold)
+#   5. Full test suite with coverage (threshold from pyproject.toml)
 #
 # Run this before every push to prevent CI failures.
 
@@ -41,8 +41,16 @@ if [ -z "$VIRTUAL_ENV" ]; then
     fi
 fi
 
-echo "Python: $(which python)"
+echo "Python: $(which python3)"
 echo
+
+# Preflight: verify flake8 is installed before running lint steps.
+# Fail fast with a clear message rather than emitting an opaque
+# "command not found" when the dev extras haven't been installed.
+if ! python3 -m flake8 --version >/dev/null 2>&1; then
+    echo "❌ ERROR: flake8 not installed — run 'python3 -m pip install -e \".[dev]\"'" >&2
+    exit 1
+fi
 
 # 1. Black formatting check
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -74,7 +82,7 @@ echo
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "3/5 🔎 Linting with flake8..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-if flake8 scripts/ tests/ --max-line-length=88 --extend-ignore=E203,W503 --select=E9,F63,F7,F82 2>/dev/null; then
+if python3 -m flake8 scripts/ tests/ --max-line-length=88 --extend-ignore=E203,W503 --select=E9,F63,F7,F82 2>/dev/null; then
     echo "✅ flake8: No critical linting errors"
 else
     echo "❌ flake8: Linting errors found"
@@ -104,10 +112,10 @@ echo
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "5/5 🧪 Running full test suite with coverage..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-if pytest tests/ -v --cov=scripts --cov-report=term-missing --cov-fail-under=80; then
-    echo "✅ Tests: All tests pass with coverage ≥80%"
+if pytest tests/ -v --cov=scripts --cov-report=term-missing; then
+    echo "✅ Tests: All tests pass (fail_under gate in pyproject.toml)"
 else
-    echo "❌ Tests: Test failures or coverage below 80%"
+    echo "❌ Tests: Test failures or coverage below pyproject gate"
     FAILED=1
 fi
 echo

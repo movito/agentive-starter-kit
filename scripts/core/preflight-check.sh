@@ -1,13 +1,20 @@
 #!/bin/bash
 # Run all 7 preflight gates for a PR
-# Usage: ./scripts/preflight-check.sh [--pr PR_NUMBER] [--task TASK_ID] [--help]
+# Usage: ./scripts/preflight-check.sh [--pr PR_NUMBER] [--task TASK_ID] [--repo owner/name] [--help]
 #
 # Metadata:
-#   version: 1.0.0
+#   version: 1.1.0
 #   origin: dispatch-kit
 #   origin-version: 0.3.2
-#   last-updated: 2026-02-27
+#   last-updated: 2026-04-20
 #   created-by: "@movito with planner2"
+#
+# Cross-repo support (ID2-0014):
+#   When CLAUDE.md contains a "## Target Repository" section, or when
+#   --repo owner/name is passed, all gh calls target that repo and git
+#   branch/log queries read from the target-repo working tree
+#   (git -C $TARGET_PATH). Local evaluator-review and task-folder gates
+#   (5, 6, 7) always read the planning repo's .kit/ directory.
 #
 # Output format (structured for machine parsing):
 #   GATE:<number>:<name>:PASS|FAIL:<detail>
@@ -20,28 +27,33 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT" || exit 1
 
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/target_repo.sh"
+
 PR_NUMBER=""
 TASK_ID=""
+REPO_OVERRIDE=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --help|-h)
-            echo "Usage: ./scripts/preflight-check.sh [--pr PR_NUMBER] [--task TASK_ID]"
+            echo "Usage: ./scripts/preflight-check.sh [--pr PR_NUMBER] [--task TASK_ID] [--repo owner/name]"
             echo ""
             echo "Run all 7 preflight gates for a PR before human review."
             echo ""
             echo "Options:"
-            echo "  --pr PR_NUMBER     PR number to check (default: auto-detect)"
-            echo "  --task TASK_ID     Task ID, e.g. TASK-0001 (default: derived from branch)"
-            echo "  --help, -h         Show this help message"
+            echo "  --pr PR_NUMBER      PR number to check (default: auto-detect)"
+            echo "  --task TASK_ID      Task ID, e.g. TASK-0001 (default: derived from branch)"
+            echo "  --repo owner/name   Target GitHub repo (overrides CLAUDE.md ## Target Repository)"
+            echo "  --help, -h          Show this help message"
             echo ""
             echo "Gates:"
             echo "  1. CI green                    GitHub Actions passing"
             echo "  2. CodeRabbit reviewed          coderabbitai[bot] reviewed latest code commit"
             echo "  3. BugBot reviewed              cursor[bot] reviewed latest code commit"
             echo "  4. Zero unresolved threads      All review threads resolved"
-            echo "  5. Evaluator review persisted   .kit/context/reviews/<TASK>-evaluator-review*.md"
+            echo "  5. Evaluator review persisted   .kit/context/reviews/<TASK>-{evaluator-review,code-review,code-reviewer}*.md"
             echo "  6. Review starter exists         .kit/context/<TASK>-REVIEW-STARTER.md"
             echo "  7. Task in correct folder        .kit/tasks/3-in-progress or 4-in-review"
             echo ""
@@ -65,6 +77,22 @@ while [[ $# -gt 0 ]]; do
             fi
             TASK_ID="$2"
             shift 2
+            ;;
+        --repo)
+            if [ -z "${2:-}" ] || [[ "$2" == -* ]]; then
+                echo "ERROR: --repo requires an owner/name value" >&2
+                exit 1
+            fi
+            REPO_OVERRIDE="$2"
+            shift 2
+            ;;
+        --repo=*)
+            REPO_OVERRIDE="${1#--repo=}"
+            if [ -z "$REPO_OVERRIDE" ]; then
+                echo "ERROR: --repo= requires an owner/name value" >&2
+                exit 1
+            fi
+            shift
             ;;
         -*)
             echo "Unknown option: $1"
@@ -93,19 +121,31 @@ if ! gh auth status &> /dev/null; then
     exit 1
 fi
 
-# Detect repo owner/name
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
-if [ -z "$REPO" ]; then
-    echo "ERROR: Could not determine GitHub repository"
-    echo "Run: gh repo set-default"
-    exit 1
+# Apply cross-repo detection (CLAUDE.md + --repo override)
+if [ -n "$REPO_OVERRIDE" ]; then
+    target_repo_init --repo "$REPO_OVERRIDE" || exit 1
+else
+    target_repo_init || exit 1
+fi
+
+# Detect repo owner/name — prefer the configured target repo.
+if target_repo_is_set; then
+    REPO="$TARGET_REPO"
+else
+    REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
+    if [ -z "$REPO" ]; then
+        echo "ERROR: Could not determine GitHub repository"
+        echo "Run: gh repo set-default"
+        exit 1
+    fi
 fi
 
 OWNER=$(echo "$REPO" | cut -d/ -f1)
 NAME=$(echo "$REPO" | cut -d/ -f2)
 
-# Detect branch
-BRANCH=$(git branch --show-current 2>/dev/null)
+# Detect branch. In cross-repo mode, read from the target-repo working tree.
+# shellcheck disable=SC2086
+BRANCH=$(git $GIT_DIR_ARG branch --show-current 2>/dev/null)
 if [ -z "$BRANCH" ]; then
     echo "ERROR: Could not determine current branch"
     exit 1
@@ -113,7 +153,7 @@ fi
 
 # Derive task ID from branch if not provided
 if [ -z "$TASK_ID" ]; then
-    TASK_ID=$(echo "$BRANCH" | sed -n 's|^feature/\([A-Z][A-Z]*-[0-9][0-9]*\).*|\1|p')
+    TASK_ID=$(echo "$BRANCH" | sed -n 's|^feature/\([A-Z][A-Z0-9]*-[0-9][0-9]*\).*|\1|p')
     if [ -z "$TASK_ID" ]; then
         echo "ERROR: Could not derive task ID from branch '$BRANCH'"
         echo "Use --task TASK_ID to specify manually."
@@ -121,9 +161,11 @@ if [ -z "$TASK_ID" ]; then
     fi
 fi
 
-# Auto-detect PR number if not provided
+# Auto-detect PR number if not provided. Pass $BRANCH explicitly so cross-repo
+# mode (where CWD's branch differs from target's branch) resolves correctly.
 if [ -z "$PR_NUMBER" ]; then
-    PR_NUMBER=$(gh pr view --json number --jq .number 2>/dev/null || true)
+    # shellcheck disable=SC2086
+    PR_NUMBER=$(gh $GH_REPO_ARG pr view "$BRANCH" --json number --jq .number 2>/dev/null || true)
     if [ -z "$PR_NUMBER" ]; then
         echo "ERROR: No PR found for branch '$BRANCH'"
         echo "Push your branch and open a PR first, or use --pr PR_NUMBER."
@@ -132,7 +174,8 @@ if [ -z "$PR_NUMBER" ]; then
 fi
 
 # Get PR head SHA for review checks
-LATEST_SHA=$(gh pr view "$PR_NUMBER" --json headRefOid --jq .headRefOid 2>/dev/null || true)
+# shellcheck disable=SC2086
+LATEST_SHA=$(gh $GH_REPO_ARG pr view "$PR_NUMBER" --json headRefOid --jq .headRefOid 2>/dev/null || true)
 if [ -z "$LATEST_SHA" ]; then
     echo "ERROR: Could not fetch PR #$PR_NUMBER head SHA"
     exit 1
@@ -145,13 +188,22 @@ ANY_FAILED=false
 # that touched non-markdown, non-planner files so Gates 2-3 check
 # the right SHA. Gate 1 (CI) still checks LATEST_SHA (HEAD).
 
-# Verify origin/main is available for the commit range query
-if ! git rev-parse --verify origin/main &>/dev/null; then
+# Verify origin/main is available for the commit range query. In cross-repo
+# mode, check it inside the target-repo working tree.
+# shellcheck disable=SC2086
+if ! git $GIT_DIR_ARG rev-parse --verify origin/main &>/dev/null; then
     echo "ERROR: origin/main not found. Run: git fetch origin main"
+    # Guard on TARGET_PATH (not TARGET_REPO) — a --repo override leaves
+    # TARGET_PATH empty, in which case showing "(target repo path: )"
+    # would be misleading.
+    if [ -n "$TARGET_PATH" ]; then
+        echo "       (target repo path: $TARGET_PATH)"
+    fi
     exit 1
 fi
 
-CODE_SHA=$(git log --diff-filter=ACDMR --format=%H "origin/main..HEAD" -- \
+# shellcheck disable=SC2086
+CODE_SHA=$(git $GIT_DIR_ARG log --diff-filter=ACDMR --format=%H "origin/main..HEAD" -- \
     ':!*.md' ':!.kit/context/' ':!.kit/tasks/' 2>/dev/null | head -1 || true)
 
 NO_CODE_CHANGES=false
@@ -164,7 +216,8 @@ fi
 # Check all workflow runs for the latest commit (not just the first),
 # so a passing run from one workflow can't mask a failure in another.
 
-CI_RUNS=$(gh run list --branch "$BRANCH" --limit 10 --json status,conclusion,workflowName,event,headSha \
+# shellcheck disable=SC2086
+CI_RUNS=$(gh $GH_REPO_ARG run list --branch "$BRANCH" --limit 10 --json status,conclusion,workflowName,event,headSha \
     --jq '[.[] | select(.event == "push" or .event == "pull_request")]' 2>/dev/null || true)
 
 if [ -z "$CI_RUNS" ] || [ "$CI_RUNS" = "[]" ]; then
@@ -299,7 +352,15 @@ fi
 
 # ─── Gate 5: Evaluator review persisted ─────────────────────────────
 
-EVAL_FILE=$(find .kit/context/reviews -name "${TASK_ID}-evaluator-review*.md" 2>/dev/null | head -1 || true)
+# Match the canonical evaluator-output naming patterns:
+#   <TASK>-evaluator-review*.md  (legacy)
+#   <TASK>-code-review*.md       (current)
+#   <TASK>-code-reviewer*.md     (alt — code-reviewer-fast variant)
+EVAL_FILE=$(find .kit/context/reviews \
+    \( -name "${TASK_ID}-evaluator-review*.md" \
+    -o -name "${TASK_ID}-code-review*.md" \
+    -o -name "${TASK_ID}-code-reviewer*.md" \) \
+    2>/dev/null | head -1 || true)
 
 if [ -n "$EVAL_FILE" ]; then
     echo "GATE:5:Evaluator:PASS:$EVAL_FILE"

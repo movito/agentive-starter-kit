@@ -1,10 +1,10 @@
 ---
 description: How to triage, reply to, and resolve automated review comments from BugBot and CodeRabbit
 user-invocable: false
-version: 1.0.0
+version: 1.1.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-04-19
 created-by: "@movito with planner2"
 ---
 
@@ -54,6 +54,10 @@ Reference knowledge for triaging automated review comments. Use `/triage-threads
 - **Fix** Medium severity suggestions if they're quick and improve the code
 - **Resolve without fixing** Trivial/Low severity cosmetic issues (naming style preferences, minor formatting)
 - **Resolve without fixing** concerns that are platform-irrelevant (e.g., Windows CRLF) or physically impossible
+- **Exception**: when a Trivial nit is consistent with a theme you're already
+  fixing in the same PR (e.g., the PR is a typography pass and the nit is one
+  more spacing tweak in the same area), it's cheaper to apply than to justify
+  declining. Treat it as Fix (easy) and batch with the other fixes.
 - When in doubt on Medium severity, fix it — it's cheaper than debating
 - **Triage ALL threads before fixing ANY. Then batch all fixes into one commit.**
 
@@ -63,6 +67,31 @@ Reference knowledge for triaging automated review comments. Use `/triage-threads
 2. Categorize each as Fix or Resolve-without-fixing
 3. Implement all fixes together
 4. Commit once, push once — one re-review instead of N re-reviews
+
+## Evaluator + CodeRabbit Convergence
+
+When an adversarial evaluator finding (e.g., `code-reviewer`, `code-reviewer-fast`)
+and a CodeRabbit (or BugBot) finding target the **same underlying issue**, treat
+the fix as **confirmed from two independent sources**. Rather than solving it
+twice:
+
+1. Implement the fix **once** — but make sure it addresses the **union** of both
+   findings' concerns. If one tool flagged a style issue and the other flagged a
+   deeper architectural or security concern in the same code, resolve the deeper
+   concern; the style fix is not a substitute.
+2. Reply to the CodeRabbit/BugBot thread citing the commit SHA
+3. Note the convergence in the evaluator review artifact
+   (`.kit/context/reviews/<TASK-ID>-*.md`) — "Addressed, also flagged by CodeRabbit"
+4. Resolve the bot thread as normal
+
+**"Same issue" test**: two findings converge if a single code change can
+legitimately resolve both root concerns. If the two findings describe different
+problems that happen to touch the same line, treat them as separate findings.
+
+Convergence is a **quality signal**: when two independent reviewers surface the
+same concern, prioritize it — skip the "is this worth fixing?" debate and go
+straight to the fix. This also helps the retro surface patterns (e.g., recurring
+evaluator/bot overlap may indicate a spec-template gap).
 
 ## Fix-Everything Policy
 

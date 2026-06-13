@@ -1,10 +1,10 @@
 ---
 description: Fetch and triage all review threads on the current PR
-argument-hint: "[optional PR number]"
-version: 1.0.0
+argument-hint: "[optional PR number] [--repo owner/name]"
+version: 1.1.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-04-20
 created-by: "@movito with planner2"
 ---
 
@@ -16,6 +16,26 @@ Triage all unresolved review threads on the current PR (or PR `$ARGUMENTS` if sp
 > permission prompts. Run each command as a **separate Bash call** and capture
 > values yourself (e.g., run `gh pr view --json number --jq .number`, note the
 > number, then use it in the next call).
+
+## Cross-repo mode (automatic)
+
+`gh-review-helper.sh` auto-detects cross-repo mode from the
+`## Target Repository` section of `CLAUDE.md`. When configured, all
+`gh api` calls target that repo. No `cd ../target-repo` needed.
+
+The `gh pr view` call in Step 1 below is run directly (not via the
+helper), so in cross-repo mode you must pass `--repo` to it explicitly:
+
+```bash
+gh --repo owner/name pr view --json number,url,headRefOid ...
+```
+
+Override either auto-detected repo by passing `--repo owner/name` to
+`gh-review-helper.sh` before the subcommand:
+
+```bash
+./scripts/core/gh-review-helper.sh --repo owner/name threads PR_NUMBER
+```
 
 ## Step 1: Gather thread data
 

@@ -1,10 +1,18 @@
 #!/bin/bash
 # Check GitHub Actions CI status for a branch
-# Usage: ./scripts/verify-ci.sh [branch-name] [--wait]
+# Usage: ./scripts/verify-ci.sh [branch-name] [--repo owner/name] [--wait]
 #
 # Options:
+#   --repo    Target GitHub repo (overrides CLAUDE.md ## Target Repository)
 #   --wait    Wait for in-progress workflows to complete (default: just report status)
 #   --timeout Timeout in seconds for --wait mode (default: 300)
+#
+# Cross-repo support (ID2-0014):
+#   When CLAUDE.md contains a "## Target Repository" section, or when
+#   --repo owner/name is passed, all gh calls target that repo and branch
+#   detection reads from the target-repo working tree (git -C $TARGET_PATH).
+#   The origin/gh default-repo cross-check is skipped in cross-repo mode
+#   because origins legitimately differ between planning and target repos.
 
 set -e
 
@@ -12,6 +20,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SELF="$SCRIPT_DIR/$(basename "${BASH_SOURCE[0]}")"
 cd "$PROJECT_ROOT"
+
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/target_repo.sh"
 
 # Progress event emission (fire-and-forget via EXIT trap)
 # The trap preserves the original exit code — do NOT call exit inside the function.
@@ -31,6 +42,7 @@ trap _emit_ci_progress EXIT
 BRANCH=""
 WAIT_MODE=false
 TIMEOUT=300
+REPO_OVERRIDE=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -43,6 +55,22 @@ while [[ $# -gt 0 ]]; do
             TIMEOUT="$2"
             shift 2
             ;;
+        --repo)
+            if [ -z "${2:-}" ] || [[ "$2" == -* ]]; then
+                echo "ERROR: --repo requires an owner/name value" >&2
+                exit 1
+            fi
+            REPO_OVERRIDE="$2"
+            shift 2
+            ;;
+        --repo=*)
+            REPO_OVERRIDE="${1#--repo=}"
+            if [ -z "$REPO_OVERRIDE" ]; then
+                echo "ERROR: --repo= requires an owner/name value" >&2
+                exit 1
+            fi
+            shift
+            ;;
         -*)
             echo "Unknown option: $1"
             exit 1
@@ -54,9 +82,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Default to current branch if not specified
+# Apply cross-repo detection (CLAUDE.md + --repo override)
+if [ -n "$REPO_OVERRIDE" ]; then
+    target_repo_init --repo "$REPO_OVERRIDE" || exit 1
+else
+    target_repo_init || exit 1
+fi
+
+# Default to current branch if not specified. In cross-repo mode, read
+# the branch from the target-repo working tree so the script behaves the
+# same whether run from planning or target CWD.
 if [ -z "$BRANCH" ]; then
-    BRANCH=$(git branch --show-current 2>/dev/null)
+    # Suppress failure so `set -e` (line 17) doesn't abort before the
+    # empty-string check below can print a graceful error. Relevant in
+    # cross-repo mode when TARGET_PATH points to a missing directory.
+    # shellcheck disable=SC2086
+    BRANCH=$(git $GIT_DIR_ARG branch --show-current 2>/dev/null || true)
 fi
 
 if [ -z "$BRANCH" ]; then
@@ -66,7 +107,7 @@ if [ -z "$BRANCH" ]; then
 fi
 
 # Derive task ID from branch for progress event
-_EMIT_TASK=$(echo "$BRANCH" | sed -n 's|^feature/\([A-Z][A-Z]*-[0-9][0-9]*\).*|\1|p') || true
+_EMIT_TASK=$(echo "$BRANCH" | sed -n 's|^feature/\([A-Z][A-Z0-9]*-[0-9][0-9]*\).*|\1|p') || true
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔍 CI Status Check: $BRANCH"
@@ -87,30 +128,38 @@ if ! gh auth status &> /dev/null; then
     exit 1
 fi
 
-# Check gh is pointing at the right repo
-EXPECTED_REPO=$(git remote get-url origin 2>/dev/null | sed 's/.*github.com[:/]//' | sed 's/.git$//')
-ACTUAL_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
+# Determine the repo we're querying. In cross-repo mode, trust the
+# configured TARGET_REPO and skip the origin/gh-default-repo consistency
+# check — the planning repo's origin legitimately differs from the
+# target repo and the comparison would always fail.
+if target_repo_is_set; then
+    ACTUAL_REPO="$TARGET_REPO"
+else
+    EXPECTED_REPO=$(git remote get-url origin 2>/dev/null | sed 's/.*github.com[:/]//' | sed 's/.git$//')
+    ACTUAL_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
 
-if [ -z "$ACTUAL_REPO" ]; then
-    echo "❌ Could not determine GitHub repository"
-    echo "Run: gh repo set-default"
-    exit 1
-fi
+    if [ -z "$ACTUAL_REPO" ]; then
+        echo "❌ Could not determine GitHub repository"
+        echo "Run: gh repo set-default"
+        exit 1
+    fi
 
-if [ "$EXPECTED_REPO" != "$ACTUAL_REPO" ]; then
-    echo "⚠️  GitHub CLI default repo mismatch!"
-    echo "   Expected: $EXPECTED_REPO"
-    echo "   Actual:   $ACTUAL_REPO"
-    echo
-    echo "Run: gh repo set-default"
-    exit 1
+    if [ "$EXPECTED_REPO" != "$ACTUAL_REPO" ]; then
+        echo "⚠️  GitHub CLI default repo mismatch!"
+        echo "   Expected: $EXPECTED_REPO"
+        echo "   Actual:   $ACTUAL_REPO"
+        echo
+        echo "Run: gh repo set-default"
+        exit 1
+    fi
 fi
 
 echo "Repository: $ACTUAL_REPO"
 echo
 
 # Get recent workflow runs (filter to push events only)
-RUNS_JSON=$(gh run list --branch "$BRANCH" --limit 10 --json status,conclusion,workflowName,createdAt,headSha,event,databaseId 2>&1)
+# shellcheck disable=SC2086
+RUNS_JSON=$(gh $GH_REPO_ARG run list --branch "$BRANCH" --limit 10 --json status,conclusion,workflowName,createdAt,headSha,event,databaseId 2>&1)
 
 if [ -z "$RUNS_JSON" ] || [ "$RUNS_JSON" = "[]" ]; then
     echo "⚠️  No CI runs found for branch '$BRANCH'"
@@ -192,12 +241,20 @@ if [ "$ANY_IN_PROGRESS" = true ]; then
         # Get the first in-progress run ID
         IN_PROGRESS_ID=$(echo "$LATEST_RUNS" | jq -r '[.[] | select(.status == "in_progress" or .status == "queued")][0].databaseId')
 
-        if gh run watch "$IN_PROGRESS_ID" --exit-status 2>/dev/null; then
+        # shellcheck disable=SC2086
+        if gh $GH_REPO_ARG run watch "$IN_PROGRESS_ID" --exit-status 2>/dev/null; then
             # Re-check status after waiting.
             # Note: exec replaces this process, so the EXIT trap fires before
             # re-exec with an empty _CI_EMIT_SUMMARY (no event emitted). The
             # re-exec'd process will set its own summary and emit on its exit.
-            exec "$SELF" "$BRANCH"
+            # Forward --repo so the re-invocation keeps targeting the same
+            # repo; CLAUDE.md re-detection on re-exec would also work, but
+            # passing --repo is explicit and override-safe.
+            if target_repo_is_set; then
+                exec "$SELF" "$BRANCH" --repo "$TARGET_REPO"
+            else
+                exec "$SELF" "$BRANCH"
+            fi
         else
             echo
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -1,13 +1,19 @@
 #!/bin/bash
 # Check bot review status for the current PR
-# Usage: ./scripts/check-bots.sh [PR_NUMBER] [--help]
+# Usage: ./scripts/check-bots.sh [PR_NUMBER] [--repo owner/name] [--help]
 #
 # Metadata:
-#   version: 1.0.0
+#   version: 1.1.0
 #   origin: dispatch-kit
 #   origin-version: 0.3.2
-#   last-updated: 2026-02-27
+#   last-updated: 2026-04-20
 #   created-by: "@movito with planner2"
+#
+# Cross-repo support (ID2-0014):
+#   When CLAUDE.md contains a "## Target Repository" section, or when
+#   --repo owner/name is passed, all gh calls use that repo instead of
+#   the current working-directory repo. Single-repo projects are
+#   unaffected.
 #
 # Reports whether BugBot (cursor[bot]) and CodeRabbit (coderabbitai[bot])
 # have posted reviews, and whether those reviews cover the HEAD commit.
@@ -38,21 +44,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT" || exit 1
 
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/lib/target_repo.sh"
+
 PR_NUMBER=""
+REPO_OVERRIDE=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --help|-h)
-            echo "Usage: ./scripts/check-bots.sh [PR_NUMBER]"
+            echo "Usage: ./scripts/check-bots.sh [PR_NUMBER] [--repo owner/name]"
             echo ""
             echo "Check bot review status for the current PR."
             echo ""
             echo "Arguments:"
-            echo "  PR_NUMBER    PR number to check (default: auto-detect from current branch)"
+            echo "  PR_NUMBER          PR number to check (default: auto-detect from current branch)"
             echo ""
             echo "Options:"
-            echo "  --help, -h   Show this help message"
+            echo "  --repo owner/name  Target GitHub repo (overrides CLAUDE.md ## Target Repository)"
+            echo "  --help, -h         Show this help message"
             echo ""
             echo "Expected bots:"
             echo "  CodeRabbit   coderabbitai[bot]   ~1-2 minutes"
@@ -68,6 +79,22 @@ while [[ $# -gt 0 ]]; do
             echo "  1  One or both bots missing, stale, or error"
             exit 0
             ;;
+        --repo)
+            if [ -z "${2:-}" ] || [[ "$2" == -* ]]; then
+                echo "ERROR: --repo requires an owner/name value" >&2
+                exit 1
+            fi
+            REPO_OVERRIDE="$2"
+            shift 2
+            ;;
+        --repo=*)
+            REPO_OVERRIDE="${1#--repo=}"
+            if [ -z "$REPO_OVERRIDE" ]; then
+                echo "ERROR: --repo= requires an owner/name value" >&2
+                exit 1
+            fi
+            shift
+            ;;
         -*)
             echo "Unknown option: $1"
             echo "Run: ./scripts/check-bots.sh --help"
@@ -79,6 +106,13 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Apply cross-repo detection (CLAUDE.md + --repo override)
+if [ -n "$REPO_OVERRIDE" ]; then
+    target_repo_init --repo "$REPO_OVERRIDE" || exit 1
+else
+    target_repo_init || exit 1
+fi
 
 # Check gh CLI is available
 if ! command -v gh &> /dev/null; then
@@ -94,32 +128,54 @@ if ! gh auth status &> /dev/null; then
     exit 1
 fi
 
-# Detect repo owner/name
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
-if [ -z "$REPO" ]; then
-    echo "ERROR: Could not determine GitHub repository"
-    echo "Run: gh repo set-default"
-    exit 1
+# Detect repo owner/name — prefer the configured target repo, fall back
+# to the current working-directory repo for single-repo projects.
+if target_repo_is_set; then
+    REPO="$TARGET_REPO"
+else
+    REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
+    if [ -z "$REPO" ]; then
+        echo "ERROR: Could not determine GitHub repository"
+        echo "Run: gh repo set-default"
+        exit 1
+    fi
 fi
 
 OWNER=$(echo "$REPO" | cut -d/ -f1)
 NAME=$(echo "$REPO" | cut -d/ -f2)
 
-# Derive task ID from branch for progress event
-_EMIT_TASK=$(git branch --show-current 2>/dev/null | sed -n 's|^feature/\([A-Z][A-Z]*-[0-9][0-9]*\).*|\1|p')
+# Derive current branch — in cross-repo mode, read from the target-repo
+# working tree so PR auto-detection uses the right branch name.
+# shellcheck disable=SC2086
+_CURRENT_BRANCH=$(git $GIT_DIR_ARG branch --show-current 2>/dev/null)
 
-# Auto-detect PR number if not provided
+# Derive task ID from branch for progress event
+_EMIT_TASK=$(printf '%s' "$_CURRENT_BRANCH" | sed -n 's|^feature/\([A-Z][A-Z0-9]*-[0-9][0-9]*\).*|\1|p')
+
+# Auto-detect PR number if not provided. Pass $_CURRENT_BRANCH explicitly so
+# cross-repo mode resolves the PR against the target-repo branch rather than
+# the planning-repo CWD branch.
 if [ -z "$PR_NUMBER" ]; then
-    PR_NUMBER=$(gh pr view --json number --jq .number 2>/dev/null || true)
+    if [ -z "$_CURRENT_BRANCH" ]; then
+        echo "ERROR: Could not determine current branch — pass PR number explicitly"
+        exit 1
+    fi
+    # shellcheck disable=SC2086
+    PR_NUMBER=$(gh $GH_REPO_ARG pr view "$_CURRENT_BRANCH" --json number --jq .number 2>/dev/null || true)
     if [ -z "$PR_NUMBER" ]; then
-        echo "ERROR: No PR found for current branch"
-        echo "Push your branch and open a PR first."
+        echo "ERROR: No PR found for branch '$_CURRENT_BRANCH'"
+        if target_repo_is_set; then
+            echo "Target repo: $TARGET_REPO — pass a PR number explicitly if auto-detect is unavailable."
+        else
+            echo "Push your branch and open a PR first."
+        fi
         exit 1
     fi
 fi
 
 # Get PR info (single call: metadata + headRefOid + reviews with commit SHAs)
-PR_JSON=$(gh pr view "$PR_NUMBER" --json number,url,title,reviewDecision,headRefOid,reviews 2>/dev/null || true)
+# shellcheck disable=SC2086
+PR_JSON=$(gh $GH_REPO_ARG pr view "$PR_NUMBER" --json number,url,title,reviewDecision,headRefOid,reviews 2>/dev/null || true)
 if [ -z "$PR_JSON" ]; then
     echo "ERROR: Could not fetch PR #$PR_NUMBER"
     exit 1
