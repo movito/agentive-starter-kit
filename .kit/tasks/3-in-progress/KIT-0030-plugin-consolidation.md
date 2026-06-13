@@ -1,6 +1,6 @@
 # KIT-0030: Consolidate Shared Agents/Skills/Commands into the agentive-workflow Plugin (Sync Phase 2)
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 sessions
