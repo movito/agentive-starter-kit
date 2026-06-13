@@ -7,8 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Cross-repo config preflight check** (KIT-0030, KIT-ADR-0024 §2) —
+  `scripts/core/check_cross_repo_config.py` fails CI when a repo
+  *declares* the cross-repo split (a concrete `../<name>-code` sibling
+  path or planning-split prose in README/CLAUDE.md) but CLAUDE.md lacks a
+  parseable `## Target Repository` section; warns when the section exists
+  but the target is not checked out locally (planning repo stays usable
+  without it). Wired as step 6 of `scripts/core/ci-check.sh`. The portable
+  cross-repo *tooling* is deliberately not treated as a declaration, so
+  single-repo projects (including this kit) pass. 100% test coverage.
+- **`scripts/core/lib/target_repo.sh` + `prepare-review-input.sh`**
+  upstreamed from suwinex so the kit carries the helper scripts its
+  cross-repo commands depend on (manifest `scripts_core`: 14 → 17;
+  `core_version` 2.0.0 → 2.1.0).
+
 ### Changed
 
+- **Kit brought to the canonical cross-repo generation** (KIT-0030) —
+  the kit was a stale snapshot while the newest generation stranded in
+  suwinex (KIT-ADR-0024's "improvements strand where invented"). Commands
+  `check-bots`/`check-ci`/`preflight`/`retro`/`triage-threads` upgraded to
+  1.1.0 and `wrap-up` to 1.3.0 (cross-repo Step 0 auto-detection with
+  graceful `SINGLE_REPO_MODE` fallback + planning-repo exception); the
+  `check-bots`/`verify-ci`/`preflight-check`/`gh-review-helper`/
+  `wait-for-bots`/`ci-check` scripts replaced with their cross-repo-aware
+  versions. Skills upgraded: `bot-triage` 1.1.0, `pre-implementation`
+  1.2.0, `code-review-evaluator` 1.2.0. Project-specific `ixda-services`/
+  `ID2-` examples genericized; dangling `.kit/context` links repointed to
+  `docs/CROSS-REPO-PATTERN.md`.
 - **`feature-developer-v7` extension points filled for the kit repo
   itself** (2.1.1) — `## Project Context` and `### Stack Notes` now
   carry the kit's own conventions (KIT-NNNN, `.kit/` layout, pre-commit
@@ -16,6 +44,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   launched in this repo. The filled sections double as the worked
   example; the unfilled template survives in `feature-developer-v6.md`
   for KIT-0030 distribution.
+
+### Notes
+
+- **Two distribution channels coexist** (KIT-0030 / KIT-ADR-0024 §3 vs.
+  KIT-0026): the `agentive-workflow` plugin is the *outbound* channel that
+  ships skills/commands/agents to planning/consumer projects; the
+  `.core-manifest.json` sync (KIT-0026) remains the *kit-to-kit* channel
+  for scripts plus kit-internal copies of the same artifacts. The kit is
+  the single canonical authoring source feeding both. Consolidating to one
+  channel is possible later but is explicitly out of scope here.
 
 ## [0.6.0] - 2026-06-12
 

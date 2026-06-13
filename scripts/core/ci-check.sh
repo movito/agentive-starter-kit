@@ -54,7 +54,7 @@ fi
 
 # 1. Black formatting check
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "1/5 🎨 Checking formatting with Black..."
+echo "1/6 🎨 Checking formatting with Black..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if black --check --diff . 2>/dev/null; then
     echo "✅ Black: All files formatted correctly"
@@ -67,7 +67,7 @@ echo
 
 # 2. isort import sorting check
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "2/5 📋 Checking import sorting with isort..."
+echo "2/6 📋 Checking import sorting with isort..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if isort --check-only --diff . 2>/dev/null; then
     echo "✅ isort: Imports sorted correctly"
@@ -80,7 +80,7 @@ echo
 
 # 3. flake8 linting
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "3/5 🔎 Linting with flake8..."
+echo "3/6 🔎 Linting with flake8..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if python3 -m flake8 scripts/ tests/ --max-line-length=88 --extend-ignore=E203,W503 --select=E9,F63,F7,F82 2>/dev/null; then
     echo "✅ flake8: No critical linting errors"
@@ -92,7 +92,7 @@ echo
 
 # 4. Pattern lint (project-specific DK rules)
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "4/5 🔍 Running pattern lint (DK rules)..."
+echo "4/6 🔍 Running pattern lint (DK rules)..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 PY_FILES=$(find scripts/ tests/ -name '*.py' 2>/dev/null)
 if [ -n "$PY_FILES" ]; then
@@ -110,12 +110,26 @@ echo
 
 # 5. Full test suite with coverage
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "5/5 🧪 Running full test suite with coverage..."
+echo "5/6 🧪 Running full test suite with coverage..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if pytest tests/ -v --cov=scripts --cov-report=term-missing; then
     echo "✅ Tests: All tests pass (fail_under gate in pyproject.toml)"
 else
     echo "❌ Tests: Test failures or coverage below pyproject gate"
+    FAILED=1
+fi
+echo
+
+# 6. Cross-repo config validation (KIT-0030 / KIT-ADR-0024 §2)
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "6/6 🧭 Validating cross-repo config..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+# Exits 1 on FAIL (declared cross-repo but no parseable ## Target Repository
+# section); 0 on PASS or WARN (warning printed for a missing local target).
+if python3 "$SCRIPT_DIR/check_cross_repo_config.py" "$PROJECT_ROOT"; then
+    :
+else
+    echo "   Fix CLAUDE.md's ## Target Repository section."
     FAILED=1
 fi
 echo
