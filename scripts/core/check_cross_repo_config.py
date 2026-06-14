@@ -184,7 +184,7 @@ def check(repo_root: Path) -> Result:
                 "auto-routing. Add:\n\n"
                 "## Target Repository\n\n"
                 "- **Path**: `../<project>-code`\n"
-                "- **GitHub**: <owner>/<project>-code",
+                "- **GitHub**: `<owner>/<project>-code`",
             )
         return Result(PASS, "Single-repo: no cross-repo declaration, no section.")
 

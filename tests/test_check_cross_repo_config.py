@@ -145,6 +145,16 @@ class TestCheck:
         assert result.status == FAIL
         assert "Target Repository" in result.message
 
+    def test_fail_hint_snippet_is_itself_valid(self, tmp_path):
+        # The suggested CLAUDE.md snippet in the FAIL message must parse
+        # cleanly — otherwise copying the hint still yields MALFORMED.
+        repo = _write_repo(tmp_path, readme=DECLARING_README)
+        message = check(repo).message
+        snippet = message[message.index("## Target Repository") :]
+        parsed = parse_target_section(snippet)
+        assert parsed not in (None, MALFORMED)
+        assert "/" in parsed["github"]
+
     def test_declared_with_malformed_section_fails(self, tmp_path):
         claude = "## Target Repository\n\n- **Path**: `../my-app-code`\n"
         repo = _write_repo(tmp_path, readme=DECLARING_README, claude=claude)
