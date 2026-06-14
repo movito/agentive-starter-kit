@@ -111,6 +111,24 @@ class TestParseTargetSection:
         )
         assert parse_target_section(text) == MALFORMED
 
+    def test_star_bullet_is_malformed(self):
+        # Runtime only parses hyphen bullets, not `*` bullets.
+        text = (
+            "## Target Repository\n\n"
+            "* **Path**: `../x-code`\n"
+            "* **GitHub**: `o/x-code`\n"
+        )
+        assert parse_target_section(text) == MALFORMED
+
+    def test_indented_bullet_is_malformed(self):
+        # Runtime requires the bullet at column 0 (no leading whitespace).
+        text = (
+            "## Target Repository\n\n"
+            "  - **Path**: `../x-code`\n"
+            "  - **GitHub**: `o/x-code`\n"
+        )
+        assert parse_target_section(text) == MALFORMED
+
 
 # ── check (integration) ──────────────────────────────────────────────
 

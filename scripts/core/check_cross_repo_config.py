@@ -133,13 +133,17 @@ def parse_target_section(claude_md: str):
     # MUST be backticked, and GitHub MUST be an `owner/name` slug. Accepting
     # looser input here would let CI PASS configs that runtime cross-repo
     # detection then rejects.
+    # Runtime parses only a top-level hyphen bullet (`^- **Path**: ...`) — no
+    # leading whitespace and no `*` bullets (see the sed patterns in
+    # lib/target_repo.sh). Match that exactly so CI does not accept a bullet
+    # style that runtime then fails to parse.
     path_match = re.search(
-        r"^\s*[-*]\s*\*\*Path\*\*:\s*`([^`\n]+)`\s*$",
+        r"^- \*\*Path\*\*:\s*`([^`\n]+)`\s*$",
         section_text,
         re.MULTILINE,
     )
     github_match = re.search(
-        r"^\s*[-*]\s*\*\*GitHub\*\*:\s*`([^`\n]+)`\s*$",
+        r"^- \*\*GitHub\*\*:\s*`([^`\n]+)`\s*$",
         section_text,
         re.MULTILINE,
     )
