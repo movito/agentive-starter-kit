@@ -113,6 +113,17 @@ class TestSetupLogging:
         assert len(logger.handlers) >= 1
         assert any(isinstance(h, logging.StreamHandler) for h in logger.handlers)
 
+    def test_configures_despite_foreign_handler(self):
+        """A foreign handler (e.g. pytest's log capture) must not make
+        setup_logging skip level/handler configuration. The idempotency
+        guard keys on our own tagged handlers, not any handler."""
+        logger = logging.getLogger("test.logger")
+        logger.addHandler(logging.NullHandler())  # simulate pytest capture
+        with patch.dict(os.environ, {"LOG_LEVEL": "WARNING"}, clear=True):
+            configured = setup_logging("test.logger")
+        assert configured.level == logging.WARNING
+        assert any(getattr(h, "_agentive_managed", False) for h in configured.handlers)
+
     def test_no_duplicate_handlers_on_multiple_calls(self):
         """Multiple calls to setup_logging don't add duplicate handlers."""
         logger1 = setup_logging("test.logger")

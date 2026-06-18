@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`setup_logging` idempotency guard** — now keys on its own tagged
+  handlers rather than "any handler present." A foreign handler (e.g. the
+  log-capture handler pytest 9.1.x attaches to the logger under test) no
+  longer makes `setup_logging` return early and skip level/handler
+  configuration, which had made `tests/test_logging.py` fail under the
+  CI pytest version while passing on older local pytest.
 - **CI lint step** — `flake8` added to the `[dev]` extras in
   `pyproject.toml`. The `test.yml` Lint job invokes bare `flake8` after
   `pip install -e ".[dev]"`, but flake8 was missing from the extra, so
