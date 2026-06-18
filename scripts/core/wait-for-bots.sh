@@ -92,7 +92,7 @@ ELAPSED=0
 POLL_COUNT=0
 
 # Derive task ID from branch for progress event
-_EMIT_TASK=$(git branch --show-current 2>/dev/null | sed -n 's|^feature/\([A-Z][A-Z]*-[0-9][0-9]*\).*|\1|p')
+_EMIT_TASK=$(git branch --show-current 2>/dev/null | sed -n 's|^feature/\([A-Z][A-Z0-9]*-[0-9][0-9]*\).*|\1|p')
 
 # Derive PR number for summary (use PR_ARG or auto-detect)
 _PR_LABEL=""

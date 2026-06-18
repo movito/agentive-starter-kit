@@ -1,10 +1,10 @@
 ---
 description: How to run the adversarial code-review evaluator after bot rounds and before human review
 user-invocable: false
-version: 1.0.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-04-23
 created-by: "@movito with planner2"
 ---
 
@@ -47,18 +47,70 @@ echo "# Evaluator skipped: <N lines logic, no new functions, no external integra
 
 **When in doubt, run it.** The fast variant costs ~$0.004 and takes 30 seconds.
 
+## Cross-Repo Mode
+
+In the cross-repo pattern (planning repo separate from target repo) the
+built-in `adversarial review` command **does not work** — it enforces a
+"you have changed files" guardrail on CWD, and the planning repo has no
+code changes (they live in the target repo). Use **file-based evaluators**
+instead. They accept an input file and skip the guardrail.
+
+To produce the input, run the helper from the planning repo:
+
+```bash
+./scripts/core/prepare-review-input.sh <TASK-ID>
+```
+
+It auto-detects the target repo from `CLAUDE.md` (`## Target Repository`
+section), reads `git diff main...HEAD` over there, and writes
+`.adversarial/inputs/<TASK-ID>-code-review-input.md` with the diff plus
+the complete post-change contents of every changed file.
+
+For single-repo projects (no target section in `CLAUDE.md`), the same
+script reads from the current working-directory repo — no separate flag
+needed.
+
+See `docs/CROSS-REPO-PATTERN.md` for the full
+cross-repo evaluator recipe.
+
 ## Step 1: Prepare Input
 
-Create `.adversarial/inputs/<TASK-ID>-code-review-input.md` using the template at `.adversarial/templates/code-review-input-template.md`.
+### Cross-repo / automated path (preferred)
 
-Use the PR's original task ID. If the input file already exists from a previous run, append `-r2`:
+```bash
+./scripts/core/prepare-review-input.sh <TASK-ID>
+# Optional flags: --base <branch> (default main), --format diff|full (default full)
+```
+
+This is the canonical path. It handles the diff extraction, the header
+block, and the full-file appendix in one step, and it works in both
+cross-repo and single-repo modes.
+
+### Manual path (special cases only)
+
+If the helper can't infer the right diff (e.g. reviewing a stacked PR or
+an arbitrary commit range), create
+`.adversarial/inputs/<TASK-ID>-code-review-input.md` by hand using the
+template at `.adversarial/templates/code-review-input-template.md`.
+
+Use the PR's original task ID. The helper always writes the single
+canonical name `<TASK-ID>-code-review-input.md` and overwrites it on
+re-run. If you need to preserve an earlier round's input for
+comparison, rename it manually before re-running:
 
 - First run: `<TASK-ID>-code-review-input.md`
-- Follow-up: `<TASK-ID>-code-review-input-r2.md`
+- Preserve before re-run: `mv <TASK-ID>-code-review-input.md <TASK-ID>-code-review-input-r1.md`
+
+The evaluators only consume the input at invocation time, so this
+manual rename is only necessary if you want the earlier input file
+retained on disk.
 
 **CRITICAL: Include FULL file content, not diffs or excerpts.** The evaluator cannot
 reason about imports, error handling context, or module-level state from partial code.
 Diff-only inputs produce false positives (high false positive rate observed empirically).
+ID2-0002 retro documented a concrete example: Claude Sonnet flagged
+`homeSponsorsQuery` as a non-existent export (HIGH severity) because the
+diff didn't include the line where it was defined.
 
 Include:
 - Full source of all new/changed files (complete files, not diffs)
@@ -69,33 +121,56 @@ Include:
 
 ### Available evaluators
 
-| Command | Model | Cost | API Key Env Var |
-|---------|-------|------|-----------------|
-| `adversarial code-reviewer` | o1 (OpenAI) | ~$0.33/run | `OPENAI_API_KEY` |
-| `adversarial code-reviewer-fast` | Gemini Flash | ~$0.004/run | `GEMINI_API_KEY` |
+| Command | Model | Focus | Cost | API Key Env Var |
+|---------|-------|-------|------|-----------------|
+| `adversarial code-reviewer-fast` | Gemini Flash | Quick correctness gate | ~$0.004/run | `GEMINI_API_KEY` |
+| `adversarial code-reviewer` | OpenAI o3 | Deep adversarial, edge cases | ~$0.33/run | `OPENAI_API_KEY` |
+| `adversarial claude-code` | Claude Sonnet | Security, data handling | ~$0.05/run | `ANTHROPIC_API_KEY` |
+
+**Cross-repo evaluator trio (recommended)**: run `code-reviewer-fast` on
+every PR as a fast gate, add `code-reviewer` for non-trivial changes, and
+add `claude-code` for security-sensitive code. Each model catches
+different classes of issues with minimal overlap (validated empirically
+across projects: distinct models surface largely non-overlapping findings).
 
 **Note**: `spec-compliance-fast` is NOT available — use manual spec checks or `/check-spec` (Gemini Flash via API) instead.
 
-If the required API key is missing, fall back to the other evaluator. If neither key is set, document the failure and proceed to human review.
+If the required API key is missing, fall back to another evaluator. If none of the keys are set, document the failure and proceed to human review.
 
 ```bash
-# Deep analysis (recommended for substantial PRs)
+# Fast gate (every PR)
+adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
+
+# Deep adversarial (non-trivial PRs)
 adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md
 
-# Fast variant (for small changes or iteration)
-adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
+# Security focus (security-sensitive code)
+adversarial claude-code .adversarial/inputs/<TASK-ID>-code-review-input.md
 ```
+
+### Large-input prompt workaround
+
+The `adversarial` CLI prints `Continue anyway? [y/N]` for input files
+larger than ~700 lines and waits for stdin. In a non-TTY context (sub-agent,
+CI, automation), the prompt hangs indefinitely. Pipe `yes` in to bypass:
+
+```bash
+yes y | adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
+```
+
+The proper fix is a `--yes` (or `--no-confirm`) flag on the `adversarial`
+CLI itself — file an upstream issue if one isn't already open. Until then,
+the `yes y |` pipe is the unblocking workaround. ID2-0028 hit this when
+the file-based evaluator input ran past 700 lines.
 
 ## Step 3: Read and Address Findings
 
-Output lands in `.adversarial/logs/`:
+Output lands in `.adversarial/logs/`, one file per evaluator:
 
 ```bash
-# First run:
-cat .adversarial/logs/<TASK-ID>-code-review-input--code-reviewer.md.md
-
-# Follow-up:
-cat .adversarial/logs/<TASK-ID>-code-review-input-r2--code-reviewer.md.md
+cat .adversarial/logs/<TASK-ID>-code-review-input--code-reviewer-fast.md
+cat .adversarial/logs/<TASK-ID>-code-review-input--code-reviewer.md
+cat .adversarial/logs/<TASK-ID>-code-review-input--claude-code.md
 ```
 
 | Verdict | Action |
@@ -106,16 +181,28 @@ cat .adversarial/logs/<TASK-ID>-code-review-input-r2--code-reviewer.md.md
 
 ## Step 4: Persist Output
 
-Copy to `.kit/context/reviews/` so it's tracked in git:
+Concatenate all evaluator outputs into a single review artifact tracked
+in git. Use the aggregation pattern (fail-fast when no logs match) so
+an empty review file can't silently mask evaluator failures:
 
 ```bash
-# First run:
-cp .adversarial/logs/<TASK-ID>-code-review-input--code-reviewer.md.md \
-   .kit/context/reviews/<TASK-ID>-evaluator-review.md
-
-# Follow-up:
-cp .adversarial/logs/<TASK-ID>-code-review-input-r2--code-reviewer.md.md \
-   .kit/context/reviews/<TASK-ID>-evaluator-review-r2.md
+shopt -s nullglob
+logs=(.adversarial/logs/<TASK-ID>-code-review-input--*.md)
+shopt -u nullglob
+if [ "${#logs[@]}" -eq 0 ]; then
+    echo "ERROR: no evaluator logs found for <TASK-ID>" >&2
+    exit 1
+fi
+{
+    for log in "${logs[@]}"; do
+        echo "## Source: $(basename "$log")"
+        echo
+        cat "$log"
+        echo
+    done
+} > .kit/context/reviews/<TASK-ID>-evaluator-review.md
 ```
 
-Include this file in your next commit.
+Include this file in your next commit. The same recipe appears in
+`docs/CROSS-REPO-PATTERN.md` — keep the two in
+sync when updating.

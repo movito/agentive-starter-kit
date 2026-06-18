@@ -59,8 +59,11 @@ def setup_logging(name: str = "agentive") -> logging.Logger:
     """
     logger = logging.getLogger(name)
 
-    # Avoid duplicate handlers if setup_logging is called multiple times
-    if logger.handlers:
+    # Avoid duplicate handlers if setup_logging is called multiple times.
+    # Detect only handlers WE installed (tagged below) — not foreign handlers
+    # such as the capture handler pytest attaches to the logger under test,
+    # which would otherwise make this return early and skip level/handler setup.
+    if any(getattr(h, "_agentive_managed", False) for h in logger.handlers):
         return logger
 
     # Get log level from environment
@@ -76,6 +79,7 @@ def setup_logging(name: str = "agentive") -> logging.Logger:
         datefmt="%H:%M:%S",
     )
     console_handler.setFormatter(console_formatter)
+    console_handler._agentive_managed = True
     logger.addHandler(console_handler)
 
     # File handler - optional, enabled via LOG_FILE env var
@@ -99,6 +103,7 @@ def setup_logging(name: str = "agentive") -> logging.Logger:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
         file_handler.setFormatter(file_formatter)
+        file_handler._agentive_managed = True
         logger.addHandler(file_handler)
 
     # Prevent propagation to root logger (avoid duplicate logs)

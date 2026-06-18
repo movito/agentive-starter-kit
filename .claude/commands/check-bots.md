@@ -1,16 +1,31 @@
 ---
 description: Check if BugBot and CodeRabbit have posted reviews on the current PR
-argument-hint: "[optional PR number]"
-version: 1.0.0
+argument-hint: "[optional PR number] [--repo owner/name]"
+version: 1.1.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-04-20
 created-by: "@movito with planner2"
 ---
 
 # Check Bot Review Status
 
 Check bot review status for the current PR (or PR `$ARGUMENTS` if specified).
+
+## Step 0: Cross-repo mode (automatic)
+
+`check-bots.sh` auto-detects cross-repo mode by reading the
+`## Target Repository` section of `CLAUDE.md` in the project root.
+When configured, all `gh` calls target that repo automatically — no
+`cd ../target-repo` workaround needed. Single-repo projects are
+unaffected.
+
+If the PR is on a repo other than the configured target (e.g. when
+auditing a branch in a different repo), pass `--repo owner/name`:
+
+```bash
+./scripts/core/check-bots.sh --repo owner/name PR_NUMBER
+```
 
 ## Step 1: Run the check-bots script
 

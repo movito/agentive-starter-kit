@@ -1,9 +1,9 @@
 ---
 description: Verify GitHub Actions CI/CD status for a branch
-version: 1.0.0
+version: 1.1.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-04-20
 created-by: "@movito with planner2"
 ---
 
@@ -11,13 +11,29 @@ created-by: "@movito with planner2"
 
 Verify that GitHub Actions workflows have passed for a specific branch.
 
+## Cross-repo mode (automatic)
+
+`verify-ci.sh` auto-detects cross-repo mode from the
+`## Target Repository` section of `CLAUDE.md`. When configured:
+
+- `gh` CI queries target the configured repo instead of the
+  planning-repo origin.
+- The origin/gh default-repo consistency check is skipped (planning
+  and target repos legitimately have different origins).
+- Branch auto-detection reads from the target-repo working tree, so
+  `/check-ci` without a branch argument finds the feature branch in
+  `../target-repo`.
+
+Override with `--repo owner/name` if needed.
+
 ## Usage
 
 ```text
-/check-ci [branch-name]
+/check-ci [branch-name] [--repo owner/name]
 ```
 
-If no branch is specified, checks the current branch.
+If no branch is specified, checks the current branch (in cross-repo
+mode, the target-repo's current branch).
 
 ## Task
 

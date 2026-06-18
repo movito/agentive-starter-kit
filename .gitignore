@@ -16,6 +16,9 @@ eggs/
 .eggs/
 lib/
 lib64/
+# Track the cross-repo helper library (not a Python venv lib/)
+!scripts/core/lib/
+!scripts/core/lib/**
 parts/
 sdist/
 var/

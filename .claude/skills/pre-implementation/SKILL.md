@@ -1,10 +1,10 @@
 ---
 description: Pre-implementation checks to run before writing any new code — prevents pattern reuse failures, API misuse, and spec drift
 user-invocable: false
-version: 1.0.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-04-27
 created-by: "@movito with planner2"
 ---
 
@@ -132,7 +132,63 @@ For every numeric parameter from YAML config, verify the spec defines:
 
 If the spec omits the upper bound, add a reasonable clamp (e.g., `MAX_TIMEOUT = 3600`).
 
-## 10. Mock patch audit (module-to-package splits only)
+## 10. pytest exit code 5 (zero-test repos)
+
+**When lowering a coverage gate (e.g., `fail_under=0`) in a repo with no tests
+yet**, remember that pytest returns **exit code 5** when it collects zero items
+— independently of any coverage threshold. CI will fail even with
+`fail_under=0` if pytest collects nothing.
+
+Before lowering the gate, verify:
+
+- At least one `test_*.py` file exists that pytest can collect
+- Or add `--exitfirst` handling / a placeholder test
+- Or use `pytest ... || [ $? -eq 5 ]` in the CI step (only if you explicitly
+  want to tolerate "no tests yet")
+
+Source: ID2-0016 retro — lowering `fail_under` without a collectable test
+caused a second fix commit.
+
+## 11. Custom `loadQuery` shape check (Sanity + SvelteKit)
+
+**For any `+page.server.js` change in a Sanity-backed SvelteKit project**,
+read the project's `loadQuery` wrapper BEFORE writing merge logic in the
+load function.
+
+Sanity's built-in `loadQuery` returns `{ data, sourceMap, perspective }`,
+but projects commonly wrap it to return just `data` or a custom envelope
+(e.g., `{ initial, query, params }` for live preview). Writing merge logic
+against the wrong shape produces a silent null-access bug that only surfaces
+at render time.
+
+Check:
+
+- The return shape of the project's `loadQuery` (grep for its definition)
+- Whether consuming components expect the wrapped or unwrapped shape
+- Whether preview mode uses a different shape than published mode
+
+Source: ID2-0002 retro — shape mismatch caused a load-function refactor
+to ship broken before catch.
+
+## 12. Audit file for old pattern (whole-file fixes)
+
+**When changing a pattern in a file** (e.g., `python` → `python3`, an
+import path rename, a deprecated API call), grep for **all remaining
+instances of the old pattern in the same file** before committing.
+
+```text
+Pattern:  Replacing `python script.py` with `python3 script.py` in setup.sh
+Action:   grep -n "python " setup.sh   # find every other instance
+Result:   Fix them all in one pass — same commit
+```
+
+Fixing the whole file in one pass prevents a CodeRabbit/BugBot finding
+that triggers a second round when the bot spots a sibling instance you
+missed. One scan + one batch is cheaper than two review rounds.
+
+Source: ID2-0018 retro — partial pattern fix triggered an extra bot round.
+
+## 13. Mock patch audit (module-to-package splits only)
 
 **When refactoring a single module into a package** (`module.py` -> `module/`),
 audit all `mock.patch` targets in tests BEFORE extracting:
@@ -158,11 +214,98 @@ modifies `__init__.__dict__`, but the function runs in `submodule.__dict__` wher
 the original binding is still cached. Late imports resolve through the package
 namespace at call time.
 
-## For refactoring tasks: skip steps 1-9
+## 14. Test shell recipes against real output before documenting
 
-Steps 1-9 are optimized for **feature development** (new code, new logic). For
-**pure refactoring** (module splits, renames, reorganization), only step 10
-applies. Also skip:
+**When documenting a shell recipe** (in a SKILL, workflow doc, or
+runbook), run it against real output once before writing the doc.
+One execution catches typos and quoting bugs that no amount of
+re-reading will surface — `.md.md` vs `.md`, missing/stray quotes,
+flag spelling, copy-paste glitches in the prompt.
+
+```text
+Pattern:  About to write `find foo -name "*.md" -exec mv {} {}.md \;`
+Action:   Run it in a scratch dir with one file first
+Result:   Catches the `.md.md` double-extension before the doc lands
+```
+
+This is cheaper than every reader hitting the same typo.
+
+Source: ID2-0015 retro — `.md.md` vs `.md` slip in a documented recipe;
+one trial run would have caught it.
+
+## 15. Self-contained snippets (bash blocks in skill docs)
+
+**When writing a bash block in a skill file**, never assume shell variables
+from earlier markdown sections are live. Either re-derive state from
+authoritative sources (CLAUDE.md, `gh` CLI), or explicitly instruct the
+agent to `export NAME=value` before the block. A literal-follower must
+be able to copy-paste any single block and have it run.
+
+Markdown bullet lists like:
+
+```markdown
+- **target_path**: the value after `- **Path**:`
+- **target_github**: the value after `- **GitHub**:`
+```
+
+read like variable assignments but **do not** export anything to the
+shell. A subsequent block that uses `$target_github` will see an empty
+string. The fix is one of:
+
+1. Add an explicit `export` block immediately before the consumer:
+
+   ```bash
+   export target_github=$(grep -E '^\- \*\*GitHub\*\*:' CLAUDE.md \
+       | sed 's/.*: `\([^`]*\)`.*/\1/')
+   ```
+
+2. Or re-derive inside the consumer block itself:
+
+   ```bash
+   gh --repo "$(grep -E '^\- \*\*GitHub\*\*:' CLAUDE.md \
+       | sed 's/.*: `\([^`]*\)`.*/\1/')" pr view ...
+   ```
+
+**Source**: ID2-0026 fix-of-fix shipped a silent failure because
+`$target_github` was a markdown value, not an exported shell variable.
+The bash block ran with an empty repo flag, succeeded against the
+default repo, and looked correct.
+
+## 16. Inline-test extraction logic against real input
+
+**When writing regex / sed / jq / awk that parses a real config file**
+(CLAUDE.md, YAML, JSON, handoff files), run the extractor against the
+actual file in the repo before committing. Document the test in the
+commit message.
+
+```text
+Pattern:  About to ship `grep -E '[A-Za-z0-9_.-]+/...' CLAUDE.md` to extract the GitHub slug
+Action:   Run it against CLAUDE.md once and inspect the first match
+Result:   Catches that `.` is in the character class and `../ixda-services` (Path) matches before `IxDA-Oslo/ixda-services` (GitHub)
+```
+
+Common gotchas this catches:
+- Character classes that include `.` or `/` matching path-like values
+  before slug-like values
+- Greedy quantifiers grabbing more than the line you intended
+- `sed -i` portability differences (BSD vs GNU)
+- jq paths assuming a key exists on every element of an array
+
+**Source**: ID2-0026 — the `gh-review-helper.sh` repo-detection regex
+matched `../ixda-services` before `IxDA-Oslo/ixda-services` because the
+character class `[A-Za-z0-9_.-]+` accepted `..`. One inline test
+against `CLAUDE.md` would have surfaced it before commit.
+
+This rule and the previous ("Self-contained snippets") apply
+equivalently to skill files in `.kit/skills/` and workflow docs in
+`.kit/context/workflows/`.
+
+## For refactoring tasks: skip steps 1-11
+
+Steps 1-11 are optimized for **feature development** (new code, new logic). For
+**pure refactoring** (module splits, renames, reorganization), steps 12 (audit
+file for old pattern — directly relevant to renames and pattern replacements)
+and 13 (mock patch audit) apply. Also skip:
 
 - Self-review boundary audit (no new input boundaries)
 - Keep: code-review evaluator (catches latent bugs in pre-existing code),
