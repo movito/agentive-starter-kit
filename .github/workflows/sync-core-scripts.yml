@@ -36,12 +36,12 @@ jobs:
             is_kit: true
     steps:
       - name: Checkout source (agentive-starter-kit)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: source
 
       - name: Checkout target (${{ matrix.repo }})
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ matrix.repo }}
           token: ${{ secrets.CROSS_REPO_TOKEN }}
