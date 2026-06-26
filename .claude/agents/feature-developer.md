@@ -100,6 +100,22 @@ commit, push, and PR all happen here, and the planning repo's own
 tooling (lint, pytest, pre-commit) applies. Without that directive,
 default to the standard split-mode flow.
 
+### Shell macros — `GIT_TARGET` / `GH_TARGET`
+
+For the rest of this document, the snippets use two macros to keep
+single-repo and split-repo flows readable in one place:
+
+- `GIT_TARGET` means: use `git -C <target_path>` in split mode, or
+  plain `git` in single-repo mode (or split mode with the planning-repo
+  exception).
+- `GH_TARGET` means: use `gh --repo <target_github>` in split mode, or
+  plain `gh` in single-repo mode (or the planning-repo exception).
+
+Caveat — `gh api` does **not** accept `--repo`. The `GH_TARGET` macro is
+for porcelain commands (`gh pr view`, `gh pr checks`, `gh run list`,
+`gh pr create`). For `gh api` GraphQL/REST calls, inline the owner/name
+into the path: `gh api repos/<owner>/<name>/...`.
+
 ## Response Format
 
 Begin every response with:
@@ -126,20 +142,23 @@ Begin every response with:
 ## Phase 1: Start Task
 
 ```bash
-# 1. Read task spec (kit default path; Project Context may override)
+# 1. Read task spec (always in the planning repo — kit default path;
+#    Project Context may override)
 cat .kit/tasks/*/<TASK-ID>-*.md
 
-# 2. Read handoff file if it exists
+# 2. Read handoff file if it exists (always planning repo)
 cat .kit/context/<TASK-ID>-HANDOFF-*.md
 
 # 3. Create feature branch — in the TARGET repo when in split mode
-git checkout -b feature/<TASK-ID>-short-description
+GIT_TARGET checkout -b feature/<TASK-ID>-short-description
 
-# 4. Update task status (always in the planning repo)
+# 4. Update task status (always in the planning repo, never GIT_TARGET)
 ./scripts/core/project start <TASK-ID>
 ```
 
-After every `git checkout`, run `git branch --show-current` to confirm.
+After every `GIT_TARGET checkout`, run `GIT_TARGET branch --show-current`
+to confirm — in split mode, a bare `git branch` from the planning repo
+would report the planning branch, not the target's.
 
 ## Phase 2: Pre-Implementation (GATE)
 
@@ -209,22 +228,26 @@ Before shipping, audit all changed files:
 ## Phase 5: Ship
 
 ```bash
-# Stage specific files (never git add -A)
-git add <specific files>
+# Stage specific files in the code repo (never git add -A)
+GIT_TARGET add <specific files>
 
 # Commit with clear message
-git commit -m "feat(<TASK-ID>): Short description
+GIT_TARGET commit -m "feat(<TASK-ID>): Short description
 
 Longer explanation if needed.
 
 Co-Authored-By: Claude <noreply@anthropic.com>"
 
-# Push and create PR
-git push -u origin feature/<TASK-ID>-short-description
-gh pr create --title "feat: Short description" --body "..."
+# Push and create PR — both must land on the target's remote in split mode
+GIT_TARGET push -u origin feature/<TASK-ID>-short-description
+GH_TARGET pr create --title "feat: Short description" --body "..."
 ```
 
 PR body: summary bullets, test plan checklist, link to the task spec.
+
+In split mode, a bare `gh pr create` from the planning repo would open
+the PR against the planning remote (wrong project), so the `GH_TARGET`
+macro is essential here.
 
 ## Phase 6: CI + Bot Review (GATE)
 
@@ -248,14 +271,15 @@ Poll CI and bot reviews **inline from the parent agent loop**, using
 After Phase 5 push, run the loop directly:
 
 ```bash
-# 1. Confirm push succeeded and capture the PR number.
-gh pr view --json number,headRefName --jq '{n: .number, b: .headRefName}'
+# 1. Confirm push succeeded and capture the PR number — must hit the
+#    target's PR list in split mode.
+GH_TARGET pr view --json number,headRefName --jq '{n: .number, b: .headRefName}'
 ```
 
 Then:
 
-1. **First CI check**: `gh pr checks <N>` and (if needed)
-   `gh run list --branch <branch> --limit 1`. If CI is still
+1. **First CI check**: `GH_TARGET pr checks <N>` and (if needed)
+   `GH_TARGET run list --branch <branch> --limit 1`. If CI is still
    `IN_PROGRESS`, schedule the next wake-up — don't busy-wait.
 2. **Schedule the next poll** with `ScheduleWakeup`. Pick the delay
    based on what the longest-running check typically takes:
@@ -279,8 +303,8 @@ Then:
    - Never sleep. Always use `ScheduleWakeup`.
 3. **On wake**, re-poll:
    ```bash
-   gh pr checks <N>
-   gh pr view <N> --json reviews,statusCheckRollup
+   GH_TARGET pr checks <N>
+   GH_TARGET pr view <N> --json reviews,statusCheckRollup
    ```
    Branch on the result:
 
@@ -331,8 +355,8 @@ ls scripts/core/*review* scripts/core/*prepare*
 # If helper exists:
 ./scripts/core/<review-helper>.sh <TASK-ID>
 
-# Otherwise, prepare input manually using git diff
-git diff main...HEAD > .adversarial/inputs/<TASK-ID>-code-review-input.md
+# Otherwise, prepare input manually using git diff (run in the code repo)
+GIT_TARGET diff main...HEAD > .adversarial/inputs/<TASK-ID>-code-review-input.md
 ```
 
 > Why full-file context is the default: diff-only input causes models to
@@ -425,7 +449,7 @@ Run `/retro` to finalize the session. Retro files are saved to
 - **No `$()` subshells**: Use simple sequential commands
 - **No `sleep`**: Never poll manually — `ScheduleWakeup` yields the
   loop and respects the prompt-cache TTL (see Phase 6)
-- **Branch verify**: After every `git checkout`, run `git branch --show-current` to confirm
+- **Branch verify**: After every `GIT_TARGET checkout`, run `GIT_TARGET branch --show-current` to confirm (the macro matters in split mode — a bare `git` would report the planning branch)
 - **Know your CWD**: Always be explicit about which repo you're in
 
 ## Quick Reference
