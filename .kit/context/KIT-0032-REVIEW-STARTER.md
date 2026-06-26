@@ -1,7 +1,7 @@
 # Review Starter: KIT-0032
 
 **Task**: KIT-0032 — Build the `upgrader` Agent (plugin-version upgrades)
-**Task File**: `.kit/tasks/3-in-progress/KIT-0032-build-upgrader-agent.md`
+**Task File**: `.kit/tasks/4-in-review/KIT-0032-build-upgrader-agent.md`
 **Branch**: feature/KIT-0032-upgrader-agent → main
 **PR**: https://github.com/movito/agentive-starter-kit/pull/56
 

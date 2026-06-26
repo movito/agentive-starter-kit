@@ -238,10 +238,13 @@ claude plugin list | grep -A3 'agentive-workflow@agentive-skills'  # confirm the
 > the latest version" and nothing changes — a same-version re-publish never
 > propagates (guide § Gotchas).
 
-**Gate the rest of APPLY on this confirmation.** If `claude plugin list` does
-**not** show the version advanced to `<target>`, **HALT here and report** — do
-**not** run Phases 4/5/7. Restamping Provenance or committing after a failed
-update would leave `CLAUDE.md` claiming a version the install does not have.
+**Gate the rest of APPLY on this confirmation.** Compare the **bare `X.Y.Z`
+token** from `claude plugin list` against the normalized target (same extraction
+as the Phase 1 idempotence check — so a `v` prefix or formatting difference does
+not fail an otherwise-successful update). If the installed version does **not**
+match the target, **HALT here and report** — do **not** run Phases 4/5/7.
+Restamping Provenance or committing after a failed update would leave `CLAUDE.md`
+claiming a version the install does not have.
 
 > **Broken-window note.** Once Phase 3 succeeds, the old artifact names are gone
 > from the plugin; Phase 4a's reference fixes must complete or the project is left
@@ -311,8 +314,11 @@ Then run the project's own gate if it has one to confirm no regression:
 
 ## PHASE 7 — Commit (guide step 7)
 
-Commit the `## Provenance` change **plus** any local-agent `model:` edits
-**together** (one commit). Follow the project's commit conventions:
+Commit **all** of the upgrade's project-file edits **together** in one commit:
+the Phase 4a namespaced-reference fixes, any local-agent `model:` edits (4b), and
+the `## Provenance` restamp (5). Staging only Provenance + `model:` would leave
+the reconcile fixes uncommitted — and that violates the Phase 3 broken-window
+rule. Follow the project's commit conventions:
 
 - Planning repos commit to `main`; code repos use feature branches
   (see `docs/CROSS-REPO-PATTERN.md`).
