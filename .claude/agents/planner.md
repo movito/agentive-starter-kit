@@ -253,7 +253,10 @@ ready — invoke `<agent-name>` in a new tab."*
 While the implementation agent is working:
 
 - Check `.kit/context/agent-handoffs.json` for status updates
-- Watch PR state with `gh pr view <N>` (target repo in split mode)
+- Watch PR state with `gh pr view <N>` — **in split mode**, pass
+  `--repo <target_github>` explicitly (`gh pr view --repo <target_github> <N>`)
+  because a bare `gh pr view` from the planning repo resolves against the
+  planning remote, not the target where the implementation PR lives
 - Surface blockers proactively — if the agent reports being stuck,
   diagnose and either unblock (clarify spec, fix handoff) or escalate
 
@@ -277,7 +280,7 @@ user.
 
 | Verdict | Planner Action |
 |---------|----------------|
-| **Approved** | Move task to `5-done/`, run knowledge extraction (below) |
+| **Approved** | Run Phase 8 (`./scripts/core/project complete <TASK-ID>`) to move the task to `5-done/`, then run knowledge extraction (below). Do **not** `mv` the task file by hand — that skips the `**Status**` field update and Linear sync. |
 | **Changes requested** | Create a *fix prompt* (not a full task starter); keep task in `4-in-review/`; send back to implementation agent |
 | **Needs discussion** | Pause; await user decision; do not act |
 

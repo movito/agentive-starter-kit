@@ -125,9 +125,16 @@ Lean: **approach 1** (markers) is least invasive and respects both audiences.
 - [ ] **Re-bootstrap refresh**: bootstrap a fresh consumer, then bump an
   agent in the upstream kit (add a new phase, edit a Stack Notes bullet),
   then re-run `bootstrap-consumer.sh`. The consumer's agent file picks up the
-  upstream change **outside** the marker region; the consumer's customized
-  Project Context **inside** the marker region is preserved verbatim. Verifies
-  F4 + N2 together.
+  upstream change **outside** the marker regions; the consumer's customized
+  content **inside both** the Project Context **and** the Stack Notes marker
+  regions is preserved verbatim. Verifies F4 + N2 together — a partial
+  implementation that preserves Project Context but clobbers Stack Notes
+  must fail this check.
+- [ ] **F3 opt-out**: bootstrap with an explicit opt-out flag (or interview
+  answer) refusing the `.kit/` scaffold and ship-downstream agents. Result:
+  no `.kit/` directory is created, no `planner.md` or `feature-developer.md`
+  is copied to the consumer, and `bootstrap-consumer.sh` exits cleanly with
+  a one-line summary of what it skipped.
 - [ ] ASK's own copies of the agents are unchanged in content (only the markers
   added, if approach 1 is chosen)
 - [ ] BugBot + CodeRabbit threads on PR #57 can be marked resolved once this
