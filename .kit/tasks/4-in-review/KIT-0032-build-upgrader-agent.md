@@ -1,6 +1,6 @@
 # KIT-0032: Build the `upgrader` Agent (plugin-version upgrades)
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 3-5 hours
