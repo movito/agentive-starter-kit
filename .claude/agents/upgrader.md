@@ -279,21 +279,23 @@ Commit the `## Provenance` change **plus** any local-agent `model:` edits
 
 ## PHASE 8 — Post-upgrade hints (not part of the upgrade)
 
-After a successful upgrade, **detect** whether a scripts/manifest version gap
-exists, and if so surface it **once** as a hint. `check-sync.sh` is read-only
-(it compares the installed core version against upstream and reports drift — it
-mutates nothing), so you run it yourself as the detection step:
+After a successful upgrade, **detect** whether scripts/manifest drift exists, and
+if so surface it **once** as a hint. `check-sync.sh` is read-only (it prints the
+local and upstream core `VERSION` strings and one `⚠️ DRIFT:`/`⚠️ MISSING:` line
+per differing file — it mutates nothing), so you run it yourself as the detection
+step:
 
 ```bash
-ASK_REPO=<path-to-agentive-starter-kit-checkout> ./scripts/core/check-sync.sh   # read-only; reports drift
+ASK_REPO=<path-to-agentive-starter-kit-checkout> ./scripts/core/check-sync.sh   # read-only; prints per-file drift
 ```
 
-- Reports **in sync** (or the manifest/`ASK_REPO` is unavailable so no gap can be
-  determined) → say nothing.
-- Reports **drift** → surface one line: "scripts/core is N versions behind —
-  upgrade is a separate surface, see `docs/MANIFEST-UPGRADE-GUIDE.md`." **Never**
-  fold the scripts upgrade into the plugin upgrade; performing it is the
-  operator's separate manifest-sync action.
+- No `⚠️ DRIFT`/`⚠️ MISSING` lines (or the manifest/`ASK_REPO` is unavailable so
+  no comparison ran) → say nothing.
+- Any `⚠️ DRIFT`/`⚠️ MISSING` lines, or the local vs upstream `VERSION` differ →
+  surface one line quoting what the script reported (e.g. "check-sync.sh reports
+  scripts/core drift: local <X> vs upstream <Y>") and point to
+  `docs/MANIFEST-UPGRADE-GUIDE.md`. **Never** fold the scripts upgrade into the
+  plugin upgrade; performing it is the operator's separate manifest-sync action.
 
 ---
 
