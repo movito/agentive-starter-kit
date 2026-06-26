@@ -251,6 +251,30 @@ until the operator confirms.
 
 ```bash
 claude plugin marketplace update agentive-skills                   # pull latest marketplace metadata from GitHub
+```
+
+**Pre-update gate: prevent target overshoot.** `claude plugin update` is
+**unpinned** — it installs whatever marketplace-latest is at the moment of the
+call (see L146-149: the Phase 3 update is a fixed string by design). If the
+operator named a target in Phase 1 that differs from marketplace-latest
+(intentional pinning, or a race where latest moved between Phase 1 and now), an
+unpinned update would land on latest rather than the ACK'd target. Re-read
+marketplace-latest and compare before running the destructive command:
+
+```bash
+gh api 'repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-plugin/plugin.json?ref=main' \
+  --jq '.content' | base64 -d | grep '"version"'
+```
+
+Extract the bare `X.Y.Z` token (same extraction as the Phase 1 idempotence
+check). If it does **not** equal the normalized target → **HALT** one line:
+"marketplace latest is `<X.Y.Z>`; ACK'd target is `<A.B.C>`. An unpinned update
+would overshoot. Either restate the target as `<X.Y.Z>` and re-ACK, or wait
+until `<A.B.C>` is published as latest." Do **not** run the destructive update.
+
+Then, if the pre-update gate passes:
+
+```bash
 claude plugin update agentive-workflow@agentive-skills
 claude plugin list | grep -A3 'agentive-workflow@agentive-skills'  # confirm the version advanced to <target>
 ```
@@ -266,6 +290,15 @@ not fail an otherwise-successful update). If the installed version does **not**
 match the target, **HALT here and report** — do **not** run Phases 4/5/7.
 Restamping Provenance or committing after a failed update would leave `CLAUDE.md`
 claiming a version the install does not have.
+
+**If this post-update HALT fires** despite the pre-update gate (narrow race
+window: marketplace published a new latest between the gate check and the
+update), the plugin is now at marketplace-latest — not the ACK'd target.
+Recovery is constrained because the CLI update is unpinned: either (a) accept
+landing on marketplace-latest, re-ACK with that as the new target, and continue
+from Phase 4 manually; or (b) invoke Rollback to the previous version while the
+plugin cache still has it (~7 days). Neither path reaches the originally ACK'd
+target if it is now older than marketplace-latest.
 
 > **Broken-window note.** Once Phase 3 succeeds, the old artifact names are gone
 > from the plugin; Phase 4a's reference fixes must complete or the project is left
