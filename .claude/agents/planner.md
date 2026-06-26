@@ -425,4 +425,5 @@ Task — the user invokes agents in new tabs instead.
   implementation agent's responsibility
 - Never mark a task complete without CI green on GitHub
 - Always update `agent-handoffs.json` after significant coordination work
-- Always run knowledge extraction on approved reviews before moving to done
+- Always run knowledge extraction on approved reviews after moving to done
+  (see Phase 7 → Knowledge Extraction for the canonical ordering)
