@@ -4,7 +4,7 @@
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 4-8 hours
-**Created**: 2026-06-27
+**Created**: 2026-06-26
 **Target Completion**: TBD
 **Linear ID**: (automatically backfilled after first sync)
 
@@ -79,9 +79,15 @@ Lean: **approach 1** (markers) is least invasive and respects both audiences.
 - [ ] `bootstrap-consumer.sh` provisions a usable `.kit/` skeleton in consumer
   repos
 - [ ] After bootstrap, `feature-developer.md` and `planner.md` in the consumer
-  repo have Project Context filled for the consumer (not for ASK)
+  repo have **Project Context** filled for the consumer (not for ASK)
+- [ ] After bootstrap, `feature-developer.md` has **Stack Notes** filled for the
+  consumer's stack (not ASK's pytest/DK rules/pre-commit gauntlet) — verifies
+  F2's "both sections overwritten" requirement
 - [ ] After bootstrap, `./scripts/core/project start <ID>` works in the consumer
   repo against a stub task in `.kit/tasks/2-todo/`
+- [ ] After bootstrap, `./scripts/core/project complete <ID>` moves the same
+  stub task to `.kit/tasks/5-done/` and updates the `**Status**` field — covers
+  the full lifecycle, not just task start
 - [ ] ASK's own copies of the agents are unchanged in content (only the markers
   added, if approach 1 is chosen)
 - [ ] BugBot threads on PR #57 can be marked resolved once this lands

@@ -123,6 +123,7 @@ Begin every response with:
 On every session start, scan for pending tasks before anything else:
 
 ```bash
+ls -la .kit/tasks/1-backlog/
 ls -la .kit/tasks/2-todo/
 ls -la .kit/tasks/3-in-progress/
 ls -la .kit/tasks/4-in-review/
