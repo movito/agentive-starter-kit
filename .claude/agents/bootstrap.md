@@ -163,7 +163,7 @@ pytest tests/ -v
 ## Getting Started
 
 1. Add API keys to `.env` (copy from `.env.template`)
-2. Start a planner session: `claude --agent .claude/agents/planner2.md`
+2. Start a planner session: `claude --agent .claude/agents/planner.md`
 3. Create your first task in `.kit/tasks/2-todo/`
 
 ---
@@ -293,7 +293,7 @@ If no: print the manual commands for later.
    # Edit .env — add OPENAI_API_KEY at minimum
 
 2. Start working:
-   claude --agent .claude/agents/planner2.md
+   claude --agent .claude/agents/planner.md
 
 3. Optional: Set up Serena for code navigation:
    ./.serena/setup-serena.sh "PROJECT_NAME"

@@ -133,7 +133,7 @@ cd agentive-starter-kit
 - Customize `CLAUDE.md`, `pyproject.toml`, and `README.md` with your project identity
 - Initialize `adversarial-workflow` and install the default evaluator library
 - Create the GitHub repo with `gh repo create` and push the first commit
-- Print a summary with next steps (add `.env`, open the new project in Claude, invoke `planner2`)
+- Print a summary with next steps (add `.env`, open the new project in Claude, invoke `planner`)
 
 When it finishes, `cd` into your new project directory and start working.
 

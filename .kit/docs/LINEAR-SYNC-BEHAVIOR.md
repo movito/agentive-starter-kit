@@ -83,7 +83,7 @@ Metadata is extracted from bold-field notation:
 ```markdown
 **Status**: In Progress
 **Priority**: medium
-**Assigned To**: feature-developer-v3
+**Assigned To**: feature-developer
 **Estimated Effort**: 2 hours
 **Linear ID**: PRJ-42
 ```
@@ -149,5 +149,5 @@ Moves the file to the correct numbered folder and updates `**Status**`.
 ## References
 
 - ADR: `.kit/adr/KIT-ADR-0012-task-status-linear-alignment.md`
-- Planner agent: `.claude/agents/planner2.md` (Linear Sync section)
+- Planner agent: `.claude/agents/planner.md` (Linear Sync references in Phase 8)
 - Commit protocol: `.kit/context/workflows/COMMIT-PROTOCOL.md`

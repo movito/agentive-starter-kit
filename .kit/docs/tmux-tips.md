@@ -7,19 +7,19 @@ the full workflow from spawning to cleanup.
 
 ```bash
 # Spawn an agent (opens in a new tmux pane)
-dispatch spawn feature-developer-v3 --session-manager tmux
+dispatch spawn feature-developer --session-manager tmux
 
 # Spawn with a starter file (auto-delivered after spawn_delay)
-dispatch spawn feature-developer-v3 \
+dispatch spawn feature-developer \
   --starter delegation/tasks/2-todo/DSP-0061-task.md \
   --session-manager tmux
 
 # Spawn with a task ID (emits spawn event with task reference)
-dispatch spawn feature-developer-v3 \
+dispatch spawn feature-developer \
   --task DSP-0061 \
   --session-manager tmux
 
-# Output: "Spawned feature-developer-v3 in tmux session 'dispatch' (pane %214)"
+# Output: "Spawned feature-developer in tmux session 'dispatch' (pane %214)"
 # Note the pane ID — you'll use it for everything below
 ```
 
@@ -108,7 +108,7 @@ tmux kill-pane -t %214
 
 ```bash
 # Via dispatch (writes to agent inbox + sends to tmux)
-dispatch message feature-developer-v3 "Bot reviews are ready for PR #59"
+dispatch message feature-developer "Bot reviews are ready for PR #59"
 
 # Via raw tmux (no inbox, just screen text)
 tmux send-keys -t %214 "Check the bot reviews on PR #59" Enter
@@ -137,7 +137,7 @@ tmux capture-pane -t %214 -p -S -5 | grep "❯"
 
 ```bash
 # 1. Spawn
-dispatch spawn feature-developer-v3 --session-manager tmux
+dispatch spawn feature-developer --session-manager tmux
 # → pane %214
 
 # 2. Wait for Claude to load (~10-15s)

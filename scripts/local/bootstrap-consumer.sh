@@ -44,9 +44,9 @@ echo "1/3 Copying implementation scaffolding..."
 RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --exclude='__pycache__/' --exclude='.DS_Store')
 
 # .claude/ — implementation agents, commands, skills, settings
-# Exclude builder agents (planner*, code-reviewer, document-reviewer, security-reviewer)
+# planner.md ships downstream (V2 is portable with EXTENSION POINTs).
+# Reviewer agents stay builder-only.
 "${RSYNC_BASE[@]}" \
-    --exclude='planner.md' --exclude='planner2.md' \
     --exclude='code-reviewer.md' --exclude='document-reviewer.md' --exclude='security-reviewer.md' \
     "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 

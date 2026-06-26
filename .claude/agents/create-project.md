@@ -119,7 +119,7 @@ Write a project-specific README:
 
 ```bash
 # Start a planning session
-claude --agent .claude/agents/planner2.md
+claude --agent .claude/agents/planner.md
 
 # Run local CI checks
 ./scripts/core/ci-check.sh
@@ -264,7 +264,7 @@ cd <target-dir> && git push origin main
 2. Open a new Claude Code session in <target-dir>
 
 3. Start planning:
-   Invoke planner2 in a new tab
+   Invoke planner in a new tab
 
 **Task prefix**: <PREFIX> (e.g., <PREFIX>-0001)
 ```
