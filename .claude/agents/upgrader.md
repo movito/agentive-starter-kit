@@ -172,10 +172,31 @@ gh api 'repos/movito/agentive-skills/contents/plugins/agentive-workflow/CHANGELO
   --jq '.content' | base64 -d
 ```
 
-If no CHANGELOG is published, fall back to diffing the artifact listing (the
-`commands/`, `agents/`, `skills/` directories) between the two versions. Reading
-that output to *categorize* added/removed/renamed is the only reasoning here, and
-it feeds Judgment Point 1 — the greps below are mechanical. For each
+**If the `gh api` call fails** (network, auth, rate limit, HTTP 5xx) → **HALT**
+one line: "could not fetch the target CHANGELOG — fix the network or name the
+reconcile scope explicitly." Do not guess and do not proceed to ACK with an empty
+diff. Missing reference updates is the failure mode this agent exists to prevent.
+
+**If the call returns HTTP 404** (no CHANGELOG published for this version), fall
+back to listing the artifact directories at each ref and diffing the names:
+
+```bash
+for dir in commands agents skills; do
+  gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=v<TARGET>" \
+    --jq '.[].name' | sort > "/tmp/$dir-target.txt"
+  gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=v<CURRENT>" \
+    --jq '.[].name' | sort > "/tmp/$dir-current.txt"
+  echo "--- $dir ---"
+  diff "/tmp/$dir-current.txt" "/tmp/$dir-target.txt"
+done
+```
+
+Lines prefixed `<` are removed/renamed; `>` are added. Pair like-named entries
+to spot renames; if a rename isn't obvious from the filename, content-diff via
+`gh api` on both refs.
+
+Reading that output to *categorize* added/removed/renamed is the only reasoning
+here, and it feeds Judgment Point 1 — the greps below are mechanical. For each
 removed/renamed namespaced artifact, grep the project for live references
 (single-quote the substituted name — see the hard rules):
 
@@ -357,6 +378,22 @@ ASK_REPO=<path-to-agentive-starter-kit-checkout> ./scripts/core/check-sync.sh   
 ## ROLLBACK (guide § Rollback)
 
 To revert an upgrade:
+
+0. **Check for partial Phase 4a reference edits.** If Rollback is being invoked
+   mid-flow (e.g. via the Phase 3 broken-window note when 4a cannot finish),
+   Phase 4a may have already modified files that now reference the new plugin's
+   renamed artifacts. Without reverting those, the working tree will be
+   inconsistent with the rolled-back pin.
+
+   ```bash
+   git status --short
+   ```
+
+   - If clean → continue to step 1.
+   - If only Phase 4a reference edits are uncommitted → either `git stash`
+     (to retry the reconcile later) or `git checkout -- <files>` (to discard).
+     Do **not** sweep unrelated changes into the stash/discard — confirm each
+     file belongs to the reconcile before acting.
 
 1. Set `agentive-workflow@<previous>` in `CLAUDE.md` Provenance.
 2. Re-resolve to the pinned version:
