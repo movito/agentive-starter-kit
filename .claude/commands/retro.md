@@ -149,7 +149,7 @@ Use this exact structure for the file content:
 ## [TASK-ID] — [Task Title] (PR #[number])
 
 **Date**: [YYYY-MM-DD]
-**Agent**: [agent version, e.g. feature-developer-v6]
+**Agent**: [agent name, e.g. feature-developer]
 **Mode**: [single-repo | cross-repo (target: <target_github>)]
 **Scorecard**: [N] threads, [N] regressions, [N] fix rounds, [N] commits
 

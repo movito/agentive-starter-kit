@@ -7,7 +7,7 @@ evaluation, and architectural decision records. For full details, see `README.md
 ## Directory Structure
 
 ```
-.claude/agents/       Implementation agents (feature-developer-v3, ci-checker, etc.)
+.claude/agents/       Implementation agents (feature-developer, ci-checker, etc.)
 .claude/commands/     All slash commands (start-task, babysit-pr, retro, etc.)
 .claude/skills/       Implementation skills (pre-implementation, bot-triage)
 .adversarial/         Adversarial evaluation system (config, evaluators, scripts, docs)
@@ -67,8 +67,8 @@ tests/                pytest test suite
 
 | Agent | Role |
 |-------|------|
-| `planner` / `planner2` | Planning and task orchestration |
-| `feature-developer-v3` | Implementation with gated workflow |
+| `planner` | Planning and task orchestration (cross-repo aware) |
+| `feature-developer` | Implementation with gated workflow + inline CI/bot loop |
 | `ci-checker` | CI/CD verification |
 | `code-reviewer` | Code quality review |
 | `test-runner` / `powertest-runner` | TDD and testing |

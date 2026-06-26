@@ -121,7 +121,7 @@ echo
 echo "4/4 🤖 Launching bootstrap agent..."
 echo
 echo "The agent will read your design materials and configure the project."
-echo "When it's done, add your API keys to .env and start working with planner2."
+echo "When it's done, add your API keys to .env and start working with planner."
 echo
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 

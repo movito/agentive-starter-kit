@@ -44,9 +44,17 @@ echo "1/3 Copying implementation scaffolding..."
 RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --exclude='__pycache__/' --exclude='.DS_Store')
 
 # .claude/ — implementation agents, commands, skills, settings
-# Exclude builder agents (planner*, code-reviewer, document-reviewer, security-reviewer)
+# planner.md ships downstream (V2 is portable with EXTENSION POINTs).
+# Reviewer agents stay builder-only.
+# Sweep retired agent variants from a prior bootstrap before rsync; --ignore-existing
+# would otherwise leave legacy planner2/3 + feature-developer-v3/v6/v7 alongside the
+# canonical V2 agents in an existing checkout.
+rm -f "$TARGET/.claude/agents/planner2.md" \
+      "$TARGET/.claude/agents/planner3.md" \
+      "$TARGET/.claude/agents/feature-developer-v3.md" \
+      "$TARGET/.claude/agents/feature-developer-v6.md" \
+      "$TARGET/.claude/agents/feature-developer-v7.md"
 "${RSYNC_BASE[@]}" \
-    --exclude='planner.md' --exclude='planner2.md' \
     --exclude='code-reviewer.md' --exclude='document-reviewer.md' --exclude='security-reviewer.md' \
     "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
