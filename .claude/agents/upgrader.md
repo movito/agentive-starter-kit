@@ -65,7 +65,15 @@ surfaced once, at the end, as a post-upgrade hint to run
   mutation, and no `claude plugin update` happens before an explicit operator
   ACK. The preview prints the version delta, the reconcile diff, and the exact
   list of local `model:` pins you would rewrite. You then **halt and wait** for
-  the operator to confirm before anything mutates.
+  the operator to confirm before anything mutates. A valid ACK is an explicit,
+  unambiguous go-ahead. Treat a question, a partial/hedged reply ("looks good,
+  but…"), or any change of scope as a **non-ACK**: re-print the PREVIEW and wait
+  again — never infer approval.
+- **Quote every substituted value.** Values you splice into a shell command from
+  external sources (CHANGELOG, plugin output, operator input, paths) must be
+  single-quoted; if a value itself contains a quote or a shell metacharacter,
+  **halt and report** rather than building the command. The agent has `Bash` —
+  an unquoted artifact name or path is an injection vector.
 - **Never hand-edit cached plugin files** (`~/.claude/plugins/cache/...`) — that
   path is ephemeral and overwritten on the next update (guide § Gotchas). You
   touch only project-owned files and the plugin CLI.
@@ -97,11 +105,16 @@ claude plugin marketplace list        # Source for agentive-skills must read: Gi
 claude plugin list | grep -A3 'agentive-workflow@agentive-skills'   # must show: enabled
 ```
 
-- If `agentive-workflow@agentive-skills` is present and enabled → the project
-  consumes the plugin; proceed.
+- If `agentive-workflow@agentive-skills` is present **and** its status reads
+  `enabled` → the project consumes the plugin; proceed.
 - If it is **absent** → the project has not migrated onto the plugin. **HALT**
   with the initial-migration refusal (table above). Initial migration (deleting
   local copies, namespacing references) is a one-time manual step — not your job.
+- If it is present but **disabled** → do not treat this as "consuming". **HALT**
+  one line: "plugin is installed but disabled — enable it
+  (`claude plugin enable agentive-workflow@agentive-skills`) before upgrading."
+  This is a different problem from initial migration; do not proceed on a
+  disabled plugin (workflows would still resolve the old, disabled version).
 
 ---
 
@@ -126,8 +139,20 @@ gh api 'repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-
   --jq '.content' | base64 -d | grep '"version"'
 ```
 
-**Idempotence check (deterministic, not a judgment):** if current == target →
-print "nothing to do" and **stop here.** No further phases run, no changes made.
+- If the operator did **not** name a target and this `gh api` call fails (network,
+  auth, rate limit) → **HALT** one line: "could not determine the target version
+  from GitHub — name it explicitly (`agentive-workflow@X.Y.Z`)." **Never guess or
+  invent a version.**
+- Confirm the resolved target looks like a version (`vX.Y.Z` / `X.Y.Z`) before
+  using it anywhere; if it does not, halt and ask the operator to restate it. (You
+  never interpolate it into a destructive command — the update in Phase 3 is a
+  fixed string — but this keeps the Provenance stamp and comparison honest.)
+
+**Idempotence check (deterministic, not a judgment):** compare the bare
+`X.Y.Z` token from each source (extract it — e.g. `grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
+— so quoting/whitespace differences between the CLI and the API don't cause a
+false mismatch). If current == target → print "nothing to do" and **stop here.**
+No further phases run, no changes made.
 
 ---
 
@@ -138,9 +163,21 @@ files, does not touch git.
 
 ### 2a. Reconcile diff (guide step 3, detection half)
 
-Read the new version's CHANGELOG / published artifact set to learn what was
-**added**, **removed**, or **renamed** between current and target. For each
-removed/renamed namespaced artifact, grep the project for live references:
+Fetch the new version's CHANGELOG to learn what was **added**, **removed**, or
+**renamed** between current and target (deterministic — a command, not a read of
+your own judgment):
+
+```bash
+gh api 'repos/movito/agentive-skills/contents/plugins/agentive-workflow/CHANGELOG.md?ref=main' \
+  --jq '.content' | base64 -d
+```
+
+If no CHANGELOG is published, fall back to diffing the artifact listing (the
+`commands/`, `agents/`, `skills/` directories) between the two versions. Reading
+that output to *categorize* added/removed/renamed is the only reasoning here, and
+it feeds Judgment Point 1 — the greps below are mechanical. For each
+removed/renamed namespaced artifact, grep the project for live references
+(single-quote the substituted name — see the hard rules):
 
 ```bash
 grep -rn 'agentive-workflow:<old-name>' .claude .kit CLAUDE.md
@@ -199,7 +236,18 @@ claude plugin list | grep -A3 'agentive-workflow@agentive-skills'  # confirm the
 
 > If the upstream `version` was not bumped, `/plugin update` reports "already at
 > the latest version" and nothing changes — a same-version re-publish never
-> propagates (guide § Gotchas). If the version did not advance, stop and report.
+> propagates (guide § Gotchas).
+
+**Gate the rest of APPLY on this confirmation.** If `claude plugin list` does
+**not** show the version advanced to `<target>`, **HALT here and report** — do
+**not** run Phases 4/5/7. Restamping Provenance or committing after a failed
+update would leave `CLAUDE.md` claiming a version the install does not have.
+
+> **Broken-window note.** Once Phase 3 succeeds, the old artifact names are gone
+> from the plugin; Phase 4a's reference fixes must complete or the project is left
+> with dangling references. If 4a cannot be finished, do not commit a partial
+> state — either complete the reference fixes or roll back (see Rollback) so the
+> tree is coherent.
 
 ---
 
@@ -215,11 +263,14 @@ confirm zero remaining old references and zero flat-ref regressions.
 For each local agent the operator approved:
 
 - Edit **only** the `model:` key inside the **opening YAML frontmatter block**
-  of files under `.claude/agents/`. The line you change is the `^model:` at the
-  top of the file (typically line ~4), not a `model:` mention in prose, a
-  description, or a comment.
-- Before editing, confirm the matched line **and its surrounding context** are
-  the frontmatter pin. Rewrite to the approved target model ID.
+  of files under `.claude/agents/` — the block bounded by the first `---` (line 1)
+  and the next `---`. The line you change is the `^model:` *above that closing
+  `---`*, not a `model:` mention in prose, a description, or a comment further
+  down the file.
+- Before editing, Read the file head and confirm the matched line sits inside that
+  opening delimiter pair (and that there is exactly one such pin). Rewrite to the
+  approved target model ID. If a file has no `^model:` in its frontmatter, skip it
+  and note it — never inject one.
 - **Never** edit a plugin agent's pin (those live in the ephemeral cache and
   come from the Phase 3 update).
 
@@ -265,14 +316,12 @@ Commit the `## Provenance` change **plus** any local-agent `model:` edits
 
 - Planning repos commit to `main`; code repos use feature branches
   (see `docs/CROSS-REPO-PATTERN.md`).
-- **Pushes:** in a non-kit repo, **stage and commit only** — hand the push to the
-  operator:
-
-  ```bash
-  ! git -C <path> push
-  ```
-
-  In the kit repo itself, pushing is allowed per existing convention, but
+- **Pushes:** in a non-kit repo, **stage and commit only** — never push. Hand the
+  push to the operator by telling them to run it themselves, e.g. "ready to push:
+  `git -C <path> push`". (Do not write `! git … push` as a shell line — a leading
+  `!` negates the exit code in bash; it is only the interactive session prefix
+  meaning "the operator runs this", not a command you execute.)
+- In the kit repo itself, pushing is allowed per existing convention, but
   commit/push stays operator-gated by the project's commit rules.
 
 ---
