@@ -8,11 +8,12 @@
     "handoff_file": null
   },
   "feature-developer": {
-    "status": "idle",
-    "current_task": null,
+    "status": "assigned",
+    "current_task": "KIT-0032",
     "task_started": null,
-    "brief_note": "ASK-0047 done (PR #42). Ready for next assignment.",
-    "details_link": null
+    "brief_note": "KIT-0032 (build upgrader agent) assigned to feature-developer-v6 — handoff ready, spec evaluated/revised. Not yet started.",
+    "details_link": ".kit/context/KIT-0032-HANDOFF-feature-developer-v6.md",
+    "handoff_file": ".kit/context/KIT-0032-HANDOFF-feature-developer-v6.md"
   },
   "code-reviewer": {
     "status": "idle",
