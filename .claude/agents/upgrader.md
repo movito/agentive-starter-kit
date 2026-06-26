@@ -72,7 +72,7 @@ surfaced once, at the end, as a post-upgrade hint to run
 
 ---
 
-# PHASE 0 — Preflight scope guards (read-only, runs first)
+## PHASE 0 — Preflight scope guards (read-only, runs first)
 
 ### 0a. Marketplace-source guard (guide § Prerequisites / Gotchas)
 
@@ -105,7 +105,7 @@ claude plugin list | grep -A3 'agentive-workflow@agentive-skills'   # must show:
 
 ---
 
-# PHASE 1 — Determine current & target versions (guide step 1)
+## PHASE 1 — Determine current & target versions (guide step 1)
 
 ```bash
 # Current pin — two sources that should agree:
@@ -131,7 +131,7 @@ print "nothing to do" and **stop here.** No further phases run, no changes made.
 
 ---
 
-# PHASE 2 (PREVIEW) — Compute the reconcile diff & model-pin list (read-only)
+## PHASE 2 (PREVIEW) — Compute the reconcile diff & model-pin list (read-only)
 
 This phase **reads only**. It does not run `claude plugin update`, does not edit
 files, does not touch git.
@@ -169,7 +169,7 @@ grep -rn '^model:' .claude/agents/        # local pins only — never the plugin
 
 > **JUDGMENT POINT 2 — model-pin rewrite.** From this list, propose which local
 > agents move and to which target model ID. Plugin agents get their pins from
-> the Phase 4 update — never hand-edit their cached files. If no model rollout
+> the Phase 3 plugin update — never hand-edit their cached files. If no model rollout
 > applies, this list is informational and nothing is rewritten.
 
 ### 2c. Print the preview and HALT for ACK
@@ -189,7 +189,7 @@ until the operator confirms.
 
 ---
 
-# PHASE 3 (APPLY) — Update the plugin (guide step 2) · runs only after ACK
+## PHASE 3 (APPLY) — Update the plugin (guide step 2) · runs only after ACK
 
 ```bash
 claude plugin marketplace update agentive-skills                   # pull latest marketplace metadata from GitHub
@@ -203,7 +203,7 @@ claude plugin list | grep -A3 'agentive-workflow@agentive-skills'  # confirm the
 
 ---
 
-# PHASE 4 (APPLY) — Apply reconcile fixes & model-pin rewrites · after ACK
+## PHASE 4 (APPLY) — Apply reconcile fixes & model-pin rewrites · after ACK
 
 ### 4a. Reference fixes for removed/renamed artifacts (guide step 3, fix half)
 
@@ -225,7 +225,7 @@ For each local agent the operator approved:
 
 ---
 
-# PHASE 5 (APPLY) — Restamp Provenance (guide step 5) · after ACK
+## PHASE 5 (APPLY) — Restamp Provenance (guide step 5) · after ACK
 
 Restamp `CLAUDE.md` `## Provenance`:
 
@@ -237,7 +237,7 @@ rather than creating one — do not introduce CLAUDE.md structure on your own.
 
 ---
 
-# PHASE 6 — Verify (guide step 6)
+## PHASE 6 — Verify (guide step 6)
 
 ```bash
 claude plugin list | grep -A3 'agentive-workflow@agentive-skills'   # new version, enabled
@@ -258,7 +258,7 @@ Then run the project's own gate if it has one to confirm no regression:
 
 ---
 
-# PHASE 7 — Commit (guide step 7)
+## PHASE 7 — Commit (guide step 7)
 
 Commit the `## Provenance` change **plus** any local-agent `model:` edits
 **together** (one commit). Follow the project's commit conventions:
@@ -277,18 +277,27 @@ Commit the `## Provenance` change **plus** any local-agent `model:` edits
 
 ---
 
-# PHASE 8 — Post-upgrade hints (not part of the upgrade)
+## PHASE 8 — Post-upgrade hints (not part of the upgrade)
 
-After a successful upgrade, if a scripts/manifest version gap exists, surface it
-**once** as a hint — never fold it into the upgrade:
+After a successful upgrade, **detect** whether a scripts/manifest version gap
+exists, and if so surface it **once** as a hint. `check-sync.sh` is read-only
+(it compares the installed core version against upstream and reports drift — it
+mutates nothing), so you run it yourself as the detection step:
 
 ```bash
-./scripts/core/check-sync.sh    # operator runs this; scripts upgrade is a separate surface
+ASK_REPO=<path-to-agentive-starter-kit-checkout> ./scripts/core/check-sync.sh   # read-only; reports drift
 ```
+
+- Reports **in sync** (or the manifest/`ASK_REPO` is unavailable so no gap can be
+  determined) → say nothing.
+- Reports **drift** → surface one line: "scripts/core is N versions behind —
+  upgrade is a separate surface, see `docs/MANIFEST-UPGRADE-GUIDE.md`." **Never**
+  fold the scripts upgrade into the plugin upgrade; performing it is the
+  operator's separate manifest-sync action.
 
 ---
 
-# ROLLBACK (guide § Rollback)
+## ROLLBACK (guide § Rollback)
 
 To revert an upgrade:
 
