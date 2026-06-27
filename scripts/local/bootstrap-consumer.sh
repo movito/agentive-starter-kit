@@ -41,6 +41,11 @@ for arg in "$@"; do
             exit 1
             ;;
         *)
+            if [ -n "$TARGET" ]; then
+                echo "Error: multiple target directories given ('$TARGET' and '$arg')"
+                echo "Usage: $0 [--no-kit] <target-directory>"
+                exit 1
+            fi
             TARGET="$arg"
             ;;
     esac
@@ -202,20 +207,33 @@ if [ "$KIT_ENABLED" -eq 1 ]; then
     # passed so that an existing-but-markerless agent (a consumer stuck on
     # a pre-consolidation copy) gets clean placeholders rather than the
     # kit's own Project Context / Stack Notes content.
-    for agent in planner.md feature-developer.md; do
+    #
+    # Two-pass for atomicity: merge BOTH agents to temp files first, so a
+    # failure on the second (e.g. malformed consumer markers → ValueError
+    # under `set -e`) aborts before any destination is overwritten — never
+    # leaving a consumer with one agent updated and the other stale. Only
+    # once every merge succeeds are the temp files moved into place.
+    KIT_AGENTS=(planner.md feature-developer.md)
+    # Clear any stale temp file left by a previously aborted merge pass.
+    rm -f "$TARGET/.claude/agents/"*.kit-merge.tmp
+    for agent in "${KIT_AGENTS[@]}"; do
         up="$PROJECT_ROOT/.claude/agents/$agent"
         dst="$TARGET/.claude/agents/$agent"
-        tmp="$dst.kit-merge.tmp"
-        merge_args=(merge --upstream "$up" --project-name "$PROJECT_NAME" --out "$tmp")
+        merge_args=(merge --upstream "$up" --project-name "$PROJECT_NAME" \
+                    --out "$dst.kit-merge.tmp")
         if [ -f "$dst" ]; then
             merge_args+=(--consumer "$dst")
-            python3 "$KIT_MARKERS" "${merge_args[@]}"
+        fi
+        python3 "$KIT_MARKERS" "${merge_args[@]}"
+    done
+    for agent in "${KIT_AGENTS[@]}"; do
+        dst="$TARGET/.claude/agents/$agent"
+        if [ -f "$dst" ]; then
             echo "  refreshed $agent (preserved filled KIT-LOCAL regions)"
         else
-            python3 "$KIT_MARKERS" "${merge_args[@]}"
             echo "  installed $agent (KIT-LOCAL regions seeded with placeholders)"
         fi
-        mv "$tmp" "$dst"
+        mv "$dst.kit-merge.tmp" "$dst"
     done
 
     # .kit/ skeleton — task status folders, coordination dir, task-starter
