@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Planner and feature-developer agents consolidated** (PR #57) — versioned
+  suffixes dropped, one canonical agent per role.
+  - `planner.md` rewritten as **v2.0.0**: phased + gated workflow modeled on
+    feature-developer-v6, with first-class single-repo / split-repo topology
+    detection, 8 phases (triage → spec → eval → handoff → assignment →
+    monitor → review → completion), gates on evaluation and review, and
+    explicit branch-isolation guardrails for split mode.
+  - `feature-developer.md` rewritten as **v2.0.0**: canonical Opus-class
+    agent (`claude-opus-4-8`) consolidating v6's template structure with
+    v7's filled-in ASK Project Context and Stack Notes (pytest, DK
+    pattern_lint, pre-commit gauntlet, defensive coding rules, evaluator
+    paths, task lifecycle).
+  - Both adopt EXTENSION POINTs for downstream customization and the same
+    Repository Topology detection (`grep '## Target Repository' CLAUDE.md`).
+  - `bootstrap-consumer.sh` now ships `planner.md` downstream alongside
+    `feature-developer.md` (was: `planner.md` excluded), and sweeps retired
+    agent variants with `rm -f` before rsync so re-runs against existing
+    consumer checkouts do not leave legacy defs side-by-side.
+- **Live invocations repointed** to the canonical agents in `bootstrap.md`,
+  `create-project.md`, `scripts/local/bootstrap.sh`,
+  `scripts/optional/create-project.sh`, `retro.md`, and
+  `.kit/docs/LINEAR-SYNC-BEHAVIOR.md`. Top-level docs refreshed: `CLAUDE.md`
+  agent table, `README.md` create-project blurb, `.kit/docs/tmux-tips.md`
+  example commands.
+
+### Removed
+
+- **`.claude/agents/planner2.md`** and **`.claude/agents/planner3.md`** —
+  content consolidated into the canonical `planner.md`.
+- **`.claude/agents/feature-developer-v3.md`**,
+  **`.claude/agents/feature-developer-v6.md`**, and
+  **`.claude/agents/feature-developer-v7.md`** — content consolidated into
+  the canonical `feature-developer.md`.
+
+### Added
+
+- **KIT-0033 backlog task** (`.kit/tasks/1-backlog/`) — portable agents
+  downstream: marker-based Project Context / Stack Notes overwrite,
+  `.kit/` skeleton scaffolding during bootstrap, F3 opt-out, and
+  re-bootstrap refresh that survives both consumer customization regions.
+  Captures the deferred work that surfaced via PR #57 bot review.
+
 ## [0.7.0] - 2026-06-13
 
 ### Fixed
