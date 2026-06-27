@@ -38,6 +38,13 @@ step in `docs/MANIFEST-UPGRADE-GUIDE.md`.
 > prefix, content language, deployment targets, and project rules.
 > A vague agent performs worse than a specific one — fill this in.
 >
+> Everything between the `KIT-LOCAL: project-context` markers below is
+> consumer-owned. `bootstrap-consumer.sh` overwrites it with project
+> values on first bootstrap and preserves it across re-bootstraps;
+> upstream refreshes everything outside the markers. Keep the marker
+> comments intact when editing.
+
+<!-- BEGIN KIT-LOCAL: project-context -->
 > Worked example (fictional project, delete when filling in):
 >
 > ```markdown
@@ -52,6 +59,8 @@ step in `docs/MANIFEST-UPGRADE-GUIDE.md`.
 > - Tasks always start in `2-todo/` after evaluation; backlog ideas in `1-backlog/`
 > - Linear sync is enabled; verify after status moves
 > ```
+<!-- END KIT-LOCAL: project-context -->
+
 
 ## Repository Topology
 

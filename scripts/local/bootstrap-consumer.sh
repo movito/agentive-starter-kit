@@ -2,10 +2,18 @@
 # Bootstrap a consumer project from the agentive starter kit.
 #
 # Consumer projects get implementation tools (agents, scripts, commands)
-# but NOT the builder layer (.kit/ — planning, evaluation, coordination).
+# plus a minimal .kit/ workflow skeleton (task folders, context, task-starter
+# template) that the shipped V2 planner + feature-developer agents need.
+# They do NOT get the full builder layer (evaluators, ADRs, kit planning docs).
 #
 # Usage:
 #   ~/Github/agentive-starter-kit/scripts/local/bootstrap-consumer.sh ~/Github/my-app
+#   ~/Github/agentive-starter-kit/scripts/local/bootstrap-consumer.sh --no-kit ~/Github/my-app
+#
+# Flags:
+#   --no-kit   Opt out of the kit workflow entirely: no .kit/ scaffold and
+#              no planner.md / feature-developer.md shipped. Useful for a
+#              consumer that only wants the lighter implementation tooling.
 #
 # Prerequisites:
 #   - Target directory exists
@@ -14,38 +22,83 @@
 set -e
 
 # ─────────────────────────────────────────
-# Resolve paths
+# Resolve paths + parse args
 # ─────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+KIT_MARKERS="$PROJECT_ROOT/scripts/local/kit_markers.py"
 
-TARGET="${1:?Usage: $0 <target-directory>}"
+KIT_ENABLED=1
+TARGET=""
+for arg in "$@"; do
+    case "$arg" in
+        --no-kit)
+            KIT_ENABLED=0
+            ;;
+        --*)
+            echo "Error: unknown flag: $arg"
+            echo "Usage: $0 [--no-kit] <target-directory>"
+            exit 1
+            ;;
+        *)
+            if [ -n "$TARGET" ]; then
+                echo "Error: multiple target directories given ('$TARGET' and '$arg')"
+                echo "Usage: $0 [--no-kit] <target-directory>"
+                exit 1
+            fi
+            TARGET="$arg"
+            ;;
+    esac
+done
+
+if [ -z "$TARGET" ]; then
+    echo "Usage: $0 [--no-kit] <target-directory>"
+    exit 1
+fi
 if [ ! -d "$TARGET" ]; then
     echo "Error: Target directory does not exist: $TARGET"
     echo "   Create it first and put your project files in it."
     exit 1
 fi
 TARGET="$(cd "$TARGET" && pwd)"
+if [ "$TARGET" = "$PROJECT_ROOT" ]; then
+    echo "Error: target is the kit source repo ($PROJECT_ROOT)."
+    echo "   bootstrap-consumer.sh provisions a *consumer* checkout; running it"
+    echo "   against the kit itself would rsync/sweep its own files. Aborting."
+    exit 1
+fi
 PROJECT_NAME="$(basename "$TARGET")"
+
+if [ "$KIT_ENABLED" -eq 1 ]; then
+    KIT_LABEL="Consumer + .kit/ workflow skeleton"
+else
+    KIT_LABEL="Consumer (--no-kit: no workflow skeleton, no planner/feature-developer)"
+fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "Bootstrapping consumer project: $PROJECT_NAME"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Source:  $PROJECT_ROOT"
 echo "  Target:  $TARGET"
-echo "  Type:    Consumer (no builder layer)"
+echo "  Type:    $KIT_LABEL"
 echo
 
 # ─────────────────────────────────────────
 # Step 1: Copy implementation scaffolding
 # ─────────────────────────────────────────
-echo "1/3 Copying implementation scaffolding..."
+echo "1/4 Copying implementation scaffolding..."
 
 RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --exclude='__pycache__/' --exclude='.DS_Store')
 
-# .claude/ — implementation agents, commands, skills, settings
-# planner.md ships downstream (V2 is portable with EXTENSION POINTs).
-# Reviewer agents stay builder-only.
+# .claude/ — implementation agents, commands, skills, settings.
+# Reviewer agents stay builder-only. The two consumer-customizable V2
+# agents (planner.md, feature-developer.md) are excluded here and handled
+# by the marker-merge step below — rsync's --ignore-existing can neither
+# fill their KIT-LOCAL regions for a fresh consumer nor refresh structure
+# for an existing one. With --no-kit they are dropped entirely.
+AGENT_EXCLUDES=(--exclude='code-reviewer.md' --exclude='document-reviewer.md' --exclude='security-reviewer.md' \
+                --exclude='planner.md' --exclude='feature-developer.md')
+
 # Sweep retired agent variants from a prior bootstrap before rsync; --ignore-existing
 # would otherwise leave legacy planner2/3 + feature-developer-v3/v6/v7 alongside the
 # canonical V2 agents in an existing checkout.
@@ -54,8 +107,7 @@ rm -f "$TARGET/.claude/agents/planner2.md" \
       "$TARGET/.claude/agents/feature-developer-v3.md" \
       "$TARGET/.claude/agents/feature-developer-v6.md" \
       "$TARGET/.claude/agents/feature-developer-v7.md"
-"${RSYNC_BASE[@]}" \
-    --exclude='code-reviewer.md' --exclude='document-reviewer.md' --exclude='security-reviewer.md' \
+"${RSYNC_BASE[@]}" "${AGENT_EXCLUDES[@]}" \
     "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
 # .serena/ — setup script and template
@@ -75,8 +127,15 @@ mkdir -p "$TARGET/scripts/optional"
     --exclude='sync-core-scripts.yml' --exclude='sync-to-linear.yml' \
     "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
-# tests/ — test infrastructure
-"${RSYNC_BASE[@]}" "$PROJECT_ROOT/tests/" "$TARGET/tests/"
+# tests/ — test infrastructure. Exclude test_kit_markers.py: it imports
+# scripts/local/kit_markers.py, an ASK-only bootstrap tool that is never
+# synced to consumers, so shipping the test would break consumer pytest
+# (and the pytest-fast pre-commit hook) at collection time. The rm -f
+# sweep removes a stale copy from a pre-fix bootstrap — --ignore-existing
+# would otherwise leave the orphaned test behind in existing consumers.
+rm -f "$TARGET/tests/test_kit_markers.py"
+"${RSYNC_BASE[@]}" --exclude='test_kit_markers.py' \
+    "$PROJECT_ROOT/tests/" "$TARGET/tests/"
 
 # Top-level files (only if they don't exist in target)
 for f in pyproject.toml .gitignore .pre-commit-config.yaml .env.template .coderabbitignore conftest.py; do
@@ -130,13 +189,78 @@ if [ ! -f "$TARGET/scripts/.core-manifest.json" ]; then
 MANIFEST
 fi
 
-echo "Done (no .kit/ builder layer — consumer project)"
+echo "Done"
 echo
 
 # ─────────────────────────────────────────
-# Step 2: Initialize git (if needed)
+# Step 2: Kit workflow agents + skeleton
 # ─────────────────────────────────────────
-echo "2/3 Checking git..."
+echo "2/4 Provisioning kit workflow..."
+
+if [ "$KIT_ENABLED" -eq 1 ]; then
+    mkdir -p "$TARGET/.claude/agents"
+
+    # Marker-merge the two consumer-customizable V2 agents. A fresh
+    # consumer gets KIT-LOCAL regions filled with project placeholders;
+    # an existing consumer keeps its filled-in regions while picking up
+    # upstream structure outside the markers. --project-name is always
+    # passed so that an existing-but-markerless agent (a consumer stuck on
+    # a pre-consolidation copy) gets clean placeholders rather than the
+    # kit's own Project Context / Stack Notes content.
+    #
+    # Two-pass for atomicity: merge BOTH agents to temp files first, so a
+    # failure on the second (e.g. malformed consumer markers → ValueError
+    # under `set -e`) aborts before any destination is overwritten — never
+    # leaving a consumer with one agent updated and the other stale. Only
+    # once every merge succeeds are the temp files moved into place.
+    KIT_AGENTS=(planner.md feature-developer.md)
+    # Clear any stale temp file left by a previously aborted merge pass.
+    rm -f "$TARGET/.claude/agents/"*.kit-merge.tmp
+    for agent in "${KIT_AGENTS[@]}"; do
+        up="$PROJECT_ROOT/.claude/agents/$agent"
+        dst="$TARGET/.claude/agents/$agent"
+        merge_args=(merge --upstream "$up" --project-name "$PROJECT_NAME" \
+                    --out "$dst.kit-merge.tmp")
+        if [ -f "$dst" ]; then
+            merge_args+=(--consumer "$dst")
+        fi
+        python3 "$KIT_MARKERS" "${merge_args[@]}"
+    done
+    for agent in "${KIT_AGENTS[@]}"; do
+        dst="$TARGET/.claude/agents/$agent"
+        if [ -f "$dst" ]; then
+            echo "  refreshed $agent (preserved filled KIT-LOCAL regions)"
+        else
+            echo "  installed $agent (KIT-LOCAL regions seeded with placeholders)"
+        fi
+        mv "$dst.kit-merge.tmp" "$dst"
+    done
+
+    # .kit/ skeleton — task status folders, coordination dir, task-starter
+    # template. The project script hardcodes .kit/tasks/<status>/, so these
+    # directories must exist for the lifecycle commands to work.
+    for d in 1-backlog 2-todo 3-in-progress 4-in-review 5-done 6-canceled 7-blocked; do
+        mkdir -p "$TARGET/.kit/tasks/$d"
+        [ -e "$TARGET/.kit/tasks/$d/.gitkeep" ] || touch "$TARGET/.kit/tasks/$d/.gitkeep"
+    done
+    mkdir -p "$TARGET/.kit/context"
+    [ -e "$TARGET/.kit/context/.gitkeep" ] || touch "$TARGET/.kit/context/.gitkeep"
+    mkdir -p "$TARGET/.kit/templates"
+    if [ ! -f "$TARGET/.kit/templates/TASK-STARTER-TEMPLATE.md" ]; then
+        cp "$PROJECT_ROOT/.kit/templates/TASK-STARTER-TEMPLATE.md" \
+           "$TARGET/.kit/templates/TASK-STARTER-TEMPLATE.md"
+    fi
+
+    echo "  .kit/ skeleton ready (tasks/, context/, templates/)"
+else
+    echo "  Skipped (--no-kit): no .kit/ scaffold, no planner.md / feature-developer.md"
+fi
+echo
+
+# ─────────────────────────────────────────
+# Step 3: Initialize git (if needed)
+# ─────────────────────────────────────────
+echo "3/4 Checking git..."
 
 cd "$TARGET"
 
@@ -151,9 +275,9 @@ fi
 echo
 
 # ─────────────────────────────────────────
-# Step 3: Next steps
+# Step 4: Next steps
 # ─────────────────────────────────────────
-echo "3/3 Next steps"
+echo "4/4 Next steps"
 echo
 echo "Your consumer project is scaffolded. To complete setup:"
 echo
@@ -162,8 +286,17 @@ echo "  ./scripts/core/project setup        # Python venv + deps"
 echo "  source .venv/bin/activate            # Activate venv"
 echo "  cp .env.template .env               # Add your API keys"
 echo
-echo "Launch agents with:"
-echo "  claude --agent .claude/agents/feature-developer.md"
+if [ "$KIT_ENABLED" -eq 1 ]; then
+    echo "Fill in the KIT-LOCAL regions (Project Context / Stack Notes) in:"
+    echo "  .claude/agents/feature-developer.md"
+    echo "  .claude/agents/planner.md"
+    echo
+    echo "Launch agents with:"
+    echo "  claude --agent .claude/agents/feature-developer.md"
+else
+    echo "Launch an agent with, e.g.:"
+    echo "  claude --agent .claude/agents/ci-checker.md"
+fi
 echo
 echo "To pull upstream updates later:"
 echo "  git remote add upstream https://github.com/movito/agentive-starter-kit.git"

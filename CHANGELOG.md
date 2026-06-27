@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Portable downstream agents via KIT-LOCAL markers** (KIT-0033) — resolves
+  the four PR #57 bot threads on under-scaffolded consumer bootstrap.
+  - `planner.md` and `feature-developer.md` wrap their consumer-customizable
+    sections (Project Context, and Stack Notes for feature-developer) in
+    stable `<!-- BEGIN/END KIT-LOCAL: <region> -->` markers. ASK's own filled
+    content is unchanged — only the markers and a short mechanism note are
+    added.
+  - New `scripts/local/kit_markers.py` (stdlib-only) merges marker regions:
+    fresh bootstrap seeds them with consumer-neutral placeholders (no kit
+    identity); re-bootstrap preserves the consumer's filled regions
+    byte-for-byte while refreshing agent structure *outside* the markers.
+    Without markers the only safe rsync mode is `--ignore-existing`, which
+    leaves consumers stuck on whatever agent version they first bootstrapped.
+  - `bootstrap-consumer.sh` provisions a working `.kit/` skeleton
+    (`tasks/1-backlog … 7-blocked`, `context/`,
+    `templates/TASK-STARTER-TEMPLATE.md`) so the shipped V2 planner +
+    feature-developer workflows run on day one, and marker-merges the two
+    agents instead of rsyncing them blindly.
+  - New `--no-kit` opt-out flag: skips the `.kit/` scaffold and drops
+    `planner.md` / `feature-developer.md`, with a one-line summary of what
+    was skipped.
+  - `tests/test_kit_markers.py` covers the merge logic, including the
+    re-bootstrap byte-preservation guarantee.
+
 ### Changed
 
 - **Planner and feature-developer agents consolidated** (PR #57) — versioned

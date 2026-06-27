@@ -35,7 +35,14 @@ step in `docs/MANIFEST-UPGRADE-GUIDE.md`.
 > A vague agent performs worse than a specific one — fill this in.
 > Below it is filled for this repo (the kit itself) and doubles as the
 > worked example for downstream projects to model their own fill on.
+>
+> Everything between the `KIT-LOCAL: project-context` markers below is
+> consumer-owned. `bootstrap-consumer.sh` overwrites it with project
+> values on first bootstrap and preserves it across re-bootstraps;
+> upstream refreshes everything outside the markers. Keep the marker
+> comments intact when editing.
 
+<!-- BEGIN KIT-LOCAL: project-context -->
 This is the **agentive-starter-kit** project — the starter kit itself,
 the upstream source for agentive project tooling:
 
@@ -63,6 +70,7 @@ the upstream source for agentive project tooling:
   (MOSS-, SWP-, LBL-) outside example blocks
 - The untracked `.kit/adversarial/` directory is user-owned — never
   stage or delete it
+<!-- END KIT-LOCAL: project-context -->
 
 ## Repository Topology
 
@@ -191,7 +199,12 @@ For each change:
 > hydration), CMS/MCP tool distinctions, and anything an implementer
 > coming in cold would get wrong about this stack. Filled for the kit
 > repo below.
+>
+> Everything between the `KIT-LOCAL: stack-notes` markers below is
+> consumer-owned and is overwritten/preserved by `bootstrap-consumer.sh`
+> exactly like Project Context above. Keep the marker comments intact.
 
+<!-- BEGIN KIT-LOCAL: stack-notes -->
 - **Test/lint loop**: `pytest` (fast suite also runs as a pre-commit
   hook), `python3 scripts/core/pattern_lint.py <files>` for DK rules,
   `black` (line-length 88) + `isort` (black profile) + `flake8`
@@ -211,6 +224,7 @@ For each change:
   `.adversarial/evaluators/` (NOT `.kit/adversarial/`)
 - **Task lifecycle**: `./scripts/core/project start|move|complete
   <KIT-NNNN>` moves task files between status folders
+<!-- END KIT-LOCAL: stack-notes -->
 
 ## Phase 4: Self-Review (GATE)
 
