@@ -1,6 +1,6 @@
 # KIT-0033: Make planner + feature-developer truly portable downstream
 
-**Status**: In Review
+**Status**: Done
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 4-8 hours
