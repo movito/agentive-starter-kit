@@ -56,6 +56,12 @@ if [ ! -d "$TARGET" ]; then
     exit 1
 fi
 TARGET="$(cd "$TARGET" && pwd)"
+if [ "$TARGET" = "$PROJECT_ROOT" ]; then
+    echo "Error: target is the kit source repo ($PROJECT_ROOT)."
+    echo "   bootstrap-consumer.sh provisions a *consumer* checkout; running it"
+    echo "   against the kit itself would rsync/sweep its own files. Aborting."
+    exit 1
+fi
 PROJECT_NAME="$(basename "$TARGET")"
 
 if [ "$KIT_ENABLED" -eq 1 ]; then

@@ -78,6 +78,17 @@ class TestReplaceRegion:
         with pytest.raises(KeyError):
             km.replace_region(SAMPLE, "nope", "x")
 
+    def test_replaces_every_occurrence_of_a_name(self):
+        # A malformed file with two same-named regions: both must update,
+        # not just the first (no silent skip).
+        dupe = (
+            "<!-- BEGIN KIT-LOCAL: r -->\nold-1\n<!-- END KIT-LOCAL: r -->\n"
+            "<!-- BEGIN KIT-LOCAL: r -->\nold-2\n<!-- END KIT-LOCAL: r -->\n"
+        )
+        out = km.replace_region(dupe, "r", "NEW")
+        assert out.count("NEW") == 2
+        assert "old-1" not in out and "old-2" not in out
+
 
 class TestMerge:
     def test_fresh_fills_placeholders(self):
@@ -142,6 +153,12 @@ class TestDefaultPlaceholders:
         for needle in ("agentive-starter-kit", "KIT-NNNN", "pytest-fast", "DK rules"):
             assert needle not in blob
 
+    @pytest.mark.parametrize("name", ["", "---", "___", "  "])
+    def test_blank_name_falls_back_to_readable_title(self, name):
+        ph = km.default_placeholders(name)
+        assert "**Your Project**" in ph["project-context"]
+        assert "****" not in ph["project-context"]
+
 
 class TestRealAgentFiles:
     """The shipped agents must expose the expected regions and round-trip."""
@@ -167,3 +184,99 @@ class TestRealAgentFiles:
         for name in km.find_regions(text):
             out = km.replace_region(out, name, km.extract_region(text, name))
         assert out == text
+
+
+class TestCLI:
+    """Exercise the argparse CLI surface (main + _cmd_* handlers)."""
+
+    def _write(self, path, text):
+        path.write_text(text, encoding="utf-8")
+        return str(path)
+
+    def test_merge_fresh_with_project_name(self, tmp_path):
+        up = self._write(tmp_path / "up.md", SAMPLE)
+        out = str(tmp_path / "out.md")
+        rc = km.main(
+            ["merge", "--upstream", up, "--out", out, "--project-name", "demo"]
+        )
+        assert rc == 0
+        merged = (tmp_path / "out.md").read_text(encoding="utf-8")
+        assert "**Demo**" in km.extract_region(merged, "project-context")
+
+    def test_merge_rebootstrap_preserves_consumer(self, tmp_path):
+        up = self._write(tmp_path / "up.md", SAMPLE)
+        consumer_text = km.replace_region(SAMPLE, "project-context", "KEEP")
+        cons = self._write(tmp_path / "cons.md", consumer_text)
+        out = str(tmp_path / "out.md")
+        rc = km.main(
+            [
+                "merge",
+                "--upstream",
+                up,
+                "--out",
+                out,
+                "--consumer",
+                cons,
+                "--project-name",
+                "demo",
+            ]
+        )
+        assert rc == 0
+        merged = (tmp_path / "out.md").read_text(encoding="utf-8")
+        assert km.extract_region(merged, "project-context") == "KEEP"
+
+    def test_merge_missing_consumer_path_is_ignored(self, tmp_path):
+        up = self._write(tmp_path / "up.md", SAMPLE)
+        out = str(tmp_path / "out.md")
+        rc = km.main(
+            [
+                "merge",
+                "--upstream",
+                up,
+                "--out",
+                out,
+                "--consumer",
+                str(tmp_path / "nope.md"),
+                "--project-name",
+                "demo",
+            ]
+        )
+        assert rc == 0  # absent consumer file falls back to placeholders
+
+    def test_extract_prints_body(self, tmp_path, capsys):
+        f = self._write(tmp_path / "a.md", SAMPLE)
+        rc = km.main(["extract", f, "project-context"])
+        assert rc == 0
+        assert capsys.readouterr().out == "ASK content here\n- a bullet"
+
+    def test_extract_missing_region_returns_1(self, tmp_path):
+        f = self._write(tmp_path / "a.md", SAMPLE)
+        assert km.main(["extract", f, "nope"]) == 1
+
+    def test_replace_from_content_file(self, tmp_path):
+        f = self._write(tmp_path / "a.md", SAMPLE)
+        cf = self._write(tmp_path / "c.txt", "REPLACED")
+        rc = km.main(["replace", f, "stack-notes", "--content-file", cf])
+        assert rc == 0
+        text = (tmp_path / "a.md").read_text(encoding="utf-8")
+        assert km.extract_region(text, "stack-notes") == "REPLACED"
+
+    def test_replace_from_stdin(self, tmp_path, monkeypatch):
+        import io
+
+        f = self._write(tmp_path / "a.md", SAMPLE)
+        monkeypatch.setattr("sys.stdin", io.StringIO("VIA-STDIN"))
+        rc = km.main(["replace", f, "stack-notes", "--stdin"])
+        assert rc == 0
+        text = (tmp_path / "a.md").read_text(encoding="utf-8")
+        assert km.extract_region(text, "stack-notes") == "VIA-STDIN"
+
+    def test_replace_missing_region_returns_1(self, tmp_path):
+        f = self._write(tmp_path / "a.md", SAMPLE)
+        assert km.main(["replace", f, "nope", "--content-file", f]) == 1
+
+    def test_regions_lists_names(self, tmp_path, capsys):
+        f = self._write(tmp_path / "a.md", SAMPLE)
+        rc = km.main(["regions", f])
+        assert rc == 0
+        assert capsys.readouterr().out.split() == ["project-context", "stack-notes"]

@@ -56,8 +56,17 @@ def _region_pattern(name: str) -> re.Pattern[str]:
 
 
 def find_regions(text: str) -> list[str]:
-    """Return the region names present in *text*, in document order."""
-    return BEGIN_RE.findall(text)
+    """Return the unique region names in *text*, in first-seen order.
+
+    Region names are expected to be unique within a file; duplicates are
+    de-duplicated here so callers iterate each name once (replace_region
+    rewrites every occurrence of a name regardless).
+    """
+    seen: list[str] = []
+    for name in BEGIN_RE.findall(text):
+        if name not in seen:
+            seen.append(name)
+    return seen
 
 
 def extract_region(text: str, name: str) -> str | None:
@@ -71,8 +80,10 @@ def extract_region(text: str, name: str) -> str | None:
 def replace_region(text: str, name: str, new_content: str) -> str:
     """Return *text* with region *name*'s inner content replaced.
 
-    The marker lines are preserved. Raises KeyError if the region is
-    absent so callers fail loudly rather than silently no-op.
+    The marker lines are preserved. Every occurrence of the named region
+    is rewritten (a well-formed agent has exactly one, but duplicates must
+    not be silently skipped). Raises KeyError if the region is absent so
+    callers fail loudly rather than silently no-op.
     """
     pattern = _region_pattern(name)
     if pattern.search(text) is None:
@@ -81,7 +92,7 @@ def replace_region(text: str, name: str, new_content: str) -> str:
     def _sub(match: re.Match[str]) -> str:
         return match.group("begin") + new_content + match.group("end")
 
-    return pattern.sub(_sub, text, count=1)
+    return pattern.sub(_sub, text)
 
 
 def merge(
@@ -117,7 +128,9 @@ def default_placeholders(project_name: str) -> dict[str, str]:
     Derives a human title from the project directory name; the rest is
     explicit TODOs the consumer fills in. Contains no kit identity.
     """
-    title = project_name.replace("-", " ").replace("_", " ").title()
+    title = project_name.replace("-", " ").replace("_", " ").title().strip()
+    if not title:
+        title = "Your Project"
     project_context = (
         f"This is the **{title}** project.\n"
         "\n"
