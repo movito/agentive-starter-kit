@@ -15,6 +15,13 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 _MODULE_PATH = REPO_ROOT / "scripts" / "local" / "kit_markers.py"
 
+# kit_markers.py is an ASK-only bootstrap tool (scripts/local is not synced
+# downstream). The consumer sync also excludes this test, but guard the load
+# so a stray copy in a consumer checkout skips cleanly instead of erroring at
+# collection.
+if not _MODULE_PATH.exists():
+    pytest.skip("kit_markers.py present only in the kit repo", allow_module_level=True)
+
 _spec = importlib.util.spec_from_file_location("kit_markers", _MODULE_PATH)
 km = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(km)
@@ -122,6 +129,16 @@ class TestMerge:
     def test_no_consumer_no_placeholder_keeps_upstream(self):
         out = km.merge(SAMPLE, consumer=None, placeholders=None)
         assert out == SAMPLE
+
+    def test_malformed_consumer_marker_raises(self):
+        # Consumer file opened a region but the END marker was edited away;
+        # merge must fail fast rather than clobber the trapped content.
+        malformed = (
+            "<!-- BEGIN KIT-LOCAL: project-context -->\n"
+            "consumer content with no closing marker\n"
+        )
+        with pytest.raises(ValueError, match="malformed KIT-LOCAL region"):
+            km.merge(SAMPLE, consumer=malformed, placeholders={"project-context": "X"})
 
     def test_markerless_consumer_falls_back_to_placeholder(self):
         # A consumer stuck on a pre-consolidation agent has no markers;

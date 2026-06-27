@@ -114,6 +114,15 @@ def merge(
     for name in find_regions(upstream):
         if consumer is not None:
             preserved = extract_region(consumer, name)
+            if preserved is None and f"<!-- BEGIN KIT-LOCAL: {name} -->" in consumer:
+                # Marker opened but not parseable (e.g. END edited away).
+                # Fail fast rather than silently clobber the consumer's
+                # trapped content with a placeholder on re-bootstrap.
+                raise ValueError(
+                    f"malformed KIT-LOCAL region in consumer file: {name} "
+                    "(BEGIN marker present but region not parseable — "
+                    "missing or mismatched END marker?)"
+                )
             if preserved is not None:
                 result = replace_region(result, name, preserved)
                 continue

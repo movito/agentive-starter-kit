@@ -122,8 +122,12 @@ mkdir -p "$TARGET/scripts/optional"
     --exclude='sync-core-scripts.yml' --exclude='sync-to-linear.yml' \
     "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
-# tests/ — test infrastructure
-"${RSYNC_BASE[@]}" "$PROJECT_ROOT/tests/" "$TARGET/tests/"
+# tests/ — test infrastructure. Exclude test_kit_markers.py: it imports
+# scripts/local/kit_markers.py, an ASK-only bootstrap tool that is never
+# synced to consumers, so shipping the test would break consumer pytest
+# (and the pytest-fast pre-commit hook) at collection time.
+"${RSYNC_BASE[@]}" --exclude='test_kit_markers.py' \
+    "$PROJECT_ROOT/tests/" "$TARGET/tests/"
 
 # Top-level files (only if they don't exist in target)
 for f in pyproject.toml .gitignore .pre-commit-config.yaml .env.template .coderabbitignore conftest.py; do
