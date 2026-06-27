@@ -47,10 +47,13 @@ def _region_pattern(name: str) -> re.Pattern[str]:
     extract/replace round-trip is byte-identical.
     """
     esc = re.escape(name)
+    # \r?\n so files with CRLF line endings (Windows / git autocrlf) parse
+    # too. The newline is captured inside begin/end and re-emitted verbatim,
+    # and the body group is preserved byte-for-byte regardless of ending.
     return re.compile(
-        r"(?P<begin><!-- BEGIN KIT-LOCAL: " + esc + r" -->\n)"
+        r"(?P<begin><!-- BEGIN KIT-LOCAL: " + esc + r" -->\r?\n)"
         r"(?P<body>.*?)"
-        r"(?P<end>\n<!-- END KIT-LOCAL: " + esc + r" -->)",
+        r"(?P<end>\r?\n<!-- END KIT-LOCAL: " + esc + r" -->)",
         re.DOTALL,
     )
 

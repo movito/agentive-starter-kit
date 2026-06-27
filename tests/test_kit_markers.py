@@ -140,6 +140,16 @@ class TestMerge:
         with pytest.raises(ValueError, match="malformed KIT-LOCAL region"):
             km.merge(SAMPLE, consumer=malformed, placeholders={"project-context": "X"})
 
+    def test_crlf_consumer_is_parsed_and_preserved(self):
+        # A consumer agent with CRLF line endings must still parse, so
+        # re-bootstrap preserves its content instead of aborting as malformed.
+        consumer = km.replace_region(SAMPLE, "project-context", "CRLF KEEP")
+        crlf = consumer.replace("\n", "\r\n")
+        assert km.find_regions(crlf) == ["project-context", "stack-notes"]
+        assert km.extract_region(crlf, "project-context") == "CRLF KEEP"
+        out = km.merge(SAMPLE, consumer=crlf, placeholders=None)
+        assert km.extract_region(out, "project-context") == "CRLF KEEP"
+
     def test_markerless_consumer_falls_back_to_placeholder(self):
         # A consumer stuck on a pre-consolidation agent has no markers;
         # the region must seed from the placeholder, NOT inherit the
