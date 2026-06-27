@@ -55,11 +55,24 @@ APPROVED with a green check-run and zero open threads.
   the loop). Put it in a scripting guideline (e.g. `.kit/context/workflows/` or a
   `docs/` scripting-conventions note) so future bootstrap/sync scripts follow it.
 
+- **F4 — Preflight Gate 1 (CI): distinguish "not yet registered" from "failed"**
+  *(from the KIT-0032 retro)*. Immediately after a push, `preflight-check.sh`
+  Gate 1 reports "no CI runs found for latest commit" and reads as a **FAIL**,
+  when in fact GitHub simply has not registered the workflow runs yet (observed
+  twice on KIT-0032 PR #56, both false alarms). Treat "no runs found for the head
+  SHA" as a distinct **PENDING/UNKNOWN** state — not FAIL — optionally with a
+  short bounded re-poll (a few seconds) before reporting. A genuine CI failure
+  (a run that completed with `conclusion != success`) must still FAIL. Shares the
+  same false-negative theme as F1/F2 and the same file.
+
 ### Non-Functional Requirements
 
 - **N1**: F1 must not weaken the gate for genuinely un-reviewed PRs — a PR with no
   CodeRabbit review at all, or with unresolved threads, must still FAIL.
 - **N2**: No new dependencies; preflight stays shell + `gh`.
+- **N3**: F4 must not let a real CI failure pass as "pending" — only the
+  *absence of any run for the head SHA* maps to PENDING; a completed non-success
+  run still FAILs.
 
 ## Acceptance Criteria
 
@@ -73,6 +86,8 @@ APPROVED with a green check-run and zero open threads.
   must exclude its `scripts/local/` dependency" item
 - [ ] A scripting guideline documents the temp-then-commit two-pass pattern with a
   short before/after example
+- [ ] Gate 1 reports PENDING/UNKNOWN (not FAIL) when no CI run exists yet for the
+  head SHA, and still FAILs on a completed non-success run
 - [ ] Any preflight logic change has test coverage (mock `gh` output) if the script
   has an existing test harness; otherwise a documented manual verification
 
@@ -86,7 +101,9 @@ APPROVED with a green check-run and zero open threads.
 
 ## Notes
 
-- Source: `.kit/context/retros/KIT-0033-retro.md` (Process Actions).
+- Source: `.kit/context/retros/KIT-0033-retro.md` (F1–F3 Process Actions) and
+  `.kit/context/retros/KIT-0032-retro.md` (F4 — preflight Gate 1). F4 was added
+  here rather than in KIT-0035 so all `preflight-check.sh` changes land together.
 - F1 is the priority and is well-scoped/ready; F2 and F3 are doc/checklist changes
   and could be split out if the planner prefers smaller PRs.
 - A fourth, lower-value retro idea (express `kit_markers.py` test-coverage

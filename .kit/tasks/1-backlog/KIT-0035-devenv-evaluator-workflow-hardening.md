@@ -1,0 +1,100 @@
+# KIT-0035: Dev-env & evaluator-workflow hardening (KIT-0032 retro)
+
+**Status**: Backlog
+**Priority**: medium
+**Assigned To**: unassigned
+**Estimated Effort**: 2-4 hours
+**Created**: 2026-06-27
+**Target Completion**: TBD
+**Linear ID**: (automatically backfilled after first sync)
+
+## Related Tasks
+
+**Parent**: KIT-0032 (build upgrader agent) — surfaced these in retro
+**Related**: KIT-0034 (preflight/bootstrap hardening) — the preflight Gate-1
+follow-up from this same retro was folded into KIT-0034 §F4, not duplicated here.
+
+## Overview
+
+The KIT-0032 retro (`.kit/context/retros/KIT-0032-retro.md`) produced five
+process/tooling follow-ups. One (preflight Gate 1 pending-vs-failed) went to
+KIT-0034 since that task already hardens preflight. The remaining four are
+collected here. They are unrelated in code but share a theme: removing
+developer-experience friction that cost real time during KIT-0032 — a phantom CI
+failure, a mid-session evaluator blocker, an avoidable bot-round cascade, and a
+brittle-grep gap between the upgrader agent and the guide it mirrors.
+
+## Requirements
+
+### Functional Requirements
+
+- **F1 — venv tool-version drift warning in `ci-check.sh`** *(highest value)*.
+  KIT-0032 hit a *phantom* Black failure: the local `.venv` carried Black
+  `23.12.1` while `pyproject.toml` pins `26.x`, so `ci-check.sh` (which activates
+  `.venv`) reformatted `tests/test_pattern_lint.py` and failed, while the
+  pinned/CI Black considered it clean — on a markdown-only change that could not
+  affect Black. Add a cheap preflight in `ci-check.sh`: compare the active
+  `black --version` against the `pyproject.toml` pin and, on mismatch, print a
+  one-line warning ("venv Black X differs from pinned Y — run
+  `pip install -e \".[dev]\"`") **before** the formatting step, so a stale venv
+  reads as an environment issue, not a code failure. Consider extending to isort
+  if cheap.
+
+- **F2 — Document the `claude-code` evaluator's `ANTHROPIC_API_KEY` need**. The
+  Phase-7 evaluator trio's `claude-code` (Anthropic) evaluator silently failed
+  mid-session because `ANTHROPIC_API_KEY` was commented out in `.env`. Add a note
+  to the evaluator docs (`.adversarial/evaluators/README.md` or the Phase-7
+  / code-review-evaluator skill) that the `claude-code` evaluator requires the key
+  uncommented in `.env`, so it's known up front rather than discovered as a
+  blocker. (Do not add the key anywhere — doc only.)
+
+- **F3 — Evaluate evaluator-trio-before-PR ordering for doc-heavy tasks**. In
+  KIT-0032, running Phase 7 (evaluator trio) *after* opening the PR meant each
+  evaluator-driven rewrite triggered a fresh bot round (4 rounds total for a
+  single doc file). Evaluate whether, for documentation/agent-spec deliverables,
+  the feature-developer workflow should run the evaluator trio **before** PR open
+  (Phase 7 → 5/6) to collapse bot cycles. Output: a recommendation + a small
+  workflow-doc amendment if adopted — **not** an unconditional reorder (code-heavy
+  tasks still benefit from CI/bots first). Decision-only until the planner agrees.
+
+- **F4 — Harden the brittle greps in `docs/PLUGIN-UPGRADE-GUIDE.md`**. All three
+  Phase-7 evaluators independently flagged brittle output-matching in the upgrader
+  agent (ANSI colours, URL-form marketplace source line, `@` vs `(source)` row
+  format, case-sensitive flat-ref grep, `grep -A8` Provenance window). These greps
+  are inherited **verbatim from the guide** — the agent must mirror the guide, so
+  the fix belongs in the guide, then the agent re-syncs. Make the guide's
+  detection patterns resilient (e.g. `GitHub.*movito/agentive-skills` rather than a
+  fixed-paren match) and update `.claude/agents/upgrader.md` to match in lockstep.
+  See the KIT-0032 evaluator review for the specific patterns:
+  `.kit/context/reviews/KIT-0032-evaluator-review.md` ("Follow-up to raise against
+  the guide").
+
+### Non-Functional Requirements
+
+- **N1**: No new dependencies; `ci-check.sh` stays shell + the existing toolchain.
+- **N2**: F1's warning must not fail the build on its own — it warns; the existing
+  Black step remains the gate.
+- **N3**: F4 keeps the guide as the source of truth; the agent never diverges from
+  it (KIT-0032 design rule: "if the agent and guide disagree, the guide wins").
+
+## Acceptance Criteria
+
+- [ ] `ci-check.sh` warns (does not fail) when active Black differs from the
+      `pyproject.toml` pin, naming the reinstall command
+- [ ] Evaluator docs state the `claude-code` evaluator needs `ANTHROPIC_API_KEY`
+      uncommented in `.env`
+- [ ] A written recommendation on evaluator-before-PR ordering for doc-heavy tasks
+      (with a workflow-doc amendment iff adopted)
+- [ ] `docs/PLUGIN-UPGRADE-GUIDE.md` detection greps made resilient, and
+      `.claude/agents/upgrader.md` re-synced to match
+- [ ] Any `ci-check.sh` logic change has test coverage if a harness exists, else a
+      documented manual check
+
+## Notes
+
+- Source: `.kit/context/retros/KIT-0032-retro.md` (Process Actions).
+- F1 is the highest-value, most self-contained item; F2/F3 are doc/decision work.
+  F4 can be split out (it touches the guide + agent, a different surface) if the
+  planner prefers smaller PRs.
+- The fifth retro action (preflight Gate 1 pending-vs-failed) lives in **KIT-0034
+  §F4** to keep all preflight changes in one PR.
