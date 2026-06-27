@@ -125,7 +125,10 @@ mkdir -p "$TARGET/scripts/optional"
 # tests/ — test infrastructure. Exclude test_kit_markers.py: it imports
 # scripts/local/kit_markers.py, an ASK-only bootstrap tool that is never
 # synced to consumers, so shipping the test would break consumer pytest
-# (and the pytest-fast pre-commit hook) at collection time.
+# (and the pytest-fast pre-commit hook) at collection time. The rm -f
+# sweep removes a stale copy from a pre-fix bootstrap — --ignore-existing
+# would otherwise leave the orphaned test behind in existing consumers.
+rm -f "$TARGET/tests/test_kit_markers.py"
 "${RSYNC_BASE[@]}" --exclude='test_kit_markers.py' \
     "$PROJECT_ROOT/tests/" "$TARGET/tests/"
 
