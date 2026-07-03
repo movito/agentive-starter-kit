@@ -1,7 +1,11 @@
 ---
 name: create-project
 description: Creates a new project from agentive-starter-kit — clean export, configuration, GitHub repo, and tooling
-model: claude-sonnet-4-6
+model: claude-sonnet-5
+version: 1.0.0
+origin: agentive-starter-kit
+last-updated: 2026-07-03
+created-by: "@movito"
 tools:
   - Read
   - Write

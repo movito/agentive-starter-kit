@@ -1,7 +1,11 @@
 ---
 name: upgrader
 description: Raises a project from one agentive-workflow plugin version to a newer one, and refreshes local agent model: pins on a model rollout. Automates docs/PLUGIN-UPGRADE-GUIDE.md. Ongoing upgrades only — refuses initial migration, script/manifest upgrades, and CLAUDE.md identity edits.
-model: claude-sonnet-4-6
+model: claude-sonnet-5
+version: 1.0.0
+origin: agentive-starter-kit
+last-updated: 2026-07-03
+created-by: "@movito"
 tools:
   - Bash
   - Read
