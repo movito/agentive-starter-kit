@@ -194,6 +194,10 @@ class TestRealAgentFiles:
         "rel,expected",
         [
             (".claude/agents/feature-developer.md", ["project-context", "stack-notes"]),
+            (
+                ".claude/agents/feature-developer-f5.md",
+                ["project-context", "stack-notes"],
+            ),
             (".claude/agents/planner.md", ["project-context"]),
         ],
     )
@@ -203,7 +207,11 @@ class TestRealAgentFiles:
 
     @pytest.mark.parametrize(
         "rel",
-        [".claude/agents/feature-developer.md", ".claude/agents/planner.md"],
+        [
+            ".claude/agents/feature-developer.md",
+            ".claude/agents/feature-developer-f5.md",
+            ".claude/agents/planner.md",
+        ],
     )
     def test_round_trip_identity(self, rel):
         text = (REPO_ROOT / rel).read_text(encoding="utf-8")
