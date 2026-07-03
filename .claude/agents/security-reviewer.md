@@ -1,7 +1,11 @@
 ---
 name: security-reviewer
 description: Security analysis and hardening specialist
-model: claude-opus-4-6
+model: claude-opus-4-8
+version: 1.0.0
+origin: agentive-starter-kit
+last-updated: 2026-07-03
+created-by: "@movito"
 tools:
   - Read
   - Grep
