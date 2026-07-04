@@ -1,6 +1,6 @@
 # KIT-0034: Harden preflight Gate 2 + bootstrap/self-review (KIT-0033 retro)
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 2-4 hours
