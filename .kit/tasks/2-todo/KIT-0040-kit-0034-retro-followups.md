@@ -1,7 +1,7 @@
 # KIT-0040: KIT-0034 retro follow-ups — preflight test harness, move-metadata pairing, kit_markers fixes
 
-**Status**: Backlog
-**Priority**: medium
+**Status**: Todo
+**Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 3-5 hours
 **Created**: 2026-07-05
@@ -108,3 +108,23 @@ unresolved on merged PR #58 since the KIT-0033 merge.
   paraphrase bot signals) is a planner process rule, not implementation
   work — codified in the planner agents' Recurring Footguns and memory, not
   here.
+
+## Evaluation (2026-07-05)
+
+`arch-review-fast` (gemini-2.5-flash): **RESTRUCTURE_NEEDED** — split into
+three tasks. Log:
+`.adversarial/logs/KIT-0040-kit-0034-retro-followups--arch-review-fast.md`.
+Planner disposition:
+
+- **Declined (task split)**: for a single-operator kit, three tickets for
+  one session of related retro follow-ups adds coordination overhead without
+  value; the sibling bundles (KIT-0034 with five requirements, KIT-0035 with
+  four) are scoped the same way and KIT-0034 shipped cleanly. All three
+  items share one theme (KIT-0034 retro debt), one assignee, one review
+  cycle.
+- **Accepted (the valid kernel — F3 is independently urgent)**: encoded as
+  PR sequencing instead of a split. **Implement F3 first**; if F1 or F2
+  grows or stalls, ship F3 as its own PR immediately (it fixes a silent
+  data-loss bug in consumer bootstraps) and let F1/F2 follow in a second
+  PR. Per-requirement completion stays visible in the acceptance criteria
+  either way.
