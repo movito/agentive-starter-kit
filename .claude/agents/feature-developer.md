@@ -224,6 +224,11 @@ For each change:
   `.adversarial/evaluators/` (NOT `.kit/adversarial/`)
 - **Task lifecycle**: `./scripts/core/project start|move|complete
   <KIT-NNNN>` moves task files between status folders
+- **Consumer test boundary**: any new test importing or reading
+  `scripts/local/` must be excluded from the consumer `tests/` rsync in
+  `bootstrap-consumer.sh` (both `--exclude` and the `rm -f` sweep) and
+  must module-skip when its dependency is absent (pattern:
+  `tests/test_kit_markers.py`)
 <!-- END KIT-LOCAL: stack-notes -->
 
 ## Phase 4: Self-Review (GATE)

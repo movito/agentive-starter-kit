@@ -1,7 +1,7 @@
 # KIT-0034: Harden preflight Gate 2 + bootstrap/self-review (KIT-0033 retro)
 
-**Status**: Backlog
-**Priority**: medium
+**Status**: In Progress
+**Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 2-4 hours
 **Created**: 2026-06-27
@@ -68,6 +68,18 @@ APPROVED with a green check-run and zero open threads.
   (a run that completed with `conclusion != success`) must still FAIL. Shares the
   same false-negative theme as F1/F2 and the same file.
 
+- **F5 — Bootstrap KIT-LOCAL marker-membership test** *(from the 2026-07-04
+  session retro)*: add a test asserting that every `.claude/agents/*.md`
+  containing `KIT-LOCAL` markers is listed in BOTH `KIT_AGENTS` and
+  `AGENT_EXCLUDES` in `scripts/local/bootstrap-consumer.sh`. This mechanically
+  catches the class of bug BugBot found on PR #66 (new marker-bearing agent not
+  wired into bootstrap → kit identity leaks to fresh consumers) and the
+  `--no-kit` prune gap CodeRabbit found on PR #68. Since `KIT_AGENTS` is now
+  single-sourced and also drives the `--no-kit` prune, one membership assertion
+  covers copy-exclusion, marker-merge, and opt-out removal together. Note: this
+  test imports/reads `scripts/local/` content, so per F2 it must itself be
+  excluded from the consumer `tests/` rsync.
+
 ### Non-Functional Requirements
 
 - **N1**: F1 must not weaken the gate for genuinely un-reviewed PRs — a PR with no
@@ -93,6 +105,9 @@ APPROVED with a green check-run and zero open threads.
   head SHA, and still FAILs on a completed non-success run
 - [ ] Any preflight logic change has test coverage (mock `gh` output) if the script
   has an existing test harness; otherwise a documented manual verification
+- [ ] A test asserts every KIT-LOCAL-marker-bearing agent file is present in both
+  `KIT_AGENTS` and `AGENT_EXCLUDES` in `bootstrap-consumer.sh`, and that test is
+  excluded from the consumer `tests/` rsync
 
 ## Test Plan
 
@@ -104,11 +119,35 @@ APPROVED with a green check-run and zero open threads.
 
 ## Notes
 
-- Source: `.kit/context/retros/KIT-0033-retro.md` (F1–F3 Process Actions) and
-  `.kit/context/retros/KIT-0032-retro.md` (F4 — preflight Gate 1). F4 was added
-  here rather than in KIT-0035 so all `preflight-check.sh` changes land together.
+- Source: `.kit/context/retros/KIT-0033-retro.md` (F1–F3 Process Actions),
+  `.kit/context/retros/KIT-0032-retro.md` (F4 — preflight Gate 1), and
+  `.kit/context/retros/SESSION-2026-07-04-agent-maintenance-retro.md` (F5 —
+  bootstrap marker-membership test). F4 was added here rather than in KIT-0035
+  so all `preflight-check.sh` changes land together; F5 was added here (per that
+  retro's own pointer) so all bootstrap-hardening lands together.
 - F1 is the priority and is well-scoped/ready; F2 and F3 are doc/checklist changes
   and could be split out if the planner prefers smaller PRs.
 - A fourth, lower-value retro idea (express `kit_markers.py` test-coverage
   expectations in the consumer manifest contract) is intentionally **out of scope**
   here — revisit only if the dual-audience test boundary causes further breakage.
+
+## Evaluation (2026-07-04)
+
+`arch-review-fast` (gemini-2.5-flash): **REVISION_SUGGESTED** — log:
+`.adversarial/logs/KIT-0034-preflight-bootstrap-hardening--arch-review-fast.md`.
+Planner disposition:
+
+- **Declined — "migrate preflight to Python"**: contradicts the deliberate N2
+  constraint (shell + `gh`, no new deps). `preflight-check.sh` is 412 lines; a
+  language migration is a separate architectural decision, not a hardening fix.
+  If a future task grows preflight further, revisit via ADR.
+- **Accepted — "invest in `gh` output mocking / validate parsed output"**:
+  folded into the existing test-coverage acceptance criterion. Note there is
+  currently NO test harness for `preflight-check.sh` or
+  `bootstrap-consumer.sh`, so the documented-manual-verification fallback
+  applies to gate logic; F5's marker-membership test IS automatable (pytest,
+  reads both files as text).
+- **Noted — "declarative dual-audience boundary config"**: valid long-term
+  idea; overlaps KIT-0026/KIT-0031 territory. Out of scope here.
+- **Accepted — F3 pattern must be prominently documented**: already the F3
+  requirement; no change.
