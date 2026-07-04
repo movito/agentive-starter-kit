@@ -92,15 +92,15 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 
 # .claude/ — implementation agents, commands, skills, settings.
 # Reviewer agents stay builder-only. The consumer-customizable marker-bearing
-# agents (planner.md, feature-developer.md, feature-developer-f5.md) are
-# excluded here and handled by the marker-merge step below — rsync's
-# --ignore-existing can neither fill their KIT-LOCAL regions for a fresh
-# consumer (it would leak the kit's own Project Context / Stack Notes) nor
-# refresh structure for an existing one. With --no-kit they are dropped
-# entirely. Keep this list in sync with KIT_AGENTS below.
+# agents (planner.md, planner-f5.md, feature-developer.md,
+# feature-developer-f5.md) are excluded here and handled by the marker-merge
+# step below — rsync's --ignore-existing can neither fill their KIT-LOCAL
+# regions for a fresh consumer (it would leak the kit's own Project Context /
+# Stack Notes) nor refresh structure for an existing one. With --no-kit they
+# are dropped entirely. Keep this list in sync with KIT_AGENTS below.
 AGENT_EXCLUDES=(--exclude='code-reviewer.md' --exclude='document-reviewer.md' --exclude='security-reviewer.md' \
-                --exclude='planner.md' --exclude='feature-developer.md' \
-                --exclude='feature-developer-f5.md')
+                --exclude='planner.md' --exclude='planner-f5.md' \
+                --exclude='feature-developer.md' --exclude='feature-developer-f5.md')
 
 # Sweep retired agent variants from a prior bootstrap before rsync; --ignore-existing
 # would otherwise leave legacy planner2/3 + feature-developer-v3/v6/v7 alongside the
@@ -218,7 +218,7 @@ if [ "$KIT_ENABLED" -eq 1 ]; then
     # once every merge succeeds are the temp files moved into place.
     # Keep this list in sync with AGENT_EXCLUDES above: every marker-bearing
     # agent must be BOTH rsync-excluded and marker-merged here.
-    KIT_AGENTS=(planner.md feature-developer.md feature-developer-f5.md)
+    KIT_AGENTS=(planner.md planner-f5.md feature-developer.md feature-developer-f5.md)
     # Clear any stale temp file left by a previously aborted merge pass.
     rm -f "$TARGET/.claude/agents/"*.kit-merge.tmp
     for agent in "${KIT_AGENTS[@]}"; do

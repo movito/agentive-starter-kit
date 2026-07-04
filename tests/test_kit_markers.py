@@ -199,6 +199,7 @@ class TestRealAgentFiles:
                 ["project-context", "stack-notes"],
             ),
             (".claude/agents/planner.md", ["project-context"]),
+            (".claude/agents/planner-f5.md", ["project-context"]),
         ],
     )
     def test_regions_present(self, rel, expected):
@@ -211,6 +212,7 @@ class TestRealAgentFiles:
             ".claude/agents/feature-developer.md",
             ".claude/agents/feature-developer-f5.md",
             ".claude/agents/planner.md",
+            ".claude/agents/planner-f5.md",
         ],
     )
     def test_round_trip_identity(self, rel):
