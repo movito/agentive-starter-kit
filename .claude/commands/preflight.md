@@ -1,10 +1,10 @@
 ---
 description: Check all 7 completion gates before requesting human review
 argument-hint: "[optional --pr PR_NUMBER --task TASK_ID --repo owner/name]"
-version: 1.1.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-04-20
+last-updated: 2026-07-04
 created-by: "@movito with planner2"
 ---
 
@@ -35,7 +35,15 @@ Override with `--repo owner/name` if needed:
 ./scripts/core/preflight-check.sh $ARGUMENTS
 ```
 
-The script outputs structured `GATE:<number>:<name>:PASS|FAIL:<detail>` lines and exits 0 (all pass) or 1 (any fail).
+The script outputs structured `GATE:<number>:<name>:PASS|FAIL|PENDING:<detail>` lines
+and exits 0 (all pass), 1 (any fail), or 2 (no failures, but at least one gate PENDING).
+
+**PENDING** (Gate 1 only, KIT-0034): CI runs are not yet registered for the head
+SHA, or are still executing — GitHub takes a few seconds to register runs after a
+push. PENDING is not a failure verdict; re-run preflight shortly (or use
+`/wait-for-bots` first) instead of treating it as a CI failure. Note: when
+no runs are registered yet, the script re-polls briefly before reporting,
+so a preflight run may block for up to ~10 seconds.
 
 ## Step 2: Present results
 
@@ -54,8 +62,11 @@ Parse the `GATE:` lines and format as a PASS/FAIL table:
 ### Verdict
 
 - If all 7 pass: **READY** — proceed with review handoff (move to `4-in-review`, notify user)
+- If no gate fails but one is PENDING: **NOT READY YET (pending)** — wait briefly
+  and re-run preflight; do not report a CI failure
 - If any fail: **NOT READY (N gates failing)** — list prescriptive actions for each failing gate:
   - Gate 1 fails: "Run `/check-ci` and fix failures"
+  - Gate 1 PENDING: "CI not registered/still running — re-run preflight in a minute"
   - Gate 2 fails: "Wait for CodeRabbit (1-2 min) or run `/check-bots`"
   - Gate 3 fails: "Wait for BugBot (4-6 min) or run `/check-bots`"
   - Gate 4 fails: "Run `/triage-threads` to resolve open threads" — but first

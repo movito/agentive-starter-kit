@@ -87,6 +87,7 @@ See `.kit/templates/AGENT-TEMPLATE.md` for creating new agents.
 | Workflow freeze | `.kit/context/workflows/WORKFLOW-FREEZE-POLICY.md` |
 | Coverage | `.kit/context/workflows/COVERAGE-WORKFLOW.md` |
 | Task completion | `.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md` |
+| Atomic multi-file scripts | `.kit/context/workflows/TEMP-THEN-COMMIT-PATTERN.md` |
 
 ## Key Scripts
 

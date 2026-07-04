@@ -1,10 +1,10 @@
 ---
 description: Self-review pass after tests pass but before committing — systematic input boundary audit that catches issues TDD misses
 user-invocable: false
-version: 1.0.0
+version: 1.1.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-07-04
 created-by: "@movito with planner2"
 ---
 
@@ -93,6 +93,8 @@ Read every function in the file you changed (not just the ones you wrote):
 5. **Early-return ordering**: For each early-return path, verify it doesn't block a cheaper or more important early-return that should come first. Example: validating tools (cheap, may short-circuit) should come before resolving PR (expensive subprocess call).
 
 6. **Module documentation**: If you changed a module's public API, parameters, or invariants, check if the module has a documentation file or contract (e.g., a module-level CLAUDE.md, README, or docstring). Update it if the public interface changed. When adding a breaking-change trigger that references another module, verify the inverse trigger exists in that module's documentation too.
+
+7. **Consumer-sync test boundary (kit repo)**: any new test that imports or reads from `scripts/local/` (which is NOT synced to consumers) must be excluded from the consumer `tests/` rsync in `scripts/local/bootstrap-consumer.sh` (both the `--exclude` and the stale-copy `rm -f` sweep), and must module-skip when its dependency is absent — see `tests/test_kit_markers.py` for the pattern. Shipping such a test unexcluded breaks consumer pytest at collection time (both bots caught this on KIT-0033).
 
 ## Step 4: Test assertion audit
 

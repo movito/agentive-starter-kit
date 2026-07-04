@@ -130,14 +130,17 @@ mkdir -p "$TARGET/scripts/optional"
     --exclude='sync-core-scripts.yml' --exclude='sync-to-linear.yml' \
     "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
-# tests/ — test infrastructure. Exclude test_kit_markers.py: it imports
-# scripts/local/kit_markers.py, an ASK-only bootstrap tool that is never
-# synced to consumers, so shipping the test would break consumer pytest
-# (and the pytest-fast pre-commit hook) at collection time. The rm -f
-# sweep removes a stale copy from a pre-fix bootstrap — --ignore-existing
-# would otherwise leave the orphaned test behind in existing consumers.
-rm -f "$TARGET/tests/test_kit_markers.py"
+# tests/ — test infrastructure. Exclude tests that import or read
+# scripts/local/ content (kit_markers.py, bootstrap-consumer.sh):
+# scripts/local is an ASK-only layer that is never synced to consumers,
+# so shipping these tests would break consumer pytest (and the
+# pytest-fast pre-commit hook) at collection time. The rm -f sweep
+# removes stale copies from a pre-fix bootstrap — --ignore-existing
+# would otherwise leave the orphaned tests behind in existing consumers.
+rm -f "$TARGET/tests/test_kit_markers.py" \
+      "$TARGET/tests/test_bootstrap_consumer.py"
 "${RSYNC_BASE[@]}" --exclude='test_kit_markers.py' \
+    --exclude='test_bootstrap_consumer.py' \
     "$PROJECT_ROOT/tests/" "$TARGET/tests/"
 
 # Top-level files (only if they don't exist in target)
