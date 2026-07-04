@@ -91,13 +91,16 @@ echo "1/4 Copying implementation scaffolding..."
 RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --exclude='__pycache__/' --exclude='.DS_Store')
 
 # .claude/ — implementation agents, commands, skills, settings.
-# Reviewer agents stay builder-only. The two consumer-customizable V2
-# agents (planner.md, feature-developer.md) are excluded here and handled
-# by the marker-merge step below — rsync's --ignore-existing can neither
-# fill their KIT-LOCAL regions for a fresh consumer nor refresh structure
-# for an existing one. With --no-kit they are dropped entirely.
+# Reviewer agents stay builder-only. The consumer-customizable marker-bearing
+# agents (planner.md, feature-developer.md, feature-developer-f5.md) are
+# excluded here and handled by the marker-merge step below — rsync's
+# --ignore-existing can neither fill their KIT-LOCAL regions for a fresh
+# consumer (it would leak the kit's own Project Context / Stack Notes) nor
+# refresh structure for an existing one. With --no-kit they are dropped
+# entirely. Keep this list in sync with KIT_AGENTS below.
 AGENT_EXCLUDES=(--exclude='code-reviewer.md' --exclude='document-reviewer.md' --exclude='security-reviewer.md' \
-                --exclude='planner.md' --exclude='feature-developer.md')
+                --exclude='planner.md' --exclude='feature-developer.md' \
+                --exclude='feature-developer-f5.md')
 
 # Sweep retired agent variants from a prior bootstrap before rsync; --ignore-existing
 # would otherwise leave legacy planner2/3 + feature-developer-v3/v6/v7 alongside the
@@ -200,7 +203,7 @@ echo "2/4 Provisioning kit workflow..."
 if [ "$KIT_ENABLED" -eq 1 ]; then
     mkdir -p "$TARGET/.claude/agents"
 
-    # Marker-merge the two consumer-customizable V2 agents. A fresh
+    # Marker-merge the consumer-customizable marker-bearing agents. A fresh
     # consumer gets KIT-LOCAL regions filled with project placeholders;
     # an existing consumer keeps its filled-in regions while picking up
     # upstream structure outside the markers. --project-name is always
@@ -208,12 +211,14 @@ if [ "$KIT_ENABLED" -eq 1 ]; then
     # a pre-consolidation copy) gets clean placeholders rather than the
     # kit's own Project Context / Stack Notes content.
     #
-    # Two-pass for atomicity: merge BOTH agents to temp files first, so a
-    # failure on the second (e.g. malformed consumer markers → ValueError
+    # Two-pass for atomicity: merge ALL agents to temp files first, so a
+    # failure on any one (e.g. malformed consumer markers → ValueError
     # under `set -e`) aborts before any destination is overwritten — never
-    # leaving a consumer with one agent updated and the other stale. Only
+    # leaving a consumer with some agents updated and others stale. Only
     # once every merge succeeds are the temp files moved into place.
-    KIT_AGENTS=(planner.md feature-developer.md)
+    # Keep this list in sync with AGENT_EXCLUDES above: every marker-bearing
+    # agent must be BOTH rsync-excluded and marker-merged here.
+    KIT_AGENTS=(planner.md feature-developer.md feature-developer-f5.md)
     # Clear any stale temp file left by a previously aborted merge pass.
     rm -f "$TARGET/.claude/agents/"*.kit-merge.tmp
     for agent in "${KIT_AGENTS[@]}"; do
