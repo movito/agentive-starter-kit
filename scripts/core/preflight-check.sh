@@ -246,8 +246,10 @@ while [ "$CI_ATTEMPT" -le "$CI_POLL_ATTEMPTS" ]; do
     # Reset per attempt so a failed refetch can't reuse a stale filter result
     LATEST_RUNS="[]"
     RUN_COUNT=0
+    # Query by commit (not a branch window) so runs for the head SHA can't
+    # be pushed out of --limit by older reruns piling up on the branch.
     # shellcheck disable=SC2086
-    CI_RUNS=$(gh $GH_REPO_ARG run list --branch "$BRANCH" --limit 10 --json status,conclusion,workflowName,event,headSha \
+    CI_RUNS=$(gh $GH_REPO_ARG run list --commit "$LATEST_SHA" --limit 10 --json status,conclusion,workflowName,event,headSha \
         --jq '[.[] | select(.event == "push" or .event == "pull_request")]' 2>/dev/null || true)
 
     if [ -n "$CI_RUNS" ] && [ "$CI_RUNS" != "[]" ]; then
@@ -282,6 +284,10 @@ else
 
         if [ "$WF_STATUS" = "completed" ] && [ "$WF_CONCLUSION" = "success" ]; then
             CI_DETAILS="${CI_DETAILS}${WF_NAME}: pass; "
+        elif [ "$WF_STATUS" = "completed" ] && { [ "$WF_CONCLUSION" = "skipped" ] || [ "$WF_CONCLUSION" = "neutral" ]; }; then
+            # GitHub treats skipped/neutral as success for dependent checks —
+            # a path-filtered or conditionally skipped workflow is not a failure
+            CI_DETAILS="${CI_DETAILS}${WF_NAME}: ${WF_CONCLUSION}; "
         elif [ "$WF_STATUS" = "in_progress" ] || [ "$WF_STATUS" = "queued" ]; then
             CI_DETAILS="${CI_DETAILS}${WF_NAME}: running; "
             CI_ALL_PASS=false

@@ -1,6 +1,6 @@
 # KIT-0034 Handoff — feature-developer
 
-**Task**: `.kit/tasks/2-todo/KIT-0034-preflight-bootstrap-hardening.md`
+**Task**: `.kit/tasks/3-in-progress/KIT-0034-preflight-bootstrap-hardening.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-04 (planner-f5)
 **Estimated effort**: 2–4 hours
