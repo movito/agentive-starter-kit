@@ -34,7 +34,8 @@ Exit-code contract (frozen by tests, documented in ``--help``):
   consumers needing finer discrimination read ``--report-json``, whose
   ``status`` field distinguishes ``drift`` from ``applied_with_warnings``.
 * ``2`` — usage error (unknown ``--tier``/``--only`` key, non-entitled tier).
-* ``3`` — source manifest missing or its schema is unrecognized.
+* ``3`` — source manifest missing/unrecognized, or the target manifest exists
+  but is corrupt (refusing to sync would silently reset ``opted_in``).
 * ``4`` — source tree unreadable.
 """
 
@@ -205,20 +206,30 @@ def load_source_manifest(source_root: Path) -> dict:
 
 
 def _read_target_manifest(target_root: Path) -> dict | None:
-    """Best-effort read of the target manifest. Missing → fresh consumer.
+    """Read the target manifest. Absent → fresh consumer; corrupt → loud fail.
 
-    Unlike the source manifest, the target's is read leniently: a fresh
-    consumer has none, and a consumer on an older schema should still get its
-    ``opted_in`` and prior entry set read where possible.
+    A missing manifest means a genuinely fresh consumer (returns ``None``). A
+    manifest that *exists* but cannot be parsed as a JSON object is a loud
+    failure (:class:`ManifestError`, exit 3): treating it as fresh would
+    silently reset the consumer's ``opted_in`` list and drop their opt-ins.
+    An older-but-valid dict schema is still read leniently.
     """
     manifest_path = target_root / MANIFEST_RELPATH
     if not manifest_path.is_file():
         return None
     try:
         data = _read_json(manifest_path)
-    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
-        return None
-    return data if isinstance(data, dict) else None
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError) as exc:
+        raise ManifestError(
+            f"target manifest exists but is unreadable: {manifest_path} ({exc}). "
+            "Fix or remove it — refusing to sync and silently reset opted_in."
+        ) from exc
+    if not isinstance(data, dict):
+        raise ManifestError(
+            f"target manifest is not a JSON object: {manifest_path}. "
+            "Fix or remove it — refusing to sync and silently reset opted_in."
+        )
+    return data
 
 
 def _all_entries(files_section: object) -> set[str]:
@@ -616,7 +627,10 @@ def sync(source: str | Path, target: str | Path, options: SyncOptions) -> SyncRe
 
     # ── Status determination ──
     if options.dry_run:
-        status = "drift" if content_changed else "clean"
+        # Drift mirrors what a real run would write: file content changes OR a
+        # manifest metadata change (core_version bump, partial_sync clear) that
+        # a non-dry run would persist. synced_at alone never counts as drift.
+        status = "drift" if should_write else "clean"
     else:
         if should_write:
             _apply(plan, new_manifest, target_root)
@@ -655,8 +669,8 @@ def _build_parser() -> argparse.ArgumentParser:
         epilog=(
             "Exit codes: 0 clean/applied; 1 drift (--dry-run) or applied with "
             "warnings (both mean a human should look — read --report-json to "
-            "distinguish); 2 usage error; 3 source manifest missing or "
-            "unrecognized; 4 source unreadable."
+            "distinguish); 2 usage error; 3 source manifest missing/"
+            "unrecognized or target manifest corrupt; 4 source unreadable."
         ),
     )
     parser.add_argument("--source", required=True, help="source (upstream) tree root")

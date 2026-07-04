@@ -185,6 +185,19 @@ class TestIdempotencyAndDryRun:
         assert report.would_bump_core_version is True
         assert report.would_set_partial_sync is False
 
+    def test_dry_run_flags_version_only_drift(self, source, target):
+        # Files identical, but upstream bumped core_version: a real run would
+        # rewrite the manifest, so dry-run must report drift (not clean).
+        sync(source, target, SyncOptions(is_kit=True))
+        newer = json.loads(json.dumps(BASE_MANIFEST))
+        newer["core_version"] = "2.0.0"
+        source2 = build_source(target.parent / "source2", manifest=newer)
+        report = sync(source2, target, SyncOptions(is_kit=True, dry_run=True))
+        assert report.added == []
+        assert report.modified == []
+        assert report.status == "drift"
+        assert report.would_bump_core_version is True
+
 
 # ── Partial sync + partial_sync marker ──────────────────────────────────────
 class TestPartialSync:
@@ -338,6 +351,18 @@ class TestErrors:
         _write(bad / "scripts" / ".core-manifest.json", "{not json")
         with pytest.raises(ManifestError):
             sync(bad, target, SyncOptions())
+
+    def test_corrupt_target_manifest_raises_not_silent_reset(self, source, target):
+        # A corrupt (not absent) target manifest must fail loudly rather than
+        # be treated as fresh — otherwise opted_in is silently reset to [].
+        _write(target / "scripts" / ".core-manifest.json", "{corrupt")
+        with pytest.raises(ManifestError):
+            sync(source, target, SyncOptions())
+
+    def test_non_object_target_manifest_raises(self, source, target):
+        _write(target / "scripts" / ".core-manifest.json", "[1, 2, 3]")
+        with pytest.raises(ManifestError):
+            sync(source, target, SyncOptions())
 
 
 # ── Exit-code contract (frozen) ─────────────────────────────────────────────
