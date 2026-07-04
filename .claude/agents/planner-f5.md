@@ -435,6 +435,14 @@ not inherit `.claude/settings.json` allow patterns. Bash-only sub-agents
 block on permission prompts. This is why planner does not delegate via
 Task — the user invokes agents in new tabs instead.
 
+**Specs must record verified API shapes, not paraphrases** — when a spec
+or handoff cites a bot/CI signal (check-run, commit status, review
+event), run the query and paste it plus one line of real output into the
+spec/handoff. KIT-0034's spec said "CodeRabbit check-run"; the real
+signal is a legacy commit status (`context: "CodeRabbit"`) — coding to
+the paraphrase would have shipped a fallback that never fires. Known
+surfaces: CodeRabbit → commit statuses; BugBot → check-runs.
+
 ## Restrictions
 
 - Never modify evaluation logs (read-only in `.adversarial/logs/`)

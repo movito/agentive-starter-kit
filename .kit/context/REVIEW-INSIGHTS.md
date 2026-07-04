@@ -81,6 +81,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Version Pinning for External Content**: Pin to tags by default, record commit hash for auditability (ASK-0029)
 - **Non-Intrusive Feature Flags**: New features should only activate for relevant scenarios (e.g., Python 3.13+ only) (ASK-0032)
 - **Tiered Error Messages**: Primary recommendation → alternatives → manual fallback (ASK-0032)
+- **Data-Shape Verification Before Coding**: When implementing against a bot/CI/API signal, capture real output first — KIT-0034's spec said "CodeRabbit check-run" but reality is a commit status; coding to the paraphrase would have shipped a fallback that never fires (KIT-0034)
+- **PATH-Stubbed Binary for Shell-Script Testing**: A fake `gh` shim on PATH running the *real* script against canned states is the cheapest credible verification for shell+CLI gate logic with no test harness — re-runs in seconds per fix round (KIT-0034; codification tracked in KIT-0040)
+- **Single Shared API Snapshot Across Related Checks**: One GraphQL fetch feeding preflight Gates 2/3/4 eliminated the race where the fallback and thread gate could disagree mid-run, and cut 3 API calls to 1 (KIT-0034)
 
 ### Anti-Patterns to Avoid
 
@@ -92,6 +95,7 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Splitting structural migrations into multiple PRs**: Mass directory moves + path rewrites create a half-migrated codebase between PRs that agents cannot navigate. Agents depend on hardcoded paths in prompts, handoff files, and CLAUDE.md — stale paths cause silent failures. Structural migrations must land atomically in a single branch/PR, even if large. The evaluator (arch-review) does not assess intermediate state viability — it only reviews the target architecture. The planner must catch this. (ASK-0044)
 - **Grep verification with only full-path patterns**: `grep -r 'old/path/'` misses bare directory name references (e.g., `"decisions"` in array literals, `exclude_path_parts`). Structural renames must also grep for bare directory names. (ASK-0047)
 - **Test fixtures with hardcoded paths**: `test_project_script.py` constructs fixtures with literal path strings (`docs/decisions`). When the real paths change, fixtures break. Consider deriving from constants. (ASK-0047)
+- **Merged PRs as stable verification fixtures**: retro-referenced PRs are snapshots, not fixtures — PR #58 drifted (2 new unresolved BugBot threads) and could no longer serve as the canonical Gate-2 false-negative case; PR #63 had to substitute. Verify a referenced PR still has the assumed shape before building a test plan on it. (KIT-0034)
 
 ---
 
@@ -104,6 +108,8 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **New Project Setup**: Run `./scripts/core/project setup` to create venv and install dependencies (ASK-0028)
 - **Evaluator Installation**: Run `./scripts/core/project install-evaluators` to add additional evaluation providers (ASK-0029)
 - **adversarial-workflow CLI requires `.adversarial/` at repo root**: The CLI (v0.9.9) hardcodes `.adversarial/` as its working directory. ASK-0044 moved it to `.kit/adversarial/` but this broke the CLI. Reverted: `.adversarial/` now lives at repo root again. Future move requires ADV-0053 (configurable dir) — tracked upstream at movito/adversarial-workflow#58. (ASK-0044 post-mortem)
+- **CodeRabbit reports via the legacy commit-status API (`context: "CodeRabbit"`), BugBot via check-runs**: any gate or tooling querying bot review state must hit the right surface for each bot — statuses primary for CodeRabbit, check-runs for BugBot. (KIT-0034)
+- **CodeRabbit re-flags stale bookkeeping paths on every task-status move**: `project move` changes the task folder but not `details_link` in agent-handoffs.json or handoff-file metadata; update them in the same commit as the move to preempt a bot round. Tooling fix tracked in KIT-0040. (KIT-0034)
 
 ---
 
@@ -113,4 +119,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-03-30 by planner (adversarial symlink gotcha added)*
+*Last updated: 2026-07-05 by planner-f5 (KIT-0034 extraction: bot API surfaces, stub-gh pattern, fixture drift)*

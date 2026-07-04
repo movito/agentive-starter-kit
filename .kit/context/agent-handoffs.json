@@ -1,19 +1,19 @@
 {
   "planner": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0034",
+    "status": "available",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "v0.8.0 plan agreed (kit-internal hardening; downstream upgrades deferred). KIT-0034 promoted to todo (+F5), evaluated (arch-review-fast, disposition in spec), handoff ready. Next in queue: KIT-0037/38/39 bundle, KIT-0035, ADR-0025 slim. Awaiting human verdicts: KIT-0032 (PR #56 merged), ASK-0048 (PR #45).",
-    "details_link": ".kit/tasks/4-in-review/KIT-0034-preflight-bootstrap-hardening.md",
-    "handoff_file": ".kit/context/KIT-0034-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0034 DONE (PR #69 merged 2026-07-05) + knowledge extracted to REVIEW-INSIGHTS.md; retro follow-ups tracked as KIT-0040 (backlog, incl. the 2 kit_markers bugs from PR #58 threads). v0.8.0 next in queue: KIT-0037/38/39 bundle, then KIT-0035, ADR-0025 slim. Awaiting human verdicts: KIT-0032 (PR #56 merged), ASK-0048 (PR #45).",
+    "details_link": ".kit/tasks/5-done/KIT-0034-preflight-bootstrap-hardening.md",
+    "handoff_file": null
   },
   "feature-developer": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0034",
+    "status": "idle",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "KIT-0034 (preflight Gate 2/1 + bootstrap hardening, F1-F5) ready for assignment. KIT-0032 implementation complete (PR #56 merged 2026-06-26, retro done) — task awaits human review verdict in 4-in-review.",
-    "details_link": ".kit/tasks/4-in-review/KIT-0034-preflight-bootstrap-hardening.md",
-    "handoff_file": ".kit/context/KIT-0034-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0034 complete (PR #69 merged 2026-07-05, retro done). Next assignment expected: KIT-0037/38/39 docs bundle once planner prepares the handoff.",
+    "details_link": ".kit/tasks/5-done/KIT-0034-preflight-bootstrap-hardening.md",
+    "handoff_file": null
   },
   "code-reviewer": {
     "status": "idle",

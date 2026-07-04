@@ -32,6 +32,13 @@ KIT-0026 remains valid for kit-to-kit sync; this task is the outbound
 project channel. If maintaining both proves redundant in practice, a future
 ADR can consolidate — out of scope here.
 
+> **Scope update (2026-07-04, planner)**: downstream migrations (suwinex,
+> moss) and the label-maker end-to-end gate are **deferred** — the operator's
+> priority is stabilizing the kit itself (v0.8.0 hardening arc) before
+> upgrading older projects. Remaining active item for this task: slim
+> KIT-ADR-0025 to the upgrader-agent form. Once that lands, this task parks
+> until the downstream-upgrade phase begins.
+
 ## Requirements
 
 ### 1. Spike: verify plugin agent support (gate for the rest)
