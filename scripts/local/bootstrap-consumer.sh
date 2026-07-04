@@ -92,15 +92,15 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 
 # .claude/ — implementation agents, commands, skills, settings.
 # Reviewer agents stay builder-only. The consumer-customizable marker-bearing
-# agents (planner.md, feature-developer.md, feature-developer-f5.md) are
-# excluded here and handled by the marker-merge step below — rsync's
-# --ignore-existing can neither fill their KIT-LOCAL regions for a fresh
-# consumer (it would leak the kit's own Project Context / Stack Notes) nor
-# refresh structure for an existing one. With --no-kit they are dropped
-# entirely. Keep this list in sync with KIT_AGENTS below.
+# agents (planner.md, planner-f5.md, feature-developer.md,
+# feature-developer-f5.md) are excluded here and handled by the marker-merge
+# step below — rsync's --ignore-existing can neither fill their KIT-LOCAL
+# regions for a fresh consumer (it would leak the kit's own Project Context /
+# Stack Notes) nor refresh structure for an existing one. With --no-kit they
+# are dropped entirely. Keep this list in sync with KIT_AGENTS below.
 AGENT_EXCLUDES=(--exclude='code-reviewer.md' --exclude='document-reviewer.md' --exclude='security-reviewer.md' \
-                --exclude='planner.md' --exclude='feature-developer.md' \
-                --exclude='feature-developer-f5.md')
+                --exclude='planner.md' --exclude='planner-f5.md' \
+                --exclude='feature-developer.md' --exclude='feature-developer-f5.md')
 
 # Sweep retired agent variants from a prior bootstrap before rsync; --ignore-existing
 # would otherwise leave legacy planner2/3 + feature-developer-v3/v6/v7 alongside the
@@ -200,6 +200,11 @@ echo
 # ─────────────────────────────────────────
 echo "2/4 Provisioning kit workflow..."
 
+# The consumer-customizable marker-bearing agents, single-sourced so the
+# kit-enabled path marker-merges them and the --no-kit path prunes them.
+# Keep in sync with AGENT_EXCLUDES above.
+KIT_AGENTS=(planner.md planner-f5.md feature-developer.md feature-developer-f5.md)
+
 if [ "$KIT_ENABLED" -eq 1 ]; then
     mkdir -p "$TARGET/.claude/agents"
 
@@ -216,9 +221,8 @@ if [ "$KIT_ENABLED" -eq 1 ]; then
     # under `set -e`) aborts before any destination is overwritten — never
     # leaving a consumer with some agents updated and others stale. Only
     # once every merge succeeds are the temp files moved into place.
-    # Keep this list in sync with AGENT_EXCLUDES above: every marker-bearing
-    # agent must be BOTH rsync-excluded and marker-merged here.
-    KIT_AGENTS=(planner.md feature-developer.md feature-developer-f5.md)
+    # (KIT_AGENTS is defined above so the --no-kit branch can prune the same
+    # set; every entry must also be rsync-excluded in AGENT_EXCLUDES.)
     # Clear any stale temp file left by a previously aborted merge pass.
     rm -f "$TARGET/.claude/agents/"*.kit-merge.tmp
     for agent in "${KIT_AGENTS[@]}"; do
@@ -258,7 +262,14 @@ if [ "$KIT_ENABLED" -eq 1 ]; then
 
     echo "  .kit/ skeleton ready (tasks/, context/, templates/)"
 else
-    echo "  Skipped (--no-kit): no .kit/ scaffold, no planner.md / feature-developer.md"
+    # --no-kit: prune any kit agents left by a prior kit-enabled bootstrap so
+    # the opt-out is truthful on existing consumers, not just fresh ones.
+    # (rsync above already excludes them, so this only removes pre-existing
+    # copies; rm -f is a no-op when absent.)
+    for agent in "${KIT_AGENTS[@]}"; do
+        rm -f "$TARGET/.claude/agents/$agent"
+    done
+    echo "  Skipped (--no-kit): pruned kit agents (planner*, feature-developer*), no .kit/ scaffold"
 fi
 echo
 
