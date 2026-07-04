@@ -39,6 +39,9 @@ APPROVED with a green check-run and zero open threads.
   Keep the strict SHA match as the primary signal; the above is the fallback so a
   green-everywhere PR doesn't read as failing. Mirror the logic for Gate 3
   (BugBot) if it shares the same SHA-exact assumption.
+  **Reconfirmed on KIT-0036 PR #63** (2026-07-04): Gate 2 false-negatived again
+  on the docs-only review-starter commit (check-run pass + APPROVED on an
+  earlier SHA + 0 threads). Second observation — raises priority.
 
 - **F2 — Self-review checklist: downstream-synced tests**: add an explicit item to
   the `self-review` skill (`.kit/skills/`) and/or the feature-developer Phase 4
