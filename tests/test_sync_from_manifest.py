@@ -509,6 +509,7 @@ class TestExitCodes:
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,  # non-zero exit codes are intentional and asserted
         )
         assert drift.returncode == 1, drift.stderr
 
@@ -526,6 +527,7 @@ class TestExitCodes:
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,  # non-zero exit codes are intentional and asserted
         )
         assert manifest_err.returncode == 3, manifest_err.stderr
 
@@ -658,6 +660,7 @@ class TestSelfSyncSubprocess:
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,  # non-zero exit codes are intentional and asserted
         )
         assert result.returncode == 0, result.stderr
         assert running_engine.read_text(encoding="utf-8") == modified_engine
