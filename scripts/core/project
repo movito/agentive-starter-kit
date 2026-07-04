@@ -104,6 +104,42 @@ def update_status_in_file(file_path: Path, new_status: str) -> bool:
         return False
 
 
+def _sync_coordination_metadata(
+    task_id: str, file_name: str, target_folder: str, project_dir: Path
+) -> None:
+    """Rewrite the moved task's path in coordination metadata (KIT-0040 F2).
+
+    A status move changes the task file's numbered folder, stranding stale
+    paths in .kit/context/agent-handoffs.json (details_link/handoff_file
+    values) and the task's HANDOFF-*.md files; CodeRabbit flags the drift
+    on every move. Only strings matching
+    .kit/tasks/<status-folder>/<this task's file name> are rewritten —
+    nothing else is touched. Failures warn and never block the already
+    completed move (CLI-layer error strategy).
+    """
+    context_dir = project_dir / ".kit" / "context"
+    if not context_dir.is_dir():
+        return
+
+    pattern = re.compile(r"\.kit/tasks/[0-9]+-[a-z-]+/" + re.escape(file_name))
+    new_path = f".kit/tasks/{target_folder}/{file_name}"
+
+    targets = [context_dir / "agent-handoffs.json"]
+    targets.extend(sorted(context_dir.glob(f"{task_id.upper()}-HANDOFF-*.md")))
+    for meta_file in targets:
+        if not meta_file.is_file():
+            continue
+        try:
+            content = meta_file.read_text(encoding="utf-8")
+            updated = pattern.sub(new_path, content)
+            if updated != content:
+                meta_file.write_text(updated, encoding="utf-8")
+                rel = meta_file.relative_to(project_dir)
+                print(f"🔗 Updated task path in {rel}")
+        except OSError as e:
+            print(f"⚠️  Could not update {meta_file.name}: {e}")
+
+
 def move_task(task_id: str, target_status: str, project_dir: Path) -> bool:
     """Move a task to a new folder and update its Status field."""
     # Normalize target status
@@ -130,6 +166,9 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> bool:
         print(f"ℹ️  Task already in {target_folder}")
         # Still update status field if needed
         update_status_in_file(task_file, linear_status)
+        # Re-running a move doubles as a repair action for metadata that
+        # drifted out of sync with the task's folder.
+        _sync_coordination_metadata(task_id, task_file.name, target_folder, project_dir)
         return True
 
     # Move file
@@ -146,6 +185,8 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> bool:
     # Update status field
     if update_status_in_file(target_path, linear_status):
         print(f"✏️  Updated: **Status**: {linear_status}")
+
+    _sync_coordination_metadata(task_id, target_path.name, target_folder, project_dir)
 
     print(f"✅ Task {task_id} is now {linear_status}")
     return True

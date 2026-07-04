@@ -5,6 +5,7 @@ Focus: install-evaluators command with mocked subprocess calls.
 """
 
 import importlib.util
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -888,3 +889,105 @@ class TestVerifyIdentityLeaks:
         verify = _project_module._verify_identity_leaks
         count = verify(tmp_path)
         assert count == 0
+
+
+class TestMoveTaskMetadataSync:
+    """KIT-0040 F2: task moves rewrite the task's path in coordination
+    metadata (agent-handoffs.json + HANDOFF files) instead of stranding
+    stale numbered-folder paths."""
+
+    TASK_FILE = "KIT-1234-sample-task.md"
+
+    def _setup_project(self, tmp_path):
+        tasks = tmp_path / ".kit" / "tasks"
+        for folder in ("2-todo", "3-in-progress", "5-done"):
+            (tasks / folder).mkdir(parents=True)
+        task = tasks / "2-todo" / self.TASK_FILE
+        task.write_text("# Task\n\n**Status**: Todo\n", encoding="utf-8")
+
+        context = tmp_path / ".kit" / "context"
+        context.mkdir(parents=True)
+        handoffs = {
+            "planner": {
+                "status": "handoff_ready",
+                "current_task": "KIT-1234",
+                "details_link": f".kit/tasks/2-todo/{self.TASK_FILE}",
+                "handoff_file": ".kit/context/KIT-1234-HANDOFF-feature-developer.md",
+            },
+            "other-agent": {
+                "status": "idle",
+                "current_task": None,
+                "details_link": ".kit/tasks/2-todo/KIT-0002-unrelated-task.md",
+            },
+        }
+        (context / "agent-handoffs.json").write_text(
+            json.dumps(handoffs, indent=2) + "\n", encoding="utf-8"
+        )
+        (context / "KIT-1234-HANDOFF-feature-developer.md").write_text(
+            f"# Handoff\n\n**Task**: `.kit/tasks/2-todo/{self.TASK_FILE}`\n",
+            encoding="utf-8",
+        )
+        return context
+
+    def test_move_rewrites_handoffs_json_and_handoff_file(self, tmp_path):
+        context = self._setup_project(tmp_path)
+
+        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
+
+        data = json.loads((context / "agent-handoffs.json").read_text(encoding="utf-8"))
+        assert data["planner"]["details_link"] == (
+            f".kit/tasks/3-in-progress/{self.TASK_FILE}"
+        )
+        handoff_md = (context / "KIT-1234-HANDOFF-feature-developer.md").read_text(
+            encoding="utf-8"
+        )
+        assert f".kit/tasks/3-in-progress/{self.TASK_FILE}" in handoff_md
+        assert "2-todo" not in handoff_md
+
+    def test_move_leaves_other_tasks_untouched(self, tmp_path):
+        context = self._setup_project(tmp_path)
+
+        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
+
+        data = json.loads((context / "agent-handoffs.json").read_text(encoding="utf-8"))
+        # The unrelated task's (stale-looking) path must be preserved.
+        assert data["other-agent"]["details_link"] == (
+            ".kit/tasks/2-todo/KIT-0002-unrelated-task.md"
+        )
+
+    def test_move_without_context_dir_still_succeeds(self, tmp_path):
+        tasks = tmp_path / ".kit" / "tasks"
+        for folder in ("2-todo", "3-in-progress"):
+            (tasks / folder).mkdir(parents=True)
+        (tasks / "2-todo" / self.TASK_FILE).write_text(
+            "**Status**: Todo\n", encoding="utf-8"
+        )
+
+        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
+        assert (tasks / "3-in-progress" / self.TASK_FILE).exists()
+
+    def test_rerun_in_same_folder_repairs_stale_metadata(self, tmp_path):
+        # Metadata drifted while the task is already in place: re-running
+        # the move acts as a repair and rewrites the stale path.
+        context = self._setup_project(tmp_path)
+        task = tmp_path / ".kit" / "tasks" / "2-todo" / self.TASK_FILE
+        moved = tmp_path / ".kit" / "tasks" / "3-in-progress" / self.TASK_FILE
+        task.rename(moved)
+
+        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
+
+        data = json.loads((context / "agent-handoffs.json").read_text(encoding="utf-8"))
+        assert data["planner"]["details_link"] == (
+            f".kit/tasks/3-in-progress/{self.TASK_FILE}"
+        )
+
+    def test_second_move_rewrites_again(self, tmp_path):
+        context = self._setup_project(tmp_path)
+
+        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
+        assert _project_module.move_task("KIT-1234", "done", tmp_path)
+
+        data = json.loads((context / "agent-handoffs.json").read_text(encoding="utf-8"))
+        assert data["planner"]["details_link"] == (
+            f".kit/tasks/5-done/{self.TASK_FILE}"
+        )
