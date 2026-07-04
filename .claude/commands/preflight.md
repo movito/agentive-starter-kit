@@ -41,7 +41,9 @@ and exits 0 (all pass), 1 (any fail), or 2 (no failures, but at least one gate P
 **PENDING** (Gate 1 only, KIT-0034): CI runs are not yet registered for the head
 SHA, or are still executing — GitHub takes a few seconds to register runs after a
 push. PENDING is not a failure verdict; re-run preflight shortly (or use
-`/wait-for-bots` first) instead of treating it as a CI failure.
+`/wait-for-bots` first) instead of treating it as a CI failure. Note: when
+no runs are registered yet, the script re-polls briefly before reporting,
+so a preflight run may block for up to ~10 seconds.
 
 ## Step 2: Present results
 

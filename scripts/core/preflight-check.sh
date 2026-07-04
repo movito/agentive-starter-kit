@@ -179,6 +179,13 @@ if [ -z "$PR_NUMBER" ]; then
     fi
 fi
 
+# Defense-in-depth: PR_NUMBER is interpolated into GraphQL queries below,
+# so insist it is numeric whether it came from --pr or from gh pr view.
+if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: PR number must be numeric (got: $PR_NUMBER)"
+    exit 1
+fi
+
 # Get PR head SHA for review checks
 # shellcheck disable=SC2086
 LATEST_SHA=$(gh $GH_REPO_ARG pr view "$PR_NUMBER" --json headRefOid --jq .headRefOid 2>/dev/null || true)
@@ -236,6 +243,9 @@ RUN_COUNT=0
 LATEST_RUNS="[]"
 CI_ATTEMPT=1
 while [ "$CI_ATTEMPT" -le "$CI_POLL_ATTEMPTS" ]; do
+    # Reset per attempt so a failed refetch can't reuse a stale filter result
+    LATEST_RUNS="[]"
+    RUN_COUNT=0
     # shellcheck disable=SC2086
     CI_RUNS=$(gh $GH_REPO_ARG run list --branch "$BRANCH" --limit 10 --json status,conclusion,workflowName,event,headSha \
         --jq '[.[] | select(.event == "push" or .event == "pull_request")]' 2>/dev/null || true)
@@ -326,9 +336,7 @@ else
     CR_REVIEW=$(echo "$PR_DATA" | jq -r ".data.repository.pullRequest.reviews.nodes[] | select(.commit.oid == \"$CODE_SHA\" or .commit.oid == \"$LATEST_SHA\") | select(.author.login | test(\"coderabbitai\")) | \"\(.author.login): \(.state)\"" 2>/dev/null | tail -1 || true)
 
     if [ -n "$CR_REVIEW" ]; then
-        MATCH_SHA="$CODE_SHA"
-        if echo "$CR_REVIEW" | grep -q "$LATEST_SHA" 2>/dev/null; then MATCH_SHA="$LATEST_SHA"; fi
-        echo "GATE:2:CodeRabbit:PASS:$CR_REVIEW (on ${MATCH_SHA:0:7})"
+        echo "GATE:2:CodeRabbit:PASS:$CR_REVIEW (on ${CODE_SHA:0:7} or ${LATEST_SHA:0:7})"
     else
         # Fallback (KIT-0034 F1): after a trivial/docs push CodeRabbit
         # refreshes its commit status and keeps an APPROVED review on an
@@ -346,8 +354,12 @@ else
         #   3. zero unresolved review threads (same count as Gate 4).
         CR_LATEST_STATE=$(echo "$PR_DATA" | jq -r "[.data.repository.pullRequest.reviews.nodes[] | select(.author.login | test(\"coderabbitai\"))] | last | .state // empty" 2>/dev/null || true)
 
+        # The combined-status endpoint returns the latest status per context.
+        # Require every CodeRabbit-matching context to be green (all() with an
+        # explicit empty guard — all([]) is vacuously true); on a mixed result
+        # surface the first non-success state in the FAIL detail.
         CR_SIGNAL=$(gh api "repos/$OWNER/$NAME/commits/$LATEST_SHA/status" \
-            --jq '.statuses[] | select(.context | test("coderabbit"; "i")) | .state' 2>/dev/null | tail -1 || true)
+            --jq '[.statuses[] | select(.context | test("coderabbit"; "i")) | .state] | if length == 0 then empty elif all(. == "success") then "success" else (map(select(. != "success")) | first) end' 2>/dev/null || true)
         if [ -z "$CR_SIGNAL" ]; then
             CR_SIGNAL=$(gh api "repos/$OWNER/$NAME/commits/$LATEST_SHA/check-runs" \
                 --jq '.check_runs[] | select(.app.slug | test("coderabbit")) | "\(.status):\(.conclusion)"' 2>/dev/null | tail -1 || true)
@@ -355,7 +367,7 @@ else
         fi
 
         CR_FALLBACK_OK=false
-        if [ "$CR_SIGNAL" = "success" ] && [ -n "$THREAD_UNRESOLVED" ] && [ "$THREAD_UNRESOLVED" -eq 0 ]; then
+        if [ "$CR_SIGNAL" = "success" ] && [[ "$THREAD_UNRESOLVED" =~ ^[0-9]+$ ]] && [ "$THREAD_UNRESOLVED" -eq 0 ]; then
             if [ "$CR_LATEST_STATE" = "APPROVED" ] || [ "$CR_LATEST_STATE" = "COMMENTED" ]; then
                 CR_FALLBACK_OK=true
             fi
@@ -415,7 +427,12 @@ if [ -n "$PR_DATA" ]; then
         echo "GATE:4:Threads:FAIL:Could not parse thread data"
         ANY_FAILED=true
     elif [ "$THREAD_UNRESOLVED" -eq 0 ]; then
-        echo "GATE:4:Threads:PASS:Total: $THREAD_TOTAL, Resolved: $THREAD_RESOLVED, Unresolved: $THREAD_UNRESOLVED"
+        # reviewThreads(first: 100) — flag possible truncation at the cap
+        _PF_TRUNC=""
+        if [ "$THREAD_TOTAL" -eq 100 ]; then
+            _PF_TRUNC=" (count capped at 100 — verify manually)"
+        fi
+        echo "GATE:4:Threads:PASS:Total: $THREAD_TOTAL, Resolved: $THREAD_RESOLVED, Unresolved: $THREAD_UNRESOLVED$_PF_TRUNC"
     else
         echo "GATE:4:Threads:FAIL:Total: $THREAD_TOTAL, Resolved: $THREAD_RESOLVED, Unresolved: $THREAD_UNRESOLVED"
         ANY_FAILED=true

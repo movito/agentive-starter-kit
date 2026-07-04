@@ -52,7 +52,11 @@ def _kit_agents() -> set[str]:
 
 
 def _agent_excludes() -> set[str]:
-    """Filenames excluded via AGENT_EXCLUDES=(--exclude='...' ...)."""
+    """Filenames excluded via AGENT_EXCLUDES=(--exclude='...' ...).
+
+    Assumes the array literal contains no nested parentheses (true of the
+    controlled internal file; a format change fails the search loudly).
+    """
     match = re.search(
         r"^AGENT_EXCLUDES=\((.*?)\)", _SCRIPT_TEXT, re.MULTILINE | re.DOTALL
     )

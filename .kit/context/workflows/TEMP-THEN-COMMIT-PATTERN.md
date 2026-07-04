@@ -78,7 +78,9 @@ Live implementation: the marker-merge step in
 
 - Pass 2 must stay trivial: `mv` on the same filesystem is effectively
   atomic per file; do not add fallible logic (parsing, network, python)
-  to the commit pass.
+  to the commit pass. Keep temp files **next to their destinations**
+  (same directory, e.g. `<dest>.tmp`) — a temp dir on another mount
+  turns `mv` into a fallible copy+delete.
 - If pass 2 can still fail for environmental reasons (permissions, disk
   full), the window is at least reduced to that pass — and the staged
   temps make recovery inspectable instead of silent.
