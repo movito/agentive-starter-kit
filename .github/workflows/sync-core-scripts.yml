@@ -21,10 +21,49 @@ on:
       - '.kit/tasks/9-reference/**'
       - 'scripts/.core-manifest.json'
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: >-
+          Sync only this downstream repo (owner/name). Leave blank to sync
+          every repo in the matrix.
+        required: false
+        default: ''
 
 jobs:
-  sync:
+  # Fail fast on a mistyped workflow_dispatch `repo`: without this, an unknown
+  # value skips every matrix step and the run goes green with no sync PR and no
+  # error — a silent no-op the operator would read as success.
+  validate-dispatch:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.repo != ''
     runs-on: ubuntu-latest
+    steps:
+      - name: Reject unknown repo input
+        env:
+          REPO: ${{ github.event.inputs.repo }}
+        run: |
+          case "$REPO" in
+            movito/dispatch-kit|movito/adversarial-workflow|movito/adversarial-evaluator-library)
+              echo "repo input valid: $REPO" ;;
+            *)
+              echo "::error::Unknown repo '$REPO'. Valid: movito/dispatch-kit, movito/adversarial-workflow, movito/adversarial-evaluator-library (or leave blank for all)."
+              exit 1 ;;
+          esac
+
+  sync:
+    needs: validate-dispatch
+    # Run on push (validate-dispatch is skipped) and on dispatch with a valid
+    # repo (validate-dispatch succeeds); skip only when validation failed.
+    if: >-
+      always()
+      && (needs.validate-dispatch.result == 'success'
+          || needs.validate-dispatch.result == 'skipped')
+    runs-on: ubuntu-latest
+    # Serialize per downstream repo so a push-triggered sync and a manual
+    # workflow_dispatch cannot race on branch creation/push into the same target.
+    concurrency:
+      group: sync-core-scripts-${{ matrix.repo }}
+      cancel-in-progress: false
     strategy:
       matrix:
         include:
@@ -36,11 +75,19 @@ jobs:
             is_kit: true
     steps:
       - name: Checkout source (agentive-starter-kit)
+        if: >-
+          github.event_name == 'push'
+          || github.event.inputs.repo == ''
+          || github.event.inputs.repo == matrix.repo
         uses: actions/checkout@v6
         with:
           path: source
 
       - name: Checkout target (${{ matrix.repo }})
+        if: >-
+          github.event_name == 'push'
+          || github.event.inputs.repo == ''
+          || github.event.inputs.repo == matrix.repo
         uses: actions/checkout@v6
         with:
           repository: ${{ matrix.repo }}
@@ -49,6 +96,10 @@ jobs:
 
       - name: Sync from manifest
         id: sync
+        if: >-
+          github.event_name == 'push'
+          || github.event.inputs.repo == ''
+          || github.event.inputs.repo == matrix.repo
         env:
           IS_KIT: ${{ matrix.is_kit }}
         run: |
@@ -56,118 +107,44 @@ jobs:
 
           VERSION=$(cat source/scripts/core/VERSION)
           BRANCH="chore/core-scripts-sync-v${VERSION}-$(date +%Y%m%d%H%M%S)"
-          UPSTREAM_MANIFEST="source/scripts/.core-manifest.json"
-          DOWNSTREAM_MANIFEST="target/scripts/.core-manifest.json"
-          WARNINGS=""
 
-          # ── Read downstream opted_in (preserve across sync) ──
-          DOWNSTREAM_OPTED_IN="[]"
-          if [ -f "$DOWNSTREAM_MANIFEST" ]; then
-            DOWNSTREAM_OPTED_IN=$(jq '.opted_in // []' "$DOWNSTREAM_MANIFEST")
-          fi
-
-          # ── Helper: check if a tier should be synced ──
-          # Core tiers (*_core) always sync.
-          # kit_builder syncs only to kit repos (is_kit=true).
-          # Optional tiers sync if downstream has opted in.
-          should_sync_tier() {
-            local tier="$1"
-            # Core tiers always sync
-            if echo "$tier" | grep -q '_core$'; then
-              return 0
-            fi
-            # kit_builder syncs only to kit repos
-            if [ "$tier" = "kit_builder" ]; then
-              [ "${IS_KIT:-false}" = "true" ]
-              return $?
-            fi
-            # Check if tier is in downstream opted_in
-            if echo "$DOWNSTREAM_OPTED_IN" | jq -e "index(\"$tier\")" > /dev/null 2>&1; then
-              return 0
-            fi
-            return 1
-          }
-
-          # ── Helper: resolve source and target paths for a tier ──
-          resolve_paths() {
-            local tier="$1"
-            local entry="$2"
-            case "$tier" in
-              scripts_core)
-                echo "source/scripts/${entry}" "target/scripts/${entry}"
-                ;;
-              commands_*)
-                echo "source/.claude/commands/${entry}" "target/.claude/commands/${entry}"
-                ;;
-              *)
-                echo "source/${entry}" "target/${entry}"
-                ;;
-            esac
-          }
-
+          # ── Create the sync branch in the target repo ──
           cd target
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           cd ..
 
-          # ── Iterate manifest tiers and sync ──
-          TIERS=$(jq -r '.files | keys[]' "$UPSTREAM_MANIFEST")
-          for tier in $TIERS; do
-            if ! should_sync_tier "$tier"; then
-              echo "Skipping tier: $tier (not opted in or not a kit repo)"
-              continue
-            fi
+          # ── Run the sync engine (one engine, two callers — KIT-ADR-0026) ──
+          # All tier/path/opt-in/cleanup logic lives in the engine now; this
+          # step is a thin shell around it.
+          IS_KIT_FLAG=""
+          if [ "${IS_KIT:-false}" = "true" ]; then
+            IS_KIT_FLAG="--is-kit"
+          fi
 
-            echo "Syncing tier: $tier"
-            ENTRIES=$(jq -r ".files[\"$tier\"][]" "$UPSTREAM_MANIFEST")
-            for entry in $ENTRIES; do
-              read -r src_path tgt_path <<< "$(resolve_paths "$tier" "$entry")"
+          set +e
+          python3 source/scripts/core/sync_from_manifest.py \
+            --source source --target target $IS_KIT_FLAG \
+            --report-json sync-report.json
+          RC=$?
+          set -e
+          # Exit-code contract: 0 clean/applied, 1 applied-with-warnings —
+          # both are fine here. 2 (usage) / 3 (manifest) / 4 (source) are real
+          # failures and must stop the run.
+          if [ "$RC" -ge 2 ]; then
+            echo "::error::sync engine failed with exit code $RC"
+            exit "$RC"
+          fi
 
-              # Directory entries end with /
-              if [[ "$entry" == */ ]]; then
-                if [ -d "$src_path" ]; then
-                  # Remove stale target contents and copy fresh
-                  src_clean="${src_path%/}"
-                  tgt_clean="${tgt_path%/}"
-                  rm -rf "$tgt_clean"
-                  mkdir -p "$(dirname "$tgt_clean")"
-                  cp -r "$src_clean" "$tgt_clean"
-                  echo "  Synced directory: $entry"
-                else
-                  echo "  Warning: Source directory not found: $src_path"
-                fi
-                continue
-              fi
+          # ── Surface engine warnings into the PR body ──
+          WARNINGS=""
+          if [ -f sync-report.json ]; then
+            WARNINGS=$(jq -r '.warnings[]?' sync-report.json \
+              | sed 's/^/- **Warning**: /')
+          fi
 
-              # Warn if target exists but was not in any previous manifest tier
-              if [ -f "$tgt_path" ] && [ -f "$DOWNSTREAM_MANIFEST" ]; then
-                IN_OLD_MANIFEST=$(jq -r --arg entry "$entry" '
-                  if (.files | type) == "array" then [.files[]]
-                  else [.files[][]]
-                  end | index($entry)
-                ' "$DOWNSTREAM_MANIFEST" 2>/dev/null || echo "null")
-                if [ "$IN_OLD_MANIFEST" = "null" ]; then
-                  WARNINGS="${WARNINGS}- **Warning**: Overwriting '${entry}' which was not previously in the manifest\n"
-                fi
-              fi
-
-              # Create target directory if needed and copy file
-              mkdir -p "$(dirname "$tgt_path")"
-              cp "$src_path" "$tgt_path"
-            done
-          done
-
-          # ── Update downstream manifest ──
-          # Take upstream files sections, preserve downstream opted_in, update metadata
-          SYNCED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          jq --arg version "$VERSION" \
-             --arg synced_at "$SYNCED_AT" \
-             --argjson opted_in "$DOWNSTREAM_OPTED_IN" \
-             '.core_version = $version | .synced_at = $synced_at | .opted_in = $opted_in' \
-             "$UPSTREAM_MANIFEST" > target/scripts/.core-manifest.json
-
-          # ── Check for changes ──
+          # ── Commit and push if the engine changed anything ──
           cd target
           if [ -z "$(git status --porcelain)" ]; then
             echo "No changes to sync"
@@ -175,21 +152,28 @@ jobs:
             exit 0
           fi
 
-          # ── Commit and push ──
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
           if [ -n "$WARNINGS" ]; then
-            echo "warnings<<EOF" >> "$GITHUB_OUTPUT"
-            echo -e "$WARNINGS" >> "$GITHUB_OUTPUT"
-            echo "EOF" >> "$GITHUB_OUTPUT"
+            # Random delimiter: WARNINGS is engine-derived text, and a fixed
+            # "EOF" could be closed early by a crafted/coincidental warning line
+            # — a known GITHUB_OUTPUT injection vector.
+            DELIM="EOF_$(openssl rand -hex 16)"
+            {
+              echo "warnings<<${DELIM}"
+              echo "$WARNINGS"
+              echo "${DELIM}"
+            } >> "$GITHUB_OUTPUT"
           fi
 
-          git add scripts/core/ scripts/.core-manifest.json
-          if [ -d .claude/commands/ ]; then
-            git add .claude/commands/
-          fi
-          if [ -d .kit/ ]; then
-            git add .kit/
-          fi
+          # Stage only the roots the manifest can target (scripts_core →
+          # scripts/, commands_* → .claude/commands/, kit_builder → .kit/ and
+          # .adversarial/). Scoped rather than `git add -A` so no unrelated
+          # working-tree change is swept into the sync PR.
+          for root in scripts .claude/commands .kit .adversarial; do
+            if [ -e "$root" ]; then
+              git add "$root"
+            fi
+          done
           git commit -m "chore: Sync core scripts v${VERSION} from agentive-starter-kit"
           git push -u origin "$BRANCH"
 
@@ -227,7 +211,7 @@ jobs:
 
           **Source**: movito/agentive-starter-kit@main
           **Core version**: ${VERSION}
-          **ADR**: KIT-ADR-0022 (Manifest-Based Sync Ownership)"
+          **ADR**: KIT-ADR-0022 (Manifest-Based Sync Ownership), KIT-ADR-0026 (Pull-Based Consumer Sync)"
 
           gh pr create \
             --title "chore: Sync core scripts v${VERSION} from agentive-starter-kit" \
