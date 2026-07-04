@@ -68,7 +68,7 @@ flowchart TD
 
 Plain-text view (terminals, diffs, non-Mermaid viewers):
 
-```
+```text
                  ┌───────────────────────────────────────────┐
                  │        agentive-starter-kit (main)         │
                  │           canonical source of truth        │
