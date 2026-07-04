@@ -1,6 +1,6 @@
 # KIT-ADR-0026: Pull-Based Consumer Sync — One Engine, Two Callers
 
-**Status**: Proposed
+**Status**: Accepted
 **Date**: 2026-07-03 (amended same day after adversarial review — see
 Evaluation trail)
 **Author**: Claude Code + User

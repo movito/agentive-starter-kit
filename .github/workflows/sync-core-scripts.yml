@@ -33,6 +33,11 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # Serialize per downstream repo so a push-triggered sync and a manual
+    # workflow_dispatch cannot race on branch creation/push into the same target.
+    concurrency:
+      group: sync-core-scripts-${{ matrix.repo }}
+      cancel-in-progress: false
     strategy:
       matrix:
         include:
@@ -123,10 +128,14 @@ jobs:
 
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
           if [ -n "$WARNINGS" ]; then
+            # Random delimiter: WARNINGS is engine-derived text, and a fixed
+            # "EOF" could be closed early by a crafted/coincidental warning line
+            # — a known GITHUB_OUTPUT injection vector.
+            DELIM="EOF_$(openssl rand -hex 16)"
             {
-              echo "warnings<<EOF"
+              echo "warnings<<${DELIM}"
               echo "$WARNINGS"
-              echo "EOF"
+              echo "${DELIM}"
             } >> "$GITHUB_OUTPUT"
           fi
 

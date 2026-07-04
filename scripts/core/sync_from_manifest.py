@@ -412,8 +412,12 @@ def _diff_plan(
             tgt = target_root / op.relpath
             if not tgt.exists():
                 added.append(op.relpath)
-            elif tgt.read_bytes() != op.file.data:
-                modified.append(op.relpath)
+            else:
+                # Compare bytes AND mode: _apply reapplies mode via os.chmod,
+                # so a file that only lost its executable bit is real drift.
+                current = _read_file(tgt)
+                if current.data != op.file.data or current.mode != op.file.mode:
+                    modified.append(op.relpath)
             # Overwrite warning: a manifest exists, the file is present, and it
             # was never a tracked manifest entry — the consumer is about to lose
             # a local file the sync unit did not previously own.
@@ -430,7 +434,10 @@ def _diff_plan(
                 full = f"{op.relpath}/{rel}"
                 if rel not in existing:
                     added.append(full)
-                elif existing[rel].data != content.data:
+                elif (
+                    existing[rel].data != content.data
+                    or existing[rel].mode != content.mode
+                ):
                     modified.append(full)
             for rel in existing:
                 if rel not in op.dir_files:

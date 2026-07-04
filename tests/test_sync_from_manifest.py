@@ -122,6 +122,16 @@ class TestFullSyncFreshConsumer:
         mode = stat.S_IMODE((target / "scripts" / "core" / "foo.sh").stat().st_mode)
         assert mode & 0o111, "executable bit should survive the sync"
 
+    def test_mode_only_change_is_drift(self, source, target):
+        # Content identical but the exec bit was stripped downstream: a real
+        # run would restore it via chmod, so drift detection must flag it.
+        sync(source, target, SyncOptions())
+        script = target / "scripts" / "core" / "foo.sh"
+        os.chmod(script, 0o644)  # strip exec bit
+        report = sync(source, target, SyncOptions(dry_run=True))
+        assert report.status == "drift"
+        assert "scripts/core/foo.sh" in report.modified
+
     def test_is_kit_pulls_builder_tier(self, source, target):
         sync(source, target, SyncOptions(is_kit=True))
         assert (target / ".kit" / "things" / "a.md").read_text(
@@ -485,7 +495,7 @@ class TestSelfSync:
     def test_engine_upgrades_its_own_file(self, tmp_path):
         # Source is a real-ish tree whose engine file is a MODIFIED copy.
         src = build_source(tmp_path / "src")
-        manifest = read_manifest_source(src)
+        manifest = read_manifest(src)
         manifest["files"]["scripts_core"].append("core/sync_from_manifest.py")
         _write(
             src / "scripts" / ".core-manifest.json",
@@ -510,11 +520,6 @@ class TestSelfSync:
         assert synced == modified_engine
 
 
-def read_manifest_source(root: Path) -> dict:
-    with open(root / "scripts" / ".core-manifest.json", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
 # ── Self-sync via a real subprocess (engine overwrites the running file) ────
 class TestSelfSyncSubprocess:
     """Run the engine as a subprocess from the *target* copy, syncing a source
@@ -523,7 +528,7 @@ class TestSelfSyncSubprocess:
 
     def test_running_engine_overwrites_itself(self, tmp_path):
         src = build_source(tmp_path / "src")
-        manifest = read_manifest_source(src)
+        manifest = read_manifest(src)
         manifest["files"]["scripts_core"].append("core/sync_from_manifest.py")
         _write(
             src / "scripts" / ".core-manifest.json",
