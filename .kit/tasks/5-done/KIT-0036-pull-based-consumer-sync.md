@@ -1,6 +1,6 @@
 # KIT-0036: Pull-based consumer sync — engine extraction + `project sync`
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 6-10 hours (two PRs)
