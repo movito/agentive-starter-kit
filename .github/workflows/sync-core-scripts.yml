@@ -31,7 +31,33 @@ on:
         default: ''
 
 jobs:
+  # Fail fast on a mistyped workflow_dispatch `repo`: without this, an unknown
+  # value skips every matrix step and the run goes green with no sync PR and no
+  # error — a silent no-op the operator would read as success.
+  validate-dispatch:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.repo != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject unknown repo input
+        env:
+          REPO: ${{ github.event.inputs.repo }}
+        run: |
+          case "$REPO" in
+            movito/dispatch-kit|movito/adversarial-workflow|movito/adversarial-evaluator-library)
+              echo "repo input valid: $REPO" ;;
+            *)
+              echo "::error::Unknown repo '$REPO'. Valid: movito/dispatch-kit, movito/adversarial-workflow, movito/adversarial-evaluator-library (or leave blank for all)."
+              exit 1 ;;
+          esac
+
   sync:
+    needs: validate-dispatch
+    # Run on push (validate-dispatch is skipped) and on dispatch with a valid
+    # repo (validate-dispatch succeeds); skip only when validation failed.
+    if: >-
+      always()
+      && (needs.validate-dispatch.result == 'success'
+          || needs.validate-dispatch.result == 'skipped')
     runs-on: ubuntu-latest
     # Serialize per downstream repo so a push-triggered sync and a manual
     # workflow_dispatch cannot race on branch creation/push into the same target.
