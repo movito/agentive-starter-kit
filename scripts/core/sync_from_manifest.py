@@ -66,6 +66,9 @@ STATUS_EXIT = {
     "applied": EXIT_OK,
     "drift": EXIT_ATTENTION,
     "applied_with_warnings": EXIT_ATTENTION,
+    # Warnings surfaced on a run that wrote nothing (e.g. a missing source
+    # file). Attention-worthy, but distinct from "applied_with_warnings".
+    "warnings": EXIT_ATTENTION,
 }
 
 MANIFEST_RELPATH = "scripts/.core-manifest.json"
@@ -641,12 +644,12 @@ def sync(source: str | Path, target: str | Path, options: SyncOptions) -> SyncRe
     else:
         if should_write:
             _apply(plan, new_manifest, target_root)
-        if warnings:
-            status = "applied_with_warnings"
-        elif content_changed:
-            status = "applied"
+            status = "applied_with_warnings" if warnings else "applied"
         else:
-            status = "clean"
+            # Nothing was written. Don't claim "applied" — but still surface
+            # warnings (e.g. a manifest entry whose source is missing) as
+            # attention-worthy via a distinct status that maps to exit 1.
+            status = "warnings" if warnings else "clean"
 
     return SyncReport(
         status=status,

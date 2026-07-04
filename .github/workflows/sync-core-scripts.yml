@@ -139,7 +139,15 @@ jobs:
             } >> "$GITHUB_OUTPUT"
           fi
 
-          git add -A
+          # Stage only the roots the manifest can target (scripts_core →
+          # scripts/, commands_* → .claude/commands/, kit_builder → .kit/ and
+          # .adversarial/). Scoped rather than `git add -A` so no unrelated
+          # working-tree change is swept into the sync PR.
+          for root in scripts .claude/commands .kit .adversarial; do
+            if [ -e "$root" ]; then
+              git add "$root"
+            fi
+          done
           git commit -m "chore: Sync core scripts v${VERSION} from agentive-starter-kit"
           git push -u origin "$BRANCH"
 
@@ -171,11 +179,6 @@ jobs:
           \`\"commands_optional\"\` to the \`opted_in\` array in \`scripts/.core-manifest.json\`.
 
           The \`kit_builder\` tier syncs automatically to kit repos and does not require opt-in.
-
-          ## Pull-based alternative
-
-          You can also sync on demand from your own checkout with
-          \`./scripts/core/project sync --dry-run\` (see KIT-ADR-0026).
 
           ${WARNINGS:+## Warnings
           ${WARNINGS}}

@@ -279,6 +279,20 @@ class TestRemovedEntries:
 
 # ── Overwrite warning ───────────────────────────────────────────────────────
 class TestOverwriteWarning:
+    def test_warnings_without_write_do_not_claim_applied(self, source, target):
+        # Fully sync, then drop a source file that stays in the manifest. The
+        # re-sync writes nothing (all else identical) but warns about the
+        # missing source — status must be "warnings", not "applied_with_warnings".
+        sync(source, target, SyncOptions(is_kit=True))
+        (source / "scripts" / "core" / "bar.py").unlink()
+        report = sync(source, target, SyncOptions(is_kit=True))
+        assert report.status == "warnings"
+        assert report.exit_code == 1
+        assert report.added == []
+        assert report.modified == []
+        # The already-synced downstream copy is untouched.
+        assert (target / "scripts" / "core" / "bar.py").exists()
+
     def test_untracked_target_file_triggers_warning(self, source, target):
         # Target has a manifest that does NOT list core/bar.py, but the file
         # exists on disk — sync is about to overwrite an untracked file.
