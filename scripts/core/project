@@ -1239,7 +1239,10 @@ def cmd_sync(args, project_dir):
     with tempfile.TemporaryDirectory(prefix="core-sync-src-") as workdir:
         source_path = resolve_source(ref, explicit_source, source_repo, workdir)
 
-        if no_branch and not dry_run:
+        # Dirty guard for ANY apply (branch mode too): `git checkout -b` carries
+        # uncommitted edits onto the new branch, where the engine would then
+        # overwrite them — so a dirty touched path must block both modes.
+        if not dry_run:
             try:
                 preview = engine.sync(
                     source_path,
@@ -1256,14 +1259,16 @@ def cmd_sync(args, project_dir):
                 print("❌ Uncommitted changes in paths this sync would touch:")
                 for path in dirty:
                     print(f"     {path}")
-                print("   Commit or stash them, or run without --no-branch.")
+                print("   Commit or stash them before syncing.")
                 return 2
 
         version = _manifest_version(source_path)
         committed = False
         if not dry_run and not no_branch:
             if not _create_branch(project_dir, f"chore/core-sync-{version}"):
-                return 1
+                # Environment/precondition failure — not drift (exit 1 is
+                # reserved for that in the engine contract).
+                return 2
 
         try:
             report = engine.sync(

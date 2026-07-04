@@ -271,6 +271,21 @@ class TestBranchAndCommit:
         assert tracked == "", "unrelated file must not be swept into the sync commit"
         assert (consumer / "scripts" / "core" / "foo.sh").exists()
 
+    def test_default_mode_also_refuses_dirty_touched_path(self, kit, tmp_path):
+        # Branch mode must guard too — checkout -b would carry the dirty edit
+        # onto the new branch where the engine would overwrite it.
+        consumer = tmp_path / "consumer"
+        consumer.mkdir()
+        self._init_repo(consumer)
+        project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
+        _git("-C", str(consumer), "add", ".", check=True)
+        _git("-C", str(consumer), "commit", "-qm", "sync", check=True)
+        (consumer / "scripts" / "core" / "foo.sh").write_text(
+            "local edit\n", encoding="utf-8"
+        )
+        rc = project_cli.cmd_sync(["--source", str(kit)], consumer)  # default mode
+        assert rc == 2
+
     def test_no_branch_refuses_dirty_manifest(self, kit, tmp_path):
         consumer = tmp_path / "consumer"
         consumer.mkdir()
