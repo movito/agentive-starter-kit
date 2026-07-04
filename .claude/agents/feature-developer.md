@@ -381,7 +381,9 @@ GIT_TARGET diff main...HEAD > .adversarial/inputs/<TASK-ID>-code-review-input.md
 ### Step 2 — Run the evaluator trio
 
 ```bash
-set -a && source .env && set +a
+set -a
+source .env
+set +a
 
 adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
 adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md

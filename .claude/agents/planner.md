@@ -167,7 +167,9 @@ producing a handoff. Always `source .env` first — evaluators need API
 keys.
 
 ```bash
-set -a && source .env && set +a
+set -a
+source .env
+set +a
 
 # Fast/cheap (Gemini):
 adversarial arch-review-fast .kit/tasks/2-todo/<TASK-ID>-*.md
