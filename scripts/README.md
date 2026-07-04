@@ -26,7 +26,9 @@ When `scripts/core/` changes on `main`, a GitHub Action opens PRs in:
 - movito/adversarial-workflow
 - movito/adversarial-evaluator-library
 
-Downstream repos can also check sync status manually:
+Downstream repos can also check sync status — or pull updates — on demand
+(KIT-ADR-0026):
 ```bash
-./scripts/core/check-sync.sh
+./scripts/core/project sync --dry-run   # what would change
+./scripts/core/project sync             # pull everything entitled
 ```

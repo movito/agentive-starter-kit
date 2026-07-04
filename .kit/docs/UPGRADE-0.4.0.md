@@ -205,7 +205,8 @@ After migration, core scripts are kept in sync automatically:
 2. The Action opens a PR in your repo with the updated files
 3. Review and merge the PR
 
-For manual checking: `ASK_REPO=~/path/to/agentive-starter-kit ./scripts/core/check-sync.sh`
+For manual checking: `./scripts/core/project sync --dry-run`
+(core v3.0.0+ — replaces the retired `check-sync.sh`; see KIT-ADR-0026)
 
 **Requirement**: The `CROSS_REPO_TOKEN` secret must be configured in the
 agentive-starter-kit repo with write access to downstream repos.
@@ -236,7 +237,7 @@ See Step 3.
 Test files import from `scripts/core/` now. Check `_script_path` definitions
 in test files. See Step 5.
 
-**`check-sync.sh` reports drift immediately after migration**:
-This is expected if your `scripts/core/` files diverge from upstream (e.g.,
-project-specific modifications). The sync workflow will normalize this over
-time.
+**`project sync --dry-run` reports drift immediately after migration**
+(was `check-sync.sh`, retired in core v3.0.0): This is expected if your
+`scripts/core/` files diverge from upstream (e.g., project-specific
+modifications). Run `./scripts/core/project sync` to converge.

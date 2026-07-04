@@ -59,7 +59,7 @@ out-of-scope work.
 
 A detected **scripts-version gap is never folded into the upgrade.** It is
 surfaced once, at the end, as a post-upgrade hint to run
-`./scripts/core/check-sync.sh` (see Phase 8).
+`./scripts/core/project sync --dry-run` (see Phase 8).
 
 ## Idempotence & the two-phase gate (hard rules)
 
@@ -393,22 +393,22 @@ rule. Follow the project's commit conventions:
 ## PHASE 8 — Post-upgrade hints (not part of the upgrade)
 
 After a successful upgrade, **detect** whether scripts/manifest drift exists, and
-if so surface it **once** as a hint. `check-sync.sh` is read-only (it prints the
-local and upstream core `VERSION` strings and one `⚠️ DRIFT:`/`⚠️ MISSING:` line
-per differing file — it mutates nothing), so you run it yourself as the detection
-step:
+if so surface it **once** as a hint. `project sync --dry-run` is read-only (it
+reports which core files would be added/modified/removed and exits `1` when there
+is drift, `0` when clean — it mutates nothing), so you run it yourself as the
+detection step:
 
 ```bash
-ASK_REPO=<path-to-agentive-starter-kit-checkout> ./scripts/core/check-sync.sh   # read-only; prints per-file drift
+./scripts/core/project sync --dry-run   # read-only; prints per-file drift, exit 1 if any
 ```
 
-- No `⚠️ DRIFT`/`⚠️ MISSING` lines (or the manifest/`ASK_REPO` is unavailable so
-  no comparison ran) → say nothing.
-- Any `⚠️ DRIFT`/`⚠️ MISSING` lines, or the local vs upstream `VERSION` differ →
-  surface one line quoting what the script reported (e.g. "check-sync.sh reports
-  scripts/core drift: local <X> vs upstream <Y>") and point to
-  `docs/MANIFEST-UPGRADE-GUIDE.md`. **Never** fold the scripts upgrade into the
-  plugin upgrade; performing it is the operator's separate manifest-sync action.
+- Exit `0` / no changes listed (or upstream is unreachable so no comparison ran)
+  → say nothing.
+- Exit `1` with added/modified/removed lines → surface one line quoting what it
+  reported (e.g. "project sync --dry-run reports N core files would change") and
+  point to `docs/MANIFEST-UPGRADE-GUIDE.md`. **Never** fold the scripts upgrade
+  into the plugin upgrade; running `project sync` is the operator's separate
+  manifest-sync action.
 
 ---
 

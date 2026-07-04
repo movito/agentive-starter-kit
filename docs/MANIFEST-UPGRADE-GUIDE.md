@@ -94,13 +94,13 @@ upstream manifest as your starting point, then set `opted_in` based on what you 
     "scripts_core": [
       "core/__init__.py",
       "core/check-bots.sh",
-      "core/check-sync.sh",
       "core/ci-check.sh",
       "core/gh-review-helper.sh",
       "core/logging_config.py",
       "core/pattern_lint.py",
       "core/preflight-check.sh",
       "core/project",
+      "core/sync_from_manifest.py",
       "core/validate_task_status.py",
       "core/verify-ci.sh",
       "core/verify-setup.sh",
@@ -201,6 +201,40 @@ v1.x had both `source` and `source_repo`. v2.0.0 only uses `source_repo`. The
 git add scripts/.core-manifest.json .claude/commands/
 git commit -m "chore: Upgrade core manifest to v2.0.0 tiered format"
 ```
+
+## Pull-based sync (core v3.0.0+)
+
+From core scripts **3.0.0** on, you don't have to wait for a push PR — pull
+updates on demand from your own checkout (KIT-ADR-0026). The same tested engine
+(`scripts/core/sync_from_manifest.py`) drives both the push Action and the
+pull command, so they can't drift.
+
+```bash
+./scripts/core/project sync --dry-run          # what would change (read-only)
+./scripts/core/project sync                     # pull everything you're entitled to
+./scripts/core/project sync --tier commands_core   # just one tier
+./scripts/core/project sync --only core/preflight-check.sh   # just one file
+./scripts/core/project sync --ref v0.7.0        # pin to a tag instead of main
+./scripts/core/project sync --source ~/agentive-starter-kit   # local checkout, no network
+```
+
+By default the command applies to a `chore/core-sync-<version>` branch and
+prints a `git diff --stat`; nothing is pushed or merged — you review with plain
+`git diff` and merge on your own schedule. `--no-branch` applies to the working
+tree instead (and refuses to run if the paths it would touch have uncommitted
+changes).
+
+**Partial vs complete, and the `partial_sync` marker.** The engine decides
+completeness itself by comparing what it synced against everything your repo is
+entitled to. A **complete** pull updates `core_version` + `synced_at` and clears
+any partial marker. A **partial** pull (`--tier`/`--only`) leaves `core_version`
+untouched and writes `"partial_sync": true` into your manifest so the mixed
+state is explicit — the next complete pull (or a push PR) clears it. Run
+`./scripts/core/project sync --dry-run` any time to see the mixed state.
+
+> **`check-sync.sh` was retired in 3.0.0.** It only diagnosed drift (against a
+> local checkout) and couldn't fix it. `project sync --dry-run` replaces the
+> diagnosis and `project sync` treats it — both from the manifest.
 
 ## Verifying the Upgrade
 

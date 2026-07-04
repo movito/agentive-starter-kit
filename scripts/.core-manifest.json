@@ -1,12 +1,11 @@
 {
-  "core_version": "2.2.0",
+  "core_version": "3.0.0",
   "source_repo": "movito/agentive-starter-kit",
   "synced_at": "2026-06-13T00:00:00Z",
   "files": {
     "scripts_core": [
       "core/__init__.py",
       "core/check-bots.sh",
-      "core/check-sync.sh",
       "core/check_cross_repo_config.py",
       "core/ci-check.sh",
       "core/gh-review-helper.sh",

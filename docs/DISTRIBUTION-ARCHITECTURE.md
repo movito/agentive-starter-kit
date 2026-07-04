@@ -3,11 +3,12 @@
 > How `agentive-starter-kit` distributes agents, commands, and shared
 > tooling to downstream projects — and how to keep everything updated.
 
-**Version**: 1.0.0
-**Last updated**: 2026-07-03
+**Version**: 1.1.0
+**Last updated**: 2026-07-04
 **Status**: Current
 **Related**: `docs/MANIFEST-UPGRADE-GUIDE.md`, `docs/PLUGIN-UPGRADE-GUIDE.md`,
-`docs/CROSS-REPO-PATTERN.md`, ADR-0008, KIT-ADR-0022, KIT-ADR-0024, KIT-ADR-0025
+`docs/CROSS-REPO-PATTERN.md`, ADR-0008, KIT-ADR-0022, KIT-ADR-0024, KIT-ADR-0025,
+KIT-ADR-0026
 
 ---
 
@@ -16,11 +17,15 @@
 - **One upstream source of truth**: this repo.
 - **Two distribution channels**: a **plugin** (install-based) and a
   **manifest sync** GitHub Action (vendored-file-based).
-- **Commands & scripts propagate automatically** on merge to `main`
-  (the sync Action opens PRs downstream).
-- **Agents do not auto-propagate** via the sync Action today — they ship
-  through the plugin or a bootstrap merge. Closing that asymmetry is
-  tracked as KIT-0026.
+- **Commands & scripts propagate two ways** (Channel B): a **push** —
+  merging to `main` fires the sync Action, which opens PRs downstream — and,
+  since KIT-ADR-0026, a **pull** — a consumer runs `./scripts/core/project
+  sync` to fetch updates on demand (selective or full, version-pinnable).
+  Both feed one tested engine, so they can't drift.
+- **Agents do not auto-propagate** via either path today — the pull channel
+  carries scripts/commands/kit files, **not** agents, which still ship
+  through the plugin or a bootstrap merge. Closing that asymmetry is tracked
+  as KIT-0026.
 - **Everything is semver-pinned**: agents in frontmatter (`version`),
   the sync unit via `core_version` in the manifest.
 
@@ -110,13 +115,13 @@ kit-builder scaffolding).
 |---|---|---|
 | **What** | `agentive-workflow` plugin, from the `movito/agentive-skills` marketplace | `sync-core-scripts.yml` Action + `scripts/.core-manifest.json` |
 | **Carries** | Agents, commands, skills as **namespaced installs** (`agentive-workflow:feature-developer-v7`, `agentive-workflow:check-ci`) | **Vendored file copies**: `scripts/core/`, `.claude/commands/`, `.kit/` templates/skills/ADRs/workflows |
-| **Consumer update path** | `claude plugin update` / `upgrader` agent | Automated PR into the consumer repo |
-| **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | ADR-0008, KIT-ADR-0022, `docs/MANIFEST-UPGRADE-GUIDE.md` |
+| **Consumer update path** | `claude plugin update` / `upgrader` agent | **Push**: automated PR into the consumer repo. **Pull**: `./scripts/core/project sync` from the consumer (on-demand, KIT-ADR-0026) |
+| **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | ADR-0008, KIT-ADR-0022, KIT-ADR-0026, `docs/MANIFEST-UPGRADE-GUIDE.md` |
 
 ## 3. The tiered manifest (Channel B's brain)
 
 `scripts/.core-manifest.json` — `core_version` is the semver of the sync
-unit (currently `2.1.0`). Files are grouped into **tiers**, and tier
+unit (currently `3.0.0`). Files are grouped into **tiers**, and tier
 membership decides who receives what:
 
 | Tier | Count | Sync rule |
@@ -148,6 +153,31 @@ watched path changes (`scripts/core/**`, `.claude/commands/**`,
    `CROSS_REPO_TOKEN` secret.
 
 Consumers review and merge on their own schedule — nothing is force-pushed.
+
+### 4b. The pull path — consumer-initiated (KIT-ADR-0026)
+
+The push Action is upstream-initiated: a consumer waits for a merge to `main`,
+and repos outside the matrix receive nothing. KIT-ADR-0026 adds a **pull**
+path so any consumer can sync from its own terminal in under two minutes:
+
+```bash
+./scripts/core/project sync --dry-run          # what would change (read-only)
+./scripts/core/project sync                     # pull everything entitled
+./scripts/core/project sync --tier commands_core   # one tier
+./scripts/core/project sync --ref v0.7.0        # pin to a tag, not main
+```
+
+Crucially, **one engine backs both paths.** The tier/opt-in/cleanup logic
+lives in `scripts/core/sync_from_manifest.py`; the Action and `project sync`
+are two thin callers of it, so push and pull cannot diverge. The pull command
+resolves its source as `--source <dir>` → `gh api` tarball → shallow clone,
+applies to a review branch (or the working tree with `--no-branch`), and marks
+partial pulls in the manifest (`partial_sync`) so a mixed-version tree is
+explicit. Same review contract as the push PRs: the consumer reads a plain
+`git diff` and merges on its own schedule.
+
+The push Action also gained a `workflow_dispatch` trigger (optional `repo`
+filter) for on-demand *remote*-initiated syncs.
 
 ## 5. Agents are the special case
 
@@ -205,10 +235,14 @@ its localization.
 KIT-0026 (backlog) proposes adding `agents_core` / `skills_core` tiers so
 agents *also* flow through Channel B. Until that ships, agent updates reach
 consumers via the plugin (a) or a bootstrap/re-bootstrap merge (b) — **not**
-the sync Action.
+the sync Action, and **not** the new `project sync` pull path either. The
+KIT-ADR-0026 engine's per-tier strategy dispatch is designed so an
+`agents_core` tier lands as a new tier plus a KIT-LOCAL-marker merge strategy,
+not an engine rewrite.
 
 > **The asymmetry to remember:** editing a *command* on `main` opens
-> downstream PRs automatically; editing an *agent* does not.
+> downstream PRs automatically **and** is pullable with `project sync`;
+> editing an *agent* is neither — it ships via the plugin or a bootstrap merge.
 
 ## 6. Versioning discipline
 
@@ -237,9 +271,13 @@ Documents (like this one) are semver-stamped too — see the header.
 
 1. Edit the canonical agent/command in `agentive-starter-kit`, bump its
    `version` + `last-updated`, commit to a branch → PR → merge to `main`.
-2. **Commands & scripts**: merging to `main` auto-fires
-   `sync-core-scripts.yml`, which opens update PRs in each downstream.
-   Consumers merge on their schedule; `opted_in` tiers are respected.
+2. **Commands & scripts** (two paths, one engine):
+   - **Push** — merging to `main` auto-fires `sync-core-scripts.yml`, which
+     opens update PRs in each downstream. Consumers merge on their schedule;
+     `opted_in` tiers are respected.
+   - **Pull** — a consumer runs `./scripts/core/project sync --dry-run` to see
+     what changed and `./scripts/core/project sync` to apply it (selective via
+     `--tier`/`--only`, pinnable via `--ref`) without waiting for a push PR.
 3. **Agents**: re-publish the plugin (consumers run `claude plugin update`
    or the `upgrader` agent), or the consumer picks up body changes on its
    next bootstrap merge — KIT-LOCAL regions preserved.

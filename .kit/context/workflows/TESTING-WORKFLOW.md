@@ -260,6 +260,44 @@ If the script fails:
 
 ---
 
+## Known gotchas
+
+### Tests that run `git` must sanitize the git env (pre-commit `GIT_DIR` leak)
+
+`pre-commit` runs the pytest hook with **`GIT_DIR` / `GIT_WORK_TREE` set in the
+environment** (pointing at the real repo). Any test that shells out to git —
+`subprocess.run(["git", "-C", tmp_repo, ...])` — will **inherit those vars, and
+they override `-C`**, so the operation lands on the *real* repository instead of
+the tmp fixture. Observed symptom: a git-operating test silently flips the real
+repo's `core.bare` to `true`, after which every `git add` / `git commit` /
+`git status` fails with `fatal: this operation must be run in a work tree` and
+commits abort. The tests pass when run directly (`pytest`) because `GIT_DIR`
+isn't set then — it only breaks under `pre-commit`, which is maddening to
+diagnose.
+
+**Fix**: run git subprocesses with a sanitized env that strips the location
+vars, so `-C` is authoritative:
+
+```python
+def _clean_git_env():
+    env = os.environ.copy()
+    for var in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE",
+                "GIT_OBJECT_DIRECTORY", "GIT_COMMON_DIR"):
+        env.pop(var, None)
+    return env
+
+subprocess.run(["git", "-C", str(repo), ...], env=_clean_git_env())
+```
+
+Production tools that operate on a repo via `git -C` should do the same (a
+consumer's shell can have `GIT_DIR` set). See `scripts/core/project`
+(`_clean_git_env`) and `tests/test_project_sync.py` for the pattern.
+
+**If you hit it**: `git config core.bare false` restores the repo, then apply
+the env fix so it doesn't recur. (KIT-0036.)
+
+---
+
 ## Documentation
 
 - **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
