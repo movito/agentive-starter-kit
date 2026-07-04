@@ -1,14 +1,14 @@
-## SESSION-2026-07-04 — Agent versioning, Fable-5 fork, distribution doc
+## SESSION-2026-07-04 — Agent versioning, Fable-5 forks, distribution doc
 
 **Date**: 2026-07-04
 **Agent**: main session (ad-hoc maintenance, no task branch)
 **Mode**: single-repo
-**Scorecard**: 4 PRs merged (#61, #62, #66, #67) · 2 substantive review threads · 3 fix/pivot rounds · 5 commits total
+**Scorecard**: 5 PRs merged (#61, #62, #66, #67, #68) · 3 substantive review threads · 3 fix/pivot rounds · 6 commits total
 
 Scope: semver + model-pin refresh across 11 agents (#61); distribution-architecture
 doc + Mermaid diagram (#62); `feature-developer-f5` Fable-5 fork + bootstrap wiring
 + test coverage (#66, superseding a force-push-blocked #65); `&&`-chain cleanup
-across three agents (#67).
+across three agents (#67); `planner-f5` Fable-5 fork + `--no-kit` prune fix (#68).
 
 ### What Worked
 
@@ -27,6 +27,10 @@ across three agents (#67).
 4. **test count as a tripwire** — `pytest tests/test_kit_markers.py` reading 35
    instead of the expected 37 is what surfaced that I was editing on the wrong
    branch before anything was committed wrong.
+5. **Applying a retro lesson prevented its recurrence** — `planner-f5` (#68)
+   wired `bootstrap-consumer.sh` (`AGENT_EXCLUDES` + `KIT_AGENTS`) up-front, so
+   BugBot found nothing this round. The #66 finding became a checklist step and
+   paid off immediately — evidence the retro→apply loop works when it's short.
 
 ### What Was Surprising
 
@@ -59,6 +63,15 @@ across three agents (#67).
 4. **One git command per Bash call** — chaining with `&&`/pipes both triggers
    permission prompts and silently drops steps when denied. (Same lesson the
    `&&`-cleanup PR #67 encoded into the agents.)
+5. **`rsync --exclude` ≠ removal — opt-out flags must prune** — CodeRabbit (#68)
+   caught that `bootstrap-consumer.sh --no-kit` excluded the kit agents from the
+   copy but never deleted pre-existing copies, so an existing consumer re-running
+   `--no-kit` kept `planner*`/`feature-developer*` on disk — contradicting the
+   flag's own "dropped entirely" contract. Latent gap for all four kit agents,
+   not just the new `planner-f5`. Fixed by single-sourcing `KIT_AGENTS` above the
+   branch and `rm -f`-ing each in the `--no-kit` path. Lesson: when a bot flags a
+   newly-added item, check whether the same gap already exists for its siblings —
+   fix the class, not the instance.
 
 ### Permission Prompts Hit
 
@@ -74,9 +87,16 @@ across three agents (#67).
 ### Process Actions Taken
 
 - [ ] Add a test asserting every `.claude/agents/*.md` containing `KIT-LOCAL`
-      markers is present in both `KIT_AGENTS` and `AGENT_EXCLUDES` in
+      markers is present in `KIT_AGENTS` AND `AGENT_EXCLUDES` in
       `scripts/local/bootstrap-consumer.sh` (catches the #66/BugBot class
-      mechanically). Relevant to KIT-0034 (preflight/bootstrap hardening).
+      mechanically). Since `KIT_AGENTS` is now single-sourced and drives the
+      `--no-kit` prune too, one membership assertion covers copy-exclusion,
+      marker-merge, and opt-out removal together. Relevant to KIT-0034
+      (preflight/bootstrap hardening).
+- [ ] Optional: a bash-level smoke test for `bootstrap-consumer.sh --no-kit`
+      against a temp consumer that has pre-existing kit agents, asserting they
+      are pruned (no harness for script behaviour exists yet — #68 was verified
+      by `bash -n` + logic review only).
 - [ ] Optional: allow-list common read-only/idempotent git ops to cut prompt
       stalls; keep `push --force*` and `branch -D` denied.
 - [ ] Cross-agent `&&`-idiom sweep is done for the three rule-bearing agents;
