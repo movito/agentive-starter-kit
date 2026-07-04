@@ -380,9 +380,11 @@ else
         CR_SIGNAL=$(gh api "repos/$OWNER/$NAME/commits/$LATEST_SHA/status" \
             --jq '[.statuses[] | select(.context | test("coderabbit"; "i")) | .state] | if length == 0 then empty elif all(. == "success") then "success" else (map(select(. != "success")) | first) end' 2>/dev/null || true)
         if [ -z "$CR_SIGNAL" ]; then
+            # Same all-green rule as the status branch: every matching
+            # check run must be completed:success; otherwise surface the
+            # first non-green "status:conclusion" in the FAIL detail.
             CR_SIGNAL=$(gh api "repos/$OWNER/$NAME/commits/$LATEST_SHA/check-runs" \
-                --jq '.check_runs[] | select(.app.slug | test("coderabbit")) | "\(.status):\(.conclusion)"' 2>/dev/null | tail -1 || true)
-            if [ "$CR_SIGNAL" = "completed:success" ]; then CR_SIGNAL="success"; fi
+                --jq '[.check_runs[] | select(.app.slug | test("coderabbit")) | "\(.status):\(.conclusion)"] | if length == 0 then empty elif all(. == "completed:success") then "success" else (map(select(. != "completed:success")) | first) end' 2>/dev/null || true)
         fi
 
         CR_FALLBACK_OK=false
