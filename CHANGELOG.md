@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Pull-based consumer sync — one engine, two callers** (KIT-0036,
+  KIT-ADR-0026). Core scripts sync (Channel B) gains a consumer-initiated
+  pull path alongside the existing push Action.
+  - New `scripts/core/sync_from_manifest.py` — a single, tested Python engine
+    (`sync(source, target, options) -> SyncReport`; thin argparse CLI) that
+    both the push Action and the new pull command invoke, so the two cannot
+    drift. Two-pass temp-then-commit apply (safe self-update, exec-bit
+    preserving), engine-computed `partial_sync` completeness, a frozen
+    exit-code contract (0 clean/applied · 1 drift/warnings · 2 usage · 3
+    manifest · 4 I/O), and path-traversal / destructive-misuse guards.
+  - New `./scripts/core/project sync` subcommand — pull core files on demand:
+    `--dry-run`, `--ref <tag>`, `--source <dir>`, `--tier`, `--only`,
+    `--no-branch`. Fetch resolves `--source` dir → `gh api` tarball → shallow
+    clone. Defaults to a `chore/core-sync-<version>` branch; nothing is pushed
+    or merged — the consumer reviews a plain diff.
+  - `workflow_dispatch` on `sync-core-scripts.yml` with an optional `repo`
+    input (guarded by a `validate-dispatch` job) for on-demand pushes.
 - **Portable downstream agents via KIT-LOCAL markers** (KIT-0033) — resolves
   the four PR #57 bot threads on under-scaffolded consumer bootstrap.
   - `planner.md` and `feature-developer.md` wrap their consumer-customizable
@@ -35,6 +52,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`./scripts/core/project sync` now means core-file sync, not Linear sync**
+  (KIT-0036) — **BREAKING**. `sync` was previously an alias for `linearsync`;
+  it now runs the manifest sync engine. Use `linearsync` (or `linear`) for
+  Linear task sync. Reflected in the core-scripts major bump to **3.0.0**.
+- **`sync-core-scripts.yml` refactored to a thin shell around the sync engine**
+  (KIT-0036) — all tier/path/opt-in/cleanup logic now lives in the tested
+  `sync_from_manifest.py`; behavior is gated by characterization tests.
 - **Planner and feature-developer agents consolidated** (PR #57) — versioned
   suffixes dropped, one canonical agent per role.
   - `planner.md` rewritten as **v2.0.0**: phased + gated workflow modeled on
@@ -62,6 +86,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **`scripts/core/check-sync.sh`** (KIT-0036) — retired in core **3.0.0**. It
+  diagnosed drift against a local kit checkout but could not treat it and
+  re-implemented its own file-walk. Replaced by `./scripts/core/project sync
+  --dry-run` (reports drift) and `./scripts/core/project sync` (applies it),
+  both driven by the manifest. Consumers are notified via the sync engine's
+  generic `removed_entries` announcement.
 - **`.claude/agents/planner2.md`** and **`.claude/agents/planner3.md`** —
   content consolidated into the canonical `planner.md`.
 - **`.claude/agents/feature-developer-v3.md`**,

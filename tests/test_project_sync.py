@@ -1,0 +1,250 @@
+"""Tests for `project sync` — the consumer-side core-sync pull wrapper (KIT-0036 D5).
+
+Covers the `resolve_source` seam, is-kit inference, the branch/commit and
+`--no-branch` mechanics, and the dual-*caller* contract: the engine's library
+API and `project sync` produce identical trees (the third entrypoint that
+completes the PR-1 dual-entrypoint test).
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO = Path(__file__).resolve().parent.parent
+CORE = REPO / "scripts" / "core"
+sys.path.insert(0, str(CORE))  # for `import sync_from_manifest`
+
+# Load the `project` script (no .py extension) as a module, mirroring
+# test_project_script.py.
+_project_path = CORE / "project"
+_spec = importlib.util.spec_from_loader("project_cli", loader=None)
+project_cli = importlib.util.module_from_spec(_spec)
+with open(_project_path, encoding="utf-8") as _f:
+    project_cli.__dict__["__file__"] = str(_project_path)
+    exec(_f.read(), project_cli.__dict__)
+
+
+# ── Fixtures ────────────────────────────────────────────────────────────────
+def _write(path: Path, text: str, *, mode: int | None = None) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    if mode is not None:
+        os.chmod(path, mode)
+
+
+def build_kit(root: Path, *, opted_in: list[str] | None = None) -> Path:
+    manifest = {
+        "core_version": "9.9.0",
+        "source_repo": "movito/test-kit",
+        "synced_at": "2026-01-01T00:00:00Z",
+        "files": {
+            "scripts_core": ["core/foo.sh"],
+            "commands_core": ["cmd.md"],
+            "commands_optional": ["opt.md"],
+            "kit_builder": [".kit/things/"],
+        },
+        "opted_in": opted_in or [],
+    }
+    _write(root / "scripts" / ".core-manifest.json", json.dumps(manifest, indent=2))
+    _write(root / "scripts" / "core" / "foo.sh", "#!/bin/sh\necho foo\n", mode=0o755)
+    _write(root / ".claude" / "commands" / "cmd.md", "# cmd\n")
+    _write(root / ".claude" / "commands" / "opt.md", "# opt\n")
+    _write(root / ".kit" / "things" / "a.md", "alpha\n")
+    return root
+
+
+def seed_consumer_manifest(root: Path, *, opted_in: list[str]) -> None:
+    manifest = {
+        "core_version": "0.0.0",
+        "source_repo": "movito/test-kit",
+        "synced_at": "2026-01-01T00:00:00Z",
+        "files": {"scripts_core": [], "commands_core": []},
+        "opted_in": opted_in,
+    }
+    _write(root / "scripts" / ".core-manifest.json", json.dumps(manifest, indent=2))
+
+
+@pytest.fixture
+def kit(tmp_path):
+    return build_kit(tmp_path / "kit")
+
+
+@pytest.fixture
+def consumer(tmp_path):
+    d = tmp_path / "consumer"
+    d.mkdir()
+    return d
+
+
+# ── resolve_source / normalization ──────────────────────────────────────────
+class TestResolveSource:
+    def test_explicit_source_returned(self, kit, tmp_path):
+        got = project_cli.resolve_source("main", str(kit), "x/y", tmp_path)
+        assert (got / "scripts" / ".core-manifest.json").is_file()
+
+    def test_nested_tarball_root_normalized(self, tmp_path):
+        # Mimic a GitHub tarball: content nested one level under owner-repo-sha/.
+        nested_parent = tmp_path / "extracted"
+        build_kit(nested_parent / "movito-test-kit-abc1234")
+        got = project_cli._normalize_source_root(nested_parent)
+        assert (got / "scripts" / ".core-manifest.json").is_file()
+        assert got.name == "movito-test-kit-abc1234"
+
+    def test_missing_explicit_source_exits_4(self, tmp_path):
+        with pytest.raises(SystemExit) as exc:
+            project_cli.resolve_source("main", str(tmp_path / "nope"), "x/y", tmp_path)
+        assert exc.value.code == 4
+
+
+# ── is-kit inference ─────────────────────────────────────────────────────────
+class TestIsKitInference:
+    def test_kit_builder_opt_in_infers_kit(self, consumer):
+        seed_consumer_manifest(consumer, opted_in=["kit_builder"])
+        assert project_cli._infer_is_kit(consumer) is True
+
+    def test_fresh_consumer_is_not_kit(self, consumer):
+        assert project_cli._infer_is_kit(consumer) is False
+
+
+# ── cmd_sync behavior ────────────────────────────────────────────────────────
+class TestCmdSync:
+    def test_dry_run_reports_drift_and_writes_nothing(self, kit, consumer):
+        rc = project_cli.cmd_sync(["--source", str(kit), "--dry-run"], consumer)
+        assert rc == 1  # drift
+        assert not (consumer / "scripts" / "core" / "foo.sh").exists()
+
+    def test_no_branch_applies_core_tiers(self, kit, consumer):
+        rc = project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
+        assert rc == 0
+        assert (consumer / "scripts" / "core" / "foo.sh").exists()
+        assert (consumer / ".claude" / "commands" / "cmd.md").exists()
+        # Fresh consumer is not a kit → builder tier and optional excluded.
+        assert not (consumer / ".kit" / "things").exists()
+        assert not (consumer / ".claude" / "commands" / "opt.md").exists()
+
+    def test_is_kit_consumer_gets_builder_tier(self, kit, consumer):
+        seed_consumer_manifest(consumer, opted_in=["kit_builder"])
+        rc = project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
+        assert rc == 0
+        assert (consumer / ".kit" / "things" / "a.md").exists()
+
+    def test_unknown_flag_exit_2(self, kit, consumer):
+        rc = project_cli.cmd_sync(["--source", str(kit), "--bogus"], consumer)
+        assert rc == 2
+
+    def test_exec_bit_preserved(self, kit, consumer):
+        project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
+        import stat
+
+        mode = stat.S_IMODE((consumer / "scripts" / "core" / "foo.sh").stat().st_mode)
+        assert mode & 0o111
+
+
+# ── Dual-caller contract: engine library API vs `project sync` ──────────────
+class TestDualCallerContract:
+    """The third entrypoint (`project sync`) must yield the same tree as the
+    engine's library API for the same fixture (completes PR 1's dual-entrypoint
+    test)."""
+
+    def _snapshot(self, root: Path) -> dict[str, str]:
+        snap = {}
+        for path in sorted(root.rglob("*")):
+            if path.is_file():
+                rel = str(path.relative_to(root))
+                if rel.endswith(".core-manifest.json"):
+                    data = json.loads(path.read_text(encoding="utf-8"))
+                    data.pop("synced_at", None)
+                    snap[rel] = json.dumps(data, sort_keys=True)
+                else:
+                    snap[rel] = path.read_bytes().hex()
+        return snap
+
+    def test_project_sync_matches_library(self, tmp_path):
+        import sync_from_manifest as engine
+
+        kit = build_kit(tmp_path / "kit", opted_in=["kit_builder"])
+
+        lib_target = tmp_path / "lib"
+        lib_target.mkdir()
+        seed_consumer_manifest(lib_target, opted_in=["kit_builder"])
+        engine.sync(kit, lib_target, engine.SyncOptions(is_kit=True))
+
+        cli_target = tmp_path / "cli"
+        cli_target.mkdir()
+        seed_consumer_manifest(cli_target, opted_in=["kit_builder"])
+        rc = project_cli.cmd_sync(["--source", str(kit), "--no-branch"], cli_target)
+        assert rc == 0
+
+        assert self._snapshot(lib_target) == self._snapshot(cli_target)
+
+
+# Run git with a sanitized env so ambient GIT_DIR/GIT_WORK_TREE (set e.g. by
+# pre-commit while running the suite) can't redirect these tmp-repo operations
+# onto the real repository.
+def _git(*args, **kwargs):
+    kwargs.setdefault("env", project_cli._clean_git_env())
+    return subprocess.run(["git", *args], **kwargs)
+
+
+# ── Branch + commit mechanics (default mode, needs a real git repo) ─────────
+class TestBranchAndCommit:
+    def _init_repo(self, root: Path) -> None:
+        _git("init", "-q", str(root), check=True)
+        _git("-C", str(root), "config", "user.email", "t@t", check=True)
+        _git("-C", str(root), "config", "user.name", "t", check=True)
+        _write(root / "README.md", "seed\n")
+        _git("-C", str(root), "add", ".", check=True)
+        _git("-C", str(root), "commit", "-qm", "seed", check=True)
+
+    def test_default_mode_creates_branch_and_commits(self, kit, tmp_path):
+        consumer = tmp_path / "consumer"
+        consumer.mkdir()
+        self._init_repo(consumer)
+
+        rc = project_cli.cmd_sync(["--source", str(kit)], consumer)
+        assert rc == 0
+
+        branch = _git(
+            "-C",
+            str(consumer),
+            "branch",
+            "--show-current",
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        assert branch == "chore/core-sync-9.9.0"
+        # The synced files were committed (clean tree after apply).
+        status = _git(
+            "-C",
+            str(consumer),
+            "status",
+            "--porcelain",
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        assert status == ""
+        assert (consumer / "scripts" / "core" / "foo.sh").exists()
+
+    def test_no_branch_refuses_dirty_touched_path(self, kit, tmp_path):
+        consumer = tmp_path / "consumer"
+        consumer.mkdir()
+        self._init_repo(consumer)
+        # First sync so the file is tracked, then dirty it.
+        project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
+        _git("-C", str(consumer), "add", ".", check=True)
+        _git("-C", str(consumer), "commit", "-qm", "sync", check=True)
+        (consumer / "scripts" / "core" / "foo.sh").write_text(
+            "local edit\n", encoding="utf-8"
+        )
+
+        rc = project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
+        assert rc == 2  # refuses to overlay onto a dirty touched path
