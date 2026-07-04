@@ -36,7 +36,8 @@ Exit-code contract (frozen by tests, documented in ``--help``):
 * ``2`` — usage error (unknown ``--tier``/``--only`` key, non-entitled tier).
 * ``3`` — source manifest missing/unrecognized, or the target manifest exists
   but is corrupt (refusing to sync would silently reset ``opted_in``).
-* ``4`` — source tree unreadable.
+* ``4`` — source tree unreadable, or an unrecoverable I/O error (unreadable
+  source file, unwritable target) that would otherwise leak a traceback.
 """
 
 from __future__ import annotations
@@ -117,6 +118,11 @@ class SyncReport:
 
     Callers branch their UX on :attr:`status` (not the exit code, which
     conflates ``drift`` and ``applied_with_warnings``).
+
+    ``complete`` means "synced everything this target is *entitled* to" (its
+    core tiers, plus opted-in / kit_builder tiers) — not "every tier in the
+    manifest". A fresh consumer with no opt-ins is still ``complete`` once its
+    core tiers land; ``--tier``/``--only`` narrowing makes a run incomplete.
     """
 
     status: str
@@ -205,7 +211,31 @@ def load_source_manifest(source_root: Path) -> dict:
             "source manifest 'files' must be a tier→entries object "
             "(legacy flat-array manifests predate this engine)"
         )
+    _validate_files_section(data["files"])
     return data
+
+
+def _validate_files_section(files: dict) -> None:
+    """Reject a malformed or unsafe ``files`` section (loud-fail, exit 3).
+
+    Each tier value must be a list of string entries, and no entry may escape
+    the repo root: an entry with a ``..`` component or an absolute path would
+    let a crafted/corrupt manifest read or write outside source/target.
+    """
+    for tier, entries in files.items():
+        if not isinstance(entries, list):
+            raise ManifestError(
+                f"manifest tier {tier!r} must be a list of entries, "
+                f"got {type(entries).__name__}"
+            )
+        for entry in entries:
+            if not isinstance(entry, str):
+                raise ManifestError(
+                    f"manifest tier {tier!r} has a non-string entry: {entry!r}"
+                )
+            parts = Path(entry).parts
+            if Path(entry).is_absolute() or ".." in parts:
+                raise ManifestError(f"manifest entry escapes the repo root: {entry!r}")
 
 
 def _read_target_manifest(target_root: Path) -> dict | None:
@@ -236,11 +266,20 @@ def _read_target_manifest(target_root: Path) -> dict | None:
 
 
 def _all_entries(files_section: object) -> set[str]:
-    """All entry keys in a manifest ``files`` section (dict or legacy list)."""
+    """All entry keys in a manifest ``files`` section (dict or legacy list).
+
+    Defensive against a malformed target manifest: non-list tier values and
+    non-string entries are skipped rather than crashing (the source manifest
+    is strictly validated separately by :func:`_validate_files_section`).
+    """
     if isinstance(files_section, dict):
-        return {entry for entries in files_section.values() for entry in entries}
+        result: set[str] = set()
+        for entries in files_section.values():
+            if isinstance(entries, list):
+                result.update(e for e in entries if isinstance(e, str))
+        return result
     if isinstance(files_section, list):
-        return set(files_section)
+        return {e for e in files_section if isinstance(e, str)}
     return set()
 
 
@@ -276,11 +315,15 @@ def _read_file(path: Path) -> _FileContent:
 
 
 def _read_dir(path: Path) -> dict[str, _FileContent]:
-    """Read every file under ``path`` into memory, keyed by relative path."""
+    """Read every file under ``path`` into memory, keyed by relative path.
+
+    Keys are POSIX-normalized (forward slashes) so diff/report output is
+    stable and platform-independent.
+    """
     contents: dict[str, _FileContent] = {}
     for child in sorted(path.rglob("*")):
         if child.is_file():
-            contents[str(child.relative_to(path))] = _read_file(child)
+            contents[child.relative_to(path).as_posix()] = _read_file(child)
     return contents
 
 
@@ -306,7 +349,11 @@ def _select_tiers(
     entitled_set = set(entitled_tiers)
     known = set(upstream_files.keys())
     selected: list[str] = []
+    seen: set[str] = set()
     for tier in requested:
+        if tier in seen:
+            continue  # dedup repeated --tier so plan/stats aren't doubled
+        seen.add(tier)
         if tier not in known:
             raise UsageError(
                 f"unknown tier {tier!r}. known tiers: " f"{', '.join(sorted(known))}"
@@ -451,8 +498,9 @@ def _diff_plan(
 def _entry_key_for_relpath(relpath: str) -> str | None:
     """Recover the manifest entry key from a repo-relative path.
 
-    Inverse of :func:`_rel_path` for file entries — used for the
-    not-previously-in-manifest overwrite warning.
+    Inverse of :func:`_rel_path` for *file* entries only (directory entries
+    have had their trailing slash stripped and never take this path — the
+    overwrite warning fires solely in the file branch of :func:`_diff_plan`).
     """
     if relpath.startswith("scripts/"):
         return relpath[len("scripts/") :]
@@ -573,6 +621,23 @@ def sync(source: str | Path, target: str | Path, options: SyncOptions) -> SyncRe
 
     if not source_root.is_dir():
         raise SourceError(f"source tree not readable: {source_root}")
+    if target_root.exists() and not target_root.is_dir():
+        raise UsageError(f"target exists but is not a directory: {target_root}")
+
+    # Refuse to sync a tree onto itself or an overlapping tree: _apply stages
+    # inside the target and rmtree's directory entries, which against source==
+    # target (or a nested pair) would destroy the live tree, possibly incl. .git.
+    src_resolved = source_root.resolve()
+    tgt_resolved = target_root.resolve()
+    if src_resolved == tgt_resolved:
+        raise UsageError(
+            "source and target resolve to the same directory — refusing to "
+            "sync a tree onto itself"
+        )
+    if src_resolved in tgt_resolved.parents or tgt_resolved in src_resolved.parents:
+        raise UsageError(
+            "source and target overlap (one contains the other) — refusing " "to sync"
+        )
 
     upstream = load_source_manifest(source_root)
     target_manifest = _read_target_manifest(target_root)
@@ -755,6 +820,12 @@ def main(argv: list[str] | None = None) -> int:
     except SyncError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return exc.exit_code
+    except OSError as exc:
+        # Unreadable source file, read-only/blocked target write, symlink loop,
+        # etc. Never leak a traceback (which would exit 1 and read as success to
+        # the workflow's `RC >= 2` failure gate) — map to the I/O failure code.
+        print(f"error: unrecoverable I/O error: {exc}", file=sys.stderr)
+        return EXIT_SOURCE
 
     if args.report_json:
         with open(args.report_json, "w", encoding="utf-8") as handle:

@@ -389,6 +389,56 @@ class TestErrors:
             sync(source, target, SyncOptions())
 
 
+# ── Hardening: malformed manifests, path traversal, unsafe targets ──────────
+class TestHardening:
+    def test_path_traversal_entry_rejected(self, tmp_path, target):
+        bad = tmp_path / "bad"
+        manifest = json.loads(json.dumps(BASE_MANIFEST))
+        manifest["files"]["scripts_core"] = ["../../etc/passwd"]
+        _write(bad / "scripts" / ".core-manifest.json", json.dumps(manifest, indent=2))
+        with pytest.raises(ManifestError):
+            sync(bad, target, SyncOptions())
+
+    def test_absolute_entry_rejected(self, tmp_path, target):
+        bad = tmp_path / "bad"
+        manifest = json.loads(json.dumps(BASE_MANIFEST))
+        manifest["files"]["scripts_core"] = ["/etc/passwd"]
+        _write(bad / "scripts" / ".core-manifest.json", json.dumps(manifest, indent=2))
+        with pytest.raises(ManifestError):
+            sync(bad, target, SyncOptions())
+
+    def test_non_list_tier_value_rejected(self, tmp_path, target):
+        bad = tmp_path / "bad"
+        manifest = json.loads(json.dumps(BASE_MANIFEST))
+        manifest["files"]["scripts_core"] = "core/foo.sh"  # string, not list
+        _write(bad / "scripts" / ".core-manifest.json", json.dumps(manifest, indent=2))
+        with pytest.raises(ManifestError):
+            sync(bad, target, SyncOptions())
+
+    def test_target_that_is_a_file_rejected(self, source, tmp_path):
+        target_file = tmp_path / "target-as-file"
+        target_file.write_text("i am a file\n", encoding="utf-8")
+        with pytest.raises(UsageError):
+            sync(source, target_file, SyncOptions())
+
+    def test_source_equals_target_rejected(self, source):
+        with pytest.raises(UsageError):
+            sync(source, source, SyncOptions())
+
+    def test_nested_source_target_rejected(self, source):
+        with pytest.raises(UsageError):
+            sync(source, source / "scripts", SyncOptions())
+
+    def test_duplicate_tier_flag_not_double_counted(self, source, target):
+        report = sync(
+            source,
+            target,
+            SyncOptions(tiers=["commands_core", "commands_core"]),
+        )
+        # cmd.md appears exactly once, not twice.
+        assert report.added.count(".claude/commands/cmd.md") == 1
+
+
 # ── Exit-code contract (frozen) ─────────────────────────────────────────────
 class TestExitCodes:
     def _run_cli(self, args: list[str]) -> int:
@@ -442,6 +492,43 @@ class TestExitCodes:
         )
         assert code == EXIT_SOURCE
 
+    def test_exit_codes_via_real_subprocess(self, source, target, tmp_path):
+        # main() returns the code; __main__ does sys.exit(main()). Prove the
+        # wiring end-to-end for a couple of codes via a real process.
+        drift = subprocess.run(
+            [
+                sys.executable,
+                str(ENGINE),
+                "--source",
+                str(source),
+                "--target",
+                str(target),
+                "--is-kit",
+                "--dry-run",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert drift.returncode == 1, drift.stderr
+
+        missing = tmp_path / "no-manifest"
+        (missing / "scripts").mkdir(parents=True)
+        manifest_err = subprocess.run(
+            [
+                sys.executable,
+                str(ENGINE),
+                "--source",
+                str(missing),
+                "--target",
+                str(target),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert manifest_err.returncode == 3, manifest_err.stderr
+
     def test_report_json_written(self, source, target, tmp_path):
         out = tmp_path / "report.json"
         self._run_cli(
@@ -482,7 +569,8 @@ class TestDualEntrypointContract:
                     data.pop("synced_at", None)
                     snapshot[rel] = json.dumps(data, sort_keys=True)
                 else:
-                    snapshot[rel] = path.read_text(encoding="utf-8")
+                    # Bytes, not text: robust to any binary files in a real sync.
+                    snapshot[rel] = path.read_bytes().hex()
         return snapshot
 
     def test_library_and_cli_produce_identical_trees(self, tmp_path):
