@@ -1231,7 +1231,9 @@ def cmd_sync(args, project_dir):
         import sync_from_manifest as engine
     except ImportError as exc:
         print(f"❌ Sync engine unavailable (scripts/core/sync_from_manifest.py): {exc}")
-        return 1
+        # Missing/broken install — not drift. Exit 1 is reserved for
+        # drift/warnings, so automation must not read this as "updates available".
+        return 2
 
     is_kit = _infer_is_kit(project_dir)
     source_repo = _source_repo(project_dir)

@@ -139,6 +139,14 @@ class TestCmdSync:
         rc = project_cli.cmd_sync(["--source", str(kit), "--bogus"], consumer)
         assert rc == 2
 
+    def test_missing_engine_returns_2_not_drift(self, kit, consumer, monkeypatch):
+        # Setting a module to None in sys.modules makes `import` raise
+        # ImportError — simulate a broken/partial install. Must NOT return 1
+        # (drift), which automation would misread as "updates available".
+        monkeypatch.setitem(sys.modules, "sync_from_manifest", None)
+        rc = project_cli.cmd_sync(["--source", str(kit), "--dry-run"], consumer)
+        assert rc == 2
+
     def test_exec_bit_preserved(self, kit, consumer):
         project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
         import stat
