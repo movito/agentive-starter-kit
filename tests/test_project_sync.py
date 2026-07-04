@@ -139,6 +139,14 @@ class TestCmdSync:
         rc = project_cli.cmd_sync(["--source", str(kit), "--bogus"], consumer)
         assert rc == 2
 
+    def test_missing_flag_value_exit_2(self, kit, consumer):
+        assert project_cli.cmd_sync(["--source", str(kit), "--ref"], consumer) == 2
+        # A flag as the next token is not a valid value either.
+        assert (
+            project_cli.cmd_sync(["--ref", "--dry-run", "--source", str(kit)], consumer)
+            == 2
+        )
+
     def test_missing_engine_returns_2_not_drift(self, kit, consumer, monkeypatch):
         # Setting a module to None in sys.modules makes `import` raise
         # ImportError — simulate a broken/partial install. Must NOT return 1
@@ -293,6 +301,37 @@ class TestBranchAndCommit:
         )
         rc = project_cli.cmd_sync(["--source", str(kit)], consumer)  # default mode
         assert rc == 2
+
+    def test_existing_sync_branch_is_uniquified_from_head(self, kit, tmp_path):
+        # A second sync must create a FRESH branch from current HEAD, not switch
+        # to the existing chore/core-sync-* tip (which would apply elsewhere).
+        consumer = tmp_path / "consumer"
+        consumer.mkdir()
+        self._init_repo(consumer)
+        base = _git(
+            "-C",
+            str(consumer),
+            "branch",
+            "--show-current",
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+
+        project_cli.cmd_sync(["--source", str(kit)], consumer)  # chore/core-sync-9.9.0
+        _git("-C", str(consumer), "checkout", "-q", base, check=True)
+
+        project_cli.cmd_sync(["--source", str(kit)], consumer)  # must not reuse
+        branch = _git(
+            "-C",
+            str(consumer),
+            "branch",
+            "--show-current",
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        assert branch == "chore/core-sync-9.9.0-2"
 
     def test_no_branch_refuses_dirty_manifest(self, kit, tmp_path):
         consumer = tmp_path / "consumer"

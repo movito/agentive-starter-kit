@@ -1010,39 +1010,44 @@ def resolve_source(ref, explicit_source, source_repo, workdir):
         tarball = Path(workdir) / "source.tar.gz"
         extract = Path(workdir) / "extracted"
         extract.mkdir(exist_ok=True)
-        with open(tarball, "wb") as out:
-            result = subprocess.run(
-                ["gh", "api", f"repos/{source_repo}/tarball/{ref}"],
-                stdout=out,
-                stderr=subprocess.PIPE,
-            )
-        if result.returncode == 0 and tarball.stat().st_size > 0:
-            try:
+        try:
+            with open(tarball, "wb") as out:
+                result = subprocess.run(
+                    ["gh", "api", f"repos/{source_repo}/tarball/{ref}"],
+                    stdout=out,
+                    stderr=subprocess.PIPE,
+                    timeout=120,
+                )
+            if result.returncode == 0 and tarball.stat().st_size > 0:
                 with tarfile.open(tarball) as tar:
                     _safe_extract(tar, extract)
                 return _normalize_source_root(extract)
-            except (tarfile.TarError, RuntimeError) as exc:
-                print(f"⚠️  tarball fetch failed ({exc}); trying git clone…")
+        except (tarfile.TarError, RuntimeError, subprocess.TimeoutExpired) as exc:
+            print(f"⚠️  tarball fetch failed ({exc}); trying git clone…")
 
     # shallow clone fallback (needs git credentials for private repos)
     if shutil.which("git"):
         clone_dir = Path(workdir) / "clone"
-        result = subprocess.run(
-            [
-                "git",
-                "clone",
-                "--depth",
-                "1",
-                "--branch",
-                ref,
-                f"https://github.com/{source_repo}.git",
-                str(clone_dir),
-            ],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode == 0:
-            return _normalize_source_root(clone_dir)
+        try:
+            result = subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--depth",
+                    "1",
+                    "--branch",
+                    ref,
+                    f"https://github.com/{source_repo}.git",
+                    str(clone_dir),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode == 0:
+                return _normalize_source_root(clone_dir)
+        except subprocess.TimeoutExpired:
+            print("⚠️  git clone timed out")
 
     print("❌ Could not obtain the upstream source. Any one of:")
     print("   1. --source <dir>   a local checkout/unpacked tree of the kit")
@@ -1087,15 +1092,27 @@ def _dirty_touched_paths(project_dir, preview):
     """
     if not shutil.which("git"):
         return []
-    status = _git(project_dir, "status", "--porcelain")
+    # -z: NUL-separated records, no path quoting (avoids core.quotePath issues).
+    status = _git(project_dir, "status", "--porcelain", "-z")
     if status.returncode != 0:
         return []
     dirty = set()
-    for line in status.stdout.splitlines():
-        # porcelain: "XY <path>"
-        path = line[3:].strip() if len(line) > 3 else ""
+    fields = status.stdout.split("\0")
+    i = 0
+    while i < len(fields):
+        entry = fields[i]
+        if not entry:
+            i += 1
+            continue
+        xy, path = entry[:2], entry[3:]
         if path:
             dirty.add(path)
+        # Rename/copy: the original path is the next NUL-terminated field.
+        if xy and xy[0] in ("R", "C"):
+            i += 1
+            if i < len(fields) and fields[i]:
+                dirty.add(fields[i])
+        i += 1
     touched = set(preview.added) | set(preview.modified) | set(preview.removed_files)
     # The engine always rewrites the manifest, but it isn't in the diff lists —
     # include it so uncommitted local manifest edits also trip the guard.
@@ -1103,16 +1120,25 @@ def _dirty_touched_paths(project_dir, preview):
     return sorted(p for p in touched if p in dirty)
 
 
-def _create_branch(project_dir, branch):
-    """Create ``branch`` (or switch to it if it already exists). True on success."""
-    exists = _git(project_dir, "rev-parse", "--verify", branch).returncode == 0
-    flags = [] if exists else ["-b"]
-    result = _git(project_dir, "checkout", *flags, branch)
+def _create_branch(project_dir, base_name):
+    """Create a fresh branch from the CURRENT HEAD; return its name (or None).
+
+    Always creates from HEAD — never switches to an existing branch's tip, which
+    would apply the sync somewhere other than where the operator started and
+    invalidate the dirty preview computed beforehand. On name collision the
+    branch is uniquified (`<base>-2`, `<base>-3`, …).
+    """
+    branch = base_name
+    suffix = 1
+    while _git(project_dir, "rev-parse", "--verify", "--quiet", branch).returncode == 0:
+        suffix += 1
+        branch = f"{base_name}-{suffix}"
+    result = _git(project_dir, "checkout", "-b", branch)
     if result.returncode != 0:
-        print(f"❌ Could not switch to branch {branch}: {result.stderr.strip()}")
-        return False
+        print(f"❌ Could not create branch {branch}: {result.stderr.strip()}")
+        return None
     print(f"🔀 On branch {branch}")
-    return True
+    return branch
 
 
 def _stage_and_commit(project_dir, version, report):
@@ -1206,6 +1232,16 @@ def cmd_sync(args, project_dir):
         if arg in known_bool:
             i += 1
         elif arg in known_val:
+            # A value must follow and must not itself be a flag — otherwise a
+            # missing value silently falls back to the default (or swallows the
+            # next flag).
+            if i + 1 >= len(args) or args[i + 1].startswith("-"):
+                print(f"❌ Option {arg} requires a value")
+                print(
+                    "Usage: ./scripts/core/project sync [--dry-run] [--no-branch] "
+                    "[--ref REF] [--source DIR] [--tier TIER]... [--only ENTRY]..."
+                )
+                return 2
             i += 2
         elif arg.startswith("-"):
             print(f"❌ Unknown option: {arg}")
@@ -1267,7 +1303,7 @@ def cmd_sync(args, project_dir):
         version = _manifest_version(source_path)
         committed = False
         if not dry_run and not no_branch:
-            if not _create_branch(project_dir, f"chore/core-sync-{version}"):
+            if _create_branch(project_dir, f"chore/core-sync-{version}") is None:
                 # Environment/precondition failure — not drift (exit 1 is
                 # reserved for that in the engine contract).
                 return 2
