@@ -241,6 +241,7 @@ CI_POLL_ATTEMPTS=3
 CI_POLL_DELAY=5
 RUN_COUNT=0
 LATEST_RUNS="[]"
+CI_FETCH_OK=false
 CI_ATTEMPT=1
 while [ "$CI_ATTEMPT" -le "$CI_POLL_ATTEMPTS" ]; do
     # Reset per attempt so a failed refetch can't reuse a stale filter result
@@ -250,7 +251,12 @@ while [ "$CI_ATTEMPT" -le "$CI_POLL_ATTEMPTS" ]; do
     # be pushed out of --limit by older reruns piling up on the branch.
     # shellcheck disable=SC2086
     CI_RUNS=$(gh $GH_REPO_ARG run list --commit "$LATEST_SHA" --limit 10 --json status,conclusion,workflowName,event,headSha \
-        --jq '[.[] | select(.event == "push" or .event == "pull_request")]' 2>/dev/null || true)
+        --jq '[.[] | select(.event == "push" or .event == "pull_request")]' 2>/dev/null)
+    # Distinguish "gh succeeded with an empty list" (runs not registered
+    # yet → PENDING) from "gh itself failed" (auth/network → FAIL below)
+    if [ $? -eq 0 ]; then
+        CI_FETCH_OK=true
+    fi
 
     if [ -n "$CI_RUNS" ] && [ "$CI_RUNS" != "[]" ]; then
         # Filter runs to the PR head commit (not just the newest run's SHA)
@@ -269,8 +275,15 @@ while [ "$CI_ATTEMPT" -le "$CI_POLL_ATTEMPTS" ]; do
 done
 
 if [ "$RUN_COUNT" -eq 0 ]; then
-    echo "GATE:1:CI:PENDING:No CI runs registered yet for ${LATEST_SHA:0:7} — re-run preflight shortly"
-    ANY_PENDING=true
+    if [ "$CI_FETCH_OK" = true ]; then
+        echo "GATE:1:CI:PENDING:No CI runs registered yet for ${LATEST_SHA:0:7} — re-run preflight shortly"
+        ANY_PENDING=true
+    else
+        # Every attempt errored — a connectivity/auth problem, not "no runs
+        # yet". Fail closed like Gate 4's could-not-fetch path.
+        echo "GATE:1:CI:FAIL:Could not fetch CI runs (gh error) — check gh auth/network"
+        ANY_FAILED=true
+    fi
 else
     CI_ALL_PASS=true
     CI_ANY_RUNNING=false
