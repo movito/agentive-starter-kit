@@ -1097,6 +1097,9 @@ def _dirty_touched_paths(project_dir, preview):
         if path:
             dirty.add(path)
     touched = set(preview.added) | set(preview.modified) | set(preview.removed_files)
+    # The engine always rewrites the manifest, but it isn't in the diff lists —
+    # include it so uncommitted local manifest edits also trip the guard.
+    touched.add("scripts/.core-manifest.json")
     return sorted(p for p in touched if p in dirty)
 
 
@@ -1112,11 +1115,17 @@ def _create_branch(project_dir, branch):
     return True
 
 
-def _stage_and_commit(project_dir, version):
-    """Stage the manifest-reachable roots and commit the sync."""
-    for root in ("scripts", ".claude/commands", ".kit", ".adversarial"):
-        if (project_dir / root).exists():
-            _git(project_dir, "add", root)
+def _stage_and_commit(project_dir, version, report):
+    """Stage only the paths the sync actually changed and commit. True on success.
+
+    Staging exact paths (not whole roots) keeps unrelated uncommitted work in
+    those trees out of the sync commit. Deleted files (removed_files) are staged
+    as deletions by ``git add``.
+    """
+    paths = set(report.added) | set(report.modified) | set(report.removed_files)
+    paths.add("scripts/.core-manifest.json")
+    for path in sorted(paths):
+        _git(project_dir, "add", "--", path)
     result = _git(
         project_dir,
         "commit",
@@ -1127,6 +1136,8 @@ def _stage_and_commit(project_dir, version):
         print(
             f"⚠️  Nothing committed: {result.stdout.strip() or result.stderr.strip()}"
         )
+        return False
+    return True
 
 
 def _print_diff_stat(project_dir, committed):
@@ -1271,8 +1282,9 @@ def cmd_sync(args, project_dir):
         and not no_branch
         and report.status in ("applied", "applied_with_warnings")
     ):
-        _stage_and_commit(project_dir, version)
-        committed = True
+        # committed reflects whether `git commit` actually succeeded, so the
+        # diff-stat shows the last commit (committed) vs the working tree (not).
+        committed = _stage_and_commit(project_dir, version, report)
 
     _print_sync_report(
         report, dry_run=dry_run, committed=committed, project_dir=project_dir

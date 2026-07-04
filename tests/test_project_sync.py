@@ -248,3 +248,40 @@ class TestBranchAndCommit:
 
         rc = project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
         assert rc == 2  # refuses to overlay onto a dirty touched path
+
+    def test_default_mode_does_not_sweep_unrelated_work(self, kit, tmp_path):
+        consumer = tmp_path / "consumer"
+        consumer.mkdir()
+        self._init_repo(consumer)
+        # Unrelated uncommitted file under a synced root — must NOT be committed.
+        _write(consumer / "scripts" / "local" / "unrelated.txt", "my wip\n")
+
+        rc = project_cli.cmd_sync(["--source", str(kit)], consumer)
+        assert rc == 0
+
+        tracked = _git(
+            "-C",
+            str(consumer),
+            "ls-files",
+            "scripts/local/unrelated.txt",
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        assert tracked == "", "unrelated file must not be swept into the sync commit"
+        assert (consumer / "scripts" / "core" / "foo.sh").exists()
+
+    def test_no_branch_refuses_dirty_manifest(self, kit, tmp_path):
+        consumer = tmp_path / "consumer"
+        consumer.mkdir()
+        self._init_repo(consumer)
+        project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
+        _git("-C", str(consumer), "add", ".", check=True)
+        _git("-C", str(consumer), "commit", "-qm", "sync", check=True)
+        # Uncommitted local manifest edit — the engine would overwrite it.
+        (consumer / "scripts" / ".core-manifest.json").write_text(
+            '{"core_version": "9.9.0", "files": {}, "opted_in": ["local-edit"]}\n',
+            encoding="utf-8",
+        )
+        rc = project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
+        assert rc == 2  # dirty manifest trips the guard
