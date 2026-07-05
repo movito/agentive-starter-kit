@@ -1,6 +1,6 @@
 # KIT-0040 Handoff — feature-developer
 
-**Task**: `.kit/tasks/4-in-review/KIT-0040-kit-0034-retro-followups.md`
+**Task**: `.kit/tasks/5-done/KIT-0040-kit-0034-retro-followups.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-05 (planner-f5)
 **Estimated effort**: 3–5 hours
