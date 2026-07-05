@@ -136,7 +136,9 @@ def _sync_coordination_metadata(
                 meta_file.write_text(updated, encoding="utf-8")
                 rel = meta_file.relative_to(project_dir)
                 print(f"🔗 Updated task path in {rel}")
-        except OSError as e:
+        except (OSError, UnicodeDecodeError) as e:
+            # UnicodeDecodeError is a ValueError, not an OSError — a
+            # non-UTF-8 coordination file must warn, not break the move.
             print(f"⚠️  Could not update {meta_file.name}: {e}")
 
 

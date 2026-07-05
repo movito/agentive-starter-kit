@@ -991,3 +991,20 @@ class TestMoveTaskMetadataSync:
         assert data["planner"]["details_link"] == (
             f".kit/tasks/5-done/{self.TASK_FILE}"
         )
+
+    def test_non_utf8_metadata_warns_but_move_succeeds(self, tmp_path, capsys):
+        # A corrupted (non-UTF-8) coordination file must warn, never
+        # break the already completed move (UnicodeDecodeError is a
+        # ValueError, not an OSError).
+        context = self._setup_project(tmp_path)
+        (context / "agent-handoffs.json").write_bytes(b"\xff\xfe broken")
+
+        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
+
+        out = capsys.readouterr().out
+        assert "Could not update agent-handoffs.json" in out
+        # The parseable handoff file was still rewritten.
+        handoff_md = (context / "KIT-1234-HANDOFF-feature-developer.md").read_text(
+            encoding="utf-8"
+        )
+        assert f".kit/tasks/3-in-progress/{self.TASK_FILE}" in handoff_md
