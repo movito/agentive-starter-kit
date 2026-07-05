@@ -1271,9 +1271,10 @@ def cmd_sync(args, project_dir):
     (clean/applied) and ``1`` (drift/warnings) — see the contract in
     ``sync_from_manifest.py``'s module docstring. Wrapper-level failures
     (usage, dirty tree, branch creation, engine import) must therefore
-    exit ``2``, never ``0``/``1``; engine failures pass through the
-    engine's own code. Also a self-review checklist item
-    (``.kit/skills/self-review/SKILL.md``).
+    exit ``2``, never ``0``/``1``; source-acquisition failures exit ``4``
+    (``resolve_source()``, matching the engine's I/O-error code); engine
+    failures pass through the engine's own code. Also a self-review
+    checklist item (``.kit/skills/self-review/SKILL.md``).
     """
     known_bool = {"--dry-run", "--no-branch"}
     known_val = {"--ref", "--source", "--tier", "--only"}
