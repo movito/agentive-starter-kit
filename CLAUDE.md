@@ -84,6 +84,7 @@ See `.kit/templates/AGENT-TEMPLATE.md` for creating new agents.
 | Testing | `.kit/context/workflows/TESTING-WORKFLOW.md` |
 | Review fixes | `.kit/context/workflows/REVIEW-FIX-WORKFLOW.md` |
 | PR sizing | `.kit/context/workflows/PR-SIZE-WORKFLOW.md` |
+| Stacked PRs | `.kit/context/workflows/STACKED-PR-WORKFLOW.md` |
 | Workflow freeze | `.kit/context/workflows/WORKFLOW-FREEZE-POLICY.md` |
 | Coverage | `.kit/context/workflows/COVERAGE-WORKFLOW.md` |
 | Task completion | `.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md` |

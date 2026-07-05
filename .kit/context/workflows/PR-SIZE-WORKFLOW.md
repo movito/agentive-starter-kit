@@ -84,6 +84,9 @@ doc changes, and single-module tasks fall here.
 
 ### Working with stacked PRs
 
+When PR 2 must be based on PR 1's *unmerged* branch (true stacking) and for
+reconciling after the base merges, see `STACKED-PR-WORKFLOW.md`.
+
 When a task spec defines multiple PRs:
 
 1. **PR 1**: Create feature branch, implement domain layer, open PR
