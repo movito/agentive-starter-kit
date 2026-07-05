@@ -1,6 +1,6 @@
 # KIT-0040: KIT-0034 retro follow-ups — preflight test harness, move-metadata pairing, kit_markers fixes
 
-**Status**: Todo
+**Status**: In Review
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 3-5 hours

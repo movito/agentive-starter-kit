@@ -85,6 +85,19 @@ class TestReplaceRegion:
         with pytest.raises(KeyError):
             km.replace_region(SAMPLE, "nope", "x")
 
+    def test_drifted_marker_round_trip_is_byte_identical(self):
+        # Whitespace-drifted markers are tolerated (KIT-0040) but must
+        # still round-trip byte-for-byte — the drifted marker lines are
+        # captured and re-emitted verbatim, never normalized.
+        drifted = (
+            "<!--  BEGIN  KIT-LOCAL: r -->\n"
+            "body line\n"
+            "  <!-- END KIT-LOCAL: r  -->\n"
+        )
+        body = km.extract_region(drifted, "r")
+        assert body == "body line"
+        assert km.replace_region(drifted, "r", body) == drifted
+
     def test_replaces_every_occurrence_of_a_name(self):
         # A malformed file with two same-named regions: both must update,
         # not just the first (no silent skip).
@@ -149,6 +162,103 @@ class TestMerge:
         assert km.extract_region(crlf, "project-context") == "CRLF KEEP"
         out = km.merge(SAMPLE, consumer=crlf, placeholders=None)
         assert km.extract_region(out, "project-context") == "CRLF KEEP"
+
+    def test_prose_mention_of_begin_marker_does_not_abort(self):
+        # KIT-0040 regression (BugBot on PR #58, finding 1): a consumer whose
+        # preserved region merely *mentions* another region's BEGIN marker in
+        # prose must not trip the malformed check for that other region —
+        # the absent region seeds from its placeholder instead of aborting
+        # bootstrap-consumer.sh.
+        consumer = (
+            "# consumer agent\n"
+            "\n"
+            "<!-- BEGIN KIT-LOCAL: project-context -->\n"
+            "Docs note: keep the `<!-- BEGIN KIT-LOCAL: stack-notes -->` "
+            "marker intact when editing.\n"
+            "<!-- END KIT-LOCAL: project-context -->\n"
+        )
+        out = km.merge(
+            SAMPLE,
+            consumer=consumer,
+            placeholders={"project-context": "PH-PC", "stack-notes": "PH-SN"},
+        )
+        # project-context preserved from the consumer, stack-notes seeded.
+        assert "marker intact when editing." in km.extract_region(
+            out, "project-context"
+        )
+        assert km.extract_region(out, "stack-notes") == "PH-SN"
+
+    def test_prefix_named_region_does_not_trip_malformed_check(self):
+        # KIT-0040 evaluator finding: a well-formed consumer region whose
+        # name merely *extends* an upstream region's name (project-context
+        # vs project-context-extra) must not trip the malformed check for
+        # the shorter name — \b after a hyphenated name matches at the
+        # t→- boundary, so the detector needs a stricter name terminator.
+        consumer = (
+            "<!-- BEGIN KIT-LOCAL: project-context-extra -->\n"
+            "extension region content\n"
+            "<!-- END KIT-LOCAL: project-context-extra -->\n"
+        )
+        out = km.merge(
+            SAMPLE,
+            consumer=consumer,
+            placeholders={"project-context": "PH-PC", "stack-notes": "PH-SN"},
+        )
+        assert km.extract_region(out, "project-context") == "PH-PC"
+        assert km.extract_region(out, "stack-notes") == "PH-SN"
+
+    def test_whitespace_drifted_marker_still_preserves_content(self):
+        # KIT-0040 regression (BugBot on PR #58, finding 2): benign
+        # whitespace drift inside a marker line must not make the region
+        # unparseable — that silently replaced customized content with
+        # placeholder TODO text on re-bootstrap.
+        consumer = (
+            "<!--  BEGIN  KIT-LOCAL:  project-context  -->\n"
+            "CUSTOMIZED CONSUMER CONTENT\n"
+            "<!-- END KIT-LOCAL:\tproject-context -->\n"
+        )
+        assert km.extract_region(consumer, "project-context") == (
+            "CUSTOMIZED CONSUMER CONTENT"
+        )
+        out = km.merge(
+            SAMPLE,
+            consumer=consumer,
+            placeholders={"project-context": "PH-PC", "stack-notes": "PH-SN"},
+        )
+        assert km.extract_region(out, "project-context") == (
+            "CUSTOMIZED CONSUMER CONTENT"
+        )
+
+    def test_marker_drift_beyond_tolerance_fails_fast(self):
+        # Drift the whitespace tolerance can't absorb (here: lowercased
+        # keywords) must raise, never silently seed a placeholder over the
+        # consumer's customized content.
+        consumer = (
+            "<!-- begin kit-local: project-context -->\n"
+            "CUSTOMIZED CONSUMER CONTENT\n"
+            "<!-- end kit-local: project-context -->\n"
+        )
+        with pytest.raises(ValueError, match="malformed KIT-LOCAL region"):
+            km.merge(
+                SAMPLE,
+                consumer=consumer,
+                placeholders={"project-context": "PH-PC"},
+            )
+
+    def test_missing_colon_marker_fails_fast(self):
+        # A marker edited past parseability (colon dropped) is detected by
+        # the loose malformed check and fails fast.
+        consumer = (
+            "<!-- BEGIN KIT-LOCAL project-context -->\n"
+            "CUSTOMIZED CONSUMER CONTENT\n"
+            "<!-- END KIT-LOCAL project-context -->\n"
+        )
+        with pytest.raises(ValueError, match="malformed KIT-LOCAL region"):
+            km.merge(
+                SAMPLE,
+                consumer=consumer,
+                placeholders={"project-context": "PH-PC"},
+            )
 
     def test_markerless_consumer_falls_back_to_placeholder(self):
         # A consumer stuck on a pre-consolidation agent has no markers;

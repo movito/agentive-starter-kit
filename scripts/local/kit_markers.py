@@ -36,7 +36,15 @@ import re
 import sys
 from pathlib import Path
 
-BEGIN_RE = re.compile(r"<!-- BEGIN KIT-LOCAL: (?P<name>\S+) -->")
+# Markers are matched as whole lines, tolerating benign whitespace drift
+# inside the comment ([ \t] only — never \s, so tolerance can't cross a
+# line break). A consumer whose marker gained an extra space must still
+# parse: treating its region as absent would silently replace customized
+# content with placeholders on re-bootstrap.
+BEGIN_RE = re.compile(
+    r"^[ \t]*<!--[ \t]*BEGIN[ \t]+KIT-LOCAL:[ \t]*(?P<name>\S+?)[ \t]*-->[ \t]*\r?$",
+    re.MULTILINE,
+)
 
 
 def _region_pattern(name: str) -> re.Pattern[str]:
@@ -44,17 +52,41 @@ def _region_pattern(name: str) -> re.Pattern[str]:
 
     Group 'body' is everything between the newline after BEGIN and the
     newline before END — never the marker lines themselves — so an
-    extract/replace round-trip is byte-identical.
+    extract/replace round-trip is byte-identical. Drifted marker lines are
+    captured and re-emitted verbatim, never normalized.
     """
     esc = re.escape(name)
     # \r?\n so files with CRLF line endings (Windows / git autocrlf) parse
     # too. The newline is captured inside begin/end and re-emitted verbatim,
     # and the body group is preserved byte-for-byte regardless of ending.
     return re.compile(
-        r"(?P<begin><!-- BEGIN KIT-LOCAL: " + esc + r" -->\r?\n)"
+        r"(?P<begin>^[ \t]*<!--[ \t]*BEGIN[ \t]+KIT-LOCAL:[ \t]*"
+        + esc
+        + r"[ \t]*-->[ \t]*\r?\n)"
         r"(?P<body>.*?)"
-        r"(?P<end>\r?\n<!-- END KIT-LOCAL: " + esc + r" -->)",
-        re.DOTALL,
+        r"(?P<end>\r?\n[ \t]*<!--[ \t]*END[ \t]+KIT-LOCAL:[ \t]*" + esc + r"[ \t]*-->)",
+        re.DOTALL | re.MULTILINE,
+    )
+
+
+def _begin_marker_line_re(name: str) -> re.Pattern[str]:
+    """Loose, line-anchored detector for a BEGIN marker of region *name*.
+
+    Deliberately looser than the parse patterns (case-insensitive, colon
+    optional, no closing --> required) so a marker damaged beyond what
+    parsing tolerates is still *detected* and merge fails fast instead of
+    silently clobbering the region's content with a placeholder. Line-
+    anchored so a prose sentence mentioning a marker never matches.
+
+    The name must end after *esc*: (?!-?\\w) rejects a continuation like
+    "-extra" or "2" (a \\b alone would match at the t→- boundary of a
+    hyphenated name, tripping the check for prefix-named sibling regions)
+    while still allowing whitespace, "-->", or end-of-line after the name.
+    """
+    esc = re.escape(name)
+    return re.compile(
+        r"^[ \t]*<!--[ \t]*BEGIN[ \t]+KIT-LOCAL\b[ \t]*:?[ \t]*" + esc + r"(?!-?\w)",
+        re.MULTILINE | re.IGNORECASE,
     )
 
 
@@ -117,14 +149,17 @@ def merge(
     for name in find_regions(upstream):
         if consumer is not None:
             preserved = extract_region(consumer, name)
-            if preserved is None and f"<!-- BEGIN KIT-LOCAL: {name} -->" in consumer:
-                # Marker opened but not parseable (e.g. END edited away).
-                # Fail fast rather than silently clobber the consumer's
-                # trapped content with a placeholder on re-bootstrap.
+            if preserved is None and _begin_marker_line_re(name).search(consumer):
+                # A line looks like this region's BEGIN marker but the
+                # region is not parseable (END edited away, marker damaged
+                # beyond whitespace tolerance). Fail fast rather than
+                # silently clobber the consumer's trapped content with a
+                # placeholder on re-bootstrap. Line-anchored, so a prose
+                # mention of a marker inside another region never trips it.
                 raise ValueError(
                     f"malformed KIT-LOCAL region in consumer file: {name} "
-                    "(BEGIN marker present but region not parseable — "
-                    "missing or mismatched END marker?)"
+                    "(BEGIN marker line present but region not parseable — "
+                    "missing/mismatched END marker or damaged BEGIN marker?)"
                 )
             if preserved is not None:
                 result = replace_region(result, name, preserved)

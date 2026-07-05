@@ -4,7 +4,7 @@
     "current_task": "KIT-0040",
     "task_started": null,
     "brief_note": "KIT-0040 promoted to todo (high, user pulled it forward to fix the kit_markers bugs), evaluated (RESTRUCTURE_NEEDED declined, F3-first sequencing accepted — disposition in spec), handoff ready. Then: KIT-0037/38/39 bundle, KIT-0035, ADR-0025 slim. Awaiting human verdicts: KIT-0032 (PR #56 merged), ASK-0048 (PR #45).",
-    "details_link": ".kit/tasks/2-todo/KIT-0040-kit-0034-retro-followups.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0040-kit-0034-retro-followups.md",
     "handoff_file": ".kit/context/KIT-0040-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0040",
     "task_started": null,
     "brief_note": "KIT-0040 (kit_markers bug fixes FIRST, then preflight stub-gh harness + project-move metadata pairing) ready for assignment.",
-    "details_link": ".kit/tasks/2-todo/KIT-0040-kit-0034-retro-followups.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0040-kit-0034-retro-followups.md",
     "handoff_file": ".kit/context/KIT-0040-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

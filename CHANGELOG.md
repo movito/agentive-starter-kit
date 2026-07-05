@@ -7,7 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`kit_markers.py` marker-merge robustness** (KIT-0040 F3, resolves the
+  two BugBot findings open on PR #58 since the KIT-0033 merge):
+  - A prose mention of a region's BEGIN marker inside another (preserved)
+    region no longer aborts re-bootstrap as "malformed" — the malformed
+    check is now line-anchored instead of a raw substring test.
+  - Benign whitespace drift inside a marker line (extra spaces/tabs) no
+    longer makes the region unparseable — previously a drifted marker
+    silently replaced customized consumer content with placeholder TODO
+    text on re-bootstrap. Drift beyond the whitespace tolerance is now
+    *detected* by a deliberately looser line-anchored check and fails
+    fast instead of clobbering. Well-formed and drifted regions still
+    round-trip byte-for-byte.
+
 ### Added
+
+- **Stub-`gh` regression harness for `preflight-check.sh`**
+  (`tests/test_preflight_check.py`, KIT-0040 F1) — runs the real script
+  against canned `gh` payloads via a fake `gh` on PATH, covering the
+  KIT-0034 8-state verification matrix (Gate 2 status/check-run fallback,
+  fail-closed paths, Gate 1 PENDING vs FAIL precedence) in CI. The script
+  itself stays shell + gh; the stub pattern is reusable for other
+  shell+gh scripts.
+- **Task moves now sync coordination metadata** (KIT-0040 F2) —
+  `./scripts/core/project move|start|complete|block` rewrites the moved
+  task's numbered-folder path in `.kit/context/agent-handoffs.json` and
+  the task's `HANDOFF-*.md` files, so status moves no longer strand stale
+  paths for CodeRabbit to flag. Re-running a move for a task already in
+  place doubles as a metadata repair.
 
 - **Pull-based consumer sync — one engine, two callers** (KIT-0036,
   KIT-ADR-0026). Core scripts sync (Channel B) gains a consumer-initiated
