@@ -1266,6 +1266,14 @@ def cmd_sync(args, project_dir):
 
     Resolution/branch mechanics per KIT-ADR-0026 §2. Returns a process exit
     code (the engine's exit-code contract).
+
+    Wrapper exit-code convention (KIT-0037): the engine reserves ``0``
+    (clean/applied) and ``1`` (drift/warnings) — see the contract in
+    ``sync_from_manifest.py``'s module docstring. Wrapper-level failures
+    (usage, dirty tree, branch creation, engine import) must therefore
+    exit ``2``, never ``0``/``1``; engine failures pass through the
+    engine's own code. Also a self-review checklist item
+    (``.kit/skills/self-review/SKILL.md``).
     """
     known_bool = {"--dry-run", "--no-branch"}
     known_val = {"--ref", "--source", "--tier", "--only"}
@@ -1284,6 +1292,7 @@ def cmd_sync(args, project_dir):
                     "Usage: ./scripts/core/project sync [--dry-run] [--no-branch] "
                     "[--ref REF] [--source DIR] [--tier TIER]... [--only ENTRY]..."
                 )
+                # Usage error → 2 (wrapper exit-code convention, see docstring).
                 return 2
             i += 2
         elif arg.startswith("-"):
@@ -1292,6 +1301,7 @@ def cmd_sync(args, project_dir):
                 "Usage: ./scripts/core/project sync [--dry-run] [--no-branch] "
                 "[--ref REF] [--source DIR] [--tier TIER]... [--only ENTRY]..."
             )
+            # Usage error → 2 (wrapper exit-code convention, see docstring).
             return 2
         else:
             i += 1
@@ -1311,7 +1321,8 @@ def cmd_sync(args, project_dir):
     except ImportError as exc:
         print(f"❌ Sync engine unavailable (scripts/core/sync_from_manifest.py): {exc}")
         # Missing/broken install — not drift. Exit 1 is reserved for
-        # drift/warnings, so automation must not read this as "updates available".
+        # drift/warnings, so automation must not read this as "updates
+        # available" (wrapper exit-code convention, see docstring).
         return 2
 
     is_kit = _infer_is_kit(project_dir)
@@ -1341,6 +1352,8 @@ def cmd_sync(args, project_dir):
                 for path in dirty:
                     print(f"     {path}")
                 print("   Commit or stash them before syncing.")
+                # Precondition failure → 2 (wrapper exit-code convention,
+                # see docstring).
                 return 2
 
         version = _manifest_version(source_path)
@@ -1348,7 +1361,8 @@ def cmd_sync(args, project_dir):
         if not dry_run and not no_branch:
             if _create_branch(project_dir, f"chore/core-sync-{version}") is None:
                 # Environment/precondition failure — not drift (exit 1 is
-                # reserved for that in the engine contract).
+                # reserved for that in the engine contract; wrapper
+                # exit-code convention, see docstring).
                 return 2
 
         try:

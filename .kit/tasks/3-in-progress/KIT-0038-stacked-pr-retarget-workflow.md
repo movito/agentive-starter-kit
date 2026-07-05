@@ -1,6 +1,6 @@
 # KIT-0038: Document the stacked-PR retarget-after-squash-merge workflow
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours
