@@ -87,6 +87,8 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Mutation-Test a New Test Harness**: after building a harness, deliberately break one condition in the system under test and confirm a test fails — turns "the harness passes" into "the harness detects breakage" for ~10 minutes of work (KIT-0040)
 - **Stub Every External Touchpoint, Not Just the Obvious One**: the preflight harness stubbed `sleep` (instant poll loops) and `dispatch` (no fire-and-forget event leakage) alongside `gh`; module-scoped fixtures cut runtime 5.3s → 1.8s, inside the pre-commit fast-hook budget (KIT-0040)
 - **Two Consistent Detection Paths for Parse-or-Reject Logic**: pair a tolerant parse regex with a deliberately *looser* malformed-input detector so no input falls between "parses fine" and "detected as broken" — the gap between the two is where silent data loss lives (KIT-0040, kit_markers.py)
+- **Grep-Before-Deciding on Optional Lint Rules**: a 30-second grep for would-be violations settled the DK005 implement-or-skip decision with evidence (5 legitimate fixture hits, and the real incident surface was shell-in-YAML the rule couldn't see) instead of taste (KIT-0037/38/39)
+- **A Convention Spec Must Verify Its Own Wording Against the Code It Cites**: KIT-0037 codified an exit-code convention while its own text carried a wrong exit code copied from retro shorthand — check the convention's claims against the reference implementation, not just the implementation against the convention (KIT-0037/38/39)
 
 ### Anti-Patterns to Avoid
 
@@ -115,6 +117,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **CodeRabbit re-flags stale bookkeeping paths on every task-status move**: `project move` changes the task folder but not `details_link` in agent-handoffs.json or handoff-file metadata; update them in the same commit as the move to preempt a bot round. FIXED in KIT-0040 (PR #70): `project start|move|complete` now rewrites the metadata in the same operation. (KIT-0034 → KIT-0040)
 - **`gh pr checks` is stale immediately after a push**: it reports the *previous* head's checks for a window after pushing — an all-green snapshot taken seconds after a push is not proof; disambiguate with a SHA-scoped GraphQL query. (KIT-0040)
 - **External-finding yield concentrates on fresh code**: across 8 evaluator/bot findings on PR #70, the 2 real ones were both in code written that session, none in pre-existing code under review. Weight triage attention accordingly. (KIT-0040)
+- **Preflight Gates 5/6 assume one task ID per PR**: exact-name match on `<TASK-ID>-REVIEW-STARTER.md` (`preflight-check.sh:487`) and single-ID evaluator artifacts — bundled PRs need lead-task naming + per-task pointer files (KIT-0037/38/39 session files are the reference shape) until KIT-0042 lands. (KIT-0037/38/39)
+- **CodeRabbit substantively reviews factual claims in prose**: it ran its own verification scripts against `resolve_source()` to check exit codes claimed in a docs-only diff — bot rounds add value even when the adversarial evaluator is skipped for docs-only changes. (KIT-0037/38/39)
+- **DK005 (scoped-staging lint rule) deliberately not implemented**: grep showed it would noqa-spam test fixtures while missing the shell-in-YAML incident surface; decision in PR #71's body. Revisit trigger: a scoped-staging violation recurring in *production* code, not test fixtures. (KIT-0037/38/39)
 
 ---
 

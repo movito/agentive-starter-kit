@@ -1,6 +1,6 @@
 # KIT-0035: Dev-env & evaluator-workflow hardening (KIT-0032 + KIT-0040 retros)
 
-**Status**: Backlog
+**Status**: Todo
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-4 hours
@@ -138,3 +138,32 @@ known non-goal that needs one documented sentence.
   planner prefers smaller PRs.
 - The fifth retro action (preflight Gate 1 pending-vs-failed) lives in **KIT-0034
   §F4** to keep all preflight changes in one PR.
+
+## PR Plan
+
+Two PRs (planner decision, from the 2026-07-05 evaluation):
+
+- **PR 1 — dev-env & evaluator friction**: F1 (ci-check venv-drift warning),
+  F2 (ANTHROPIC_API_KEY doc), F3 (ordering recommendation), F5
+  (ADVERSARIAL_UNATTENDED surfacing), F6 (v2 discoverability), F7
+  (fenced-code non-goal doc). Small diffs, doc-heavy.
+- **PR 2 — upgrade-guide grep hardening**: F4 only
+  (`docs/PLUGIN-UPGRADE-GUIDE.md` + `.claude/agents/upgrader.md` in
+  lockstep). Different surface, different reviewer context; N3's
+  guide-wins rule makes this an atomic pair.
+
+## Evaluation (2026-07-05)
+
+`arch-review-fast` (gemini-2.5-flash): **REVISION_SUGGESTED** — bundle spans
+too many surfaces; individual requirements judged "sound and well-defined".
+Log: `.adversarial/logs/KIT-0035-devenv-evaluator-workflow-hardening--arch-review-fast.md`.
+Planner disposition:
+
+- **Accepted (the kernel)**: the review-surface concern is real at 7
+  requirements / 8+ files. Addressed with the two-PR plan above rather than
+  a task split — F4 is the one genuinely different surface.
+- **Declined (task split into 3+ tickets and a standing "friction
+  backlog")**: single-operator kit; retro-sourced bundles are the working
+  convention (KIT-0034/0040 precedent) and per-requirement progress stays
+  visible in the acceptance criteria. If a future friction bundle exceeds
+  ~7 items or two PRs, revisit.
