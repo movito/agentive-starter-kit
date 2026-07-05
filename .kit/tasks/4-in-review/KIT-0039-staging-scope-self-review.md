@@ -1,6 +1,6 @@
 # KIT-0039: Self-review item — commit staging scoped to changed paths
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1 hour
