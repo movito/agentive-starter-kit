@@ -1,4 +1,4 @@
-# KIT-0035: Dev-env & evaluator-workflow hardening (KIT-0032 retro)
+# KIT-0035: Dev-env & evaluator-workflow hardening (KIT-0032 + KIT-0040 retros)
 
 **Status**: Backlog
 **Priority**: medium
@@ -23,6 +23,11 @@ collected here. They are unrelated in code but share a theme: removing
 developer-experience friction that cost real time during KIT-0032 — a phantom CI
 failure, a mid-session evaluator blocker, an avoidable bot-round cascade, and a
 brittle-grep gap between the upgrader agent and the guide it mirrors.
+
+The KIT-0040 retro (`.kit/context/retros/KIT-0040-retro.md`, 2026-07-05) added
+three more items of the same theme (F5–F7 below): an evaluator auto-cancel trap
+in non-TTY sessions, v2-evaluator discoverability, and a twice-re-litigated
+known non-goal that needs one documented sentence.
 
 ## Requirements
 
@@ -69,6 +74,31 @@ brittle-grep gap between the upgrader agent and the guide it mirrors.
   `.kit/context/reviews/KIT-0032-evaluator-review.md` ("Follow-up to raise against
   the guide").
 
+- **F5 — `prepare-review-input.sh` must surface `ADVERSARIAL_UNATTENDED`**
+  *(KIT-0040 retro #1)*. In a non-TTY agent session, a >50k-token evaluator
+  input auto-cancels unless `ADVERSARIAL_UNATTENDED=1` is exported — but the
+  script's "Next steps" output lists the three evaluator commands without
+  mentioning it, so every future agent burns one failed evaluator invocation
+  discovering it. Either add the export to the next-steps output, or auto-set
+  it when stdout is not a TTY (prefer auto-set if it stays a one-liner).
+
+- **F6 — Make the v2-evaluator preference executable** *(KIT-0040 retro #2)*.
+  The agent spec says "prefer -v2 where installed," but discovering that
+  `code-reviewer-fast-v2` exists (while `code-reviewer` has no v2) requires
+  `ls .adversarial/evaluators/*/`. Add the discovery step to the
+  code-review-evaluator skill (`.kit/skills/code-review-evaluator/`) — a
+  one-line "list installed evaluators first" command — or point at an
+  `adversarial list` command if the CLI has one.
+
+- **F7 — Document the fenced-code-marker fail-fast as a known non-goal**
+  *(KIT-0040 retro #3)*. A literal BEGIN-marker line inside a fenced code
+  sample (with no parseable region for that name) makes `kit_markers.py`
+  fail fast and abort the merge. This was flagged by evaluators twice on
+  PR #70 and declined twice with the same reasoning (loud abort beats silent
+  clobber; markdown-fence parsing is out of scope for a stdlib helper). Add
+  one sentence to `.kit/docs/KIT-MIGRATION-PLAYBOOK.md` (or the bootstrap
+  docs) so future reviewer/evaluator rounds don't re-litigate it.
+
 ### Non-Functional Requirements
 
 - **N1**: No new dependencies; `ci-check.sh` stays shell + the existing toolchain.
@@ -89,10 +119,20 @@ brittle-grep gap between the upgrader agent and the guide it mirrors.
       `.claude/agents/upgrader.md` re-synced to match
 - [ ] Any `ci-check.sh` logic change has test coverage if a harness exists, else a
       documented manual check
+- [ ] `prepare-review-input.sh` surfaces (or auto-sets) `ADVERSARIAL_UNATTENDED`
+      for non-TTY sessions
+- [ ] code-review-evaluator skill includes an evaluator-discovery step (v2
+      variants findable without spelunking)
+- [ ] Fenced-code-marker fail-fast documented as a known non-goal in the
+      migration/bootstrap docs
 
 ## Notes
 
-- Source: `.kit/context/retros/KIT-0032-retro.md` (Process Actions).
+- Source: `.kit/context/retros/KIT-0032-retro.md` (Process Actions, F1–F4) and
+  `.kit/context/retros/KIT-0040-retro.md` (Process Actions 1–3, F5–F7; folded
+  in by planner 2026-07-05 — same dev-env/evaluator-friction theme). The
+  fourth KIT-0040 action (generalize the stub-`gh` harness) is implementation
+  work of a different scope — tracked as KIT-0041.
 - F1 is the highest-value, most self-contained item; F2/F3 are doc/decision work.
   F4 can be split out (it touches the guide + agent, a different surface) if the
   planner prefers smaller PRs.

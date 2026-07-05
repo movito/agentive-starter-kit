@@ -1,6 +1,6 @@
 # KIT-0037: Codify a wrapper exit-code convention (reserved engine codes)
 
-**Status**: Backlog
+**Status**: Todo
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours

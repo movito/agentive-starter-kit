@@ -84,6 +84,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Data-Shape Verification Before Coding**: When implementing against a bot/CI/API signal, capture real output first — KIT-0034's spec said "CodeRabbit check-run" but reality is a commit status; coding to the paraphrase would have shipped a fallback that never fires (KIT-0034)
 - **PATH-Stubbed Binary for Shell-Script Testing**: A fake `gh` shim on PATH running the *real* script against canned states is the cheapest credible verification for shell+CLI gate logic with no test harness — re-runs in seconds per fix round (KIT-0034; codification tracked in KIT-0040)
 - **Single Shared API Snapshot Across Related Checks**: One GraphQL fetch feeding preflight Gates 2/3/4 eliminated the race where the fallback and thread gate could disagree mid-run, and cut 3 API calls to 1 (KIT-0034)
+- **Mutation-Test a New Test Harness**: after building a harness, deliberately break one condition in the system under test and confirm a test fails — turns "the harness passes" into "the harness detects breakage" for ~10 minutes of work (KIT-0040)
+- **Stub Every External Touchpoint, Not Just the Obvious One**: the preflight harness stubbed `sleep` (instant poll loops) and `dispatch` (no fire-and-forget event leakage) alongside `gh`; module-scoped fixtures cut runtime 5.3s → 1.8s, inside the pre-commit fast-hook budget (KIT-0040)
+- **Two Consistent Detection Paths for Parse-or-Reject Logic**: pair a tolerant parse regex with a deliberately *looser* malformed-input detector so no input falls between "parses fine" and "detected as broken" — the gap between the two is where silent data loss lives (KIT-0040, kit_markers.py)
 
 ### Anti-Patterns to Avoid
 
@@ -109,7 +112,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Evaluator Installation**: Run `./scripts/core/project install-evaluators` to add additional evaluation providers (ASK-0029)
 - **adversarial-workflow CLI requires `.adversarial/` at repo root**: The CLI (v0.9.9) hardcodes `.adversarial/` as its working directory. ASK-0044 moved it to `.kit/adversarial/` but this broke the CLI. Reverted: `.adversarial/` now lives at repo root again. Future move requires ADV-0053 (configurable dir) — tracked upstream at movito/adversarial-workflow#58. (ASK-0044 post-mortem)
 - **CodeRabbit reports via the legacy commit-status API (`context: "CodeRabbit"`), BugBot via check-runs**: any gate or tooling querying bot review state must hit the right surface for each bot — statuses primary for CodeRabbit, check-runs for BugBot. (KIT-0034)
-- **CodeRabbit re-flags stale bookkeeping paths on every task-status move**: `project move` changes the task folder but not `details_link` in agent-handoffs.json or handoff-file metadata; update them in the same commit as the move to preempt a bot round. Tooling fix tracked in KIT-0040. (KIT-0034)
+- **CodeRabbit re-flags stale bookkeeping paths on every task-status move**: `project move` changes the task folder but not `details_link` in agent-handoffs.json or handoff-file metadata; update them in the same commit as the move to preempt a bot round. FIXED in KIT-0040 (PR #70): `project start|move|complete` now rewrites the metadata in the same operation. (KIT-0034 → KIT-0040)
+- **`gh pr checks` is stale immediately after a push**: it reports the *previous* head's checks for a window after pushing — an all-green snapshot taken seconds after a push is not proof; disambiguate with a SHA-scoped GraphQL query. (KIT-0040)
+- **External-finding yield concentrates on fresh code**: across 8 evaluator/bot findings on PR #70, the 2 real ones were both in code written that session, none in pre-existing code under review. Weight triage attention accordingly. (KIT-0040)
 
 ---
 
@@ -119,4 +124,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-07-05 by planner-f5 (KIT-0034 extraction: bot API surfaces, stub-gh pattern, fixture drift)*
+*Last updated: 2026-07-05 by planner-f5 (KIT-0040 extraction: harness mutation-testing, detection-path pairing, stale pr-checks, fresh-code finding yield)*

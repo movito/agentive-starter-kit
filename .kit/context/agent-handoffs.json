@@ -1,19 +1,19 @@
 {
   "planner": {
     "status": "handoff_ready",
-    "current_task": "KIT-0040",
+    "current_task": "KIT-0037",
     "task_started": null,
-    "brief_note": "KIT-0040 promoted to todo (high, user pulled it forward to fix the kit_markers bugs), evaluated (RESTRUCTURE_NEEDED declined, F3-first sequencing accepted — disposition in spec), handoff ready. Then: KIT-0037/38/39 bundle, KIT-0035, ADR-0025 slim. Awaiting human verdicts: KIT-0032 (PR #56 merged), ASK-0048 (PR #45).",
-    "details_link": ".kit/tasks/5-done/KIT-0040-kit-0034-retro-followups.md",
-    "handoff_file": ".kit/context/KIT-0040-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0040 DONE (PR #70) + knowledge extracted; its retro items folded into KIT-0035 (F5-F7) and new KIT-0041 (stub-gh generalization, backlog). KIT-0037/38/39 promoted to todo as one bundle (evaluation skipped: docs/checklist-only), combined handoff ready. Then: KIT-0035, ADR-0025 slim. Awaiting human verdicts: KIT-0032 (PR #56 merged), ASK-0048 (PR #45).",
+    "details_link": ".kit/tasks/2-todo/KIT-0037-wrapper-exit-code-convention.md",
+    "handoff_file": ".kit/context/KIT-0037-38-39-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
     "status": "handoff_ready",
-    "current_task": "KIT-0040",
+    "current_task": "KIT-0037",
     "task_started": null,
-    "brief_note": "KIT-0040 (kit_markers bug fixes FIRST, then preflight stub-gh harness + project-move metadata pairing) ready for assignment.",
-    "details_link": ".kit/tasks/5-done/KIT-0040-kit-0034-retro-followups.md",
-    "handoff_file": ".kit/context/KIT-0040-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0037+0038+0039 bundle (wrapper exit-code convention, stacked-PR workflow doc, scoped-staging self-review item) ready for assignment — one branch, one PR.",
+    "details_link": ".kit/tasks/2-todo/KIT-0037-wrapper-exit-code-convention.md",
+    "handoff_file": ".kit/context/KIT-0037-38-39-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {
     "status": "idle",
