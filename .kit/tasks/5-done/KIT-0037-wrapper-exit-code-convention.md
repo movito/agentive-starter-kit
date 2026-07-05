@@ -1,6 +1,6 @@
 # KIT-0037: Codify a wrapper exit-code convention (reserved engine codes)
 
-**Status**: In Review
+**Status**: Done
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours
