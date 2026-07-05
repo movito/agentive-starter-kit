@@ -188,6 +188,25 @@ class TestMerge:
         )
         assert km.extract_region(out, "stack-notes") == "PH-SN"
 
+    def test_prefix_named_region_does_not_trip_malformed_check(self):
+        # KIT-0040 evaluator finding: a well-formed consumer region whose
+        # name merely *extends* an upstream region's name (project-context
+        # vs project-context-extra) must not trip the malformed check for
+        # the shorter name — \b after a hyphenated name matches at the
+        # t→- boundary, so the detector needs a stricter name terminator.
+        consumer = (
+            "<!-- BEGIN KIT-LOCAL: project-context-extra -->\n"
+            "extension region content\n"
+            "<!-- END KIT-LOCAL: project-context-extra -->\n"
+        )
+        out = km.merge(
+            SAMPLE,
+            consumer=consumer,
+            placeholders={"project-context": "PH-PC", "stack-notes": "PH-SN"},
+        )
+        assert km.extract_region(out, "project-context") == "PH-PC"
+        assert km.extract_region(out, "stack-notes") == "PH-SN"
+
     def test_whitespace_drifted_marker_still_preserves_content(self):
         # KIT-0040 regression (BugBot on PR #58, finding 2): benign
         # whitespace drift inside a marker line must not make the region

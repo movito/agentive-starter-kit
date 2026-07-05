@@ -77,10 +77,15 @@ def _begin_marker_line_re(name: str) -> re.Pattern[str]:
     parsing tolerates is still *detected* and merge fails fast instead of
     silently clobbering the region's content with a placeholder. Line-
     anchored so a prose sentence mentioning a marker never matches.
+
+    The name must end after *esc*: (?!-?\\w) rejects a continuation like
+    "-extra" or "2" (a \\b alone would match at the t→- boundary of a
+    hyphenated name, tripping the check for prefix-named sibling regions)
+    while still allowing whitespace, "-->", or end-of-line after the name.
     """
     esc = re.escape(name)
     return re.compile(
-        r"^[ \t]*<!--[ \t]*BEGIN[ \t]+KIT-LOCAL\b[ \t]*:?[ \t]*" + esc + r"\b",
+        r"^[ \t]*<!--[ \t]*BEGIN[ \t]+KIT-LOCAL\b[ \t]*:?[ \t]*" + esc + r"(?!-?\w)",
         re.MULTILINE | re.IGNORECASE,
     )
 
