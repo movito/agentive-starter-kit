@@ -22,9 +22,11 @@ Run after bot triage rounds are complete, before human review. Uses a different 
 ## Ordering for Doc-Heavy Tasks (run before PR open)
 
 **Recommendation (adopted, KIT-0035)**: when the deliverable is
-documentation or agent-spec only — nothing for CI to exercise — run the
-evaluator trio **before** opening the PR. The standard order (PR → CI →
-bots → evaluator) stays for anything with code paths.
+documentation- or agent-spec-dominated — CI exercises little or none of
+the substance — run the evaluator trio **before** opening the PR. This
+includes mixed tasks that are mostly docs with small script tweaks. The
+standard order (PR → CI → bots → evaluator) stays when CI meaningfully
+exercises the change.
 
 Why:
 

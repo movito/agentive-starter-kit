@@ -371,11 +371,13 @@ Run adversarial code review using **file-based evaluators** if available,
 or use the `/code-review-evaluator` skill.
 
 > **Doc-heavy ordering exception (KIT-0035)**: when the deliverable is
-> documentation or agent-spec only — nothing for CI to exercise — run
-> this phase BEFORE Phase 5/6. Evaluator-driven rewrites after PR open
-> each trigger a fresh bot round (KIT-0032: four rounds on a single doc
-> file). Code-heavy tasks keep the standard order. Rationale lives in
-> the code-review-evaluator skill ("Ordering for Doc-Heavy Tasks").
+> documentation- or agent-spec-dominated — CI exercises little or none
+> of the substance — run this phase BEFORE Phase 5/6. Mixed tasks that
+> are mostly docs with small script tweaks count. Evaluator-driven
+> rewrites after PR open each trigger a fresh bot round (KIT-0032: four
+> rounds on a single doc file). When CI meaningfully exercises the
+> change, keep the standard order. Rationale lives in the
+> code-review-evaluator skill ("Ordering for Doc-Heavy Tasks").
 
 ### Step 1 — Prepare the input
 

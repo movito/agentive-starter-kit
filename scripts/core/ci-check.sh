@@ -58,8 +58,8 @@ fi
 # pinned 26.x failed a markdown-only change). The Black step below stays
 # the gate — this only names the real cause up front. isort is pinned as
 # a floor (>=), not an exact version, so no drift check applies there.
-PINNED_BLACK=$(grep -Eo 'black==[0-9][0-9A-Za-z.]*' pyproject.toml | head -1 | sed 's/^black==//')
-ACTIVE_BLACK=$(black --version 2>/dev/null | head -1 | grep -Eo '[0-9][0-9A-Za-z.]*' | head -1)
+PINNED_BLACK=$(grep -Eo 'black==[0-9][0-9A-Za-z.]*' pyproject.toml 2>/dev/null | head -1 | sed 's/^black==//')
+ACTIVE_BLACK=$(black --version 2>/dev/null | head -1 | grep -Eo '[0-9]+\.[0-9][0-9A-Za-z.]*' | head -1)
 if [ -n "$PINNED_BLACK" ] && [ -n "$ACTIVE_BLACK" ] && [ "$PINNED_BLACK" != "$ACTIVE_BLACK" ]; then
     echo "⚠️  Active Black $ACTIVE_BLACK differs from pyproject.toml pin $PINNED_BLACK"
     echo "   A stale venv can fail formatting that pinned/CI Black accepts."
