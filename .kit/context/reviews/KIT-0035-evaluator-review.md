@@ -432,3 +432,165 @@ The PR is well-constructed with a clear intent, good inline documentation, and s
 The **one issue requiring a fix before merge** is the MEDIUM finding: the Black version extraction regex will produce a truncated version string (`26` instead of `26.3.1`) on current Black output format, generating spurious warnings on correctly-configured environments. Since the entire value of F1 is accurate diagnostic output, this defeats the purpose of the feature and should be corrected. The fix is a one-line regex change.
 
 The LOW findings (manifest timestamp, TTY check scope) are minor and can be addressed at the author's discretion — the manifest timestamp in particular warrants clarification of intended semantics.
+
+---
+
+# KIT-0035 Evaluator Review — PR 2 (upgrade-guide grep hardening, #73)
+
+**Date**: 2026-07-06
+**Evaluators**: code-reviewer-fast-v2 (Gemini), code-reviewer (o3) — doc-only PR, run BEFORE PR open per the F3 ordering rule
+**Verdicts**: fast-v2 CONCERNS (r1+r2) · o3 FAIL (r1)
+
+## Disposition
+
+### Accepted (fixed in the round-1 fix commit)
+
+| Finding | Source | Fix |
+|---------|--------|-----|
+| `github.*movito/...` matched a local checkout path (`Directory (/Users/alice/github/movito/agentive-skills)`), bypassing the pin guard | o3 (FAIL driver) + fast-v2 — convergent | Pattern anchored to the `Source:` field; accepts only the GitHub paren form or github.com URL form. Bypass case + both legit forms tested. |
+| `grep -A3 'agentive-workflow'` also matches `agentive-workflow-beta` siblings | o3 | Tightened to `agentive-workflow([@ (]|$)` — row-format drift still tolerated, suffixed siblings excluded. Tested. |
+
+### Declined with evidence
+
+| Finding | Source | Why declined |
+|---------|--------|--------------|
+| sed range "stops at the start line — prints only the header" | o3 | Empirically false: POSIX sed searches the end address from the line AFTER the start match. Tested on BSD sed with the pin 9 lines below the header — found. |
+| sed range "prints nothing when Provenance is the last section" | fast-v2 (r1+r2) | Empirically false: when the end address never matches, the range runs to EOF. Tested on BSD sed — pin at EOF found. |
+| `Source:` capitalization / spacing variance | fast-v2 r2 | Already handled: the grep uses `-Ei` (case-insensitive) and `^[[:space:]]*` / `: *` tolerances; verified against live output. |
+| Prefixed sibling (`my-agentive-workflow`) still matches | fast-v2 r2 | Diminishing returns: `-A3` output shows all matching rows, so a prefixed sibling is visible next to the real row, not silently substituted. Left-anchoring would require matching the `❯` bullet glyph — exactly the volatile-format coupling this PR removes. |
+| Bare command names without a slash evade the flat-ref grep | fast-v2 | Out of scope: the check targets slash-references; a bare name in prose is not a command reference. |
+| `grep -oE '[0-9]+\.[0-9]+\.[0-9]+'` could multi-match | fast-v2 | Pre-existing Phase 1 text, unchanged by this PR; input is a single pin line. |
+| Metacharacters in substituted artifact names | fast-v2 r2 | Pre-existing hard rule already covers it: single-quote every substituted value, halt on embedded quotes/metacharacters. |
+| ANSI strip documented but not integrated into every pipeline | o3 | Deliberate: current CLI verified to strip colours when piped (2026-07-06); the gotcha records the contingency recipe without adding a noise stage to every command for a hypothetical. |
+
+## Raw evaluator logs (PR 2)
+
+## Source: KIT-0035-code-review-input--code-reviewer-fast-v2.md (PR 2 run)
+
+#  Code Reviewer Fast V2
+
+**Source**: .adversarial/inputs/KIT-0035-code-review-input.md
+**Evaluator**: code-reviewer-fast-v2
+**Model**: gemini/gemini-3-flash-preview
+**Generated**: 2026-07-06 06:13 UTC
+
+---
+
+### Findings
+
+**[CORRECTNESS]: False Negative in Marketplace Source Guard due to Grep Anchoring**
+- **Location**: `.claude/agents/upgrader.md:Phase 0a` / `docs/PLUGIN-UPGRADE-GUIDE.md:Prerequisites`
+- **Edge case**: `claude plugin marketplace list` output with leading indentation or slightly different spacing before the `source:` key.
+- **What happens**: The regex `^[[:space:]]*source: *...` is used. However, the command `claude plugin marketplace list` typically outputs a list where "Source" might be a nested field or part of a YAML-like block. If the CLI output uses "Source:" (capitalized) or contains multiple spaces before the colon, this grep will fail and trigger a **HALT** even if the source is correct.
+- **Tested?**: No.
+
+**[CORRECTNESS]: RegEx for row-format drift too broad (Potential Collision)**
+- **Location**: `.claude/agents/upgrader.md:Phase 0b`
+- **Edge case**: A plugin named `my-agentive-workflow` or `test-agentive-workflow` is installed.
+- **What happens**: The grep `grep -A3 -E 'agentive-workflow([@ (]|$)'` looks for the string anywhere in the line. If a user has a custom plugin with a prefix that contains the target string, this grep will return multiple matches or the wrong match, leading the agent to potentially verify the status of the wrong plugin.
+- **Tested?**: No.
+
+**[ROBUSTNESS]: Sed Range Failure on Missing Closing Header**
+- **Location**: `.claude/agents/upgrader.md:Phase 1` / `docs/PLUGIN-UPGRADE-GUIDE.md:Step 1`
+- **Edge case**: `CLAUDE.md` has a `## Provenance` header at the very end of the file with no following `## ` header.
+- **What happens**: `sed -n '/^## Provenance/,/^## /p'` will fail to match the range correctly or may swallow the rest of the file if the closing pattern `^## ` is never found. In some `sed` implementations, if the end-pattern is not found, it does not print anything for that range.
+- **Tested?**: No.
+
+**[INTERACTION]: Unprotected Variable Substitution in Reconcile Logic**
+- **Location**: `.claude/agents/upgrader.md:Phase 2a`
+- **Edge case**: Artifact names containing characters like `&`, `[`, or `*`.
+- **What happens**: The agent is instructed to `grep -rn 'agentive-workflow:<old-name>'`. While the instructions mention single-quoting, the manual execution of these generated commands by the LLM often leads to shell interpretation issues if the "reasoned" artifact name from the CHANGELOG contains glob characters or regex metacharacters, leading to incorrect grep results.
+- **Tested?**: No.
+
+### Test Gap Summary
+| Edge Case | Function | Tested? | Risk |
+|-----------|----------|---------|------|
+| Missing trailing header in CLAUDE.md | `sed` Provenance extraction | No | Low - Extraction fails, agent relies on CLI. |
+| Case sensitivity in "Source" field | Phase 0a Marketplace Guard | No | Medium - False HALT preventing upgrades. |
+| Overlapping plugin names | Phase 0b/1 Plugin List Grep | No | Medium - Agent might target wrong plugin metadata. |
+| ANSI codes in non-interactive shell | CLI Greps | No | Low - Documented as a "Gotcha" but not handled in commands. |
+
+### Verdict
+
+**CONCERNS**
+
+The hardening of the `grep` and `sed` patterns improves upon the previous version, but introduces new rigidities. Specifically, the `sed` range for Provenance assumes a following `## ` header which isn't guaranteed if Provenance is the last section. The marketplace guard is also fragile regarding the exact string "source:" (case sensitivity and prefixing).
+
+**Recommendation**: Change `sed` to a simpler `grep -A` or use a more robust range like `/^## Provenance/,/^(#| \w)/`. Ensure marketplace grep is case-insensitive for the key (e.g., `grep -Ei 'source:'`).
+## Source: KIT-0035-code-review-input--code-reviewer.md (PR 2 run)
+
+#  Code Reviewer
+
+**Source**: .adversarial/inputs/KIT-0035-code-review-input.md
+**Evaluator**: code-reviewer
+**Model**: o3
+**Generated**: 2026-07-06 00:31 UTC
+
+---
+
+### Summary
+Reviewed the two Markdown “code-as-runbook” files that implement the upgrader agent’s shell recipe.
+Although no executable Python/JS was changed, the new grep/sed one-liners are themselves code and can mis-classify project state.
+I found 4 correctness/robustness issues (2 serious), plus three un-tested edge cases.
+
+### Findings
+
+**CORRECTNESS: GitHub-source guard can be bypassed by local “Directory” paths**
+- Location: `.claude/agents/upgrader.md` 0a and `docs/…GUIDE.md` Prerequisites
+- Edge case: `claude plugin marketplace list` prints
+  `agentive-skills   Directory (/Users/alice/github/movito/agentive-skills)`
+- What happens: The new test
+  `grep -Ei 'github.*movito/agentive-skills'`
+  matches the substring “github”, so the upgrader treats the directory source as “GitHub-form” and proceeds.
+- Expected: Halt with the “Directory source” refusal because pins will be ignored.
+- Test coverage: NOT covered (no mocked CLI output containing a path with the word github).
+- Severity: Bug – causes a wrong PASS at Phase 0 and the upgrade continues on an un-pinned, mutable plugin tree.
+
+---
+
+**CORRECTNESS: sed range prints only the header, hides the pin**
+- Location: both files, Phase 1 “Current pin” command
+  `sed -n '/^## Provenance/,/^## /p' CLAUDE.md`
+- Edge case: The very next line after the header contains the version, then another header later.
+- What happens: Because the range end pattern `^## ` also matches the first line, sed stops immediately; only “## Provenance” is echoed.
+  Subsequent `grep agentive-workflow` therefore fails → the script concludes “may be absent”.
+- Expected: The command should exclude the first line in the end-match (e.g. `/^## Provenance/,$p | sed '1d'`) or use a negated look-ahead.
+- Test coverage: NOT covered.
+- Severity: Latent – the run still succeeds (it falls back to `plugin list`), but the Provenance check and later restamp diff are wrong, confusing operators.
+
+---
+
+**ROBUSTNESS: broadened plugin-list grep can yield duplicate or false rows**
+- Location: everywhere the pattern changed to `grep -A3 'agentive-workflow'`
+- Edge case: A disabled copy called `agentive-workflow-beta`, or the string appears in the CLI column “Description”.
+- What happens: Multiple rows are returned; the follow-up status test (`must show: enabled`) may read the wrong row and mis-detect enablement.
+- Expected: Anchor on the exact column (`^agentive-workflow[[:space:]]`) or additionally filter for the marketplace suffix.
+- Test coverage: NOT covered.
+- Severity: Latent – only trips when other similarly-named plugins are present.
+
+---
+
+**TESTING: colour-escape workaround only documented, never exercised**
+- Location: Gotchas section – suggested `sed $'s/\x1b\\[[0-9;]*m//g'`
+- Edge case: Future CLI introduces coloured output but the upgrader still pipes raw data (Phase 0, Phase 1, etc.).
+- What happens: None of the greps include the strip stage; once colours arrive every check fails silently → false HALT or worse, a false PASS if the colour codes contain the pattern.
+- Expected: Either integrate the strip into every pipeline or test for it now.
+- Test coverage: NOT covered.
+- Severity: Gap – will break the upgrader the moment the CLI adds colours.
+
+### Edge Cases Verified Clean
+• Empty `## Provenance` section handled (falls back to `plugin list`).
+• Multiple CLI versions: grep now catches both “@agentive-skills” and “(agentive-skills)”.
+• `grep -rinoE` correctly ignores case-drifted flat references.
+
+### Test Gap Summary
+
+| Edge Case | Function/Step | Tested? | Risk |
+|-----------|---------------|---------|------|
+| “Directory (…) github …” path | Phase 0a guard | No | High |
+| sed range excluding body | Phase 1 pin read | No | Medium |
+| Multiple plugin rows | Phase 0b guard / Version confirm | No | Medium |
+| ANSI colour codes | All greps | No | Medium |
+
+### Verdict
+**FAIL** – The new GitHub-source grep lets a common local-directory path slip through, defeating the central version-pin guarantee. Fix that pattern (e.g. `grep -Ei '^\s*GitHub[[:space:]].*movito/agentive-skills'`) before merge. Also address the sed header bug to keep Provenance accurate.
