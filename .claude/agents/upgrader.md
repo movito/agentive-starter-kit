@@ -92,8 +92,10 @@ surfaced once, at the end, as a post-upgrade hint to run
 # Accept a GitHub-form Source line — paren form "GitHub (movito/agentive-skills)"
 # or URL form "https://github.com/movito/agentive-skills", either case. The
 # pattern is anchored to the Source field so a local checkout at a path like
-# "Directory (/Users/alice/github/movito/agentive-skills)" cannot slip past:
-claude plugin marketplace list | grep -Ei '^[[:space:]]*source: *(github \(|https://github\.com/)movito/agentive-skills'
+# "Directory (/Users/alice/github/movito/agentive-skills)" cannot slip past,
+# and end-anchored so a similarly named repo (movito/agentive-skills-beta)
+# cannot either:
+claude plugin marketplace list | grep -Ei '^[[:space:]]*source: *(github \(|https://github\.com/)movito/agentive-skills([[:space:]]*\)|$)'
 ```
 
 - If the grep matches → the source is GitHub-form → proceed.
