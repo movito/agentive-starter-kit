@@ -2,9 +2,9 @@
 name: feature-developer-f5
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring (Fable 5 variant)
 model: claude-fable-5
-version: 1.0.0
+version: 1.1.0
 origin: agentive-starter-kit
-last-updated: 2026-07-03
+last-updated: 2026-07-05
 created-by: "@movito (Fable-5 fork of feature-developer v2.0.0)"
 ---
 
@@ -369,6 +369,13 @@ agent doesn't need to clamp itself.
 
 Run adversarial code review using **file-based evaluators** if available,
 or use the `/code-review-evaluator` skill.
+
+> **Doc-heavy ordering exception (KIT-0035)**: when the deliverable is
+> documentation or agent-spec only — nothing for CI to exercise — run
+> this phase BEFORE Phase 5/6. Evaluator-driven rewrites after PR open
+> each trigger a fresh bot round (KIT-0032: four rounds on a single doc
+> file). Code-heavy tasks keep the standard order. Rationale lives in
+> the code-review-evaluator skill ("Ordering for Doc-Heavy Tasks").
 
 ### Step 1 — Prepare the input
 

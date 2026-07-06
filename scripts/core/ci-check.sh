@@ -52,6 +52,21 @@ if ! python3 -m flake8 --version >/dev/null 2>&1; then
     exit 1
 fi
 
+# Preflight: warn (never fail) when the active Black differs from the
+# pyproject.toml pin. A stale venv reads as a phantom formatting failure
+# on changes that can't affect Black (KIT-0032 retro: venv 23.12.1 vs
+# pinned 26.x failed a markdown-only change). The Black step below stays
+# the gate — this only names the real cause up front. isort is pinned as
+# a floor (>=), not an exact version, so no drift check applies there.
+PINNED_BLACK=$(grep -Eo 'black==[0-9][0-9A-Za-z.]*' pyproject.toml | head -1 | sed 's/^black==//')
+ACTIVE_BLACK=$(black --version 2>/dev/null | head -1 | grep -Eo '[0-9][0-9A-Za-z.]*' | head -1)
+if [ -n "$PINNED_BLACK" ] && [ -n "$ACTIVE_BLACK" ] && [ "$PINNED_BLACK" != "$ACTIVE_BLACK" ]; then
+    echo "⚠️  Active Black $ACTIVE_BLACK differs from pyproject.toml pin $PINNED_BLACK"
+    echo "   A stale venv can fail formatting that pinned/CI Black accepts."
+    echo "   Fix: python3 -m pip install -e \".[dev]\""
+    echo
+fi
+
 # 1. Black formatting check
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "1/6 🎨 Checking formatting with Black..."

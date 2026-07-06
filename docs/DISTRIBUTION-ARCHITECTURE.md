@@ -230,6 +230,12 @@ while upstream refreshes everything *outside* the markers. This is the
 contract that lets a consumer take a workflow-body upgrade without losing
 its localization.
 
+> **Known non-goal**: a literal `BEGIN KIT-LOCAL` marker line inside a
+> fenced code sample (with no parseable region of that name) makes
+> `kit_markers.py` fail fast and abort the merge — by design. A loud
+> abort beats a silent clobber, and markdown-fence parsing is out of
+> scope for a stdlib helper. Declined twice on PR #70; do not re-raise.
+
 ### In transition
 
 KIT-0026 (backlog) proposes adding `agents_core` / `skills_core` tiers so
