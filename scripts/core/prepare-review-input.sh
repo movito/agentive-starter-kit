@@ -471,8 +471,10 @@ echo "Next steps:"
 # In a non-TTY session (agent, CI) the adversarial CLI auto-cancels on
 # large (>50k-token) inputs instead of prompting — surface the env flag
 # that prevents it (KIT-0040 retro). A script can't export into the
-# caller's shell, so the export line is printed, not set.
-if [ ! -t 1 ]; then
+# caller's shell, so the export line is printed, not set. Either fd
+# being non-TTY marks the session non-interactive: stdin is what the
+# CLI prompt reads, stdout catches piped/captured agent sessions.
+if [ ! -t 0 ] || [ ! -t 1 ]; then
     echo "  export ADVERSARIAL_UNATTENDED=1  # non-TTY session: large inputs auto-cancel without this"
 fi
 echo "  set -a && source .env && set +a"
