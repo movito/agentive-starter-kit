@@ -2,9 +2,9 @@
 name: upgrader
 description: Raises a project from one agentive-workflow plugin version to a newer one, and refreshes local agent model: pins on a model rollout. Automates docs/PLUGIN-UPGRADE-GUIDE.md. Ongoing upgrades only — refuses initial migration, script/manifest upgrades, and CLAUDE.md identity edits.
 model: claude-sonnet-5
-version: 1.0.0
+version: 1.1.0
 origin: agentive-starter-kit
-last-updated: 2026-07-03
+last-updated: 2026-07-06
 created-by: "@movito"
 tools:
   - Bash
@@ -89,12 +89,14 @@ surfaced once, at the end, as a post-upgrade hint to run
 ### 0a. Marketplace-source guard (guide § Prerequisites / Gotchas)
 
 ```bash
-claude plugin marketplace list        # Source for agentive-skills must read: GitHub (movito/agentive-skills)
+# Accept any GitHub-form source line — paren form "GitHub (movito/agentive-skills)"
+# or URL form "https://github.com/movito/agentive-skills", either case:
+claude plugin marketplace list | grep -Ei 'github.*movito/agentive-skills'
 ```
 
-- If the `agentive-skills` source reads `GitHub (movito/agentive-skills)` →
-  proceed.
-- If it reads `Directory (...)` → **HALT.** A local directory source serves
+- If the grep matches → the source is GitHub-form → proceed.
+- If it does not match, inspect the full `claude plugin marketplace list`
+  output. If the `agentive-skills` source reads `Directory (...)` → **HALT.** A local directory source serves
   whatever is on disk and defeats version pins. Print the re-point commands for
   **the operator to run** (you cannot edit `settings.json`):
 
@@ -106,7 +108,9 @@ claude plugin marketplace list        # Source for agentive-skills must read: Gi
 ### 0b. Already-consuming guard (refuse initial migration)
 
 ```bash
-claude plugin list | grep -A3 'agentive-workflow@agentive-skills'   # must show: enabled
+# Match on the plugin name alone — the row format may render the source
+# as '@agentive-skills' or '(agentive-skills)' across CLI versions:
+claude plugin list | grep -A3 'agentive-workflow'   # must show: enabled
 ```
 
 - If `agentive-workflow@agentive-skills` is present **and** its status reads
@@ -126,8 +130,10 @@ claude plugin list | grep -A3 'agentive-workflow@agentive-skills'   # must show:
 
 ```bash
 # Current pin — two sources that should agree:
-grep -A8 '## Provenance' CLAUDE.md | grep agentive-workflow      # may be absent
-claude plugin list | grep -A3 'agentive-workflow@agentive-skills'
+# Scope to the whole Provenance section (a fixed -A window breaks if the
+# pin sits lower in the section; sed stops at the next '## ' header):
+sed -n '/^## Provenance/,/^## /p' CLAUDE.md | grep agentive-workflow   # may be absent
+claude plugin list | grep -A3 'agentive-workflow'
 ```
 
 - The authoritative current version is what `claude plugin list` reports.
@@ -212,7 +218,9 @@ Also confirm no **flat** references regressed (they would not resolve now that
 artifacts come from the plugin):
 
 ```bash
-grep -rnoE '(^|[^:A-Za-z/.-])/(preflight|retro|triage-threads|check-ci|check-bots|wrap-up|babysit-pr|wait-for-bots|commit-push-pr|start-task|check-spec|status)([^.A-Za-z]|$)' \
+# -i: catch case-drifted slash-references in prose too (a capitalized
+# command name after a slash would evade a case-sensitive grep)
+grep -rinoE '(^|[^:A-Za-z/.-])/(preflight|retro|triage-threads|check-ci|check-bots|wrap-up|babysit-pr|wait-for-bots|commit-push-pr|start-task|check-spec|status)([^.A-Za-z]|$)' \
   .claude .kit/templates .kit/context/workflows CLAUDE.md
 # expect no output
 ```
@@ -259,7 +267,8 @@ claude plugin marketplace update agentive-skills                   # pull latest
 
 **Pre-update gate: prevent target overshoot.** `claude plugin update` is
 **unpinned** — it installs whatever marketplace-latest is at the moment of the
-call (see L146-149: the Phase 3 update is a fixed string by design). If the
+call (see Phase 1's no-guess rule: the Phase 3 update is a fixed string by
+design). If the
 operator named a target in Phase 1 that differs from marketplace-latest
 (intentional pinning, or a race where latest moved between Phase 1 and now), an
 unpinned update would land on latest rather than the ACK'd target. Re-read
@@ -280,7 +289,7 @@ Then, if the pre-update gate passes:
 
 ```bash
 claude plugin update agentive-workflow@agentive-skills
-claude plugin list | grep -A3 'agentive-workflow@agentive-skills'  # confirm the version advanced to <target>
+claude plugin list | grep -A3 'agentive-workflow'  # confirm the version advanced to <target>
 ```
 
 > If the upstream `version` was not bumped, `/plugin update` reports "already at
@@ -352,7 +361,7 @@ rather than creating one — do not introduce CLAUDE.md structure on your own.
 ## PHASE 6 — Verify (guide step 6)
 
 ```bash
-claude plugin list | grep -A3 'agentive-workflow@agentive-skills'   # new version, enabled
+claude plugin list | grep -A3 'agentive-workflow'   # new version, enabled
 ```
 
 Optional headless probe that namespaced artifacts resolve at the new version,
