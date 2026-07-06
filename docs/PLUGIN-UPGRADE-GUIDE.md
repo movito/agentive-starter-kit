@@ -31,9 +31,11 @@ future upgrader agent, or any agent pointed at a project) or by hand.
   not a local directory. Verify:
 
   ```bash
-  # Accept any GitHub-form source line — paren form "GitHub (movito/agentive-skills)"
-  # or URL form "https://github.com/movito/agentive-skills", either case:
-  claude plugin marketplace list | grep -Ei 'github.*movito/agentive-skills'
+  # Accept a GitHub-form Source line — paren form "GitHub (movito/agentive-skills)"
+  # or URL form "https://github.com/movito/agentive-skills", either case. The
+  # pattern is anchored to the Source field so a local checkout at a path like
+  # "Directory (/Users/alice/github/movito/agentive-skills)" cannot slip past:
+  claude plugin marketplace list | grep -Ei '^[[:space:]]*source: *(github \(|https://github\.com/)movito/agentive-skills'
   # match → GitHub-sourced, proceed; no match → inspect the full output
   ```
 
@@ -57,9 +59,9 @@ future upgrader agent, or any agent pointed at a project) or by hand.
 # Scope to the whole Provenance section (a fixed -A window breaks if the
 # pin sits lower in the section; sed stops at the next '## ' header):
 sed -n '/^## Provenance/,/^## /p' CLAUDE.md | grep agentive-workflow
-# Match on the plugin name alone — the list row format may render the
-# source as '@agentive-skills' or '(agentive-skills)' across CLI versions:
-claude plugin list | grep -A3 'agentive-workflow'
+# Tolerate row-format drift ('@agentive-skills' vs '(agentive-skills)')
+# while excluding similarly-named siblings (e.g. agentive-workflow-beta):
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'
 ```
 
 Target = the version you intend to land. Either the operator names it, or read
@@ -77,7 +79,7 @@ If current == target, stop — nothing to do.
 ```bash
 claude plugin marketplace update agentive-skills      # pull latest marketplace metadata from GitHub
 claude plugin update agentive-workflow@agentive-skills
-claude plugin list | grep -A3 'agentive-workflow'     # confirm the version advanced
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'   # confirm the version advanced
 ```
 
 > The plugin's semver `version` is the cache key. If the upstream version was
@@ -137,7 +139,7 @@ Restamp `CLAUDE.md` `## Provenance`:
 ### 6. Verify
 
 ```bash
-claude plugin list | grep -A3 'agentive-workflow'   # new version, enabled
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'   # new version, enabled
 ```
 
 Optionally confirm the namespaced artifacts resolve at the new version with a

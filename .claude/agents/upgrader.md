@@ -89,9 +89,11 @@ surfaced once, at the end, as a post-upgrade hint to run
 ### 0a. Marketplace-source guard (guide § Prerequisites / Gotchas)
 
 ```bash
-# Accept any GitHub-form source line — paren form "GitHub (movito/agentive-skills)"
-# or URL form "https://github.com/movito/agentive-skills", either case:
-claude plugin marketplace list | grep -Ei 'github.*movito/agentive-skills'
+# Accept a GitHub-form Source line — paren form "GitHub (movito/agentive-skills)"
+# or URL form "https://github.com/movito/agentive-skills", either case. The
+# pattern is anchored to the Source field so a local checkout at a path like
+# "Directory (/Users/alice/github/movito/agentive-skills)" cannot slip past:
+claude plugin marketplace list | grep -Ei '^[[:space:]]*source: *(github \(|https://github\.com/)movito/agentive-skills'
 ```
 
 - If the grep matches → the source is GitHub-form → proceed.
@@ -108,9 +110,9 @@ claude plugin marketplace list | grep -Ei 'github.*movito/agentive-skills'
 ### 0b. Already-consuming guard (refuse initial migration)
 
 ```bash
-# Match on the plugin name alone — the row format may render the source
-# as '@agentive-skills' or '(agentive-skills)' across CLI versions:
-claude plugin list | grep -A3 'agentive-workflow'   # must show: enabled
+# Tolerate row-format drift ('@agentive-skills' vs '(agentive-skills)')
+# while excluding similarly-named siblings (e.g. agentive-workflow-beta):
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'   # must show: enabled
 ```
 
 - If `agentive-workflow@agentive-skills` is present **and** its status reads
@@ -133,7 +135,7 @@ claude plugin list | grep -A3 'agentive-workflow'   # must show: enabled
 # Scope to the whole Provenance section (a fixed -A window breaks if the
 # pin sits lower in the section; sed stops at the next '## ' header):
 sed -n '/^## Provenance/,/^## /p' CLAUDE.md | grep agentive-workflow   # may be absent
-claude plugin list | grep -A3 'agentive-workflow'
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'
 ```
 
 - The authoritative current version is what `claude plugin list` reports.
@@ -289,7 +291,7 @@ Then, if the pre-update gate passes:
 
 ```bash
 claude plugin update agentive-workflow@agentive-skills
-claude plugin list | grep -A3 'agentive-workflow'  # confirm the version advanced to <target>
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'  # confirm the version advanced to <target>
 ```
 
 > If the upstream `version` was not bumped, `/plugin update` reports "already at
@@ -361,7 +363,7 @@ rather than creating one — do not introduce CLAUDE.md structure on your own.
 ## PHASE 6 — Verify (guide step 6)
 
 ```bash
-claude plugin list | grep -A3 'agentive-workflow'   # new version, enabled
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'   # new version, enabled
 ```
 
 Optional headless probe that namespaced artifacts resolve at the new version,
