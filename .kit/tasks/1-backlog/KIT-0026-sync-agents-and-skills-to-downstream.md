@@ -1,13 +1,23 @@
 # KIT-0026: Sync Agent Definitions and Skills to Downstream Repos
 
-**Status**: Todo
+**Status**: Backlog
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-4 hours
 **Created**: 2026-03-29
 **Target Completion**: TBD
-**Last Updated**: 2026-04-14
+**Last Updated**: 2026-07-14
 **Linear ID**: (automatically backfilled after first sync)
+
+> **Disposition (2026-07-14, planner)**: moved back to backlog — not ready
+> for assignment. Two of its premises have shifted since March: (1) the
+> `agentive-workflow` plugin (KIT-0030) now distributes agents/skills to
+> consumer projects, overlapping this task's goal for that audience;
+> (2) the push-sync workflow this task extends is PARKED
+> (CROSS_REPO_TOKEN never provisioned — see KIT-0045). Re-scope against
+> the plugin channel and re-sequence behind KIT-0045 before promoting.
+> Related stale claim: ASK-0048 asserted it superseded this task; that PR
+> was closed unmerged 2026-07-14.
 
 ## Related Tasks
 

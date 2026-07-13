@@ -5,7 +5,7 @@
 **Date**: 2026-06-26
 **From**: Coordinator (KIT-0030 plugin-consolidation session)
 **To**: feature-developer-v6 (claude-opus-4-8)
-**Task**: `.kit/tasks/2-todo/KIT-0032-build-upgrader-agent.md`
+**Task**: `.kit/tasks/5-done/KIT-0032-build-upgrader-agent.md`
 **Status**: Ready for implementation
 **Evaluation**: ✅ REVISED — three-evaluator arch review done (1 APPROVED, 2
 REVISION_SUGGESTED); convergent findings already folded into the spec. Do **not**
@@ -28,7 +28,7 @@ points at.
 
 Read these before writing anything (in order):
 
-1. `.kit/tasks/2-todo/KIT-0032-build-upgrader-agent.md` — **the spec**. Its
+1. `.kit/tasks/5-done/KIT-0032-build-upgrader-agent.md` — **the spec**. Its
    acceptance criteria are your definition of done.
 2. `docs/PLUGIN-UPGRADE-GUIDE.md` — **the agent's specification**. Your agent
    body maps 1:1 to its 7 steps + rollback. If the agent and the guide ever
@@ -119,7 +119,7 @@ command.
 ## Acceptance Criteria
 
 Mirror of the spec — every box in
-`.kit/tasks/3-in-progress/KIT-0032-build-upgrader-agent.md` must be satisfied.
+`.kit/tasks/5-done/KIT-0032-build-upgrader-agent.md` must be satisfied.
 Pay special attention to: scope refusals are concrete (not just the word
 "refuse"), the preview→ACK→apply gate, frontmatter-aware model-pin rewrite, and
 the no-op dry-run proof.
@@ -134,7 +134,7 @@ resumes cleanly.
 
 ---
 
-**Task File**: `.kit/tasks/2-todo/KIT-0032-build-upgrader-agent.md`
+**Task File**: `.kit/tasks/5-done/KIT-0032-build-upgrader-agent.md`
 **Spec it automates**: `docs/PLUGIN-UPGRADE-GUIDE.md`
 **ADRs**: KIT-ADR-0025 (backs this), KIT-ADR-0024 §3/§4 (the boundary)
 **Eval logs** (local, gitignored): `.adversarial/logs/KIT-0032-build-upgrader-agent--*.md`
