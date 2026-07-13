@@ -266,11 +266,11 @@ while [ "$CI_ATTEMPT" -le "$CI_POLL_ATTEMPTS" ]; do
     # not in the gh --jq, so the truncation guard sees the RAW returned
     # count — a cap-full response of mixed events must still trip the
     # guard (KIT-0043 F1).
-    # shellcheck disable=SC2086
-    CI_RUNS=$(gh $GH_REPO_ARG run list --commit "$LATEST_SHA" --limit "$CI_RUN_LIMIT" --json status,conclusion,workflowName,event,headSha 2>/dev/null)
     # Distinguish "gh succeeded with an empty list" (runs not registered
-    # yet → PENDING) from "gh itself failed" (auth/network → FAIL below)
-    if [ $? -eq 0 ]; then
+    # yet → PENDING) from "gh itself failed" (auth/network → FAIL below).
+    # Exit status tested directly on the assignment (SC2181-safe).
+    # shellcheck disable=SC2086
+    if CI_RUNS=$(gh $GH_REPO_ARG run list --commit "$LATEST_SHA" --limit "$CI_RUN_LIMIT" --json status,conclusion,workflowName,event,headSha 2>/dev/null); then
         CI_FETCH_OK=true
     fi
 
