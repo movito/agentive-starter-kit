@@ -1,6 +1,6 @@
 # KIT-0042: Preflight support for task bundles (Gates 5/6 exact-name match)
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours
