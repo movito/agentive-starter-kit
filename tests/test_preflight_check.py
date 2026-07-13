@@ -459,10 +459,13 @@ class TestGate56Bundle:
         # route): the fixture's KIT-9999 artifacts must NOT satisfy the
         # gates for the shorter task ID KIT-999 — the literal separator
         # after ${TASK_ID} in every Gate 5/6 pattern is the boundary.
+        # Gate 7 gained the same boundary in KIT-0043 (F3): the fixture's
+        # KIT-9999-stub-task.md must not locate task KIT-999.
         result = proj.run(_baseline(proj.head), extra_args=["--task", "KIT-999"])
         gates = _gates(result.stdout)
         assert gates[5][0] == "FAIL", result.stdout
         assert gates[6][0] == "FAIL", result.stdout
+        assert gates[7][0] == "FAIL", result.stdout
 
     def test_empty_pointer_files_do_not_pass(self, proj):
         # A zero-byte "pointer" (botched write, or a bare touch) must
@@ -500,3 +503,123 @@ class TestGate56Bundle:
             assert "review-handoff" in detail, detail
             assert "Multi-PR task" in detail, detail
         assert result.returncode == 1
+
+
+# ── Gate 1: edge hardening (KIT-0043 F1/F2) ──────────────────────────────
+class TestGate1EdgeHardening:
+    """Convergent evaluator findings from KIT-0042: non-terminal
+    statuses must read as PENDING (only `completed` is terminal in the
+    Actions API), and run-list truncation at the --limit cap must be
+    visible, not silent.
+    """
+
+    def test_waiting_status_is_pending_not_fail(self, proj):
+        # A run awaiting a runner/approval is non-terminal — PENDING,
+        # not a CI failure (KIT-0034's pending-vs-failed distinction).
+        files = _baseline(proj.head)
+        files["run_list"] = json.dumps(
+            [_run_entry(proj.head, status="waiting", conclusion="")]
+        )
+        result = proj.run(files)
+        verdict, _ = _gates(result.stdout)[1]
+        assert verdict == "PENDING", result.stdout
+        assert result.returncode == 2
+
+    def test_unknown_future_status_is_pending(self, proj):
+        # A status value the script has never heard of is by definition
+        # not `completed` → non-terminal → PENDING, never FAIL.
+        files = _baseline(proj.head)
+        files["run_list"] = json.dumps(
+            [_run_entry(proj.head, status="hyperqueued", conclusion="")]
+        )
+        result = proj.run(files)
+        verdict, _ = _gates(result.stdout)[1]
+        assert verdict == "PENDING", result.stdout
+
+    def test_completed_failure_still_fails(self, proj):
+        # Pinning the other side of F2: terminal non-success stays FAIL
+        # (KIT-0034 N-series: never soften a completed failure).
+        files = _baseline(proj.head)
+        files["run_list"] = json.dumps(
+            [
+                _run_entry(proj.head),
+                _run_entry(
+                    proj.head, status="completed", conclusion="failure", name="Lint"
+                ),
+            ]
+        )
+        result = proj.run(files)
+        verdict, _ = _gates(result.stdout)[1]
+        assert verdict == "FAIL", result.stdout
+        assert result.returncode == 1
+
+    def test_run_count_at_cap_flags_possible_truncation(self, proj):
+        # F1: the gh query is already server-side filtered by --commit,
+        # so truncation only bites when one SHA accumulates >limit runs.
+        # When the returned count hits the cap, the detail must say so
+        # (mirrors Gate 4's thread-cap flag) instead of silently passing.
+        files = _baseline(proj.head)
+        files["run_list"] = json.dumps(
+            [_run_entry(proj.head, name=f"WF-{i}") for i in range(50)]
+        )
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[1]
+        assert verdict == "PASS", result.stdout
+        assert "capped" in detail, detail
+
+
+# ── Gate 2: F4 reproduce-or-decline (KIT-0043) ───────────────────────────
+class TestGate2MixedContexts:
+    """o3 (KIT-0042 rounds) claimed a mixed success/failure pair of
+    CodeRabbit commit-status contexts can slip the Gate 2 fallback.
+    These tests are the reproduce-or-decline evidence.
+    """
+
+    def _no_head_review(self, head: str) -> dict[str, str]:
+        files = _baseline(head)
+        files["graphql"] = _graphql(
+            [
+                _review("coderabbitai[bot]", "APPROVED", OLD_SHA),
+                _review("cursor[bot]", "COMMENTED", head),
+            ],
+            resolved=2,
+        )
+        return files
+
+    def test_non_success_fallback_signal_fails_closed(self, proj):
+        # Shell layer: the fallback requires CR_SIGNAL to be exactly
+        # "success"; a "failure" signal (what the jq reduces a mixed
+        # context set to) must FAIL even with APPROVED + 0 unresolved.
+        files = self._no_head_review(proj.head)
+        files["commit_status"] = "failure\n"
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[2]
+        assert verdict == "FAIL", result.stdout
+        assert "signal=failure" in detail, detail
+
+    def test_status_jq_reduces_mixed_contexts_to_non_success(self, proj):
+        # jq layer: extract the commit-status --jq filter from the real
+        # script (no duplication drift) and run real jq over a mixed
+        # fixture — the reduction must yield the failing state, never
+        # "success".
+        script = (proj.root / "scripts" / "core" / "preflight-check.sh").read_text(
+            encoding="utf-8"
+        )
+        m = re.search(r"--jq '(\[\.statuses\[\][^']*)'", script)
+        assert m, "commit-status jq filter not found in script"
+        mixed = json.dumps(
+            {
+                "statuses": [
+                    {"context": "coderabbitai/review", "state": "success"},
+                    {"context": "coderabbitai/ci", "state": "failure"},
+                ]
+            }
+        )
+        out = subprocess.run(
+            ["jq", "-r", m.group(1)],
+            input=mixed,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        assert out == "failure", out

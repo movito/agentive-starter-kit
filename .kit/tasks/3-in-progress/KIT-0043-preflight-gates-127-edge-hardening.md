@@ -1,6 +1,6 @@
 # KIT-0043: Preflight Gates 1/2/7 edge-case hardening (recurring evaluator findings)
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: low-medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours

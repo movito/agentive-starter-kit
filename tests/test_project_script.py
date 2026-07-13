@@ -6,6 +6,7 @@ Focus: install-evaluators command with mocked subprocess calls.
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -14,6 +15,25 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from conftest import MockVersionInfo
+
+
+@pytest.fixture(autouse=True)
+def _isolate_git_env(monkeypatch):
+    """Strip ambient GIT_* so tmp-repo git calls can't escape to the real repo.
+
+    pre-commit exports GIT_DIR / GIT_INDEX_FILE during hooks — and in a git
+    WORKTREE the exported GIT_DIR is absolute, so every `git` subprocess in
+    this module (TestDeriveRepoUrl, TestReconfigureExpanded, ...) resolved
+    the REAL repo instead of its tmp_path fixture, failing the pytest-fast
+    hook on any worktree commit. Same isolation as
+    test_preflight_check._clean_env — the GIT_DIR gotcha in
+    .kit/context/workflows/TESTING-WORKFLOW.md. Surfaced by the KIT-0043
+    worktree pilot.
+    """
+    for key in list(os.environ):
+        if key.startswith("GIT_"):
+            monkeypatch.delenv(key, raising=False)
+
 
 # Load the project script as a module
 _script_path = Path(__file__).parent.parent / "scripts" / "core" / "project"
