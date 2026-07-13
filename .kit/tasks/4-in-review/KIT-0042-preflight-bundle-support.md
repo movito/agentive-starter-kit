@@ -1,6 +1,6 @@
 # KIT-0042: Preflight support for task bundles (Gates 5/6 exact-name match)
 
-**Status**: Todo
+**Status**: In Review
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours
@@ -83,3 +83,20 @@ Planner disposition:
 - **Declined — `.bundle-manifest` / programmatic bundle definition**: the
   evaluator itself notes it exceeds the task's effort; two observed bundles
   don't justify a manifest format. Revisit if bundle shapes diversify.
+
+## Addendum (2026-07-13, planner — from the KIT-0035 retro, filed after this task started)
+
+**F1.1 gains a second case.** KIT-0035 ran as ONE task across TWO
+sequential PRs, and preflight on PR 2's branch showed 3 spurious FAILs
+(Gates 5–7) by design — the task-level artifacts lived on PR 1's branch
+until it merged. The output read like a real failure
+(`No evaluator review found for KIT-0035`).
+
+So the F1.1 FAIL text should name BOTH situations, e.g.:
+
+> `(bundled PR? each task needs its own pointer file — see review-handoff
+> skill. Multi-PR task? artifacts may live on the sibling PR's branch
+> until it merges.)`
+
+One extended message string covers both; no new logic required. Evidence:
+`.kit/context/retros/KIT-0035-retro.md` (Surprising #3, Should Change #3).

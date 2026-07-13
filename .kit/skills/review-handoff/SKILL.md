@@ -1,10 +1,10 @@
 ---
 description: How to hand off a PR for human code review after automated reviews pass
 user-invocable: false
-version: 1.0.0
+version: 1.1.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-07-13
 created-by: "@movito with planner2"
 ---
 
@@ -21,6 +21,41 @@ After automated review is complete, you **MUST** request human code review befor
 5. **Notify user**: Include thread count proof (mandatory)
 6. **Address feedback**: Fix any issues from human reviewer
 7. **After approval**: `./scripts/core/project complete <TASK-ID>`
+
+## Bundled PR? Do this FIRST (multiple task IDs, one PR)
+
+Preflight Gates 5/6 check for artifacts named exactly
+`<TASK-ID>-REVIEW-STARTER.md` and `<TASK-ID>-evaluator-review.md` —
+**per task ID**, deliberately (KIT-0042: the gates stay strict; the
+bundle intelligence lives here, in process). When one PR ships several
+tasks, follow the lead-task + pointer-files convention **up front**, not
+after a gate failure:
+
+1. **Pick the lead task** (usually the lowest ID) and write the full
+   review starter and evaluator record under the lead's name, covering
+   the whole bundle.
+2. **For every other bundled task**, create two short pointer files with
+   the exact solo-task names:
+   - `.kit/context/<TASK-ID>-REVIEW-STARTER.md` — a few lines: names the
+     bundle + PR, points at the lead's starter, and states this task's
+     slice of the change.
+   - `.kit/context/reviews/<TASK-ID>-evaluator-review.md` — points at the
+     lead's evaluator record (and notes any per-task skip rationale).
+
+Reference shape: the KIT-0037/38/39 bundle (PR #71) —
+`.kit/context/KIT-0038-REVIEW-STARTER.md` and
+`.kit/context/reviews/KIT-0038-evaluator-review.md` are the canonical
+examples of pointer files.
+
+**Multi-PR task** (one task ID, several sequential PRs — KIT-0035's
+shape): the task-level artifacts live on ONE branch (put them on the
+first/primary PR's branch; sibling PRs must not touch them, or the
+branches conflict). Until that PR merges, preflight run against a
+sibling branch shows spurious Gate 5–7 FAILs — expected, not a
+regression; re-run after the artifact-carrying PR merges.
+
+If you forget, Gates 5/6's FAIL output names this convention — but doing
+it here, before preflight, is the intended path.
 
 ## Creating Review Starter
 

@@ -122,7 +122,9 @@ class PreflightProject:
         self.env = env
         self.head = head
 
-    def run(self, files: dict[str, str]) -> subprocess.CompletedProcess:
+    def run(
+        self, files: dict[str, str], extra_args: list[str] | None = None
+    ) -> subprocess.CompletedProcess:
         # The project fixture is module-scoped (the git repo and .kit
         # artifacts are read-only during a run); the canned payloads are
         # per-scenario, so wipe leftovers from the previous test first.
@@ -136,6 +138,7 @@ class PreflightProject:
                 str(self.root / "scripts" / "core" / "preflight-check.sh"),
                 "--pr",
                 "42",
+                *(extra_args or []),
             ],
             cwd=self.root,
             env=self.env,
@@ -415,3 +418,85 @@ class TestGate3BugBot:
         assert verdict == "PASS", result.stdout
         assert "check-run" in detail
         assert result.returncode == 0
+
+
+# ── Gates 5/6: bundled-PR convention (KIT-0042) ──────────────────────────
+class TestGate56Bundle:
+    """A bundled PR satisfies Gates 5/6 via per-task pointer files named
+    exactly like a solo task's artifacts (reference shape: the
+    KIT-0037/38/39 bundle's pointer files), and the FAIL detail names
+    that convention so nobody discovers it by failing the gate.
+    """
+
+    def test_pointer_files_pass_gates_5_6_for_non_lead_task(self, proj):
+        # Bundle lead is HEAD_TASK (fixture artifacts); a bundled task
+        # KIT-9998 carries its own pointer starter + pointer record.
+        starter = proj.root / ".kit" / "context" / "KIT-9998-REVIEW-STARTER.md"
+        record = (
+            proj.root / ".kit" / "context" / "reviews" / "KIT-9998-evaluator-review.md"
+        )
+        task = proj.root / ".kit" / "tasks" / "3-in-progress" / "KIT-9998-stub-task.md"
+        try:
+            starter.write_text(
+                f"Pointer: see {HEAD_TASK}-REVIEW-STARTER.md (bundle lead)\n",
+                encoding="utf-8",
+            )
+            record.write_text(
+                f"Pointer: see {HEAD_TASK}-evaluator-review.md (bundle lead)\n",
+                encoding="utf-8",
+            )
+            task.write_text("task\n", encoding="utf-8")
+            result = proj.run(_baseline(proj.head), extra_args=["--task", "KIT-9998"])
+            gates = _gates(result.stdout)
+            assert gates[5][0] == "PASS", result.stdout
+            assert gates[6][0] == "PASS", result.stdout
+        finally:
+            for path in (starter, record, task):
+                path.unlink(missing_ok=True)
+
+    def test_prefix_is_not_a_match_boundary_violation(self, proj):
+        # Boundary pinning (KIT-0040 lesson, kept even on the convention
+        # route): the fixture's KIT-9999 artifacts must NOT satisfy the
+        # gates for the shorter task ID KIT-999 — the literal separator
+        # after ${TASK_ID} in every Gate 5/6 pattern is the boundary.
+        result = proj.run(_baseline(proj.head), extra_args=["--task", "KIT-999"])
+        gates = _gates(result.stdout)
+        assert gates[5][0] == "FAIL", result.stdout
+        assert gates[6][0] == "FAIL", result.stdout
+
+    def test_empty_pointer_files_do_not_pass(self, proj):
+        # A zero-byte "pointer" (botched write, or a bare touch) must
+        # not satisfy Gates 5/6 — the find requires a non-empty regular
+        # file.
+        starter = proj.root / ".kit" / "context" / "KIT-9996-REVIEW-STARTER.md"
+        record = (
+            proj.root / ".kit" / "context" / "reviews" / "KIT-9996-evaluator-review.md"
+        )
+        try:
+            starter.write_text("", encoding="utf-8")
+            record.write_text("", encoding="utf-8")
+            result = proj.run(_baseline(proj.head), extra_args=["--task", "KIT-9996"])
+            gates = _gates(result.stdout)
+            assert gates[5][0] == "FAIL", result.stdout
+            assert gates[6][0] == "FAIL", result.stdout
+        finally:
+            for path in (starter, record):
+                path.unlink(missing_ok=True)
+
+    def test_fail_details_name_bundle_convention(self, proj):
+        # No artifacts exist for KIT-9997 → Gates 5/6 FAIL, and each
+        # detail must point at BOTH conventions (F1.1 + the 2026-07-13
+        # spec addendum): the bundle pointer files and the multi-PR-task
+        # case (artifacts on a sibling PR's branch — the KIT-0035
+        # spurious-FAIL evidence). The parseable GATE:N:Name:FAIL:
+        # prefix stays intact (harness regex in _gates would not match
+        # otherwise).
+        result = proj.run(_baseline(proj.head), extra_args=["--task", "KIT-9997"])
+        gates = _gates(result.stdout)
+        for gate_num in (5, 6):
+            verdict, detail = gates[gate_num]
+            assert verdict == "FAIL", result.stdout
+            assert "bundled PR" in detail, detail
+            assert "review-handoff" in detail, detail
+            assert "Multi-PR task" in detail, detail
+        assert result.returncode == 1

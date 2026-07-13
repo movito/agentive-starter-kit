@@ -124,6 +124,14 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **A script cannot export into its caller's shell**: `prepare-review-input.sh` surfaces the `ADVERSARIAL_UNATTENDED=1` export line in its next-steps output rather than pretending to set it — surface, don't fake-set. (KIT-0035)
 - **`adversarial list-evaluators` exists** for evaluator discovery (with `ls .adversarial/evaluators/*/` as fallback; prefer `-v2` variants). (KIT-0035)
 - **isort's pin is a floor (`>=`), not exact** — version-drift warnings comparing "active vs pinned" only make sense for exact pins like Black's. (KIT-0035)
+- **Evaluator-before-PR round-collapse is measured, not theoretical**: PR #72 (six items, 8 files) ran the trio pre-open and got a ZERO-thread first bot round with CodeRabbit APPROVED — vs KIT-0032's four post-open rounds on one doc file. (KIT-0035 retro)
+- **Test rejection cases, not just acceptance, for detection patterns**: live-output testing only exercises the happy path; the marketplace-source bypass (`Directory (/Users/alice/github/movito/...)`) passed every live test. Now codified in TESTING-WORKFLOW.md. (KIT-0035 retro)
+
+### Empirically Disproven Reviewer Claims (decline-by-reference)
+
+- **"`sed -n '/^## X/,/^## /p'` terminates on its own start line" — FALSE.** POSIX sed searches the end address from the line AFTER the addr1 match. Asserted identically by o3, Gemini fast-v2, AND CodeRabbit in one session — model-diverse review does not protect against shared training-data folklore about classic tools. BSD-sed repro pasted in `.kit/context/reviews/KIT-0035-evaluator-review.md`; decline by linking there. (KIT-0035)
+- **"`grep -o` extracts the shortest match" — FALSE** (leftmost-longest; `26.3.1` extracts fully, not `26`). Tested live, repro in the same review record. (KIT-0035)
+- When declining any reviewer claim, paste the repro in the review record — it turns later re-litigation (bots repeating an evaluator's false claim) into a one-reply copy-paste. (KIT-0035)
 
 ---
 

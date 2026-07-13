@@ -469,27 +469,30 @@ fi
 #   <TASK>-evaluator-review*.md  (legacy)
 #   <TASK>-code-review*.md       (current)
 #   <TASK>-code-reviewer*.md     (alt — code-reviewer-fast variant)
+# -type f -size +0c: an empty file (botched write, bare touch) is not a
+# persisted review — require a non-empty regular file (KIT-0042).
 EVAL_FILE=$(find .kit/context/reviews \
     \( -name "${TASK_ID}-evaluator-review*.md" \
     -o -name "${TASK_ID}-code-review*.md" \
     -o -name "${TASK_ID}-code-reviewer*.md" \) \
+    -type f -size +0c \
     2>/dev/null | head -1 || true)
 
 if [ -n "$EVAL_FILE" ]; then
     echo "GATE:5:Evaluator:PASS:$EVAL_FILE"
 else
-    echo "GATE:5:Evaluator:FAIL:No evaluator review found for $TASK_ID"
+    echo "GATE:5:Evaluator:FAIL:No evaluator review found for $TASK_ID (bundled PR? each task needs its own pointer record named .kit/context/reviews/${TASK_ID}-evaluator-review.md — see the review-handoff skill. Multi-PR task? artifacts may live on the sibling PR's branch until it merges.)"
     ANY_FAILED=true
 fi
 
 # ─── Gate 6: Review starter exists ──────────────────────────────────
 
-STARTER_FILE=$(find .kit/context -maxdepth 1 -name "${TASK_ID}-REVIEW-STARTER.md" 2>/dev/null | head -1 || true)
+STARTER_FILE=$(find .kit/context -maxdepth 1 -name "${TASK_ID}-REVIEW-STARTER.md" -type f -size +0c 2>/dev/null | head -1 || true)
 
 if [ -n "$STARTER_FILE" ]; then
     echo "GATE:6:ReviewStarter:PASS:$STARTER_FILE"
 else
-    echo "GATE:6:ReviewStarter:FAIL:No review starter found for $TASK_ID"
+    echo "GATE:6:ReviewStarter:FAIL:No review starter found for $TASK_ID (bundled PR? each task needs its own pointer starter named .kit/context/${TASK_ID}-REVIEW-STARTER.md — see the review-handoff skill. Multi-PR task? artifacts may live on the sibling PR's branch until it merges.)"
     ANY_FAILED=true
 fi
 
