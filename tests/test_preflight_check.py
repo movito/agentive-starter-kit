@@ -456,9 +456,12 @@ class TestGate56Bundle:
 
     def test_fail_details_name_bundle_convention(self, proj):
         # No artifacts exist for KIT-9997 → Gates 5/6 FAIL, and each
-        # detail must point at the bundle convention (F1.1) while the
-        # parseable GATE:N:Name:FAIL: prefix stays intact (harness
-        # regex in _gates would not match otherwise).
+        # detail must point at BOTH conventions (F1.1 + the 2026-07-13
+        # spec addendum): the bundle pointer files and the multi-PR-task
+        # case (artifacts on a sibling PR's branch — the KIT-0035
+        # spurious-FAIL evidence). The parseable GATE:N:Name:FAIL:
+        # prefix stays intact (harness regex in _gates would not match
+        # otherwise).
         result = proj.run(_baseline(proj.head), extra_args=["--task", "KIT-9997"])
         gates = _gates(result.stdout)
         for gate_num in (5, 6):
@@ -466,4 +469,5 @@ class TestGate56Bundle:
             assert verdict == "FAIL", result.stdout
             assert "bundled PR" in detail, detail
             assert "review-handoff" in detail, detail
+            assert "Multi-PR task" in detail, detail
         assert result.returncode == 1

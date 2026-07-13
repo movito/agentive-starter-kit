@@ -478,7 +478,7 @@ EVAL_FILE=$(find .kit/context/reviews \
 if [ -n "$EVAL_FILE" ]; then
     echo "GATE:5:Evaluator:PASS:$EVAL_FILE"
 else
-    echo "GATE:5:Evaluator:FAIL:No evaluator review found for $TASK_ID (bundled PR? each task needs its own pointer record named ${TASK_ID}-evaluator-review.md — see the review-handoff skill: lead-task + pointer files)"
+    echo "GATE:5:Evaluator:FAIL:No evaluator review found for $TASK_ID (bundled PR? each task needs its own pointer record named ${TASK_ID}-evaluator-review.md — see the review-handoff skill. Multi-PR task? artifacts may live on the sibling PR's branch until it merges.)"
     ANY_FAILED=true
 fi
 
@@ -489,7 +489,7 @@ STARTER_FILE=$(find .kit/context -maxdepth 1 -name "${TASK_ID}-REVIEW-STARTER.md
 if [ -n "$STARTER_FILE" ]; then
     echo "GATE:6:ReviewStarter:PASS:$STARTER_FILE"
 else
-    echo "GATE:6:ReviewStarter:FAIL:No review starter found for $TASK_ID (bundled PR? each task needs its own pointer starter named ${TASK_ID}-REVIEW-STARTER.md — see the review-handoff skill: lead-task + pointer files)"
+    echo "GATE:6:ReviewStarter:FAIL:No review starter found for $TASK_ID (bundled PR? each task needs its own pointer starter named ${TASK_ID}-REVIEW-STARTER.md — see the review-handoff skill. Multi-PR task? artifacts may live on the sibling PR's branch until it merges.)"
     ANY_FAILED=true
 fi
 

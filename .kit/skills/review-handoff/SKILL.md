@@ -47,6 +47,13 @@ Reference shape: the KIT-0037/38/39 bundle (PR #71) —
 `.kit/context/reviews/KIT-0038-evaluator-review.md` are the canonical
 examples of pointer files.
 
+**Multi-PR task** (one task ID, several sequential PRs — KIT-0035's
+shape): the task-level artifacts live on ONE branch (put them on the
+first/primary PR's branch; sibling PRs must not touch them, or the
+branches conflict). Until that PR merges, preflight run against a
+sibling branch shows spurious Gate 5–7 FAILs — expected, not a
+regression; re-run after the artifact-carrying PR merges.
+
 If you forget, Gates 5/6's FAIL output names this convention — but doing
 it here, before preflight, is the intended path.
 
