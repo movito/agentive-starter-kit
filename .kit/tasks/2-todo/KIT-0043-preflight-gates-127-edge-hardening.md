@@ -1,6 +1,6 @@
 # KIT-0043: Preflight Gates 1/2/7 edge-case hardening (recurring evaluator findings)
 
-**Status**: Backlog
+**Status**: Todo
 **Priority**: low-medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours
@@ -66,6 +66,9 @@ KIT-0042 just pinned tests for on Gates 5/6.
 - [ ] All gate changes covered in `tests/test_preflight_check.py`;
       `GATE:N:Name:VERDICT:` format unchanged
 - [ ] The KIT-0042 decline-table entries updated to point here
+- [ ] *(Optional, F3-conditional)* If F3's edit touches a `find ... | head -1`
+      site, replace the order-arbitrary `head -1` with a deterministic pick
+      (or assert single-match); otherwise explicitly note it was left as-is
 
 ## Notes
 
@@ -76,3 +79,29 @@ KIT-0042 just pinned tests for on Gates 5/6.
 - Operator context (2026-07-14): CodeRabbit prepaid credits exhausted —
   Gate 2's *bot availability* is a separate operational issue, not this
   task; this task is only the fallback-logic edge case (F4).
+  **Update (planner, 2026-07-14): credits topped up — resolved.**
+
+## Evaluation (2026-07-14)
+
+`arch-review-fast` (gemini-2.5-flash): **REVISION_SUGGESTED** — single
+minor finding; spec otherwise rated clean across all six dimensions. Log:
+`.adversarial/logs/KIT-0043-preflight-gates-127-edge-hardening--arch-review-fast.md`.
+Planner disposition:
+
+- **Accepted — formalize the conditional `head -1` note**: now an explicit
+  optional acceptance criterion tied to F3 (not a separate task — it is a
+  two-line concern living on the same lines F3 edits).
+- **Planner verification of cited runtime facts (2026-07-14)**, per the
+  runtime-facts footgun:
+  - F1: `preflight-check.sh:253` —
+    `gh $GH_REPO_ARG run list --commit "$LATEST_SHA" --limit 10 ...`.
+    Note the query ALREADY filters server-side by commit; truncation only
+    bites when one SHA accumulates >10 runs (matrix builds, reruns). This
+    narrows F1 versus the evaluators' framing — the "justify the limit
+    against real repo run counts" acceptance path is likely the right one
+    for this repo (~2 workflows per push).
+  - F2: statuses handled at lines 298–304 (`completed:success`,
+    `completed:skipped|neutral`, `in_progress|queued`); anything else falls
+    to the FAIL branch — confirmed.
+  - F3: Gate 7 at line 501 — `find ... -name "${TASK_ID}*"`, no boundary —
+    confirmed. `head -1` sites: lines 221, 479, 490, 501.
