@@ -31,11 +31,18 @@ future upgrader agent, or any agent pointed at a project) or by hand.
   not a local directory. Verify:
 
   ```bash
-  claude plugin marketplace list        # Source should read: GitHub (movito/agentive-skills)
+  # Accept a GitHub-form Source line — paren form "GitHub (movito/agentive-skills)"
+  # or URL form "https://github.com/movito/agentive-skills", either case. The
+  # pattern is anchored to the Source field so a local checkout at a path like
+  # "Directory (/Users/alice/github/movito/agentive-skills)" cannot slip past,
+  # and end-anchored so a similarly named repo (movito/agentive-skills-beta)
+  # cannot either:
+  claude plugin marketplace list | grep -Ei '^[[:space:]]*source: *(github \(|https://github\.com/)movito/agentive-skills([[:space:]]*\)|$)'
+  # match → GitHub-sourced, proceed; no match → inspect the full output
   ```
 
-  If it reads `Directory (...)`, it is a dev/spike artifact — re-point it
-  before upgrading:
+  If the source reads `Directory (...)`, it is a dev/spike artifact —
+  re-point it before upgrading:
 
   ```bash
   claude plugin marketplace remove agentive-skills
@@ -51,8 +58,12 @@ future upgrader agent, or any agent pointed at a project) or by hand.
 
 ```bash
 # Current pin (two sources — they should agree):
-grep -A8 '## Provenance' CLAUDE.md | grep agentive-workflow
-claude plugin list | grep -A3 'agentive-workflow@agentive-skills'
+# Scope to the whole Provenance section (a fixed -A window breaks if the
+# pin sits lower in the section; sed stops at the next '## ' header):
+sed -n '/^## Provenance/,/^## /p' CLAUDE.md | grep agentive-workflow
+# Tolerate row-format drift ('@agentive-skills' vs '(agentive-skills)')
+# while excluding similarly-named siblings (e.g. agentive-workflow-beta):
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'
 ```
 
 Target = the version you intend to land. Either the operator names it, or read
@@ -70,7 +81,7 @@ If current == target, stop — nothing to do.
 ```bash
 claude plugin marketplace update agentive-skills      # pull latest marketplace metadata from GitHub
 claude plugin update agentive-workflow@agentive-skills
-claude plugin list | grep -A3 'agentive-workflow@agentive-skills'   # confirm the version advanced
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'   # confirm the version advanced
 ```
 
 > The plugin's semver `version` is the cache key. If the upstream version was
@@ -96,7 +107,9 @@ Compare the artifact set before/after (or read the plugin CHANGELOG):
   (they would not resolve now that artifacts come from the plugin):
 
   ```bash
-  grep -rnoE '(^|[^:A-Za-z/.-])/(preflight|retro|triage-threads|check-ci|check-bots|wrap-up|babysit-pr|wait-for-bots|commit-push-pr|start-task|check-spec|status)([^.A-Za-z]|$)' \
+  # -i: catch case-drifted slash-references in prose too (a capitalized
+  # command name after a slash would evade a case-sensitive grep)
+  grep -rinoE '(^|[^:A-Za-z/.-])/(preflight|retro|triage-threads|check-ci|check-bots|wrap-up|babysit-pr|wait-for-bots|commit-push-pr|start-task|check-spec|status)([^.A-Za-z]|$)' \
     .claude .kit/templates .kit/context/workflows CLAUDE.md
   # expect no output
   ```
@@ -128,7 +141,7 @@ Restamp `CLAUDE.md` `## Provenance`:
 ### 6. Verify
 
 ```bash
-claude plugin list | grep -A3 'agentive-workflow@agentive-skills'   # new version, enabled
+claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'   # new version, enabled
 ```
 
 Optionally confirm the namespaced artifacts resolve at the new version with a
@@ -165,6 +178,11 @@ Pin back to the previous version and re-update:
   must increase for consumers to receive changes.
 - **Never hand-edit cached plugin files** (`~/.claude/plugins/cache/...`) — that
   path is ephemeral and is overwritten on the next update.
+- **ANSI colour codes can defeat the greps** — the `claude` CLI currently
+  strips colours when piped (verified 2026-07-06), but if a future version
+  colours piped output, insert a strip stage before grepping:
+  `claude plugin list | sed $'s/\x1b\\[[0-9;]*m//g' | grep ...`
+  (bash ANSI-C quoting; works with BSD/macOS sed).
 - **Plugin vs scripts vs identity** are three separate upgrade surfaces; this
   guide is only the plugin. Don't fold manifest-script or CLAUDE.md changes
   into a "plugin upgrade."
