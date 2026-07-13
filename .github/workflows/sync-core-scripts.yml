@@ -1,26 +1,25 @@
 name: Sync Core Scripts to Downstream
 
+# ── PARKED (2026-07-14, planner + operator decision) ──────────────────────
+# The push trigger is disabled: CROSS_REPO_TOKEN was never provisioned, so
+# every push-triggered run failed at target checkout — 22/22 failures since
+# 2026-03-09. Cross-repo sync is deferred until the downstream phase
+# ("stabilize the kit first", operator 2026-07-04). workflow_dispatch is
+# kept for deliberate runs once the token exists.
+#
+# TO RE-ENABLE (tracked in KIT-0045):
+#   1. Mint a fine-grained PAT (owner: movito) scoped to EXACTLY:
+#      dispatch-kit, adversarial-workflow, adversarial-evaluator-library
+#      Permissions: Contents RW, Pull requests RW, Metadata R.
+#   2. `gh secret set CROSS_REPO_TOKEN` in agentive-starter-kit
+#      (paste the value locally — never through an agent transcript).
+#   3. Verify with a single-repo dispatch run:
+#      `gh workflow run "Sync Core Scripts to Downstream" -f repo=movito/dispatch-kit`
+#   4. Restore the push trigger from git history (commit parking this file)
+#      once someone is committed to tending the sync PRs in all 3 repos.
+# ───────────────────────────────────────────────────────────────────────────
+
 on:
-  push:
-    paths:
-      - 'scripts/core/**'
-      - '.claude/commands/**'
-      - '.kit/templates/**'
-      - '.kit/skills/**'
-      - '.kit/launchers/**'
-      - '.kit/adr/**'
-      - '.kit/docs/**'
-      - '.adversarial/scripts/**'
-      - '.adversarial/docs/**'
-      - '.adversarial/templates/**'
-      - '.adversarial/config.yml.template'
-      - '.kit/context/workflows/**'
-      - '.kit/context/templates/**'
-      - '.kit/context/patterns.yml'
-      - '.kit/context/AGENT-SYSTEM-GUIDE.md'
-      - '.kit/tasks/9-reference/**'
-      - 'scripts/.core-manifest.json'
-    branches: [main]
   workflow_dispatch:
     inputs:
       repo:
@@ -65,6 +64,10 @@ jobs:
       group: sync-core-scripts-${{ matrix.repo }}
       cancel-in-progress: false
     strategy:
+      # fail-fast off: one repo's failure must not cancel (and thereby mask)
+      # the sibling legs' real per-repo results — the 2026-07 diagnosis was
+      # slowed by a 'cancelled' leg that had never actually run.
+      fail-fast: false
       matrix:
         include:
           - repo: movito/dispatch-kit
