@@ -246,12 +246,13 @@ def _run_entry(
     status: str = "completed",
     conclusion: str = "success",
     name: str = "Tests",
+    event: str = "push",
 ) -> dict:
     return {
         "status": status,
         "conclusion": conclusion,
         "workflowName": name,
-        "event": "push",
+        "event": event,
         "headSha": head,
     }
 
@@ -553,19 +554,62 @@ class TestGate1EdgeHardening:
         assert verdict == "FAIL", result.stdout
         assert result.returncode == 1
 
-    def test_run_count_at_cap_flags_possible_truncation(self, proj):
-        # F1: the gh query is already server-side filtered by --commit,
-        # so truncation only bites when one SHA accumulates >limit runs.
-        # When the returned count hits the cap, the detail must say so
-        # (mirrors Gate 4's thread-cap flag) instead of silently passing.
+    def test_run_count_at_cap_is_pending_never_pass(self, proj):
+        # F1 (evaluator round): an at-cap response is indistinguishable
+        # from a truncated one — unseen runs may exist, so all-green at
+        # the cap must demote to PENDING with the remedy named, never
+        # false-PASS (o3's hidden-51st-run scenario).
         files = _baseline(proj.head)
         files["run_list"] = json.dumps(
             [_run_entry(proj.head, name=f"WF-{i}") for i in range(50)]
         )
         result = proj.run(files)
         verdict, detail = _gates(result.stdout)[1]
-        assert verdict == "PASS", result.stdout
-        assert "capped" in detail, detail
+        assert verdict == "PENDING", result.stdout
+        assert "cap" in detail, detail
+        assert result.returncode == 2
+
+    def test_cap_guard_keys_on_raw_count_not_filtered(self, proj):
+        # F1 (fast-v2): a cap-full response where the event filter
+        # discards some entries must STILL trip the guard — the guard
+        # watches the raw returned count, not the post-filter count.
+        files = _baseline(proj.head)
+        entries = [_run_entry(proj.head, name=f"WF-{i}") for i in range(40)] + [
+            _run_entry(proj.head, name=f"D-{i}", event="workflow_dispatch")
+            for i in range(10)
+        ]
+        files["run_list"] = json.dumps(entries)
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[1]
+        assert verdict == "PENDING", result.stdout
+        assert "cap" in detail, detail
+
+    def test_visible_failure_beats_at_cap_pending(self, proj):
+        # Verdict priority: a failing run in the visible window is a
+        # harder signal than "maybe truncated" — FAIL wins over the
+        # at-cap PENDING demotion.
+        files = _baseline(proj.head)
+        entries = [_run_entry(proj.head, name=f"WF-{i}") for i in range(49)] + [
+            _run_entry(proj.head, conclusion="failure", name="Lint")
+        ]
+        files["run_list"] = json.dumps(entries)
+        result = proj.run(files)
+        verdict, _ = _gates(result.stdout)[1]
+        assert verdict == "FAIL", result.stdout
+
+    def test_failure_beats_waiting_sibling(self, proj):
+        # Priority pinning: completed failure + a waiting sibling must
+        # read FAIL (the failure is real regardless of the pending run).
+        files = _baseline(proj.head)
+        files["run_list"] = json.dumps(
+            [
+                _run_entry(proj.head, conclusion="failure", name="Lint"),
+                _run_entry(proj.head, status="waiting", conclusion="", name="Tests"),
+            ]
+        )
+        result = proj.run(files)
+        verdict, _ = _gates(result.stdout)[1]
+        assert verdict == "FAIL", result.stdout
 
 
 # ── Gate 2: F4 reproduce-or-decline (KIT-0043) ───────────────────────────
