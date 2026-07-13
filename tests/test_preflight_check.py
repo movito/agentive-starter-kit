@@ -623,3 +623,17 @@ class TestGate2MixedContexts:
             check=True,
         ).stdout.strip()
         assert out == "failure", out
+
+
+class TestGate7RegularFile:
+    def test_directory_named_like_task_does_not_pass(self, proj):
+        # CodeRabbit (PR #75): a DIRECTORY named <ID>-anything satisfied
+        # Gate 7's find. Gate 7 now requires a non-empty regular file,
+        # matching the Gates 5/6 treatment.
+        bogus = proj.root / ".kit" / "tasks" / "3-in-progress" / "KIT-9995-dir.md"
+        try:
+            bogus.mkdir()
+            result = proj.run(_baseline(proj.head), extra_args=["--task", "KIT-9995"])
+            assert _gates(result.stdout)[7][0] == "FAIL", result.stdout
+        finally:
+            bogus.rmdir()

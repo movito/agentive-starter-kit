@@ -523,7 +523,7 @@ fi
 # boundary that stops KIT-4 matching KIT-40's file (KIT-0043 F3, same
 # bug-class as the Gate 5/6 separators). `sort` makes the multi-match
 # pick deterministic instead of filesystem-order arbitrary.
-TASK_FILE=$(find .kit/tasks/3-in-progress .kit/tasks/4-in-review -name "${TASK_ID}-*" 2>/dev/null | sort | head -1 || true)
+TASK_FILE=$(find .kit/tasks/3-in-progress .kit/tasks/4-in-review -name "${TASK_ID}-*" -type f -size +0c 2>/dev/null | sort | head -1 || true)
 
 if [ -n "$TASK_FILE" ]; then
     echo "GATE:7:TaskFolder:PASS:$TASK_FILE"
