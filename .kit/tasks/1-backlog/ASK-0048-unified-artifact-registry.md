@@ -1,12 +1,25 @@
 # ASK-0048: Unified Artifact Registry — Phase 1 (Metadata Adoption)
 
-**Status**: Todo
-**Priority**: high
+**Status**: Backlog
+**Priority**: low (was high — see Disposition below)
 **Assigned To**: unassigned
-**Estimated Effort**: 4-6 hours
+**Estimated Effort**: 4-6 hours (STALE — re-estimate against current architecture)
 **Created**: 2026-04-01
-**Target Completion**: 2026-04-08
+**Target Completion**: TBD (was 2026-04-08)
 **Linear ID**: (automatically backfilled after first sync)
+
+> **Disposition (2026-07-14, operator + planner)**: PR #45 CLOSED without
+> merging — it sat open since April 1 and predates the `.kit/` builder
+> boundary (ASK-0044), plugin consolidation (KIT-0030), agent semver
+> frontmatter (PR #61), and manifest sync v3 (KIT-0036). Too many
+> conflicts and stale assumptions to rebase; the operator chose to re-do
+> the task fresh later. BEFORE re-assignment this spec needs a
+> re-evaluation pass: the registry design (ADR-0007) overlaps what the
+> plugin channel + `version:` frontmatter + `.core-manifest.json` now
+> already provide — Phase 1's value proposition must be re-argued or the
+> task retired in favor of those mechanisms. The "supersedes KIT-0026"
+> claim below is likewise stale (KIT-0026 itself needs re-scoping
+> post-plugin). Closed PR kept as reference: #45.
 
 ## Related Tasks
 
