@@ -4,7 +4,7 @@
     "current_task": "KIT-0042",
     "task_started": null,
     "brief_note": "KIT-0035 DONE (PRs #72+#73 merged 2026-07-13; F3 ordering rule ADOPTED, core scripts 3.1.0) + knowledge extracted (no retro was written). KIT-0042 evaluated (both actionable findings accepted: F1.1 gate-message pointer, code-vs-process reasoning), handoff ready with verified gate anchors. Then: ADR-0025 slim = last v0.8.0 item. Awaiting human verdicts: KIT-0032 (PR #56 merged), ASK-0048 (PR #45), 6 dependabot PRs.",
-    "details_link": ".kit/tasks/4-in-review/KIT-0042-preflight-bundle-support.md",
+    "details_link": ".kit/tasks/5-done/KIT-0042-preflight-bundle-support.md",
     "handoff_file": ".kit/context/KIT-0042-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0042",
     "task_started": null,
     "brief_note": "KIT-0042 (bundle-aware preflight Gates 5/6: glob or convention + mandatory F1.1 failure-message pointer) ready for assignment. Small task, single PR.",
-    "details_link": ".kit/tasks/4-in-review/KIT-0042-preflight-bundle-support.md",
+    "details_link": ".kit/tasks/5-done/KIT-0042-preflight-bundle-support.md",
     "handoff_file": ".kit/context/KIT-0042-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {
