@@ -120,6 +120,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Preflight Gates 5/6 assume one task ID per PR**: exact-name match on `<TASK-ID>-REVIEW-STARTER.md` (`preflight-check.sh:487`) and single-ID evaluator artifacts — bundled PRs need lead-task naming + per-task pointer files (KIT-0037/38/39 session files are the reference shape) until KIT-0042 lands. (KIT-0037/38/39)
 - **CodeRabbit substantively reviews factual claims in prose**: it ran its own verification scripts against `resolve_source()` to check exit codes claimed in a docs-only diff — bot rounds add value even when the adversarial evaluator is skipped for docs-only changes. (KIT-0037/38/39)
 - **DK005 (scoped-staging lint rule) deliberately not implemented**: grep showed it would noqa-spam test fixtures while missing the shell-in-YAML incident surface; decision in PR #71's body. Revisit trigger: a scoped-staging violation recurring in *production* code, not test fixtures. (KIT-0037/38/39)
+- **Doc-dominated tasks run the evaluator trio BEFORE PR open** (adopted process change): rationale in the code-review-evaluator skill, Phase 7 exception note in both feature-developer agents. "Doc-dominated" = mostly docs plus small script tweaks, not only pure-doc. (KIT-0035, PR #72)
+- **A script cannot export into its caller's shell**: `prepare-review-input.sh` surfaces the `ADVERSARIAL_UNATTENDED=1` export line in its next-steps output rather than pretending to set it — surface, don't fake-set. (KIT-0035)
+- **`adversarial list-evaluators` exists** for evaluator discovery (with `ls .adversarial/evaluators/*/` as fallback; prefer `-v2` variants). (KIT-0035)
+- **isort's pin is a floor (`>=`), not exact** — version-drift warnings comparing "active vs pinned" only make sense for exact pins like Black's. (KIT-0035)
 
 ---
 

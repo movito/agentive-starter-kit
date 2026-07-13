@@ -1,6 +1,6 @@
 # KIT-0035: Dev-env & evaluator-workflow hardening (KIT-0032 + KIT-0040 retros)
 
-**Status**: In Review
+**Status**: Done
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-4 hours
