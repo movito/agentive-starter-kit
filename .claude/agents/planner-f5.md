@@ -444,6 +444,15 @@ happened: `f7a6c90` landed on the KIT-0042 feature branch and changed
 that task's requirements mid-flight). Hold bookkeeping in memory until
 `main` is checked out again, or operate on a separate worktree.
 
+**`project move` invalidates your read state and your git paths** — the
+task lifecycle relocates spec files between numbered folders. Two
+failure modes follow: (1) an Edit against a spec you read before the
+move fails at the new path — sequence spec edits BEFORE `project
+move|start|complete`, and re-read at the new path after any move;
+(2) a `git add` naming the pre-move path is fatal and **aborts the
+entire batch of paths in that call** — after every `git add`, verify
+the staged set with `git status --short` before committing.
+
 **Specs must record verified runtime behavior, not paraphrases** — when
 a spec or handoff asserts any runtime fact (bot/CI signal, exit code,
 event name, API shape), verify it against the source and paste the
