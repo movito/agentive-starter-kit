@@ -4,7 +4,7 @@
     "current_task": "KIT-0035",
     "task_started": null,
     "brief_note": "KIT-0037/38/39 DONE (PR #71) + knowledge extracted; retro items -> KIT-0042 (bundle-aware preflight, todo) + extended runtime-facts footgun in planner agents. KIT-0035 promoted (evaluated, two-PR plan accepted from REVISION_SUGGESTED), handoff ready with post-#71 verified state. Then: KIT-0042, ADR-0025 slim. Awaiting human verdicts: KIT-0032 (PR #56 merged), ASK-0048 (PR #45).",
-    "details_link": ".kit/tasks/2-todo/KIT-0035-devenv-evaluator-workflow-hardening.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0035-devenv-evaluator-workflow-hardening.md",
     "handoff_file": ".kit/context/KIT-0035-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0035",
     "task_started": null,
     "brief_note": "KIT-0035 (dev-env & evaluator friction, F1-F7, TWO PRs: F1/F2/F3/F5/F6/F7 then F4 guide+upgrader lockstep) ready for assignment.",
-    "details_link": ".kit/tasks/2-todo/KIT-0035-devenv-evaluator-workflow-hardening.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0035-devenv-evaluator-workflow-hardening.md",
     "handoff_file": ".kit/context/KIT-0035-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

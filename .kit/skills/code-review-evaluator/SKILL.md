@@ -1,10 +1,10 @@
 ---
 description: How to run the adversarial code-review evaluator after bot rounds and before human review
 user-invocable: false
-version: 1.2.0
+version: 1.3.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-04-23
+last-updated: 2026-07-05
 created-by: "@movito with planner2"
 ---
 
@@ -16,6 +16,30 @@ Run after bot triage rounds are complete, before human review. Uses a different 
 
 - After all bot threads are resolved (0 unresolved)
 - Before requesting human code review
+- **Exception — doc-heavy tasks run the evaluator BEFORE PR open** (see
+  "Ordering for Doc-Heavy Tasks" below)
+
+## Ordering for Doc-Heavy Tasks (run before PR open)
+
+**Recommendation (adopted, KIT-0035)**: when the deliverable is
+documentation- or agent-spec-dominated — CI exercises little or none of
+the substance — run the evaluator trio **before** opening the PR. This
+includes mixed tasks that are mostly docs with small script tweaks. The
+standard order (PR → CI → bots → evaluator) stays when CI meaningfully
+exercises the change.
+
+Why:
+
+- **KIT-0032**: each evaluator-driven rewrite after PR open triggered a
+  fresh bot round — four review rounds for a single documentation file.
+  Running the trio first would have collapsed those into one.
+- **KIT-0033**: running the evaluator while CI was still pending worked
+  well — for docs, the two signals don't depend on each other.
+- **KIT-0040**: external-finding yield concentrates on freshly written
+  text; getting trio findings addressed before bots first see the text
+  is where the round-saving is.
+- Code-heavy tasks keep CI/bots first: a CI failure invalidates the
+  review, and bots review the exact PR diff.
 
 ## When to Skip
 
@@ -119,6 +143,22 @@ Include:
 
 ## Step 2: Run the Evaluator
 
+### Discover installed evaluators first
+
+Availability varies per install, and v2 variants exist for some
+evaluators but not others (e.g. `code-reviewer-fast-v2` exists while
+`code-reviewer` has no v2). List what is actually installed before
+choosing:
+
+```bash
+adversarial list-evaluators
+# Fallback if the installed CLI predates list-evaluators:
+ls .adversarial/evaluators/*/
+```
+
+Prefer a `-v2` variant wherever one is installed; v1 names are
+deprecated in the evaluator library.
+
 ### Available evaluators
 
 | Command | Model | Focus | Cost | API Key Env Var |
@@ -134,6 +174,13 @@ different classes of issues with minimal overlap (validated empirically
 across projects: distinct models surface largely non-overlapping findings).
 
 **Note**: `spec-compliance-fast` is NOT available — use manual spec checks or `/check-spec` (Gemini Flash via API) instead.
+
+**`claude-code` requires `ANTHROPIC_API_KEY` *uncommented* in `.env`.**
+A commented-out key does not error at launch — the evaluator fails
+mid-run (KIT-0032 hit this as a mid-session blocker: the trio ran 2-of-3
+until the operator uncommented the key). Verify before running the trio:
+`grep -E '^ANTHROPIC_API_KEY=' .env` must match. Never add or commit a
+key — surface the gap to the operator instead.
 
 If the required API key is missing, fall back to another evaluator. If none of the keys are set, document the failure and proceed to human review.
 

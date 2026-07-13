@@ -3,9 +3,9 @@
 # Usage: ./scripts/core/prepare-review-input.sh <TASK-ID> [--base main] [--format diff|full] [--help]
 #
 # Metadata:
-#   version: 1.4.1
+#   version: 1.5.0
 #   origin: ixda-services-2.0 (ID2-0015)
-#   last-updated: 2026-04-23
+#   last-updated: 2026-07-05
 #   created-by: "@movito with feature-developer-v6"
 #
 # Note: unlike sibling scripts (check-bots, verify-ci) this helper does
@@ -102,6 +102,7 @@ Output:
   .adversarial/inputs/<TASK-ID>-code-review-input.md
 
 Next steps:
+  export ADVERSARIAL_UNATTENDED=1   # non-TTY sessions only: large inputs auto-cancel without it
   set -a && source .env && set +a
   adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
 EOF
@@ -467,6 +468,15 @@ echo "  Format:       $FORMAT"
 echo "  Files changed: $CHANGED_COUNT"
 echo
 echo "Next steps:"
+# In a non-TTY session (agent, CI) the adversarial CLI auto-cancels on
+# large (>50k-token) inputs instead of prompting — surface the env flag
+# that prevents it (KIT-0040 retro). A script can't export into the
+# caller's shell, so the export line is printed, not set. Either fd
+# being non-TTY marks the session non-interactive: stdin is what the
+# CLI prompt reads, stdout catches piped/captured agent sessions.
+if [ ! -t 0 ] || [ ! -t 1 ]; then
+    echo "  export ADVERSARIAL_UNATTENDED=1  # non-TTY session: large inputs auto-cancel without this"
+fi
 echo "  set -a && source .env && set +a"
 echo "  adversarial code-reviewer-fast $OUTPUT_FILE  # fast gate (~\$0.01)"
 echo "  adversarial code-reviewer $OUTPUT_FILE       # deep (~\$0.33)"

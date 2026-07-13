@@ -1,6 +1,6 @@
 # KIT-0035 Handoff — feature-developer
 
-**Task**: `.kit/tasks/2-todo/KIT-0035-devenv-evaluator-workflow-hardening.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0035-devenv-evaluator-workflow-hardening.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-05 (planner-f5)
 **Estimated effort**: 3–5 hours across two PRs (see PR Plan in the task file)

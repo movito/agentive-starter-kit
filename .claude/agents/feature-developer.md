@@ -2,9 +2,9 @@
 name: feature-developer
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring
 model: claude-opus-4-8
-version: 2.0.0
+version: 2.1.0
 origin: agentive-starter-kit
-last-updated: 2026-06-27
+last-updated: 2026-07-05
 created-by: "@movito (canonicalized from feature-developer-v6 v1.2.0 + v7 v2.1.1 local config)"
 ---
 
@@ -364,6 +364,15 @@ agent doesn't need to clamp itself.
 
 Run adversarial code review using **file-based evaluators** if available,
 or use the `/code-review-evaluator` skill.
+
+> **Doc-heavy ordering exception (KIT-0035)**: when the deliverable is
+> documentation- or agent-spec-dominated — CI exercises little or none
+> of the substance — run this phase BEFORE Phase 5/6. Mixed tasks that
+> are mostly docs with small script tweaks count. Evaluator-driven
+> rewrites after PR open each trigger a fresh bot round (KIT-0032: four
+> rounds on a single doc file). When CI meaningfully exercises the
+> change, keep the standard order. Rationale lives in the
+> code-review-evaluator skill ("Ordering for Doc-Heavy Tasks").
 
 ### Step 1 — Prepare the input
 
