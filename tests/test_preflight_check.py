@@ -454,6 +454,35 @@ class TestGate56Bundle:
             for path in (starter, record, task):
                 path.unlink(missing_ok=True)
 
+    def test_prefix_is_not_a_match_boundary_violation(self, proj):
+        # Boundary pinning (KIT-0040 lesson, kept even on the convention
+        # route): the fixture's KIT-9999 artifacts must NOT satisfy the
+        # gates for the shorter task ID KIT-999 — the literal separator
+        # after ${TASK_ID} in every Gate 5/6 pattern is the boundary.
+        result = proj.run(_baseline(proj.head), extra_args=["--task", "KIT-999"])
+        gates = _gates(result.stdout)
+        assert gates[5][0] == "FAIL", result.stdout
+        assert gates[6][0] == "FAIL", result.stdout
+
+    def test_empty_pointer_files_do_not_pass(self, proj):
+        # A zero-byte "pointer" (botched write, or a bare touch) must
+        # not satisfy Gates 5/6 — the find requires a non-empty regular
+        # file.
+        starter = proj.root / ".kit" / "context" / "KIT-9996-REVIEW-STARTER.md"
+        record = (
+            proj.root / ".kit" / "context" / "reviews" / "KIT-9996-evaluator-review.md"
+        )
+        try:
+            starter.write_text("", encoding="utf-8")
+            record.write_text("", encoding="utf-8")
+            result = proj.run(_baseline(proj.head), extra_args=["--task", "KIT-9996"])
+            gates = _gates(result.stdout)
+            assert gates[5][0] == "FAIL", result.stdout
+            assert gates[6][0] == "FAIL", result.stdout
+        finally:
+            for path in (starter, record):
+                path.unlink(missing_ok=True)
+
     def test_fail_details_name_bundle_convention(self, proj):
         # No artifacts exist for KIT-9997 → Gates 5/6 FAIL, and each
         # detail must point at BOTH conventions (F1.1 + the 2026-07-13

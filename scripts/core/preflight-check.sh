@@ -469,10 +469,13 @@ fi
 #   <TASK>-evaluator-review*.md  (legacy)
 #   <TASK>-code-review*.md       (current)
 #   <TASK>-code-reviewer*.md     (alt — code-reviewer-fast variant)
+# -type f -size +0c: an empty file (botched write, bare touch) is not a
+# persisted review — require a non-empty regular file (KIT-0042).
 EVAL_FILE=$(find .kit/context/reviews \
     \( -name "${TASK_ID}-evaluator-review*.md" \
     -o -name "${TASK_ID}-code-review*.md" \
     -o -name "${TASK_ID}-code-reviewer*.md" \) \
+    -type f -size +0c \
     2>/dev/null | head -1 || true)
 
 if [ -n "$EVAL_FILE" ]; then
@@ -484,7 +487,7 @@ fi
 
 # ─── Gate 6: Review starter exists ──────────────────────────────────
 
-STARTER_FILE=$(find .kit/context -maxdepth 1 -name "${TASK_ID}-REVIEW-STARTER.md" 2>/dev/null | head -1 || true)
+STARTER_FILE=$(find .kit/context -maxdepth 1 -name "${TASK_ID}-REVIEW-STARTER.md" -type f -size +0c 2>/dev/null | head -1 || true)
 
 if [ -n "$STARTER_FILE" ]; then
     echo "GATE:6:ReviewStarter:PASS:$STARTER_FILE"
