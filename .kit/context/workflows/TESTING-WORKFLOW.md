@@ -59,6 +59,26 @@ pytest tests/ -n auto
 
 ---
 
+## Testing Detection Patterns (greps, regexes, matchers)
+
+**Added**: 2026-07-13 (KIT-0035 retro #1)
+
+When hardening or writing detection patterns (grep/sed/regex in scripts,
+gate logic, or guides), test the **rejection cases, not just acceptance**:
+
+1. Run the pattern against real current output (acceptance — the happy path)
+2. Run it against the documented bypass/negative cases (rejection) — e.g.
+   a path that *contains* the expected string in the wrong position
+   (`Directory (/Users/alice/github/movito/...)` passing a
+   `github.*movito` source check), prefix collisions (`KIT-0004` vs
+   `KIT-0040`), suffix collisions (`agentive-skills-beta`)
+3. Anchor both ends when the match is meant to be exact
+
+Live output only exercises the happy path; every real bypass found in
+KIT-0035 was a rejection case no live test could produce.
+
+---
+
 ## Interpreting Results
 
 | Symbol | Meaning |

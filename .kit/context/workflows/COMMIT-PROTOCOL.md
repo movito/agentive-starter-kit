@@ -99,6 +99,13 @@ EOF
 - ✅ Run pytest: Ensure tests pass
 - ✅ Check git status: Verify all intended files staged
 - ✅ Review diff: Ensure no unintended changes
+- ✅ **Verify HEAD moved after committing** (`git log --oneline -1`) whenever
+  the staged set includes appended or generated markdown (review records,
+  logs, retros). Pre-commit auto-fixers (trailing-whitespace,
+  end-of-file-fixer) reformat such files and **abort the commit** — the
+  long hook output can read as success while nothing was committed. If
+  aborted: re-stage the hook's fixes and commit fresh (never `--amend`).
+  (KIT-0035 retro #4 — happened twice in one session.)
 
 ---
 
