@@ -126,12 +126,17 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **isort's pin is a floor (`>=`), not exact** — version-drift warnings comparing "active vs pinned" only make sense for exact pins like Black's. (KIT-0035)
 - **Evaluator-before-PR round-collapse is measured, not theoretical**: PR #72 (six items, 8 files) ran the trio pre-open and got a ZERO-thread first bot round with CodeRabbit APPROVED — vs KIT-0032's four post-open rounds on one doc file. (KIT-0035 retro)
 - **Test rejection cases, not just acceptance, for detection patterns**: live-output testing only exercises the happy path; the marketplace-source bypass (`Directory (/Users/alice/github/movito/...)`) passed every live test. Now codified in TESTING-WORKFLOW.md. (KIT-0035 retro)
+- **Existence checks should require non-empty regular files**: zero-byte pointer files satisfied preflight Gates 5/6's bare `find -name`; `-type f -size +0c` closes it. Audit any gate that equates "file exists" with "artifact provided". (KIT-0042, o3's one real catch)
+- **Write the route decision before the code**: KIT-0042's convention-vs-glob reasoning written first let TDD prove the chosen route needed zero gate-logic change — the mechanism collapsed to a string change plus docs. (KIT-0042)
+- **Count your declines — convergent repeated evaluator findings are a follow-up signal**: o3 + fast-v2 flagged the identical Gate 1/2/7 edge set three runs running; individually declinable, collectively they earned KIT-0043. Decline tables are where recurring findings go to be forgotten unless someone counts them. (KIT-0042)
 
 ### Empirically Disproven Reviewer Claims (decline-by-reference)
 
 - **"`sed -n '/^## X/,/^## /p'` terminates on its own start line" — FALSE.** POSIX sed searches the end address from the line AFTER the addr1 match. Asserted identically by o3, Gemini fast-v2, AND CodeRabbit in one session — model-diverse review does not protect against shared training-data folklore about classic tools. BSD-sed repro pasted in `.kit/context/reviews/KIT-0035-evaluator-review.md`; decline by linking there. (KIT-0035)
 - **"`grep -o` extracts the shortest match" — FALSE** (leftmost-longest; `26.3.1` extracts fully, not `26`). Tested live, repro in the same review record. (KIT-0035)
 - When declining any reviewer claim, paste the repro in the review record — it turns later re-litigation (bots repeating an evaluator's false claim) into a one-reply copy-paste. (KIT-0035)
+- Decline-by-reference is proven end-to-end: shown this section plus a fresh repro, fast-v2 *retracted* its prefix-collision claim in the next round. (KIT-0042)
+- **CodeRabbit operational facts**: "Internal error occurred during review" can mean *quota exhaustion* (detail text says "Prepaid credits exhausted" only after several crash rounds — check it before re-triggering); the wrong handle `@coderabbit` (no `-ai`) is silently ignored. Outage substitution pattern documented in check-bots.md. (KIT-0042)
 
 ---
 

@@ -82,3 +82,17 @@ Parse the output and format a status report:
 - **If either bot is MISSING**: Bot hasn't posted at all. Note their typical timing above.
 - **If both are CURRENT**: Report whether there are unresolved threads that need attention.
 - **If unresolved threads exist**: Suggest running `/triage-threads`
+
+### Bot Outages (from KIT-0042, 2026-07-14)
+
+- **CodeRabbit "Internal error occurred during review" may mean quota
+  exhaustion** — read the check-run/status *detail text* before burning
+  re-trigger cycles ("Prepaid credits exhausted" only appears after
+  several misleading crash rounds). Surface quota issues to the operator;
+  re-triggering cannot fix them.
+- **Re-trigger with the exact handle `@coderabbitai review`** — the wrong
+  handle (`@coderabbit`) is silently ignored: no error, no reaction.
+- **Proven substitution for a confirmed bot outage**: rerun the evaluator
+  trio on the full diff, document the substitution and the outage in the
+  review record, and proceed with the gate honestly FAIL — never fake a
+  pass. (Reference: KIT-0042, PR #74, review record.)

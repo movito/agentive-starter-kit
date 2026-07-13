@@ -431,6 +431,15 @@ not inherit `.claude/settings.json` allow patterns. Bash-only sub-agents
 block on permission prompts. This is why planner does not delegate via
 Task — the user invokes agents in new tabs instead.
 
+**Verify the branch before every commit** — planner sessions can share a
+working directory with an active implementation session, and the checkout
+can change under you mid-turn. Run `git branch --show-current`
+immediately before `git add`/`git commit`; if it is not `main`, STOP —
+your commit would land in whatever PR that branch has open (this
+happened: `f7a6c90` landed on the KIT-0042 feature branch and changed
+that task's requirements mid-flight). Hold bookkeeping in memory until
+`main` is checked out again, or operate on a separate worktree.
+
 **Specs must record verified runtime behavior, not paraphrases** — when
 a spec or handoff asserts any runtime fact (bot/CI signal, exit code,
 event name, API shape), verify it against the source and paste the
