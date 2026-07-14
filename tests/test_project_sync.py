@@ -347,3 +347,47 @@ class TestBranchAndCommit:
         )
         rc = project_cli.cmd_sync(["--source", str(kit), "--no-branch"], consumer)
         assert rc == 2  # dirty manifest trips the guard
+
+
+KIT_MARKERS = REPO / "scripts" / "local" / "kit_markers.py"
+
+
+@pytest.mark.skipif(
+    not KIT_MARKERS.exists(), reason="kit_markers.py absent (consumer checkout)"
+)
+class TestShapeGuard:
+    """KIT-0048: sync refuses planning-shaped repos until KIT-0049."""
+
+    @staticmethod
+    def _shaped_root(tmp_path: Path, region: str) -> Path:
+        root = tmp_path / "shaped"
+        (root / "scripts" / "local").mkdir(parents=True)
+        (root / "scripts" / "local" / "kit_markers.py").write_text(
+            KIT_MARKERS.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+        (root / "CLAUDE.md").write_text(
+            "# Repo\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            f"{region}"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+            encoding="utf-8",
+        )
+        return root
+
+    def test_planning_shape_refused(self, tmp_path):
+        root = self._shaped_root(tmp_path, "shape: planning\n")
+        rc = project_cli.cmd_sync(["--dry-run"], root)
+        assert rc == 2
+
+    def test_malformed_shape_refused(self, tmp_path):
+        root = self._shaped_root(tmp_path, "shape: pyramid\n")
+        rc = project_cli.cmd_sync(["--dry-run"], root)
+        assert rc == 2
+
+    def test_single_shape_not_blocked_by_guard(self, tmp_path, capsys):
+        root = self._shaped_root(tmp_path, "shape: single\n")
+        rc = project_cli.cmd_sync(["--dry-run"], root)
+        # proceeds past the guard (fails later for engine reasons, but
+        # never with the shape-refusal message)
+        captured = capsys.readouterr()
+        assert "sync refused" not in captured.out
+        assert rc != 2 or "KIT-0049" not in captured.out

@@ -269,3 +269,33 @@ class TestPlanningShape:
         )
         assert result.returncode == 1
         assert "owner/repo" in result.stdout + result.stderr
+
+    def test_existing_section_seeds_region_no_desync(self, tmp_path):
+        """BugBot PR #78: with a pre-existing ## Target Repository, the
+        kit-install region must seed FROM it — never from placeholders."""
+        target = make_consumer_dir(tmp_path, "seeded")
+        (target / "CLAUDE.md").write_text(
+            "# Repo\n\n## Target Repository\n\n"
+            "- **Path**: `../real-product`\n"
+            "- **GitHub**: `real/product`\n",
+            encoding="utf-8",
+        )
+        result = run_bootstrap(target, "--shape", "planning")
+        assert result.returncode == 0, result.stderr
+        text = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "target_path: ../real-product" in text
+        assert "target_github: real/product" in text
+
+    def test_conflicting_flags_with_existing_section_rejected(self, tmp_path):
+        target = make_consumer_dir(tmp_path, "conflict")
+        (target / "CLAUDE.md").write_text(
+            "# Repo\n\n## Target Repository\n\n"
+            "- **Path**: `../real-product`\n"
+            "- **GitHub**: `real/product`\n",
+            encoding="utf-8",
+        )
+        result = run_bootstrap(
+            target, "--shape", "planning", "--target-path", "../other-product"
+        )
+        assert result.returncode == 1
+        assert "conflicts" in result.stdout + result.stderr

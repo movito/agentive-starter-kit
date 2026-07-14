@@ -539,7 +539,27 @@ if [ "$SHAPE" = "planning" ]; then
 
     # Human-facing convention (KIT-ADR-0024) — agents grep for this
     # section; seeded once, never rewritten (consumer-owned after that).
-    if ! grep -q '^## Target Repository' "$CLAUDE_MD"; then
+    # When the section ALREADY exists it is the source of truth: the
+    # region below seeds FROM it so the two records never disagree, and
+    # conflicting flags are an error, not a silent desync (BugBot, PR #78).
+    if grep -q '^## Target Repository' "$CLAUDE_MD"; then
+        EXISTING_TP="$(grep -A6 '^## Target Repository' "$CLAUDE_MD" | grep -E '^\- \*\*Path\*\*:' | head -1 | sed -E 's/.*`([^`]*)`.*/\1/')"
+        EXISTING_TG="$(grep -A6 '^## Target Repository' "$CLAUDE_MD" | grep -E '^\- \*\*GitHub\*\*:' | head -1 | sed -E 's/.*`([^`]*)`.*/\1/')"
+        if [ -n "$TARGET_PATH" ] && [ -n "$EXISTING_TP" ] && [ "$TARGET_PATH" != "$EXISTING_TP" ]; then
+            echo "Error: --target-path '$TARGET_PATH' conflicts with the existing"
+            echo "       ## Target Repository section ('$EXISTING_TP')."
+            echo "       Update the section first, or drop the flag."
+            exit 1
+        fi
+        if [ -n "$TARGET_GITHUB" ] && [ -n "$EXISTING_TG" ] && [ "$TARGET_GITHUB" != "$EXISTING_TG" ]; then
+            echo "Error: --target-github '$TARGET_GITHUB' conflicts with the existing"
+            echo "       ## Target Repository section ('$EXISTING_TG')."
+            echo "       Update the section first, or drop the flag."
+            exit 1
+        fi
+        [ -n "$EXISTING_TP" ] && TP="$EXISTING_TP"
+        [ -n "$EXISTING_TG" ] && TG="$EXISTING_TG"
+    else
         printf '\n## Target Repository\n\n- **Path**: `%s`\n- **GitHub**: `%s`\n' \
             "$TP" "$TG" >> "$CLAUDE_MD"
     fi
