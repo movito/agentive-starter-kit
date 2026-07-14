@@ -571,6 +571,8 @@ class TestPushSyncTokenCheck:
             "on:\n    push:\n        branches: [main]\n",  # four-space indent
             "on: [push, workflow_dispatch]\n",  # flow style
             "on: push\n",  # scalar style
+            "on:\n  push:  # deploy trigger\n    branches: [main]\n",  # trailing comment
+            "on: push  # deploy trigger\n",  # scalar + trailing comment
         ],
     )
     def test_active_trigger_detected_regardless_of_style(self, tmp_path, body):

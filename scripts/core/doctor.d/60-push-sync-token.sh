@@ -28,14 +28,16 @@ fi
 # false-positive (CodeRabbit round 2); comments never match (o3 round 1:
 # any-indent tolerance — erring toward "checking" beats erring toward
 # SKIP for this incident class).
+# Trailing same-line comments after the trigger are allowed
+# (`push:  # deploy` is active — BugBot round 3).
 BLOCK_PUSH="$(awk '
     /^on:[[:space:]]*$/ { in_on = 1; next }
     in_on && /^[^ \t#]/ { in_on = 0 }
-    in_on && /^[[:space:]]+push:[[:space:]]*$/ { found = 1 }
+    in_on && /^[[:space:]]+push:[[:space:]]*(#.*)?$/ { found = 1 }
     END { print found + 0 }
 ' "$WORKFLOW")"
 
-if [ "$BLOCK_PUSH" != "1" ] && ! grep -qE '^on:[[:space:]]*(\[[^]]*push|push[[:space:]]*$)' "$WORKFLOW"; then
+if [ "$BLOCK_PUSH" != "1" ] && ! grep -qE '^on:[[:space:]]*(\[[^]]*push|push[[:space:]]*(#.*)?$)' "$WORKFLOW"; then
     echo "DOCTOR:push-sync-token:SKIP:push channel parked — see KIT-0045"
     exit 0
 fi
