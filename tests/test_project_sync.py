@@ -606,6 +606,36 @@ class TestShapeScopedSync:
         assert rc == 2
         assert "unsafe path" in capsys.readouterr().out
 
+    def test_empty_entitled_scope_never_complete(self, kit_with_addition, tmp_path):
+        """BugBot round 3: every recorded entry outside entitlement →
+        empty intersection must NOT vacuously report complete and bump
+        core_version."""
+        target = tmp_path / "unentitled"
+        target.mkdir()
+        # records ONLY an opt-gated entry, without the opt-in
+        _write(
+            target / "scripts" / ".core-manifest.json",
+            json.dumps(
+                {
+                    "core_version": "1.0.0",
+                    "source_repo": "movito/test-kit",
+                    "synced_at": "2026-01-01T00:00:00Z",
+                    "files": {"commands_optional": ["opt.md"]},
+                    "opted_in": [],
+                }
+            ),
+        )
+        report = sync_from_manifest.sync(
+            kit_with_addition,
+            target,
+            sync_from_manifest.SyncOptions(allowlist=["opt.md"]),
+        )
+        assert report.complete is False
+        manifest = json.loads(
+            (target / "scripts" / ".core-manifest.json").read_text(encoding="utf-8")
+        )
+        assert manifest["core_version"] == "1.0.0"  # NOT bumped
+
     def test_engine_allowlist_report_fields(self, kit_with_addition, tmp_path):
         # engine-level: skipped additions land in the report, sorted;
         # allowlist runs count as complete for their scope

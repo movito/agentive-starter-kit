@@ -742,7 +742,11 @@ def sync(source: str | Path, target: str | Path, options: SyncOptions) -> SyncRe
         # complete = "synced everything the allowlist records within this
         # target's entitlement" — an allowlisted target that got all its
         # recorded files IS complete (core_version bumps, no partial flag).
-        complete = effective_entries == (full_entitlement & set(options.allowlist))
+        # An EMPTY intersection is never complete: nothing was verified
+        # against upstream, so a vacuous match must not advance
+        # core_version (BugBot, PR #79 round 3).
+        allow_scope = full_entitlement & set(options.allowlist)
+        complete = bool(allow_scope) and effective_entries == allow_scope
     else:
         complete = effective_entries == full_entitlement
 
