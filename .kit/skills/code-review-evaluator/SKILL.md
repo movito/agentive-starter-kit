@@ -212,6 +212,15 @@ the file-based evaluator input ran past 700 lines.
 
 ## Step 3: Read and Address Findings
 
+**First: run `git status` immediately after every evaluator invocation,
+before staging anything.** During KIT-0044, an evaluator running through
+a stale venv (adversarial-workflow 0.9.7, the aider-era engine) applied
+its suggested edit directly to a script mid-review. The root cause was
+fixed (venv upgraded to the aider-free 1.0.1), but the check stays as
+defense in depth: an unexpected working-tree change after a review run
+must be inspected and consciously kept or reverted — never silently
+swept into the next commit.
+
 Output lands in `.adversarial/logs/`, one file per evaluator:
 
 ```bash

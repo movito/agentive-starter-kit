@@ -100,6 +100,8 @@ Read every function in the file you changed (not just the ones you wrote):
 
 9. **Scoped staging in commit helpers**: any helper that programmatically `git add`s and commits must stage the *exact* changed paths it produced (from a report/manifest), never whole roots or `git add -A` / `git add .` — otherwise unrelated uncommitted work in those trees gets swept into the automated commit. Only a provably clean tree (e.g. a fresh CI checkout) excuses broad staging, and even then prefer scoping. Deleted files are staged as deletions via `git add -- <path>`. Reference implementations: `_stage_and_commit` in `scripts/core/project` and the scoped-add loop in `.github/workflows/sync-core-scripts.yml`. Recurred twice within KIT-0036.
 
+10. **Shipped hints about other tools' interfaces must be verified against the installed version**: any user-facing hint a script prints about another tool (an env flag, a CLI option, an invocation pattern) is a runtime claim — grep the installed package or run it once before shipping. KIT-0044: `prepare-review-input.sh` advertised `ADVERSARIAL_UNATTENDED=1`, which never existed in the installed adversarial-workflow library; every non-TTY large-input evaluator run died on the interactive prompt until the hint was replaced with the verified `echo y |` pattern (1.5.1). Same family as the spec-side verified-runtime-facts rule.
+
 ## Step 4: Test assertion audit
 
 Before checking boundary coverage, audit test assertion quality:

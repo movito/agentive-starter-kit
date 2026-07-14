@@ -35,6 +35,11 @@ Override with `--repo owner/name` if needed:
 ./scripts/core/preflight-check.sh $ARGUMENTS
 ```
 
+**Argument shape**: the script takes named flags only — `--task <TASK-ID>
+--pr <N>` (plus optional `--repo owner/name`). A positional task ID
+(`preflight-check.sh KIT-0044 --pr 76`) fails with "Unknown argument"
+(KIT-0044 retro #4).
+
 The script outputs structured `GATE:<number>:<name>:PASS|FAIL|PENDING:<detail>` lines
 and exits 0 (all pass), 1 (any fail), or 2 (no failures, but at least one gate PENDING).
 
