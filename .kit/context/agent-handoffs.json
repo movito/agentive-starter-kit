@@ -4,7 +4,7 @@
     "current_task": "KIT-0044",
     "task_started": null,
     "brief_note": "KIT-0043 DONE + retro processed (bare-repo state was GIT_DIR damage, corrected + restored by fd; conftest-wide isolation shipped 7ef104d; knowledge extracted). KIT-0044 drafted from the 6 verified pilot frictions, evaluated (2 minor findings accepted), promoted; worktree pre-provisioned at ../ask-worktrees/KIT-0044 (venv+env+evaluators, fresh origin/main). After KIT-0044: ADR-0025 slim = last v0.8.0 content, then release mechanics. Verdict queue EMPTY; zero open PRs.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0044-worktree-based-implementation-sessions.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0044-worktree-based-implementation-sessions.md",
     "handoff_file": ".kit/context/KIT-0044-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0044",
     "task_started": null,
     "brief_note": "KIT-0044 (codify worktree sessions: helper, template LAUNCH block, lifecycle, WORKTREE-WORKFLOW.md, bare-hub decision record) ready. SECOND PILOT: repo root is ../ask-worktrees/KIT-0044 (fully provisioned incl. evaluators). Doc-dominated: evaluator trio BEFORE PR open.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0044-worktree-based-implementation-sessions.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0044-worktree-based-implementation-sessions.md",
     "handoff_file": ".kit/context/KIT-0044-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

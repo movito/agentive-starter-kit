@@ -1,6 +1,6 @@
 # KIT-0044 Handoff — feature-developer
 
-**Task**: `.kit/tasks/3-in-progress/KIT-0044-worktree-based-implementation-sessions.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0044-worktree-based-implementation-sessions.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-14 (planner-f5)
 **Estimated effort**: 3–4 hours

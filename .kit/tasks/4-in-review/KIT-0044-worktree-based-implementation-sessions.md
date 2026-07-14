@@ -1,6 +1,6 @@
 # KIT-0044: Worktree-based implementation sessions (codify the pilot)
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 3-4 hours
