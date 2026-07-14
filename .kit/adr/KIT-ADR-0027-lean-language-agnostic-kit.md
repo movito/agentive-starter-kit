@@ -142,8 +142,10 @@ evaluation — documentation-only deprecation contradicts this ADR's own
 drift thesis, the strongest finding of the review)*: on the same PR
 that lands the new door, the six existing entrances become thin
 `exec`-into-`bootstrap` shims with the equivalent flags. Convergence is
-structural, not social; back-compat is preserved; the shims are
-deletable one release later.
+structural, not social; back-compat is preserved. The shims' removal is
+not left to memory: the PR that creates them also files the removal
+task, pinned to the next minor release (round-2 evaluation finding —
+an unenforced "one release later" is how six doors became six).
 
 ### P4 — `project doctor`: the incident table as a setup verifier
 
@@ -180,6 +182,47 @@ one reader library, no ad-hoc regex over CLAUDE.md (evaluation finding:
 multiple readers grepping free text is the fragile pattern kit_markers
 exists to prevent).
 
+### P7 — Operator presets: the one-button layer *(added 2026-07-14 after operator review)*
+
+P5's degraded modes are the **floor** for unknown adopters. The kit's
+primary operator wants the **ceiling** every time — BugBot + CodeRabbit,
+the full evaluator library, the complete agent set including the Fable-5
+variants, Linear sync. Hard-coding that ceiling into the kit would
+re-create the identity leak ADR-0025 eliminated, just in the opposite
+direction (operator specifics inside a distributable kit). So the
+ceiling becomes a **preset**: operator-owned data layered over the same
+mechanism, never new mechanism.
+
+- **A preset is a pre-answered questionnaire.** It may supply default
+  answers for exactly the inputs the one door (P3) asks — shape,
+  profile, bots-present declaration, evaluator install, plugin
+  channel/pin, Linear on/off, agent set, model-pin policy — and nothing
+  else. If bootstrap doesn't ask it, a preset cannot set it. This keeps
+  the preset from becoming a shadow config system.
+- **It lives outside every repo**: `~/.config/agentive-kit/preset`
+  (plus an optional `env.source` secrets file, `chmod 600`, *referenced*
+  by the preset, never embedded in it). Presets are never committed to
+  any repo and never travel on any sync channel; the kit ships only a
+  commented example.
+- **Resolution order follows the git-config precedent**: CLI flags >
+  preset > kit-neutral defaults, with interactive prompts only for
+  questions nothing answered. A stranger with no preset gets the P5
+  floor and the wizard; the operator with a preset gets
+  `bootstrap --new <name>` as a genuine one-button "new project with my
+  usual prefs".
+- **The project records resolved choices, not the preset.** The
+  KIT-LOCAL region from P3 captures what was actually chosen; the
+  preset is never consulted again after creation. Projects stay
+  self-describing, and a project deliberately created leaner than the
+  preset is not "wrong". Doctor (P4) validates the project's record;
+  an optional `doctor --against-preset` reports divergence as
+  information, never failure.
+- **Bot enablement note**: installing CodeRabbit and BugBot **org-wide
+  ("all repositories")** makes bot coverage automatic for every new
+  repo — the real one-button enabler for the bots' half. Documented as
+  a preset-setup step, not automated (GitHub App installation is an
+  operator-auth surface the kit should not drive).
+
 ### P6 — One canonical home per artifact type, plus a prune
 
 Declare canonical homes and converge: agents → `.claude/agents/`
@@ -196,19 +239,24 @@ for strays. Small, mostly mechanical PR.
 
 ## Recommended sequence
 
-**P4 → P2 → P1 → P3 → P5 → P6.** Doctor first (immediate value, zero
+**P4 → P2 → P1 → P3 → P5+P7 → P6.** Doctor first (immediate value, zero
 design risk, evidence already tabulated). Planning profile second (the
 strategic split win; unblocks adopting the kit for non-Python products
 immediately, before P1 lands). Language profiles third. One door fourth
-(it needs P1/P2's shapes to exist). Degraded modes fifth. The prune is
-continuous background.
+(it needs P1/P2's shapes to exist). Floor and ceiling land together
+fifth — P5 (degraded modes) and P7 (operator presets) are the same
+resolution mechanism read from opposite ends, and P7 is only a preset
+file plus the door honoring it. The prune is continuous background.
 
 ## Consequences
 
 **Positive**: adoption drops to one command + doctor; non-Python and
 planning-only repos become first-class; the arc's incident class gets a
 standing preventive check; no channel redesign — ADR-0022/0024/0026
-boundaries are untouched.
+boundaries are untouched. The floor/ceiling pairing (P5+P7) serves both
+audiences from one mechanism: a stranger onboards with zero paid
+services, the operator gets a one-button full-stack project — and the
+kit itself stays neutral in both cases.
 
 **Negative / risks**: "shape" and "profile" are two new concepts to
 document (mitigation: the one door asks two questions and picks for
@@ -246,6 +294,12 @@ composability + incident-closure lifecycle rule; named KIT-LOCAL region
 via `kit_markers.py` for P5; skills-merge back-compat cycle.
 **Declined with reasoning**: `install.toml` contract file (KIT-LOCAL
 record instead, per ADR-0025); `forge.sh` abstraction (above).
+
+**Round 2 (post-P7 amendment)**: arch-review-fast REVISION_SUGGESTED —
+one minor finding (shim-removal deadline must be enforced, not hoped
+for), accepted into P3 as a filed-with-the-PR removal task. P7 itself
+(operator presets) drew no findings. Zero evaluator working-tree
+mutations, all four runs total.
 
 ## Revisit Triggers
 
