@@ -1,6 +1,6 @@
 # KIT-0044: Worktree-based implementation sessions (codify the pilot)
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 3-4 hours
