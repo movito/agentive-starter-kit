@@ -1,9 +1,36 @@
 ## KIT-0044 — Worktree-Based Implementation Sessions (PR #76) — SECOND WORKTREE PILOT
 
-**Date**: 2026-07-14
+**Date**: 2026-07-14 (finalized post-merge — PR #76 squash-merged as `fd28703`)
 **Agent**: feature-developer-f5
 **Mode**: single-repo (session ran in `ask-worktrees/KIT-0044`, pre-provisioned by the planner)
-**Scorecard**: 3 threads, 0 regressions, 1 fix round, 4 commits (+1 pending: handoff/retro)
+**Scorecard**: 4 threads (3 CodeRabbit + 1 BugBot, all real), 0 regressions, 2 fix rounds, 6 commits
+
+### The four flags (headline items for the planner)
+
+1. **The aider-based evaluator edited the working tree mid-review** —
+   `code-reviewer-fast-v2` applied its own suggested fix directly to
+   `scripts/local/new-worktree.sh` during the review run. Benign this
+   time (nullglob hardening, kept); silently dangerous in general.
+   New rule: **`git status` immediately after every evaluator run**,
+   before anything is staged. (Detail: Surprising #2, Should Change #1.)
+2. **`ADVERSARIAL_UNATTENDED` never existed** — the env flag advertised
+   by `prepare-review-input.sh` 1.5.0 appears nowhere in the installed
+   adversarial-workflow library; every non-TTY evaluator run on a large
+   input died on the interactive prompt. Fixed in 1.5.1 with the
+   verified `echo y |` pattern. Lesson: shipped hints about another
+   tool's interface need verify-before-believing too. (Detail:
+   Surprising #3, Should Change #2.)
+3. **The harness resets shell cwd to the primary clone between Bash
+   calls even in a worktree-launched session** — pilot friction #1 is
+   only half-fixed by the LAUNCH block; `cd`/`git -C` prefixes are still
+   required for shell commands. Needs one more worktree session of data,
+   then either document as the standing pattern or escalate. (Detail:
+   Surprising #1, Should Change #3.)
+4. **This worktree needs `git worktree remove --force` post-merge** —
+   it was created before the `.gitignore` symlink fix landed, so its
+   provisioning symlink still reads as untracked. Worktrees created
+   after this merge remove cleanly. (Detail: What Worked #4, lifecycle
+   section of WORKTREE-WORKFLOW.md.)
 
 ### Six-friction confirmation (the acceptance criterion)
 
@@ -65,12 +92,15 @@
    I shipped a hint in a core script without verifying it against the
    installed package — same lesson as the bare-repo misattribution, one
    layer down. Fixed in 1.5.1 (`echo y |` piping, verified working).
-4. **CodeRabbit's three findings were all real** — no noise round this
-   time: the template example genuinely drifted (derived slug ≠ shown
-   branch), the "from anywhere" claim was genuinely wrong, and
-   warn-and-continue genuinely contradicted the "fully-provisioned"
-   contract. Fix quality benefited from the temp-then-commit pattern
-   already being documented — pre-flight-then-mutate was the obvious shape.
+4. **All four bot findings were real — zero noise threads** —
+   CodeRabbit's three (template example drifted: derived slug ≠ shown
+   branch; the "from anywhere" claim was wrong; warn-and-continue
+   contradicted the "fully-provisioned" contract) plus BugBot's
+   second-round catch (lowercase task IDs passed the format regex but
+   the case-sensitive spec glob diverged from `project start`'s
+   uppercase normalization — fixed in `8942869`). Fix quality benefited
+   from the temp-then-commit pattern already being documented —
+   pre-flight-then-mutate was the obvious shape.
 
 ### What Should Change
 
