@@ -3,7 +3,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0048 DONE (PR #78, a908b90) — P2 complete, transformation 2/6; planning shape live, KIT-0027 retired. Retro processed: 3 process fixes shipped (TESTING-WORKFLOW fixture-scope caveat, COMMIT-PROTOCOL quoting rule, self-review item 11); gitignore-inputs was ALREADY closed (e0879a6) and validated at this closeout. KIT-0049 (shape-scoped sync) raised to HIGH — recommended next, completes P2's promise before P1. Awaiting operator sequencing call: KIT-0049 vs P1.",
+    "brief_note": "KIT-0049 (shape-scoped sync) promoted per operator call. Evaluator's punted-architecture objection ACCEPTED — planner LOCKED both decisions: single source = consumer manifest (intersection; no new config file), trigger = implicit via _doctor_shape(), P3 overlap dissolved. v1 limitation explicit: planning gets updates not additions (named in report). Worktree provisioned. After this: P1 (language profiles).",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
@@ -11,7 +11,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0048 complete (PR #78 merged, retro 7fc20a4, worktree removed cleanly — gitignore-inputs fix validated). Next assignment expected: KIT-0049 (shape-scoped sync) or P1 (language profiles), operator's call.",
+    "brief_note": "KIT-0049 (manifest-intersection sync for planning shape; decisions LOCKED — implement, don't re-litigate; check --only semantics first, may be mostly wiring) ready. Worktree: ../ask-worktrees/KIT-0049 (pull --ff-only first).",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
