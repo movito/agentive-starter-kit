@@ -1,19 +1,19 @@
 {
   "planner": {
-    "status": "available",
-    "current_task": null,
+    "status": "handoff_ready",
+    "current_task": "KIT-0046",
     "task_started": null,
-    "brief_note": "v0.8.0 CONTENT COMPLETE. ADR-0025 slim was already done (64a8d20, Accepted); verification-evaluated via venv 1.0.1 (claude-arch APPROVED, fast = monitor-triggers only; zero mutations in 2 runs -> 1.0.1 clean). KIT-0030 parked in 7-blocked (residuals = downstream phase). Remaining: release mechanics only (0.7.0->0.8.0 bump, CHANGELOG #69-#76, tag) — awaiting operator go. Harness cwd-reset: 1 more session of data needed.",
-    "details_link": ".kit/tasks/5-done/KIT-0044-worktree-based-implementation-sessions.md",
-    "handoff_file": null
+    "brief_note": "v0.8.0 SHIPPED (tag + GH release). KIT-ADR-0027 ACCEPTED (P1-P7 incl. operator presets + rollout plan; 5 evaluation runs total). KIT-0046 (project doctor, ADR P4, first transformation task) specced, evaluated (1 minor finding accepted), promoted; worktree created via new-worktree.sh (first dogfood — worked perfectly). Transformation sequence: P4->P2->P1->P3->P5+P7->P6; downstream migrates at two checkpoints (post-P4 doctor sync, post-P3 upgrader pass).",
+    "details_link": ".kit/tasks/2-todo/KIT-0046-project-doctor.md",
+    "handoff_file": ".kit/context/KIT-0046-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
-    "status": "idle",
-    "current_task": null,
+    "status": "handoff_ready",
+    "current_task": "KIT-0046",
     "task_started": null,
-    "brief_note": "KIT-0044 complete (PR #76 merged 2026-07-14, retro finalized 99bdd64). Next assignment expected: ADR-0025 slim (last v0.8.0 content item).",
-    "details_link": ".kit/tasks/5-done/KIT-0044-worktree-based-implementation-sessions.md",
-    "handoff_file": null
+    "brief_note": "KIT-0046 (project doctor: doctor.d driver + 8 incident-mapped checks + exit contract + retro lifecycle rule + verify-setup shim) ready. Worktree: ../ask-worktrees/KIT-0046 (pull --ff-only first). Read-only tool (N3); resolve primary via --git-common-dir (N4).",
+    "details_link": ".kit/tasks/2-todo/KIT-0046-project-doctor.md",
+    "handoff_file": ".kit/context/KIT-0046-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {
     "status": "idle",

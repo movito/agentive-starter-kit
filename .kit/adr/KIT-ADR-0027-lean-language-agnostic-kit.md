@@ -1,6 +1,6 @@
 # KIT-ADR-0027: A Leaner, Language-Agnostic Kit — Simplification and Setup Proposals
 
-**Status**: Proposed
+**Status**: Accepted (2026-07-14, operator)
 **Date**: 2026-07-14
 **Deciders**: operator + planner-f5
 **Evidence base**: the v0.8.0 stabilization arc (PRs #69–#76) and its
