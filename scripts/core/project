@@ -1563,6 +1563,12 @@ def cmd_sync(args, project_dir):
             with open(manifest_path, encoding="utf-8") as f:
                 consumer_manifest = json.load(f)
             files_section = consumer_manifest["files"]
+            for tier, entries in files_section.items():
+                if not isinstance(entries, list):
+                    # a string tier would iterate as CHARACTERS, silently
+                    # poisoning the allowlist while sync exits clean
+                    # (BugBot finding on PR #79) — schema violations refuse
+                    raise TypeError(f"files tier {tier!r} is not a list")
             allowlist = sorted(
                 {
                     entry

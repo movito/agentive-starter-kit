@@ -552,6 +552,21 @@ class TestShapeScopedSync:
         )
         assert rc == 2
 
+    def test_string_tier_refused_not_char_iterated(self, kit_with_addition, tmp_path):
+        """BugBot PR #79: a string-valued tier iterates as characters,
+        silently poisoning the allowlist — must refuse (exit 2)."""
+        root = _shaped_root(tmp_path, "shape: planning\n", name="strtier")
+        _write(
+            root / "scripts" / ".core-manifest.json",
+            json.dumps(
+                {"core_version": "1.0.0", "files": {"scripts_core": "core/foo.sh"}}
+            ),
+        )
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--dry-run"], root
+        )
+        assert rc == 2
+
     def test_traversal_entry_in_manifest_refused(
         self, kit_with_addition, tmp_path, capsys
     ):
