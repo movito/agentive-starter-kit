@@ -1,6 +1,6 @@
 # KIT-0043 Handoff — feature-developer
 
-**Task**: `.kit/tasks/4-in-review/KIT-0043-preflight-gates-127-edge-hardening.md`
+**Task**: `.kit/tasks/5-done/KIT-0043-preflight-gates-127-edge-hardening.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-14 (planner-f5)
 **Estimated effort**: 2–3 hours

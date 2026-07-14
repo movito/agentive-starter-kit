@@ -4,7 +4,7 @@
     "current_task": "KIT-0043",
     "task_started": null,
     "brief_note": "CodeRabbit credits topped up (operator). KIT-0043 evaluated (one minor finding accepted; runtime anchors planner-verified incl. Gate 1 --commit filter nuance), promoted, handoff ready. WORKTREE PILOT: worktree pre-created at ../ask-worktrees/KIT-0043 with .venv/.env symlinks — fd session must open there. Frictions feed KIT-0044. v0.8.0 remaining after this: ADR-0025 slim + release mechanics. Verdicts pending: KIT-0032, ASK-0048, 6 dependabot PRs.",
-    "details_link": ".kit/tasks/4-in-review/KIT-0043-preflight-gates-127-edge-hardening.md",
+    "details_link": ".kit/tasks/5-done/KIT-0043-preflight-gates-127-edge-hardening.md",
     "handoff_file": ".kit/context/KIT-0043-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0043",
     "task_started": null,
     "brief_note": "KIT-0043 (preflight Gates 1/2/7 edge hardening + F4 reproduce-or-decline) ready. WORKTREE PILOT: repo root is ../ask-worktrees/KIT-0043 (branch pre-created); log every worktree friction for KIT-0044.",
-    "details_link": ".kit/tasks/4-in-review/KIT-0043-preflight-gates-127-edge-hardening.md",
+    "details_link": ".kit/tasks/5-done/KIT-0043-preflight-gates-127-edge-hardening.md",
     "handoff_file": ".kit/context/KIT-0043-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {
