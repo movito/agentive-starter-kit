@@ -7,6 +7,82 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-14
+
+The kit-stabilization release: seven hardening tasks (KIT-0034 →
+KIT-0044), the worktree session topology, and a clean board — downstream
+project upgrades were deliberately deferred to the next phase.
+
+### Added
+
+- **Preflight completion gates hardened across three passes** (KIT-0034,
+  KIT-0042, KIT-0043):
+  - Gate 2 (CodeRabbit) gains a fallback — commit-status pass + latest
+    review APPROVED + zero unresolved threads — ending the SHA-exact
+    false negatives that hit three consecutive tasks. (Verified surfaces:
+    CodeRabbit = commit statuses, BugBot = check-runs.)
+  - Gate 1 distinguishes PENDING from FAIL: unregistered runs and
+    non-terminal unknown statuses are PENDING, an at-cap run list is
+    PENDING (never PASS, `CI_RUN_LIMIT` knob), and a completed
+    non-success run still FAILs.
+  - Gates 5/6 support multi-task bundle PRs via the lead-task +
+    pointer-files convention; FAIL messages name the convention (and the
+    multi-PR-task case), and zero-byte pointer files no longer satisfy
+    the gates (`-type f -size +0c`). Gate 7 prefix boundary fixed
+    (`KIT-0004` can no longer match `KIT-0040-*`).
+- **`upgrader` agent** (KIT-0032) — automates the ongoing plugin-upgrade
+  runbook (`docs/PLUGIN-UPGRADE-GUIDE.md`): pin bumps, manifest sync,
+  local `model:` pin refresh, Provenance restamp.
+- **Worktree-based implementation sessions** (KIT-0044, piloted in
+  KIT-0043): `scripts/local/new-worktree.sh` creates a fully-provisioned
+  per-task worktree from fresh `origin/main` (enumerated artifact list:
+  `.venv`, `.env`, `.adversarial/evaluators/`); un-skippable LAUNCH block
+  in the task-starter template; `WORKTREE-WORKFLOW.md` documents
+  topology, the pre-commit `GIT_DIR` contract with its `core.bare`
+  canary, closeout, and lifecycle; the bare-hub layout is evaluated and
+  declined with recorded revisit triggers. Eliminates the
+  shared-clone/wrong-branch hazard class.
+- **Suite-wide `GIT_*` test isolation** (`tests/conftest.py`) — after a
+  pre-commit-in-worktree subprocess leak flipped `core.bare` on the real
+  repo, all tests now run under a cleaned git environment; validated by
+  a hostile-`GIT_DIR` canary run.
+- **Fable-5 agent variants** — `feature-developer-f5` and `planner-f5`
+  (PRs #66, #68), plus semver `version:` frontmatter and refreshed model
+  pins across all agents (#61) and a distribution-architecture overview
+  (`docs/DISTRIBUTION-ARCHITECTURE.md`, #62).
+- **Workflow codification** (KIT-0037/38/39, KIT-0034):
+  `STACKED-PR-WORKFLOW.md` (retarget-after-squash-merge recipe, the
+  base-retarget-doesn't-trigger-CI gotcha), `TEMP-THEN-COMMIT-PATTERN.md`
+  (atomic multi-file script mutations), and self-review checklist items
+  8–10 (wrapper exit-code convention, scoped staging, verify shipped
+  hints against installed tools).
+
+### Changed
+
+- **`ci-check.sh` warns on venv Black version drift** against the
+  `pyproject.toml` pin (KIT-0035) — stale-venv phantom failures now read
+  as environment issues; warn-only, the format gate is unchanged.
+- **Evaluator trio runs before PR open for doc-dominated tasks**
+  (KIT-0035, adopted into the code-review-evaluator skill and both
+  feature-developer agents) — validated twice with zero-noise first bot
+  rounds.
+- **`prepare-review-input.sh` 1.5.1** — non-TTY large-input evaluator
+  runs use the verified `echo y |` confirm pattern; the previously
+  advertised `ADVERSARIAL_UNATTENDED` flag never existed in the installed
+  library (KIT-0035 → KIT-0044).
+- **`docs/PLUGIN-UPGRADE-GUIDE.md` detection greps hardened** and
+  `.claude/agents/upgrader.md` re-synced in lockstep (KIT-0035).
+- **`sync-core-scripts.yml` push trigger parked** — `CROSS_REPO_TOKEN`
+  was never provisioned (22/22 failed runs since 2026-03-09);
+  dispatch-only until KIT-0045 re-enables it deliberately, with the
+  re-enable checklist embedded in the workflow file. Matrix `fail-fast`
+  disabled so one leg can't mask the others.
+- **Dependency floors refreshed** (dependabot #46–#50, #55):
+  `pytest>=9.1.1`, `pytest-asyncio>=1.3.0`, `ruff>=0.15.21`,
+  `python-dotenv>=1.2.2`, `gql>=4.0.0`; `actions/checkout@v7`.
+- **Core scripts 3.1.0** (two consumer-visible script changes on top of
+  the 3.0.0 sync-engine major).
+
 ### Fixed
 
 - **`kit_markers.py` marker-merge robustness** (KIT-0040 F3, resolves the
@@ -135,6 +211,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `.kit/` skeleton scaffolding during bootstrap, F3 opt-out, and
   re-bootstrap refresh that survives both consumer customization regions.
   Captures the deferred work that surfaced via PR #57 bot review.
+- **`bootstrap-consumer.sh --no-kit` now prunes pre-existing kit agents**
+  on re-run (#68), `feature-developer-f5` wired into
+  `KIT_AGENTS`/`AGENT_EXCLUDES` (#66), and a marker-membership test
+  guards the whole class mechanically (KIT-0034).
+- **Worktree provisioning symlinks gitignored** so `git worktree remove`
+  works cleanly after a session (KIT-0044).
 
 ## [0.7.0] - 2026-06-13
 
