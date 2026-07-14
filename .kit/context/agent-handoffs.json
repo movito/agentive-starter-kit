@@ -4,7 +4,7 @@
     "current_task": "KIT-0046",
     "task_started": null,
     "brief_note": "v0.8.0 SHIPPED (tag + GH release). KIT-ADR-0027 ACCEPTED (P1-P7 incl. operator presets + rollout plan; 5 evaluation runs total). KIT-0046 (project doctor, ADR P4, first transformation task) specced, evaluated (1 minor finding accepted), promoted; worktree created via new-worktree.sh (first dogfood — worked perfectly). Transformation sequence: P4->P2->P1->P3->P5+P7->P6; downstream migrates at two checkpoints (post-P4 doctor sync, post-P3 upgrader pass).",
-    "details_link": ".kit/tasks/2-todo/KIT-0046-project-doctor.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0046-project-doctor.md",
     "handoff_file": ".kit/context/KIT-0046-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0046",
     "task_started": null,
     "brief_note": "KIT-0046 (project doctor: doctor.d driver + 8 incident-mapped checks + exit contract + retro lifecycle rule + verify-setup shim) ready. Worktree: ../ask-worktrees/KIT-0046 (pull --ff-only first). Read-only tool (N3); resolve primary via --git-common-dir (N4).",
-    "details_link": ".kit/tasks/2-todo/KIT-0046-project-doctor.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0046-project-doctor.md",
     "handoff_file": ".kit/context/KIT-0046-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

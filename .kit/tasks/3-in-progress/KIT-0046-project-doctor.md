@@ -1,6 +1,6 @@
 # KIT-0046: `project doctor` — incident-mapped environment verifier (ADR-0027 P4)
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 3-5 hours
