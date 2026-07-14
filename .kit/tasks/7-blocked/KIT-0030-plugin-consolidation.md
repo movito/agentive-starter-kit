@@ -1,6 +1,6 @@
 # KIT-0030: Consolidate Shared Agents/Skills/Commands into the agentive-workflow Plugin (Sync Phase 2)
 
-**Status**: In Progress
+**Status**: Blocked
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 sessions
@@ -38,6 +38,17 @@ ADR can consolidate — out of scope here.
 > upgrading older projects. Remaining active item for this task: slim
 > KIT-ADR-0025 to the upgrader-agent form. Once that lands, this task parks
 > until the downstream-upgrade phase begins.
+>
+> **PARKED (2026-07-14, planner)**: the ADR slim landed (`64a8d20`,
+> Status Accepted, runtime-read form) and was verification-evaluated
+> post-hoc (claude-arch APPROVED; arch-review-fast REVISION_SUGGESTED
+> with monitor-the-trigger findings only — both findings restate the
+> ADR's own recorded revisit triggers, no changes needed; logs in
+> `.adversarial/logs/KIT-ADR-0025-agent-localization-vs-plugin-upgrades--*`).
+> All remaining acceptance criteria are downstream-phase work
+> (suwinex/moss migrations, label-maker e2e gate). Moved to 7-blocked
+> until that phase opens; unblock via KIT-0045 (token) + this file's
+> Requirement 5 checklist.
 
 ## Requirements
 

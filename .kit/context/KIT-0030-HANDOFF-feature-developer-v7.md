@@ -5,7 +5,7 @@
 **Date**: 2026-06-13
 **From**: Coordinator (moss session, KIT-ADR-0024 initiative)
 **To**: feature-developer-v7 (claude-fable-5)
-**Task**: `.kit/tasks/2-todo/KIT-0030-plugin-consolidation.md`
+**Task**: `.kit/tasks/7-blocked/KIT-0030-plugin-consolidation.md`
 **Status**: Ready for implementation
 **Target Codebase**: This repo (agentive-starter-kit) + movito/agentive-skills + three downstream repos (see Repo Map)
 
@@ -23,7 +23,7 @@ policy) comes after you.
 
 Read these before writing anything:
 
-1. `.kit/tasks/2-todo/KIT-0030-plugin-consolidation.md` — the spec; the
+1. `.kit/tasks/7-blocked/KIT-0030-plugin-consolidation.md` — the spec; the
    spike (Requirement 1) gates everything else
 2. `.kit/adr/KIT-ADR-0024-*.md` — §3 is the plugin decision you implement
 3. `docs/CROSS-REPO-PATTERN.md` — canonical pattern the preflight check
@@ -110,13 +110,13 @@ write a session handoff in `.kit/context/` so the next session can resume.
 ## Acceptance Criteria
 
 Mirror of the spec — all six boxes in
-`.kit/tasks/3-in-progress/KIT-0030-plugin-consolidation.md` must be
+`.kit/tasks/7-blocked/KIT-0030-plugin-consolidation.md` must be
 checked, including the CHANGELOG entry stating the KIT-0026 relationship
 (channels coexist: plugin = outbound to projects, manifest = kit-to-kit).
 
 ---
 
-**Task File**: `.kit/tasks/2-todo/KIT-0030-plugin-consolidation.md`
+**Task File**: `.kit/tasks/7-blocked/KIT-0030-plugin-consolidation.md`
 **ADR**: `.kit/adr/KIT-ADR-0024` (§3)
 **Prior phase commits**: KIT-0028 (624a11e, kit 0.5.1), KIT-0029 (035e839 + b2aedc3 + 742c67e, kit 0.6.0)
 **Handoff Date**: 2026-06-13

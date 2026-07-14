@@ -3,7 +3,7 @@
     "status": "available",
     "current_task": null,
     "task_started": null,
-    "brief_note": "KIT-0044 DONE (PR #76) + closeout complete: worktree removed, branch deleted, retro processed (evaluator-mutation root cause = stale venv 0.9.7 aider engine, upgraded to 1.0.1; git-status-after-evaluator rule in skill; verify-shipped-hints = self-review item 10; preflight arg-shape doc fixed). Worktree topology is now the codified default. v0.8.0 remaining: ADR-0025 slim (KIT-0030 residual), then release mechanics (0.7.0->0.8.0 bump + changelog). Harness cwd-reset: 1 more session of data needed.",
+    "brief_note": "v0.8.0 CONTENT COMPLETE. ADR-0025 slim was already done (64a8d20, Accepted); verification-evaluated via venv 1.0.1 (claude-arch APPROVED, fast = monitor-triggers only; zero mutations in 2 runs -> 1.0.1 clean). KIT-0030 parked in 7-blocked (residuals = downstream phase). Remaining: release mechanics only (0.7.0->0.8.0 bump, CHANGELOG #69-#76, tag) — awaiting operator go. Harness cwd-reset: 1 more session of data needed.",
     "details_link": ".kit/tasks/5-done/KIT-0044-worktree-based-implementation-sessions.md",
     "handoff_file": null
   },
