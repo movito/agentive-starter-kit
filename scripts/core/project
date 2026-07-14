@@ -1563,19 +1563,21 @@ def cmd_sync(args, project_dir):
             with open(manifest_path, encoding="utf-8") as f:
                 consumer_manifest = json.load(f)
             files_section = consumer_manifest["files"]
+            # full dict[str, list[str]] validation: a string tier would
+            # iterate as CHARACTERS and a non-string member would be
+            # silently discarded — either way the allowlist is poisoned
+            # while sync exits clean (BugBot + CodeRabbit, PR #79).
+            # Schema violations refuse.
             for tier, entries in files_section.items():
                 if not isinstance(entries, list):
-                    # a string tier would iterate as CHARACTERS, silently
-                    # poisoning the allowlist while sync exits clean
-                    # (BugBot finding on PR #79) — schema violations refuse
                     raise TypeError(f"files tier {tier!r} is not a list")
+                for entry in entries:
+                    if not isinstance(entry, str):
+                        raise TypeError(
+                            f"files tier {tier!r} has a non-string entry: " f"{entry!r}"
+                        )
             allowlist = sorted(
-                {
-                    entry
-                    for entries in files_section.values()
-                    for entry in entries
-                    if isinstance(entry, str)
-                }
+                {entry for entries in files_section.values() for entry in entries}
             )
         except (
             OSError,

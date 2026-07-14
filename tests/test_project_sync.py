@@ -567,6 +567,24 @@ class TestShapeScopedSync:
         )
         assert rc == 2
 
+    def test_nonstring_list_member_refused(self, kit_with_addition, tmp_path):
+        """CodeRabbit PR #79: a non-string member in a tier list must
+        refuse, not be silently discarded from the allowlist."""
+        root = _shaped_root(tmp_path, "shape: planning\n", name="mixedtier")
+        _write(
+            root / "scripts" / ".core-manifest.json",
+            json.dumps(
+                {
+                    "core_version": "1.0.0",
+                    "files": {"scripts_core": ["core/foo.sh", 42]},
+                }
+            ),
+        )
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--dry-run"], root
+        )
+        assert rc == 2
+
     def test_traversal_entry_in_manifest_refused(
         self, kit_with_addition, tmp_path, capsys
     ):
