@@ -81,6 +81,9 @@ if ! printf '%s' "$TASK_ID" | grep -qE '^[A-Za-z]+-[0-9]+$'; then
     echo "Error: TASK-ID must look like PREFIX-NNNN (got: $TASK_ID)" >&2
     exit 1
 fi
+# Normalize case like `project start` does — task files, branches and
+# worktree dirs are always uppercase-ID; the glob below is case-sensitive.
+TASK_ID="$(printf '%s' "$TASK_ID" | tr '[:lower:]' '[:upper:]')"
 
 # Derive the slug from the task spec filename when not given.
 if [ -z "$SLUG" ]; then
