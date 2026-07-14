@@ -89,6 +89,7 @@ See `.kit/templates/AGENT-TEMPLATE.md` for creating new agents.
 | Coverage | `.kit/context/workflows/COVERAGE-WORKFLOW.md` |
 | Task completion | `.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md` |
 | Atomic multi-file scripts | `.kit/context/workflows/TEMP-THEN-COMMIT-PATTERN.md` |
+| Worktree sessions | `.kit/context/workflows/WORKTREE-WORKFLOW.md` |
 
 ## Key Scripts
 

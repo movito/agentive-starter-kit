@@ -159,7 +159,9 @@ logs/
 
 # Adversarial Workflow
 # Evaluators are installed via: ./scripts/core/project install-evaluators
-.adversarial/evaluators/
+# No trailing slash: in provisioned worktrees this is a SYMLINK to the
+# primary clone's install, and dir-only patterns don't match symlinks
+.adversarial/evaluators
 
 # Dispatch (runtime artifacts)
 .dispatch/config.local.yml
