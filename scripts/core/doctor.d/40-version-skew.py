@@ -40,6 +40,35 @@ except ImportError:  # Python 3.10
 SKEW_PACKAGE = "adversarial-workflow"
 
 
+def venv_bin(root):
+    """The project venv's bin dir — .venv/ preferred, venv/ accepted
+    (both layouts are supported by ci-check.sh and the project CLI)."""
+    for name in (".venv", "venv"):
+        candidate = root / name / "bin"
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def system_pip(root):
+    """First pip3 on PATH that is NOT inside the project venv.
+
+    With an activated venv, a bare `shutil.which("pip3")` resolves to
+    the venv itself and both probe sides compare equal — masking the
+    exact skew this check exists for (BugBot round 4).
+    """
+    venv_bins = {str((root / name / "bin").resolve()) for name in (".venv", "venv")}
+    for entry in os.environ.get("PATH", "").split(os.pathsep):
+        if not entry:
+            continue
+        if str(Path(entry).resolve()) in venv_bins:
+            continue
+        candidate = Path(entry) / "pip3"
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    return None
+
+
 def pip_version(pip_cmd, package):
     """Return the version `pip show` reports, or None if unavailable."""
     try:
@@ -97,7 +126,10 @@ def black_pin(root):
 
 def active_black_version(root):
     """Version of the black the project actually runs (venv first)."""
-    candidates = [str(root / ".venv" / "bin" / "black")]
+    candidates = []
+    bin_dir = venv_bin(root)
+    if bin_dir:
+        candidates.append(str(bin_dir / "black"))
     path_black = shutil.which("black")
     if path_black:
         candidates.append(path_black)
@@ -126,10 +158,15 @@ def main():
     root = Path(os.environ.get("DOCTOR_ROOT") or Path(__file__).resolve().parents[3])
 
     # --- adversarial-workflow: venv vs system ---
-    venv_pip = root / ".venv" / "bin" / "pip"
-    venv_ver = pip_version(str(venv_pip), SKEW_PACKAGE) if venv_pip.exists() else None
-    system_pip = shutil.which("pip3")
-    system_ver = pip_version(system_pip, SKEW_PACKAGE) if system_pip else None
+    bin_dir = venv_bin(root)
+    venv_pip = bin_dir / "pip" if bin_dir else None
+    venv_ver = (
+        pip_version(str(venv_pip), SKEW_PACKAGE)
+        if venv_pip and venv_pip.exists()
+        else None
+    )
+    sys_pip = system_pip(root)
+    system_ver = pip_version(sys_pip, SKEW_PACKAGE) if sys_pip else None
 
     if venv_ver is None and system_ver is None:
         print(

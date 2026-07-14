@@ -344,6 +344,50 @@ class TestVersionSkewCheck:
         result = run_skew_check(root, path_dir)
         assert "DOCTOR:black-pin:SKIP:" in result.stdout
 
+    def test_activated_venv_on_path_cannot_mask_skew(self, tmp_path):
+        """BugBot round 4: with the venv's bin dir FIRST on PATH (an
+        activated venv), the system probe must skip it — otherwise both
+        sides resolve to the venv and real skew reports PASS."""
+        root, path_dir = _skew_fixture(tmp_path, venv_ver="0.9.7", system_ver="1.0.1")
+        # simulate activation: venv bin also provides pip3 and leads PATH
+        venv_bin_dir = root / ".venv" / "bin"
+        _stub_executable(
+            venv_bin_dir / "pip3",
+            'echo "Name: adversarial-workflow"\necho "Version: 0.9.7"\n',
+        )
+        check = DOCTOR_D / "40-version-skew.py"
+        result = subprocess.run(
+            [sys.executable, str(check)],
+            env={
+                **os.environ,
+                "DOCTOR_ROOT": str(root),
+                "PATH": os.pathsep.join([str(venv_bin_dir), str(path_dir)]),
+            },
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert "DOCTOR:venv-skew-adversarial:FAIL:" in result.stdout
+        assert "0.9.7" in result.stdout and "1.0.1" in result.stdout
+
+    def test_alternate_venv_layout_probed(self, tmp_path):
+        """BugBot round 4: repos on the venv/ (not .venv/) layout must
+        still get a two-sided comparison."""
+        root = tmp_path / "root"
+        (root / "venv" / "bin").mkdir(parents=True)
+        path_dir = tmp_path / "bin"
+        path_dir.mkdir()
+        _stub_executable(
+            root / "venv" / "bin" / "pip",
+            'echo "Name: adversarial-workflow"\necho "Version: 0.9.7"\n',
+        )
+        _stub_executable(
+            path_dir / "pip3",
+            'echo "Name: adversarial-workflow"\necho "Version: 1.0.1"\n',
+        )
+        result = run_skew_check(root, path_dir)
+        assert "DOCTOR:venv-skew-adversarial:FAIL:" in result.stdout
+
 
 def run_core_bare_check(root: Path) -> subprocess.CompletedProcess:
     check = DOCTOR_D / "70-core-bare.sh"
@@ -573,6 +617,7 @@ class TestPushSyncTokenCheck:
             "on: push\n",  # scalar style
             "on:\n  push:  # deploy trigger\n    branches: [main]\n",  # trailing comment
             "on: push  # deploy trigger\n",  # scalar + trailing comment
+            "on:  # triggers\n  push:\n    branches: [main]\n",  # comment on on: line
         ],
     )
     def test_active_trigger_detected_regardless_of_style(self, tmp_path, body):
