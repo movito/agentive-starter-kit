@@ -13,11 +13,15 @@
 
 set -u
 
-# A leaked GIT_DIR would make git ignore -C entirely and inspect the
-# WRONG repository — the exact leak class this check diagnoses must not
-# be able to blind the check itself (fast-v2 review finding; the driver
-# also scrubs GIT_* but this check must survive standalone runs).
-unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
+# Leaked GIT_* env would make git ignore -C or override config values
+# (GIT_CONFIG_COUNT/KEY_0/VALUE_0 can literally rewrite core.bare) — the
+# exact leak class this check diagnoses must not be able to blind the
+# check itself. Scrub EVERY GIT_* variable, not an allowlist (fast-v2
+# round 1 + CodeRabbit round 2; the driver also scrubs, but this check
+# must survive standalone runs).
+for _git_var in $(compgen -A variable | grep '^GIT_' || true); do
+    unset "$_git_var"
+done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${DOCTOR_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"

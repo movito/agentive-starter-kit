@@ -36,9 +36,14 @@ def key_state(lines, key):
         if stripped.startswith("export "):
             stripped = stripped[len("export ") :].lstrip()
         if stripped.startswith(f"{key}="):
-            # empty value counts as commented-out for our purposes
             _, _, value = stripped.partition("=")
-            if value.strip():
+            # normalize before judging: an unquoted trailing `# comment`
+            # is not a value, and quoted-empty ("" / '') is empty —
+            # KEY="" or KEY= # placeholder must not PASS an unusable env
+            value = value.split("#", 1)[0].strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                value = value[1:-1].strip()
+            if value:
                 return "present"
             state = "commented"
             continue

@@ -1352,9 +1352,13 @@ def cmd_doctor(args, project_dir):
             if not line.startswith("DOCTOR:"):
                 continue
             parts = line.split(":", 3)
+            # F1 field contract: exactly DOCTOR:<name>:<verdict>:<detail>
+            # with non-empty name and detail — an incomplete record must
+            # not be able to count as a pass (CodeRabbit round 2)
+            malformed = len(parts) < 4 or not parts[1] or not parts[3].strip()
             verdict = parts[2] if len(parts) >= 3 else ""
             # membership: verdict vocabulary check, not identifier equality
-            if verdict not in ("PASS", "WARN", "FAIL", "SKIP"):
+            if malformed or verdict not in ("PASS", "WARN", "FAIL", "SKIP"):
                 # malformed line: surface it, count it as a failure
                 print(line)
                 verdicts.append("FAIL")

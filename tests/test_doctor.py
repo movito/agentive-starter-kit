@@ -121,6 +121,20 @@ class TestDriverContract:
         result = run_doctor(tmp_path)
         assert result.returncode == 1
 
+    @pytest.mark.parametrize(
+        "line",
+        [
+            "DOCTOR:noise:PASS",  # missing detail field entirely
+            "DOCTOR:noise:PASS:",  # empty detail
+            "DOCTOR::PASS:detail",  # empty name
+        ],
+    )
+    def test_incomplete_record_cannot_count_as_pass(self, tmp_path, line):
+        # F1 field contract: all four fields, non-empty name and detail
+        _make_check(tmp_path, "10-bad.sh", f'echo "{line}"\n')
+        result = run_doctor(tmp_path)
+        assert result.returncode == 1
+
     def test_non_executable_check_reported(self, tmp_path):
         path = tmp_path / "10-inert.sh"
         path.write_text("#!/bin/bash\necho hi\n", encoding="utf-8")
@@ -397,6 +411,26 @@ class TestCoreBareCheck:
         # without the unset, git would inspect the bare decoy and FAIL
         assert "DOCTOR:core-bare:PASS:" in result.stdout
 
+    def test_git_config_env_override_cannot_fake_bare(self, tmp_path):
+        """GIT_CONFIG_COUNT/KEY_0/VALUE_0 can rewrite core.bare in-env —
+        the full GIT_* scrub must neutralize them (CodeRabbit round 2)."""
+        self._init_repo(tmp_path)
+        check = DOCTOR_D / "70-core-bare.sh"
+        result = subprocess.run(
+            [BASH, str(check)],
+            env={
+                **os.environ,
+                "DOCTOR_ROOT": str(tmp_path),
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "core.bare",
+                "GIT_CONFIG_VALUE_0": "true",
+            },
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert "DOCTOR:core-bare:PASS:" in result.stdout
+
 
 class TestEnvKeysDuplicates:
     """o3 review: present must win over an earlier commented template line."""
@@ -415,6 +449,27 @@ class TestEnvKeysDuplicates:
         (tmp_path / ".env").write_text(
             "export ANTHROPIC_API_KEY=sk-test-real\n"
             "export OPENAI_API_KEY=x\nexport GEMINI_API_KEY=y\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:PASS:" in result.stdout
+
+    @pytest.mark.parametrize(
+        "value",
+        ['""', "''", " # placeholder", '"" # fill me in'],
+    )
+    def test_quoted_empty_and_comment_only_values_fail(self, tmp_path, value):
+        # CodeRabbit round 2: these are unusable but textually non-empty
+        (tmp_path / ".env").write_text(
+            f"ANTHROPIC_API_KEY={value}\nOPENAI_API_KEY=x\nGEMINI_API_KEY=y\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:FAIL:" in result.stdout
+
+    def test_quoted_real_value_passes(self, tmp_path):
+        (tmp_path / ".env").write_text(
+            'ANTHROPIC_API_KEY="sk-test-real"\nOPENAI_API_KEY=x\nGEMINI_API_KEY=y\n',
             encoding="utf-8",
         )
         result = run_env_check(tmp_path)
@@ -491,6 +546,24 @@ class TestPushSyncTokenCheck:
         result = run_push_sync_check(tmp_path)
         assert "parked — see KIT-0045" in result.stdout
 
+    def test_nested_push_key_outside_on_block_still_parked(self, tmp_path):
+        # CodeRabbit round 2: a push: key under jobs: must not read as an
+        # active trigger
+        self._workflow(
+            tmp_path,
+            """\
+            on:
+              workflow_dispatch:
+            jobs:
+              push:
+                runs-on: ubuntu-latest
+                steps:
+                  - run: echo push
+            """,
+        )
+        result = run_push_sync_check(tmp_path)
+        assert "parked — see KIT-0045" in result.stdout
+
     @pytest.mark.parametrize(
         "body",
         [
@@ -502,9 +575,10 @@ class TestPushSyncTokenCheck:
     )
     def test_active_trigger_detected_regardless_of_style(self, tmp_path, body):
         self._workflow(tmp_path, body)
-        # PATH with grep but without gh: an active trigger must degrade
-        # to WARN ("cannot verify"), never to the parked SKIP
-        bin_dir = _restricted_bin(tmp_path, tools=("grep",))
+        # PATH with the check's tools (grep, awk) but without gh: an
+        # active trigger must degrade to WARN ("cannot verify"), never
+        # to the parked SKIP
+        bin_dir = _restricted_bin(tmp_path, tools=("grep", "awk"))
         result = run_push_sync_check(tmp_path, path_dir=bin_dir)
         assert "DOCTOR:push-sync-token:WARN:" in result.stdout
         assert "cannot verify" in result.stdout

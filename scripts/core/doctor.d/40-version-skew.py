@@ -67,13 +67,19 @@ def black_pin(root):
     if tomllib is None:
         # No TOML parser on this interpreter (bare 3.10): regex scan so
         # drift detection still works instead of silently SKIPping
-        # (o3 review finding).
+        # (o3 review finding). Comment lines are skipped and both TOML
+        # quote styles accepted (CodeRabbit round 2).
         try:
             text = pyproject.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             return None
-        match = re.search(r'"black\s*==\s*([0-9][0-9a-zA-Z.]*)"', text)
-        return match.group(1) if match else None
+        for line in text.splitlines():
+            if line.lstrip().startswith("#"):
+                continue
+            match = re.search(r"['\"]black\s*==\s*([0-9][0-9a-zA-Z.]*)['\"]", line)
+            if match:
+                return match.group(1)
+        return None
     try:
         data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError):

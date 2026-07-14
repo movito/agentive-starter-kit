@@ -21,12 +21,21 @@ if [ ! -f "$WORKFLOW" ]; then
     exit 0
 fi
 
-# An active push trigger can be block style at any indent (`push:` on
-# its own line), flow style (`on: [push, ...]`), or scalar (`on: push`).
-# Comments discussing "push" do not match (o3 review: the original
-# two-space-only grep silently SKIPped on other indents — erring toward
-# "checking" beats erring toward SKIP for this incident class).
-if ! grep -qE '^[[:space:]]*push:[[:space:]]*$|^on:[[:space:]]*(\[[^]]*push|push[[:space:]]*$)' "$WORKFLOW"; then
+# An active push trigger can be block style at any indent (`push:`
+# inside the top-level `on:` block), flow style (`on: [push, ...]`), or
+# scalar (`on: push`). Block-style detection is scoped to the `on:`
+# block so a nested `push:` key elsewhere (e.g. under jobs:) cannot
+# false-positive (CodeRabbit round 2); comments never match (o3 round 1:
+# any-indent tolerance — erring toward "checking" beats erring toward
+# SKIP for this incident class).
+BLOCK_PUSH="$(awk '
+    /^on:[[:space:]]*$/ { in_on = 1; next }
+    in_on && /^[^ \t#]/ { in_on = 0 }
+    in_on && /^[[:space:]]+push:[[:space:]]*$/ { found = 1 }
+    END { print found + 0 }
+' "$WORKFLOW")"
+
+if [ "$BLOCK_PUSH" != "1" ] && ! grep -qE '^on:[[:space:]]*(\[[^]]*push|push[[:space:]]*$)' "$WORKFLOW"; then
     echo "DOCTOR:push-sync-token:SKIP:push channel parked — see KIT-0045"
     exit 0
 fi
