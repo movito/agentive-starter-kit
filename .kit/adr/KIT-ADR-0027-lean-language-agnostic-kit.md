@@ -248,6 +248,35 @@ fifth — P5 (degraded modes) and P7 (operator presets) are the same
 resolution mechanism read from opposite ends, and P7 is only a preset
 file plus the door honoring it. The prune is continuous background.
 
+## Rollout & Downstream Compatibility *(added 2026-07-14, operator review)*
+
+**The kit stays usable at every stage.** Consumers are pinned (semver
+plugin pin, manifest `core_version`) and the push channel is parked —
+mid-transformation states cannot reach a downstream repo uninvited;
+consumers move only by pulling (`project sync --ref <tag>`) or bumping a
+pin. Each stage additionally ships a behavior-preserving default:
+
+| After | Downstream effect | New capability |
+|---|---|---|
+| P4 | `doctor` arrives via normal core-scripts sync | env-drift detection everywhere |
+| P2 | none (new shapes affect new installs only) | **planning repos for non-Python products — earliest new-capability point** |
+| P1 | Python profile seeded as the hook = current `ci-check.sh` behavior; functional no-op | non-Python profiles |
+| P3 | old doors keep working as shims | the one door |
+| P5+P7 | none (no bots-declaration ⇒ today's "bots expected" behavior; presets are operator-side) | floor + ceiling |
+| P6 | skills merge — the only real consumer-facing move; gated on inventory + read-both cycle | — |
+
+**Migration paths** reuse existing vehicles: kit-family repos pull via
+the manifest channel per release tag; plugin consumers migrate via the
+**upgrader agent** (KIT-0032), whose runbook gains a post-upgrade
+`doctor` step; re-shaping an existing product into planning+target is
+opt-in via a fresh planning repo, never forced.
+
+**Migrate downstream at two checkpoints, not per stage**: `doctor`
+everywhere after P4 (cheap, catches consumer-side drift), then one
+coordinated upgrader pass per repo after P3. The second checkpoint *is*
+the deferred downstream-upgrade phase — the transformation completes in
+the kit first, and each downstream repo migrates once.
+
 ## Consequences
 
 **Positive**: adoption drops to one command + doctor; non-Python and
