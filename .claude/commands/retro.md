@@ -131,6 +131,25 @@ If none, state "None." This data is used by the planner to proactively expand th
 
 List action items as unchecked checkboxes. The planner will check them off as they're implemented.
 
+### Incident Closure (doctor lifecycle rule — KIT-0046, ADR-0027 P4)
+
+Every incident surfaced in this retro (a failed environment assumption, a
+tool that behaved differently than documented, a silent drift) must close
+one of three ways — name the choice per incident:
+
+1. **Doctor check** — a new or extended check in `scripts/core/doctor.d/`
+   (cite the incident in the check's header comment), or
+2. **Not-checkable note** — an explicit comment in the nearest related
+   check explaining why this cannot be cheaply verified (see the
+   CodeRabbit-quota note in `80-bot-presence.sh` for the pattern), or
+3. **Triage-guide entry** — when the incident is diagnosable only at
+   failure time, document the symptom→cause mapping where the failing
+   step's docs live.
+
+This rule is what keeps `project doctor` an incident map instead of a
+2026-07-14 snapshot. "None of the above" is not an option; if an incident
+genuinely fits nowhere, say so explicitly and let the planner decide.
+
 ## Step 4: Save the retro
 
 Format the complete retro as a single markdown block using the structure below, then **save it to a file**.
@@ -172,6 +191,10 @@ Use this exact structure for the file content:
 ### Process Actions Taken
 
 - [ ] [Action item]
+
+### Incident Closure
+
+[Per incident: doctor check added/extended | not-checkable note (where) | triage-guide entry (where) — or "No environment incidents this session."]
 ```
 
 After saving, confirm the file path so the planner can find and review it.

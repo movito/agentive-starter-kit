@@ -1261,6 +1261,152 @@ def _print_sync_report(report, *, dry_run, committed, project_dir):
         print("\n   Run without --dry-run to apply.")
 
 
+def cmd_doctor(args, project_dir):
+    """`project doctor`: run all doctor.d environment checks (ADR-0027 P4).
+
+    Composable driver: every executable in scripts/core/doctor.d/ runs;
+    a failing check never short-circuits its siblings (the fail-fast-
+    masking lesson from the sync workflow). Checks emit
+    ``DOCTOR:<name>:<verdict>:<detail>`` lines — <name> and <verdict>
+    are colon-free tokens, <detail> is everything after the third colon
+    (parsers split on the first three colons only, exactly like the
+    preflight GATE: format). Verdicts: PASS, WARN, FAIL, SKIP.
+
+    Exit-code contract (F3 — driver errors never overload 0/1):
+      0  every check PASS or SKIP
+      1  at least one FAIL
+      2  warnings only (no FAIL)
+      3  driver/usage error (unknown flag, doctor.d missing or empty)
+
+    Read-only (N3): the driver and every check diagnose the environment;
+    they never mutate config, env, or the working tree.
+    """
+    doctor_dir = project_dir / "scripts" / "core" / "doctor.d"
+    for arg in args:
+        # An empty value would resolve Path("") to the cwd and silently
+        # diagnose the wrong tree — usage error instead (BugBot round 6).
+        if arg.startswith("--dir="):
+            # test/advanced seam: run a different check set (resolve now —
+            # checks run with a different cwd, so relative would break)
+            value = arg.partition("=")[2]
+            if not value:
+                print("❌ --dir= requires a path")
+                return 3
+            doctor_dir = Path(value).resolve()
+        elif arg.startswith("--root="):
+            # diagnose another checkout (e.g. the primary clone from a
+            # worktree); checks receive it as DOCTOR_ROOT
+            value = arg.partition("=")[2]
+            if not value:
+                print("❌ --root= requires a path")
+                return 3
+            project_dir = Path(value).resolve()
+            if not project_dir.is_dir():
+                print(f"❌ --root is not a directory: {project_dir}")
+                return 3
+        else:
+            print(f"Unknown option: {arg}")
+            print(
+                "Usage: ./scripts/core/project doctor "
+                "[--dir=<checks-dir>] [--root=<checkout>]"
+            )
+            return 3
+
+    if not doctor_dir.is_dir():
+        print(f"❌ doctor checks directory not found: {doctor_dir}")
+        return 3
+    # dotfiles (.DS_Store & friends) are never checks — everything else
+    # in doctor.d/ is held to the check contract
+    checks = sorted(
+        p for p in doctor_dir.iterdir() if p.is_file() and not p.name.startswith(".")
+    )
+    if not checks:
+        print(f"❌ no checks found in {doctor_dir}")
+        return 3
+
+    # TODO(P2): per-shape inclusion — filter `checks` by the recorded
+    # project shape once shapes exist (ADR-0027 P2). v1 runs everything.
+
+    # Scrub ambient GIT_* so a leaked GIT_DIR (the KIT-0043 incident
+    # class — e.g. doctor invoked from a pre-commit hook in a worktree)
+    # cannot redirect git-facing checks at the wrong repository.
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env["DOCTOR_ROOT"] = str(project_dir)
+    verdicts = []
+    for check in checks:
+        name = check.name
+        if not os.access(check, os.X_OK):
+            print(f"DOCTOR:{name}:FAIL:check file is not executable")
+            verdicts.append("FAIL")
+            continue
+        try:
+            result = subprocess.run(
+                [str(check)],
+                cwd=project_dir,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired:
+            print(f"DOCTOR:{name}:FAIL:check timed out after 30s")
+            verdicts.append("FAIL")
+            continue
+        except OSError as exc:
+            print(f"DOCTOR:{name}:FAIL:check failed to run ({exc.__class__.__name__})")
+            verdicts.append("FAIL")
+            continue
+
+        emitted = False
+        for line in result.stdout.splitlines():
+            if not line.startswith("DOCTOR:"):
+                continue
+            parts = line.split(":", 3)
+            # F1 field contract: exactly DOCTOR:<name>:<verdict>:<detail>
+            # with non-empty name and detail — an incomplete record must
+            # not be able to count as a pass (CodeRabbit round 2)
+            malformed = len(parts) < 4 or not parts[1] or not parts[3].strip()
+            verdict = parts[2] if len(parts) >= 3 else ""
+            # membership: verdict vocabulary check, not identifier equality
+            if malformed or verdict not in ("PASS", "WARN", "FAIL", "SKIP"):
+                # malformed line: surface it, count it as a failure
+                print(line)
+                verdicts.append("FAIL")
+                emitted = True
+                continue
+            print(line)
+            verdicts.append(verdict)
+            emitted = True
+        if result.stderr:
+            sys.stderr.write(result.stderr)
+        if not emitted:
+            print(
+                f"DOCTOR:{name}:FAIL:check produced no DOCTOR line "
+                f"(exit {result.returncode})"
+            )
+            verdicts.append("FAIL")
+        elif result.returncode != 0:
+            # a check that emitted lines but then crashed may have lost
+            # its remaining concerns — surface the crash, don't let an
+            # early PASS line mask it (fast-v2 review finding)
+            print(
+                f"DOCTOR:{name}:FAIL:check exited {result.returncode} "
+                "after emitting output — remaining concerns may be lost"
+            )
+            verdicts.append("FAIL")
+
+    fails = verdicts.count("FAIL")
+    warns = verdicts.count("WARN")
+    passes = verdicts.count("PASS")
+    skips = verdicts.count("SKIP")
+    print(f"\nDoctor: {passes} pass, {warns} warn, {fails} fail, {skips} skip")
+    if fails:
+        return 1
+    if warns:
+        return 2
+    return 0
+
+
 def cmd_sync(args, project_dir):
     """`project sync`: pull core files from upstream via the sync engine.
 
@@ -1572,6 +1718,10 @@ except Exception as e:
         cmd_install_evaluators(sys.argv[2:], project_dir)
         sys.exit(0)
 
+    elif command == "doctor":
+        # Incident-mapped environment verifier (KIT-0046, ADR-0027 P4)
+        sys.exit(cmd_doctor(sys.argv[2:], project_dir))
+
     elif command == "sync-status":
         # Check Linear sync status
         print("🔍 Checking Linear sync status...")
@@ -1804,6 +1954,8 @@ Setup:
   setup [--force]        Create venv and install dependencies
   install-evaluators     Install evaluators from adversarial-evaluator-library
                          Options: --force (reinstall), --ref <tag> (version)
+  doctor                 Run incident-mapped environment checks (doctor.d/)
+                         Exit: 0 ok, 1 failures, 2 warnings only, 3 driver error
 
 Task Management:
   move <id> <status>   Move task to folder and update Status field

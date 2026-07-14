@@ -1,6 +1,6 @@
 # KIT-0046 Handoff — feature-developer
 
-**Task**: `.kit/tasks/2-todo/KIT-0046-project-doctor.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0046-project-doctor.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-14 (planner-f5)
 **Estimated effort**: 3–5 hours
