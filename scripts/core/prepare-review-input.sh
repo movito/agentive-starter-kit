@@ -3,7 +3,7 @@
 # Usage: ./scripts/core/prepare-review-input.sh <TASK-ID> [--base main] [--format diff|full] [--help]
 #
 # Metadata:
-#   version: 1.5.0
+#   version: 1.5.1
 #   origin: ixda-services-2.0 (ID2-0015)
 #   last-updated: 2026-07-05
 #   created-by: "@movito with feature-developer-v6"
@@ -102,9 +102,10 @@ Output:
   .adversarial/inputs/<TASK-ID>-code-review-input.md
 
 Next steps:
-  export ADVERSARIAL_UNATTENDED=1   # non-TTY sessions only: large inputs auto-cancel without it
   set -a && source .env && set +a
-  adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
+  echo y | adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
+  # 'echo y |' answers the large-input confirm prompt in non-TTY sessions
+  # (the installed library has no unattended env flag; upstream #74)
 EOF
 }
 
@@ -469,15 +470,20 @@ echo "  Files changed: $CHANGED_COUNT"
 echo
 echo "Next steps:"
 # In a non-TTY session (agent, CI) the adversarial CLI auto-cancels on
-# large (>50k-token) inputs instead of prompting — surface the env flag
-# that prevents it (KIT-0040 retro). A script can't export into the
-# caller's shell, so the export line is printed, not set. Either fd
+# large (>17k-token) inputs instead of prompting — surface the stdin
+# workaround (KIT-0040 retro; corrected in KIT-0044). The previously
+# advertised ADVERSARIAL_UNATTENDED env flag does NOT exist in the
+# installed library (verified: no match in the package source) — the
+# only thing the prompt reads is stdin, so pipe the answer. Either fd
 # being non-TTY marks the session non-interactive: stdin is what the
 # CLI prompt reads, stdout catches piped/captured agent sessions.
 if [ ! -t 0 ] || [ ! -t 1 ]; then
-    echo "  export ADVERSARIAL_UNATTENDED=1  # non-TTY session: large inputs auto-cancel without this"
+    PIPE_Y="echo y | "
+    echo "  # 'echo y |' answers the large-input confirm prompt (no unattended env flag exists; upstream #74)"
+else
+    PIPE_Y=""
 fi
 echo "  set -a && source .env && set +a"
-echo "  adversarial code-reviewer-fast $OUTPUT_FILE  # fast gate (~\$0.01)"
-echo "  adversarial code-reviewer $OUTPUT_FILE       # deep (~\$0.33)"
-echo "  adversarial claude-code $OUTPUT_FILE         # security"
+echo "  ${PIPE_Y}adversarial code-reviewer-fast $OUTPUT_FILE  # fast gate (~\$0.01)"
+echo "  ${PIPE_Y}adversarial code-reviewer $OUTPUT_FILE       # deep (~\$0.33)"
+echo "  ${PIPE_Y}adversarial claude-code $OUTPUT_FILE         # security"

@@ -1,7 +1,7 @@
 # Task Starter Message Template
 
-**Version**: 1.0.0
-**Last Updated**: 2025-11-16
+**Version**: 1.1.0
+**Last Updated**: 2026-07-14
 **Purpose**: Standardized format for handing off tasks to implementation agents
 **Used By**: Coordinators (planner, coordinator) when assigning tasks
 
@@ -106,10 +106,25 @@ Your mission: [Clear, action-oriented statement of the agent's goal]
 - All [CRITICAL/HIGH/etc.] feedback addressed
 - See handoff file for detailed implementation guidance
 
+**⚠️ LAUNCH** (un-skippable — see `WORKTREE-WORKFLOW.md`):
+Open the session tab with its working directory set to
+`[worktree path, e.g. ../ask-worktrees/[TASK-ID]]` — branch
+`feature/[TASK-ID]-short-description`, created and provisioned via
+`./scripts/local/new-worktree.sh [TASK-ID] short-description`.
+(Pass the slug explicitly, or omit it and copy the branch name the
+helper derives from the task filename — the LAUNCH block's branch must
+match what the helper actually created.)
+Do NOT run the session from the primary clone.
+
 **⚠️ FIRST ACTIONS** (in order):
-1. `git checkout -b feature/[TASK-ID]-short-description` (create feature branch)
+1. `git branch --show-current` (expect: `feature/[TASK-ID]-short-description`)
 2. `./scripts/core/project start [TASK-ID]` (move task to `3-in-progress/`)
 ```
+
+The LAUNCH block is **mandatory** in every starter — the KIT-0043 pilot
+measured the cost of skipping it (~40 `cd` prefixes when the session ran
+from the primary clone). Create the worktree with the helper BEFORE
+writing the starter, so the path and branch in the block are real.
 
 ### Footer
 
@@ -180,8 +195,15 @@ Your mission: Follow the RED-GREEN-REFACTOR TDD cycle to create a properly teste
 - See handoff file for starting point and implementation details
 - Follow `tests/test_linear_comments.py` as TDD example pattern
 
+**⚠️ LAUNCH** (un-skippable — see `WORKTREE-WORKFLOW.md`):
+Open the session tab with its working directory set to
+`../ask-worktrees/TASK-0102` — branch `feature/TASK-0102-linear-sync-tdd`,
+created and provisioned via
+`./scripts/local/new-worktree.sh TASK-0102 linear-sync-tdd`.
+Do NOT run the session from the primary clone.
+
 **⚠️ FIRST ACTIONS** (in order):
-1. `git checkout -b feature/TASK-0102-linear-sync-tdd`
+1. `git branch --show-current` (expect: `feature/TASK-0102-linear-sync-tdd`)
 2. `./scripts/core/project start TASK-0102`
 
 ---
@@ -312,6 +334,8 @@ Before sending task starter to user:
 - [ ] Time estimate is realistic and broken down by phase
 - [ ] Evaluation status mentioned (if applicable)
 - [ ] Both task file and handoff file links included
+- [ ] **Worktree created** (`./scripts/local/new-worktree.sh <TASK-ID>`) and
+      **LAUNCH block included** with the real worktree path and branch
 - [ ] **FIRST ACTION reminder included** (`./scripts/core/project start <TASK-ID>`)
 - [ ] Recommended agent type specified
 - [ ] agent-handoffs.json updated with task assignment
@@ -327,14 +351,17 @@ After creating task specification and addressing evaluation feedback:
 
 1. Create handoff file: `.kit/context/[TASK-ID]-HANDOFF-[agent-type].md`
 2. Update `agent-handoffs.json` with task assignment
-3. Create task starter message using this template
-4. Send task starter to user
-5. User invokes agent in new tab with task starter
+3. Create the task worktree: `./scripts/local/new-worktree.sh [TASK-ID]`
+4. Create task starter message using this template (LAUNCH block carries
+   the worktree path and branch the helper just printed)
+5. Send task starter to user
+6. User invokes agent in new tab **with cwd set to the worktree path**
 
 ### For Implementation Agents
 
 When receiving task starter:
-1. **Create feature branch**: `git checkout -b feature/<TASK-ID>-short-description`
+1. **Verify the worktree**: `git branch --show-current` must match the
+   LAUNCH block's branch (the worktree already exists — never `checkout -b`)
 2. **Start task**: `./scripts/core/project start <TASK-ID>` to move task to `3-in-progress/`
 3. Read task file for full specification
 4. Read handoff file for implementation guidance
@@ -344,7 +371,8 @@ When receiving task starter:
 
 ---
 
-**Template Version**: 1.0.0
+**Template Version**: 1.1.0
 **Created**: 2025-11-16
 **Maintained By**: Coordinators (planner, coordinator)
-**Related**: AGENT-TEMPLATE.md, OPERATIONAL-RULES.md
+**Related**: AGENT-TEMPLATE.md, OPERATIONAL-RULES.md,
+`.kit/context/workflows/WORKTREE-WORKFLOW.md`
