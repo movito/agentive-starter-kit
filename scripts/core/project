@@ -1296,8 +1296,17 @@ def _doctor_shape(project_dir):
     except (OSError, subprocess.TimeoutExpired) as exc:
         return None, f"shape record unreadable ({exc.__class__.__name__})"
     if result.returncode != 0:
-        # region not present — absent, not malformed
-        return "single", None
+        # kit_markers exits 1 with this exact stderr for a missing region
+        # (absent = single, back-compat). ANY other failure — crash, bad
+        # interpreter, argv error — is an unreadable record and must fail
+        # loud, not silently fall back (o3 review).
+        if "region not found" in result.stderr:
+            return "single", None
+        detail = result.stderr.strip().splitlines()
+        return None, (
+            "kit_markers extract failed "
+            f"(exit {result.returncode}: {detail[0] if detail else 'no stderr'})"
+        )
     for line in result.stdout.splitlines():
         stripped = line.strip()
         if stripped.startswith("shape:"):
@@ -1318,16 +1327,26 @@ def _check_shapes(check_path):
     """Shapes a doctor.d check declares via its `# shapes:` header line.
 
     Returns a set of shape tokens, or None when the check declares
-    nothing — an undeclared check runs for every shape (never silently
-    skipped).
+    nothing — an undeclared OR empty declaration runs for every shape
+    (never silently skipped; o3 review: an empty set would skip the
+    check in every shape forever). Case-insensitive; scanned over the
+    first 30 lines, which covers long banners without picking up
+    documentation strings deep in a check body (convention: the header
+    sits right under the shebang).
     """
     try:
-        head = check_path.read_text(encoding="utf-8", errors="replace")[:600]
+        text = check_path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
-    match = re.search(r"^#\s*shapes:\s*(.+)$", head, re.MULTILINE)
+    head = "\n".join(text.splitlines()[:30])
+    # [^\S\n] = horizontal whitespace only — \s would slurp the newline
+    # of an empty declaration and capture the NEXT line as shape tokens
+    match = re.search(
+        r"^#[^\S\n]*shapes:[^\S\n]*(.*)$", head, re.MULTILINE | re.IGNORECASE
+    )
     if match:
-        return set(match.group(1).split())
+        declared = set(match.group(1).split())
+        return declared or None
     return None
 
 

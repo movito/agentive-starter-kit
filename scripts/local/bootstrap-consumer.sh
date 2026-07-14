@@ -35,13 +35,15 @@
 #   - agentive-starter-kit is cloned at the path this script lives in
 
 set -e
+IFS=$' \t\n'  # an exported IFS must not affect the scrub loop below
 
 # This script runs git init/add/commit against $TARGET by design. A
 # leaked GIT_DIR (pre-commit exports an absolute one inside worktrees)
 # would silently redirect every one of those calls at the REAL
 # repository — during KIT-0048 exactly that committed a scaffold tree
 # onto a live feature branch and flipped the primary clone's core.bare.
-# Scrub ALL GIT_* before any git call (the doctor 70-core-bare pattern).
+# Scrub ALL GIT_* before any git call (the doctor 70-core-bare pattern;
+# compgen is fine — this script is bash by shebang).
 for _git_var in $(compgen -A variable | grep '^GIT_' || true); do
     unset "$_git_var"
 done
@@ -112,6 +114,10 @@ case "$SHAPE" in
 esac
 if [ "$SHAPE" = "planning" ] && [ "$KIT_ENABLED" -eq 0 ]; then
     echo "Error: --no-kit contradicts --shape planning (the planning shape IS the kit workflow)"
+    exit 1
+fi
+if [ -n "$TARGET_GITHUB" ] && ! printf '%s' "$TARGET_GITHUB" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+    echo "Error: --target-github must look like owner/repo (got: $TARGET_GITHUB)"
     exit 1
 fi
 
@@ -522,26 +528,20 @@ if [ "$SHAPE" = "planning" ]; then
     TP="${TARGET_PATH:-../<target-repo>  # TODO: set the product repo path}"
     TG="${TARGET_GITHUB:-<owner>/<repo>  # TODO: set the product repo}"
 
+    # printf %s + quoted heredoc delimiters everywhere below: the
+    # target-pointer values are operator input and must be written
+    # literally — an unquoted heredoc would shell-expand $(...) inside
+    # them (claude-code review, heredoc injection).
     if [ ! -f "$CLAUDE_MD" ]; then
-        cat > "$CLAUDE_MD" << CLAUDEMD
-# $PROJECT_NAME
-
-Planning repo for the target product repository below. Coordination,
-task specs, and reviews live here; ALL code changes happen in the
-target repo (see docs/CROSS-REPO-PATTERN.md in the kit).
-CLAUDEMD
+        printf '# %s\n\nPlanning repo for the target product repository below. Coordination,\ntask specs, and reviews live here; ALL code changes happen in the\ntarget repo (see docs/CROSS-REPO-PATTERN.md in the kit).\n' \
+            "$PROJECT_NAME" > "$CLAUDE_MD"
     fi
 
     # Human-facing convention (KIT-ADR-0024) — agents grep for this
     # section; seeded once, never rewritten (consumer-owned after that).
     if ! grep -q '^## Target Repository' "$CLAUDE_MD"; then
-        cat >> "$CLAUDE_MD" << TARGETSECTION
-
-## Target Repository
-
-- **Path**: \`$TP\`
-- **GitHub**: \`$TG\`
-TARGETSECTION
+        printf '\n## Target Repository\n\n- **Path**: `%s`\n- **GitHub**: `%s`\n' \
+            "$TP" "$TG" >> "$CLAUDE_MD"
     fi
 
     # Machine-written shape record (KIT-0048 F2) — kit_markers is the
@@ -550,14 +550,8 @@ TARGETSECTION
     # above; absorbs KIT-0027's intent (mechanism redirected from
     # current-state.json to this runtime-read region).
     if ! python3 "$KIT_MARKERS" regions "$CLAUDE_MD" 2>/dev/null | grep -qx 'kit-install'; then
-        cat >> "$CLAUDE_MD" << KITINSTALL
-
-<!-- BEGIN KIT-LOCAL: kit-install -->
-shape: planning
-target_path: $TP
-target_github: $TG
-<!-- END KIT-LOCAL: kit-install -->
-KITINSTALL
+        printf '\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: planning\ntarget_path: %s\ntarget_github: %s\n<!-- END KIT-LOCAL: kit-install -->\n' \
+            "$TP" "$TG" >> "$CLAUDE_MD"
         echo "  kit-install region written (shape: planning)"
     else
         echo "  kit-install region already present (preserved)"

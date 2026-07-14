@@ -244,3 +244,28 @@ class TestPlanningShape:
         text = (target / "CLAUDE.md").read_text(encoding="utf-8")
         assert "Hand-written intro." in text
         assert "shape: planning" in text
+
+    def test_target_values_written_literally_no_expansion(self, tmp_path):
+        """claude-code review: $(...) in operator-supplied pointer values
+        must be written literally, never shell-expanded."""
+        target = make_consumer_dir(tmp_path, "hostile")
+        marker = tmp_path / "pwned"
+        result = run_bootstrap(
+            target,
+            "--shape",
+            "planning",
+            "--target-path",
+            f"../x$(touch {marker})",
+        )
+        assert result.returncode == 0, result.stderr
+        assert not marker.exists(), "command substitution executed!"
+        text = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "$(touch" in text  # literal, unexpanded
+
+    def test_malformed_target_github_rejected(self, tmp_path):
+        target = make_consumer_dir(tmp_path, "badgh")
+        result = run_bootstrap(
+            target, "--shape", "planning", "--target-github", "not a repo slug"
+        )
+        assert result.returncode == 1
+        assert "owner/repo" in result.stdout + result.stderr

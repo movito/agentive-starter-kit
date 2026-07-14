@@ -305,6 +305,63 @@ class TestShapeInclusion:
         assert len(doctor_lines(result)) == 3
         assert "shape-record" not in result.stdout
 
+    def test_crashing_kit_markers_fails_loud(self, tmp_path):
+        """o3 review: a reader failure that is NOT 'region not found'
+        must never silently fall back to single."""
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        (root / "scripts" / "local" / "kit_markers.py").write_text(
+            "import sys\nsys.stderr.write('boom')\nsys.exit(2)\n",
+            encoding="utf-8",
+        )
+        result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
+        assert any(
+            ln.startswith("DOCTOR:shape-record:FAIL:") and "exit 2" in ln
+            for ln in lines
+        )
+        # maximally diagnostic: full set still ran
+        assert len(lines) == 4
+        assert result.returncode == 1
+
+    def test_empty_shapes_header_runs_everywhere(self, tmp_path):
+        """o3 review: an empty declaration must never skip a check in
+        every shape forever — it runs everywhere instead."""
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        _make_check(
+            checks,
+            "40-empty.sh",
+            "# shapes:\n" 'echo "DOCTOR:empty-header:PASS:still ran"\n',
+        )
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:empty-header:PASS:") for ln in doctor_lines(result)
+        )
+
+    def test_case_variant_header_recognized(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        _make_check(
+            checks,
+            "50-case.sh",
+            "# SHAPES: single\n" 'echo "DOCTOR:case:PASS:single only"\n',
+        )
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:50-case.sh:SKIP:") for ln in doctor_lines(result)
+        )
+
+    def test_header_found_after_long_banner(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        banner = "".join(f"# banner line {i} {'x' * 40}\n" for i in range(20))
+        _make_check(
+            checks,
+            "60-banner.sh",
+            banner + "# shapes: single\n" 'echo "DOCTOR:banner:PASS:x"\n',
+        )
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:60-banner.sh:SKIP:") for ln in doctor_lines(result)
+        )
+
 
 def run_env_check(root: Path) -> subprocess.CompletedProcess:
     check = DOCTOR_D / "20-env-keys.py"
