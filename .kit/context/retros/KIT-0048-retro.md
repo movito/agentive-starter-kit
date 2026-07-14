@@ -1,9 +1,9 @@
 ## KIT-0048 — Planning-Repo Shape, ADR-0027 P2 (PR #78)
 
-**Date**: 2026-07-14
+**Date**: 2026-07-14 (finalized post-merge — PR #78 squash-merged as `a908b90`, CodeRabbit approved)
 **Agent**: feature-developer-f5
 **Mode**: single-repo (fourth worktree session: `ask-worktrees/KIT-0048`)
-**Scorecard**: 9 threads (4 rounds; 8 real+fixed, 1 declined with evidence), 0 regressions, 4 fix rounds (1 evaluator pre-PR + 3 bot), 8 commits
+**Scorecard**: 9 threads (4 rounds; 8 real+fixed, 1 declined with evidence), 0 regressions, 4 fix rounds (1 evaluator pre-PR + 3 bot), 9 commits
 
 ### What Worked
 

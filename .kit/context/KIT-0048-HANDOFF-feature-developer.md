@@ -1,6 +1,6 @@
 # KIT-0048 Handoff — feature-developer
 
-**Task**: `.kit/tasks/4-in-review/KIT-0048-planning-repo-shape.md`
+**Task**: `.kit/tasks/5-done/KIT-0048-planning-repo-shape.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-14 (planner-f5)
 **Estimated effort**: 4–6 hours

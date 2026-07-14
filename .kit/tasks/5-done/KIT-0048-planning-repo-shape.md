@@ -1,6 +1,6 @@
 # KIT-0048: Planning-repo shape — install the kit without a toolchain (ADR-0027 P2)
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 4-6 hours
