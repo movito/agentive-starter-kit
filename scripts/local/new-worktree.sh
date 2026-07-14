@@ -128,6 +128,22 @@ if git -C "$PRIMARY_ROOT" show-ref --verify --quiet "refs/heads/$BRANCH"; then
 fi
 
 # ─────────────────────────────────────────
+# Pre-flight the provisioning sources BEFORE creating anything
+# (temp-then-commit spirit: all fallible checks first, then mutate —
+# a missing artifact must refuse cleanly, never leave a half-provisioned
+# worktree behind a "Worktree ready" message)
+# ─────────────────────────────────────────
+for rel in "${PROVISION_LINKS[@]}"; do
+    if [ ! -e "$PRIMARY_ROOT/$rel" ]; then
+        echo "Error: required artifact missing in primary clone: $rel" >&2
+        if [ "$rel" = ".adversarial/evaluators" ]; then
+            echo "       Install first: ./scripts/core/project install-evaluators" >&2
+        fi
+        exit 1
+    fi
+done
+
+# ─────────────────────────────────────────
 # Create: fetch fresh, branch from origin/main (pilot friction #2)
 # ─────────────────────────────────────────
 echo "Fetching origin..."
@@ -152,16 +168,11 @@ trap 'echo "Provisioning failed — to retry from scratch:" >&2;
 # ─────────────────────────────────────────
 # Provision (pilot friction #3)
 # ─────────────────────────────────────────
+# Sources were verified up front, so every entry links or the ERR trap
+# fires — no silent partial provisioning.
 for rel in "${PROVISION_LINKS[@]}"; do
     src="$PRIMARY_ROOT/$rel"
     dst="$WORKTREE_PATH/$rel"
-    if [ ! -e "$src" ]; then
-        echo "⚠️  Skipping $rel — missing in primary clone ($src)." >&2
-        if [ "$rel" = ".adversarial/evaluators" ]; then
-            echo "   Install first: ./scripts/core/project install-evaluators" >&2
-        fi
-        continue
-    fi
     mkdir -p "$(dirname "$dst")"
     ln -s "$src" "$dst"
     echo "Linked $rel -> $src"

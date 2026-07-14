@@ -110,7 +110,10 @@ Your mission: [Clear, action-oriented statement of the agent's goal]
 Open the session tab with its working directory set to
 `[worktree path, e.g. ../ask-worktrees/[TASK-ID]]` — branch
 `feature/[TASK-ID]-short-description`, created and provisioned via
-`./scripts/local/new-worktree.sh [TASK-ID]`.
+`./scripts/local/new-worktree.sh [TASK-ID] short-description`.
+(Pass the slug explicitly, or omit it and copy the branch name the
+helper derives from the task filename — the LAUNCH block's branch must
+match what the helper actually created.)
 Do NOT run the session from the primary clone.
 
 **⚠️ FIRST ACTIONS** (in order):
@@ -195,7 +198,8 @@ Your mission: Follow the RED-GREEN-REFACTOR TDD cycle to create a properly teste
 **⚠️ LAUNCH** (un-skippable — see `WORKTREE-WORKFLOW.md`):
 Open the session tab with its working directory set to
 `../ask-worktrees/TASK-0102` — branch `feature/TASK-0102-linear-sync-tdd`,
-created and provisioned via `./scripts/local/new-worktree.sh TASK-0102`.
+created and provisioned via
+`./scripts/local/new-worktree.sh TASK-0102 linear-sync-tdd`.
 Do NOT run the session from the primary clone.
 
 **⚠️ FIRST ACTIONS** (in order):

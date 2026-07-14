@@ -25,7 +25,8 @@ planner-side branch-verify habit stays as defense in depth.
 
 ## Creation
 
-One command, run from anywhere in the repo (or any of its worktrees):
+One command, run from the repository root (the primary clone's or any
+worktree's — the helper always resolves the primary internally):
 
 ```bash
 ./scripts/local/new-worktree.sh <TASK-ID> [slug]
