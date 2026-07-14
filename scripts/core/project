@@ -1283,14 +1283,24 @@ def cmd_doctor(args, project_dir):
     """
     doctor_dir = project_dir / "scripts" / "core" / "doctor.d"
     for arg in args:
+        # An empty value would resolve Path("") to the cwd and silently
+        # diagnose the wrong tree — usage error instead (BugBot round 6).
         if arg.startswith("--dir="):
             # test/advanced seam: run a different check set (resolve now —
             # checks run with a different cwd, so relative would break)
-            doctor_dir = Path(arg.partition("=")[2]).resolve()
+            value = arg.partition("=")[2]
+            if not value:
+                print("❌ --dir= requires a path")
+                return 3
+            doctor_dir = Path(value).resolve()
         elif arg.startswith("--root="):
             # diagnose another checkout (e.g. the primary clone from a
             # worktree); checks receive it as DOCTOR_ROOT
-            project_dir = Path(arg.partition("=")[2]).resolve()
+            value = arg.partition("=")[2]
+            if not value:
+                print("❌ --root= requires a path")
+                return 3
+            project_dir = Path(value).resolve()
             if not project_dir.is_dir():
                 print(f"❌ --root is not a directory: {project_dir}")
                 return 3

@@ -165,6 +165,18 @@ class TestDriverContract:
         )
         assert result.returncode == 3
 
+    @pytest.mark.parametrize("flag", ["--dir=", "--root="])
+    def test_empty_flag_value_is_usage_error(self, tmp_path, flag):
+        # Path("") resolves to cwd — an empty value must not silently
+        # diagnose the wrong tree (BugBot round 6)
+        result = subprocess.run(
+            [sys.executable, str(PROJECT_SCRIPT), "doctor", flag],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert result.returncode == 3
+
     def test_missing_checks_dir_is_driver_error(self, tmp_path):
         result = run_doctor(tmp_path / "nope")
         assert result.returncode == 3
@@ -387,6 +399,7 @@ class TestVersionSkewCheck:
         )
         result = run_skew_check(root, path_dir)
         assert "DOCTOR:venv-skew-adversarial:FAIL:" in result.stdout
+        assert "0.9.7" in result.stdout and "1.0.1" in result.stdout
 
     def test_activated_alternate_venv_cannot_mask_skew(self, tmp_path):
         """CodeRabbit round 5: the two round-4 fixes combined — an
@@ -422,6 +435,7 @@ class TestVersionSkewCheck:
             timeout=30,
         )
         assert "DOCTOR:venv-skew-adversarial:FAIL:" in result.stdout
+        assert "0.9.7" in result.stdout and "1.0.1" in result.stdout
 
 
 def run_core_bare_check(root: Path) -> subprocess.CompletedProcess:
