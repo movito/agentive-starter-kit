@@ -10,6 +10,8 @@
 # Exit codes follow the doctor contract: 0 ok, 1 failures, 2 warnings
 # only, 3 driver error.
 
+set -euo pipefail
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "⚠️  verify-setup.sh is deprecated — running: ./scripts/core/project doctor" >&2

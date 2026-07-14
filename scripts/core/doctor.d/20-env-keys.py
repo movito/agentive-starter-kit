@@ -21,16 +21,30 @@ RECOMMENDED_KEYS = ["OPENAI_API_KEY", "GEMINI_API_KEY"]
 
 
 def key_state(lines, key):
-    """Return 'present', 'commented', or 'missing' for key. Values unread."""
+    """Return 'present', 'commented', or 'missing' for key. Values unread.
+
+    Scans the WHOLE file: an uncommented assignment anywhere wins over a
+    commented one (the copy-template-then-append layout keeps the
+    commented template line — o3 review caught the first-match-wins
+    false FAIL). Accepts an optional `export ` prefix. Strict `KEY=value`
+    format otherwise — spaces around `=` are deliberately not recognized
+    (standard .env parsers do not accept them either).
+    """
+    state = "missing"
     for line in lines:
         stripped = line.strip()
+        if stripped.startswith("export "):
+            stripped = stripped[len("export ") :].lstrip()
         if stripped.startswith(f"{key}="):
             # empty value counts as commented-out for our purposes
             _, _, value = stripped.partition("=")
-            return "present" if value.strip() else "commented"
-        if stripped.lstrip("# ").startswith(f"{key}=") and stripped.startswith("#"):
-            return "commented"
-    return "missing"
+            if value.strip():
+                return "present"
+            state = "commented"
+            continue
+        if stripped.startswith("#") and stripped.lstrip("# ").startswith(f"{key}="):
+            state = "commented"
+    return state
 
 
 def main():

@@ -13,6 +13,12 @@
 
 set -u
 
+# A leaked GIT_DIR would make git ignore -C entirely and inspect the
+# WRONG repository — the exact leak class this check diagnoses must not
+# be able to blind the check itself (fast-v2 review finding; the driver
+# also scrubs GIT_* but this check must survive standalone runs).
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${DOCTOR_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 

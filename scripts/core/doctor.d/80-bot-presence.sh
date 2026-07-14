@@ -22,12 +22,12 @@ if ! command -v gh >/dev/null 2>&1; then
     exit 0
 fi
 
-PR_JSON="$(gh pr list --state all --limit 1 --json number 2>/dev/null)" || {
+# gh's built-in --jq extracts robustly — no regex-over-JSON (convergent
+# finding from all three evaluators)
+PR_NUM="$(gh pr list --state all --limit 1 --json number --jq '.[0].number // empty' 2>/dev/null)" || {
     echo "DOCTOR:bot-presence:SKIP:cannot list PRs (unauthenticated or no remote)"
     exit 0
 }
-
-PR_NUM="$(printf '%s' "$PR_JSON" | grep -oE '"number": *[0-9]+' | grep -oE '[0-9]+' | head -1)"
 if [ -z "$PR_NUM" ]; then
     echo "DOCTOR:bot-presence:SKIP:no PRs yet — bot presence unknowable pre-PR"
     exit 0

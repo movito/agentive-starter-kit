@@ -32,7 +32,10 @@ from pathlib import Path
 try:
     import tomllib
 except ImportError:  # Python 3.10
-    tomllib = None
+    try:
+        import tomli as tomllib
+    except ImportError:
+        tomllib = None  # black_pin falls back to a regex scan
 
 SKEW_PACKAGE = "adversarial-workflow"
 
@@ -59,8 +62,18 @@ def pip_version(pip_cmd, package):
 def black_pin(root):
     """Return the exact black pin from pyproject.toml, or None."""
     pyproject = root / "pyproject.toml"
-    if not pyproject.exists() or tomllib is None:
+    if not pyproject.exists():
         return None
+    if tomllib is None:
+        # No TOML parser on this interpreter (bare 3.10): regex scan so
+        # drift detection still works instead of silently SKIPping
+        # (o3 review finding).
+        try:
+            text = pyproject.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return None
+        match = re.search(r'"black\s*==\s*([0-9][0-9a-zA-Z.]*)"', text)
+        return match.group(1) if match else None
     try:
         data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError):
@@ -94,7 +107,10 @@ def active_black_version(root):
             )
         except (OSError, subprocess.TimeoutExpired):
             continue
-        match = re.search(r"(\d+\.\d+(?:\.\d+)?[a-z0-9]*)", result.stdout)
+        # anchor to the tool name so a version-like string earlier in the
+        # output (e.g. inside a path) cannot be captured (claude-code
+        # review finding)
+        match = re.search(r"black[,\s]+(\d+\.\d+(?:\.\d+)?[a-z0-9]*)", result.stdout)
         if match:
             return match.group(1)
     return None

@@ -21,9 +21,12 @@ if [ ! -f "$WORKFLOW" ]; then
     exit 0
 fi
 
-# An active push trigger is a top-level `on:` child — two-space indent,
-# uncommented. Comments discussing "push" do not match.
-if ! grep -qE '^  push:' "$WORKFLOW"; then
+# An active push trigger can be block style at any indent (`push:` on
+# its own line), flow style (`on: [push, ...]`), or scalar (`on: push`).
+# Comments discussing "push" do not match (o3 review: the original
+# two-space-only grep silently SKIPped on other indents — erring toward
+# "checking" beats erring toward SKIP for this incident class).
+if ! grep -qE '^[[:space:]]*push:[[:space:]]*$|^on:[[:space:]]*(\[[^]]*push|push[[:space:]]*$)' "$WORKFLOW"; then
     echo "DOCTOR:push-sync-token:SKIP:push channel parked — see KIT-0045"
     exit 0
 fi

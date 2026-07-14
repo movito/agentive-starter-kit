@@ -367,3 +367,220 @@ class TestCoreBareCheck:
     def test_non_git_dir_skips(self, tmp_path):
         result = run_core_bare_check(tmp_path)
         assert "DOCTOR:core-bare:SKIP:" in result.stdout
+
+    def test_hostile_git_dir_cannot_redirect_the_check(self, tmp_path):
+        """A leaked GIT_DIR (the incident class itself) must not blind
+        the canary — the check unsets GIT_* before touching git."""
+        victim = tmp_path / "victim"
+        victim.mkdir()
+        self._init_repo(victim)
+        decoy = tmp_path / "decoy"
+        decoy.mkdir()
+        self._init_repo(decoy)
+        subprocess.run(
+            ["git", "-C", str(decoy), "config", "core.bare", "true"],
+            check=True,
+            timeout=30,
+        )
+        check = DOCTOR_D / "70-core-bare.sh"
+        result = subprocess.run(
+            ["bash", str(check)],
+            env={
+                **os.environ,
+                "DOCTOR_ROOT": str(victim),
+                "GIT_DIR": str(decoy / ".git"),
+            },
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        # without the unset, git would inspect the bare decoy and FAIL
+        assert "DOCTOR:core-bare:PASS:" in result.stdout
+
+
+class TestEnvKeysDuplicates:
+    """o3 review: present must win over an earlier commented template line."""
+
+    def test_commented_template_then_real_key_passes(self, tmp_path):
+        (tmp_path / ".env").write_text(
+            "# ANTHROPIC_API_KEY=template-placeholder\n"
+            "ANTHROPIC_API_KEY=sk-test-real\n"
+            "OPENAI_API_KEY=x\nGEMINI_API_KEY=y\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:PASS:" in result.stdout
+
+    def test_export_prefix_recognized(self, tmp_path):
+        (tmp_path / ".env").write_text(
+            "export ANTHROPIC_API_KEY=sk-test-real\n"
+            "export OPENAI_API_KEY=x\nexport GEMINI_API_KEY=y\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:PASS:" in result.stdout
+
+
+BASH = shutil.which("bash")  # absolute — restricted-PATH runs still need it
+
+
+def _restricted_bin(base: Path, tools: tuple[str, ...] = ()) -> Path:
+    """A PATH dir holding ONLY the named real tools (gh notably absent)."""
+    bin_dir = base / "restricted-bin"
+    bin_dir.mkdir()
+    for tool in tools:
+        real = shutil.which(tool)
+        assert real, f"{tool} required for this fixture"
+        (bin_dir / tool).symlink_to(real)
+    return bin_dir
+
+
+def run_push_sync_check(root: Path, path_dir: Path | None = None):
+    """Run 60-push-sync-token.sh; restrict PATH to control gh visibility."""
+    env = {**os.environ, "DOCTOR_ROOT": str(root)}
+    if path_dir is not None:
+        env["PATH"] = str(path_dir)
+    check = DOCTOR_D / "60-push-sync-token.sh"
+    return subprocess.run(
+        [BASH, str(check)],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+class TestPushSyncTokenCheck:
+    """F2.6: parked vs active trigger detection (o3: indent tolerance)."""
+
+    @staticmethod
+    def _workflow(root: Path, body: str) -> None:
+        wf = root / ".github" / "workflows"
+        wf.mkdir(parents=True)
+        (wf / "sync-core-scripts.yml").write_text(
+            textwrap.dedent(body), encoding="utf-8"
+        )
+
+    def test_missing_workflow_skips(self, tmp_path):
+        result = run_push_sync_check(tmp_path)
+        assert "DOCTOR:push-sync-token:SKIP:" in result.stdout
+        assert "not present" in result.stdout
+
+    def test_parked_dispatch_only_skips(self, tmp_path):
+        self._workflow(
+            tmp_path,
+            """\
+            # The push trigger is disabled: CROSS_REPO_TOKEN was never provisioned
+            on:
+              workflow_dispatch:
+            """,
+        )
+        result = run_push_sync_check(tmp_path)
+        assert "parked — see KIT-0045" in result.stdout
+
+    def test_commented_push_trigger_still_parked(self, tmp_path):
+        self._workflow(
+            tmp_path,
+            """\
+            on:
+              workflow_dispatch:
+              #  push:
+              #    branches: [main]
+            """,
+        )
+        result = run_push_sync_check(tmp_path)
+        assert "parked — see KIT-0045" in result.stdout
+
+    @pytest.mark.parametrize(
+        "body",
+        [
+            "on:\n  push:\n    branches: [main]\n",  # two-space indent
+            "on:\n    push:\n        branches: [main]\n",  # four-space indent
+            "on: [push, workflow_dispatch]\n",  # flow style
+            "on: push\n",  # scalar style
+        ],
+    )
+    def test_active_trigger_detected_regardless_of_style(self, tmp_path, body):
+        self._workflow(tmp_path, body)
+        # PATH with grep but without gh: an active trigger must degrade
+        # to WARN ("cannot verify"), never to the parked SKIP
+        bin_dir = _restricted_bin(tmp_path, tools=("grep",))
+        result = run_push_sync_check(tmp_path, path_dir=bin_dir)
+        assert "DOCTOR:push-sync-token:WARN:" in result.stdout
+        assert "cannot verify" in result.stdout
+
+
+class TestGhAuthCheck:
+    """F2.1: negative paths via PATH-controlled stubs (o3 test gap)."""
+
+    def test_missing_gh_fails(self, tmp_path):
+        empty_bin = _restricted_bin(tmp_path)
+        check = DOCTOR_D / "10-gh-auth.sh"
+        result = subprocess.run(
+            [BASH, str(check)],
+            env={**os.environ, "PATH": str(empty_bin)},
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert "DOCTOR:gh-auth:FAIL:" in result.stdout
+        assert "not installed" in result.stdout
+
+    def test_unauthenticated_gh_fails(self, tmp_path):
+        stub_bin = _restricted_bin(tmp_path)
+        _stub_executable(
+            stub_bin / "gh",
+            'if [ "$1 $2" = "auth status" ]; then exit 1; fi\nexit 0\n',
+        )
+        check = DOCTOR_D / "10-gh-auth.sh"
+        result = subprocess.run(
+            [BASH, str(check)],
+            env={**os.environ, "PATH": str(stub_bin)},
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert "DOCTOR:gh-auth:FAIL:" in result.stdout
+        assert "not authenticated" in result.stdout
+
+
+class TestDriverHardening:
+    """Fix-round driver guarantees (fast-v2 + claude-code findings)."""
+
+    def test_dotfiles_in_doctor_d_are_ignored(self, tmp_path):
+        _make_check(tmp_path, "10-ok.sh", 'echo "DOCTOR:ok:PASS:fine"\n')
+        (tmp_path / ".DS_Store").write_bytes(b"\x00junk")
+        result = run_doctor(tmp_path)
+        assert result.returncode == 0
+        assert len(doctor_lines(result)) == 1
+
+    def test_nonzero_exit_after_output_adds_fail(self, tmp_path):
+        _make_check(
+            tmp_path,
+            "10-halfway.sh",
+            'echo "DOCTOR:halfway:PASS:first concern ok"\nexit 5\n',
+        )
+        result = run_doctor(tmp_path)
+        lines = doctor_lines(result)
+        assert any(ln.startswith("DOCTOR:halfway:PASS:") for ln in lines)
+        assert any(
+            ln.startswith("DOCTOR:10-halfway.sh:FAIL:") and "exited 5" in ln
+            for ln in lines
+        )
+        assert result.returncode == 1
+
+    def test_git_env_scrubbed_from_checks(self, tmp_path):
+        _make_check(
+            tmp_path,
+            "10-gitenv.sh",
+            'echo "DOCTOR:gitenv:PASS:GIT_DIR=${GIT_DIR:-scrubbed}"\n',
+        )
+        result = subprocess.run(
+            [sys.executable, str(PROJECT_SCRIPT), "doctor", f"--dir={tmp_path}"],
+            env={**os.environ, "GIT_DIR": "/tmp/hostile/.git"},
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        line = next(ln for ln in doctor_lines(result) if ":gitenv:" in ln)
+        assert "GIT_DIR=scrubbed" in line
