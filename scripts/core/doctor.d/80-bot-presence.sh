@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shapes: single planning
 # doctor check: review bots present on the repo — WARN-max by design.
 #
 # Incidents: CodeRabbit "internal error" ×3 rounds (prepaid credits

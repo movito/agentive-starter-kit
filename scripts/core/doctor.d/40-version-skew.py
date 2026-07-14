@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# shapes: single
 """doctor check: venv-vs-system version skew for packages that bit us.
 
 Incidents:

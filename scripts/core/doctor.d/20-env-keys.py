@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# shapes: single planning
 """doctor check: .env exists; required keys present AND uncommented.
 
 Incident (KIT-0032): the evaluator trio ran 2-of-3 because

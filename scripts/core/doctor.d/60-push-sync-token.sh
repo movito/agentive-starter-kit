@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shapes: single planning
 # doctor check: push-sync secrets exist — only while the push trigger
 # is active in sync-core-scripts.yml.
 #

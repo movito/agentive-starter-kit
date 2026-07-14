@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shapes: single planning
 # doctor check: plugin marketplace source is GitHub, not a directory.
 #
 # Incident (KIT-0030 gotcha): a `Directory (...)` marketplace source
