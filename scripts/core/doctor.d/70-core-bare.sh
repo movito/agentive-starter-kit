@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shapes: single planning
 # doctor check: core.bare is false in the primary clone.
 #
 # Incident (KIT-0043): a pre-commit GIT_DIR leak from inside a worktree

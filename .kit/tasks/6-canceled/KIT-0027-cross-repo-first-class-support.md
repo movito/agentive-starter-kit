@@ -1,10 +1,23 @@
 # KIT-0027: First-Class Cross-Repo Agent Support
 
-**Status**: Backlog
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 days
 **Created**: 2026-04-16
+
+> **DISPOSITION (2026-07-14, KIT-0048)**: **Superseded — absorbed by
+> KIT-0048 (planning-repo shape, ADR-0027 P2).** The intent (a
+> first-class planning↔target installation) shipped there:
+> `bootstrap-consumer.sh --shape planning` installs the coordination
+> machinery, and the target-repo pointer is recorded in CLAUDE.md's
+> `kit-install` KIT-LOCAL region. **Mechanism redirect**: this spec's
+> `current-state.json` `target_repo` field was NOT built — the record is
+> a runtime-read CLAUDE.md region per ADR-0025/0027 (convention +
+> runtime-read over config machinery). The `## Target Repository`
+> section and its grep detection (KIT-ADR-0024) remain the agent-facing
+> convention, unchanged. File retained per the ASK-0048 precedent
+> (superseded, not deleted).
 
 ## Overview
 

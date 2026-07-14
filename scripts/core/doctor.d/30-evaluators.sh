@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shapes: single planning
 # doctor check: evaluator library installed (.adversarial/evaluators/ non-empty).
 #
 # Incident (KIT-0043 worktree pilot): a fresh worktree had no

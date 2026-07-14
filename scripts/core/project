@@ -1261,6 +1261,97 @@ def _print_sync_report(report, *, dry_run, committed, project_dir):
         print("\n   Run without --dry-run to apply.")
 
 
+def _doctor_shape(project_dir):
+    """Read the installation's shape record (KIT-0048 F2/F3).
+
+    The record lives in CLAUDE.md's ``kit-install`` KIT-LOCAL region and
+    kit_markers.py is its only reader (N4: one extract, runtime-read, no
+    cache). Returns ``(shape, error_detail)``:
+
+    - anything absent (kit_markers, CLAUDE.md, region) -> ("single", None)
+      — back-compat: absent means today's single shape, never an error;
+    - a readable record with shape in {single, planning} -> (shape, None);
+    - malformed/unknown value or unreadable record -> (None, detail) —
+      the caller runs the FULL check set AND emits
+      DOCTOR:shape-record:FAIL — fail loud while staying maximally
+      diagnostic, never silently fall back.
+    """
+    kit_markers = project_dir / "scripts" / "local" / "kit_markers.py"
+    claude_md = project_dir / "CLAUDE.md"
+    if not kit_markers.exists() or not claude_md.exists():
+        return "single", None
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(kit_markers),
+                "extract",
+                str(claude_md),
+                "kit-install",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return None, f"shape record unreadable ({exc.__class__.__name__})"
+    if result.returncode != 0:
+        # kit_markers exits 1 with this exact stderr for a missing region
+        # (absent = single, back-compat). ANY other failure — crash, bad
+        # interpreter, argv error — is an unreadable record and must fail
+        # loud, not silently fall back (o3 review).
+        if "region not found" in result.stderr:
+            return "single", None
+        detail = result.stderr.strip().splitlines()
+        return None, (
+            "kit_markers extract failed "
+            f"(exit {result.returncode}: {detail[0] if detail else 'no stderr'})"
+        )
+    for line in result.stdout.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("shape:"):
+            value = stripped.partition(":")[2].strip()
+            if value == "single" or value == "planning":
+                return value, None
+            return None, (
+                f"unknown shape '{value}' in kit-install region — "
+                "expected single|planning; running the full check set"
+            )
+    return None, (
+        "kit-install region present but has no shape: line — "
+        "running the full check set"
+    )
+
+
+def _check_shapes(check_path):
+    """Shapes a doctor.d check declares via its `# shapes:` header line.
+
+    Returns a set of shape tokens, or None when the check declares
+    nothing — an undeclared OR empty declaration runs for every shape
+    (never silently skipped; o3 review: an empty set would skip the
+    check in every shape forever). Case-insensitive; scanned over the
+    first 30 lines, which covers long banners without picking up
+    documentation strings deep in a check body (convention: the header
+    sits right under the shebang).
+    """
+    try:
+        text = check_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    head = "\n".join(text.splitlines()[:30])
+    # [^\S\n] = horizontal whitespace only — \s would slurp the newline
+    # of an empty declaration and capture the NEXT line as shape tokens
+    match = re.search(
+        r"^#[^\S\n]*shapes:[^\S\n]*(.*)$", head, re.MULTILINE | re.IGNORECASE
+    )
+    if match:
+        # lowercase the tokens too — IGNORECASE only covers the keyword,
+        # and '# Shapes: Single' must match shape 'single' (CodeRabbit)
+        declared = {token.lower() for token in match.group(1).split()}
+        return declared or None
+    return None
+
+
 def cmd_doctor(args, project_dir):
     """`project doctor`: run all doctor.d environment checks (ADR-0027 P4).
 
@@ -1324,8 +1415,11 @@ def cmd_doctor(args, project_dir):
         print(f"❌ no checks found in {doctor_dir}")
         return 3
 
-    # TODO(P2): per-shape inclusion — filter `checks` by the recorded
-    # project shape once shapes exist (ADR-0027 P2). v1 runs everything.
+    # Per-shape inclusion (KIT-0048, fills the P2 seam): checks declare
+    # their shapes in a `# shapes:` header; the driver reads the shape
+    # record once and stays otherwise shape-blind. A malformed record
+    # runs everything AND fails loud via the shape-record line below.
+    shape, shape_error = _doctor_shape(project_dir)
 
     # Scrub ambient GIT_* so a leaked GIT_DIR (the KIT-0043 incident
     # class — e.g. doctor invoked from a pre-commit hook in a worktree)
@@ -1333,8 +1427,19 @@ def cmd_doctor(args, project_dir):
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env["DOCTOR_ROOT"] = str(project_dir)
     verdicts = []
+    if shape_error:
+        print(f"DOCTOR:shape-record:FAIL:{shape_error}")
+        verdicts.append("FAIL")
     for check in checks:
         name = check.name
+        declared = _check_shapes(check)
+        if shape is not None and declared is not None and shape not in declared:
+            print(
+                f"DOCTOR:{name}:SKIP:not applicable to shape '{shape}' "
+                f"(check declares: {' '.join(sorted(declared))})"
+            )
+            verdicts.append("SKIP")
+            continue
         if not os.access(check, os.X_OK):
             print(f"DOCTOR:{name}:FAIL:check file is not executable")
             verdicts.append("FAIL")
@@ -1410,6 +1515,12 @@ def cmd_doctor(args, project_dir):
 def cmd_sync(args, project_dir):
     """`project sync`: pull core files from upstream via the sync engine.
 
+    Shape guard (KIT-0048): the engine selects entries from the UPSTREAM
+    manifest, so a full sync into a planning-shaped repo would install
+    the single-shape toolchain files the shape must never ship (BugBot
+    finding on PR #78). Until sync learns shape-scoped subsets
+    (KIT-0049), refuse loudly rather than mis-provision.
+
     Resolution/branch mechanics per KIT-ADR-0026 §2. Returns a process exit
     code (the engine's exit-code contract).
 
@@ -1422,6 +1533,16 @@ def cmd_sync(args, project_dir):
     failures pass through the engine's own code. Also a self-review
     checklist item (``.kit/skills/self-review/SKILL.md``).
     """
+    shape, shape_error = _doctor_shape(project_dir)
+    if shape == "planning" or shape_error:
+        reason = shape_error or "this repo records shape: planning"
+        print(f"❌ sync refused: {reason}")
+        print("   The sync engine selects entries from the UPSTREAM manifest —")
+        print("   a full run would install single-shape toolchain files into a")
+        print("   planning repo. Shape-scoped sync is tracked as KIT-0049.")
+        # Wrapper-level refusal → 2 (wrapper exit-code convention above).
+        return 2
+
     known_bool = {"--dry-run", "--no-branch"}
     known_val = {"--ref", "--source", "--tier", "--only"}
     i = 0

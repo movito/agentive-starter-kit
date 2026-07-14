@@ -18,6 +18,28 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _isolate_git_env_session():
+    """Strip ambient GIT_* for the WHOLE session, before any fixture runs.
+
+    The function-scoped fixture below is NOT enough on its own: class- and
+    session-scoped fixtures execute OUTSIDE it, so a scoped fixture that
+    shells out to git (or to a script that does) still sees pre-commit's
+    exported GIT_DIR. During KIT-0048 exactly that happened — a
+    class-scoped bootstrap fixture ran under the pytest-fast hook, its
+    `git init`/`git add -A`/`git commit` resolved to the REAL worktree
+    repo with the scratch dir as work-tree, committing a scaffold tree
+    onto the feature branch and flipping the primary's core.bare (the
+    same damage signature as the never-conclusively-pinned KIT-0043
+    incident — this fixture-scope escape is the missing vector).
+    """
+    saved = {k: v for k, v in os.environ.items() if k.startswith("GIT_")}
+    for key in saved:
+        del os.environ[key]
+    yield
+    os.environ.update(saved)
+
+
 @pytest.fixture(autouse=True)
 def _isolate_git_env(monkeypatch):
     """Strip ambient GIT_* for EVERY test (suite-wide; KIT-0043 pilot).
@@ -30,8 +52,10 @@ def _isolate_git_env(monkeypatch):
     repo. Per-module isolation (test_preflight_check._clean_env,
     test_project_sync._git, test_project_script's fixture) predates this;
     the suite-wide fixture kills the whole class, including vectors that
-    reach git indirectly through invoked scripts. The GIT_DIR gotcha is
-    documented in .kit/context/workflows/TESTING-WORKFLOW.md.
+    reach git indirectly through invoked scripts. Belt to the session-
+    scoped fixture above: this one also covers env mutations tests make
+    themselves. The GIT_DIR gotcha is documented in
+    .kit/context/workflows/TESTING-WORKFLOW.md.
     """
     for key in list(os.environ):
         if key.startswith("GIT_"):

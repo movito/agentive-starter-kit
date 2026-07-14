@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shapes: single planning
 # doctor check: gh installed AND authenticated.
 #
 # Incident (KIT-ADR-0027 Context): verify-setup.sh marked `gh` as

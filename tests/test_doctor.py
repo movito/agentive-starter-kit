@@ -191,6 +191,193 @@ class TestDriverContract:
         assert "Doctor: 1 pass, 0 warn, 0 fail, 0 skip" in result.stdout
 
 
+KIT_MARKERS_SRC = REPO_ROOT / "scripts" / "local" / "kit_markers.py"
+
+
+def _shape_fixture(tmp_path: Path, region: str | None) -> tuple[Path, Path]:
+    """A --root fixture with a shape record plus a --dir check set that
+    declares shapes (KIT-0048 F3)."""
+    root = tmp_path / "root"
+    (root / "scripts" / "local").mkdir(parents=True)
+    if KIT_MARKERS_SRC.exists():
+        shutil.copy(KIT_MARKERS_SRC, root / "scripts" / "local" / "kit_markers.py")
+    body = "# My planning repo\n"
+    if region is not None:
+        body += (
+            "\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            f"{region}"
+            "<!-- END KIT-LOCAL: kit-install -->\n"
+        )
+    (root / "CLAUDE.md").write_text(body, encoding="utf-8")
+    checks = tmp_path / "checks"
+    checks.mkdir()
+    _make_check(
+        checks,
+        "10-everywhere.sh",
+        "# shapes: single planning\n"
+        'echo "DOCTOR:everywhere:PASS:runs in all shapes"\n',
+    )
+    _make_check(
+        checks,
+        "20-toolchain.sh",
+        "# shapes: single\n" 'echo "DOCTOR:toolchain:PASS:python toolchain check"\n',
+    )
+    _make_check(
+        checks,
+        "30-undeclared.sh",
+        'echo "DOCTOR:undeclared:PASS:no shapes header"\n',
+    )
+    return root, checks
+
+
+def run_doctor_rooted(root: Path, checks: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [
+            sys.executable,
+            str(PROJECT_SCRIPT),
+            "doctor",
+            f"--root={root}",
+            f"--dir={checks}",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+
+@pytest.mark.skipif(
+    not KIT_MARKERS_SRC.exists(), reason="kit_markers.py absent (consumer checkout)"
+)
+class TestShapeInclusion:
+    """KIT-0048 F3: per-shape check inclusion via `# shapes:` headers."""
+
+    def test_planning_shape_skips_single_only_checks(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
+        assert any(ln.startswith("DOCTOR:everywhere:PASS:") for ln in lines)
+        assert any(
+            ln.startswith("DOCTOR:20-toolchain.sh:SKIP:") and "shape 'planning'" in ln
+            for ln in lines
+        )
+        # undeclared checks run for every shape — never silently skipped
+        assert any(ln.startswith("DOCTOR:undeclared:PASS:") for ln in lines)
+        assert result.returncode == 0
+
+    def test_single_shape_runs_full_set(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        result = run_doctor_rooted(root, checks)
+        assert len(doctor_lines(result)) == 3
+        assert not any("SKIP" in ln for ln in doctor_lines(result))
+
+    def test_absent_region_means_single(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, None)
+        result = run_doctor_rooted(root, checks)
+        assert len(doctor_lines(result)) == 3
+        assert "shape-record" not in result.stdout
+        assert result.returncode == 0
+
+    def test_malformed_shape_runs_full_set_and_fails_loud(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: pyramid\n")
+        result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
+        assert any(
+            ln.startswith("DOCTOR:shape-record:FAIL:") and "pyramid" in ln
+            for ln in lines
+        )
+        # maximally diagnostic: every check still ran (3 checks + 1 FAIL line)
+        assert len(lines) == 4
+        assert result.returncode == 1
+
+    def test_region_without_shape_line_fails_loud(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "target_path: ../x\n")
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:shape-record:FAIL:") for ln in doctor_lines(result)
+        )
+        assert result.returncode == 1
+
+    def test_missing_kit_markers_means_single(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        (root / "scripts" / "local" / "kit_markers.py").unlink()
+        result = run_doctor_rooted(root, checks)
+        # no reader -> absent -> single -> full set, no shape-record line
+        assert len(doctor_lines(result)) == 3
+        assert "shape-record" not in result.stdout
+
+    def test_crashing_kit_markers_fails_loud(self, tmp_path):
+        """o3 review: a reader failure that is NOT 'region not found'
+        must never silently fall back to single."""
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        (root / "scripts" / "local" / "kit_markers.py").write_text(
+            "import sys\nsys.stderr.write('boom')\nsys.exit(2)\n",
+            encoding="utf-8",
+        )
+        result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
+        assert any(
+            ln.startswith("DOCTOR:shape-record:FAIL:") and "exit 2" in ln
+            for ln in lines
+        )
+        # maximally diagnostic: full set still ran
+        assert len(lines) == 4
+        assert result.returncode == 1
+
+    def test_empty_shapes_header_runs_everywhere(self, tmp_path):
+        """o3 review: an empty declaration must never skip a check in
+        every shape forever — it runs everywhere instead."""
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        _make_check(
+            checks,
+            "40-empty.sh",
+            "# shapes:\n" 'echo "DOCTOR:empty-header:PASS:still ran"\n',
+        )
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:empty-header:PASS:") for ln in doctor_lines(result)
+        )
+
+    def test_case_variant_header_recognized(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        _make_check(
+            checks,
+            "50-case.sh",
+            "# SHAPES: single\n" 'echo "DOCTOR:case:PASS:single only"\n',
+        )
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:50-case.sh:SKIP:") for ln in doctor_lines(result)
+        )
+
+    def test_mixed_case_tokens_match(self, tmp_path):
+        """CodeRabbit round 2: '# Shapes: Planning' must match shape
+        'planning' — tokens are lowercased, not just the keyword."""
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        _make_check(
+            checks,
+            "55-mixedcase.sh",
+            "# Shapes: Single Planning\n"
+            'echo "DOCTOR:mixedcase:PASS:runs in planning"\n',
+        )
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:mixedcase:PASS:") for ln in doctor_lines(result)
+        )
+
+    def test_header_found_after_long_banner(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        banner = "".join(f"# banner line {i} {'x' * 40}\n" for i in range(20))
+        _make_check(
+            checks,
+            "60-banner.sh",
+            banner + "# shapes: single\n" 'echo "DOCTOR:banner:PASS:x"\n',
+        )
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:60-banner.sh:SKIP:") for ln in doctor_lines(result)
+        )
+
+
 def run_env_check(root: Path) -> subprocess.CompletedProcess:
     check = DOCTOR_D / "20-env-keys.py"
     return subprocess.run(
