@@ -286,6 +286,34 @@ class TestPlanningShape:
         assert "target_path: ../real-product" in text
         assert "target_github: real/product" in text
 
+    def test_prose_padded_section_still_seeds_region(self, tmp_path):
+        """BugBot round 2: bullets after introductory prose must still
+        be found (whole-section extraction, not a fixed -A window)."""
+        target = make_consumer_dir(tmp_path, "prose")
+        (target / "CLAUDE.md").write_text(
+            "# Repo\n\n## Target Repository\n\n"
+            "This planning repo coordinates the product repo below.\n"
+            "All code changes happen there; specs and reviews live here.\n"
+            "See docs/CROSS-REPO-PATTERN.md for the full pattern.\n\n"
+            "- **Path**: `../prose-product`\n"
+            "- **GitHub**: `prose/product`\n\n"
+            "## Another Section\n\n- **Path**: `../decoy`\n",
+            encoding="utf-8",
+        )
+        result = run_bootstrap(target, "--shape", "planning")
+        assert result.returncode == 0, result.stderr
+        text = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "target_path: ../prose-product" in text
+        assert "../decoy" not in text.split("kit-install")[1]
+
+    def test_shape_flag_as_last_arg_is_clean_usage_error(self, tmp_path):
+        """CodeRabbit round 2: a value-consuming flag in final position
+        must produce the validation message, not a silent set -e death."""
+        target = make_consumer_dir(tmp_path, "lastflag")
+        result = run_bootstrap(target, "--shape")
+        assert result.returncode == 1
+        assert "unknown shape" in (result.stdout + result.stderr).lower()
+
     def test_conflicting_flags_with_existing_section_rejected(self, tmp_path):
         target = make_consumer_dir(tmp_path, "conflict")
         (target / "CLAUDE.md").write_text(

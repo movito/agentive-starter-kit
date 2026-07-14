@@ -1345,7 +1345,9 @@ def _check_shapes(check_path):
         r"^#[^\S\n]*shapes:[^\S\n]*(.*)$", head, re.MULTILINE | re.IGNORECASE
     )
     if match:
-        declared = set(match.group(1).split())
+        # lowercase the tokens too — IGNORECASE only covers the keyword,
+        # and '# Shapes: Single' must match shape 'single' (CodeRabbit)
+        declared = {token.lower() for token in match.group(1).split()}
         return declared or None
     return None
 

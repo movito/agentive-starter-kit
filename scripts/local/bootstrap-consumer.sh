@@ -101,7 +101,9 @@ while [ $# -gt 0 ]; do
             TARGET="$1"
             ;;
     esac
-    shift
+    # value-consuming flags may have emptied $@ — an unguarded shift
+    # would exit 1 under set -e before validation gets to speak
+    if [ $# -gt 0 ]; then shift; fi
 done
 
 case "$SHAPE" in
@@ -206,16 +208,24 @@ AGENT_EXCLUDES=(--exclude='code-reviewer.md' --exclude='document-reviewer.md' --
 
 if [ "$SHAPE" = "planning" ]; then
     echo "1/4 Copying planning-shape scaffolding..."
+else
+    echo "1/4 Copying implementation scaffolding..."
+fi
 
-    # .claude/ — agents (marker-merged below), commands, skills, settings
-    rm -f "$TARGET/.claude/agents/planner2.md" \
-          "$TARGET/.claude/agents/planner3.md" \
-          "$TARGET/.claude/agents/feature-developer-v3.md" \
-          "$TARGET/.claude/agents/feature-developer-v6.md" \
-          "$TARGET/.claude/agents/feature-developer-v7.md"
-    "${RSYNC_BASE[@]}" "${AGENT_EXCLUDES[@]}" \
-        "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
+# Sweep retired agent variants from a prior bootstrap before rsync;
+# --ignore-existing would otherwise leave legacy planner2/3 +
+# feature-developer-v3/v6/v7 alongside the canonical V2 agents in an
+# existing checkout. Shared across shapes — hoisted so the two branches
+# cannot drift (CodeRabbit).
+rm -f "$TARGET/.claude/agents/planner2.md" \
+      "$TARGET/.claude/agents/planner3.md" \
+      "$TARGET/.claude/agents/feature-developer-v3.md" \
+      "$TARGET/.claude/agents/feature-developer-v6.md" \
+      "$TARGET/.claude/agents/feature-developer-v7.md"
+"${RSYNC_BASE[@]}" "${AGENT_EXCLUDES[@]}" \
+    "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
+if [ "$SHAPE" = "planning" ]; then
     # lifecycle + gate machinery (enumerated)
     for rel in "${PLANNING_CORE[@]}"; do
         mkdir -p "$TARGET/scripts/core/$(dirname "$rel")"
@@ -331,19 +341,6 @@ MANIFEST
     echo "Done"
     echo
 else
-echo "1/4 Copying implementation scaffolding..."
-
-# Sweep retired agent variants from a prior bootstrap before rsync; --ignore-existing
-# would otherwise leave legacy planner2/3 + feature-developer-v3/v6/v7 alongside the
-# canonical V2 agents in an existing checkout.
-rm -f "$TARGET/.claude/agents/planner2.md" \
-      "$TARGET/.claude/agents/planner3.md" \
-      "$TARGET/.claude/agents/feature-developer-v3.md" \
-      "$TARGET/.claude/agents/feature-developer-v6.md" \
-      "$TARGET/.claude/agents/feature-developer-v7.md"
-"${RSYNC_BASE[@]}" "${AGENT_EXCLUDES[@]}" \
-    "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
-
 # .serena/ — setup script and template
 "${RSYNC_BASE[@]}" --exclude='cache/' --exclude='memories/' --exclude='claude-code/' \
     "$PROJECT_ROOT/.serena/" "$TARGET/.serena/"
@@ -543,8 +540,11 @@ if [ "$SHAPE" = "planning" ]; then
     # region below seeds FROM it so the two records never disagree, and
     # conflicting flags are an error, not a silent desync (BugBot, PR #78).
     if grep -q '^## Target Repository' "$CLAUDE_MD"; then
-        EXISTING_TP="$(grep -A6 '^## Target Repository' "$CLAUDE_MD" | grep -E '^\- \*\*Path\*\*:' | head -1 | sed -E 's/.*`([^`]*)`.*/\1/')"
-        EXISTING_TG="$(grep -A6 '^## Target Repository' "$CLAUDE_MD" | grep -E '^\- \*\*GitHub\*\*:' | head -1 | sed -E 's/.*`([^`]*)`.*/\1/')"
+        # whole-section extraction (heading to next ## heading) — a fixed
+        # -A window misses layouts with prose before the bullets (BugBot)
+        TARGET_SECTION="$(awk '/^## Target Repository/{in_s=1; next} in_s && /^## /{in_s=0} in_s' "$CLAUDE_MD")"
+        EXISTING_TP="$(printf '%s\n' "$TARGET_SECTION" | grep -E '^\- \*\*Path\*\*:' | head -1 | sed -E 's/.*`([^`]*)`.*/\1/')"
+        EXISTING_TG="$(printf '%s\n' "$TARGET_SECTION" | grep -E '^\- \*\*GitHub\*\*:' | head -1 | sed -E 's/.*`([^`]*)`.*/\1/')"
         if [ -n "$TARGET_PATH" ] && [ -n "$EXISTING_TP" ] && [ "$TARGET_PATH" != "$EXISTING_TP" ]; then
             echo "Error: --target-path '$TARGET_PATH' conflicts with the existing"
             echo "       ## Target Repository section ('$EXISTING_TP')."
@@ -569,7 +569,15 @@ if [ "$SHAPE" = "planning" ]; then
     # consumer edits (KIT-LOCAL semantics). Seeded to match the section
     # above; absorbs KIT-0027's intent (mechanism redirected from
     # current-state.json to this runtime-read region).
-    if ! python3 "$KIT_MARKERS" regions "$CLAUDE_MD" 2>/dev/null | grep -qx 'kit-install'; then
+    # a reader FAILURE must not read as "region absent" — appending a
+    # fresh block over a malformed file would duplicate/corrupt it
+    # (CodeRabbit; the same fail-loud class as the doctor reader fix)
+    if ! REGIONS_OUT="$(python3 "$KIT_MARKERS" regions "$CLAUDE_MD" 2>&1)"; then
+        echo "Error: kit_markers regions failed on $CLAUDE_MD:"
+        echo "       $REGIONS_OUT"
+        exit 1
+    fi
+    if ! printf '%s\n' "$REGIONS_OUT" | grep -qx 'kit-install'; then
         printf '\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: planning\ntarget_path: %s\ntarget_github: %s\n<!-- END KIT-LOCAL: kit-install -->\n' \
             "$TP" "$TG" >> "$CLAUDE_MD"
         echo "  kit-install region written (shape: planning)"

@@ -349,6 +349,21 @@ class TestShapeInclusion:
             ln.startswith("DOCTOR:50-case.sh:SKIP:") for ln in doctor_lines(result)
         )
 
+    def test_mixed_case_tokens_match(self, tmp_path):
+        """CodeRabbit round 2: '# Shapes: Planning' must match shape
+        'planning' — tokens are lowercased, not just the keyword."""
+        root, checks = _shape_fixture(tmp_path, "shape: planning\n")
+        _make_check(
+            checks,
+            "55-mixedcase.sh",
+            "# Shapes: Single Planning\n"
+            'echo "DOCTOR:mixedcase:PASS:runs in planning"\n',
+        )
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:mixedcase:PASS:") for ln in doctor_lines(result)
+        )
+
     def test_header_found_after_long_banner(self, tmp_path):
         root, checks = _shape_fixture(tmp_path, "shape: planning\n")
         banner = "".join(f"# banner line {i} {'x' * 40}\n" for i in range(20))
