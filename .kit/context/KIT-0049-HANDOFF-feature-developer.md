@@ -1,6 +1,6 @@
 # KIT-0049 Handoff — feature-developer
 
-**Task**: `.kit/tasks/3-in-progress/KIT-0049-shape-scoped-sync.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0049-shape-scoped-sync.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-14 (planner-f5)
 **Estimated effort**: 2–3 hours
