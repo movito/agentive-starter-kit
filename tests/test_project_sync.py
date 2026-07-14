@@ -354,9 +354,6 @@ class TestBranchAndCommit:
 KIT_MARKERS = REPO / "scripts" / "local" / "kit_markers.py"
 
 
-@pytest.mark.skipif(
-    not KIT_MARKERS.exists(), reason="kit_markers.py absent (consumer checkout)"
-)
 def _shaped_root(tmp_path: Path, region: str, name: str = "shaped") -> Path:
     """A consumer root with a shape record (kit_markers + CLAUDE.md)."""
     root = tmp_path / name
@@ -395,8 +392,15 @@ def seed_planning_manifest(root: Path) -> None:
     _write(root / "scripts" / ".core-manifest.json", json.dumps(manifest, indent=2))
 
 
+@pytest.mark.skipif(
+    not KIT_MARKERS.exists(), reason="kit_markers.py absent (consumer checkout)"
+)
 class TestShapeScopedSync:
-    """KIT-0049: planning repos sync by manifest intersection."""
+    """KIT-0049: planning repos sync by manifest intersection.
+
+    Class-level skipif: pytest silently ignores marks on plain helper
+    functions (claude-code review caught the decorator stranded on
+    _shaped_root after the KIT-0048 class was replaced)."""
 
     @pytest.fixture
     def planning(self, tmp_path):
@@ -496,6 +500,78 @@ class TestShapeScopedSync:
         captured = capsys.readouterr()
         assert "sync refused" not in captured.out
         assert rc != 2 or "KIT-0049" not in captured.out
+
+    def test_upstream_deletion_pruned_from_preserved_manifest(
+        self, kit_with_addition, planning, capsys
+    ):
+        """o3 review: an upstream-dropped entry must be pruned from the
+        preserved manifest, not frozen into a stale record forever."""
+        manifest_path = kit_with_addition / "scripts" / ".core-manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["files"]["commands_core"].remove("cmd.md")
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        (kit_with_addition / ".claude" / "commands" / "cmd.md").unlink()
+
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--no-branch"], planning
+        )
+        assert rc == 0
+        result = json.loads(
+            (planning / "scripts" / ".core-manifest.json").read_text(encoding="utf-8")
+        )
+        # pruned from the record; announced in the output
+        assert result["files"]["commands_core"] == []
+        assert result["files"]["scripts_core"] == ["core/foo.sh"]
+        assert "cmd.md" in capsys.readouterr().out
+
+    def test_only_outside_allowlist_is_usage_error(self, kit_with_addition, planning):
+        """o3 review: an explicit --only request outside the allowlist
+        must refuse (exit 2), never silently become a skipped addition."""
+        rc = project_cli.cmd_sync(
+            [
+                "--source",
+                str(kit_with_addition),
+                "--no-branch",
+                "--only",
+                "core/extra.sh",
+            ],
+            planning,
+        )
+        assert rc == 2
+
+    def test_null_files_section_refused_not_crash(self, kit_with_addition, tmp_path):
+        """fast-v2 review: "files": null raised AttributeError past the
+        except tuple — must refuse with exit 2 instead."""
+        root = _shaped_root(tmp_path, "shape: planning\n", name="nullfiles")
+        _write(
+            root / "scripts" / ".core-manifest.json",
+            json.dumps({"core_version": "1.0.0", "files": None}),
+        )
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--dry-run"], root
+        )
+        assert rc == 2
+
+    def test_traversal_entry_in_manifest_refused(
+        self, kit_with_addition, tmp_path, capsys
+    ):
+        """claude-code review: consumer-manifest entries get the same
+        path rules as the source manifest (defense in depth)."""
+        root = _shaped_root(tmp_path, "shape: planning\n", name="traversal")
+        _write(
+            root / "scripts" / ".core-manifest.json",
+            json.dumps(
+                {
+                    "core_version": "1.0.0",
+                    "files": {"scripts_core": ["core/foo.sh", "../../evil"]},
+                }
+            ),
+        )
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--dry-run"], root
+        )
+        assert rc == 2
+        assert "unsafe path" in capsys.readouterr().out
 
     def test_engine_allowlist_report_fields(self, kit_with_addition, tmp_path):
         # engine-level: skipped additions land in the report, sorted;

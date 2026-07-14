@@ -547,7 +547,20 @@ def _build_new_manifest(
         and target_manifest is not None
         and isinstance(target_manifest.get("files"), dict)
     ):
-        new_manifest["files"] = json.loads(json.dumps(target_manifest["files"]))
+        preserved = json.loads(json.dumps(target_manifest["files"]))
+        # Prune entries upstream no longer ships — copying them back
+        # verbatim would freeze a stale record forever: the entry never
+        # becomes a candidate again, the file never updates, yet
+        # core_version keeps converging (o3 review finding). The pruned
+        # entries are the removed_entries the report already announces
+        # (single-shape parity: manifest drops them, disk cleanup stays
+        # advisory).
+        upstream_entries = _all_entries(upstream.get("files"))
+        for tier in list(preserved):
+            entries = preserved[tier]
+            if isinstance(entries, list):
+                preserved[tier] = [e for e in entries if e in upstream_entries]
+        new_manifest["files"] = preserved
 
     if target_manifest is not None and isinstance(
         target_manifest.get("opted_in"), list
@@ -701,9 +714,24 @@ def sync(source: str | Path, target: str | Path, options: SyncOptions) -> SyncRe
     # ADDITIONS: named in the report, never a usage error and never a
     # warning. Additions reach an allowlisted target via re-bootstrap or
     # a manual manifest add (the recorded v1 limitation).
+    # Semantics note: skipped_additions is computed AFTER --tier/--only
+    # narrowing, so it means "upstream has these within the tiers/entries
+    # this run selected, but the allowlist doesn't record them" — entries
+    # excluded by --tier never appear here (they were never candidates).
     skipped_additions: list[str] = []
     if options.allowlist is not None:
         allow = set(options.allowlist)
+        # An explicit --only request that falls OUTSIDE the allowlist
+        # must not be silently converted into a skipped addition — the
+        # caller named it; dropping it would mis-sync scripted runs
+        # (o3 review finding).
+        if options.only:
+            outside = sorted(set(options.only) - allow)
+            if outside:
+                raise UsageError(
+                    "--only entr(y/ies) not in this target's allowlist "
+                    f"(its manifest does not record them): {', '.join(outside)}"
+                )
         skipped_additions = sorted(
             {entry for _tier, entry in candidates if entry not in allow}
         )

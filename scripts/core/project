@@ -1571,11 +1571,31 @@ def cmd_sync(args, project_dir):
                     if isinstance(entry, str)
                 }
             )
-        except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
-            print(f"❌ sync refused: planning shape requires a readable manifest")
-            print(f"   ({manifest_path}: {exc.__class__.__name__}: {exc})")
+        except (
+            OSError,
+            json.JSONDecodeError,
+            KeyError,
+            TypeError,
+            AttributeError,  # "files": null / list — schema violations
+        ) as exc:
+            print("❌ sync refused: planning shape requires a readable manifest")
+            print(f"   ({manifest_path}: {exc.__class__.__name__})")
             print("   Re-bootstrap with --shape planning to restore it.")
             # Wrapper-level precondition failure → 2.
+            return 2
+        # Defense in depth: the consumer manifest is consumer-owned, so
+        # hold its entries to the same path rules the engine applies to
+        # the source manifest — a traversal/absolute entry must refuse,
+        # not ride the allowlist (claude-code review).
+        bad_entries = [
+            entry
+            for entry in allowlist
+            if ".." in Path(entry).parts or Path(entry).is_absolute()
+        ]
+        if bad_entries:
+            print("❌ sync refused: manifest records unsafe path entries:")
+            for entry in bad_entries:
+                print(f"     {entry}")
             return 2
         if not allowlist:
             print("❌ sync refused: the manifest records no files to sync")
