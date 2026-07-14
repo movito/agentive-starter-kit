@@ -129,6 +129,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Existence checks should require non-empty regular files**: zero-byte pointer files satisfied preflight Gates 5/6's bare `find -name`; `-type f -size +0c` closes it. Audit any gate that equates "file exists" with "artifact provided". (KIT-0042, o3's one real catch)
 - **Write the route decision before the code**: KIT-0042's convention-vs-glob reasoning written first let TDD prove the chosen route needed zero gate-logic change — the mechanism collapsed to a string change plus docs. (KIT-0042)
 - **Count your declines — convergent repeated evaluator findings are a follow-up signal**: o3 + fast-v2 flagged the identical Gate 1/2/7 edge set three runs running; individually declinable, collectively they earned KIT-0043. Decline tables are where recurring findings go to be forgotten unless someone counts them. (KIT-0042)
+- **Triple convergence is a priority filter, not just a severity flag**: o3 + fast-v2 + BugBot hit the Gate 1 cap flaw from three different angles, and the merged fix was strictly better than any single reviewer's suggestion — convergence count beats any one reviewer's own severity rating. (KIT-0043)
+- **Reproduce-or-decline as a spec clause for evaluator-sourced requirements**: KIT-0043 F4's "verify first" gate turned an unverified o3 claim into two green pinning tests plus a documented decline instead of a speculative rewrite. Make this the standing convention whenever a requirement originates from an unverified reviewer claim. (KIT-0043)
+- **Verify-before-believing applies to your OWN inferences, not just reviewers' claims**: the "operator converted the repo to bare" reading was checkable in one command (an intact working tree inside a "bare" repo) and went unchecked for a whole closeout. (KIT-0043)
+- **Weight fast-v2 findings by specificity, not placement**: its self-hedged headline claim was structurally impossible while its secondary finding was the best of the round — twice now. (KIT-0042/0043)
 
 ### Empirically Disproven Reviewer Claims (decline-by-reference)
 
@@ -137,6 +141,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - When declining any reviewer claim, paste the repro in the review record — it turns later re-litigation (bots repeating an evaluator's false claim) into a one-reply copy-paste. (KIT-0035)
 - Decline-by-reference is proven end-to-end: shown this section plus a fresh repro, fast-v2 *retracted* its prefix-collision claim in the next round. (KIT-0042)
 - **CodeRabbit operational facts**: "Internal error occurred during review" can mean *quota exhaustion* (detail text says "Prepaid credits exhausted" only after several crash rounds — check it before re-triggering); the wrong handle `@coderabbit` (no `-ai`) is silently ignored. Outage substitution pattern documented in check-bots.md. (KIT-0042)
+- **Preflight Gate 1 at-cap semantics (since PR #75)**: when `gh run list` returns a full page (raw count = limit), the gate reports PENDING, never PASS — a matrix-heavy repo hitting this should raise `CI_RUN_LIMIT`, not suspect a preflight bug. (KIT-0043)
+- **Worktree tests can MUTATE the real repo, not just fail**: pre-commit exports an absolute `GIT_DIR` in worktrees; a leaked subprocess flipped `core.bare=true` on the primary clone (second occurrence of the KIT-0036 class, this time state-corrupting). Suite-wide `GIT_*` isolation now lives in `tests/conftest.py` (7ef104d); after pre-commit runs in a worktree, `git -C <primary> config core.bare` staying `false` is the canary. (KIT-0043)
+- **Fresh worktrees are missing every gitignored install artifact**: `.venv`, `.env`, AND `.adversarial/evaluators/` (the CLI's "invalid choice" error means no evaluators installed). Provision all three at creation. (KIT-0043)
 
 ---
 
