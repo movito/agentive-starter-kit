@@ -1,19 +1,19 @@
 {
   "planner": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0046",
+    "status": "available",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "v0.8.0 SHIPPED (tag + GH release). KIT-ADR-0027 ACCEPTED (P1-P7 incl. operator presets + rollout plan; 5 evaluation runs total). KIT-0046 (project doctor, ADR P4, first transformation task) specced, evaluated (1 minor finding accepted), promoted; worktree created via new-worktree.sh (first dogfood — worked perfectly). Transformation sequence: P4->P2->P1->P3->P5+P7->P6; downstream migrates at two checkpoints (post-P4 doctor sync, post-P3 upgrader pass).",
+    "brief_note": "KIT-0046 DONE (PR #77, doctor live: 7pass/0fail/2skip, core scripts 3.2.0) — ADR-0027 P4 complete, transformation 1/6. Retro processed: .adversarial/inputs/ now gitignored (clean worktree removal); evaluator-before-PR rule WIDENED to all tasks (evidence: 3 tasks); KIT-0041 absorbs _restricted_bin; rm-rf allowlist = operator call. Next: P2 planning-repo shape spec on operator go; post-P4 downstream checkpoint (doctor via sync) now available. KIT-0047 (shim removal) waits for downstream sync.",
     "details_link": ".kit/tasks/5-done/KIT-0046-project-doctor.md",
-    "handoff_file": ".kit/context/KIT-0046-HANDOFF-feature-developer.md"
+    "handoff_file": null
   },
   "feature-developer": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0046",
+    "status": "idle",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "KIT-0046 (project doctor: doctor.d driver + 8 incident-mapped checks + exit contract + retro lifecycle rule + verify-setup shim) ready. Worktree: ../ask-worktrees/KIT-0046 (pull --ff-only first). Read-only tool (N3); resolve primary via --git-common-dir (N4).",
+    "brief_note": "KIT-0046 complete (PR #77 merged, retro 7cf496e, worktree removed). Next assignment expected: KIT-0048 (P2 planning-repo shape) once planner specs it.",
     "details_link": ".kit/tasks/5-done/KIT-0046-project-doctor.md",
-    "handoff_file": ".kit/context/KIT-0046-HANDOFF-feature-developer.md"
+    "handoff_file": null
   },
   "code-reviewer": {
     "status": "idle",

@@ -52,3 +52,8 @@ shell+gh scripts of the same shape. Lift the stub machinery into a shared
 - Source: `.kit/context/retros/KIT-0040-retro.md` (Process Action #4).
 - Post-v0.8.0 candidate — valuable but not release-blocking; the release's
   critical gate script (`preflight-check.sh`) is already covered.
+- **Scope addition (2026-07-14, KIT-0046 retro)**: also absorb
+  `test_doctor.py`'s `_restricted_bin` PATH-fixture helper into the
+  shared harness — third instance of the stub-a-binary pattern (fake
+  `gh`, no-op `sleep`/`dispatch`, restricted PATH with symlinked
+  `awk`). Consolidate all of them behind one helper module.

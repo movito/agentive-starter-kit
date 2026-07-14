@@ -138,6 +138,10 @@ adversarial-workflow/test_venv*/
 # Adversarial Workflow
 .adversarial/logs/
 .adversarial/artifacts/
+# Evaluator inputs regenerate from git/PR state (the persisted review
+# record lives in .kit/context/reviews/); ignoring them keeps
+# `git worktree remove` clean after evaluator sessions (KIT-0046 retro).
+.adversarial/inputs/
 
 # Audio processing work files (user projects)
 audio-processing/

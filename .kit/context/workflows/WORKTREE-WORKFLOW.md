@@ -122,6 +122,14 @@ provisioning symlink forces `--force` on every removal and erodes the
 safety net). Check `git -C <worktree> status --porcelain` — it must be
 empty before removal.
 
+Session-generated evaluator inputs (`.adversarial/inputs/`) are
+gitignored as of KIT-0046 — they regenerate from git/PR state, and the
+persisted review record lives in `.kit/context/reviews/`. A clean
+evaluator session therefore removes cleanly. If removal still refuses,
+the dirty file is something *else*: inspect it, preserve anything
+non-regenerable into the primary clone, and only then `--force`
+(preserve-then-force is the fallback, not the routine).
+
 ## Design note: bare-hub layout — evaluated and declined (2026-07-14)
 
 **Option considered**: convert the primary clone to a deliberate bare

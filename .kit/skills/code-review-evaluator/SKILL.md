@@ -19,27 +19,32 @@ Run after bot triage rounds are complete, before human review. Uses a different 
 - **Exception — doc-heavy tasks run the evaluator BEFORE PR open** (see
   "Ordering for Doc-Heavy Tasks" below)
 
-## Ordering for Doc-Heavy Tasks (run before PR open)
+## Ordering: Run the Evaluator Trio Before PR Open (all tasks)
 
-**Recommendation (adopted, KIT-0035)**: when the deliverable is
-documentation- or agent-spec-dominated — CI exercises little or none of
-the substance — run the evaluator trio **before** opening the PR. This
-includes mixed tasks that are mostly docs with small script tweaks. The
-standard order (PR → CI → bots → evaluator) stays when CI meaningfully
-exercises the change.
+**Recommendation (adopted KIT-0035 for doc-dominated; widened to ALL
+tasks 2026-07-14, KIT-0046 retro)**: run the evaluator trio **before**
+opening the PR, regardless of task type. Local tests must pass first —
+evaluate working code, not a draft — but do not wait for CI/bots.
 
 Why:
 
 - **KIT-0032**: each evaluator-driven rewrite after PR open triggered a
   fresh bot round — four review rounds for a single documentation file.
-  Running the trio first would have collapsed those into one.
 - **KIT-0033**: running the evaluator while CI was still pending worked
-  well — for docs, the two signals don't depend on each other.
+  well — the two signals don't depend on each other.
 - **KIT-0040**: external-finding yield concentrates on freshly written
-  text; getting trio findings addressed before bots first see the text
-  is where the round-saving is.
-- Code-heavy tasks keep CI/bots first: a CI failure invalidates the
-  review, and bots review the exact PR diff.
+  content; addressing trio findings before bots first see it is where
+  the round-saving is.
+- **KIT-0035 + KIT-0044** (doc-dominated): pre-open trio produced
+  zero-noise first bot rounds, twice.
+- **KIT-0046** (code-dominated — the widening evidence): all three
+  substantive round-1 bot findings were also evaluator findings. The
+  original "code-heavy keeps CI/bots first" carve-out predicted CI
+  would invalidate reviews; in practice local tests + pre-open trio
+  gets the same protection without burning bot rounds.
+
+The only remaining reason to defer the trio is when the diff genuinely
+cannot be assembled pre-PR (rare); say so in the review record.
 
 ## When to Skip
 
