@@ -1,5 +1,5 @@
 {
-  "core_version": "3.1.0",
+  "core_version": "3.2.0",
   "source_repo": "movito/agentive-starter-kit",
   "synced_at": "2026-06-13T00:00:00Z",
   "files": {
@@ -8,6 +8,14 @@
       "core/check-bots.sh",
       "core/check_cross_repo_config.py",
       "core/ci-check.sh",
+      "core/doctor.d/10-gh-auth.sh",
+      "core/doctor.d/20-env-keys.py",
+      "core/doctor.d/30-evaluators.sh",
+      "core/doctor.d/40-version-skew.py",
+      "core/doctor.d/50-plugin-source.sh",
+      "core/doctor.d/60-push-sync-token.sh",
+      "core/doctor.d/70-core-bare.sh",
+      "core/doctor.d/80-bot-presence.sh",
       "core/gh-review-helper.sh",
       "core/lib/target_repo.sh",
       "core/logging_config.py",
