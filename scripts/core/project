@@ -1249,6 +1249,19 @@ def _print_sync_report(report, *, dry_run, committed, project_dir):
                 print(f"     {entry}")
         print("   (dropped upstream — remove your local copy if unused)")
 
+    if report.skipped_additions:
+        print(
+            f"\nℹ️  Upstream has {len(report.skipped_additions)} entr"
+            f"{'y' if len(report.skipped_additions) == 1 else 'ies'} "
+            "this shape does not record (skipped):"
+        )
+        for entry in report.skipped_additions:
+            print(f"     {entry}")
+        print(
+            "   (additions arrive via re-bootstrap or a manual manifest add "
+            "— KIT-0049 v1)"
+        )
+
     if report.would_set_partial_sync or not report.complete:
         print(
             "\n   Note: partial sync — core_version left unchanged "
@@ -1515,11 +1528,13 @@ def cmd_doctor(args, project_dir):
 def cmd_sync(args, project_dir):
     """`project sync`: pull core files from upstream via the sync engine.
 
-    Shape guard (KIT-0048): the engine selects entries from the UPSTREAM
-    manifest, so a full sync into a planning-shaped repo would install
-    the single-shape toolchain files the shape must never ship (BugBot
-    finding on PR #78). Until sync learns shape-scoped subsets
-    (KIT-0049), refuse loudly rather than mis-provision.
+    Shape-scoped sync (KIT-0049, replacing the KIT-0048 refusal): a
+    planning-shaped repo syncs via manifest intersection — the engine's
+    ``allowlist`` is the consumer's own recorded file list, so sync
+    updates what the repo HAS and never introduces unrecorded files.
+    Upstream additions are skipped BY NAME in the report (v1 limitation:
+    additions arrive via re-bootstrap or a manual manifest add). A
+    malformed/unreadable shape record still refuses with exit 2.
 
     Resolution/branch mechanics per KIT-ADR-0026 §2. Returns a process exit
     code (the engine's exit-code contract).
@@ -1534,14 +1549,38 @@ def cmd_sync(args, project_dir):
     checklist item (``.kit/skills/self-review/SKILL.md``).
     """
     shape, shape_error = _doctor_shape(project_dir)
-    if shape == "planning" or shape_error:
-        reason = shape_error or "this repo records shape: planning"
-        print(f"❌ sync refused: {reason}")
-        print("   The sync engine selects entries from the UPSTREAM manifest —")
-        print("   a full run would install single-shape toolchain files into a")
-        print("   planning repo. Shape-scoped sync is tracked as KIT-0049.")
+    if shape_error:
+        print(f"❌ sync refused: {shape_error}")
+        print("   Fix the kit-install region in CLAUDE.md before syncing —")
+        print("   an unreadable shape record could mis-provision this repo.")
         # Wrapper-level refusal → 2 (wrapper exit-code convention above).
         return 2
+
+    allowlist = None
+    if shape == "planning":
+        manifest_path = project_dir / "scripts" / ".core-manifest.json"
+        try:
+            with open(manifest_path, encoding="utf-8") as f:
+                consumer_manifest = json.load(f)
+            files_section = consumer_manifest["files"]
+            allowlist = sorted(
+                {
+                    entry
+                    for entries in files_section.values()
+                    for entry in entries
+                    if isinstance(entry, str)
+                }
+            )
+        except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
+            print(f"❌ sync refused: planning shape requires a readable manifest")
+            print(f"   ({manifest_path}: {exc.__class__.__name__}: {exc})")
+            print("   Re-bootstrap with --shape planning to restore it.")
+            # Wrapper-level precondition failure → 2.
+            return 2
+        if not allowlist:
+            print("❌ sync refused: the manifest records no files to sync")
+            return 2
+        print(f"🔷 planning shape: syncing the {len(allowlist)} recorded entries")
 
     known_bool = {"--dry-run", "--no-branch"}
     known_val = {"--ref", "--source", "--tier", "--only"}
@@ -1608,7 +1647,11 @@ def cmd_sync(args, project_dir):
                     source_path,
                     project_dir,
                     engine.SyncOptions(
-                        tiers=tiers, only=only, dry_run=True, is_kit=is_kit
+                        tiers=tiers,
+                        only=only,
+                        dry_run=True,
+                        is_kit=is_kit,
+                        allowlist=allowlist,
                     ),
                 )
             except engine.SyncError as exc:
@@ -1638,7 +1681,11 @@ def cmd_sync(args, project_dir):
                 source_path,
                 project_dir,
                 engine.SyncOptions(
-                    tiers=tiers, only=only, dry_run=dry_run, is_kit=is_kit
+                    tiers=tiers,
+                    only=only,
+                    dry_run=dry_run,
+                    is_kit=is_kit,
+                    allowlist=allowlist,
                 ),
             )
         except engine.SyncError as exc:
