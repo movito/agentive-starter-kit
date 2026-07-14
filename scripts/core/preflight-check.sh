@@ -146,6 +146,14 @@ else
     fi
 fi
 
+# Validate the slug shape wherever it came from (--repo, CLAUDE.md, or
+# gh) before OWNER/NAME are interpolated into a GraphQL query string —
+# an unvalidated value could rewrite the query (KIT-0043, o3 finding).
+if ! printf '%s' "$REPO" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+    echo "ERROR: repository must look like owner/name, got: '$REPO'"
+    exit 1
+fi
+
 OWNER=$(echo "$REPO" | cut -d/ -f1)
 NAME=$(echo "$REPO" | cut -d/ -f2)
 
@@ -239,28 +247,39 @@ fi
 
 CI_POLL_ATTEMPTS=3
 CI_POLL_DELAY=5
+CI_RUN_LIMIT=50
 RUN_COUNT=0
 LATEST_RUNS="[]"
 CI_FETCH_OK=false
 CI_ATTEMPT=1
+CI_RAW_COUNT=0
 while [ "$CI_ATTEMPT" -le "$CI_POLL_ATTEMPTS" ]; do
     # Reset per attempt so a failed refetch can't reuse a stale filter result
     LATEST_RUNS="[]"
     RUN_COUNT=0
+    CI_RAW_COUNT=0
     # Query by commit (not a branch window) so runs for the head SHA can't
     # be pushed out of --limit by older reruns piling up on the branch.
-    # shellcheck disable=SC2086
-    CI_RUNS=$(gh $GH_REPO_ARG run list --commit "$LATEST_SHA" --limit 10 --json status,conclusion,workflowName,event,headSha \
-        --jq '[.[] | select(.event == "push" or .event == "pull_request")]' 2>/dev/null)
+    # The limit only truncates when ONE commit accumulates more runs than
+    # the cap (matrix builds, reruns) — this repo runs ~2 workflows per
+    # push, so 50 is generous headroom. The event filter happens BELOW,
+    # not in the gh --jq, so the truncation guard sees the RAW returned
+    # count — a cap-full response of mixed events must still trip the
+    # guard (KIT-0043 F1).
     # Distinguish "gh succeeded with an empty list" (runs not registered
-    # yet → PENDING) from "gh itself failed" (auth/network → FAIL below)
-    if [ $? -eq 0 ]; then
+    # yet → PENDING) from "gh itself failed" (auth/network → FAIL below).
+    # Exit status tested directly on the assignment (SC2181-safe).
+    # shellcheck disable=SC2086
+    if CI_RUNS=$(gh $GH_REPO_ARG run list --commit "$LATEST_SHA" --limit "$CI_RUN_LIMIT" --json status,conclusion,workflowName,event,headSha 2>/dev/null); then
         CI_FETCH_OK=true
     fi
 
     if [ -n "$CI_RUNS" ] && [ "$CI_RUNS" != "[]" ]; then
-        # Filter runs to the PR head commit (not just the newest run's SHA)
-        LATEST_RUNS=$(echo "$CI_RUNS" | jq -c "[.[] | select(.headSha == \"$LATEST_SHA\")]" 2>/dev/null || echo "[]")
+        CI_RAW_COUNT=$(echo "$CI_RUNS" | jq 'length' 2>/dev/null || echo "0")
+        CI_RAW_COUNT="${CI_RAW_COUNT:-0}"
+        # Filter to push/PR events for the PR head commit (not just the
+        # newest run's SHA)
+        LATEST_RUNS=$(echo "$CI_RUNS" | jq -c "[.[] | select((.event == \"push\" or .event == \"pull_request\") and .headSha == \"$LATEST_SHA\")]" 2>/dev/null || echo "[]")
         RUN_COUNT=$(echo "$LATEST_RUNS" | jq 'length' 2>/dev/null || echo "0")
         RUN_COUNT="${RUN_COUNT:-0}"
     fi
@@ -295,31 +314,56 @@ else
         WF_STATUS=$(echo "$LATEST_RUNS" | jq -r ".[$i].status")
         WF_CONCLUSION=$(echo "$LATEST_RUNS" | jq -r ".[$i].conclusion")
 
-        if [ "$WF_STATUS" = "completed" ] && [ "$WF_CONCLUSION" = "success" ]; then
-            CI_DETAILS="${CI_DETAILS}${WF_NAME}: pass; "
-        elif [ "$WF_STATUS" = "completed" ] && { [ "$WF_CONCLUSION" = "skipped" ] || [ "$WF_CONCLUSION" = "neutral" ]; }; then
-            # GitHub treats skipped/neutral as success for dependent checks —
-            # a path-filtered or conditionally skipped workflow is not a failure
-            CI_DETAILS="${CI_DETAILS}${WF_NAME}: ${WF_CONCLUSION}; "
-        elif [ "$WF_STATUS" = "in_progress" ] || [ "$WF_STATUS" = "queued" ]; then
-            CI_DETAILS="${CI_DETAILS}${WF_NAME}: running; "
+        if [ "$WF_STATUS" = "completed" ]; then
+            if [ "$WF_CONCLUSION" = "success" ]; then
+                CI_DETAILS="${CI_DETAILS}${WF_NAME}: pass; "
+            elif [ "$WF_CONCLUSION" = "skipped" ] || [ "$WF_CONCLUSION" = "neutral" ]; then
+                # GitHub treats skipped/neutral as success for dependent checks —
+                # a path-filtered or conditionally skipped workflow is not a failure
+                CI_DETAILS="${CI_DETAILS}${WF_NAME}: ${WF_CONCLUSION}; "
+            else
+                # Terminal non-success (failure, cancelled, timed_out,
+                # action_required, stale, …) — a real CI failure.
+                CI_DETAILS="${CI_DETAILS}${WF_NAME}: ${WF_CONCLUSION:-$WF_STATUS}; "
+                CI_ALL_PASS=false
+                CI_ANY_FAILED_RUN=true
+            fi
+        else
+            # `completed` is the ONLY terminal status in the Actions API.
+            # Everything else — in_progress, queued, waiting, requested,
+            # pending, and any status GitHub adds later — is a run that
+            # has not finished: PENDING, never FAIL (KIT-0043 F2; the
+            # KIT-0034 pending-vs-failed distinction).
+            CI_DETAILS="${CI_DETAILS}${WF_NAME}: ${WF_STATUS}; "
             CI_ALL_PASS=false
             CI_ANY_RUNNING=true
-        else
-            CI_DETAILS="${CI_DETAILS}${WF_NAME}: ${WF_CONCLUSION:-$WF_STATUS}; "
-            CI_ALL_PASS=false
-            CI_ANY_FAILED_RUN=true
         fi
     done
 
     # Trim trailing "; "
     CI_DETAILS="${CI_DETAILS%; }"
 
-    if [ "$CI_ALL_PASS" = true ]; then
-        echo "GATE:1:CI:PASS:$CI_DETAILS"
-    elif [ "$CI_ANY_FAILED_RUN" = true ]; then
+    # F1 truncation guard: the query cannot return more than the --limit
+    # cap, so a count AT the cap means runs may have been dropped — flag
+    # it in the verdict — an at-cap response is indistinguishable from a
+    # truncated one, so unseen runs may exist and a PASS would be
+    # unverifiable. A visible failing run still wins (FAIL); otherwise
+    # at-cap demotes the verdict to PENDING (never PASS) with the remedy
+    # named. Keyed on the RAW returned count, not the post-filter count.
+    CI_AT_CAP=false
+    if [ "$CI_RAW_COUNT" -ge "$CI_RUN_LIMIT" ]; then
+        CI_AT_CAP=true
+        CI_DETAILS="${CI_DETAILS} (run count at query cap ${CI_RUN_LIMIT} — unseen runs may exist; raise CI_RUN_LIMIT or verify manually)"
+    fi
+
+    if [ "$CI_ANY_FAILED_RUN" = true ]; then
         echo "GATE:1:CI:FAIL:$CI_DETAILS"
         ANY_FAILED=true
+    elif [ "$CI_AT_CAP" = true ]; then
+        echo "GATE:1:CI:PENDING:$CI_DETAILS"
+        ANY_PENDING=true
+    elif [ "$CI_ALL_PASS" = true ]; then
+        echo "GATE:1:CI:PASS:$CI_DETAILS"
     else
         echo "GATE:1:CI:PENDING:$CI_DETAILS (still running)"
         ANY_PENDING=true
@@ -498,7 +542,11 @@ fi
 
 # ─── Gate 7: Task in correct folder ─────────────────────────────────
 
-TASK_FILE=$(find .kit/tasks/3-in-progress .kit/tasks/4-in-review -name "${TASK_ID}*" 2>/dev/null | head -1 || true)
+# "${TASK_ID}-*": task files are named <ID>-slug.md — the "-" is the
+# boundary that stops KIT-4 matching KIT-40's file (KIT-0043 F3, same
+# bug-class as the Gate 5/6 separators). `sort` makes the multi-match
+# pick deterministic instead of filesystem-order arbitrary.
+TASK_FILE=$(find .kit/tasks/3-in-progress .kit/tasks/4-in-review -name "${TASK_ID}-*" -type f -size +0c 2>/dev/null | LC_ALL=C sort | head -1 || true)
 
 if [ -n "$TASK_FILE" ]; then
     echo "GATE:7:TaskFolder:PASS:$TASK_FILE"
