@@ -35,6 +35,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GIT_COMMON_DIR="$(git -C "$SCRIPT_DIR" rev-parse --path-format=absolute --git-common-dir)"
 PRIMARY_ROOT="$(dirname "$GIT_COMMON_DIR")"
 
+# Guard: the dirname math assumes a normal clone (<root>/.git). A bare
+# hub (declined in WORKTREE-WORKFLOW.md, but the pilot proved the state
+# can occur as damage) would resolve to the wrong directory silently.
+if [ ! -e "$PRIMARY_ROOT/.git" ]; then
+    echo "Error: could not resolve primary clone root (got: $PRIMARY_ROOT)" >&2
+    echo "       Is the primary clone bare? See WORKTREE-WORKFLOW.md." >&2
+    exit 1
+fi
+
 # Sibling directory holding all task worktrees (pilot convention).
 WORKTREES_DIR="$(dirname "$PRIMARY_ROOT")/ask-worktrees"
 
@@ -75,19 +84,29 @@ fi
 
 # Derive the slug from the task spec filename when not given.
 if [ -z "$SLUG" ]; then
+    # Use nullglob to ensure the loop doesn't run if no files match
+    shopt -s nullglob
+    matches=()
     for f in "$PRIMARY_ROOT"/.kit/tasks/*/"$TASK_ID"-*.md; do
         if [ -f "$f" ]; then
-            SLUG="$(basename "$f")"
-            SLUG="${SLUG%.md}"          # strip extension (never .replace)
-            SLUG="${SLUG#"$TASK_ID"-}"  # strip the TASK-ID- prefix
-            break
+            matches+=("$f")
         fi
     done
-    if [ -z "$SLUG" ]; then
+    shopt -u nullglob
+    if [ "${#matches[@]}" -eq 0 ]; then
         echo "Error: no task spec found for $TASK_ID in .kit/tasks/ —" >&2
         echo "       pass a slug explicitly: $0 $TASK_ID <slug>" >&2
         exit 1
     fi
+    if [ "${#matches[@]}" -gt 1 ]; then
+        echo "Error: multiple task specs found for $TASK_ID:" >&2
+        printf '       %s\n' "${matches[@]}" >&2
+        echo "       Fix the duplicate or pass a slug explicitly." >&2
+        exit 1
+    fi
+    SLUG="$(basename "${matches[0]}")"
+    SLUG="${SLUG%.md}"          # strip extension (never .replace)
+    SLUG="${SLUG#"$TASK_ID"-}"  # strip the TASK-ID- prefix
 fi
 
 BRANCH="feature/$TASK_ID-$SLUG"
@@ -113,6 +132,12 @@ fi
 # ─────────────────────────────────────────
 echo "Fetching origin..."
 git -C "$PRIMARY_ROOT" fetch origin
+
+if ! git -C "$PRIMARY_ROOT" show-ref --verify --quiet "refs/remotes/origin/main"; then
+    echo "Error: origin/main does not exist after fetch —" >&2
+    echo "       check the remote's default branch." >&2
+    exit 1
+fi
 
 mkdir -p "$WORKTREES_DIR"
 echo "Creating worktree $WORKTREE_PATH on $BRANCH (from origin/main)..."
