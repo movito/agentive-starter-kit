@@ -75,8 +75,15 @@ in `.claude/settings.json`. First prompts in three worktree sessions.
 - [x] All 17 bot threads replied-to and resolved; 18 evaluator findings
       dispositioned (11 accepted / 7 declined with evidence)
 - [x] KIT-0047 (verify-setup shim removal) filed in backlog
-- [ ] Planner: post-merge — plain `worktree remove ../ask-worktrees/KIT-0046`,
-      `project complete KIT-0046`, delete branch
+- [x] Post-merge closeout done (operator-approved): task 5-done, worktree
+      removed, branch deleted. **Lifecycle wrinkle found at removal**:
+      plain `worktree remove` was refused NOT by provisioning symlinks
+      (the KIT-0044 fix works) but by the untracked evaluator input file
+      — inputs are untracked-by-convention, so every session that runs
+      evaluators leaves one. Resolution: input preserved into the
+      primary's `.adversarial/inputs/`, then `--force`. WORKTREE-WORKFLOW
+      candidates: gitignore `.adversarial/inputs/` (they regenerate), or
+      codify preserve-inputs-then-force as the removal step. Planner call.
 - [ ] Planner: decide on widening evaluator-before-PR to code-dominated
       tasks (Should Change #1)
 - [ ] Planner: rm -rf allow-list entry (Should Change #2)
