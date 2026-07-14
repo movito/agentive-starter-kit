@@ -33,14 +33,24 @@
 
 ### What Was Surprising
 
-1. **The primary clone became a bare repo mid-session** — at closeout,
-   `git checkout main` in the main clone failed ("must be run in a work
-   tree"); `git worktree list` showed the clone converted to bare with
-   only the KIT-0043 worktree attached. The operator's restructure is
-   the logical endpoint of the worktree direction, but every agent
-   assumption of "the primary clone has a working tree on main" broke
-   silently. Closeout was done by ff-ing `main` in the bare repo
-   (`git fetch origin main:main`) and switching the task worktree to it.
+1. **The primary clone became a bare repo mid-session — CORRECTED
+   (2026-07-14, post-review): this was DAMAGE from the GIT_DIR leak,
+   not an operator restructure.** The original text below misattributed
+   it; the planner's challenge caught the misread. Forensics: the
+   working tree was fully intact on disk (a real bare conversion
+   wouldn't leave it), `core.bare=true` sat in the shared config, and
+   the config mtime (10:37 +0200) matched a closeout pre-commit run —
+   AFTER the per-module test fixes, meaning a leak vector beyond the
+   three pytest git-modules was still live (likely a test invoking a
+   script that runs git). Suite-wide `GIT_*` isolation added to
+   `tests/conftest.py`; primary clone restored (core.bare=false, tree
+   reset to main); worktree removed. Lesson for the lessons-file: I
+   verified evaluator claims all session but did not apply
+   verify-before-believing to my own "operator restructure" inference —
+   an intact working tree inside a "bare" repo was checkable in one
+   command. Original (wrong) reading, kept for the record: closeout was
+   done by ff-ing `main` in the bare repo and switching the task
+   worktree to it — the recovery recipe itself remains valid.
 2. **pre-commit exports an absolute `GIT_DIR` in worktrees** — the
    sharpest pilot finding. `test_project_script.py`'s tmp-repo git calls
    leaked to the REAL repo only under pre-commit-in-worktree, failing
@@ -76,19 +86,22 @@
    others (`.adversarial/logs` history is nice-to-have, logs regenerate).
 4. **pre-commit + worktree needs a documented env contract** — the
    absolute-GIT_DIR export breaks any test that shells out to git
-   without env isolation. Either codify the module-level GIT_* fixture
-   as a conftest.py standard (one fixture, whole suite) or document the
-   per-module pattern in TESTING-WORKFLOW.md as mandatory for tmp-repo
-   tests.
-5. **Define the closeout path for a bare-repo layout** — `project
-   complete`, retros, and memory bookkeeping all assumed a main-clone
-   working tree. With a bare primary, either a standing `main` worktree
-   (e.g. `ask-worktrees/main`) or a documented "closeout from the task
-   worktree switched to main" recipe (what this session improvised).
-6. **Worktree lifecycle: who removes it?** — `ask-worktrees/KIT-0043`
-   still exists, now checked out on `main` post-closeout. KIT-0044
-   should define removal timing (`git worktree remove` after retro?) and
-   ownership (agent vs planner vs operator).
+   without env isolation — and, as the core.bare corruption proved, the
+   damage is not limited to failing tests: it can MUTATE the real
+   repository. **RESOLVED (post-review): suite-wide autouse GIT_*
+   isolation fixture added to `tests/conftest.py`** — the per-module
+   pattern demonstrably missed a vector.
+5. **Define the closeout path for a bare-repo layout** — ~~superseded~~
+   CORRECTED: the bare state was leak damage (Surprising #1), now
+   restored; the primary clone has a normal working tree again. A
+   deliberate bare-hub layout remains an evaluable KIT-0044 design
+   question — if pursued, the improvised recipe (ff `main` inside the
+   bare repo, work from worktrees) is a tested starting point, and the
+   migration costs (session cwd, closeout, memory/path assumptions)
+   must be written down first.
+6. **Worktree lifecycle: who removes it?** — RESOLVED for this pilot:
+   `ask-worktrees/KIT-0043` removed during the restore. KIT-0044 still
+   owns the general policy (removal timing and ownership).
 
 ### Permission Prompts Hit
 
@@ -98,10 +111,14 @@ None.
 
 - [x] KIT-0043 → 5-done; merged branch deleted; KIT-0042 decline-table
       rows updated to point at the resolutions
-- [ ] Planner: fold the 6 frictions above into KIT-0044's spec as
-      verified requirements (each has a session repro)
-- [ ] Planner: decide conftest-wide vs per-module GIT_* isolation
-      (What Should Change #4)
-- [ ] Operator/planner: standing `main` worktree or documented bare-repo
-      closeout recipe (What Should Change #5); remove or repurpose the
-      KIT-0043 worktree (#6)
+- [x] Suite-wide GIT_* isolation in `tests/conftest.py` (What Should
+      Change #4 — resolved conftest-wide after the corruption evidence)
+- [x] Primary clone restored (core.bare=false, tree reset to main);
+      KIT-0043 worktree removed
+- [ ] Planner: fold the frictions above into KIT-0044's spec as
+      verified requirements (each has a session repro); bare-hub is a
+      design question, not an assumption
+- [ ] Next committer: verify `git -C <primary> config core.bare` is
+      still false after the next pre-commit run (canary — the exact
+      leak vector that wrote at 10:37 is not conclusively pinned;
+      conftest-wide isolation should kill it, this check proves it)

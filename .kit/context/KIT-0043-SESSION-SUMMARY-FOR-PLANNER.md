@@ -16,10 +16,16 @@ main and partially actioned (your `cfa0e47` / `f7a6c90` follow-through).
   (`.kit/context/reviews/KIT-0043-evaluator-review.md`, 4 accepted /
   4 declined-with-evidence), review starter, KIT-0042 decline-table
   rows updated to point at their resolutions.
-- **Repo topology changed mid-session**: the primary clone at
-  `Github/agentive-starter-kit` is now a **bare repo**; the only
-  working tree is `ask-worktrees/KIT-0043`, currently parked on `main`
-  post-closeout. Nothing is lost, but see Decision 3.
+- **CORRECTION (post-review)**: the "bare repo" I reported here was
+  **leak damage, not a restructure** — your challenge was right. The
+  GIT_DIR leak flipped `core.bare` in the primary clone's shared config
+  (working tree was intact on disk throughout; remote unharmed).
+  Restored: `core.bare=false`, tree reset to current `main`, KIT-0043
+  worktree removed. Root-cause note: the config write at 10:37 happened
+  AFTER the per-module test fixes, so a vector beyond the three pytest
+  git-modules was live — suite-wide `GIT_*` isolation now sits in
+  `tests/conftest.py`, and the retro carries a canary check for the
+  next committer.
 
 ## What the retro is really about: the worktree pilot
 
@@ -57,10 +63,10 @@ hurt the next worktree session:
    PENDING (never PASS). Right call, but any future matrix-heavy repo
    will hit it and read it as a preflight bug unless
    REVIEW-INSIGHTS/docs mention the `CI_RUN_LIMIT` knob.
-3. **KIT-0043 worktree disposal**: remove it
-   (`git worktree remove ask-worktrees/KIT-0043` — after deciding
-   whether it becomes the standing `main` worktree instead), and define
-   lifecycle ownership in KIT-0044.
+3. **KIT-0043 worktree disposal**: DONE — removed during the restore
+   (see Correction above). KIT-0044 still owns the general lifecycle
+   policy, and bare-hub is downgraded from "current state" to "design
+   question to evaluate with migration costs written down".
 
 ## Review-quality signals worth keeping (pattern evidence)
 

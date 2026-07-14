@@ -12,8 +12,30 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # Project root for locating real files used by test fixtures
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+@pytest.fixture(autouse=True)
+def _isolate_git_env(monkeypatch):
+    """Strip ambient GIT_* for EVERY test (suite-wide; KIT-0043 pilot).
+
+    pre-commit exports GIT_DIR / GIT_INDEX_FILE while running hooks — and
+    in a git WORKTREE the exported GIT_DIR is absolute, so any test (or any
+    script a test invokes) that runs git against a tmp dir silently
+    operates on the REAL repository instead. During the KIT-0043 session
+    this flipped the primary clone's core.bare, converting it to a bare
+    repo. Per-module isolation (test_preflight_check._clean_env,
+    test_project_sync._git, test_project_script's fixture) predates this;
+    the suite-wide fixture kills the whole class, including vectors that
+    reach git indirectly through invoked scripts. The GIT_DIR gotcha is
+    documented in .kit/context/workflows/TESTING-WORKFLOW.md.
+    """
+    for key in list(os.environ):
+        if key.startswith("GIT_"):
+            monkeypatch.delenv(key, raising=False)
 
 
 class MockVersionInfo:
