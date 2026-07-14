@@ -61,6 +61,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ## Commit Example
 
+**Quoting rule (KIT-0048)**: commit messages containing shell
+metacharacters — backticks, `$(…)`, `${…}` — must go through a
+single-quoted heredoc (`<<'EOF'`, as below) or single quotes. In a
+double-quoted `-m "..."`, `$(…)` executes locally before git ever sees
+the message.
+
 ```bash
 git commit -m "$(cat <<'EOF'
 feat: Add semantic parser integration for natural language thematic lists

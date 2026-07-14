@@ -3,7 +3,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0048 (planning-repo shape, ADR-0027 P2, transformation 2/6) specced from the ADR + absorbs KIT-0027 (mechanism redirected to KIT-LOCAL region). Evaluated: 2 findings accepted (check-level shape declarations, malformed-shape fail-loud), 1 deferred to P3. Worktree provisioned via helper. Verified: project script is stdlib on py>=3.11 — planning shape needs no venv. Post-P4 downstream checkpoint (doctor via sync) still available whenever operator wants that pass.",
+    "brief_note": "KIT-0048 DONE (PR #78, a908b90) — P2 complete, transformation 2/6; planning shape live, KIT-0027 retired. Retro processed: 3 process fixes shipped (TESTING-WORKFLOW fixture-scope caveat, COMMIT-PROTOCOL quoting rule, self-review item 11); gitignore-inputs was ALREADY closed (e0879a6) and validated at this closeout. KIT-0049 (shape-scoped sync) raised to HIGH — recommended next, completes P2's promise before P1. Awaiting operator sequencing call: KIT-0049 vs P1.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
@@ -11,7 +11,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0048 (--shape planning: toolchain-free coordination install, shape record via kit_markers, doctor # shapes: headers, minimal pre-commit, KIT-0027 retirement) ready. Worktree: ../ask-worktrees/KIT-0048 (pull --ff-only first). Characterization of flagless output FIRST (N1). Evaluator trio BEFORE PR open (rule now all tasks).",
+    "brief_note": "KIT-0048 complete (PR #78 merged, retro 7fc20a4, worktree removed cleanly — gitignore-inputs fix validated). Next assignment expected: KIT-0049 (shape-scoped sync) or P1 (language profiles), operator's call.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },

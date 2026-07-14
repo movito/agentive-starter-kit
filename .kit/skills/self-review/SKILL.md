@@ -102,6 +102,8 @@ Read every function in the file you changed (not just the ones you wrote):
 
 10. **Shipped hints about other tools' interfaces must be verified against the installed version**: any user-facing hint a script prints about another tool (an env flag, a CLI option, an invocation pattern) is a runtime claim — grep the installed package or run it once before shipping. KIT-0044: `prepare-review-input.sh` advertised `ADVERSARIAL_UNATTENDED=1`, which never existed in the installed adversarial-workflow library; every non-TTY large-input evaluator run died on the interactive prompt until the hint was replaced with the verified `echo y |` pattern (1.5.1). Same family as the spec-side verified-runtime-facts rule.
 
+11. **Class/session-scoped fixtures that shell out must scrub their own env**: function-scoped autouse isolation (conftest.py) does not reach wider-scoped fixtures — any class- or session-scoped fixture spawning subprocesses builds an explicitly scrubbed environment (`_scrubbed_env()` pattern) instead of trusting autouse. The gap is invisible until a hook-context run leaks `GIT_*` into a wider-scoped fixture (KIT-0048; the corruption class is KIT-0036/0043's).
+
 ## Step 4: Test assertion audit
 
 Before checking boundary coverage, audit test assertion quality:

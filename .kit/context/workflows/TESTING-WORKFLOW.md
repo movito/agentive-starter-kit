@@ -316,6 +316,14 @@ consumer's shell can have `GIT_DIR` set). See `scripts/core/project`
 **If you hit it**: `git config core.bare false` restores the repo, then apply
 the env fix so it doesn't recur. (KIT-0036.)
 
+**Fixture-scope caveat (KIT-0048)**: the suite-wide autouse isolation in
+`tests/conftest.py` is **function-scoped** — it does NOT cover
+class- or session-scoped fixtures, which resolve their environment
+before the autouse scrub runs. A session-scoped scrub exists in
+conftest.py for that layer, but any NEW class/session-scoped fixture
+that shells out must build an explicitly scrubbed env
+(`_scrubbed_env()` pattern) rather than trusting autouse isolation.
+
 ---
 
 ## Documentation
