@@ -1,9 +1,9 @@
 ## KIT-0046 — `project doctor`, incident-mapped environment verifier (PR #77)
 
-**Date**: 2026-07-14
+**Date**: 2026-07-14 (finalized post-merge — PR #77 squash-merged as `c4609fa`; doctor verified running natively in the primary: 7 pass / 0 fail / 2 skip)
 **Agent**: feature-developer-f5
 **Mode**: single-repo (third worktree session: `ask-worktrees/KIT-0046`)
-**Scorecard**: 17 threads (6 rounds, ALL real — zero noise), 0 regressions, 6 fix rounds (1 evaluator+bot batched, 5 bot-only), 8 commits
+**Scorecard**: 17 threads (6 rounds, ALL real — zero noise), 0 regressions, 6 fix rounds (1 evaluator+bot batched, 5 bot-only), 9 commits
 
 ### What Worked
 
