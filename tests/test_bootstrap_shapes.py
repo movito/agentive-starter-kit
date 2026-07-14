@@ -306,11 +306,18 @@ class TestPlanningShape:
         assert "target_path: ../prose-product" in text
         assert "../decoy" not in text.split("kit-install")[1]
 
-    def test_shape_flag_as_last_arg_is_clean_usage_error(self, tmp_path):
-        """CodeRabbit round 2: a value-consuming flag in final position
-        must produce the validation message, not a silent set -e death."""
-        target = make_consumer_dir(tmp_path, "lastflag")
-        result = run_bootstrap(target, "--shape")
+    def test_shape_flag_as_last_arg_is_clean_usage_error(self):
+        """CodeRabbit round 2: a value-consuming flag in TRULY final
+        position must produce the validation message, not a silent
+        set -e death — no target argument after the flag (the helper
+        would append one, exercising the wrong branch; round 4)."""
+        result = subprocess.run(
+            ["bash", str(BOOTSTRAP), "--shape"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=_scrubbed_env(),
+        )
         assert result.returncode == 1
         assert "unknown shape" in (result.stdout + result.stderr).lower()
 
