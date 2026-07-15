@@ -51,7 +51,7 @@ def _marker_bearing_agents() -> set[str]:
 def _kit_agents() -> set[str]:
     """Entries of the KIT_AGENTS=(...) bash array, text-parsed."""
     match = re.search(r"^KIT_AGENTS=\(([^)]*)\)", _SCRIPT_TEXT, re.MULTILINE)
-    assert match is not None, "KIT_AGENTS array not found in bootstrap-consumer.sh"
+    assert match is not None, "KIT_AGENTS array not found in engine-consumer.sh"
     return set(match.group(1).split())
 
 
@@ -64,7 +64,7 @@ def _agent_excludes() -> set[str]:
     match = re.search(
         r"^AGENT_EXCLUDES=\((.*?)\)", _SCRIPT_TEXT, re.MULTILINE | re.DOTALL
     )
-    assert match is not None, "AGENT_EXCLUDES array not found in bootstrap-consumer.sh"
+    assert match is not None, "AGENT_EXCLUDES array not found in engine-consumer.sh"
     return set(re.findall(r"--exclude='([^']+)'", match.group(1)))
 
 

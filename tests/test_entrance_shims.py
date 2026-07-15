@@ -260,6 +260,17 @@ class TestBootstrapMaterialsSurface:
         assert "design-brief.md" in argv  # the materials find fed the context
 
 
+def _command_lines(text: str) -> list[str]:
+    """Non-comment, non-blank lines — the executable surface. Keeps
+    the graph assertions from passing on prose in header comments
+    (CodeRabbit, PR #81)."""
+    return [
+        line
+        for line in text.splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    ]
+
+
 @pytest.mark.skipif(not DOOR.exists(), reason="setup door not landed yet")
 class TestCallGraph:
     """F3: the call graph is strictly shim -> door -> engine."""
@@ -267,27 +278,33 @@ class TestCallGraph:
     def test_shims_exec_the_door(self):
         consumer_shim = REPO_ROOT / "scripts" / "local" / "bootstrap-consumer.sh"
         for shim in (CREATE_PROJECT, BOOTSTRAP_MATERIALS, consumer_shim):
-            text = shim.read_text(encoding="utf-8")
-            assert (
-                "exec" in text and "bootstrap" in text
-            ), f"{shim.name} must exec the door"
+            commands = _command_lines(shim.read_text(encoding="utf-8"))
+            assert any(
+                'exec "$DOOR"' in line for line in commands
+            ), f"{shim.name} must exec the door via its DOOR variable"
+            assert any(
+                "DOOR=" in line and "/bootstrap" in line for line in commands
+            ), f"{shim.name} must resolve DOOR to scripts/local/bootstrap"
             for engine in ENGINES:
-                assert (
-                    engine.name not in text
-                ), f"{shim.name} must not reach an engine directly"
+                assert not any(
+                    engine.name in line for line in commands
+                ), f"{shim.name} must not reach {engine.name} directly"
 
     def test_door_calls_engines_not_old_entrances(self):
-        text = DOOR.read_text(encoding="utf-8")
+        commands = _command_lines(DOOR.read_text(encoding="utf-8"))
         for engine in ENGINES:
-            assert engine.name in text, f"door must reference {engine.name}"
+            assert any(
+                engine.name in line for line in commands
+            ), f"door must reference {engine.name} in a command position"
         for old_name in ("bootstrap-consumer.sh", "create-project.sh"):
-            assert (
-                old_name not in text
+            assert not any(
+                old_name in line for line in commands
             ), f"door must never call old entrance {old_name} (shim loop)"
 
     def test_engines_do_not_call_the_door(self):
         for engine in ENGINES:
-            text = engine.read_text(encoding="utf-8")
-            assert (
-                "local/bootstrap " not in text and "exec bash" not in text
-            ), f"{engine.name} must not re-enter the door"
+            commands = _command_lines(engine.read_text(encoding="utf-8"))
+            for needle in ('"$DOOR"', "scripts/local/bootstrap "):
+                assert not any(
+                    needle in line for line in commands
+                ), f"{engine.name} must not re-enter the door ({needle!r})"

@@ -17,9 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pairs), resolves answers through a documented chain (CLI → preset
   layer stub [P7 seam] → kit defaults → interactive prompt; every
   prompt has a flag, so non-TTY runs never hang), offers evaluator
-  install and venv setup, and finishes every install with a `project
-  doctor` report (verdict reported, never encoded — exit contract
-  0 install-ok / 1 install-failed / 2 usage).
+  install and venv setup, and finishes every door-native install with
+  a `project doctor` report (verdict reported, never encoded — exit
+  contract 0 install-ok / 1 install-failed / 2 usage). The legacy
+  shims and the design-materials exec path skip the doctor tail
+  (byte-fidelity / interactive-exec constraints, documented in the
+  door header).
 - The three historical entrances (`bootstrap-consumer.sh`,
   `bootstrap.sh`, `create-project.sh`) are now frozen-surface shims
   that exec the door; their implementations moved behind it as

@@ -56,6 +56,16 @@ channel that exists only for them.
 
 ## Notes
 
+- **Materials-engine hardening to consider here** (CodeRabbit PR #81,
+  declined on the frozen legacy surface): `engine-materials.sh` runs
+  the TARGET's copy of `setup-dev.sh` (rsync `--ignore-existing`
+  preserves a pre-existing one), i.e. target-controlled code executes
+  with the operator's privileges. Declined for KIT-0053 because the
+  flow's trust boundary is the operator's choice of directory (the
+  same materials are handed to an interactive claude agent moments
+  later) and the surface is characterization-frozen. When the shims
+  die, consider executing the KIT's copy with `cwd=$TARGET` instead —
+  and re-pin the characterization accordingly.
 - Consumers hold frozen copies of the old `create-project.sh` from
   pre-KIT-0053 bootstraps; those keep working (they are full
   implementations, not shims). Fresh consumers get the shim, which

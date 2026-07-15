@@ -112,7 +112,10 @@ echo "2/4 🔀 Checking git..."
 
 cd "$TARGET"
 
-if [ -d ".git" ]; then
+# -e, not -d: in a worktree or submodule .git is a FILE — treating it
+# as "no repo" would git-init/commit inside an existing checkout (the
+# KIT-0048 incident's second ingredient; engine-consumer.sh pattern)
+if [ -e ".git" ]; then
     echo "✅ Git repo already exists"
 else
     git init -b main

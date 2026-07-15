@@ -81,7 +81,8 @@ DIR_BASENAME="$(basename "$TARGET_DIR")"
 PROJECT_NAME="${PROJECT_NAME:-$DIR_BASENAME}"
 if [[ -z "$TASK_PREFIX" ]]; then
     # Derive prefix: uppercase first letters of each word, max 4 chars
-    TASK_PREFIX=$(echo "$PROJECT_NAME" | tr '[:lower:]' '[:upper:]' | sed 's/[^A-Z0-9 ]//g' | awk '{for(i=1;i<=NF;i++) printf substr($i,1,1)}')
+    # (cut enforces the documented cap — five-word names overflowed)
+    TASK_PREFIX=$(echo "$PROJECT_NAME" | tr '[:lower:]' '[:upper:]' | sed 's/[^A-Z0-9 ]//g' | awk '{for(i=1;i<=NF;i++) printf substr($i,1,1)}' | cut -c1-4)
     # Fallback if too short
     if [[ ${#TASK_PREFIX} -lt 2 ]]; then
         # dash must sit LAST in the tr set — a leading dash reads as an
@@ -177,20 +178,26 @@ cat > .kit/context/agent-handoffs.json << 'HANDOFF_EOF'
 }
 HANDOFF_EOF
 
-# Reset current-state.json
-cat > .kit/context/current-state.json << STATE_EOF
-{
-  "project": {
-    "name": "$PROJECT_NAME",
-    "task_prefix": "$TASK_PREFIX",
-    "version": "0.1.0"
-  },
-  "phase": "bootstrap",
-  "onboarding": {
-    "completed": false
-  }
+# Reset current-state.json — serialized by json.dump, never string
+# interpolation: a name with quotes/backslashes/newlines must yield
+# valid JSON (CodeRabbit, PR #81). python3 is an N2 prerequisite.
+PROJECT_NAME="$PROJECT_NAME" TASK_PREFIX="$TASK_PREFIX" python3 - << 'PYEOF'
+import json
+import os
+
+state = {
+    "project": {
+        "name": os.environ["PROJECT_NAME"],
+        "task_prefix": os.environ["TASK_PREFIX"],
+        "version": "0.1.0",
+    },
+    "phase": "bootstrap",
+    "onboarding": {"completed": False},
 }
-STATE_EOF
+with open(".kit/context/current-state.json", "w", encoding="utf-8") as f:
+    json.dump(state, f, indent=2)
+    f.write("\n")
+PYEOF
 
 # Reset REVIEW-INSIGHTS.md
 cat > .kit/context/REVIEW-INSIGHTS.md << 'INSIGHTS_EOF'

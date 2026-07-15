@@ -162,6 +162,16 @@ class TestExitContract:
     def test_unknown_flag_is_usage(self):
         assert run_door("--frobnicate").returncode == 2
 
+    def test_mode_flag_must_not_swallow_following_flag(self):
+        # BugBot PR #81: '--new --shape planning' must not adopt
+        # '--shape' as the target directory
+        result = run_door("--new", "--shape", "planning", timeout=30)
+        assert result.returncode == 2
+        assert "requires a value" in result.stderr
+        result = run_door("--adopt", "--profile", "none", timeout=30)
+        assert result.returncode == 2
+        assert "requires a value" in result.stderr
+
     def test_missing_mode_non_tty_fails_fast(self):
         result = run_door(timeout=30)
         assert result.returncode == 2
@@ -269,6 +279,41 @@ class TestAdoptE2E:
         assert "shape: single" in region
         assert "profile: python" in region
         assert (target / "scripts" / "local" / "checks.sh").is_file()
+
+    def test_adopt_single_profile_none(self, tmp_path):
+        """The single:none matrix cell, adopt mode (CodeRabbit PR #81).
+        The profile scopes the check hook + record ONLY — the shipset
+        is the shape's job (ADR-0027 P1 / KIT-0050 contract), so the
+        toolchain still ships for a single-shape install."""
+        target = make_adopt_dir(tmp_path, "docsrepo")
+        result = run_door("--adopt", str(target), "--profile", "none")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Setup door: mode=adopt shape=single profile=none" in result.stdout
+        # no venv offer for a toolchain-free profile
+        assert "Offer skipped (non-interactive): venv" not in result.stdout
+        _assert_doctor_tail(result.stdout)
+        region = _kit_install_region(target)
+        assert "shape: single" in region
+        assert "profile: none" in region
+        none_seed = REPO_ROOT / "scripts" / "local" / "templates" / "checks-none.sh"
+        hook = target / "scripts" / "local" / "checks.sh"
+        assert hook.read_bytes() == none_seed.read_bytes()
+        # shipset unchanged by profile: single shape ships the toolchain
+        assert (target / "pyproject.toml").is_file()
+
+    def test_readopt_with_conflicting_profile_rejected(self, tmp_path):
+        """CodeRabbit PR #81: explicit flags that contradict the
+        target's existing kit-install record are an error, never a
+        silent preserve (the PR #78 target-pointer precedent)."""
+        target = make_adopt_dir(tmp_path, "docsrepo")
+        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
+        result = run_door("--adopt", str(target), "--profile", "python")
+        assert result.returncode == 2
+        assert "conflicts with the target's existing kit-install record" in (
+            result.stderr
+        )
+        # flagless re-adopt keeps working (nothing explicit to conflict)
+        assert run_door("--adopt", str(target)).returncode == 0
 
     def test_adopt_planning_records_pointer(self, tmp_path):
         target = make_adopt_dir(tmp_path, "coord")

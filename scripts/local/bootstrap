@@ -144,6 +144,15 @@ die_usage() {
     exit 2
 }
 
+reject_flaglike() {  # $1 flag, $2 captured value — a following flag is
+    # not a value ('--new --shape planning' must not adopt '--shape'
+    # as its target; BugBot, PR #81). Empty stays allowed: the later
+    # required-answer handling prompts or fails with its own message.
+    case "$2" in
+        --*) die_usage "$1 requires a value (got the flag '$2' instead)" ;;
+    esac
+}
+
 validate_values() {  # $1 shape, $2 profile ("" = unresolved) → 0/message+1
     case "$1" in
         single|planning) ;;
@@ -226,6 +235,27 @@ prompt_yn() {  # $1 question → "yes"/"no"
 # ─────────────────────────────────────────
 # Orchestration helpers
 # ─────────────────────────────────────────
+check_record_conflict() {
+    # Native adopt of a target that already carries a kit-install
+    # record: EXPLICIT flags that contradict it are an error, never a
+    # silent preserve (CodeRabbit PR #81; the PR #78 target-pointer
+    # precedent). Only the door can do this — it alone knows whether a
+    # value was operator-given or defaulted. Reads via kit_markers,
+    # the record's one reader library.
+    [ -f "$TARGET/CLAUDE.md" ] || return 0
+    local rec rec_shape rec_profile
+    rec="$(python3 "$SCRIPT_DIR/kit_markers.py" extract "$TARGET/CLAUDE.md" kit-install 2>/dev/null)" || return 0
+    rec_shape="$(printf '%s\n' "$rec" | sed -n 's/^shape: *//p' | head -1)"
+    rec_profile="$(printf '%s\n' "$rec" | sed -n 's/^profile: *//p' | head -1)"
+    if [ -n "$SHAPE_CLI" ] && [ -n "$rec_shape" ] && [ "$SHAPE_CLI" != "$rec_shape" ]; then
+        die_usage "--shape $SHAPE_CLI conflicts with the target's existing kit-install record (shape: $rec_shape) — update the record first, or drop the flag"
+    fi
+    if [ -n "$PROFILE_CLI" ] && [ -n "$rec_profile" ] && [ "$PROFILE_CLI" != "$rec_profile" ]; then
+        die_usage "--profile $PROFILE_CLI conflicts with the target's existing kit-install record (profile: $rec_profile) — update the record first, or drop the flag"
+    fi
+    return 0
+}
+
 ensure_git_identity() {
     # Fail fast with a real message when the install will commit into
     # the target but git has no identity — otherwise the engine dies
@@ -311,21 +341,21 @@ main() {
 
     while [ $# -gt 0 ]; do
         case "$1" in
-            --new)              shift; MODE="new";   TARGET="${1:-}" ;;
+            --new)              shift; MODE="new";   TARGET="${1:-}"; reject_flaglike --new "$TARGET" ;;
             --new=*)            MODE="new";   TARGET="${1#--new=}" ;;
-            --adopt)            shift; MODE="adopt"; TARGET="${1:-}" ;;
+            --adopt)            shift; MODE="adopt"; TARGET="${1:-}"; reject_flaglike --adopt "$TARGET" ;;
             --adopt=*)          MODE="adopt"; TARGET="${1#--adopt=}" ;;
-            --shape)            shift; SHAPE_CLI="${1:-}" ;;
+            --shape)            shift; SHAPE_CLI="${1:-}"; reject_flaglike --shape "$SHAPE_CLI" ;;
             --shape=*)          SHAPE_CLI="${1#--shape=}" ;;
-            --profile)          shift; PROFILE_CLI="${1:-}" ;;
+            --profile)          shift; PROFILE_CLI="${1:-}"; reject_flaglike --profile "$PROFILE_CLI" ;;
             --profile=*)        PROFILE_CLI="${1#--profile=}" ;;
-            --name)             shift; NAME="${1:-}" ;;
+            --name)             shift; NAME="${1:-}"; reject_flaglike --name "$NAME" ;;
             --name=*)           NAME="${1#--name=}" ;;
-            --prefix)           shift; PREFIX="${1:-}" ;;
+            --prefix)           shift; PREFIX="${1:-}"; reject_flaglike --prefix "$PREFIX" ;;
             --prefix=*)         PREFIX="${1#--prefix=}" ;;
-            --target-path)      shift; TARGET_PATH="${1:-}" ;;
+            --target-path)      shift; TARGET_PATH="${1:-}"; reject_flaglike --target-path "$TARGET_PATH" ;;
             --target-path=*)    TARGET_PATH="${1#--target-path=}" ;;
-            --target-github)    shift; TARGET_GITHUB="${1:-}" ;;
+            --target-github)    shift; TARGET_GITHUB="${1:-}"; reject_flaglike --target-github "$TARGET_GITHUB" ;;
             --target-github=*)  TARGET_GITHUB="${1#--target-github=}" ;;
             --no-kit)           NO_KIT=1 ;;
             --design-materials)    DESIGN_MATERIALS="yes" ;;
@@ -426,6 +456,9 @@ main() {
     fi
 
     # ── Orchestrate ──
+    if [ "$MODE" = "adopt" ]; then
+        check_record_conflict
+    fi
     # a --new install (and an adopt of a git-less target) will commit
     if [ "$MODE" = "new" ] || [ ! -e "$TARGET/.git" ]; then
         ensure_git_identity
