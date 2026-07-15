@@ -653,24 +653,44 @@ if ! REGIONS_OUT="$(python3 "$KIT_MARKERS" regions "$CLAUDE_MD" 2>&1)"; then
     echo "       $REGIONS_OUT"
     exit 1
 fi
-if ! printf '%s\n' "$REGIONS_OUT" | grep -qx 'kit-install'; then
-    if [ "$SHAPE" = "planning" ]; then
-        printf '\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: planning\nprofile: %s\ntarget_path: %s\ntarget_github: %s\n<!-- END KIT-LOCAL: kit-install -->\n' \
-            "$PROFILE" "$TP" "$TG" >> "$CLAUDE_MD"
-    else
-        printf '\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: single\nprofile: %s\n<!-- END KIT-LOCAL: kit-install -->\n' \
-            "$PROFILE" >> "$CLAUDE_MD"
+
+# Append a KIT-LOCAL region to CLAUDE.md unless already present —
+# the shared append-if-absent shape for every region this step seeds
+# (CodeRabbit, PR #80). $1 region name, $2 content, $3 status detail.
+# Reads $REGIONS_OUT/$CLAUDE_MD from the enclosing scope.
+append_region_if_absent() {
+    if printf '%s\n' "$REGIONS_OUT" | grep -qx "$1"; then
+        echo "  $1 region already present (preserved)"
+        return 0
     fi
-    echo "  kit-install region written (shape: $SHAPE, profile: $PROFILE)"
+    {
+        printf '\n<!-- BEGIN KIT-LOCAL: %s -->\n' "$1"
+        printf '%s\n' "$2"
+        printf '<!-- END KIT-LOCAL: %s -->\n' "$1"
+    } >> "$CLAUDE_MD"
+    echo "  $1 region written ($3)"
+}
+
+if [ "$SHAPE" = "planning" ]; then
+    append_region_if_absent kit-install \
+        "$(printf 'shape: planning\nprofile: %s\ntarget_path: %s\ntarget_github: %s' \
+            "$PROFILE" "$TP" "$TG")" \
+        "shape: planning, profile: $PROFILE"
 else
-    echo "  kit-install region already present (preserved)"
+    append_region_if_absent kit-install \
+        "$(printf 'shape: single\nprofile: %s' "$PROFILE")" \
+        "shape: single, profile: $PROFILE"
 fi
 
 # Project Rules region (KIT-0050 F6) — seeded per profile, consumer-
 # owned afterwards (append-if-absent, same KIT-LOCAL semantics). The
 # python content is extracted from the kit's OWN marker-wrapped rules
-# so there is exactly one source of that text.
-if ! printf '%s\n' "$REGIONS_OUT" | grep -qx 'project-rules'; then
+# so there is exactly one source of that text. Content stays computed
+# only when the region is absent: a re-bootstrap of a consumer that
+# already owns its rules must not depend on the kit-side extract.
+if printf '%s\n' "$REGIONS_OUT" | grep -qx 'project-rules'; then
+    echo "  project-rules region already present (preserved)"
+else
     if [ "$PROFILE" = "python" ]; then
         if ! RULES_BODY="$(python3 "$KIT_MARKERS" extract "$PROJECT_ROOT/CLAUDE.md" project-rules 2>&1)"; then
             echo "Error: kit_markers extract project-rules failed on the kit's CLAUDE.md:"
@@ -690,14 +710,7 @@ if ! printf '%s\n' "$REGIONS_OUT" | grep -qx 'project-rules'; then
 RULES
 )"
     fi
-    {
-        printf '\n<!-- BEGIN KIT-LOCAL: project-rules -->\n'
-        printf '%s\n' "$RULES_BODY"
-        printf '<!-- END KIT-LOCAL: project-rules -->\n'
-    } >> "$CLAUDE_MD"
-    echo "  project-rules region written (profile: $PROFILE)"
-else
-    echo "  project-rules region already present (preserved)"
+    append_region_if_absent project-rules "$RULES_BODY" "profile: $PROFILE"
 fi
 echo
 
