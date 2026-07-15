@@ -501,6 +501,27 @@ class TestShapeScopedSync:
         assert "sync refused" not in captured.out
         assert rc != 2 or "KIT-0049" not in captured.out
 
+    def test_profile_record_error_does_not_block_sync(self, tmp_path, capsys):
+        """KIT-0050: sync provisions by SHAPE — a malformed profile is
+        doctor's problem (fail-loud there), not a sync refusal."""
+        root = _shaped_root(tmp_path, "shape: single\nprofile: elixir\n")
+        project_cli.cmd_sync(["--dry-run"], root)
+        assert "sync refused" not in capsys.readouterr().out
+
+    def test_planning_sync_never_touches_consumer_hook(
+        self, kit_with_addition, planning
+    ):
+        """KIT-0050 N4: scripts/local/checks.sh is consumer-owned after
+        seeding — a sync run must leave it byte-identical."""
+        hook = planning / "scripts" / "local" / "checks.sh"
+        custom = "#!/bin/bash\n# consumer-customized checks\nexit 0\n"
+        hook.write_text(custom, encoding="utf-8")
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--no-branch"], planning
+        )
+        assert rc == 0
+        assert hook.read_text(encoding="utf-8") == custom
+
     def test_upstream_deletion_pruned_from_preserved_manifest(
         self, kit_with_addition, planning, capsys
     ):
@@ -650,3 +671,36 @@ class TestShapeScopedSync:
         assert report.skipped_additions == ["core/extra.sh"]
         assert report.complete is True
         assert report.to_dict()["skipped_additions"] == ["core/extra.sh"]
+
+
+BOOTSTRAP = REPO / "scripts" / "local" / "bootstrap-consumer.sh"
+
+
+class TestHookNeverSynced:
+    """KIT-0050 N4: scripts/local/checks.sh rides no sync tier — the
+    engine writes only manifest-listed files, so manifest absence IS
+    the never-overwritten guarantee."""
+
+    def test_kit_manifest_records_no_scripts_local_entries(self):
+        manifest = json.loads(
+            (REPO / "scripts" / ".core-manifest.json").read_text(encoding="utf-8")
+        )
+        entries = [e for tier in manifest["files"].values() for e in tier]
+        assert "local/checks.sh" not in entries
+        assert not any(e.startswith("local/") for e in entries)
+
+    @pytest.mark.skipif(
+        not BOOTSTRAP.exists(),
+        reason="bootstrap-consumer.sh absent (consumer checkout)",
+    )
+    def test_bootstrap_seeded_manifests_record_no_scripts_local_entries(self):
+        import re
+
+        text = BOOTSTRAP.read_text(encoding="utf-8")
+        blocks = re.findall(r"<< 'MANIFEST'\n(.*?)\nMANIFEST\n", text, re.DOTALL)
+        assert len(blocks) >= 2, "expected both seeded-manifest heredocs"
+        for block in blocks:
+            manifest = json.loads(block)
+            entries = [e for tier in manifest["files"].values() for e in tier]
+            assert "local/checks.sh" not in entries
+            assert not any(e.startswith("local/") for e in entries)

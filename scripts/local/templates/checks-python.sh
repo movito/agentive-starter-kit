@@ -1,51 +1,35 @@
 #!/bin/bash
-# Local CI check - mirrors GitHub Actions test.yml
-# Run this BEFORE pushing to catch issues early
+# checks.sh — this project's check hook (seeded by bootstrap; consumer-owned).
 #
-# Usage: ./scripts/core/ci-check.sh
+# Contract (KIT-ADR-0027 P1): accepts `--mode ci|local`; exits 0 (pass)
+# or 1 (fail) only; human-readable diagnostics to stdout; invoked from
+# the repo root with no other environment guarantees. Nothing else is
+# passed through. ci-check.sh dispatches here when this file exists.
+# Edit freely — the kit never overwrites this file after seeding.
 #
-# Dispatch (KIT-0050, ADR-0027 P1): when the project-owned hook
-# scripts/local/checks.sh exists, it OWNS the project's checks and this
-# script only dispatches to it (`--mode ci`) and passes its exit code
-# through. Hook contract: accepts --mode ci|local; exits 0 (pass) or
-# 1 (fail); human-readable diagnostics to stdout; invoked from the
-# repo root with no other environment guarantees.
-#
-# When the hook does NOT exist, the built-in Python gauntlet below runs
-# unchanged (the pre-KIT-0050 behavior, pinned by characterization in
-# tests/test_ci_check.py):
-#   1. Black formatting check
-#   2. isort import sorting check
-#   3. flake8 linting
-#   4. Pattern lint (project-specific DK rules)
-#   5. Full test suite with coverage (threshold from pyproject.toml)
-#
-# Run this before every push to prevent CI failures.
+# Profile: python — the kit's own gauntlet (Black, isort, flake8,
+# pattern lint, pytest + coverage, cross-repo config), moved here from
+# ci-check.sh's built-in checks. Both modes currently run the same set;
+# differentiate them (e.g. skip coverage in --mode local) as your
+# project needs.
+
+MODE=""
+case "${1:-}" in
+    --mode) MODE="${2:-}" ;;
+    --mode=*) MODE="${1#--mode=}" ;;
+esac
+if [ "$MODE" != "ci" ] && [ "$MODE" != "local" ]; then
+    echo "Usage: $0 --mode ci|local"
+    echo "   Unknown or missing mode: '${MODE:-<none>}'"
+    exit 1
+fi
 
 set -e  # Exit on first error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+CORE_DIR="$PROJECT_ROOT/scripts/core"
 cd "$PROJECT_ROOT"
-
-# ─────────────────────────────────────────
-# Project check hook (KIT-0050)
-# ─────────────────────────────────────────
-# Presence-of-file is the whole detection — no profile logic here. A
-# hook that is present but unusable (not executable, a directory, a
-# broken symlink) is a loud error, never a silent fall-through to the
-# built-in gauntlet: a fallback that masks a broken hook would report
-# green while running the wrong checks (the intersection-masking class).
-HOOK="scripts/local/checks.sh"
-if [ -e "$HOOK" ] || [ -L "$HOOK" ]; then
-    if [ ! -f "$HOOK" ] || [ ! -x "$HOOK" ]; then
-        echo "❌ ERROR: $HOOK exists but is not an executable file." >&2
-        echo "   Fix it (chmod +x, or repair the symlink) or remove it to" >&2
-        echo "   fall back to the built-in gauntlet." >&2
-        exit 1
-    fi
-    exec "$HOOK" --mode ci
-fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔍 Running local CI checks"
@@ -139,7 +123,7 @@ echo "4/6 🔍 Running pattern lint (DK rules)..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 PY_FILES=$(find scripts/ tests/ -name '*.py' 2>/dev/null)
 if [ -n "$PY_FILES" ]; then
-    if python3 "$SCRIPT_DIR/pattern_lint.py" $PY_FILES 2>&1; then
+    if python3 "$CORE_DIR/pattern_lint.py" $PY_FILES 2>&1; then
         echo "✅ Pattern lint: No DK violations"
     else
         echo "❌ Pattern lint: DK violations found"
@@ -169,7 +153,7 @@ echo "6/6 🧭 Validating cross-repo config..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 # Exits 1 on FAIL (declared cross-repo but no parseable ## Target Repository
 # section); 0 on PASS or WARN (warning printed for a missing local target).
-if python3 "$SCRIPT_DIR/check_cross_repo_config.py" "$PROJECT_ROOT"; then
+if python3 "$CORE_DIR/check_cross_repo_config.py" "$PROJECT_ROOT"; then
     :
 else
     echo "   Fix CLAUDE.md's ## Target Repository section."

@@ -126,6 +126,7 @@ class TestCharacterization:
 
 # The planning contract, both directions (F1: enumerated, tested).
 PLANNING_MUST_SHIP = (
+    "scripts/local/checks.sh",
     "scripts/core/project",
     "scripts/core/preflight-check.sh",
     "scripts/core/gh-review-helper.sh",
@@ -334,3 +335,135 @@ class TestPlanningShape:
         )
         assert result.returncode == 1
         assert "conflicts" in result.stdout + result.stderr
+
+
+PYTHON_SEED = REPO_ROOT / "scripts" / "local" / "templates" / "checks-python.sh"
+NONE_SEED = REPO_ROOT / "scripts" / "local" / "templates" / "checks-none.sh"
+
+
+class TestProfiles:
+    """KIT-0050 F3/F4/F6: hook seeding, install record, Project Rules."""
+
+    def test_default_single_seeds_python_hook(self, tmp_path):
+        target = make_consumer_dir(tmp_path, "app")
+        result = run_bootstrap(target)
+        assert result.returncode == 0, result.stderr
+        hook = target / "scripts" / "local" / "checks.sh"
+        assert hook.is_file()
+        assert os.access(hook, os.X_OK)
+        # seeded content IS the template — moved, not rewritten
+        assert hook.read_bytes() == PYTHON_SEED.read_bytes()
+        # the record's only reader must ship alongside the record, or a
+        # non-default profile would be silently ignored by doctor
+        assert (target / "scripts" / "local" / "kit_markers.py").is_file()
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "shape: single" in claude
+        assert "profile: python" in claude
+        assert "<!-- BEGIN KIT-LOCAL: project-rules -->" in claude
+        assert "### Python" in claude  # python rules text seeded
+
+    def test_profile_none_seeds_loud_noop(self, tmp_path):
+        target = make_consumer_dir(tmp_path, "docsrepo")
+        result = run_bootstrap(target, "--profile", "none")
+        assert result.returncode == 0, result.stderr
+        hook = target / "scripts" / "local" / "checks.sh"
+        assert hook.read_bytes() == NONE_SEED.read_bytes()
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "profile: none" in claude
+        assert "No project toolchain is configured" in claude
+        assert "### Python" not in claude  # no python rules for none
+
+    def test_profile_python_identical_to_flagless(self, tmp_path):
+        # characterization of the default: python IS the flagless profile
+        flagless = make_consumer_dir(tmp_path / "a", "app")
+        explicit = make_consumer_dir(tmp_path / "b", "app")
+        r1 = run_bootstrap(flagless)
+        r2 = run_bootstrap(explicit, "--profile", "python")
+        assert r1.returncode == 0, r1.stderr
+        assert r2.returncode == 0, r2.stderr
+        assert tree_snapshot(flagless) == tree_snapshot(explicit)
+
+    def test_planning_shape_forces_none(self, tmp_path):
+        target = make_consumer_dir(tmp_path, "plan")
+        result = run_bootstrap(target, "--shape", "planning")
+        assert result.returncode == 0, result.stderr
+        hook = target / "scripts" / "local" / "checks.sh"
+        assert hook.read_bytes() == NONE_SEED.read_bytes()
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "profile: none" in claude
+
+    def test_planning_with_profile_python_rejected(self, tmp_path):
+        target = make_consumer_dir(tmp_path, "badcombo")
+        result = run_bootstrap(target, "--shape", "planning", "--profile", "python")
+        assert result.returncode == 1
+        assert "planning forces profile none" in result.stdout + result.stderr
+
+    def test_unknown_profile_rejected(self, tmp_path):
+        target = make_consumer_dir(tmp_path, "badprof")
+        result = run_bootstrap(target, "--profile", "elixir")
+        assert result.returncode == 1
+        assert "unknown profile" in (result.stdout + result.stderr).lower()
+
+    def test_profile_flag_as_last_arg_is_clean_usage_error(self):
+        # value-consuming flag in truly final position: empty profile is
+        # the default, so this must fall through to the missing-target
+        # usage error — never a set -e death
+        result = subprocess.run(
+            ["bash", str(BOOTSTRAP), "--profile"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=_scrubbed_env(),
+        )
+        assert result.returncode == 1
+        assert "Usage:" in result.stdout + result.stderr
+
+    def test_no_kit_flag_still_seeds_hook_and_record(self, tmp_path):
+        # o3 review gap: no functional --no-kit run existed in the
+        # suite; also pins that the hook/record are toolchain-level,
+        # not kit-workflow-level (seeded even on opt-out)
+        target = make_consumer_dir(tmp_path, "nokit")
+        result = run_bootstrap(target, "--no-kit")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert (target / "scripts" / "core" / "ci-check.sh").is_file()
+        assert (target / "scripts" / "local" / "checks.sh").is_file()
+        assert not (target / ".claude" / "agents" / "planner.md").exists()
+        assert "profile: python" in (target / "CLAUDE.md").read_text(encoding="utf-8")
+
+    def test_equals_form_flags_parse(self, tmp_path):
+        # o3 review gap: the --flag=value forms had no functional run
+        target = make_consumer_dir(tmp_path, "eqform")
+        result = run_bootstrap(target, "--shape=planning", "--profile=none")
+        assert result.returncode == 0, result.stderr + result.stdout
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "shape: planning" in claude
+        assert "profile: none" in claude
+
+    def test_rebootstrap_preserves_customized_hook(self, tmp_path):
+        # N4's bootstrap half: the hook is consumer-owned after seeding
+        target = make_consumer_dir(tmp_path, "app")
+        assert run_bootstrap(target).returncode == 0
+        hook = target / "scripts" / "local" / "checks.sh"
+        custom = "#!/bin/bash\n# my js checks\nnpm test\n"
+        hook.write_text(custom, encoding="utf-8")
+        result = run_bootstrap(target)
+        assert result.returncode == 0, result.stderr
+        assert hook.read_text(encoding="utf-8") == custom
+        assert "preserved" in result.stdout
+
+    def test_rebootstrap_preserves_claude_md_regions(self, tmp_path):
+        # append-if-absent: consumer edits inside the regions survive a
+        # re-bootstrap byte-for-byte, and no duplicate regions appear
+        target = make_consumer_dir(tmp_path, "app")
+        assert run_bootstrap(target).returncode == 0
+        claude_md = target / "CLAUDE.md"
+        edited = claude_md.read_text(encoding="utf-8").replace(
+            "### Python", "### Python (consumer-tuned)"
+        )
+        claude_md.write_text(edited, encoding="utf-8")
+        result = run_bootstrap(target)
+        assert result.returncode == 0, result.stderr
+        text = claude_md.read_text(encoding="utf-8")
+        assert "### Python (consumer-tuned)" in text
+        assert text.count("BEGIN KIT-LOCAL: kit-install") == 1
+        assert text.count("BEGIN KIT-LOCAL: project-rules") == 1

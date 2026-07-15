@@ -1274,25 +1274,32 @@ def _print_sync_report(report, *, dry_run, committed, project_dir):
         print("\n   Run without --dry-run to apply.")
 
 
-def _doctor_shape(project_dir):
-    """Read the installation's shape record (KIT-0048 F2/F3).
+def _doctor_install(project_dir):
+    """Read the installation's shape+profile record (KIT-0048 F2/F3,
+    extended by KIT-0050 F4 — one reader, never two).
 
     The record lives in CLAUDE.md's ``kit-install`` KIT-LOCAL region and
     kit_markers.py is its only reader (N4: one extract, runtime-read, no
-    cache). Returns ``(shape, error_detail)``:
+    cache). Returns ``(shape, profile, errors)`` where ``errors`` is a
+    list of ``(record, detail)`` pairs, ``record`` in {"shape-record",
+    "profile-record"}:
 
-    - anything absent (kit_markers, CLAUDE.md, region) -> ("single", None)
-      — back-compat: absent means today's single shape, never an error;
-    - a readable record with shape in {single, planning} -> (shape, None);
-    - malformed/unknown value or unreadable record -> (None, detail) —
-      the caller runs the FULL check set AND emits
-      DOCTOR:shape-record:FAIL — fail loud while staying maximally
-      diagnostic, never silently fall back.
+    - anything absent (kit_markers, CLAUDE.md, region) ->
+      ("single", "python", []) — back-compat: absent means today's
+      single shape with the Python toolchain, never an error;
+    - a readable record: shape in {single, planning}; a missing
+      profile: line defaults by shape (single -> python,
+      planning -> none — the KIT-0050 back-compat rule);
+    - malformed/unknown value or unreadable record -> the affected
+      value(s) are None and ``errors`` carries the detail — the caller
+      runs the FULL check set AND emits a DOCTOR:<record>:FAIL line —
+      fail loud while staying maximally diagnostic, never silently
+      fall back.
     """
     kit_markers = project_dir / "scripts" / "local" / "kit_markers.py"
     claude_md = project_dir / "CLAUDE.md"
     if not kit_markers.exists() or not claude_md.exists():
-        return "single", None
+        return "single", "python", []
     try:
         result = subprocess.run(
             [
@@ -1307,45 +1314,112 @@ def _doctor_shape(project_dir):
             timeout=15,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
-        return None, f"shape record unreadable ({exc.__class__.__name__})"
+        detail = f"shape record unreadable ({exc.__class__.__name__})"
+        return None, None, [("shape-record", detail)]
     if result.returncode != 0:
         # kit_markers exits 1 with this exact stderr for a missing region
         # (absent = single, back-compat). ANY other failure — crash, bad
         # interpreter, argv error — is an unreadable record and must fail
         # loud, not silently fall back (o3 review).
         if "region not found" in result.stderr:
-            return "single", None
+            return "single", "python", []
         detail = result.stderr.strip().splitlines()
-        return None, (
-            "kit_markers extract failed "
-            f"(exit {result.returncode}: {detail[0] if detail else 'no stderr'})"
+        return (
+            None,
+            None,
+            [
+                (
+                    "shape-record",
+                    "kit_markers extract failed "
+                    f"(exit {result.returncode}: "
+                    f"{detail[0] if detail else 'no stderr'})",
+                )
+            ],
         )
+    raw_shape = None
+    raw_profile = None
     for line in result.stdout.splitlines():
         stripped = line.strip()
-        if stripped.startswith("shape:"):
-            value = stripped.partition(":")[2].strip()
-            if value == "single" or value == "planning":
-                return value, None
-            return None, (
-                f"unknown shape '{value}' in kit-install region — "
-                "expected single|planning; running the full check set"
+        if stripped.startswith("shape:") and raw_shape is None:
+            raw_shape = stripped.partition(":")[2].strip()
+        elif stripped.startswith("profile:") and raw_profile is None:
+            raw_profile = stripped.partition(":")[2].strip()
+
+    errors = []
+    shape = None
+    if raw_shape is None:
+        errors.append(
+            (
+                "shape-record",
+                "kit-install region present but has no shape: line — "
+                "running the full check set",
             )
-    return None, (
-        "kit-install region present but has no shape: line — "
-        "running the full check set"
-    )
+        )
+    elif raw_shape == "single" or raw_shape == "planning":
+        shape = raw_shape
+    else:
+        errors.append(
+            (
+                "shape-record",
+                f"unknown shape '{raw_shape}' in kit-install region — "
+                "expected single|planning; running the full check set",
+            )
+        )
+
+    profile = None
+    if raw_profile is None:
+        # Absent profile defaults by shape; with the shape itself
+        # unreadable there is no default to derive — profile stays None
+        # (run everything) without a second error line for one cause.
+        if shape == "single":
+            profile = "python"
+        elif shape == "planning":
+            profile = "none"
+    elif raw_profile == "python" or raw_profile == "none":
+        if shape is None:
+            # An unreadable shape poisons the profile too: a profile's
+            # legality is shape-dependent (planning forces none), so
+            # honoring one from a record whose shape cannot be trusted
+            # could SKIP checks the shape-record FAIL just promised to
+            # run. profile stays None — run everything (BugBot, PR #80).
+            pass
+        elif raw_profile == "python" and shape == "planning":
+            # The P3 matrix pairing, hard-coded as in KIT-0048: planning
+            # forces none. Honoring the illegal combination would run
+            # toolchain checks a planning repo cannot satisfy; silently
+            # coercing would drop what the record says — fail loud.
+            errors.append(
+                (
+                    "profile-record",
+                    "profile 'python' is not legal for shape 'planning' "
+                    "(planning forces none) — running the full check set",
+                )
+            )
+        else:
+            profile = raw_profile
+    else:
+        errors.append(
+            (
+                "profile-record",
+                f"unknown profile '{raw_profile}' in kit-install region — "
+                "expected python|none; running the full check set",
+            )
+        )
+    return shape, profile, errors
 
 
-def _check_shapes(check_path):
-    """Shapes a doctor.d check declares via its `# shapes:` header line.
+def _check_declared(check_path, keyword):
+    """Tokens a doctor.d check declares via its `# <keyword>:` header
+    line — keyword is "shapes" (KIT-0048) or "profiles" (KIT-0050 F5);
+    the two declarations share one mechanism by design.
 
-    Returns a set of shape tokens, or None when the check declares
-    nothing — an undeclared OR empty declaration runs for every shape
-    (never silently skipped; o3 review: an empty set would skip the
-    check in every shape forever). Case-insensitive; scanned over the
-    first 30 lines, which covers long banners without picking up
-    documentation strings deep in a check body (convention: the header
-    sits right under the shebang).
+    Returns a set of tokens, or None when the check declares nothing —
+    an undeclared OR empty declaration runs everywhere (never silently
+    skipped; o3 review: an empty set would skip the check in every
+    shape forever). Case-insensitive; scanned over the first 30 lines,
+    which covers long banners without picking up documentation strings
+    deep in a check body (convention: the header sits right under the
+    shebang).
     """
     try:
         text = check_path.read_text(encoding="utf-8", errors="replace")
@@ -1353,9 +1427,11 @@ def _check_shapes(check_path):
         return None
     head = "\n".join(text.splitlines()[:30])
     # [^\S\n] = horizontal whitespace only — \s would slurp the newline
-    # of an empty declaration and capture the NEXT line as shape tokens
+    # of an empty declaration and capture the NEXT line as tokens
     match = re.search(
-        r"^#[^\S\n]*shapes:[^\S\n]*(.*)$", head, re.MULTILINE | re.IGNORECASE
+        r"^#[^\S\n]*" + keyword + r":[^\S\n]*(.*)$",
+        head,
+        re.MULTILINE | re.IGNORECASE,
     )
     if match:
         # lowercase the tokens too — IGNORECASE only covers the keyword,
@@ -1428,11 +1504,12 @@ def cmd_doctor(args, project_dir):
         print(f"❌ no checks found in {doctor_dir}")
         return 3
 
-    # Per-shape inclusion (KIT-0048, fills the P2 seam): checks declare
-    # their shapes in a `# shapes:` header; the driver reads the shape
-    # record once and stays otherwise shape-blind. A malformed record
-    # runs everything AND fails loud via the shape-record line below.
-    shape, shape_error = _doctor_shape(project_dir)
+    # Per-shape inclusion (KIT-0048, fills the P2 seam) and per-profile
+    # inclusion (KIT-0050 F5): checks declare their shapes/profiles in
+    # `# shapes:` / `# profiles:` headers; the driver reads the install
+    # record once and stays otherwise declaration-driven. A malformed
+    # record runs everything AND fails loud via the record lines below.
+    shape, profile, record_errors = _doctor_install(project_dir)
 
     # Scrub ambient GIT_* so a leaked GIT_DIR (the KIT-0043 incident
     # class — e.g. doctor invoked from a pre-commit hook in a worktree)
@@ -1440,16 +1517,28 @@ def cmd_doctor(args, project_dir):
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env["DOCTOR_ROOT"] = str(project_dir)
     verdicts = []
-    if shape_error:
-        print(f"DOCTOR:shape-record:FAIL:{shape_error}")
+    for record, detail in record_errors:
+        print(f"DOCTOR:{record}:FAIL:{detail}")
         verdicts.append("FAIL")
     for check in checks:
         name = check.name
-        declared = _check_shapes(check)
+        declared = _check_declared(check, "shapes")
         if shape is not None and declared is not None and shape not in declared:
             print(
                 f"DOCTOR:{name}:SKIP:not applicable to shape '{shape}' "
                 f"(check declares: {' '.join(sorted(declared))})"
+            )
+            verdicts.append("SKIP")
+            continue
+        declared_profiles = _check_declared(check, "profiles")
+        if (
+            profile is not None
+            and declared_profiles is not None
+            and profile not in declared_profiles
+        ):
+            print(
+                f"DOCTOR:{name}:SKIP:not applicable to profile '{profile}' "
+                f"(check declares: {' '.join(sorted(declared_profiles))})"
             )
             verdicts.append("SKIP")
             continue
@@ -1548,9 +1637,14 @@ def cmd_sync(args, project_dir):
     failures pass through the engine's own code. Also a self-review
     checklist item (``.kit/skills/self-review/SKILL.md``).
     """
-    shape, shape_error = _doctor_shape(project_dir)
-    if shape_error:
-        print(f"❌ sync refused: {shape_error}")
+    # Sync provisions by SHAPE; the profile only scopes doctor checks,
+    # so a profile-record error alone does not block a sync whose shape
+    # is readable (minimal coupling — KIT-0050).
+    shape, _profile, record_errors = _doctor_install(project_dir)
+    if shape is None:
+        shape_errors = [d for record, d in record_errors if record == "shape-record"]
+        detail = shape_errors[0] if shape_errors else "shape record unreadable"
+        print(f"❌ sync refused: {detail}")
         print("   Fix the kit-install region in CLAUDE.md before syncing —")
         print("   an unreadable shape record could mis-provision this repo.")
         # Wrapper-level refusal → 2 (wrapper exit-code convention above).

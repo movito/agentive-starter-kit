@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-# shapes: single
+# profiles: python
 """doctor check: venv-vs-system version skew for packages that bit us.
+
+Profile-scoped, not shape-scoped (KIT-0050 F5): these are Python
+toolchain checks, so they run wherever the effective profile is python
+and SKIP by declaration everywhere else (planning repos force profile
+none; a docs-only single repo can opt out with --profile none).
 
 Incidents:
 - adversarial-workflow (KIT-0044): the venv carried aider-era 0.9.7,
