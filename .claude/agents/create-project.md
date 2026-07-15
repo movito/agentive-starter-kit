@@ -54,21 +54,28 @@ Infer what you can (e.g., prefix from name, description from context).
 > `cd <target-dir> && ...` (or use absolute paths). Do not assume CWD carries
 > over.
 
-### Step 1: Run create-project.sh
+### Step 1: Run the setup door (--new)
 
-The mechanical export and cleanup is handled by a script. Run it from the
-agentive-starter-kit repo root:
+The mechanical export and cleanup is handled by the kit's one setup
+door (KIT-0053). Run it from the agentive-starter-kit repo root:
 
 ```bash
-./scripts/optional/create-project.sh <target-dir> --name "<name>" --prefix <PREFIX>
+./scripts/local/bootstrap --new <target-dir> --name "<name>" --prefix <PREFIX> --without-evaluators --without-venv
 ```
 
-**If the script fails**: Read the error, diagnose, and fix. Common issues:
-- Target directory already exists → ask user if they want to delete it
-- Not running from ASK root → cd to the right place first
+It exports a clean copy, records the install (shape/profile) in the
+new project's CLAUDE.md, and ends with a `project doctor` report —
+read it; WARNs about missing .env keys are expected at this stage.
+(Evaluator install happens in Step 5, so pass `--without-evaluators`
+here.)
 
-Verify the script succeeded by checking that the target directory has a clean
-git repo with one commit.
+**If the door fails**: Read the error, diagnose, and fix. Common issues:
+- Exit 2, target already exists → ask user if they want to delete it
+- Exit 2, not running from ASK root → cd to the right place first
+- Exit 1, no git identity → have the user set git user.name/user.email
+
+Verify it succeeded by checking that the target directory has a clean
+git repo with two commits (export + install record).
 
 ### Step 2: Customize CLAUDE.md
 

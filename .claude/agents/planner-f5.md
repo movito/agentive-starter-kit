@@ -43,7 +43,7 @@ step in `docs/MANIFEST-UPGRADE-GUIDE.md`.
 > A vague agent performs worse than a specific one — fill this in.
 >
 > Everything between the `KIT-LOCAL: project-context` markers below is
-> consumer-owned. `bootstrap-consumer.sh` overwrites it with project
+> consumer-owned. `engine-consumer.sh` (the setup door's consumer engine) overwrites it with project
 > values on first bootstrap and preserves it across re-bootstraps;
 > upstream refreshes everything outside the markers. Keep the marker
 > comments intact when editing.

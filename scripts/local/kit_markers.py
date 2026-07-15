@@ -9,7 +9,8 @@ markers:
     ...consumer-owned content...
     <!-- END KIT-LOCAL: project-context -->
 
-`bootstrap-consumer.sh` uses this helper so that:
+The consumer engine behind the setup door (`scripts/local/bootstrap`,
+engine `engine-consumer.sh`; KIT-0053) uses this helper so that:
 
 - **Fresh bootstrap** — the upstream agent is copied, then each marker
   region is replaced with consumer-derived placeholder content (so a
