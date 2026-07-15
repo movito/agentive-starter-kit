@@ -210,6 +210,13 @@ validate_combo() {
         [ "$DESIGN_MATERIALS" = "yes" ] &&
             { echo "Error: --design-materials requires profile python (the materials flow runs setup-dev)" >&2; return 1; }
     fi
+    if [ "$DESIGN_MATERIALS" = "yes" ] && [ "$NO_KIT" -eq 1 ]; then
+        # the materials engine ships the full kit workflow — honoring
+        # --no-kit there is impossible, so ignoring it silently would
+        # drop what the operator asked for (the masking class)
+        echo "Error: --no-kit contradicts --design-materials (the materials flow installs the full kit workflow)" >&2
+        return 1
+    fi
     return 0
 }
 

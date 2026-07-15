@@ -214,6 +214,14 @@ class TestExitContract:
         result = run_door("--adopt", str(tmp_path), "--target-path", "../x")
         assert result.returncode == 2
 
+    def test_no_kit_materials_contradiction(self, tmp_path):
+        # BugBot PR #81: the materials engine installs the full kit
+        # workflow — --no-kit cannot be honored there and must be
+        # rejected loudly, never silently dropped
+        result = run_door("--adopt", str(tmp_path), "--design-materials", "--no-kit")
+        assert result.returncode == 2
+        assert "--no-kit contradicts --design-materials" in result.stderr
+
     def test_no_kit_planning_contradiction(self, tmp_path):
         result = run_door("--adopt", str(tmp_path), "--shape", "planning", "--no-kit")
         assert result.returncode == 2
