@@ -1,6 +1,6 @@
 # KIT-0053: The one setup door (ADR-0027 P3)
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 5-7 hours (largest transformation task; 2-PR split pre-approved)
