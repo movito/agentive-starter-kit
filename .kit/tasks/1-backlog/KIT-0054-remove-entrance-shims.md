@@ -56,6 +56,15 @@ channel that exists only for them.
 
 ## Notes
 
+- **Known shim/door divergence that this removal erases** (BugBot
+  PR #81, declined on N1): the native door rejects an explicit
+  `--shape`/`--profile` that contradicts the target's existing
+  kit-install record (exit 2); the legacy shim path preserves the
+  historical silent-preserve behavior (exit 0), because a conflicting
+  re-adopt was a *succeeding* historical invocation form and N1 pins
+  it. When the shims and `--legacy-shim` go, every adopt gets the
+  conflict check automatically — nothing extra to implement, but
+  re-pin the characterization to the door's corrected semantics.
 - **Materials-engine hardening to consider here** (CodeRabbit PR #81,
   declined on the frozen legacy surface): `engine-materials.sh` runs
   the TARGET's copy of `setup-dev.sh` (rsync `--ignore-existing`
