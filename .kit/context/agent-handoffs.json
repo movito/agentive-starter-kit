@@ -3,7 +3,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0049 DONE (PR #79) — P2's promise fully delivered: planning repos bootstrap, lifecycle, doctor, preflight, AND update. Closeout complete (5-done, worktree removed cleanly, branch deleted). Retro items shipped: intersection_names_drops in patterns.yml, block-replacement hygiene = self-review item 12; o3-FAIL-default-serious extracted. Transformation: P4 done, P2 done+complete. NEXT: P1 (language profiles) — spec on operator go.",
+    "brief_note": "KIT-0050 (language profiles, ADR-0027 P1, transformation 3/6) specced and promoted. Evaluation: APPROVED ZERO FINDINGS — first clean approve of the arc (ADR pre-decided contract + KIT-0048/49 mechanisms left nothing open). Worktree provisioned. Operator arc-end reminder logged: rm -rf allowlist after P6. After P1: P3 (one door), then P5+P7, P6.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
@@ -11,7 +11,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0049 complete (PR #79 merged, 34 tests, retro on main). Next assignment expected: P1 language profiles (KIT-0050) once planner specs it.",
+    "brief_note": "KIT-0050 (ci-check dispatcher + hook contract + python/none seeds + profile record + doctor scoping + Project Rules region) ready. Worktree: ../ask-worktrees/KIT-0050 (pull --ff-only first). Characterization of ci-check FIRST (N1). Move the gauntlet, don't rewrite it.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
