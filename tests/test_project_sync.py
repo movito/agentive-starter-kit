@@ -673,7 +673,10 @@ class TestShapeScopedSync:
         assert report.to_dict()["skipped_additions"] == ["core/extra.sh"]
 
 
-BOOTSTRAP = REPO / "scripts" / "local" / "bootstrap-consumer.sh"
+# the consumer ENGINE carries the seeded-manifest heredocs (KIT-0053
+# moved the implementation behind the setup door; the old entrance
+# filename is a flag-mapping shim)
+BOOTSTRAP = REPO / "scripts" / "local" / "engine-consumer.sh"
 
 
 class TestHookNeverSynced:
@@ -691,7 +694,7 @@ class TestHookNeverSynced:
 
     @pytest.mark.skipif(
         not BOOTSTRAP.exists(),
-        reason="bootstrap-consumer.sh absent (consumer checkout)",
+        reason="engine-consumer.sh absent (consumer checkout)",
     )
     def test_bootstrap_seeded_manifests_record_no_scripts_local_entries(self):
         import re
