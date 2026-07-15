@@ -72,7 +72,9 @@ if [[ -z "$TASK_PREFIX" ]]; then
     TASK_PREFIX=$(echo "$PROJECT_NAME" | tr '[:lower:]' '[:upper:]' | sed 's/[^A-Z0-9 ]//g' | awk '{for(i=1;i<=NF;i++) printf substr($i,1,1)}')
     # Fallback if too short
     if [[ ${#TASK_PREFIX} -lt 2 ]]; then
-        TASK_PREFIX=$(echo "$DIR_BASENAME" | tr '[:lower:]' '[:upper:]' | tr -d '-_ ' | cut -c1-4)
+        # dash must sit LAST in the tr set — a leading dash reads as an
+        # option flag under BSD tr and crashes the whole export
+        TASK_PREFIX=$(echo "$DIR_BASENAME" | tr '[:lower:]' '[:upper:]' | tr -d '_ -' | cut -c1-4)
     fi
 fi
 
