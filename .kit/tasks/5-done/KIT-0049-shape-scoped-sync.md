@@ -1,6 +1,6 @@
 # KIT-0049: Shape-scoped `project sync`
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high (raised by planner 2026-07-14: this completes P2's
 promise — planning repos are live but update-locked until it lands.
 Recommended sequence: KIT-0049 next, small and unblocking, then P1.)

@@ -104,6 +104,8 @@ Read every function in the file you changed (not just the ones you wrote):
 
 11. **Class/session-scoped fixtures that shell out must scrub their own env**: function-scoped autouse isolation (conftest.py) does not reach wider-scoped fixtures — any class- or session-scoped fixture spawning subprocesses builds an explicitly scrubbed environment (`_scrubbed_env()` pattern) instead of trusting autouse. The gap is invisible until a hook-context run leaks `GIT_*` into a wider-scoped fixture (KIT-0048; the corruption class is KIT-0036/0043's).
 
+12. **Block-replacement hygiene**: after replacing a large text block, inspect what sits immediately ABOVE and BELOW the replaced span — decorators, comments, and staged-vs-disk state don't move with the block. Two artifacts in two tasks: a `skipif` decorator stranded on a helper function (pytest silently ignores it; consumer CI errors instead of skipping — KIT-0049) and an equivalent orphan in KIT-0048. One glance at the block's borders per replacement.
+
 ## Step 4: Test assertion audit
 
 Before checking boundary coverage, audit test assertion quality:

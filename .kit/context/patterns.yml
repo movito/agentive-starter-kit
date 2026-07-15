@@ -20,6 +20,22 @@ patterns:
 
 # Defensive coding patterns — learned from automated bot findings
 defensive:
+  intersection_names_drops:
+    rule: >
+      Intersection/filter code must NAME what it drops — never silently
+      narrow a set. Any operation that selects a subset (manifest
+      intersection, allowlist filtering, tier selection, glob matching
+      against an inventory) reports the excluded items through its
+      result/report channel, and an empty selection can never claim
+      completeness. Five reviewers found five faces of this one masking
+      class on a single PR (deletion divergence, completeness masking,
+      char-iteration over a string treated as a list, mixed-list
+      discard, vacuous empty scope).
+    examples:
+      - "sync allowlist: skipped upstream additions named in every SyncReport (KIT-0049)"
+      - "empty allowlist -> partial_sync, never 'complete' (KIT-0049)"
+      - "--only outside the allowlist errors instead of silently no-op (KIT-0049)"
+    caught_by: "o3 FAIL + fast-v2 + claude-code + BugBot + CodeRabbit (convergent, KIT-0049)"
   external_cli_integration:
     rule: >
       Before writing subprocess.run() for any external CLI tool, read
