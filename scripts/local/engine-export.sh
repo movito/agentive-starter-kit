@@ -17,6 +17,15 @@
 
 set -euo pipefail
 
+# Scrub GIT_* before any git call — a leaked GIT_DIR (pre-commit
+# exports one inside worktrees) would redirect this engine's git
+# init/add/commit at the REAL repository (the KIT-0048 incident class;
+# the engine-consumer.sh pattern). The door scrubs too — this is
+# defense in depth for direct engine invocation.
+for _git_var in $(compgen -A variable | grep '^GIT_' || true); do
+    unset "$_git_var"
+done
+
 # --- Resolve repo root ---
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -135,7 +144,6 @@ mkdir -p scripts/local
 # Project memory from wrong project
 rm -rf .claude/projects/ 2>/dev/null || true
 
-DELETED_COUNT=$(git diff --stat 2>/dev/null | tail -1 || echo "many files")
 echo "   Done — project-specific content removed"
 
 # --- Step 3: Reset identity files ---

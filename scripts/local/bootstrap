@@ -69,6 +69,7 @@
 # session, so doctor cannot follow it — run it in the target afterward.
 
 set -e
+set -o pipefail
 IFS=$' \t\n'
 
 # The door commits into $TARGET on --new; a leaked GIT_DIR would
@@ -121,7 +122,9 @@ resolve_setting() {  # $1 key, $2 cli value, $3 shape context → stdout
         echo "$2"
         return 0
     fi
-    if v="$(preset_get "$1")"; then
+    # empty-but-successful preset output counts as unanswered — a P7
+    # preset that echoes nothing must fall through, not resolve to ""
+    if v="$(preset_get "$1")" && [ -n "$v" ]; then
         echo "$v"
         return 0
     fi
@@ -201,8 +204,9 @@ validate_combo() {
 }
 
 usage() {
-    # print the header block (everything before the first non-comment line)
-    sed -n '2,/^set -e/p' "${BASH_SOURCE[0]}" | sed '$d' | sed 's/^# \{0,1\}//'
+    # print the header block: line 2 up to the first non-comment,
+    # non-blank line (order-insensitive to what that line is)
+    sed -n '2,/^[^#]/p' "${BASH_SOURCE[0]}" | sed '$d' | sed 's/^# \{0,1\}//'
 }
 
 # ─────────────────────────────────────────
@@ -222,6 +226,24 @@ prompt_yn() {  # $1 question → "yes"/"no"
 # ─────────────────────────────────────────
 # Orchestration helpers
 # ─────────────────────────────────────────
+ensure_git_identity() {
+    # Fail fast with a real message when the install will commit into
+    # the target but git has no identity — otherwise the engine dies
+    # mid-run with git's "Please tell me who you are" (o3 finding).
+    # --global includes the XDG config scope.
+    if git config --global --get user.email >/dev/null 2>&1; then
+        return 0
+    fi
+    if git config --system --get user.email >/dev/null 2>&1; then
+        return 0
+    fi
+    echo "Error: no git identity configured — this install commits into the target." >&2
+    echo "       Set one first:" >&2
+    echo "         git config --global user.name  'Your Name'" >&2
+    echo "         git config --global user.email you@example.com" >&2
+    exit 1
+}
+
 run_offers() {
     if [ "$WITH_EVALUATORS" = "" ]; then
         if is_tty; then
@@ -404,6 +426,10 @@ main() {
     fi
 
     # ── Orchestrate ──
+    # a --new install (and an adopt of a git-less target) will commit
+    if [ "$MODE" = "new" ] || [ ! -e "$TARGET/.git" ]; then
+        ensure_git_identity
+    fi
     echo "Setup door: mode=$MODE shape=$SHAPE profile=$PROFILE target=$TARGET"
 
     if [ "$MODE" = "adopt" ] && [ "$DESIGN_MATERIALS" = "yes" ]; then
@@ -428,7 +454,10 @@ main() {
                git -C "$TARGET" commit --quiet -m "chore: record kit install (shape: single, profile: $PROFILE)"; then
                 echo "Install record committed."
             else
-                echo "Warning: install record left uncommitted (git identity missing?) — commit CLAUDE.md + scripts/local/ yourself"
+                # F6: a failed record step is an install failure — the
+                # record is written to CLAUDE.md but sits uncommitted
+                echo "Error: install record commit failed — commit CLAUDE.md + scripts/local/ in the target, then re-run doctor" >&2
+                exit 1
             fi
         else
             mkdir -p "$TARGET"

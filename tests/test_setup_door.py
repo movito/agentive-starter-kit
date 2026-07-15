@@ -141,6 +141,13 @@ class TestResolveValidateUnits:
         assert sourced('validate_values pyramid ""').returncode == 1
         assert sourced("validate_values single elixir").returncode == 1
 
+    def test_empty_preset_answer_falls_through(self):
+        # o3 finding: a P7 preset that succeeds but echoes nothing must
+        # count as unanswered — the chain falls through to kit defaults
+        result = sourced('preset_get() { echo ""; }; resolve_setting shape ""')
+        assert result.returncode == 0
+        assert result.stdout.strip() == "single"
+
 
 class TestExitContract:
     """F6: 0 install-ok / 1 install-failed / 2 usage-or-illegal."""
@@ -211,6 +218,25 @@ class TestExitContract:
         result = run_door("--adopt", str(REPO_ROOT))
         assert result.returncode == 2
         assert "kit source repo" in result.stderr
+
+    def test_missing_git_identity_fails_fast_with_guidance(self, tmp_path):
+        # o3 finding: without an identity the export engine would die
+        # mid-run with git's own cryptic error — the door pre-checks
+        system_cfg = subprocess.run(
+            ["git", "config", "--system", "--get", "user.email"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if system_cfg.returncode == 0:
+            pytest.skip("system gitconfig carries an identity on this machine")
+        home = tmp_path / "bare-home"
+        home.mkdir()
+        env = _scrubbed_env(HOME=str(home), XDG_CONFIG_HOME=str(home / "xdg"))
+        result = run_door("--new", str(tmp_path / "proj"), env=env)
+        assert result.returncode == 1
+        assert "no git identity configured" in result.stderr
+        assert not (tmp_path / "proj").exists()  # failed BEFORE any work
 
 
 def _kit_install_region(target: Path) -> str:

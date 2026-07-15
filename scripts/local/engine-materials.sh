@@ -27,6 +27,15 @@
 
 set -e
 
+# Scrub GIT_* before any git call — a leaked GIT_DIR (pre-commit
+# exports one inside worktrees) would redirect this engine's git
+# init/add/commit at the REAL repository (the KIT-0048 incident class;
+# the engine-consumer.sh pattern). The door scrubs too — this is
+# defense in depth for direct engine invocation.
+for _git_var in $(compgen -A variable | grep '^GIT_' || true); do
+    unset "$_git_var"
+done
+
 # ─────────────────────────────────────────
 # Resolve paths
 # ─────────────────────────────────────────
