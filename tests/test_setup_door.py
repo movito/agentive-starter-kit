@@ -171,6 +171,10 @@ class TestExitContract:
         result = run_door("--adopt", "--profile", "none", timeout=30)
         assert result.returncode == 2
         assert "requires a value" in result.stderr
+        # short options are flags too, not targets
+        result = run_door("--new", "-h", timeout=30)
+        assert result.returncode == 2
+        assert "requires a value" in result.stderr
 
     def test_missing_mode_non_tty_fails_fast(self):
         result = run_door(timeout=30)
@@ -313,7 +317,11 @@ class TestAdoptE2E:
             result.stderr
         )
         # flagless re-adopt keeps working (nothing explicit to conflict)
-        assert run_door("--adopt", str(target)).returncode == 0
+        # AND preserves the existing record — the default must not
+        # silently overwrite single:none with single:python
+        readopt = run_door("--adopt", str(target))
+        assert readopt.returncode == 0, readopt.stderr + readopt.stdout
+        assert "profile: none" in _kit_install_region(target)
 
     def test_adopt_planning_records_pointer(self, tmp_path):
         target = make_adopt_dir(tmp_path, "coord")

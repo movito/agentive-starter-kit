@@ -146,10 +146,11 @@ die_usage() {
 
 reject_flaglike() {  # $1 flag, $2 captured value — a following flag is
     # not a value ('--new --shape planning' must not adopt '--shape'
-    # as its target; BugBot, PR #81). Empty stays allowed: the later
-    # required-answer handling prompts or fails with its own message.
+    # as its target; BugBot, PR #81; -* also catches short options
+    # like -h). Empty stays allowed: the later required-answer
+    # handling prompts or fails with its own message.
     case "$2" in
-        --*) die_usage "$1 requires a value (got the flag '$2' instead)" ;;
+        -*) die_usage "$1 requires a value (got the flag '$2' instead)" ;;
     esac
 }
 
