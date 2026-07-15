@@ -1376,7 +1376,14 @@ def _doctor_install(project_dir):
         elif shape == "planning":
             profile = "none"
     elif raw_profile == "python" or raw_profile == "none":
-        if raw_profile == "python" and shape == "planning":
+        if shape is None:
+            # An unreadable shape poisons the profile too: a profile's
+            # legality is shape-dependent (planning forces none), so
+            # honoring one from a record whose shape cannot be trusted
+            # could SKIP checks the shape-record FAIL just promised to
+            # run. profile stays None — run everything (BugBot, PR #80).
+            pass
+        elif raw_profile == "python" and shape == "planning":
             # The P3 matrix pairing, hard-coded as in KIT-0048: planning
             # forces none. Honoring the illegal combination would run
             # toolchain checks a planning repo cannot satisfy; silently

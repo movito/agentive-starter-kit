@@ -515,6 +515,20 @@ class TestProfileInclusion:
         assert "# profiles: python" in head
         assert "# shapes:" not in head
 
+    def test_malformed_shape_never_honors_valid_profile(self, tmp_path):
+        """BugBot PR #80: with an unreadable shape, a syntactically
+        valid profile must NOT be honored — its legality is shape-
+        dependent, and honoring it would SKIP checks the shape-record
+        FAIL just promised to run (the masking class)."""
+        root, checks = _profile_fixture(tmp_path, "shape: pyramid\nprofile: none\n")
+        result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
+        assert any(ln.startswith("DOCTOR:shape-record:FAIL:") for ln in lines)
+        # the python-scoped check RAN despite profile: none in the record
+        assert any(ln.startswith("DOCTOR:pytool:PASS:") for ln in lines)
+        assert not any(":SKIP:" in ln for ln in lines)
+        assert result.returncode == 1
+
 
 def run_env_check(root: Path) -> subprocess.CompletedProcess:
     check = DOCTOR_D / "20-env-keys.py"
