@@ -21,6 +21,8 @@ REPO = Path(__file__).resolve().parent.parent
 CORE = REPO / "scripts" / "core"
 sys.path.insert(0, str(CORE))  # for `import sync_from_manifest`
 
+import sync_from_manifest  # noqa: E402
+
 # Load the `project` script (no .py extension) as a module, mirroring
 # test_project_script.py.
 _project_path = CORE / "project"
@@ -352,42 +354,299 @@ class TestBranchAndCommit:
 KIT_MARKERS = REPO / "scripts" / "local" / "kit_markers.py"
 
 
+def _shaped_root(tmp_path: Path, region: str, name: str = "shaped") -> Path:
+    """A consumer root with a shape record (kit_markers + CLAUDE.md)."""
+    root = tmp_path / name
+    (root / "scripts" / "local").mkdir(parents=True)
+    (root / "scripts" / "local" / "kit_markers.py").write_text(
+        KIT_MARKERS.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (root / "CLAUDE.md").write_text(
+        "# Repo\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+        f"{region}"
+        "<!-- END KIT-LOCAL: kit-install -->\n",
+        encoding="utf-8",
+    )
+    return root
+
+
+def add_upstream_entry(kit: Path, tier: str, entry: str, relpath: str, body: str):
+    """Add a brand-new upstream entry — the 'addition' a planning repo
+    must skip and a single repo must receive."""
+    manifest_path = kit / "scripts" / ".core-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["files"][tier].append(entry)
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    _write(kit / relpath, body)
+
+
+def seed_planning_manifest(root: Path) -> None:
+    """The reduced manifest a planning bootstrap writes (KIT-0048)."""
+    manifest = {
+        "core_version": "1.0.0",
+        "source_repo": "movito/test-kit",
+        "synced_at": "2026-01-01T00:00:00Z",
+        "files": {"scripts_core": ["core/foo.sh"], "commands_core": ["cmd.md"]},
+        "opted_in": [],
+    }
+    _write(root / "scripts" / ".core-manifest.json", json.dumps(manifest, indent=2))
+
+
 @pytest.mark.skipif(
     not KIT_MARKERS.exists(), reason="kit_markers.py absent (consumer checkout)"
 )
-class TestShapeGuard:
-    """KIT-0048: sync refuses planning-shaped repos until KIT-0049."""
+class TestShapeScopedSync:
+    """KIT-0049: planning repos sync by manifest intersection.
 
-    @staticmethod
-    def _shaped_root(tmp_path: Path, region: str) -> Path:
-        root = tmp_path / "shaped"
-        (root / "scripts" / "local").mkdir(parents=True)
-        (root / "scripts" / "local" / "kit_markers.py").write_text(
-            KIT_MARKERS.read_text(encoding="utf-8"), encoding="utf-8"
-        )
-        (root / "CLAUDE.md").write_text(
-            "# Repo\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
-            f"{region}"
-            "<!-- END KIT-LOCAL: kit-install -->\n",
-            encoding="utf-8",
-        )
+    Class-level skipif: pytest silently ignores marks on plain helper
+    functions (claude-code review caught the decorator stranded on
+    _shaped_root after the KIT-0048 class was replaced)."""
+
+    @pytest.fixture
+    def planning(self, tmp_path):
+        root = _shaped_root(tmp_path, "shape: planning\n", name="planning")
+        seed_planning_manifest(root)
         return root
 
-    def test_planning_shape_refused(self, tmp_path):
-        root = self._shaped_root(tmp_path, "shape: planning\n")
+    @pytest.fixture
+    def kit_with_addition(self, tmp_path):
+        kit = build_kit(tmp_path / "kit")
+        add_upstream_entry(
+            kit,
+            "scripts_core",
+            "core/extra.sh",
+            "scripts/core/extra.sh",
+            "#!/bin/sh\necho extra\n",
+        )
+        return kit
+
+    def test_planning_sync_updates_only_recorded_files(
+        self, kit_with_addition, planning
+    ):
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--no-branch"], planning
+        )
+        assert rc == 0
+        assert (planning / "scripts" / "core" / "foo.sh").exists()
+        assert (planning / ".claude" / "commands" / "cmd.md").exists()
+        # the unrecorded addition must never appear
+        assert not (planning / "scripts" / "core" / "extra.sh").exists()
+        # opt-gated tiers stay out too (not recorded, not opted in)
+        assert not (planning / ".claude" / "commands" / "opt.md").exists()
+
+    def test_planning_sync_preserves_reduced_manifest(
+        self, kit_with_addition, planning
+    ):
+        project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--no-branch"], planning
+        )
+        manifest = json.loads(
+            (planning / "scripts" / ".core-manifest.json").read_text(encoding="utf-8")
+        )
+        # the reduced record survives — NOT upstream's full list
+        assert manifest["files"] == {
+            "scripts_core": ["core/foo.sh"],
+            "commands_core": ["cmd.md"],
+        }
+        # everything recorded was synced: this run IS complete for this
+        # shape — core_version converges, no partial flag
+        assert manifest["core_version"] == "9.9.0"
+        assert "partial_sync" not in manifest
+
+    def test_planning_sync_names_skipped_additions(
+        self, kit_with_addition, planning, capsys
+    ):
+        project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--no-branch"], planning
+        )
+        out = capsys.readouterr().out
+        assert "core/extra.sh" in out
+        assert "does not record" in out
+
+    def test_single_shape_receives_additions_unchanged(
+        self, kit_with_addition, tmp_path
+    ):
+        # characterization: a single-shape consumer still gets upstream
+        # additions and the full upstream manifest
+        consumer = tmp_path / "single-consumer"
+        consumer.mkdir()
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--no-branch"], consumer
+        )
+        assert rc == 0
+        assert (consumer / "scripts" / "core" / "extra.sh").exists()
+        manifest = json.loads(
+            (consumer / "scripts" / ".core-manifest.json").read_text(encoding="utf-8")
+        )
+        assert "core/extra.sh" in manifest["files"]["scripts_core"]
+
+    def test_malformed_shape_still_refused(self, tmp_path):
+        root = _shaped_root(tmp_path, "shape: pyramid\n")
         rc = project_cli.cmd_sync(["--dry-run"], root)
         assert rc == 2
 
-    def test_malformed_shape_refused(self, tmp_path):
-        root = self._shaped_root(tmp_path, "shape: pyramid\n")
-        rc = project_cli.cmd_sync(["--dry-run"], root)
+    def test_planning_without_manifest_refused(self, kit_with_addition, tmp_path):
+        root = _shaped_root(tmp_path, "shape: planning\n")
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--dry-run"], root
+        )
         assert rc == 2
 
     def test_single_shape_not_blocked_by_guard(self, tmp_path, capsys):
-        root = self._shaped_root(tmp_path, "shape: single\n")
+        root = _shaped_root(tmp_path, "shape: single\n")
         rc = project_cli.cmd_sync(["--dry-run"], root)
         # proceeds past the guard (fails later for engine reasons, but
         # never with the shape-refusal message)
         captured = capsys.readouterr()
         assert "sync refused" not in captured.out
         assert rc != 2 or "KIT-0049" not in captured.out
+
+    def test_upstream_deletion_pruned_from_preserved_manifest(
+        self, kit_with_addition, planning, capsys
+    ):
+        """o3 review: an upstream-dropped entry must be pruned from the
+        preserved manifest, not frozen into a stale record forever."""
+        manifest_path = kit_with_addition / "scripts" / ".core-manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["files"]["commands_core"].remove("cmd.md")
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        (kit_with_addition / ".claude" / "commands" / "cmd.md").unlink()
+
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--no-branch"], planning
+        )
+        assert rc == 0
+        result = json.loads(
+            (planning / "scripts" / ".core-manifest.json").read_text(encoding="utf-8")
+        )
+        # pruned from the record; announced in the output
+        assert result["files"]["commands_core"] == []
+        assert result["files"]["scripts_core"] == ["core/foo.sh"]
+        assert "cmd.md" in capsys.readouterr().out
+
+    def test_only_outside_allowlist_is_usage_error(self, kit_with_addition, planning):
+        """o3 review: an explicit --only request outside the allowlist
+        must refuse (exit 2), never silently become a skipped addition."""
+        rc = project_cli.cmd_sync(
+            [
+                "--source",
+                str(kit_with_addition),
+                "--no-branch",
+                "--only",
+                "core/extra.sh",
+            ],
+            planning,
+        )
+        assert rc == 2
+
+    def test_null_files_section_refused_not_crash(self, kit_with_addition, tmp_path):
+        """fast-v2 review: "files": null raised AttributeError past the
+        except tuple — must refuse with exit 2 instead."""
+        root = _shaped_root(tmp_path, "shape: planning\n", name="nullfiles")
+        _write(
+            root / "scripts" / ".core-manifest.json",
+            json.dumps({"core_version": "1.0.0", "files": None}),
+        )
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--dry-run"], root
+        )
+        assert rc == 2
+
+    def test_string_tier_refused_not_char_iterated(self, kit_with_addition, tmp_path):
+        """BugBot PR #79: a string-valued tier iterates as characters,
+        silently poisoning the allowlist — must refuse (exit 2)."""
+        root = _shaped_root(tmp_path, "shape: planning\n", name="strtier")
+        _write(
+            root / "scripts" / ".core-manifest.json",
+            json.dumps(
+                {"core_version": "1.0.0", "files": {"scripts_core": "core/foo.sh"}}
+            ),
+        )
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--dry-run"], root
+        )
+        assert rc == 2
+
+    def test_nonstring_list_member_refused(self, kit_with_addition, tmp_path):
+        """CodeRabbit PR #79: a non-string member in a tier list must
+        refuse, not be silently discarded from the allowlist."""
+        root = _shaped_root(tmp_path, "shape: planning\n", name="mixedtier")
+        _write(
+            root / "scripts" / ".core-manifest.json",
+            json.dumps(
+                {
+                    "core_version": "1.0.0",
+                    "files": {"scripts_core": ["core/foo.sh", 42]},
+                }
+            ),
+        )
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--dry-run"], root
+        )
+        assert rc == 2
+
+    def test_traversal_entry_in_manifest_refused(
+        self, kit_with_addition, tmp_path, capsys
+    ):
+        """claude-code review: consumer-manifest entries get the same
+        path rules as the source manifest (defense in depth)."""
+        root = _shaped_root(tmp_path, "shape: planning\n", name="traversal")
+        _write(
+            root / "scripts" / ".core-manifest.json",
+            json.dumps(
+                {
+                    "core_version": "1.0.0",
+                    "files": {"scripts_core": ["core/foo.sh", "../../evil"]},
+                }
+            ),
+        )
+        rc = project_cli.cmd_sync(
+            ["--source", str(kit_with_addition), "--dry-run"], root
+        )
+        assert rc == 2
+        assert "unsafe path" in capsys.readouterr().out
+
+    def test_empty_entitled_scope_never_complete(self, kit_with_addition, tmp_path):
+        """BugBot round 3: every recorded entry outside entitlement →
+        empty intersection must NOT vacuously report complete and bump
+        core_version."""
+        target = tmp_path / "unentitled"
+        target.mkdir()
+        # records ONLY an opt-gated entry, without the opt-in
+        _write(
+            target / "scripts" / ".core-manifest.json",
+            json.dumps(
+                {
+                    "core_version": "1.0.0",
+                    "source_repo": "movito/test-kit",
+                    "synced_at": "2026-01-01T00:00:00Z",
+                    "files": {"commands_optional": ["opt.md"]},
+                    "opted_in": [],
+                }
+            ),
+        )
+        report = sync_from_manifest.sync(
+            kit_with_addition,
+            target,
+            sync_from_manifest.SyncOptions(allowlist=["opt.md"]),
+        )
+        assert report.complete is False
+        manifest = json.loads(
+            (target / "scripts" / ".core-manifest.json").read_text(encoding="utf-8")
+        )
+        assert manifest["core_version"] == "1.0.0"  # NOT bumped
+
+    def test_engine_allowlist_report_fields(self, kit_with_addition, tmp_path):
+        # engine-level: skipped additions land in the report, sorted;
+        # allowlist runs count as complete for their scope
+        target = tmp_path / "engine-target"
+        target.mkdir()
+        seed_planning_manifest(target)
+        report = sync_from_manifest.sync(
+            kit_with_addition,
+            target,
+            sync_from_manifest.SyncOptions(allowlist=["core/foo.sh", "cmd.md"]),
+        )
+        assert report.skipped_additions == ["core/extra.sh"]
+        assert report.complete is True
+        assert report.to_dict()["skipped_additions"] == ["core/extra.sh"]

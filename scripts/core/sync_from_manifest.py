@@ -110,6 +110,14 @@ class SyncOptions:
     only: list[str] | None = None
     dry_run: bool = False
     is_kit: bool = False
+    # Shape-scoped sync (KIT-0049): when set, candidates are intersected
+    # with this entry set and everything else is reported as a skipped
+    # addition — never a usage error (unlike ``only``, which names
+    # entries the caller explicitly asked for). The target's reduced
+    # manifest ``files`` record is preserved instead of being replaced
+    # by upstream's. ``complete`` becomes "synced everything the
+    # allowlist records within entitlement", so core_version still bumps.
+    allowlist: list[str] | None = None
 
 
 @dataclass
@@ -134,6 +142,11 @@ class SyncReport:
     removed_files: list[str] = field(default_factory=list)
     removed_entries: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    # Upstream entries excluded by SyncOptions.allowlist (KIT-0049) —
+    # named, never silent, and deliberately NOT warnings: skipping
+    # unrecorded additions is the allowlist working as designed, so it
+    # must not flip the exit code to attention.
+    skipped_additions: list[str] = field(default_factory=list)
     would_bump_core_version: bool = False
     would_set_partial_sync: bool = False
     core_version: str = ""
@@ -154,6 +167,7 @@ class SyncReport:
             "removed_files": self.removed_files,
             "removed_entries": self.removed_entries,
             "warnings": self.warnings,
+            "skipped_additions": self.skipped_additions,
             "would_bump_core_version": self.would_bump_core_version,
             "would_set_partial_sync": self.would_set_partial_sync,
             "core_version": self.core_version,
@@ -514,13 +528,39 @@ def _build_new_manifest(
     upstream: dict,
     target_manifest: dict | None,
     complete: bool,
+    preserve_files: bool = False,
 ) -> dict:
     """Build the manifest to write to the target.
 
     Takes the upstream ``files``/``source_repo`` (the sync contract), preserves
     the target's ``opted_in`` verbatim, and sets metadata per completeness.
+
+    ``preserve_files`` (allowlist/shape-scoped runs, KIT-0049): the
+    target's reduced ``files`` record is the source of truth for what it
+    ships — replacing it with upstream's full list would re-entitle the
+    very entries the shape excludes on the NEXT sync.
     """
     new_manifest = json.loads(json.dumps(upstream))  # deep copy, key order kept
+
+    if (
+        preserve_files
+        and target_manifest is not None
+        and isinstance(target_manifest.get("files"), dict)
+    ):
+        preserved = json.loads(json.dumps(target_manifest["files"]))
+        # Prune entries upstream no longer ships — copying them back
+        # verbatim would freeze a stale record forever: the entry never
+        # becomes a candidate again, the file never updates, yet
+        # core_version keeps converging (o3 review finding). The pruned
+        # entries are the removed_entries the report already announces
+        # (single-shape parity: manifest drops them, disk cleanup stays
+        # advisory).
+        upstream_entries = _all_entries(upstream.get("files"))
+        for tier in list(preserved):
+            entries = preserved[tier]
+            if isinstance(entries, list):
+                preserved[tier] = [e for e in entries if e in upstream_entries]
+        new_manifest["files"] = preserved
 
     if target_manifest is not None and isinstance(
         target_manifest.get("opted_in"), list
@@ -669,8 +709,46 @@ def sync(source: str | Path, target: str | Path, options: SyncOptions) -> SyncRe
     ]
     candidates = _apply_only_filter(candidates, upstream_files, options.only)
 
+    # ── Allowlist intersection (shape-scoped sync, KIT-0049) ──
+    # Entries upstream has but the allowlist does not record are skipped
+    # ADDITIONS: named in the report, never a usage error and never a
+    # warning. Additions reach an allowlisted target via re-bootstrap or
+    # a manual manifest add (the recorded v1 limitation).
+    # Semantics note: skipped_additions is computed AFTER --tier/--only
+    # narrowing, so it means "upstream has these within the tiers/entries
+    # this run selected, but the allowlist doesn't record them" — entries
+    # excluded by --tier never appear here (they were never candidates).
+    skipped_additions: list[str] = []
+    if options.allowlist is not None:
+        allow = set(options.allowlist)
+        # An explicit --only request that falls OUTSIDE the allowlist
+        # must not be silently converted into a skipped addition — the
+        # caller named it; dropping it would mis-sync scripted runs
+        # (o3 review finding).
+        if options.only:
+            outside = sorted(set(options.only) - allow)
+            if outside:
+                raise UsageError(
+                    "--only entr(y/ies) not in this target's allowlist "
+                    f"(its manifest does not record them): {', '.join(outside)}"
+                )
+        skipped_additions = sorted(
+            {entry for _tier, entry in candidates if entry not in allow}
+        )
+        candidates = [(tier, entry) for tier, entry in candidates if entry in allow]
+
     effective_entries = {entry for _tier, entry in candidates}
-    complete = effective_entries == full_entitlement
+    if options.allowlist is not None:
+        # complete = "synced everything the allowlist records within this
+        # target's entitlement" — an allowlisted target that got all its
+        # recorded files IS complete (core_version bumps, no partial flag).
+        # An EMPTY intersection is never complete: nothing was verified
+        # against upstream, so a vacuous match must not advance
+        # core_version (BugBot, PR #79 round 3).
+        allow_scope = full_entitlement & set(options.allowlist)
+        complete = bool(allow_scope) and effective_entries == allow_scope
+    else:
+        complete = effective_entries == full_entitlement
 
     # ── Plan (only source-reading phase) ──
     plan, plan_warnings = _build_plan(source_root, candidates)
@@ -683,7 +761,12 @@ def sync(source: str | Path, target: str | Path, options: SyncOptions) -> SyncRe
     upstream_all_entries = _all_entries(upstream_files)
     removed_entries = sorted(target_old_entries - upstream_all_entries)
 
-    new_manifest = _build_new_manifest(upstream, target_manifest, complete)
+    new_manifest = _build_new_manifest(
+        upstream,
+        target_manifest,
+        complete,
+        preserve_files=options.allowlist is not None,
+    )
     new_core_version = new_manifest["core_version"]
 
     would_bump = complete and (
@@ -726,6 +809,7 @@ def sync(source: str | Path, target: str | Path, options: SyncOptions) -> SyncRe
         removed_files=sorted(removed_files),
         removed_entries=removed_entries,
         warnings=warnings,
+        skipped_additions=skipped_additions,
         would_bump_core_version=would_bump,
         would_set_partial_sync=would_set_partial,
         core_version=new_core_version,
@@ -802,6 +886,8 @@ def _print_report(report: SyncReport) -> None:
             print(f"  {label}: {item}", file=sys.stderr)
     for warning in report.warnings:
         print(f"  warning: {warning}", file=sys.stderr)
+    for entry in report.skipped_additions:
+        print(f"  skipped addition (not in allowlist): {entry}", file=sys.stderr)
     if report.would_set_partial_sync:
         print("  note: partial sync — core_version left unchanged", file=sys.stderr)
 
