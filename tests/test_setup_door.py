@@ -351,6 +351,28 @@ class TestNewE2E:
         )
         assert status.stdout.strip() == ""
 
+    def test_new_single_profile_none_reseeds_rules(self, tmp_path):
+        """BugBot PR #81: the export carries the kit's python Project
+        Rules region; a profile-none install must reseed it to the
+        none content, never record none next to python guidance."""
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
+        target = tmp_path / "docs-app"
+        result = run_door("--new", str(target), "--profile", "none", env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        region = _kit_install_region(target)
+        assert "profile: none" in region
+        text = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        rules = text.split("BEGIN KIT-LOCAL: project-rules")[1].split(
+            "END KIT-LOCAL: project-rules"
+        )[0]
+        assert "No project toolchain is configured" in rules
+        assert "### Python" not in rules
+        assert text.count("BEGIN KIT-LOCAL: project-rules") == 1
+        # the none check hook seeded alongside (byte-identical to template)
+        none_seed = REPO_ROOT / "scripts" / "local" / "templates" / "checks-none.sh"
+        hook = target / "scripts" / "local" / "checks.sh"
+        assert hook.read_bytes() == none_seed.read_bytes()
+
     def test_new_planning_scaffolds_and_records(self, tmp_path):
         env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
         target = tmp_path / "fresh-planning"

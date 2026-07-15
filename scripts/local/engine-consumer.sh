@@ -20,6 +20,10 @@
 #              the CLAUDE.md install record (Step 2.5). Used by the
 #              door's --new path after the export engine has produced
 #              the tree, so this engine stays the record's one writer.
+#              In this mode existing KIT-LOCAL regions are RESEEDED,
+#              not preserved — the fresh export carries the kit's own
+#              region content, which is not consumer-owned and must
+#              match the recorded install (BugBot, PR #81).
 #   --no-kit   Opt out of the kit workflow entirely: no .kit/ scaffold and
 #              no planner.md / feature-developer.md shipped. Useful for a
 #              consumer that only wants the lighter implementation tooling.
@@ -693,13 +697,42 @@ append_region_if_absent() {
     echo "  $1 region written ($3)"
 }
 
+# Replace the body of an existing KIT-LOCAL region in-place. Used ONLY
+# under --internal-record-only: there the target was just produced from
+# the kit's own tree by the export engine, so an existing region is the
+# KIT's copy, never consumer-owned — preserving it would ship guidance
+# that contradicts the recorded install (BugBot, PR #81: a profile-none
+# export carried the kit's python Project Rules next to profile: none).
+# Body passes via the environment — awk -v would mangle backslashes.
+replace_region() {
+    REGION_BODY="$2" awk -v region="$1" '
+        $0 == "<!-- BEGIN KIT-LOCAL: " region " -->" {
+            print; print ENVIRON["REGION_BODY"]; skip=1; next
+        }
+        $0 == "<!-- END KIT-LOCAL: " region " -->" { skip=0 }
+        !skip { print }
+    ' "$CLAUDE_MD" > "$CLAUDE_MD.kit-reseed.tmp"
+    mv "$CLAUDE_MD.kit-reseed.tmp" "$CLAUDE_MD"
+    echo "  $1 region reseeded ($3)"
+}
+
+# Seed a region: reseed on the fresh-export path, else append-if-absent
+# (the consumer-owned KIT-LOCAL semantics stay untouched).
+seed_region() {
+    if [ "$RECORD_ONLY" -eq 1 ] && printf '%s\n' "$REGIONS_OUT" | grep -qx "$1"; then
+        replace_region "$1" "$2" "$3"
+    else
+        append_region_if_absent "$1" "$2" "$3"
+    fi
+}
+
 if [ "$SHAPE" = "planning" ]; then
-    append_region_if_absent kit-install \
+    seed_region kit-install \
         "$(printf 'shape: planning\nprofile: %s\ntarget_path: %s\ntarget_github: %s' \
             "$PROFILE" "$TP" "$TG")" \
         "shape: planning, profile: $PROFILE"
 else
-    append_region_if_absent kit-install \
+    seed_region kit-install \
         "$(printf 'shape: single\nprofile: %s' "$PROFILE")" \
         "shape: single, profile: $PROFILE"
 fi
@@ -710,7 +743,9 @@ fi
 # so there is exactly one source of that text. Content stays computed
 # only when the region is absent: a re-bootstrap of a consumer that
 # already owns its rules must not depend on the kit-side extract.
-if printf '%s\n' "$REGIONS_OUT" | grep -qx 'project-rules'; then
+# On the fresh-export path the region is always recomputed + reseeded
+# (the kit's own copy is not consumer-owned — see replace_region).
+if [ "$RECORD_ONLY" -eq 0 ] && printf '%s\n' "$REGIONS_OUT" | grep -qx 'project-rules'; then
     echo "  project-rules region already present (preserved)"
 else
     if [ "$PROFILE" = "python" ]; then
@@ -732,7 +767,7 @@ else
 RULES
 )"
     fi
-    append_region_if_absent project-rules "$RULES_BODY" "profile: $PROFILE"
+    seed_region project-rules "$RULES_BODY" "profile: $PROFILE"
 fi
 echo
 
