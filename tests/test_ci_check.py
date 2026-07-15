@@ -215,6 +215,19 @@ class TestDispatcher:
         assert result.returncode == 1
         assert "not an executable file" in result.stderr
 
+    def test_executable_symlink_hook_dispatches(self, tmp_path):
+        # o3 review gap: a VALID symlink to an executable hook must
+        # dispatch, not be mistaken for broken (-f follows symlinks)
+        root, bin_dir = make_scratch(tmp_path)
+        real = root / "real-hook.sh"
+        real.write_text('#!/bin/bash\necho "SYMLINKED: $*"\nexit 0\n', encoding="utf-8")
+        real.chmod(0o755)
+        (root / "scripts" / "local").mkdir(parents=True)
+        (root / "scripts" / "local" / "checks.sh").symlink_to(real)
+        result = run_ci_check(root, bin_dir)
+        assert result.returncode == 0
+        assert "SYMLINKED: --mode ci" in result.stdout
+
     def test_absent_hook_runs_builtin_gauntlet(self, tmp_path):
         # N1 restated at the dispatch seam: no hook -> the pinned golden
         root, bin_dir = make_scratch(tmp_path)

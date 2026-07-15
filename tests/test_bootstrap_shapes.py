@@ -418,6 +418,27 @@ class TestProfiles:
         assert result.returncode == 1
         assert "Usage:" in result.stdout + result.stderr
 
+    def test_no_kit_flag_still_seeds_hook_and_record(self, tmp_path):
+        # o3 review gap: no functional --no-kit run existed in the
+        # suite; also pins that the hook/record are toolchain-level,
+        # not kit-workflow-level (seeded even on opt-out)
+        target = make_consumer_dir(tmp_path, "nokit")
+        result = run_bootstrap(target, "--no-kit")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert (target / "scripts" / "core" / "ci-check.sh").is_file()
+        assert (target / "scripts" / "local" / "checks.sh").is_file()
+        assert not (target / ".claude" / "agents" / "planner.md").exists()
+        assert "profile: python" in (target / "CLAUDE.md").read_text(encoding="utf-8")
+
+    def test_equals_form_flags_parse(self, tmp_path):
+        # o3 review gap: the --flag=value forms had no functional run
+        target = make_consumer_dir(tmp_path, "eqform")
+        result = run_bootstrap(target, "--shape=planning", "--profile=none")
+        assert result.returncode == 0, result.stderr + result.stdout
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "shape: planning" in claude
+        assert "profile: none" in claude
+
     def test_rebootstrap_preserves_customized_hook(self, tmp_path):
         # N4's bootstrap half: the hook is consumer-owned after seeding
         target = make_consumer_dir(tmp_path, "app")

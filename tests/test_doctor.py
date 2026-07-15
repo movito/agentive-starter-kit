@@ -476,9 +476,24 @@ class TestProfileInclusion:
         # illegal combination or silently coercing would both mask
         root, checks = _profile_fixture(tmp_path, "shape: planning\nprofile: python\n")
         result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
         assert any(
             ln.startswith("DOCTOR:profile-record:FAIL:") and "not legal" in ln
-            for ln in doctor_lines(result)
+            for ln in lines
+        )
+        # maximally diagnostic (the KIT-0048 pattern): profile is None,
+        # so the FULL set still runs alongside the FAIL — 2 checks + 1
+        assert any(ln.startswith("DOCTOR:pytool:PASS:") for ln in lines)
+        assert len(lines) == 3
+        assert result.returncode == 1
+
+    def test_empty_profile_value_fails_loud(self, tmp_path):
+        # fast-v2 review gap: `profile:` with an empty value is a
+        # malformed record (fail loud), NOT an absent line (default)
+        root, checks = _profile_fixture(tmp_path, "shape: single\nprofile:\n")
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:profile-record:FAIL:") for ln in doctor_lines(result)
         )
         assert result.returncode == 1
 
