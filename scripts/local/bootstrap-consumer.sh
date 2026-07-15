@@ -25,6 +25,16 @@
 #                       P2): .kit/, agents, commands, lifecycle + gates +
 #                       doctor. NO pyproject/tests/venv/Python gauntlet.
 #                       The target product repo receives nothing, ever.
+#   --profile <python|none>
+#              (KIT-0050, ADR-0027 P1) which check-hook content to seed
+#              into scripts/local/checks.sh and record in the CLAUDE.md
+#              kit-install region. single shape defaults to python (the
+#              kit's own gauntlet); none is a loud no-op for docs-only
+#              repos. planning shape FORCES none (the P3 matrix pairing)
+#              — combining it with --profile python is an error. Other
+#              toolchains: seed a profile and edit the hook (the
+#              contract is in its header); the kit ships no toolchains
+#              it doesn't itself use.
 #   --target-path <p>, --target-github <owner/name>
 #              (planning shape) recorded in the CLAUDE.md kit-install
 #              region and seeded into ## Target Repository. Placeholders
@@ -58,9 +68,10 @@ KIT_MARKERS="$PROJECT_ROOT/scripts/local/kit_markers.py"
 KIT_ENABLED=1
 TARGET=""
 SHAPE="single"
+PROFILE=""
 TARGET_PATH=""
 TARGET_GITHUB=""
-USAGE="Usage: $0 [--no-kit] [--shape single|planning] [--target-path <p>] [--target-github <o/r>] <target-directory>"
+USAGE="Usage: $0 [--no-kit] [--shape single|planning] [--profile python|none] [--target-path <p>] [--target-github <o/r>] <target-directory>"
 while [ $# -gt 0 ]; do
     case "$1" in
         --no-kit)
@@ -72,6 +83,13 @@ while [ $# -gt 0 ]; do
             ;;
         --shape=*)
             SHAPE="${1#--shape=}"
+            ;;
+        --profile)
+            shift
+            PROFILE="${1:-}"
+            ;;
+        --profile=*)
+            PROFILE="${1#--profile=}"
             ;;
         --target-path)
             shift
@@ -117,6 +135,27 @@ esac
 if [ "$SHAPE" = "planning" ] && [ "$KIT_ENABLED" -eq 0 ]; then
     echo "Error: --no-kit contradicts --shape planning (the planning shape IS the kit workflow)"
     exit 1
+fi
+# Profile validation + defaults (KIT-0050 F3): single defaults to
+# python; planning FORCES none — an explicit --profile python there is
+# an error, never a silent override (the masking class: coercion would
+# drop what the operator asked for without saying so).
+case "$PROFILE" in
+    python|none|"") ;;
+    *)
+        echo "Error: unknown profile: '$PROFILE' (expected: python | none)"
+        echo "$USAGE"
+        exit 1
+        ;;
+esac
+if [ "$SHAPE" = "planning" ]; then
+    if [ "$PROFILE" = "python" ]; then
+        echo "Error: --profile python contradicts --shape planning (planning forces profile none)"
+        exit 1
+    fi
+    PROFILE="none"
+elif [ -z "$PROFILE" ]; then
+    PROFILE="python"
 fi
 if [ -n "$TARGET_GITHUB" ] && ! printf '%s' "$TARGET_GITHUB" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
     echo "Error: --target-github must look like owner/repo (got: $TARGET_GITHUB)"
@@ -289,7 +328,7 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.2.0",
+  "core_version": "3.3.0",
   "source_repo": "movito/agentive-starter-kit",
   "synced_at": "2026-07-14T00:00:00Z",
   "files": {
@@ -367,10 +406,12 @@ mkdir -p "$TARGET/scripts/optional"
 # would otherwise leave the orphaned tests behind in existing consumers.
 rm -f "$TARGET/tests/test_kit_markers.py" \
       "$TARGET/tests/test_bootstrap_consumer.py" \
-      "$TARGET/tests/test_bootstrap_shapes.py"
+      "$TARGET/tests/test_bootstrap_shapes.py" \
+      "$TARGET/tests/test_check_hook_seeds.py"
 "${RSYNC_BASE[@]}" --exclude='test_kit_markers.py' \
     --exclude='test_bootstrap_consumer.py' \
     --exclude='test_bootstrap_shapes.py' \
+    --exclude='test_check_hook_seeds.py' \
     "$PROJECT_ROOT/tests/" "$TARGET/tests/"
 
 # Top-level files (only if they don't exist in target)
@@ -428,6 +469,34 @@ fi
 echo "Done"
 echo
 fi
+
+# ─────────────────────────────────────────
+# Step 1.5: project check hook (KIT-0050, ADR-0027 P1)
+# ─────────────────────────────────────────
+echo "1.5/4 Seeding the project check hook..."
+# checks.sh is seeded ONCE per profile and consumer-owned afterwards:
+# re-bootstrap preserves it and it rides no sync tier (N4) — the kit
+# never overwrites it. ci-check.sh dispatches to it when present.
+mkdir -p "$TARGET/scripts/local"
+if [ ! -e "$TARGET/scripts/local/checks.sh" ]; then
+    cp "$PROJECT_ROOT/scripts/local/templates/checks-$PROFILE.sh" \
+       "$TARGET/scripts/local/checks.sh"
+    chmod +x "$TARGET/scripts/local/checks.sh"
+    echo "  seeded scripts/local/checks.sh (profile: $PROFILE)"
+else
+    echo "  scripts/local/checks.sh already present (preserved — consumer-owned)"
+fi
+# kit_markers.py is the only reader of the CLAUDE.md kit-install region
+# (doctor and sync consult it at runtime). Planning ships it via
+# PLANNING_LOCAL above; single shapes need it too, or the profile
+# recorded in Step 2.5 would be silently ignored (the reader-absent
+# path falls back to defaults — exactly the masking this record exists
+# to prevent).
+if [ ! -e "$TARGET/scripts/local/kit_markers.py" ]; then
+    cp "$PROJECT_ROOT/scripts/local/kit_markers.py" \
+       "$TARGET/scripts/local/kit_markers.py"
+fi
+echo
 
 # ─────────────────────────────────────────
 # Step 2: Kit workflow agents + skeleton
@@ -517,11 +586,12 @@ fi
 echo
 
 # ─────────────────────────────────────────
-# Step 2.5 (planning): record the shape in CLAUDE.md
+# Step 2.5: record the install (shape + profile) in CLAUDE.md
 # ─────────────────────────────────────────
+echo "Recording install (shape: $SHAPE, profile: $PROFILE) in CLAUDE.md..."
+CLAUDE_MD="$TARGET/CLAUDE.md"
+
 if [ "$SHAPE" = "planning" ]; then
-    echo "Recording shape in CLAUDE.md..."
-    CLAUDE_MD="$TARGET/CLAUDE.md"
     TP="${TARGET_PATH:-../<target-repo>  # TODO: set the product repo path}"
     TG="${TARGET_GITHUB:-<owner>/<repo>  # TODO: set the product repo}"
 
@@ -563,29 +633,73 @@ if [ "$SHAPE" = "planning" ]; then
         printf '\n## Target Repository\n\n- **Path**: `%s`\n- **GitHub**: `%s`\n' \
             "$TP" "$TG" >> "$CLAUDE_MD"
     fi
-
-    # Machine-written shape record (KIT-0048 F2) — kit_markers is the
-    # only writer/reader; append-if-absent so re-bootstrap preserves
-    # consumer edits (KIT-LOCAL semantics). Seeded to match the section
-    # above; absorbs KIT-0027's intent (mechanism redirected from
-    # current-state.json to this runtime-read region).
-    # a reader FAILURE must not read as "region absent" — appending a
-    # fresh block over a malformed file would duplicate/corrupt it
-    # (CodeRabbit; the same fail-loud class as the doctor reader fix)
-    if ! REGIONS_OUT="$(python3 "$KIT_MARKERS" regions "$CLAUDE_MD" 2>&1)"; then
-        echo "Error: kit_markers regions failed on $CLAUDE_MD:"
-        echo "       $REGIONS_OUT"
-        exit 1
-    fi
-    if ! printf '%s\n' "$REGIONS_OUT" | grep -qx 'kit-install'; then
-        printf '\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: planning\ntarget_path: %s\ntarget_github: %s\n<!-- END KIT-LOCAL: kit-install -->\n' \
-            "$TP" "$TG" >> "$CLAUDE_MD"
-        echo "  kit-install region written (shape: planning)"
-    else
-        echo "  kit-install region already present (preserved)"
-    fi
-    echo
+elif [ ! -f "$CLAUDE_MD" ]; then
+    # single shape (KIT-0050): the install record and Project Rules
+    # region below need a CLAUDE.md to live in — seed a minimal one.
+    printf '# %s\n\nProject instructions for Claude Code agents working in this repo.\n' \
+        "$PROJECT_NAME" > "$CLAUDE_MD"
 fi
+
+# Machine-written install record (KIT-0048 F2, profile added by
+# KIT-0050 F4) — kit_markers is the only writer/reader; append-if-
+# absent so re-bootstrap preserves consumer edits (KIT-LOCAL
+# semantics). Absent profile defaults by shape (single -> python,
+# planning -> none), so pre-KIT-0050 regions stay valid unmodified.
+# a reader FAILURE must not read as "region absent" — appending a
+# fresh block over a malformed file would duplicate/corrupt it
+# (CodeRabbit; the same fail-loud class as the doctor reader fix)
+if ! REGIONS_OUT="$(python3 "$KIT_MARKERS" regions "$CLAUDE_MD" 2>&1)"; then
+    echo "Error: kit_markers regions failed on $CLAUDE_MD:"
+    echo "       $REGIONS_OUT"
+    exit 1
+fi
+if ! printf '%s\n' "$REGIONS_OUT" | grep -qx 'kit-install'; then
+    if [ "$SHAPE" = "planning" ]; then
+        printf '\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: planning\nprofile: %s\ntarget_path: %s\ntarget_github: %s\n<!-- END KIT-LOCAL: kit-install -->\n' \
+            "$PROFILE" "$TP" "$TG" >> "$CLAUDE_MD"
+    else
+        printf '\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: single\nprofile: %s\n<!-- END KIT-LOCAL: kit-install -->\n' \
+            "$PROFILE" >> "$CLAUDE_MD"
+    fi
+    echo "  kit-install region written (shape: $SHAPE, profile: $PROFILE)"
+else
+    echo "  kit-install region already present (preserved)"
+fi
+
+# Project Rules region (KIT-0050 F6) — seeded per profile, consumer-
+# owned afterwards (append-if-absent, same KIT-LOCAL semantics). The
+# python content is extracted from the kit's OWN marker-wrapped rules
+# so there is exactly one source of that text.
+if ! printf '%s\n' "$REGIONS_OUT" | grep -qx 'project-rules'; then
+    if [ "$PROFILE" = "python" ]; then
+        if ! RULES_BODY="$(python3 "$KIT_MARKERS" extract "$PROJECT_ROOT/CLAUDE.md" project-rules 2>&1)"; then
+            echo "Error: kit_markers extract project-rules failed on the kit's CLAUDE.md:"
+            echo "       $RULES_BODY"
+            exit 1
+        fi
+    else
+        RULES_BODY="$(cat << 'RULES'
+## Project Rules
+
+- No project toolchain is configured (profile: none). The check hook
+  `scripts/local/checks.sh` is a loud no-op — edit it to add checks
+  (the contract is in its header).
+- Task workflow: task files live in `.kit/tasks/<status-folder>/`;
+  use `./scripts/core/project start|move|complete <TASK-ID>`.
+- Feature branches: `feature/<TASK-ID>-short-description`.
+RULES
+)"
+    fi
+    {
+        printf '\n<!-- BEGIN KIT-LOCAL: project-rules -->\n'
+        printf '%s\n' "$RULES_BODY"
+        printf '<!-- END KIT-LOCAL: project-rules -->\n'
+    } >> "$CLAUDE_MD"
+    echo "  project-rules region written (profile: $PROFILE)"
+else
+    echo "  project-rules region already present (preserved)"
+fi
+echo
 
 # ─────────────────────────────────────────
 # Step 3: Initialize git (if needed)

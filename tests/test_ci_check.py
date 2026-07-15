@@ -159,3 +159,65 @@ class TestCharacterization:
         result = run_ci_check(root, bin_dir, {"STUB_PYTHON3_RC": "1"})
         assert result.returncode == 1
         assert "flake8 not installed" in result.stderr
+
+
+def install_hook(root: Path, body: str, mode: int = 0o755) -> Path:
+    hook = root / "scripts" / "local" / "checks.sh"
+    hook.parent.mkdir(parents=True, exist_ok=True)
+    hook.write_text("#!/bin/bash\n" + body, encoding="utf-8")
+    hook.chmod(mode)
+    return hook
+
+
+class TestDispatcher:
+    """F1 (KIT-0050): presence-of-file dispatch to scripts/local/checks.sh."""
+
+    def test_hook_receives_mode_ci_from_repo_root(self, tmp_path):
+        root, bin_dir = make_scratch(tmp_path)
+        install_hook(root, 'echo "HOOK: args=$* pwd=$PWD"\nexit 0\n')
+        result = run_ci_check(root, bin_dir)
+        assert result.returncode == 0
+        assert "HOOK: args=--mode ci" in result.stdout
+        # contract: invoked from the repo root
+        assert f"pwd={root}" in result.stdout
+        # the built-in gauntlet must NOT also run
+        assert "Running local CI checks" not in result.stdout
+
+    def test_hook_exit_code_passes_through(self, tmp_path):
+        root, bin_dir = make_scratch(tmp_path)
+        install_hook(root, 'echo "hook failing"\nexit 1\n')
+        result = run_ci_check(root, bin_dir)
+        assert result.returncode == 1
+        assert "hook failing" in result.stdout
+
+    def test_non_executable_hook_is_loud_error_not_fallback(self, tmp_path):
+        # the masking class: a present-but-broken hook must never
+        # silently fall back to the built-in gauntlet
+        root, bin_dir = make_scratch(tmp_path)
+        install_hook(root, "exit 0\n", mode=0o644)
+        result = run_ci_check(root, bin_dir)
+        assert result.returncode == 1
+        assert "not an executable file" in result.stderr
+        assert "Running local CI checks" not in result.stdout
+
+    def test_hook_directory_is_loud_error(self, tmp_path):
+        root, bin_dir = make_scratch(tmp_path)
+        (root / "scripts" / "local" / "checks.sh").mkdir(parents=True)
+        result = run_ci_check(root, bin_dir)
+        assert result.returncode == 1
+        assert "not an executable file" in result.stderr
+
+    def test_broken_symlink_hook_is_loud_error(self, tmp_path):
+        root, bin_dir = make_scratch(tmp_path)
+        (root / "scripts" / "local").mkdir(parents=True)
+        (root / "scripts" / "local" / "checks.sh").symlink_to(root / "nope.sh")
+        result = run_ci_check(root, bin_dir)
+        assert result.returncode == 1
+        assert "not an executable file" in result.stderr
+
+    def test_absent_hook_runs_builtin_gauntlet(self, tmp_path):
+        # N1 restated at the dispatch seam: no hook -> the pinned golden
+        root, bin_dir = make_scratch(tmp_path)
+        result = run_ci_check(root, bin_dir)
+        assert result.returncode == 0
+        assert normalized(result, tmp_path) == GOLDEN_PASS

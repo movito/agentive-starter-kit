@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Language profiles — the check hook separates kit from toolchain**
+  (KIT-0050, KIT-ADR-0027 P1; core scripts 3.3.0):
+  - `ci-check.sh` becomes a thin dispatcher: when the project-owned
+    hook `scripts/local/checks.sh` exists it runs `--mode ci` and
+    passes the exit code through; hook-absent behavior is byte-identical
+    to before (characterization-pinned). A present-but-broken hook
+    (not executable, directory, broken symlink) errors loudly instead
+    of silently falling back.
+  - Hook micro-contract (a paragraph, never a schema): `--mode
+    ci|local`, exit 0/1 only, stdout diagnostics, repo-root invocation,
+    no other environment guarantees.
+  - `bootstrap-consumer.sh --profile python|none`: `python` (single
+    default) seeds the kit's own gauntlet — moved, not rewritten,
+    including the KIT-0035 Black-drift warning; `none` (forced for the
+    planning shape) seeds a loud no-op. The hook is consumer-owned
+    after seeding: re-bootstrap preserves it and it rides no sync tier.
+  - The CLAUDE.md `kit-install` region gains a `profile:` line;
+    `_doctor_install()` reads shape+profile with back-compat defaults
+    (absent → `python` for single, `none` for planning) and fails loud
+    on malformed values or the illegal planning+python combination.
+  - Doctor toolchain checks (venv skew, Black pin) are profile-scoped
+    via `# profiles: python` headers — the KIT-0048 declaration
+    mechanism generalized; they SKIP by declaration under `none`.
+  - The kit's own CLAUDE.md Project Rules section is wrapped in a
+    `KIT-LOCAL: project-rules` region (content unchanged); bootstrap
+    seeds consumers' Project Rules per profile from that single source.
+
 ## [0.8.0] - 2026-07-14
 
 The kit-stabilization release: seven hardening tasks (KIT-0034 →

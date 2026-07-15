@@ -378,6 +378,129 @@ class TestShapeInclusion:
         )
 
 
+def _profile_fixture(tmp_path: Path, region: str | None) -> tuple[Path, Path]:
+    """A --root fixture with an install record plus a --dir check set
+    that declares profiles (KIT-0050 F5)."""
+    root = tmp_path / "root"
+    (root / "scripts" / "local").mkdir(parents=True)
+    if KIT_MARKERS_SRC.exists():
+        shutil.copy(KIT_MARKERS_SRC, root / "scripts" / "local" / "kit_markers.py")
+    body = "# My repo\n"
+    if region is not None:
+        body += (
+            "\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            f"{region}"
+            "<!-- END KIT-LOCAL: kit-install -->\n"
+        )
+    (root / "CLAUDE.md").write_text(body, encoding="utf-8")
+    checks = tmp_path / "checks"
+    checks.mkdir()
+    _make_check(
+        checks,
+        "10-anywhere.sh",
+        'echo "DOCTOR:anywhere:PASS:no profiles header"\n',
+    )
+    _make_check(
+        checks,
+        "20-pytool.sh",
+        "# profiles: python\n" 'echo "DOCTOR:pytool:PASS:python toolchain check"\n',
+    )
+    return root, checks
+
+
+@pytest.mark.skipif(
+    not KIT_MARKERS_SRC.exists(), reason="kit_markers.py absent (consumer checkout)"
+)
+class TestProfileInclusion:
+    """KIT-0050 F5: per-profile check inclusion via `# profiles:` headers."""
+
+    def test_python_profile_runs_toolchain_checks(self, tmp_path):
+        root, checks = _profile_fixture(tmp_path, "shape: single\nprofile: python\n")
+        result = run_doctor_rooted(root, checks)
+        assert len(doctor_lines(result)) == 2
+        assert not any("SKIP" in ln for ln in doctor_lines(result))
+        assert result.returncode == 0
+
+    def test_none_profile_skips_python_only_checks(self, tmp_path):
+        root, checks = _profile_fixture(tmp_path, "shape: single\nprofile: none\n")
+        result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
+        assert any(ln.startswith("DOCTOR:anywhere:PASS:") for ln in lines)
+        assert any(
+            ln.startswith("DOCTOR:20-pytool.sh:SKIP:")
+            and "profile 'none'" in ln
+            and "python" in ln
+            for ln in lines
+        )
+        assert result.returncode == 0
+
+    def test_planning_defaults_to_none(self, tmp_path):
+        # a pre-KIT-0050 planning record (no profile: line) must scope
+        # toolchain checks out — back-compat default planning -> none
+        root, checks = _profile_fixture(tmp_path, "shape: planning\n")
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:20-pytool.sh:SKIP:") and "profile 'none'" in ln
+            for ln in doctor_lines(result)
+        )
+        assert "profile-record" not in result.stdout
+
+    def test_single_defaults_to_python(self, tmp_path):
+        root, checks = _profile_fixture(tmp_path, "shape: single\n")
+        result = run_doctor_rooted(root, checks)
+        assert len(doctor_lines(result)) == 2
+        assert not any("SKIP" in ln for ln in doctor_lines(result))
+        assert "profile-record" not in result.stdout
+
+    def test_absent_region_defaults_to_python(self, tmp_path):
+        root, checks = _profile_fixture(tmp_path, None)
+        result = run_doctor_rooted(root, checks)
+        assert len(doctor_lines(result)) == 2
+        assert "profile-record" not in result.stdout
+        assert result.returncode == 0
+
+    def test_malformed_profile_runs_full_set_and_fails_loud(self, tmp_path):
+        root, checks = _profile_fixture(tmp_path, "shape: single\nprofile: elixir\n")
+        result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
+        assert any(
+            ln.startswith("DOCTOR:profile-record:FAIL:") and "elixir" in ln
+            for ln in lines
+        )
+        # maximally diagnostic: both checks still ran (2 + 1 FAIL line)
+        assert len(lines) == 3
+        assert result.returncode == 1
+
+    def test_planning_python_combination_fails_loud(self, tmp_path):
+        # the P3 matrix pairing: planning forces none — honoring the
+        # illegal combination or silently coercing would both mask
+        root, checks = _profile_fixture(tmp_path, "shape: planning\nprofile: python\n")
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:profile-record:FAIL:") and "not legal" in ln
+            for ln in doctor_lines(result)
+        )
+        assert result.returncode == 1
+
+    def test_malformed_shape_does_not_double_fail(self, tmp_path):
+        # one unreadable shape must produce ONE record FAIL, with the
+        # profile-scoped check still running (profile None = run all)
+        root, checks = _profile_fixture(tmp_path, "shape: pyramid\n")
+        result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
+        assert any(ln.startswith("DOCTOR:shape-record:FAIL:") for ln in lines)
+        assert "profile-record" not in result.stdout
+        assert any(ln.startswith("DOCTOR:pytool:PASS:") for ln in lines)
+
+    def test_real_version_skew_check_is_profile_scoped(self):
+        # F5 on the real file: the toolchain checks (venv skew + black
+        # pin) declare `# profiles: python` and no shape scoping
+        head = (DOCTOR_D / "40-version-skew.py").read_text(encoding="utf-8")
+        head = "\n".join(head.splitlines()[:30])
+        assert "# profiles: python" in head
+        assert "# shapes:" not in head
+
+
 def run_env_check(root: Path) -> subprocess.CompletedProcess:
     check = DOCTOR_D / "20-env-keys.py"
     return subprocess.run(

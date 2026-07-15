@@ -226,6 +226,19 @@ Runs the **SAME checks** as GitHub Actions CI:
 
 **Duration**: ~15-30 seconds (vs waiting minutes for CI feedback)
 
+### The Project Check Hook (KIT-0050)
+
+The checks above are the *seeded default*, not the kit's opinion of
+your project. When `scripts/local/checks.sh` exists, `ci-check.sh` is a
+thin dispatcher over it — the hook accepts `--mode ci|local`, exits `0`
+(pass) or `1` (fail) only, prints human-readable diagnostics to stdout,
+and is invoked from the repo root with no other environment guarantees.
+That paragraph is the whole contract: no schema, no config file — the
+hook is the interface. The hook is consumer-owned after bootstrap seeds
+it (profile `python` = the gauntlet above; `none` = a loud no-op); the
+kit never overwrites it, and it rides no sync tier. Without the hook,
+`ci-check.sh` runs its built-in gauntlet exactly as before.
+
 ### Why This Is Mandatory
 
 - **Prevents CI failures**: Catch failures locally before push

@@ -25,6 +25,7 @@ scripts/              Project scripts: core/ (shared), local/ (ASK-specific), op
 tests/                pytest test suite
 ```
 
+<!-- BEGIN KIT-LOCAL: project-rules -->
 ## Project Rules
 
 ### Python (v3.10-3.12)
@@ -60,6 +61,7 @@ tests/                pytest test suite
 - Follow error strategy by layer: domain modules raise, CLI modules return empty,
   fire-and-forget modules log and continue (see `patterns.yml` -> `error_strategies`)
 - Run `python3 scripts/core/pattern_lint.py <files>` to check for pattern violations
+<!-- END KIT-LOCAL: project-rules -->
 
 ## Agent Context
 
