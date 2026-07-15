@@ -37,12 +37,23 @@ both single-thread rounds, second round clean + APPROVED.
 
 ### What Was Surprising
 
-1. **`ADVERSARIAL_UNATTENDED=1` now exists and is REQUIRED** — the
-   documented `echo y |` pipe no longer satisfies the CLI's non-TTY
-   guard; the first trio run silently auto-cancelled all three
-   evaluations (exit 0!). The CLI's own message names the new flag.
-   Memory and `prepare-review-input.sh`'s printed guidance were both
-   stale (memory corrected this session).
+1. **`ADVERSARIAL_UNATTENDED=1` now exists and is REQUIRED — CORRECTED
+   (planner, 2026-07-15): the flag does NOT exist.** Verification: zero
+   matches in the installed venv package, the installed system package,
+   AND the evaluator-library scripts; `pip index versions` shows 1.0.1
+   is the latest upstream release, so no newer version can carry it.
+   The string's only occurrences anywhere are prose in this repo's own
+   logs/docs (the KIT-0035-era phantom) — the "CLI message naming the
+   flag" was almost certainly our own documentation echoing back
+   through session context. Third-time lesson, sharpest form yet: this
+   is the SAME phantom flag that self-review item 10 was created for,
+   re-asserted as newly-real. **What remains genuinely observed and
+   open**: the first trio run auto-cancelled with exit 0 in this
+   session, conflicting with KIT-0044's verified-working `echo y |` on
+   the same 1.0.1 — needs a controlled repro (parked in KIT-0052's
+   notes). Memory's "correction" this session made memory wrong; the
+   planner re-corrected it. Original (wrong) text kept above for the
+   record.
 2. **o3's 3/3 real-blocker streak broke — 4/4 claims wrong** — first
    fully-refuted o3 FAIL in the transformation arc. It misread the
    post-case `shift` (which removes the current token, not the next)
@@ -98,8 +109,12 @@ needed (the split form is already covered).
 
 ### Process Actions Taken
 
-- [ ] `prepare-review-input.sh`: replace `echo y |` guidance with
-      `ADVERSARIAL_UNATTENDED=1`; note auto-cancel exits 0
+- [x] ~~`prepare-review-input.sh`: replace `echo y |` guidance with
+      `ADVERSARIAL_UNATTENDED=1`~~ **NOT ACTIONED — closed as
+      misattribution** (planner, 2026-07-15; see corrected Surprising
+      #1). 1.5.1's guidance matches installed and latest reality. The
+      real residue — auto-cancel-exits-0 vs KIT-0044's verified pipe —
+      is parked in KIT-0052's notes for controlled repro.
 - [ ] `patterns.yml`: add the record-reader face to
       `intersection_names_drops` (partial record poisons dependent
       fields together)

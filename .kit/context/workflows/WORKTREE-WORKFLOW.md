@@ -122,6 +122,14 @@ provisioning symlink forces `--force` on every removal and erodes the
 safety net). Check `git -C <worktree> status --porcelain` — it must be
 empty before removal.
 
+**Harness cwd-reset is the standing pattern, not a bug** (confirmed
+over two full sessions, KIT-0044 + KIT-0050): the harness resets the
+shell's working directory to the primary clone between Bash calls even
+when the session tab was opened in the worktree. File tools follow the
+session root correctly; **shell commands must use absolute paths or
+explicit `cd`/`git -C` prefixes throughout**. Plan for it; do not
+re-diagnose it.
+
 Session-generated evaluator inputs (`.adversarial/inputs/`) are
 gitignored as of KIT-0046 — they regenerate from git/PR state, and the
 persisted review record lives in `.kit/context/reviews/`. A clean

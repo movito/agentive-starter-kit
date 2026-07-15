@@ -1,6 +1,6 @@
 # KIT-0050: Language profiles — the check hook separates kit from toolchain (ADR-0027 P1)
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 4-6 hours

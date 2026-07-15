@@ -35,7 +35,8 @@ defensive:
       - "sync allowlist: skipped upstream additions named in every SyncReport (KIT-0049)"
       - "empty allowlist -> partial_sync, never 'complete' (KIT-0049)"
       - "--only outside the allowlist errors instead of silently no-op (KIT-0049)"
-    caught_by: "o3 FAIL + fast-v2 + claude-code + BugBot + CodeRabbit (convergent, KIT-0049)"
+      - "record readers: a partially-unreadable multi-field record poisons DEPENDENT fields together, never validates them independently — an unreadable shape must poison the profile, else profile-scoped SKIPs silently narrow the promised full check set (KIT-0050, sixth face)"
+    caught_by: "o3 FAIL + fast-v2 + claude-code + BugBot + CodeRabbit (convergent, KIT-0049); BugBot record-reader face (KIT-0050)"
   external_cli_integration:
     rule: >
       Before writing subprocess.run() for any external CLI tool, read

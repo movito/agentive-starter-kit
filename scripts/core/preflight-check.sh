@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run all 7 preflight gates for a PR
-# Usage: ./scripts/preflight-check.sh [--pr PR_NUMBER] [--task TASK_ID] [--repo owner/name] [--help]
+# Usage: ./scripts/core/preflight-check.sh [--pr PR_NUMBER] [--task TASK_ID] [--repo owner/name] [--help]
 #
 # Metadata:
 #   version: 1.2.0
@@ -43,7 +43,7 @@ REPO_OVERRIDE=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --help|-h)
-            echo "Usage: ./scripts/preflight-check.sh [--pr PR_NUMBER] [--task TASK_ID] [--repo owner/name]"
+            echo "Usage: ./scripts/core/preflight-check.sh [--pr PR_NUMBER] [--task TASK_ID] [--repo owner/name]"
             echo ""
             echo "Run all 7 preflight gates for a PR before human review."
             echo ""
@@ -102,12 +102,12 @@ while [[ $# -gt 0 ]]; do
             ;;
         -*)
             echo "Unknown option: $1"
-            echo "Run: ./scripts/preflight-check.sh --help"
+            echo "Run: ./scripts/core/preflight-check.sh --help"
             exit 1
             ;;
         *)
             echo "Unknown argument: $1"
-            echo "Run: ./scripts/preflight-check.sh --help"
+            echo "Run: ./scripts/core/preflight-check.sh --help"
             exit 1
             ;;
     esac
