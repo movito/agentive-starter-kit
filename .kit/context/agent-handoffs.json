@@ -3,7 +3,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0050 DONE (PR #80) — P1 complete, transformation 3/6; closeout done. MAJOR retro correction: the ADVERSARIAL_UNATTENDED claim was a misattribution (flag exists NOWHERE, 1.0.1 = latest; echo-y| guidance stands; memory re-corrected; auto-cancel contradiction parked in KIT-0052 for repro). Shipped: patterns.yml record-reader face, preflight usage-path fix, cwd-reset documented as standing pattern (2 sessions), KIT-0051+KIT-0052 filed, o3 calibration updated (streaks = priors). NEXT: P3 (one door) on operator go. Arc-end reminder standing: rm -rf allowlist after P6.",
+    "brief_note": "KIT-0053 (one door, ADR-0027 P3, transformation 4/6 — largest task) specced, evaluated (decomposition accepted; matrix-to-YAML declined, third appearance), promoted; worktree provisioned. Key invariants in handoff: shim->door->engine call graph (no loops), engine stays the record's only writer, preset stub seam for P7, removal task files WITH the shims. 2-PR split pre-approved. After P3: downstream checkpoint opens + P5+P7. Arc-end reminder standing: rm -rf allowlist after P6.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
@@ -11,7 +11,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0050 complete (PR #80 merged, retro corrected by planner re: UNATTENDED misattribution). Next assignment expected: P3 one door (KIT-0053) once planner specs it.",
+    "brief_note": "KIT-0053 (the one door: --new/--adopt x shape x profile, matrix single-owner, three entrances become exec shims + removal task same PR) ready. Worktree: ../ask-worktrees/KIT-0053 (pull --ff-only first). Characterize the three old entrances FIRST.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
