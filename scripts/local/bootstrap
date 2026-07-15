@@ -268,18 +268,22 @@ ensure_git_identity() {
     # Fail fast with a real message when the install will commit into
     # the target but git has no identity — otherwise the engine dies
     # mid-run with git's "Please tell me who you are" (o3 finding).
-    # --global includes the XDG config scope.
-    if git config --global --get user.email >/dev/null 2>&1; then
-        return 0
-    fi
-    if git config --system --get user.email >/dev/null 2>&1; then
-        return 0
-    fi
-    echo "Error: no git identity configured — this install commits into the target." >&2
-    echo "       Set one first:" >&2
-    echo "         git config --global user.name  'Your Name'" >&2
-    echo "         git config --global user.email you@example.com" >&2
-    exit 1
+    # Commits need BOTH user.name and user.email (BugBot); --global
+    # includes the XDG config scope.
+    local key
+    for key in user.name user.email; do
+        if git config --global --get "$key" >/dev/null 2>&1; then
+            continue
+        fi
+        if git config --system --get "$key" >/dev/null 2>&1; then
+            continue
+        fi
+        echo "Error: git identity incomplete ($key unset) — this install commits into the target." >&2
+        echo "       Set it first:" >&2
+        echo "         git config --global user.name  'Your Name'" >&2
+        echo "         git config --global user.email you@example.com" >&2
+        exit 1
+    done
 }
 
 run_offers() {

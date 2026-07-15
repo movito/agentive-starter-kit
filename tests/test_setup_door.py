@@ -244,21 +244,33 @@ class TestExitContract:
     def test_missing_git_identity_fails_fast_with_guidance(self, tmp_path):
         # o3 finding: without an identity the export engine would die
         # mid-run with git's own cryptic error — the door pre-checks
-        system_cfg = subprocess.run(
-            ["git", "config", "--system", "--get", "user.email"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if system_cfg.returncode == 0:
-            pytest.skip("system gitconfig carries an identity on this machine")
+        for key in ("user.email", "user.name"):
+            system_cfg = subprocess.run(
+                ["git", "config", "--system", "--get", key],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if system_cfg.returncode == 0:
+                pytest.skip(f"system gitconfig carries {key} on this machine")
         home = tmp_path / "bare-home"
         home.mkdir()
         env = _scrubbed_env(HOME=str(home), XDG_CONFIG_HOME=str(home / "xdg"))
         result = run_door("--new", str(tmp_path / "proj"), env=env)
         assert result.returncode == 1
-        assert "no git identity configured" in result.stderr
+        assert "git identity incomplete" in result.stderr
         assert not (tmp_path / "proj").exists()  # failed BEFORE any work
+
+        # email alone is not an identity — commits need name AND email
+        # (BugBot PR #81)
+        xdg = home / "xdg"
+        (xdg / "git").mkdir(parents=True)
+        (xdg / "git" / "config").write_text(
+            "[user]\n\temail = only-email@example.invalid\n", encoding="utf-8"
+        )
+        result = run_door("--new", str(tmp_path / "proj"), env=env)
+        assert result.returncode == 1
+        assert "user.name unset" in result.stderr
 
 
 def _kit_install_region(target: Path) -> str:
