@@ -1,0 +1,535 @@
+#!/usr/bin/env bash
+# bootstrap — the one setup door (KIT-0053, KIT-ADR-0027 P3)
+#
+# The single kit-side entrance for creating or adopting a project. It
+# RESOLVES the install questions, VALIDATES the shape×profile matrix,
+# and ORCHESTRATES the engines; the engines do the work, and the
+# consumer engine remains the only writer of the CLAUDE.md kit-install
+# record. Kit-side only: runs from an agentive-starter-kit clone
+# against a target; never ships on any sync tier or consumer rsync.
+#
+# Usage:
+#   scripts/local/bootstrap --new <dir>   [--shape single|planning] [--profile python|none]
+#   scripts/local/bootstrap --adopt <dir> [--shape single|planning] [--profile python|none]
+#
+# Examples (one per matrix cell):
+#   bootstrap --new ~/Github/my-app                        # single+python (default)
+#   bootstrap --new ~/Github/my-notes --profile none       # single+none (docs-only)
+#   bootstrap --new ~/Github/my-planning --shape planning \
+#             --target-path ../my-product --target-github acme/my-product
+#   bootstrap --adopt ~/Github/existing-app                # single+python
+#   bootstrap --adopt ~/Github/docs-repo --profile none    # single+none
+#   bootstrap --adopt ~/Github/coord-repo --shape planning # planning+none (forced)
+#   bootstrap --adopt ~/Github/materials --design-materials  # bootstrap-agent flow
+#
+# Shape × profile legality (single owner: THIS file — doctor and every
+# other reader consult the recorded pair, never re-derive the matrix):
+#
+#   |          | python      | none         |
+#   |----------|-------------|--------------|
+#   | single   | ✔ (default) | ✔ (docs-only)|
+#   | planning | ✘           | ✔ (forced)   |
+#
+# Flags (every interactive question has one — non-TTY runs never hang):
+#   --new <dir>          create <dir> (must not exist): clean kit export
+#                        (single) or planning scaffold (planning)
+#   --adopt <dir>        install into an existing directory
+#   --shape <s>          single (default) | planning
+#   --profile <p>        python | none (default: by shape, see matrix)
+#   --name / --prefix    project name / task prefix (--new, single only)
+#   --target-path / --target-github
+#                        product-repo pointer (planning only)
+#   --no-kit             skip the .kit workflow (adopt, single only)
+#   --design-materials / --no-design-materials
+#                        (adopt, single+python) run the bootstrap-agent
+#                        materials flow / silence its detection hint
+#   --with-evaluators / --without-evaluators
+#                        answer the evaluator-install offer
+#   --with-venv / --without-venv
+#                        answer the venv offer (profile python only)
+#   --legacy-shim        internal: fidelity channel for the three old
+#                        entrance shims — byte-identical passthrough
+#                        (no door chrome, offers, record augmentation,
+#                        or doctor tail). Removed with the shims.
+#
+# Resolution chain (F5, the P7 seam): CLI flag → preset layer (a stub
+# today; P7 replaces preset_get with the ~/.config/agentive-kit/preset
+# reader) → kit default → interactive prompt (TTY only). Required
+# answers missing in a non-TTY run fail with usage (exit 2); optional
+# offers default to "skip, with notice".
+#
+# Exit contract (F6):
+#   0  install succeeded — the doctor verdict is REPORTED prominently,
+#      never encoded (a fresh repo with doctor WARNs still installed)
+#   1  install failed (an engine or record step errored)
+#   2  usage error or illegal shape/profile combination
+#
+# Every non-materials run finishes with `project doctor` in the target
+# (P4). The --design-materials path execs an interactive claude
+# session, so doctor cannot follow it — run it in the target afterward.
+
+set -e
+set -o pipefail
+IFS=$' \t\n'
+
+# The door commits into $TARGET on --new; a leaked GIT_DIR would
+# redirect that at the real repository (the KIT-0048 incident class).
+for _git_var in $(compgen -A variable | grep '^GIT_' || true); do
+    unset "$_git_var"
+done
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ENGINE_CONSUMER="$SCRIPT_DIR/engine-consumer.sh"
+ENGINE_MATERIALS="$SCRIPT_DIR/engine-materials.sh"
+ENGINE_EXPORT="$SCRIPT_DIR/engine-export.sh"
+
+# ─────────────────────────────────────────
+# F2 — the matrix, door-owned data
+# ─────────────────────────────────────────
+readonly LEGAL_PAIRS="single:python single:none planning:none"
+
+legal_pairs_human() {
+    echo "single+python (default), single+none, planning+none (forced)"
+}
+
+# ─────────────────────────────────────────
+# Resolution chain (F5)
+# ─────────────────────────────────────────
+preset_get() {
+    # P7 seam (reserved): the operator-preset layer. Until P7 lands
+    # the layer answers nothing; P7 replaces this stub with the
+    # ~/.config/agentive-kit/preset reader. Never widen it elsewhere.
+    return 1
+}
+
+kit_default() {  # $1 key, $2 shape context (for profile)
+    case "$1" in
+        shape) echo "single" ;;
+        profile)
+            case "${2:-}" in
+                planning) echo "none" ;;
+                *) echo "python" ;;
+            esac
+            ;;
+        *) return 1 ;;  # no kit default — falls to the prompt layer
+    esac
+}
+
+resolve_setting() {  # $1 key, $2 cli value, $3 shape context → stdout
+    local v
+    if [ -n "$2" ]; then
+        echo "$2"
+        return 0
+    fi
+    # empty-but-successful preset output counts as unanswered — a P7
+    # preset that echoes nothing must fall through, not resolve to ""
+    if v="$(preset_get "$1")" && [ -n "$v" ]; then
+        echo "$v"
+        return 0
+    fi
+    if v="$(kit_default "$1" "${3:-}")"; then
+        echo "$v"
+        return 0
+    fi
+    return 1  # unanswered — caller prompts (TTY) or fails/skips
+}
+
+# ─────────────────────────────────────────
+# Validation (pure — no filesystem access)
+# ─────────────────────────────────────────
+die_usage() {
+    echo "Error: $1" >&2
+    echo "Run 'scripts/local/bootstrap --help' for usage and examples." >&2
+    exit 2
+}
+
+reject_flaglike() {  # $1 flag, $2 captured value — a following flag is
+    # not a value ('--new --shape planning' must not adopt '--shape'
+    # as its target; BugBot, PR #81; -* also catches short options
+    # like -h). Empty stays allowed: the later required-answer
+    # handling prompts or fails with its own message.
+    case "$2" in
+        -*) die_usage "$1 requires a value (got the flag '$2' instead)" ;;
+    esac
+}
+
+validate_values() {  # $1 shape, $2 profile ("" = unresolved) → 0/message+1
+    case "$1" in
+        single|planning) ;;
+        *)
+            echo "Error: unknown shape: '$1' (expected: single | planning)" >&2
+            return 1
+            ;;
+    esac
+    case "$2" in
+        python|none|"") ;;
+        *)
+            echo "Error: unknown profile: '$2' (expected: python | none)" >&2
+            return 1
+            ;;
+    esac
+    return 0
+}
+
+validate_pair() {  # $1 shape, $2 profile → 0 legal / message + 1
+    case " $LEGAL_PAIRS " in
+        *" $1:$2 "*) return 0 ;;
+    esac
+    echo "Error: illegal shape/profile combination: $1 + $2" >&2
+    echo "       Legal pairs: $(legal_pairs_human)" >&2
+    return 1
+}
+
+# Cross-flag legality. Reads the resolved globals; returns 0 or prints
+# the offending pairing and returns 1 (main converts to exit 2).
+validate_combo() {
+    if [ "$SHAPE" = "planning" ]; then
+        [ "$NO_KIT" -eq 1 ] &&
+            { echo "Error: --no-kit contradicts --shape planning (the planning shape IS the kit workflow)" >&2; return 1; }
+        [ "$DESIGN_MATERIALS" = "yes" ] &&
+            { echo "Error: --design-materials applies to single-shape adopts only" >&2; return 1; }
+        [ -n "$NAME" ] || [ -n "$PREFIX" ] &&
+            { echo "Error: --name/--prefix apply to '--new --shape single' exports only" >&2; return 1; }
+    else
+        [ -n "$TARGET_PATH" ] || [ -n "$TARGET_GITHUB" ] &&
+            { echo "Error: --target-path/--target-github apply to the planning shape only" >&2; return 1; }
+    fi
+    if [ "$MODE" = "new" ]; then
+        [ "$NO_KIT" -eq 1 ] &&
+            { echo "Error: --no-kit applies to --adopt (single shape) only" >&2; return 1; }
+        [ "$DESIGN_MATERIALS" = "yes" ] &&
+            { echo "Error: --design-materials applies to --adopt only" >&2; return 1; }
+    else
+        [ -n "$NAME" ] || [ -n "$PREFIX" ] &&
+            { echo "Error: --name/--prefix apply to --new only" >&2; return 1; }
+    fi
+    if [ "$PROFILE" = "none" ]; then
+        [ "$WITH_VENV" = "yes" ] &&
+            { echo "Error: --with-venv requires profile python (resolved profile: none)" >&2; return 1; }
+        [ "$DESIGN_MATERIALS" = "yes" ] &&
+            { echo "Error: --design-materials requires profile python (the materials flow runs setup-dev)" >&2; return 1; }
+    fi
+    if [ "$DESIGN_MATERIALS" = "yes" ] && [ "$NO_KIT" -eq 1 ]; then
+        # the materials engine ships the full kit workflow — honoring
+        # --no-kit there is impossible, so ignoring it silently would
+        # drop what the operator asked for (the masking class)
+        echo "Error: --no-kit contradicts --design-materials (the materials flow installs the full kit workflow)" >&2
+        return 1
+    fi
+    return 0
+}
+
+usage() {
+    # print the header block: line 2 up to the first non-comment,
+    # non-blank line (order-insensitive to what that line is)
+    sed -n '2,/^[^#]/p' "${BASH_SOURCE[0]}" | sed '$d' | sed 's/^# \{0,1\}//'
+}
+
+# ─────────────────────────────────────────
+# Prompt layer (TTY only)
+# ─────────────────────────────────────────
+is_tty() { [ -t 0 ]; }
+
+prompt_yn() {  # $1 question → "yes"/"no"
+    local ans
+    read -r -p "$1 [y/N] " ans
+    case "$ans" in
+        [Yy]*) echo "yes" ;;
+        *) echo "no" ;;
+    esac
+}
+
+# ─────────────────────────────────────────
+# Orchestration helpers
+# ─────────────────────────────────────────
+check_record_conflict() {
+    # Native adopt of a target that already carries a kit-install
+    # record: EXPLICIT flags that contradict it are an error, never a
+    # silent preserve (CodeRabbit PR #81; the PR #78 target-pointer
+    # precedent). Only the door can do this — it alone knows whether a
+    # value was operator-given or defaulted. Reads via kit_markers,
+    # the record's one reader library.
+    [ -f "$TARGET/CLAUDE.md" ] || return 0
+    local rec rec_shape rec_profile
+    rec="$(python3 "$SCRIPT_DIR/kit_markers.py" extract "$TARGET/CLAUDE.md" kit-install 2>/dev/null)" || return 0
+    rec_shape="$(printf '%s\n' "$rec" | sed -n 's/^shape: *//p' | head -1)"
+    rec_profile="$(printf '%s\n' "$rec" | sed -n 's/^profile: *//p' | head -1)"
+    if [ -n "$SHAPE_CLI" ] && [ -n "$rec_shape" ] && [ "$SHAPE_CLI" != "$rec_shape" ]; then
+        die_usage "--shape $SHAPE_CLI conflicts with the target's existing kit-install record (shape: $rec_shape) — update the record first, or drop the flag"
+    fi
+    if [ -n "$PROFILE_CLI" ] && [ -n "$rec_profile" ] && [ "$PROFILE_CLI" != "$rec_profile" ]; then
+        die_usage "--profile $PROFILE_CLI conflicts with the target's existing kit-install record (profile: $rec_profile) — update the record first, or drop the flag"
+    fi
+    return 0
+}
+
+ensure_git_identity() {
+    # Fail fast with a real message when the install will commit into
+    # the target but git has no identity — otherwise the engine dies
+    # mid-run with git's "Please tell me who you are" (o3 finding).
+    # Commits need BOTH user.name and user.email (BugBot); --global
+    # includes the XDG config scope.
+    local key
+    for key in user.name user.email; do
+        if git config --global --get "$key" >/dev/null 2>&1; then
+            continue
+        fi
+        if git config --system --get "$key" >/dev/null 2>&1; then
+            continue
+        fi
+        echo "Error: git identity incomplete ($key unset) — this install commits into the target." >&2
+        echo "       Set it first:" >&2
+        echo "         git config --global user.name  'Your Name'" >&2
+        echo "         git config --global user.email you@example.com" >&2
+        exit 1
+    done
+}
+
+run_offers() {
+    if [ "$WITH_EVALUATORS" = "" ]; then
+        if is_tty; then
+            WITH_EVALUATORS="$(prompt_yn "Install adversarial evaluators now?")"
+        else
+            echo "Offer skipped (non-interactive): evaluators — pass --with-evaluators to install"
+            WITH_EVALUATORS="no"
+        fi
+    fi
+    if [ "$WITH_EVALUATORS" = "yes" ]; then
+        (cd "$TARGET" && ./scripts/core/project install-evaluators) ||
+            echo "Warning: evaluator install failed — doctor will flag it; re-run './scripts/core/project install-evaluators' in the target"
+    fi
+
+    if [ "$PROFILE" = "python" ]; then
+        if [ "$WITH_VENV" = "" ]; then
+            if is_tty; then
+                WITH_VENV="$(prompt_yn "Set up the Python venv now (setup-dev.sh)?")"
+            else
+                echo "Offer skipped (non-interactive): venv — pass --with-venv to set up"
+                WITH_VENV="no"
+            fi
+        fi
+        if [ "$WITH_VENV" = "yes" ]; then
+            (cd "$TARGET" && bash scripts/optional/setup-dev.sh) ||
+                echo "Warning: venv setup failed — run 'bash scripts/optional/setup-dev.sh' in the target"
+        fi
+    fi
+}
+
+run_doctor_tail() {
+    echo
+    echo "━━━ project doctor (${TARGET}) ━━━"
+    local doctor_exit=0
+    set +e
+    (cd "$TARGET" && ./scripts/core/project doctor)
+    doctor_exit=$?
+    set -e
+    local verdict
+    case "$doctor_exit" in
+        0) verdict="all checks passed" ;;
+        1) verdict="WARNINGS (see above) — install still succeeded" ;;
+        2) verdict="FAILURES (see above) — install still succeeded; fix before working" ;;
+        *) verdict="doctor could not run (exit $doctor_exit)" ;;
+    esac
+    echo
+    echo "Doctor verdict: $verdict"
+    echo "Install complete: shape=$SHAPE profile=$PROFILE → $TARGET"
+}
+
+main() {
+    MODE=""
+    TARGET=""
+    SHAPE_CLI=""
+    PROFILE_CLI=""
+    NAME=""
+    PREFIX=""
+    TARGET_PATH=""
+    TARGET_GITHUB=""
+    NO_KIT=0
+    DESIGN_MATERIALS=""
+    WITH_EVALUATORS=""
+    WITH_VENV=""
+    LEGACY_SHIM=0
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --new)              shift; MODE="new";   TARGET="${1:-}"; reject_flaglike --new "$TARGET" ;;
+            --new=*)            MODE="new";   TARGET="${1#--new=}" ;;
+            --adopt)            shift; MODE="adopt"; TARGET="${1:-}"; reject_flaglike --adopt "$TARGET" ;;
+            --adopt=*)          MODE="adopt"; TARGET="${1#--adopt=}" ;;
+            --shape)            shift; SHAPE_CLI="${1:-}"; reject_flaglike --shape "$SHAPE_CLI" ;;
+            --shape=*)          SHAPE_CLI="${1#--shape=}" ;;
+            --profile)          shift; PROFILE_CLI="${1:-}"; reject_flaglike --profile "$PROFILE_CLI" ;;
+            --profile=*)        PROFILE_CLI="${1#--profile=}" ;;
+            --name)             shift; NAME="${1:-}"; reject_flaglike --name "$NAME" ;;
+            --name=*)           NAME="${1#--name=}" ;;
+            --prefix)           shift; PREFIX="${1:-}"; reject_flaglike --prefix "$PREFIX" ;;
+            --prefix=*)         PREFIX="${1#--prefix=}" ;;
+            --target-path)      shift; TARGET_PATH="${1:-}"; reject_flaglike --target-path "$TARGET_PATH" ;;
+            --target-path=*)    TARGET_PATH="${1#--target-path=}" ;;
+            --target-github)    shift; TARGET_GITHUB="${1:-}"; reject_flaglike --target-github "$TARGET_GITHUB" ;;
+            --target-github=*)  TARGET_GITHUB="${1#--target-github=}" ;;
+            --no-kit)           NO_KIT=1 ;;
+            --design-materials)    DESIGN_MATERIALS="yes" ;;
+            --no-design-materials) DESIGN_MATERIALS="no" ;;
+            --with-evaluators)     WITH_EVALUATORS="yes" ;;
+            --without-evaluators)  WITH_EVALUATORS="no" ;;
+            --with-venv)           WITH_VENV="yes" ;;
+            --without-venv)        WITH_VENV="no" ;;
+            --legacy-shim)      LEGACY_SHIM=1 ;;
+            --help|-h)          usage; exit 0 ;;
+            *)                  die_usage "unknown argument: $1" ;;
+        esac
+        if [ $# -gt 0 ]; then shift; fi
+    done
+
+    # ── Resolve (CLI → preset stub → kit default → prompt) ──
+    if [ -z "$MODE" ]; then
+        if is_tty; then
+            local pick
+            read -r -p "Create a new project or adopt an existing directory? [new/adopt] " pick
+            case "$pick" in
+                new|adopt) MODE="$pick" ;;
+                *) die_usage "mode is required: --new <dir> or --adopt <dir>" ;;
+            esac
+        else
+            die_usage "mode is required: --new <dir> or --adopt <dir>"
+        fi
+    fi
+    if [ -z "$TARGET" ]; then
+        if is_tty; then
+            read -r -p "Target directory: " TARGET
+        fi
+        [ -n "$TARGET" ] || die_usage "target directory is required (--$MODE <dir>)"
+    fi
+    TARGET="${TARGET/#\~/$HOME}"
+
+    SHAPE="$(resolve_setting shape "$SHAPE_CLI")"
+    validate_values "$SHAPE" "$PROFILE_CLI" || exit 2
+    if [ "$SHAPE" = "planning" ] && [ "$PROFILE_CLI" = "python" ]; then
+        validate_pair planning python || exit 2
+    fi
+    PROFILE="$(resolve_setting profile "$PROFILE_CLI" "$SHAPE")"
+    validate_pair "$SHAPE" "$PROFILE" || exit 2
+    if [ "$SHAPE" = "planning" ] && [ -z "$PROFILE_CLI" ] && [ "$LEGACY_SHIM" -eq 0 ]; then
+        echo "planning shape → profile none (forced; the only legal pair)"
+    fi
+    validate_combo || exit 2
+
+    if [ -n "$TARGET_GITHUB" ] && ! printf '%s' "$TARGET_GITHUB" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+        die_usage "--target-github must look like owner/repo (got: $TARGET_GITHUB)"
+    fi
+
+    # ── Target checks ──
+    if [ "$MODE" = "new" ]; then
+        [ -e "$TARGET" ] && die_usage "--new target already exists: $TARGET (use --adopt for existing directories)"
+    else
+        [ -d "$TARGET" ] || die_usage "--adopt target does not exist: $TARGET (use --new to create one)"
+        TARGET="$(cd "$TARGET" && pwd)"
+        [ "$TARGET" = "$PROJECT_ROOT" ] &&
+            die_usage "target is the kit source repo itself ($PROJECT_ROOT)"
+    fi
+
+    # ── Legacy fidelity channel: validate, then hand straight off ──
+    if [ "$LEGACY_SHIM" -eq 1 ]; then
+        case "$MODE" in
+            new)
+                set -- "$TARGET"
+                [ -n "$NAME" ] && set -- "$@" --name "$NAME"
+                [ -n "$PREFIX" ] && set -- "$@" --prefix "$PREFIX"
+                exec "$ENGINE_EXPORT" "$@"
+                ;;
+            adopt)
+                if [ "$DESIGN_MATERIALS" = "yes" ]; then
+                    exec "$ENGINE_MATERIALS" "$TARGET"
+                fi
+                set -- --shape "$SHAPE" --profile "$PROFILE"
+                [ "$NO_KIT" -eq 1 ] && set -- "$@" --no-kit
+                [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
+                [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
+                exec "$ENGINE_CONSUMER" "$@" "$TARGET"
+                ;;
+        esac
+    fi
+
+    # ── Design-material detection (adopt, single: a git-less target is
+    #    materials-shaped — bootstrap.sh's historical precondition) ──
+    if [ "$MODE" = "adopt" ] && [ "$SHAPE" = "single" ] && [ -z "$DESIGN_MATERIALS" ]; then
+        if [ ! -e "$TARGET/.git" ] && [ "$PROFILE" = "python" ]; then
+            if is_tty; then
+                DESIGN_MATERIALS="$(prompt_yn "Target has no git repo — treat its contents as design materials and launch the bootstrap-agent flow?")"
+            else
+                echo "Hint: target has no git repo — if it holds design materials, re-run with --design-materials for the bootstrap-agent flow"
+                DESIGN_MATERIALS="no"
+            fi
+        else
+            DESIGN_MATERIALS="no"
+        fi
+    fi
+
+    # ── Orchestrate ──
+    if [ "$MODE" = "adopt" ]; then
+        check_record_conflict
+    fi
+    # a --new install (and an adopt of a git-less target) will commit
+    if [ "$MODE" = "new" ] || [ ! -e "$TARGET/.git" ]; then
+        ensure_git_identity
+    fi
+    echo "Setup door: mode=$MODE shape=$SHAPE profile=$PROFILE target=$TARGET"
+
+    if [ "$MODE" = "adopt" ] && [ "$DESIGN_MATERIALS" = "yes" ]; then
+        echo "Handing off to the design-materials flow (ends in an interactive"
+        echo "bootstrap-agent session). Doctor cannot run after an exec — run"
+        echo "'./scripts/core/project doctor' in the target when the agent is done."
+        exec "$ENGINE_MATERIALS" "$TARGET"
+    fi
+
+    if [ "$MODE" = "new" ]; then
+        if [ "$SHAPE" = "single" ]; then
+            set -- "$TARGET"
+            [ -n "$NAME" ] && set -- "$@" --name "$NAME"
+            [ -n "$PREFIX" ] && set -- "$@" --prefix "$PREFIX"
+            "$ENGINE_EXPORT" "$@" ||
+                { echo "Error: export engine failed (exit $?)" >&2; exit 1; }
+            TARGET="$(cd "$TARGET" && pwd)"
+            "$ENGINE_CONSUMER" --internal-record-only \
+                --shape single --profile "$PROFILE" "$TARGET" ||
+                { echo "Error: install record step failed (exit $?)" >&2; exit 1; }
+            if git -C "$TARGET" add CLAUDE.md scripts/local/checks.sh scripts/local/kit_markers.py &&
+               git -C "$TARGET" commit --quiet -m "chore: record kit install (shape: single, profile: $PROFILE)"; then
+                echo "Install record committed."
+            else
+                # F6: a failed record step is an install failure — the
+                # record is written to CLAUDE.md but sits uncommitted
+                echo "Error: install record commit failed — commit CLAUDE.md + scripts/local/ in the target, then re-run doctor" >&2
+                exit 1
+            fi
+        else
+            mkdir -p "$TARGET"
+            TARGET="$(cd "$TARGET" && pwd)"
+            set -- --shape planning
+            [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
+            [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
+            "$ENGINE_CONSUMER" "$@" "$TARGET" ||
+                { echo "Error: consumer engine failed (exit $?)" >&2; exit 1; }
+        fi
+    else
+        set -- --shape "$SHAPE" --profile "$PROFILE"
+        [ "$NO_KIT" -eq 1 ] && set -- "$@" --no-kit
+        [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
+        [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
+        "$ENGINE_CONSUMER" "$@" "$TARGET" ||
+            { echo "Error: consumer engine failed (exit $?)" >&2; exit 1; }
+    fi
+
+    run_offers
+    run_doctor_tail
+    exit 0
+}
+
+# Source guard: `source scripts/local/bootstrap` loads the functions
+# for tests (resolve/validate run with no filesystem access); direct
+# invocation runs main.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

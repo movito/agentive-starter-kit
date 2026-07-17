@@ -1,11 +1,14 @@
-"""Shape tests for bootstrap-consumer.sh (KIT-0048, ADR-0027 P2).
+"""Shape tests for the bootstrap-consumer.sh surface (KIT-0048, ADR-0027 P2).
 
 Characterization net first (N1): flagless and --shape single must stay
 byte-identical to each other for every subsequent edit; the flagless
-baseline invariants pin today's behavior.
+baseline invariants pin today's behavior. Since KIT-0053 the invoked
+path is a shim over the setup door — these tests deliberately keep
+exercising the OLD entrance so the whole shim -> door -> engine chain
+stays pinned to the historical surface.
 
 Consumer-rsync boundary: this module reads scripts/local/ content, so it
-is excluded from the consumer tests/ rsync in bootstrap-consumer.sh
+is excluded from the consumer tests/ rsync in engine-consumer.sh
 (exclude + rm -f sweep) and module-skips when the script is absent —
 the tests/test_kit_markers.py pattern.
 """

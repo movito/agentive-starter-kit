@@ -1,6 +1,6 @@
 # KIT-0053 Handoff — feature-developer
 
-**Task**: `.kit/tasks/2-todo/KIT-0053-one-setup-door.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0053-one-setup-door.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-15 (planner-f5)
 **Estimated effort**: 5–7 hours (largest transformation task; 2-PR

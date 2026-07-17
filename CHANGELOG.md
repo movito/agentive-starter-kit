@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The one setup door** (KIT-0053, KIT-ADR-0027 P3):
+  `scripts/local/bootstrap` is the single kit-side entrance —
+  `--new`/`--adopt` × `--shape single|planning` × `--profile
+  python|none`. The door owns the shape×profile legality matrix
+  (planning→none forced; illegal combos exit 2 naming the legal
+  pairs), resolves answers through a documented chain (CLI → preset
+  layer stub [P7 seam] → kit defaults → interactive prompt; every
+  prompt has a flag, so non-TTY runs never hang), offers evaluator
+  install and venv setup, and finishes every door-native install with
+  a `project doctor` report (verdict reported, never encoded — exit
+  contract 0 install-ok / 1 install-failed / 2 usage). The legacy
+  shims and the design-materials exec path skip the doctor tail
+  (byte-fidelity / interactive-exec constraints, documented in the
+  door header).
+- The three historical entrances (`bootstrap-consumer.sh`,
+  `bootstrap.sh`, `create-project.sh`) are now frozen-surface shims
+  that exec the door; their implementations moved behind it as
+  `engine-consumer.sh`, `engine-materials.sh`, `engine-export.sh`.
+  Historical flag forms stay byte-identical (characterization-pinned).
+  Shim removal is filed as KIT-0054, pinned to 0.9.0.
 - **Language profiles — the check hook separates kit from toolchain**
   (KIT-0050, KIT-ADR-0027 P1; core scripts 3.3.0):
   - `ci-check.sh` becomes a thin dispatcher: when the project-owned
@@ -35,6 +55,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The kit's own CLAUDE.md Project Rules section is wrapped in a
     `KIT-LOCAL: project-rules` region (content unchanged); bootstrap
     seeds consumers' Project Rules per profile from that single source.
+
+### Fixed
+
+- `create-project.sh`'s derived-prefix fallback crashed on macOS
+  (BSD `tr` read the leading dash of its delete-set as an option) —
+  every flagless export died. Found by the KIT-0053 characterization
+  net.
 
 ## [0.8.0] - 2026-07-14
 
