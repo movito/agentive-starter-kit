@@ -96,17 +96,18 @@ for cross-repo projects and preflight-validated.
 From the agentive-starter-kit directory:
 
 ```bash
-# Using the create-project agent (recommended):
-# Invoke create-project agent in a new tab and tell it:
-#   - target directory
-#   - project name
-#   - task prefix
-#   - that it will manage an existing codebase at <path>
+# Using the one setup door (KIT-0053) with the planning shape
+# (ADR-0027 P2): coordination machinery only, no Python toolchain,
+# profile forced to none, target pointers recorded in CLAUDE.md
+./scripts/local/bootstrap --new ~/Github/my-project-planning \
+  --shape planning \
+  --target-path ../my-project \
+  --target-github acme/my-project
 
-# Or using the script directly:
-./scripts/optional/create-project.sh ~/Github/my-project-planning \
-  --name "My Project Planning" \
-  --prefix MPP
+# Or via the create-project agent (recommended for full-kit planning
+# repos): invoke it in a new tab and tell it the target directory,
+# project name, task prefix, and that it will manage an existing
+# codebase at <path>
 ```
 
 ### 2. Ensure sibling directory layout

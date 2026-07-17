@@ -127,7 +127,7 @@ grep -ri "agentive.starter.kit\|agentive-starter-kit" \
    - `docs/UPSTREAM-CHANGES-*.md` — upgrade guides referencing the source repo
    - `docs/archive/agentive-development/` — archive directory path
    - `tests/test_project_script.py` — test fixtures that detect upstream patterns
-   - `scripts/bootstrap.sh` — this script references ASK as the source (correct)
+   - `scripts/local/bootstrap` + `scripts/local/engine-*.sh` — the kit setup door and its engines reference ASK as the source (correct)
    - `onboarding.md` — references to ASK git URLs for upstream tracking
    - README footer: "Built with Agentive Starter Kit" link (this is attribution)
 

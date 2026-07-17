@@ -42,7 +42,7 @@ step in `docs/MANIFEST-UPGRADE-GUIDE.md`.
 > worked example for downstream projects to model their own fill on.
 >
 > Everything between the `KIT-LOCAL: project-context` markers below is
-> consumer-owned. `bootstrap-consumer.sh` overwrites it with project
+> consumer-owned. `engine-consumer.sh` (the setup door's consumer engine) overwrites it with project
 > values on first bootstrap and preserves it across re-bootstraps;
 > upstream refreshes everything outside the markers. Keep the marker
 > comments intact when editing.
@@ -206,7 +206,7 @@ For each change:
 > repo below.
 >
 > Everything between the `KIT-LOCAL: stack-notes` markers below is
-> consumer-owned and is overwritten/preserved by `bootstrap-consumer.sh`
+> consumer-owned and is overwritten/preserved by `engine-consumer.sh` (the setup door's consumer engine)
 > exactly like Project Context above. Keep the marker comments intact.
 
 <!-- BEGIN KIT-LOCAL: stack-notes -->
@@ -231,7 +231,7 @@ For each change:
   <KIT-NNNN>` moves task files between status folders
 - **Consumer test boundary**: any new test importing or reading
   `scripts/local/` must be excluded from the consumer `tests/` rsync in
-  `bootstrap-consumer.sh` (both `--exclude` and the `rm -f` sweep) and
+  `engine-consumer.sh` (the setup door's consumer engine) (both `--exclude` and the `rm -f` sweep) and
   must module-skip when its dependency is absent (pattern:
   `tests/test_kit_markers.py`)
 <!-- END KIT-LOCAL: stack-notes -->

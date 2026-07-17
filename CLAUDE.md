@@ -105,6 +105,7 @@ See `.kit/templates/AGENT-TEMPLATE.md` for creating new agents.
 | `./scripts/core/verify-ci.sh` | Verify CI status on GitHub |
 | `./scripts/core/pattern_lint.py` | Check for defensive coding violations |
 | `./scripts/optional/create-agent.sh` | Create a new agent definition |
+| `./scripts/local/bootstrap` | The one setup door: `--new`/`--adopt` × shape × profile (KIT-0053) |
 | `.kit/launchers/launch` | Interactive agent launcher |
 | `.kit/launchers/onboarding` | First-time project setup |
 
