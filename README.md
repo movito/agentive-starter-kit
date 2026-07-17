@@ -91,7 +91,7 @@ Claude will:
 1. Clone the kit to a working directory (it will pick a sensible location, or ask)
 2. Read `.claude/agents/create-project.md` and follow that recipe
 3. Ask you the same questions the `create-project` agent asks (target directory, project name, task prefix, description, GitHub visibility, optional target codebase)
-4. Run `scripts/local/bootstrap --new` (the kit's one setup door), customize identity files, init adversarial-workflow, install evaluators, and create the GitHub repo
+4. Run `./scripts/local/bootstrap --new <target-dir>` (the kit's one setup door), customize identity files, init adversarial-workflow, install evaluators, and create the GitHub repo
 
 **What you need installed beforehand**:
 
@@ -129,7 +129,7 @@ cd agentive-starter-kit
 
 **4. The agent does the rest**. It will:
 
-- Run `scripts/local/bootstrap --new <dir>` (the one setup door) to export a clean copy (via `git archive`, no kit history)
+- Run `./scripts/local/bootstrap --new <dir>` (the one setup door) to export a clean copy (via `git archive`, no kit history)
 - Customize `CLAUDE.md`, `pyproject.toml`, and `README.md` with your project identity
 - Initialize `adversarial-workflow` and install the default evaluator library
 - Create the GitHub repo with `gh repo create` and push the first commit
@@ -496,7 +496,7 @@ Bootstrap an existing project with the implementation tools — agents, scripts,
 ./scripts/local/bootstrap --adopt ~/Github/my-planning --shape planning
 ```
 
-Use this when you want agentive coding help in an existing repo. Add `--no-kit` to skip the task-management workflow entirely. Run `scripts/local/bootstrap --help` for the full shape × profile matrix.
+Use this when you want agentive coding help in an existing repo. Add `--no-kit` to skip the task-management workflow entirely. Run `./scripts/local/bootstrap --help` for the full shape × profile matrix.
 
 ---
 
