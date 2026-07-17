@@ -329,6 +329,14 @@ consumer's shell can have `GIT_DIR` set). See `scripts/core/project`
 **If you hit it**: `git config core.bare false` restores the repo, then apply
 the env fix so it doesn't recur. (KIT-0036.)
 
+**Module-skip guards + file renames = silent green (KIT-0053)**: a
+characterization suite guarded by `pytest.skip(..., allow_module_level=True)`
+when its target script is absent does not FAIL when the script is
+renamed — it silently stops testing, and main looks green with the
+regression net switched off. On any PR that moves/renames scripts,
+`grep allow_module_level tests/` and confirm each guard's target still
+exists (or that the skip is intended).
+
 **Fixture-scope caveat (KIT-0048)**: the suite-wide autouse isolation in
 `tests/conftest.py` is **function-scoped** — it does NOT cover
 class- or session-scoped fixtures, which resolve their environment

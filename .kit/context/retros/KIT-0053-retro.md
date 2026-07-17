@@ -39,17 +39,32 @@ instances of the known masking class — see Surprising #3), 5 fix rounds
 
 ### What Was Surprising
 
-1. **`ADVERSARIAL_UNATTENDED` EXISTS in adversarial-workflow 1.0.1** —
-   runtime evidence, resolving the KIT-0052 contradiction: in non-TTY
-   with a large input and the flag unset, 1.0.1 prints "Non-TTY context
-   detected and ADVERSARIAL_UNATTENDED is unset — auto-cancelling" and
-   **exits 0 without running anything**. `echo y |` cannot work there —
-   the auto-cancel fires before stdin is read. With
-   `ADVERSARIAL_UNATTENDED=1` it auto-confirms and runs. The KIT-0050
-   retro was right; the 2026-07-15 "zero matches in venv AND system"
-   re-verification was wrong. Memory (Key Gotchas) corrected this
-   session. Corollary: the documented `echo y |` guidance in
-   prepare-review-input.sh 1.5.1 is dead weight for agents.
+1. **`ADVERSARIAL_UNATTENDED` EXISTS in adversarial-workflow 1.0.1 —
+   CORRECTED (planner empirical matrix, 2026-07-17): it exists in ONE
+   of THREE installs, and "1.0.1" was hiding the difference.** Final
+   forensics: `/opt/homebrew/bin/adversarial` is an **editable install
+   of the operator's dev checkout `~/Github/adversarial-workflow`**
+   (`direct_url.json`: `"editable": true`) — THAT build implements the
+   flag and prints the quoted message. The PyPI 1.0.1 in `.venv` and
+   Framework python has a plain `input()` prompt: `echo y |` WORKS
+   there (verified live: piped y proceeds past the prompt), closed
+   stdin crashes EOFError, and a piped empty/non-y answer cancels with
+   exit 0. So: this session's observation was right FOR ITS BINARY;
+   KIT-0044's was right for its binary; the planner's "zero matches"
+   was right for the two packages it grepped and wrong as a
+   generalization (the /opt/homebrew glob failed silently and went
+   unchased — a masking-class miss). All three sessions' error was
+   the same: treating one binary's behavior as "1.0.1's behavior"
+   while an editable install made the version string lie.
+   **Resolution shipped**: prepare-review-input.sh 1.5.2 prints the
+   belt-and-braces form `echo y | ADVERSARIAL_UNATTENDED=1 adversarial
+   …` (robust on every build) + the never-trust-exit-0 caution;
+   doctor blind-spot follow-up filed (KIT-0055: check the
+   PATH-resolved binary's package origin, WARN on editable installs).
+   Original (partially wrong) text kept below for the record:
+   *"The KIT-0050 retro was right; the 2026-07-15 re-verification was
+   wrong. Corollary: the echo y | guidance is dead weight."* — both
+   halves of that were themselves overgeneralizations.
 2. **The pre-approved PR split was structurally impossible to execute
    green** — door-first/shims-second orphans the old entrance paths at
    the PR-1 boundary, and the characterization suite doesn't FAIL — it
@@ -107,9 +122,12 @@ needed (the `$TMPDIR` form is already permitted).
 
 ### Process Actions Taken
 
-- [ ] KIT-0052: swap `echo y |` → `ADVERSARIAL_UNATTENDED=1` in
-      prepare-review-input.sh next-steps + code-review-evaluator skill;
-      document exit-0-without-running
+- [x] ~~KIT-0052: swap `echo y |` → `ADVERSARIAL_UNATTENDED=1`~~
+      **Actioned differently (planner, 2026-07-17)**: after the
+      three-installs resolution, prepare-review-input.sh 1.5.2 ships
+      the belt-and-braces `echo y | ADVERSARIAL_UNATTENDED=1 …` form
+      (works on every build) + the exit-0 caution; skill update rides
+      the same pass. A pure swap would have broken PyPI-build sessions.
 - [ ] COMMIT-PROTOCOL.md: pre-run black on new/edited Python files
       before staging
 - [ ] self-review skill: add the two-axes-meet-a-copy-step masking

@@ -47,13 +47,13 @@ pass path.
 ## Notes
 
 - Source: `.kit/context/retros/KIT-0050-retro.md` Surprising #3.
-- **Parked here (planner, 2026-07-15) — the unresolved evaluator
-  auto-cancel contradiction**: KIT-0044 verified `echo y |` satisfies
-  the adversarial CLI's large-input confirm in non-TTY; KIT-0050
-  observed all three trio runs auto-cancel with exit 0 on the same
-  1.0.1. The KIT-0050 explanation (an `ADVERSARIAL_UNATTENDED` flag)
-  was disproven (flag exists nowhere; 1.0.1 is latest). While in this
-  task's neighborhood, if convenient: reproduce a >17k-token non-TTY
-  run with and without the pipe and record actual behavior + exit
-  codes in the review record. Do not change any guidance without the
-  repro.
+- ~~Parked contradiction~~ **RESOLVED (planner empirical matrix,
+  2026-07-17)**: three adversarial installs, all "1.0.1" — the
+  operator's editable dev build (`/opt/homebrew/bin`) implements
+  `ADVERSARIAL_UNATTENDED` and auto-cancels exit 0 without it; PyPI
+  builds (.venv, Framework) use plain `input()` where `echo y |`
+  works. Guidance updated everywhere to the belt-and-braces
+  `echo y | ADVERSARIAL_UNATTENDED=1 …` form
+  (prepare-review-input.sh 1.5.2, code-review-evaluator skill). No
+  repro needed in this task anymore; the doctor blind spot went to
+  KIT-0055.

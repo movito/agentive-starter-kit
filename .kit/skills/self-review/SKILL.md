@@ -106,6 +106,8 @@ Read every function in the file you changed (not just the ones you wrote):
 
 12. **Block-replacement hygiene**: after replacing a large text block, inspect what sits immediately ABOVE and BELOW the replaced span — decorators, comments, and staged-vs-disk state don't move with the block. Two artifacts in two tasks: a `skipif` decorator stranded on a helper function (pytest silently ignores it; consumer CI errors instead of skipping — KIT-0049) and an equivalent orphan in KIT-0048. One glance at the block's borders per replacement.
 
+13. **When two configuration axes meet a copy/generation step, enumerate the cells**: any code that copies, seeds, or generates content conditioned on one axis (shape, mode, profile) while another axis also varies must be asked "which combinations does this step actually distinguish, and which cells share a path?" — shared cells are where one axis silently masks the other (two of KIT-0053's real bot finds were this shape: the fresh-export reseed and the no-kit×materials contradiction). The `intersection_names_drops` mindset applied to axis products.
+
 ## Step 4: Test assertion audit
 
 Before checking boundary coverage, audit test assertion quality:

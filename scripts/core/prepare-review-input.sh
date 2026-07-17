@@ -3,7 +3,7 @@
 # Usage: ./scripts/core/prepare-review-input.sh <TASK-ID> [--base main] [--format diff|full] [--help]
 #
 # Metadata:
-#   version: 1.5.1
+#   version: 1.5.2
 #   origin: ixda-services-2.0 (ID2-0015)
 #   last-updated: 2026-07-05
 #   created-by: "@movito with feature-developer-v6"
@@ -103,9 +103,11 @@ Output:
 
 Next steps:
   set -a && source .env && set +a
-  echo y | adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
-  # 'echo y |' answers the large-input confirm prompt in non-TTY sessions
-  # (the installed library has no unattended env flag; upstream #74)
+  echo y | ADVERSARIAL_UNATTENDED=1 adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
+  # Belt-and-braces for the large-input confirm across ALL installed builds
+  # (PyPI 1.0.1 reads stdin; the editable dev build reads the env flag).
+  # NEVER trust exit 0 alone: a cancelled run also exits 0 — check that the
+  # log file exists and carries a verdict.
 EOF
 }
 
@@ -469,17 +471,18 @@ echo "  Format:       $FORMAT"
 echo "  Files changed: $CHANGED_COUNT"
 echo
 echo "Next steps:"
-# In a non-TTY session (agent, CI) the adversarial CLI auto-cancels on
-# large (>17k-token) inputs instead of prompting — surface the stdin
-# workaround (KIT-0040 retro; corrected in KIT-0044). The previously
-# advertised ADVERSARIAL_UNATTENDED env flag does NOT exist in the
-# installed library (verified: no match in the package source) — the
-# only thing the prompt reads is stdin, so pipe the answer. Either fd
-# being non-TTY marks the session non-interactive: stdin is what the
-# CLI prompt reads, stdout catches piped/captured agent sessions.
+# Large-input confirm handling (final resolution, 2026-07-17 planner
+# empirical matrix): THREE adversarial builds coexist, all "1.0.1" —
+# PyPI (venv + system python) prompts via input() and reads STDIN;
+# the operator's editable dev install (/opt/homebrew/bin) checks the
+# ADVERSARIAL_UNATTENDED env flag and auto-cancels EXIT 0 without it.
+# Belt-and-braces covers every build: pipe y AND set the flag. Either
+# fd being non-TTY marks the session non-interactive. Never trust
+# exit 0 alone — a cancelled run also exits 0; the log file's
+# existence + verdict is the proof an evaluation ran.
 if [ ! -t 0 ] || [ ! -t 1 ]; then
-    PIPE_Y="echo y | "
-    echo "  # 'echo y |' answers the large-input confirm prompt (no unattended env flag exists; upstream #74)"
+    PIPE_Y="echo y | ADVERSARIAL_UNATTENDED=1 "
+    echo "  # belt-and-braces large-input confirm (stdin pipe for PyPI builds, env flag for the dev build); check the log file — cancelled runs also exit 0"
 else
     PIPE_Y=""
 fi

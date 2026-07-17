@@ -207,13 +207,17 @@ larger than ~700 lines and waits for stdin. In a non-TTY context (sub-agent,
 CI, automation), the prompt hangs indefinitely. Pipe `yes` in to bypass:
 
 ```bash
-yes y | adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
+echo y | ADVERSARIAL_UNATTENDED=1 adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
 ```
 
-The proper fix is a `--yes` (or `--no-confirm`) flag on the `adversarial`
-CLI itself — file an upstream issue if one isn't already open. Until then,
-the `yes y |` pipe is the unblocking workaround. ID2-0028 hit this when
-the file-based evaluator input ran past 700 lines.
+Belt-and-braces (final resolution 2026-07-17): multiple adversarial
+builds coexist all claiming the same version — PyPI builds read the
+piped `y` from stdin; the operator's editable dev build reads the
+`ADVERSARIAL_UNATTENDED` env flag and otherwise auto-cancels **with
+exit 0**. Use both; each is inert where unneeded. **Never trust exit 0
+alone** — a cancelled run also exits 0; the proof an evaluation ran is
+the log file existing with a verdict. Symptom→cause: "evaluation
+'succeeded' but no log verdict" = auto-cancelled non-TTY large input.
 
 ## Step 3: Read and Address Findings
 

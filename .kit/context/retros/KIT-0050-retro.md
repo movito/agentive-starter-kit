@@ -115,6 +115,11 @@ needed (the split form is already covered).
       #1). 1.5.1's guidance matches installed and latest reality. The
       real residue — auto-cancel-exits-0 vs KIT-0044's verified pipe —
       is parked in KIT-0052's notes for controlled repro.
+      *(Final amendment 2026-07-17: residue RESOLVED — a THIRD,
+      editable dev install carries the flag and was this session's
+      PATH binary; the "misattribution" was itself an
+      overgeneralization in the other direction. See KIT-0053 retro's
+      corrected Surprising #1; guidance is now belt-and-braces, 1.5.2.)*
 - [ ] `patterns.yml`: add the record-reader face to
       `intersection_names_drops` (partial record poisons dependent
       fields together)

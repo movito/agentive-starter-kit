@@ -103,6 +103,10 @@ EOF
 
 ### Manual (you should do):
 - ✅ Run pytest: Ensure tests pass
+- ✅ **Pre-run Black on new/edited Python files before staging**
+  (`black <files>`) — letting the hook reformat mid-commit aborts the
+  commit and forces a re-stage cycle; running it first makes the hook
+  a no-op (KIT-0053 retro)
 - ✅ Check git status: Verify all intended files staged
 - ✅ Review diff: Ensure no unintended changes
 - ✅ **Verify HEAD moved after committing** (`git log --oneline -1`) whenever
