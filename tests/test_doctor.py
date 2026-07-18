@@ -1313,3 +1313,26 @@ class TestBotsReaderTolerance:
             assert result.returncode == 0
         finally:
             preset.chmod(0o600)
+
+    def test_indented_record_lines_still_read(self, tmp_path):
+        # o3 (this PR): all readers tolerate harmless indentation —
+        # this pins the Python side (the shell readers have their own
+        # pins in test_preflight_check / test_setup_door)
+        root, checks = _shape_fixture(tmp_path, "  shape: single\n  bots: none\n")
+        result = run_doctor_rooted(root, checks)
+        assert "shape-record" not in result.stdout
+        assert "bots-record" not in result.stdout
+        assert result.returncode == 0
+
+    def test_duplicate_bot_names_collapse(self, tmp_path):
+        # _normalize_bots dedupes via canonical-order membership — a
+        # repeated name is valid and normalizes to one occurrence
+        root, checks = _shape_fixture(
+            tmp_path, "shape: single\nbots: coderabbit coderabbit\n"
+        )
+        env = _preset_env(tmp_path, "bots: coderabbit\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        assert "bots-record" not in result.stdout
+        assert any(
+            "record matches the preset" in ln for ln in preset_lines(result)
+        ), result.stdout

@@ -188,11 +188,20 @@ load_preset() {
 }
 
 preset_get() {  # $1 key → value on stdout; rc 1 when unanswered
+    # pure parameter expansion — no sed, so a key name can never
+    # alter the match program (claude-code review, this PR)
     [ -n "$PRESET_DATA" ] || return 1
-    local hit
-    hit="$(printf '%s' "$PRESET_DATA" | sed -n "s/^$1=//p" | head -1)"
-    [ -n "$hit" ] || return 1
-    printf '%s\n' "$hit"
+    local line
+    while IFS= read -r line; do
+        case "$line" in
+            "$1="*)
+                [ -n "${line#*=}" ] || return 1  # empty = unanswered
+                printf '%s\n' "${line#*=}"
+                return 0
+                ;;
+        esac
+    done <<< "$PRESET_DATA"
+    return 1
 }
 
 normalize_bots() {  # $1 raw (comma/space separated) → canonical, rc 1 on invalid/empty
@@ -395,12 +404,21 @@ load_record() {
     [ -f "$TARGET/CLAUDE.md" ] || return 0
     local rec
     rec="$(python3 "$SCRIPT_DIR/kit_markers.py" extract "$TARGET/CLAUDE.md" kit-install 2>/dev/null)" || return 0
-    REC_SHAPE="$(printf '%s\n' "$rec" | sed -n 's/^shape: *//p' | head -1)"
-    REC_PROFILE="$(printf '%s\n' "$rec" | sed -n 's/^profile: *//p' | head -1)"
-    REC_BOTS="$(printf '%s\n' "$rec" | sed -n 's/^bots: *//p' | head -1)"
-    REC_TARGET_PATH="$(printf '%s\n' "$rec" | sed -n 's/^target_path: *//p' | head -1)"
-    REC_TARGET_GITHUB="$(printf '%s\n' "$rec" | sed -n 's/^target_github: *//p' | head -1)"
+    # leading/trailing-whitespace tolerant, like the Python reader's
+    # line.strip() — an indented hand-edited line must not be visible
+    # to one reader and invisible to another (o3, this PR)
+    REC_SHAPE="$(record_field "$rec" shape)"
+    REC_PROFILE="$(record_field "$rec" profile)"
+    REC_BOTS="$(record_field "$rec" bots)"
+    REC_TARGET_PATH="$(record_field "$rec" target_path)"
+    REC_TARGET_GITHUB="$(record_field "$rec" target_github)"
     return 0
+}
+
+record_field() {  # $1 region text, $2 key → first value, whitespace-trimmed
+    printf '%s\n' "$1" |
+        sed -n "s/^[[:space:]]*$2:[[:space:]]*//p" | head -1 |
+        sed 's/[[:space:]]*$//'
 }
 
 check_record_conflict() {
@@ -464,10 +482,13 @@ apply_env_source() {  # $1 source path (from the preset) — --new only (F6)
         echo "Error: .env is not gitignored in the target — refusing to seed secrets from env-source" >&2
         exit 1
     fi
-    # create-then-fill so the file never exists with looser permissions
-    : > "$TARGET/.env"
+    # umask-first so the file is BORN 0600 — no window at looser
+    # permissions (claude-code review, this PR)
+    (
+        umask 077
+        cat "$src" > "$TARGET/.env"
+    )
     chmod 600 "$TARGET/.env"
-    cat "$src" >> "$TARGET/.env"
     echo "Seeded .env from preset env-source (mode 0600, gitignored; contents never printed)"
 }
 

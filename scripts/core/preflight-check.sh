@@ -227,10 +227,12 @@ BOTS_DECLARED=""
 BOTS_LINE_PRESENT=false
 if [ -f "scripts/local/kit_markers.py" ] && [ -f "CLAUDE.md" ] && command -v python3 >/dev/null 2>&1; then
     KIT_INSTALL_REGION=$(python3 scripts/local/kit_markers.py extract CLAUDE.md kit-install 2>/dev/null || true)
-    if printf '%s\n' "$KIT_INSTALL_REGION" | grep -q '^bots:'; then
+    # leading-whitespace tolerant like the Python reader's strip() —
+    # an indented line must not be visible to doctor but invisible here
+    if printf '%s\n' "$KIT_INSTALL_REGION" | grep -q '^[[:space:]]*bots:'; then
         BOTS_LINE_PRESENT=true
     fi
-    BOTS_DECLARED=$(printf '%s\n' "$KIT_INSTALL_REGION" | sed -n 's/^bots:[[:space:]]*//p' | head -1)
+    BOTS_DECLARED=$(printf '%s\n' "$KIT_INSTALL_REGION" | sed -n 's/^[[:space:]]*bots:[[:space:]]*//p' | head -1)
     # same tolerance as every other bots reader (door normalize_bots,
     # project _normalize_bots): comma- or space-separated, any case —
     # one declaration must never be valid to one reader and invalid

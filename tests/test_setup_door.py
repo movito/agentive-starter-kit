@@ -238,6 +238,19 @@ class TestPresetUnits:
         result = sourced('load_preset; resolve_setting shape ""', env=env)
         assert result.stdout.strip() == "planning"
 
+    def test_env_not_gitignored_refuses_secret_copy(self, tmp_path):
+        # F6's hard guard, exercised directly: a target whose .env is
+        # NOT gitignored must refuse the copy outright — no .env file,
+        # exit 1, and the reason named
+        target = make_adopt_dir(tmp_path, "no-ignore")  # no .gitignore at all
+        src = tmp_path / "env-template"
+        src.write_text("KEY=secret-fixture\n", encoding="utf-8")
+        src.chmod(0o600)
+        result = sourced(f'TARGET="{target}"; apply_env_source "{src}"')
+        assert result.returncode == 1
+        assert "refusing to seed secrets" in result.stderr
+        assert not (target / ".env").exists()
+
 
 class TestNormalizeBots:
     """KIT-0056 F1: 'none' alone, or a subset of coderabbit/bugbot —
@@ -252,6 +265,8 @@ class TestNormalizeBots:
             ("CodeRabbit,BUGBOT", "coderabbit bugbot"),  # case-insensitive
             ("coderabbit", "coderabbit"),
             ("bugbot", "bugbot"),
+            ("coderabbit coderabbit", "coderabbit"),  # duplicates collapse
+            ("bugbot,bugbot coderabbit", "coderabbit bugbot"),
             ("none", "none"),
             ("None", "none"),
         ],
@@ -277,19 +292,6 @@ class TestNormalizeBots:
         result = sourced('normalize_bots "" || echo "rc=$?"')
         assert result.stdout.strip() == "rc=1"
         assert result.stderr == ""
-
-    def test_env_not_gitignored_refuses_secret_copy(self, tmp_path):
-        # F6's hard guard, exercised directly: a target whose .env is
-        # NOT gitignored must refuse the copy outright — no .env file,
-        # exit 1, and the reason named
-        target = make_adopt_dir(tmp_path, "no-ignore")  # no .gitignore at all
-        src = tmp_path / "env-template"
-        src.write_text("KEY=secret-fixture\n", encoding="utf-8")
-        src.chmod(0o600)
-        result = sourced(f'TARGET="{target}"; apply_env_source "{src}"')
-        assert result.returncode == 1
-        assert "refusing to seed secrets" in result.stderr
-        assert not (target / ".env").exists()
 
 
 class TestExitContract:
@@ -900,6 +902,23 @@ class TestBotsDeclarationE2E:
             result.stderr
         )
         assert "bots: none" in _kit_install_region(target)  # record untouched
+
+    def test_indented_existing_bots_line_not_duplicated(self, tmp_path):
+        """o3 (this PR): an indented hand-edited bots line read as
+        'absent' by the engine would gain a SECOND bots line — the
+        whitespace-tolerant reader must see it and no-op."""
+        target = make_adopt_dir(tmp_path, "indented")
+        assert run_door("--adopt", str(target), "--bots", "none").returncode == 0
+        claude_md = target / "CLAUDE.md"
+        text = claude_md.read_text(encoding="utf-8")
+        claude_md.write_text(
+            text.replace("\nbots: none\n", "\n   bots: none\n"), encoding="utf-8"
+        )
+        result = run_door("--adopt", str(target), "--bots", "none")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "bots line added" not in result.stdout
+        region = _kit_install_region(target)
+        assert region.count("bots:") == 1
 
     def test_new_without_bots_writes_no_line(self, tmp_path):
         """N1: no flag, no preset — the record is byte-identical to a

@@ -386,9 +386,9 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.3.0",
+  "core_version": "3.4.0",
   "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-07-14T00:00:00Z",
+  "synced_at": "2026-07-18T00:00:00Z",
   "files": {
     "scripts_core": [
       "core/__init__.py",
@@ -789,7 +789,11 @@ if [ -n "$BOTS" ]; then
         echo "       $REGION_NOW"
         exit 1
     fi
-    EXISTING_BOTS="$(printf '%s\n' "$REGION_NOW" | sed -n 's/^bots: *//p' | head -1)"
+    # whitespace-tolerant like every other record reader — an indented
+    # existing line read as "absent" would append a SECOND bots: line
+    EXISTING_BOTS="$(printf '%s\n' "$REGION_NOW" |
+        sed -n 's/^[[:space:]]*bots:[[:space:]]*//p' | head -1 |
+        sed 's/[[:space:]]*$//')"
     if [ -z "$EXISTING_BOTS" ]; then
         # no trailing newline: the region body group excludes the
         # newline before END, so extract→replace stays byte-identical

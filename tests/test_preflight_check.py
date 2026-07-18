@@ -684,13 +684,15 @@ class TestGate23BotsDeclaration:
     expected (fail closed, today's behavior).
     """
 
-    def _install_declaration(self, proj, bots_line: str | None) -> None:
+    def _install_declaration(
+        self, proj, bots_line: str | None, indent: str = ""
+    ) -> None:
         local_dir = proj.root / "scripts" / "local"
         local_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy(_KIT_MARKERS_SRC, local_dir / "kit_markers.py")
         region = "shape: single\nprofile: python\n"
         if bots_line is not None:
-            region += f"bots: {bots_line}\n"
+            region += f"{indent}bots: {bots_line}\n"
         (proj.root / "CLAUDE.md").write_text(
             "# stub project\n\n"
             "<!-- BEGIN KIT-LOCAL: kit-install -->\n"
@@ -736,6 +738,21 @@ class TestGate23BotsDeclaration:
             result = proj.run(files)
             gates = _gates(result.stdout)
             assert gates[2][0] == "PASS", result.stdout
+            assert gates[3][0] == "SKIP", result.stdout
+            assert result.returncode == 0
+        finally:
+            self._remove_declaration(proj)
+
+    def test_indented_declaration_still_read(self, proj):
+        # o3 (this PR): the Python readers strip() lines, so an
+        # indented hand-edited declaration must be visible to the
+        # shell readers too — invisible here would run gates that
+        # doctor's reading says are declared away
+        self._install_declaration(proj, "none", indent="   ")
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            gates = _gates(result.stdout)
+            assert gates[2][0] == "SKIP", result.stdout
             assert gates[3][0] == "SKIP", result.stdout
             assert result.returncode == 0
         finally:
