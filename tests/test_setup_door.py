@@ -802,7 +802,33 @@ class TestPresetE2E:
         assert "Preset venv answer ignored" in result.stdout
         assert "profile: none" in result.stdout  # the reason is named
         assert "setup-dev" not in result.stdout  # the venv step never ran
+        # BugBot round 3: the OFFER is closed too — no misleading
+        # non-TTY --with-venv hint (and in TTY, no prompt) on a
+        # docs-only recorded project
+        assert "Offer skipped (non-interactive): venv" not in result.stdout
         assert "profile: none" in _kit_install_region(target)
+
+    def test_venv_offer_closed_for_none_recorded_target(self, tmp_path):
+        """BugBot round 3, the preset-less face: flagless adopt of a
+        profile:none-recorded target must not surface the venv offer
+        at all — the record has no Python toolchain."""
+        target = make_adopt_dir(tmp_path, "docs-flagless")
+        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
+        result = run_door("--adopt", str(target))
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Offer skipped (non-interactive): venv" not in result.stdout
+        # the evaluators offer is profile-independent and stays open
+        assert "Offer skipped (non-interactive): evaluators" in result.stdout
+
+    def test_with_venv_flag_rejected_for_none_recorded_target(self, tmp_path):
+        """The explicit flag keys on the effective profile too —
+        --with-venv on a docs-only recorded project is the same
+        illegal ask as on a resolved-none run."""
+        target = make_adopt_dir(tmp_path, "docs-flagged")
+        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
+        result = run_door("--adopt", str(target), "--with-venv")
+        assert result.returncode == 2
+        assert "--with-venv requires profile python" in result.stderr
 
     def test_bad_offer_value_fails_loud(self, tmp_path):
         xdg = write_preset(tmp_path, "evaluators: maybe\n")

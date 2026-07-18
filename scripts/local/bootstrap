@@ -354,9 +354,9 @@ validate_combo() {
         [ -n "$NAME" ] || [ -n "$PREFIX" ] &&
             { echo "Error: --name/--prefix apply to --new only" >&2; return 1; }
     fi
-    if [ "$PROFILE" = "none" ]; then
+    if [ "$EFFECTIVE_PROFILE" = "none" ]; then
         [ "$WITH_VENV" = "yes" ] &&
-            { echo "Error: --with-venv requires profile python (resolved profile: none)" >&2; return 1; }
+            { echo "Error: --with-venv requires profile python (effective profile: none)" >&2; return 1; }
         [ "$DESIGN_MATERIALS" = "yes" ] &&
             { echo "Error: --design-materials requires profile python (the materials flow runs setup-dev)" >&2; return 1; }
     fi
@@ -520,7 +520,11 @@ run_offers() {
             echo "Warning: evaluator install failed — doctor will flag it; re-run './scripts/core/project install-evaluators' in the target"
     fi
 
-    if [ "$PROFILE" = "python" ]; then
+    # EFFECTIVE_PROFILE, not PROFILE: a profile:none-recorded adopt
+    # resolves PROFILE to the python default, but its venv offer (TTY
+    # prompt AND the non-TTY --with-venv hint) would be wrong — the
+    # record has no Python toolchain (BugBot round 3, PR #83)
+    if [ "$EFFECTIVE_PROFILE" = "python" ]; then
         if [ "$WITH_VENV" = "" ]; then
             if is_tty; then
                 WITH_VENV="$(prompt_yn "Set up the Python venv now (setup-dev.sh)?")"
@@ -662,6 +666,14 @@ main() {
     if [ "$SHAPE" = "planning" ] && [ -z "$PROFILE_CLI" ] && [ "$LEGACY_SHIM" -eq 0 ]; then
         echo "planning shape → profile none (forced; the only legal pair)"
     fi
+    # The EFFECTIVE profile: on adopt of a recorded target the record
+    # wins over the resolved default (the engine preserves it), so
+    # every Python-toolchain surface — the venv offer, the preset venv
+    # answer, --with-venv, --design-materials — must key on THIS, not
+    # on the resolved PROFILE, or a docs-only recorded project gets
+    # offered setup-dev.sh (BugBot rounds 2-3, PR #83).
+    EFFECTIVE_PROFILE="$PROFILE"
+    [ -n "$REC_PROFILE" ] && EFFECTIVE_PROFILE="$REC_PROFILE"
     validate_combo || exit 2
 
     # Preset may answer the planning shape's target-pointer questions —
@@ -758,13 +770,10 @@ main() {
             *) die_usage "preset key 'evaluators' must be yes or no (got: $offer)" ;;
         esac
     fi
-    # The venv answer keys on the EFFECTIVE profile: on adopt of a
-    # recorded target the record wins over the resolved default, so a
-    # preset 'venv: yes' must never run setup-dev.sh on a project
+    # The venv answer keys on EFFECTIVE_PROFILE (see its definition):
+    # a preset 'venv: yes' must never run setup-dev.sh on a project
     # whose record says profile: none (BugBot round 2). Ignoring the
     # answer is said out loud — never a silent drop.
-    local effective_profile="$PROFILE"
-    [ -n "$REC_PROFILE" ] && effective_profile="$REC_PROFILE"
     if [ "$PROFILE" = "python" ] && [ -z "$WITH_VENV" ] && offer="$(preset_get venv)"; then
         # validate BEFORE deciding applicability — a malformed value
         # fails loud even when the answer would be ignored (N2)
@@ -772,8 +781,8 @@ main() {
             yes|no) ;;
             *) die_usage "preset key 'venv' must be yes or no (got: $offer)" ;;
         esac
-        if [ "$effective_profile" != "python" ]; then
-            echo "Preset venv answer ignored — the target's record (profile: $effective_profile) has no Python toolchain"
+        if [ "$EFFECTIVE_PROFILE" != "python" ]; then
+            echo "Preset venv answer ignored — the target's record (profile: $EFFECTIVE_PROFILE) has no Python toolchain"
         else
             WITH_VENV="$offer"
         fi
