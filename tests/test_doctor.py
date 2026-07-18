@@ -1276,3 +1276,13 @@ class TestBotsReaderTolerance:
         assert any("comparison skipped" in ln for ln in lines)
         assert not any(ln.startswith("PRESET:shape:INFO:record") for ln in lines)
         assert result.returncode == 0
+
+    def test_empty_bots_line_fails_loud(self, tmp_path):
+        # a PRESENT-but-empty bots: line is invalid, not absent —
+        # matching the preflight reader's NOTICE for the same content
+        root, checks = _shape_fixture(tmp_path, "shape: single\nbots:\n")
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:bots-record:FAIL:") for ln in doctor_lines(result)
+        ), result.stdout
+        assert result.returncode == 1

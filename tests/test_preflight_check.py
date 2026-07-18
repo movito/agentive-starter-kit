@@ -820,6 +820,36 @@ class TestGate23BotsDeclaration:
         finally:
             self._remove_declaration(proj)
 
+    def test_skip_never_masks_pending(self, proj):
+        # PENDING outranks the SKIPs in the final verdict: skipped
+        # bot gates plus an unregistered CI run still exit 2
+        self._install_declaration(proj, "none")
+        try:
+            files = self._no_bot_reviews(proj.head)
+            files["run_list"] = "[]"
+            result = proj.run(files)
+            gates = _gates(result.stdout)
+            assert gates[1][0] == "PENDING", result.stdout
+            assert gates[2][0] == "SKIP"
+            assert gates[3][0] == "SKIP"
+            assert result.returncode == 2
+        finally:
+            self._remove_declaration(proj)
+
+    def test_empty_bots_line_is_invalid_not_absent(self, proj):
+        # fast-v2 round 2: doctor FAILs a present-but-empty bots: line
+        # (bots-record) — preflight must not silently read the same
+        # line as "no declaration"; it fails closed with its own NOTICE
+        self._install_declaration(proj, "")
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            assert "NOTICE: empty bots declaration" in result.stdout
+            gates = _gates(result.stdout)
+            assert gates[2][0] == "FAIL", result.stdout
+            assert gates[3][0] == "FAIL", result.stdout
+        finally:
+            self._remove_declaration(proj)
+
 
 class TestGate7RegularFile:
     def test_directory_named_like_task_does_not_pass(self, proj):

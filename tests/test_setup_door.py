@@ -772,6 +772,21 @@ class TestPresetE2E:
         finally:
             (xdg / "agentive-kit" / "preset").chmod(0o600)
 
+    @pytest.mark.slow
+    def test_loose_env_source_perms_warn_but_proceed(self, tmp_path):
+        """0600 on the SOURCE is expected-not-enforced by design (F6:
+        it is the operator's own file; the target copy is always
+        0600) — but the warning must actually fire."""
+        xdg = _demo_preset_xdg(tmp_path)
+        env_template = tmp_path / "env-template"
+        env_template.chmod(0o644)
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        target = tmp_path / "loose-perms"
+        result = run_door("--new", str(target), env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "0600 expected" in result.stderr
+        assert ((target / ".env").stat().st_mode & 0o777) == 0o600
+
     def test_unreadable_env_source_fails_before_any_work(self, tmp_path):
         if os.geteuid() == 0:
             pytest.skip("permission checks are meaningless as root")

@@ -224,14 +224,24 @@ SKIP_COUNT=0
 # run). Read via kit_markers.py, the region's one reader — never
 # ad-hoc regex over CLAUDE.md.
 BOTS_DECLARED=""
+BOTS_LINE_PRESENT=false
 if [ -f "scripts/local/kit_markers.py" ] && [ -f "CLAUDE.md" ] && command -v python3 >/dev/null 2>&1; then
     KIT_INSTALL_REGION=$(python3 scripts/local/kit_markers.py extract CLAUDE.md kit-install 2>/dev/null || true)
+    if printf '%s\n' "$KIT_INSTALL_REGION" | grep -q '^bots:'; then
+        BOTS_LINE_PRESENT=true
+    fi
     BOTS_DECLARED=$(printf '%s\n' "$KIT_INSTALL_REGION" | sed -n 's/^bots:[[:space:]]*//p' | head -1)
     # same tolerance as every other bots reader (door normalize_bots,
     # project _normalize_bots): comma- or space-separated, any case —
     # one declaration must never be valid to one reader and invalid
     # to another
     BOTS_DECLARED=$(printf '%s' "$BOTS_DECLARED" | tr ',' ' ' | tr '[:upper:]' '[:lower:]')
+fi
+if [ "$BOTS_LINE_PRESENT" = true ] && [ -z "$BOTS_DECLARED" ]; then
+    # a PRESENT-but-empty bots: line is invalid, not absent — doctor
+    # FAILs it (bots-record), so reading it as "no declaration"
+    # silently here would let the two readers diverge
+    echo "NOTICE: empty bots declaration in kit-install ('bots:' with no value) — expecting both bots (fail closed); fix the line in CLAUDE.md"
 fi
 if [ -n "$BOTS_DECLARED" ]; then
     # Validate: an unrecognized declaration must not silently SKIP a
