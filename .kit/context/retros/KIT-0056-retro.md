@@ -3,7 +3,7 @@
 **Date**: 2026-07-18
 **Agent**: feature-developer-f5
 **Mode**: single-repo
-**Scorecard**: 11 threads, 0 regressions, 4 fix rounds, 11 commits
+**Scorecard**: 12 threads, 0 regressions, 5 fix rounds, 13 commits
 
 ### What Worked
 
@@ -54,7 +54,16 @@
    structure was still an improvement under N2, so I adopted it while
    correcting the premise in the reply. Worth separating "is the
    diagnosis right?" from "is the patch better?".
-4. **The baked-manifest bump is a repeating trap** — KIT-0050
+4. **A half-closed bug class reopens** — BugBot round 3 (post-retro)
+   caught that round 2 closed the preset venv ANSWER but left the
+   OFFER keyed on the resolved PROFILE: a TTY adopt of a
+   profile:none-recorded project could still prompt for setup-dev.sh.
+   The durable fix was structural — one EFFECTIVE_PROFILE computed at
+   resolution, gating every Python-toolchain surface (offer, preset
+   answer, --with-venv, --design-materials) — instead of patching the
+   one reported path. When a reviewer finds face N of a class, fix
+   the class's single source, not face N.
+5. **The baked-manifest bump is a repeating trap** — KIT-0050
    established that `engine-consumer.sh`'s heredoc planning manifest
    bumps with core VERSION; I followed the VERSION+manifest bump and
    still missed the heredoc. Only claude-code caught it. A convention
