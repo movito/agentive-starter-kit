@@ -766,13 +766,16 @@ main() {
     local effective_profile="$PROFILE"
     [ -n "$REC_PROFILE" ] && effective_profile="$REC_PROFILE"
     if [ "$PROFILE" = "python" ] && [ -z "$WITH_VENV" ] && offer="$(preset_get venv)"; then
+        # validate BEFORE deciding applicability — a malformed value
+        # fails loud even when the answer would be ignored (N2)
+        case "$offer" in
+            yes|no) ;;
+            *) die_usage "preset key 'venv' must be yes or no (got: $offer)" ;;
+        esac
         if [ "$effective_profile" != "python" ]; then
             echo "Preset venv answer ignored — the target's record (profile: $effective_profile) has no Python toolchain"
         else
-            case "$offer" in
-                yes|no) WITH_VENV="$offer" ;;
-                *) die_usage "preset key 'venv' must be yes or no (got: $offer)" ;;
-            esac
+            WITH_VENV="$offer"
         fi
     fi
     ENV_SOURCE=""
