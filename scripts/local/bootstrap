@@ -758,11 +758,22 @@ main() {
             *) die_usage "preset key 'evaluators' must be yes or no (got: $offer)" ;;
         esac
     fi
+    # The venv answer keys on the EFFECTIVE profile: on adopt of a
+    # recorded target the record wins over the resolved default, so a
+    # preset 'venv: yes' must never run setup-dev.sh on a project
+    # whose record says profile: none (BugBot round 2). Ignoring the
+    # answer is said out loud — never a silent drop.
+    local effective_profile="$PROFILE"
+    [ -n "$REC_PROFILE" ] && effective_profile="$REC_PROFILE"
     if [ "$PROFILE" = "python" ] && [ -z "$WITH_VENV" ] && offer="$(preset_get venv)"; then
-        case "$offer" in
-            yes|no) WITH_VENV="$offer" ;;
-            *) die_usage "preset key 'venv' must be yes or no (got: $offer)" ;;
-        esac
+        if [ "$effective_profile" != "python" ]; then
+            echo "Preset venv answer ignored — the target's record (profile: $effective_profile) has no Python toolchain"
+        else
+            case "$offer" in
+                yes|no) WITH_VENV="$offer" ;;
+                *) die_usage "preset key 'venv' must be yes or no (got: $offer)" ;;
+            esac
+        fi
     fi
     ENV_SOURCE=""
     if [ "$MODE" = "new" ] && offer="$(preset_get env-source)"; then

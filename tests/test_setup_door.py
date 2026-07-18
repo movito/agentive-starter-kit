@@ -787,6 +787,23 @@ class TestPresetE2E:
         assert "Offer skipped (non-interactive): evaluators" not in result.stdout
         assert "Offer skipped (non-interactive): venv" not in result.stdout
 
+    def test_preset_venv_ignored_for_none_recorded_target(self, tmp_path):
+        """BugBot round 2: on adopt, the record's profile wins over the
+        resolved default for the venv answer too — a preset 'venv: yes'
+        must never run setup-dev.sh on a recorded docs-only project,
+        and ignoring the answer is said out loud."""
+        target = make_adopt_dir(tmp_path, "docs-only")
+        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
+        xdg = write_preset(tmp_path, "venv: yes\nevaluators: no\n")
+        result = run_door(
+            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Preset venv answer ignored" in result.stdout
+        assert "profile: none" in result.stdout  # the reason is named
+        assert "setup-dev" not in result.stdout  # the venv step never ran
+        assert "profile: none" in _kit_install_region(target)
+
     def test_bad_offer_value_fails_loud(self, tmp_path):
         xdg = write_preset(tmp_path, "evaluators: maybe\n")
         target = make_adopt_dir(tmp_path, "badval")
