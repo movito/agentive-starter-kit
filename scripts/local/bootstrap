@@ -434,8 +434,17 @@ check_record_conflict() {
     if [ -n "$PROFILE_CLI" ] && [ -n "$REC_PROFILE" ] && [ "$PROFILE_CLI" != "$REC_PROFILE" ]; then
         die_usage "--profile $PROFILE_CLI conflicts with the target's existing kit-install record (profile: $REC_PROFILE) — update the record first, or drop the flag"
     fi
-    if [ -n "$BOTS_CLI" ] && [ -n "$REC_BOTS" ] && [ "$BOTS_CLI" != "$REC_BOTS" ]; then
-        die_usage "--bots '$BOTS_CLI' conflicts with the target's existing kit-install record (bots: $REC_BOTS) — update the record first, or drop the flag"
+    if [ -n "$BOTS_CLI" ] && [ -n "$REC_BOTS" ]; then
+        # compare NORMALIZED forms — 'BugBot CodeRabbit' in the record
+        # is the same declaration as --bots 'coderabbit bugbot', not a
+        # conflict (BugBot, this PR). An unnormalizable record keeps
+        # its raw text: the inevitable mismatch then routes the
+        # operator to fix the record, which is the right advice.
+        local rec_bots_canon
+        rec_bots_canon="$(normalize_bots "$REC_BOTS" 2>/dev/null)" || rec_bots_canon="$REC_BOTS"
+        if [ "$BOTS_CLI" != "$rec_bots_canon" ]; then
+            die_usage "--bots '$BOTS_CLI' conflicts with the target's existing kit-install record (bots: $REC_BOTS) — update the record first, or drop the flag"
+        fi
     fi
     return 0
 }

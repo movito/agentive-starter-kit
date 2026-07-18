@@ -920,6 +920,29 @@ class TestBotsDeclarationE2E:
         region = _kit_install_region(target)
         assert region.count("bots:") == 1
 
+    def test_equivalent_bots_record_is_not_a_conflict(self, tmp_path):
+        """BugBot PR #83: conflict checks compare NORMALIZED forms —
+        a hand-edited 'BugBot, CodeRabbit' record is the same
+        declaration as --bots 'bugbot coderabbit', not a conflict,
+        and the engine must not append a second line either."""
+        target = make_adopt_dir(tmp_path, "equiv")
+        first = run_door("--adopt", str(target), "--bots", "coderabbit bugbot")
+        assert first.returncode == 0, first.stderr + first.stdout
+        claude_md = target / "CLAUDE.md"
+        text = claude_md.read_text(encoding="utf-8")
+        claude_md.write_text(
+            text.replace("\nbots: coderabbit bugbot\n", "\nbots: BugBot, CodeRabbit\n"),
+            encoding="utf-8",
+        )
+        result = run_door("--adopt", str(target), "--bots", "bugbot coderabbit")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "conflicts" not in result.stderr
+        assert "bots line added" not in result.stdout
+        region = _kit_install_region(target)
+        assert region.count("bots:") == 1
+        # the operator's spelling is preserved, not rewritten
+        assert "bots: BugBot, CodeRabbit" in region
+
     def test_new_without_bots_writes_no_line(self, tmp_path):
         """N1: no flag, no preset — the record is byte-identical to a
         pre-KIT-0056 install (no bots line, zero migration)."""

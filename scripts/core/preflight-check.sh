@@ -239,12 +239,7 @@ if [ -f "scripts/local/kit_markers.py" ] && [ -f "CLAUDE.md" ] && command -v pyt
     # to another
     BOTS_DECLARED=$(printf '%s' "$BOTS_DECLARED" | tr ',' ' ' | tr '[:upper:]' '[:lower:]')
 fi
-if [ "$BOTS_LINE_PRESENT" = true ] && [ -z "$BOTS_DECLARED" ]; then
-    # a PRESENT-but-empty bots: line is invalid, not absent — doctor
-    # FAILs it (bots-record), so reading it as "no declaration"
-    # silently here would let the two readers diverge
-    echo "NOTICE: empty bots declaration in kit-install ('bots:' with no value) — expecting both bots (fail closed); fix the line in CLAUDE.md"
-fi
+_BOTS_NOTICED=false
 if [ -n "$BOTS_DECLARED" ]; then
     # Validate: an unrecognized declaration must not silently SKIP a
     # gate (a typo'd 'bots:' line would otherwise skip both bots) —
@@ -261,7 +256,7 @@ if [ -n "$BOTS_DECLARED" ]; then
         _BOTS_TOKENS="$_BOTS_TOKENS$_BOT_TOK "
     done
     BOTS_DECLARED="${_BOTS_TOKENS% }"
-    if [ "$_BOTS_VALID" = true ]; then
+    if [ "$_BOTS_VALID" = true ] && [ -n "$BOTS_DECLARED" ]; then
         case " $BOTS_DECLARED " in
             *" none "*)
                 [ "$BOTS_DECLARED" = "none" ] || _BOTS_VALID=false
@@ -271,7 +266,16 @@ if [ -n "$BOTS_DECLARED" ]; then
     if [ "$_BOTS_VALID" = false ]; then
         echo "NOTICE: invalid bots declaration in kit-install ('bots: $BOTS_DECLARED') — expecting both bots (fail closed); fix the line in CLAUDE.md"
         BOTS_DECLARED=""
+        _BOTS_NOTICED=true
     fi
+fi
+if [ "$BOTS_LINE_PRESENT" = true ] && [ -z "$BOTS_DECLARED" ] && [ "$_BOTS_NOTICED" = false ]; then
+    # a PRESENT-but-valueless bots: line is invalid, not absent —
+    # doctor FAILs it (bots-record), so reading it as "no declaration"
+    # silently here would let the two readers diverge. Checked AFTER
+    # normalization so a value that reduces to nothing (e.g. a lone
+    # ',') is caught too (BugBot, this PR).
+    echo "NOTICE: empty bots declaration in kit-install ('bots:' with no value) — expecting both bots (fail closed); fix the line in CLAUDE.md"
 fi
 
 bot_declared_absent() {  # $1 coderabbit|bugbot → 0 when declared absent

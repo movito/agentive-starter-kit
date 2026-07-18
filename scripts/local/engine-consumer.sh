@@ -794,13 +794,20 @@ if [ -n "$BOTS" ]; then
     EXISTING_BOTS="$(printf '%s\n' "$REGION_NOW" |
         sed -n 's/^[[:space:]]*bots:[[:space:]]*//p' | head -1 |
         sed 's/[[:space:]]*$//')"
+    # sorted-set canonical form for the equality check below — an
+    # existing 'BugBot, CodeRabbit' is the same declaration as
+    # 'coderabbit bugbot', not a conflict (BugBot, this PR)
+    _canon_bots() {
+        printf '%s' "$1" | tr ',' ' ' | tr '[:upper:]' '[:lower:]' |
+            tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/ $//'
+    }
     if [ -z "$EXISTING_BOTS" ]; then
         # no trailing newline: the region body group excludes the
         # newline before END, so extract→replace stays byte-identical
         printf '%s\nbots: %s' "$REGION_NOW" "$BOTS" |
             python3 "$KIT_MARKERS" replace "$CLAUDE_MD" kit-install --stdin
         echo "  kit-install region: bots line added (bots: $BOTS)"
-    elif [ "$EXISTING_BOTS" != "$BOTS" ]; then
+    elif [ "$(_canon_bots "$EXISTING_BOTS")" != "$(_canon_bots "$BOTS")" ]; then
         echo "Error: --bots '$BOTS' conflicts with the recorded declaration (bots: $EXISTING_BOTS)"
         echo "       Update the kit-install region in CLAUDE.md first, or drop the flag."
         exit 1

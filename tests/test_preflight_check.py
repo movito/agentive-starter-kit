@@ -853,11 +853,14 @@ class TestGate23BotsDeclaration:
         finally:
             self._remove_declaration(proj)
 
-    def test_empty_bots_line_is_invalid_not_absent(self, proj):
-        # fast-v2 round 2: doctor FAILs a present-but-empty bots: line
-        # (bots-record) — preflight must not silently read the same
-        # line as "no declaration"; it fails closed with its own NOTICE
-        self._install_declaration(proj, "")
+    @pytest.mark.parametrize("value", ["", ","])
+    def test_empty_bots_line_is_invalid_not_absent(self, proj, value):
+        # fast-v2 round 2 + BugBot PR #83: doctor FAILs a
+        # present-but-valueless bots: line (bots-record) — preflight
+        # must not silently read the same line as "no declaration";
+        # it fails closed with its own NOTICE. The ',' variant reduces
+        # to nothing only AFTER normalization.
+        self._install_declaration(proj, value)
         try:
             result = proj.run(self._no_bot_reviews(proj.head))
             assert "NOTICE: empty bots declaration" in result.stdout
