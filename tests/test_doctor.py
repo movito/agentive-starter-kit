@@ -1236,3 +1236,43 @@ class TestAgainstPreset:
         env = _preset_env(tmp_path, "shape: planning\n")
         result = run_doctor_rooted(root, checks, env=env)
         assert preset_lines(result) == []
+
+
+@pytest.mark.skipif(
+    not KIT_MARKERS_SRC.exists(), reason="kit_markers.py absent (consumer checkout)"
+)
+class TestBotsReaderTolerance:
+    """fast-v2 round 1: every bots reader shares one tolerance rule —
+    comma- or space-separated, any case. A declaration must never be
+    valid to the door but invalid to doctor (or vice versa)."""
+
+    def test_comma_and_case_variants_are_valid(self, tmp_path):
+        root, checks = _shape_fixture(
+            tmp_path, "shape: single\nbots: CodeRabbit,BugBot\n"
+        )
+        result = run_doctor_rooted(root, checks)
+        assert "bots-record" not in result.stdout
+        assert result.returncode == 0
+
+    def test_normalized_form_used_in_comparison(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\nbots: BUGBOT\n")
+        env = _preset_env(tmp_path, "bots: bugbot,coderabbit\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        bots_info = [ln for ln in preset_lines(result) if ln.startswith("PRESET:bots:")]
+        assert bots_info, result.stdout
+        assert "'bugbot'" in bots_info[0]  # record normalized
+        assert "'coderabbit bugbot'" in bots_info[0]  # preset normalized
+
+    def test_duplicate_preset_key_skips_comparison(self, tmp_path):
+        # same duplicate rule as the door's load_preset — comparing
+        # against a value the door would refuse to load would mislead
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        env = _preset_env(tmp_path, "shape: single\nshape: planning\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        lines = preset_lines(result)
+        assert any(
+            "duplicate preset key 'shape'" in ln and "line 2" in ln for ln in lines
+        ), result.stdout
+        assert any("comparison skipped" in ln for ln in lines)
+        assert not any(ln.startswith("PRESET:shape:INFO:record") for ln in lines)
+        assert result.returncode == 0

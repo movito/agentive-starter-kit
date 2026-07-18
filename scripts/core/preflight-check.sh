@@ -227,18 +227,28 @@ BOTS_DECLARED=""
 if [ -f "scripts/local/kit_markers.py" ] && [ -f "CLAUDE.md" ] && command -v python3 >/dev/null 2>&1; then
     KIT_INSTALL_REGION=$(python3 scripts/local/kit_markers.py extract CLAUDE.md kit-install 2>/dev/null || true)
     BOTS_DECLARED=$(printf '%s\n' "$KIT_INSTALL_REGION" | sed -n 's/^bots:[[:space:]]*//p' | head -1)
+    # same tolerance as every other bots reader (door normalize_bots,
+    # project _normalize_bots): comma- or space-separated, any case —
+    # one declaration must never be valid to one reader and invalid
+    # to another
+    BOTS_DECLARED=$(printf '%s' "$BOTS_DECLARED" | tr ',' ' ' | tr '[:upper:]' '[:lower:]')
 fi
 if [ -n "$BOTS_DECLARED" ]; then
     # Validate: an unrecognized declaration must not silently SKIP a
     # gate (a typo'd 'bots:' line would otherwise skip both bots) —
-    # fail closed to expecting both, and say so.
+    # fail closed to expecting both, and say so. The loop also
+    # rebuilds the string with single-space separators so the exact
+    # "none" comparison below cannot miss on stray whitespace.
     _BOTS_VALID=true
+    _BOTS_TOKENS=""
     for _BOT_TOK in $BOTS_DECLARED; do
         case "$_BOT_TOK" in
             coderabbit|bugbot|none) ;;
             *) _BOTS_VALID=false ;;
         esac
+        _BOTS_TOKENS="$_BOTS_TOKENS$_BOT_TOK "
     done
+    BOTS_DECLARED="${_BOTS_TOKENS% }"
     if [ "$_BOTS_VALID" = true ]; then
         case " $BOTS_DECLARED " in
             *" none "*)

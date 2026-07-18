@@ -1278,12 +1278,15 @@ def _normalize_bots(raw):
     """Canonical form of a bots declaration, or None when invalid.
 
     Valid: ``none`` alone, or a non-empty subset of
-    {coderabbit, bugbot} (any order/duplication; normalized to
-    canonical order). Shared by the record reader and the
+    {coderabbit, bugbot} (any order/duplication/case, comma- or
+    space-separated; normalized to canonical lowercase order — the
+    same tolerance as the door's normalize_bots and the preflight
+    reader, so one declaration can never be valid to one reader and
+    invalid to another). Shared by the record reader and the
     ``--against-preset`` comparison so the two can never disagree on
     what a declaration means (KIT-0056).
     """
-    tokens = raw.split()
+    tokens = raw.replace(",", " ").lower().split()
     if not tokens:
         return None
     for token in tokens:
@@ -1498,6 +1501,13 @@ def _print_preset_comparison(shape, profile, bots, record_errors):
     project is not wrong. Doctor validates the RECORD (the DOCTOR:
     lines above); the preset is only a comparison baseline. The
     PRESET: prefix keeps these lines out of DOCTOR: parsers entirely.
+
+    Keys other than shape/profile/bots are ignored here by design:
+    the door owns the preset-key vocabulary (unknown keys WARN there);
+    duplicating its key list in this comparator would be a second
+    source of truth that drifts. Structural faults shared with the
+    door's parser (malformed lines, duplicate keys) do get reported —
+    as INFO, with the comparison skipped whole.
     """
     config_home = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
     preset_path = Path(config_home) / "agentive-kit" / "preset"
@@ -1531,7 +1541,17 @@ def _print_preset_comparison(shape, profile, bots, record_errors):
             )
             return
         key, _, value = stripped.partition(":")
-        preset_values[key.strip()] = value.strip()
+        key = key.strip()
+        if key in preset_values:
+            # same duplicate rule as the door's load_preset — silently
+            # letting the last value win could compare against a value
+            # the door would refuse to load
+            print(
+                f"PRESET:comparison:INFO:duplicate preset key '{key}' at "
+                f"line {lineno} — fix {preset_path}; comparison skipped"
+            )
+            return
+        preset_values[key] = value.strip()
 
     if shape is None or profile is None:
         print(

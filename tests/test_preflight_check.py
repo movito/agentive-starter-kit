@@ -741,6 +741,20 @@ class TestGate23BotsDeclaration:
         finally:
             self._remove_declaration(proj)
 
+    def test_comma_and_case_tolerance(self, proj):
+        # fast-v2 round 1: the preflight reader shares the door's
+        # tolerance — 'CodeRabbit,BugBot' is a valid both-present
+        # declaration, so neither gate SKIPs and no NOTICE fires
+        self._install_declaration(proj, "CodeRabbit,BugBot")
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            assert "NOTICE" not in result.stdout
+            gates = _gates(result.stdout)
+            assert gates[2][0] == "FAIL", result.stdout  # declared present, missing
+            assert gates[3][0] == "FAIL", result.stdout
+        finally:
+            self._remove_declaration(proj)
+
     def test_declared_present_bot_still_fails_when_missing(self, proj):
         # SKIP is never a free pass: a bot the declaration KEEPS is
         # still required.

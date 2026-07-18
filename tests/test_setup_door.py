@@ -249,9 +249,11 @@ class TestNormalizeBots:
             ("coderabbit bugbot", "coderabbit bugbot"),
             ("bugbot coderabbit", "coderabbit bugbot"),
             ("bugbot,coderabbit", "coderabbit bugbot"),
+            ("CodeRabbit,BUGBOT", "coderabbit bugbot"),  # case-insensitive
             ("coderabbit", "coderabbit"),
             ("bugbot", "bugbot"),
             ("none", "none"),
+            ("None", "none"),
         ],
     )
     def test_canonical_forms(self, raw, expected):
@@ -751,6 +753,40 @@ class TestPresetE2E:
         )
         assert result.returncode == 2
         assert "preset key 'evaluators' must be yes or no" in result.stderr
+
+    def test_unreadable_preset_fails_loud(self, tmp_path):
+        # a present-but-unreadable preset must diagnose itself, not
+        # die with bash's raw "Permission denied" (fast-v2 finding)
+        if os.geteuid() == 0:
+            pytest.skip("permission checks are meaningless as root")
+        xdg = write_preset(tmp_path, "shape: single\n")
+        (xdg / "agentive-kit" / "preset").chmod(0o000)
+        target = make_adopt_dir(tmp_path, "unreadable")
+        try:
+            result = run_door(
+                "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+            )
+            assert result.returncode == 2
+            assert "not readable" in result.stderr
+            assert "--no-preset" in result.stderr  # the escape hatch is named
+        finally:
+            (xdg / "agentive-kit" / "preset").chmod(0o600)
+
+    def test_unreadable_env_source_fails_before_any_work(self, tmp_path):
+        if os.geteuid() == 0:
+            pytest.skip("permission checks are meaningless as root")
+        secret_file = tmp_path / "env-template"
+        secret_file.write_text("KEY=x\n", encoding="utf-8")
+        secret_file.chmod(0o000)
+        xdg = write_preset(tmp_path, f"env-source: {secret_file}\n")
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        try:
+            result = run_door("--new", str(tmp_path / "proj"), env=env, timeout=30)
+            assert result.returncode == 2
+            assert "not readable" in result.stderr
+            assert not (tmp_path / "proj").exists()  # failed BEFORE any work
+        finally:
+            secret_file.chmod(0o600)
 
 
 @pytest.mark.slow

@@ -143,6 +143,12 @@ load_preset() {
     local file="${XDG_CONFIG_HOME:-$HOME/.config}/agentive-kit/preset"
     [ "$NO_PRESET" -eq 1 ] && return 0
     [ -f "$file" ] || return 0
+    if [ ! -r "$file" ]; then
+        # set -e would kill the read loop anyway — but with bash's raw
+        # "Permission denied", not a diagnosis
+        echo "Error: preset exists but is not readable: $file — fix its permissions, or pass --no-preset" >&2
+        exit 2
+    fi
     local lineno=0 line key value data="" seen=" "
     while IFS= read -r line || [ -n "$line" ]; do
         lineno=$((lineno + 1))
@@ -190,8 +196,12 @@ preset_get() {  # $1 key → value on stdout; rc 1 when unanswered
 }
 
 normalize_bots() {  # $1 raw (comma/space separated) → canonical, rc 1 on invalid/empty
+    # Case-insensitive by the _check_declared precedent ('# Shapes:
+    # Single' matches shape 'single') — every bots reader (this, the
+    # project script's _normalize_bots, preflight) shares the rule so
+    # one input can never be valid to one reader and invalid to another.
     local raw tok cr=0 bb=0 none=0
-    raw="$(printf '%s' "$1" | tr ',' ' ')"
+    raw="$(printf '%s' "$1" | tr ',' ' ' | tr '[:upper:]' '[:lower:]')"
     for tok in $raw; do
         case "$tok" in
             coderabbit) cr=1 ;;
@@ -440,8 +450,9 @@ apply_env_source() {  # $1 source path (from the preset) — --new only (F6)
     # printed, logged, or staged — .env must be gitignored in the
     # target or the copy is refused outright.
     local src="${1/#\~/$HOME}"
-    if [ ! -f "$src" ]; then
-        echo "Error: preset env-source not found: $src — fix the preset (or drop the key)" >&2
+    if [ ! -f "$src" ] || [ ! -r "$src" ]; then
+        # defense in depth — main pre-validated both before any work
+        echo "Error: preset env-source missing or unreadable: $src" >&2
         exit 1
     fi
     local mode
@@ -723,6 +734,8 @@ main() {
         ENV_SOURCE="${offer/#\~/$HOME}"
         [ -f "$ENV_SOURCE" ] ||
             die_usage "preset env-source not found: $ENV_SOURCE — fix the preset (or drop the key)"
+        [ -r "$ENV_SOURCE" ] ||
+            die_usage "preset env-source is not readable: $ENV_SOURCE — fix its permissions"
     fi
 
     # ── Orchestrate ──
