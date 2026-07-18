@@ -3,10 +3,10 @@
 # Usage: ./scripts/core/preflight-check.sh [--pr PR_NUMBER] [--task TASK_ID] [--repo owner/name] [--help]
 #
 # Metadata:
-#   version: 1.2.0
+#   version: 1.3.0
 #   origin: dispatch-kit
 #   origin-version: 0.3.2
-#   last-updated: 2026-07-04
+#   last-updated: 2026-07-18
 #   created-by: "@movito with planner2"
 #
 # Cross-repo support (ID2-0014):
@@ -17,14 +17,20 @@
 #   (5, 6, 7) always read the planning repo's .kit/ directory.
 #
 # Output format (structured for machine parsing):
-#   GATE:<number>:<name>:PASS|FAIL|PENDING:<detail>
+#   GATE:<number>:<name>:PASS|FAIL|PENDING|SKIP:<detail>
 #
 #   PENDING (KIT-0034 F4): the gate cannot be evaluated yet — CI runs not
 #   registered for the head SHA, or runs still executing. Not a failure
 #   verdict; re-run preflight shortly.
 #
+#   SKIP (KIT-0056, ADR-0027 P5): the gate does not apply — a `bots:`
+#   line in CLAUDE.md's kit-install region declares the bot absent on
+#   this project, so Gates 2/3 SKIP with the declaration named (never
+#   FAIL, never a silent PASS). No declaration = both bots expected =
+#   the pre-KIT-0056 behavior, unchanged.
+#
 # Exit codes:
-#   0 — All gates pass
+#   0 — All gates pass (SKIP counts as satisfied)
 #   1 — One or more gates fail, or error
 #   2 — No gate failed, but at least one is PENDING (re-run shortly)
 
@@ -57,6 +63,8 @@ while [[ $# -gt 0 ]]; do
             echo "  1. CI green                    GitHub Actions passing"
             echo "  2. CodeRabbit reviewed          coderabbitai[bot] reviewed latest code commit"
             echo "  3. BugBot reviewed              cursor[bot] reviewed latest code commit"
+            echo "     (Gates 2/3 SKIP when a 'bots:' line in CLAUDE.md's kit-install"
+            echo "      region declares the bot absent — e.g. 'bots: none')"
             echo "  4. Zero unresolved threads      All review threads resolved"
             echo "  5. Evaluator review persisted   .kit/context/reviews/<TASK>-{evaluator-review,code-review,code-reviewer}*.md"
             echo "  6. Review starter exists         .kit/context/<TASK>-REVIEW-STARTER.md"
@@ -204,6 +212,54 @@ fi
 
 ANY_FAILED=false
 ANY_PENDING=false
+SKIP_COUNT=0
+
+# ─── Bot declaration (KIT-0056, ADR-0027 P5) ────────────────────────
+# A `bots:` line in CLAUDE.md's kit-install region declares which
+# review bots run on this project ('none', or a subset of
+# 'coderabbit bugbot'). Declared-absent bots make Gates 2/3 SKIP with
+# the declaration named — never FAIL, never a silent PASS. Absent
+# line, absent region, or unreadable record = both bots expected —
+# the pre-declaration behavior (fail closed: when in doubt, the gates
+# run). Read via kit_markers.py, the region's one reader — never
+# ad-hoc regex over CLAUDE.md.
+BOTS_DECLARED=""
+if [ -f "scripts/local/kit_markers.py" ] && [ -f "CLAUDE.md" ] && command -v python3 >/dev/null 2>&1; then
+    KIT_INSTALL_REGION=$(python3 scripts/local/kit_markers.py extract CLAUDE.md kit-install 2>/dev/null || true)
+    BOTS_DECLARED=$(printf '%s\n' "$KIT_INSTALL_REGION" | sed -n 's/^bots:[[:space:]]*//p' | head -1)
+fi
+if [ -n "$BOTS_DECLARED" ]; then
+    # Validate: an unrecognized declaration must not silently SKIP a
+    # gate (a typo'd 'bots:' line would otherwise skip both bots) —
+    # fail closed to expecting both, and say so.
+    _BOTS_VALID=true
+    for _BOT_TOK in $BOTS_DECLARED; do
+        case "$_BOT_TOK" in
+            coderabbit|bugbot|none) ;;
+            *) _BOTS_VALID=false ;;
+        esac
+    done
+    if [ "$_BOTS_VALID" = true ]; then
+        case " $BOTS_DECLARED " in
+            *" none "*)
+                [ "$BOTS_DECLARED" = "none" ] || _BOTS_VALID=false
+                ;;
+        esac
+    fi
+    if [ "$_BOTS_VALID" = false ]; then
+        echo "NOTICE: invalid bots declaration in kit-install ('bots: $BOTS_DECLARED') — expecting both bots (fail closed); fix the line in CLAUDE.md"
+        BOTS_DECLARED=""
+    fi
+fi
+
+bot_declared_absent() {  # $1 coderabbit|bugbot → 0 when declared absent
+    [ -n "$BOTS_DECLARED" ] || return 1
+    [ "$BOTS_DECLARED" = "none" ] && return 0
+    case " $BOTS_DECLARED " in
+        *" $1 "*) return 1 ;;
+    esac
+    return 0
+}
 
 # ─── Determine latest code commit for bot review checks ───────────
 # Bots don't re-review markdown-only pushes. Find the latest commit
@@ -393,7 +449,10 @@ fi
 # a non-code chore push like review artifacts).
 # Auto-passes for pure docs PRs (no code changes to review).
 
-if [ "$NO_CODE_CHANGES" = true ]; then
+if bot_declared_absent coderabbit; then
+    echo "GATE:2:CodeRabbit:SKIP:declared absent in kit-install (bots: $BOTS_DECLARED) — CodeRabbit is not expected on this project"
+    SKIP_COUNT=$((SKIP_COUNT + 1))
+elif [ "$NO_CODE_CHANGES" = true ]; then
     echo "GATE:2:CodeRabbit:PASS:No code changes — bot review not required"
 else
     CR_REVIEW=$(echo "$PR_DATA" | jq -r ".data.repository.pullRequest.reviews.nodes[] | select(.commit.oid == \"$CODE_SHA\" or .commit.oid == \"$LATEST_SHA\") | select(.author.login | test(\"coderabbitai\")) | \"\(.author.login): \(.state)\"" 2>/dev/null | tail -1 || true)
@@ -454,7 +513,10 @@ fi
 # (No Gate-2-style status fallback needed here: BugBot re-emits its
 # check-run on every push, so the head SHA always carries a signal.)
 
-if [ "$NO_CODE_CHANGES" = true ]; then
+if bot_declared_absent bugbot; then
+    echo "GATE:3:BugBot:SKIP:declared absent in kit-install (bots: $BOTS_DECLARED) — BugBot is not expected on this project"
+    SKIP_COUNT=$((SKIP_COUNT + 1))
+elif [ "$NO_CODE_CHANGES" = true ]; then
     echo "GATE:3:BugBot:PASS:No code changes — bot review not required"
 else
     BB_REVIEW=$(echo "$PR_DATA" | jq -r ".data.repository.pullRequest.reviews.nodes[] | select(.commit.oid == \"$CODE_SHA\" or .commit.oid == \"$LATEST_SHA\") | select(.author.login | test(\"cursor\")) | \"\(.author.login): \(.state)\"" 2>/dev/null | tail -1 || true)
@@ -563,6 +625,10 @@ if command -v dispatch >/dev/null 2>&1; then
         _PF_SUMMARY="FAIL ($TASK_ID, PR #$PR_NUMBER)"
     elif [ "$ANY_PENDING" = true ]; then
         _PF_SUMMARY="PENDING — no failures, re-run shortly ($TASK_ID, PR #$PR_NUMBER)"
+    elif [ "$SKIP_COUNT" -gt 0 ]; then
+        # F4 (loud everywhere): a pass with declaration-skipped gates
+        # names the degraded mode — never "all 7 passed"
+        _PF_SUMMARY="PASS — gates passed, $SKIP_COUNT skipped by bot declaration ($TASK_ID, PR #$PR_NUMBER)"
     else
         _PF_SUMMARY="PASS — All 7 gates passed ($TASK_ID, PR #$PR_NUMBER)"
     fi

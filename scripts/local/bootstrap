@@ -40,6 +40,13 @@
 #   --target-path / --target-github
 #                        product-repo pointer (planning only)
 #   --no-kit             skip the .kit workflow (adopt, single only)
+#   --bots <b>           declare which review bots run on this project:
+#                        'coderabbit bugbot' (or a subset) | 'none'
+#                        (comma or space separated). Recorded as a
+#                        `bots:` line in the kit-install region; the
+#                        preflight gates SKIP declared-absent bots.
+#                        No flag/answer = no line = both bots expected
+#                        (today's behavior; zero migration).
 #   --design-materials / --no-design-materials
 #                        (adopt, single+python) run the bootstrap-agent
 #                        materials flow / silence its detection hint
@@ -47,16 +54,34 @@
 #                        answer the evaluator-install offer
 #   --with-venv / --without-venv
 #                        answer the venv offer (profile python only)
+#   --no-preset          ignore the operator preset for this run (the
+#                        stranger path — behaves as if no preset exists)
 #   --legacy-shim        internal: fidelity channel for the three old
 #                        entrance shims — byte-identical passthrough
 #                        (no door chrome, offers, record augmentation,
-#                        or doctor tail). Removed with the shims.
+#                        preset, or doctor tail). Removed with the shims.
 #
-# Resolution chain (F5, the P7 seam): CLI flag → preset layer (a stub
-# today; P7 replaces preset_get with the ~/.config/agentive-kit/preset
-# reader) → kit default → interactive prompt (TTY only). Required
-# answers missing in a non-TTY run fail with usage (exit 2); optional
-# offers default to "skip, with notice".
+# Resolution chain (F5): CLI flag → operator preset
+# (~/.config/agentive-kit/preset — see "Operator preset" below) → kit
+# default → interactive prompt (TTY only). On --adopt of a target that
+# already carries a kit-install record, the record's values win over
+# the preset for shape/profile/bots/target-pointer (the record is the
+# project's identity; divergence is `project doctor --against-preset`'s
+# INFO surface, never a silent re-answer). Required answers missing in
+# a non-TTY run fail with usage (exit 2); optional offers default to
+# "skip, with notice".
+#
+# Operator preset (KIT-0056, ADR-0027 P7): flat `key: value` lines,
+# one per line, '#' comments allowed. Recognized keys (exactly the
+# door's questions, nothing else): shape, profile, bots, evaluators
+# (yes|no), venv (yes|no), target-path, target-github, env-source.
+# `env-source: <path>` names an operator-owned .env template (chmod
+# 600 expected); on --new the door copies it to the target's .env
+# (mode 0600), never printing or staging it. Unknown keys WARN and are
+# skipped; a malformed line fails loud naming the line. Flat keys only
+# is a conscious v1 boundary of the format. The preset lives outside
+# every repo and is never distributed — no sync tier, rsync, or export
+# touches ~/.config/agentive-kit/. Example: docs/preset.example.
 #
 # Exit contract (F6):
 #   0  install succeeded — the doctor verdict is REPORTED prominently,
@@ -96,11 +121,101 @@ legal_pairs_human() {
 # ─────────────────────────────────────────
 # Resolution chain (F5)
 # ─────────────────────────────────────────
-preset_get() {
-    # P7 seam (reserved): the operator-preset layer. Until P7 lands
-    # the layer answers nothing; P7 replaces this stub with the
-    # ~/.config/agentive-kit/preset reader. Never widen it elsewhere.
-    return 1
+# The operator-preset layer (KIT-0056 fills the KIT-0053 P7 seam). ALL
+# resolution logic stays inside resolve_setting below — the preset is
+# one layer of that one chain; never a second resolver anywhere.
+PRESET_KEYS="shape profile bots evaluators venv target-path target-github env-source"
+PRESET_DATA=""   # "key=value" lines once loaded (empty = no preset)
+PRESET_PATH=""   # set when a preset file was loaded (for messages)
+# defaults so the sourced function layer works without main()
+NO_PRESET="${NO_PRESET:-0}"
+REC_SHAPE=""
+REC_PROFILE=""
+REC_BOTS=""
+REC_TARGET_PATH=""
+REC_TARGET_GITHUB=""
+
+load_preset() {
+    # Malformed lines fail loud naming the line — never a silent
+    # partial read (the record-reader face of the masking class:
+    # partial reads poison dependent answers together). Unknown keys
+    # WARN and are skipped (forward compatibility), never an error.
+    local file="${XDG_CONFIG_HOME:-$HOME/.config}/agentive-kit/preset"
+    [ "$NO_PRESET" -eq 1 ] && return 0
+    [ -f "$file" ] || return 0
+    local lineno=0 line key value data="" seen=" "
+    while IFS= read -r line || [ -n "$line" ]; do
+        lineno=$((lineno + 1))
+        line="${line%$'\r'}"  # CRLF tolerance (kit_markers precedent)
+        case "$line" in
+            ''|'#'*) continue ;;
+        esac
+        case "$line" in
+            *:*) ;;
+            *)
+                echo "Error: malformed preset line $lineno in $file: '$line' (expected 'key: value')" >&2
+                exit 2
+                ;;
+        esac
+        key="${line%%:*}"
+        value="${line#*:}"
+        key="$(printf '%s' "$key" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        value="$(printf '%s' "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        case " $PRESET_KEYS " in
+            *" $key "*) ;;
+            *)
+                echo "Warning: unknown preset key '$key' (line $lineno in $file) — ignored" >&2
+                continue
+                ;;
+        esac
+        case "$seen" in
+            *" $key "*)
+                echo "Error: duplicate preset key '$key' (line $lineno in $file) — a preset answers each question once" >&2
+                exit 2
+                ;;
+        esac
+        seen="$seen$key "
+        data="$data$key=$value"$'\n'
+    done < "$file"
+    PRESET_DATA="$data"
+    PRESET_PATH="$file"
+}
+
+preset_get() {  # $1 key → value on stdout; rc 1 when unanswered
+    [ -n "$PRESET_DATA" ] || return 1
+    local hit
+    hit="$(printf '%s' "$PRESET_DATA" | sed -n "s/^$1=//p" | head -1)"
+    [ -n "$hit" ] || return 1
+    printf '%s\n' "$hit"
+}
+
+normalize_bots() {  # $1 raw (comma/space separated) → canonical, rc 1 on invalid/empty
+    local raw tok cr=0 bb=0 none=0
+    raw="$(printf '%s' "$1" | tr ',' ' ')"
+    for tok in $raw; do
+        case "$tok" in
+            coderabbit) cr=1 ;;
+            bugbot)     bb=1 ;;
+            none)       none=1 ;;
+            *)
+                echo "Error: unknown bot '$tok' (expected: coderabbit, bugbot, or none)" >&2
+                return 1
+                ;;
+        esac
+    done
+    if [ "$none" -eq 1 ]; then
+        if [ "$cr" -eq 1 ] || [ "$bb" -eq 1 ]; then
+            echo "Error: 'none' cannot be combined with bot names (got: $1)" >&2
+            return 1
+        fi
+        echo "none"
+        return 0
+    fi
+    if [ "$cr" -eq 1 ] && [ "$bb" -eq 1 ]; then echo "coderabbit bugbot"
+    elif [ "$cr" -eq 1 ]; then echo "coderabbit"
+    elif [ "$bb" -eq 1 ]; then echo "bugbot"
+    else return 1  # empty → unanswered, caller decides
+    fi
 }
 
 kit_default() {  # $1 key, $2 shape context (for profile)
@@ -117,14 +232,25 @@ kit_default() {  # $1 key, $2 shape context (for profile)
 }
 
 resolve_setting() {  # $1 key, $2 cli value, $3 shape context → stdout
-    local v
+    local v rec=""
     if [ -n "$2" ]; then
         echo "$2"
         return 0
     fi
-    # empty-but-successful preset output counts as unanswered — a P7
+    # Adopt of a recorded target: a question the record already
+    # answered is not open, so the preset layer is not consulted for
+    # it — the chain falls through to the kit default exactly as on a
+    # preset-less machine (N1). The record itself is preserved by the
+    # engine; preset divergence is doctor --against-preset's INFO
+    # surface, never a silent re-answer.
+    case "$1" in
+        shape)   rec="$REC_SHAPE" ;;
+        profile) rec="$REC_PROFILE" ;;
+        bots)    rec="$REC_BOTS" ;;
+    esac
+    # empty-but-successful preset output counts as unanswered — a
     # preset that echoes nothing must fall through, not resolve to ""
-    if v="$(preset_get "$1")" && [ -n "$v" ]; then
+    if [ -z "$rec" ] && v="$(preset_get "$1")" && [ -n "$v" ]; then
         echo "$v"
         return 0
     fi
@@ -243,23 +369,45 @@ prompt_yn() {  # $1 question → "yes"/"no"
 # ─────────────────────────────────────────
 # Orchestration helpers
 # ─────────────────────────────────────────
-check_record_conflict() {
-    # Native adopt of a target that already carries a kit-install
-    # record: EXPLICIT flags that contradict it are an error, never a
-    # silent preserve (CodeRabbit PR #81; the PR #78 target-pointer
-    # precedent). Only the door can do this — it alone knows whether a
-    # value was operator-given or defaulted. Reads via kit_markers,
-    # the record's one reader library.
+load_record() {
+    # Adopt of a target that already carries a kit-install record:
+    # load its values ONCE, before resolution, so resolve_setting can
+    # keep the preset out of already-answered questions. Reads via
+    # kit_markers, the record's one reader library. An unreadable
+    # record loads nothing here — the engine and doctor fail loud on
+    # it; the door's conflict checks simply have nothing to compare.
+    REC_SHAPE=""
+    REC_PROFILE=""
+    REC_BOTS=""
+    REC_TARGET_PATH=""
+    REC_TARGET_GITHUB=""
+    [ "$MODE" = "adopt" ] || return 0
     [ -f "$TARGET/CLAUDE.md" ] || return 0
-    local rec rec_shape rec_profile
+    local rec
     rec="$(python3 "$SCRIPT_DIR/kit_markers.py" extract "$TARGET/CLAUDE.md" kit-install 2>/dev/null)" || return 0
-    rec_shape="$(printf '%s\n' "$rec" | sed -n 's/^shape: *//p' | head -1)"
-    rec_profile="$(printf '%s\n' "$rec" | sed -n 's/^profile: *//p' | head -1)"
-    if [ -n "$SHAPE_CLI" ] && [ -n "$rec_shape" ] && [ "$SHAPE_CLI" != "$rec_shape" ]; then
-        die_usage "--shape $SHAPE_CLI conflicts with the target's existing kit-install record (shape: $rec_shape) — update the record first, or drop the flag"
+    REC_SHAPE="$(printf '%s\n' "$rec" | sed -n 's/^shape: *//p' | head -1)"
+    REC_PROFILE="$(printf '%s\n' "$rec" | sed -n 's/^profile: *//p' | head -1)"
+    REC_BOTS="$(printf '%s\n' "$rec" | sed -n 's/^bots: *//p' | head -1)"
+    REC_TARGET_PATH="$(printf '%s\n' "$rec" | sed -n 's/^target_path: *//p' | head -1)"
+    REC_TARGET_GITHUB="$(printf '%s\n' "$rec" | sed -n 's/^target_github: *//p' | head -1)"
+    return 0
+}
+
+check_record_conflict() {
+    # EXPLICIT flags that contradict the existing record are an error,
+    # never a silent preserve (CodeRabbit PR #81; the PR #78
+    # target-pointer precedent). Only the door can do this — it alone
+    # knows whether a value was operator-given or defaulted. (Preset
+    # values never reach here: resolve_setting keeps the preset out of
+    # recorded questions.)
+    if [ -n "$SHAPE_CLI" ] && [ -n "$REC_SHAPE" ] && [ "$SHAPE_CLI" != "$REC_SHAPE" ]; then
+        die_usage "--shape $SHAPE_CLI conflicts with the target's existing kit-install record (shape: $REC_SHAPE) — update the record first, or drop the flag"
     fi
-    if [ -n "$PROFILE_CLI" ] && [ -n "$rec_profile" ] && [ "$PROFILE_CLI" != "$rec_profile" ]; then
-        die_usage "--profile $PROFILE_CLI conflicts with the target's existing kit-install record (profile: $rec_profile) — update the record first, or drop the flag"
+    if [ -n "$PROFILE_CLI" ] && [ -n "$REC_PROFILE" ] && [ "$PROFILE_CLI" != "$REC_PROFILE" ]; then
+        die_usage "--profile $PROFILE_CLI conflicts with the target's existing kit-install record (profile: $REC_PROFILE) — update the record first, or drop the flag"
+    fi
+    if [ -n "$BOTS_CLI" ] && [ -n "$REC_BOTS" ] && [ "$BOTS_CLI" != "$REC_BOTS" ]; then
+        die_usage "--bots '$BOTS_CLI' conflicts with the target's existing kit-install record (bots: $REC_BOTS) — update the record first, or drop the flag"
     fi
     return 0
 }
@@ -284,6 +432,32 @@ ensure_git_identity() {
         echo "         git config --global user.email you@example.com" >&2
         exit 1
     done
+}
+
+apply_env_source() {  # $1 source path (from the preset) — --new only (F6)
+    # Secrets by reference: the preset names an operator-owned .env
+    # template; the door copies it 0600. The contents are NEVER
+    # printed, logged, or staged — .env must be gitignored in the
+    # target or the copy is refused outright.
+    local src="${1/#\~/$HOME}"
+    if [ ! -f "$src" ]; then
+        echo "Error: preset env-source not found: $src — fix the preset (or drop the key)" >&2
+        exit 1
+    fi
+    local mode
+    mode="$(stat -f '%Lp' "$src" 2>/dev/null || stat -c '%a' "$src" 2>/dev/null || echo unknown)"
+    if [ "$mode" != "600" ]; then
+        echo "Warning: env-source $src is mode $mode (0600 expected) — tighten it: chmod 600 $src" >&2
+    fi
+    if ! git -C "$TARGET" check-ignore -q .env; then
+        echo "Error: .env is not gitignored in the target — refusing to seed secrets from env-source" >&2
+        exit 1
+    fi
+    # create-then-fill so the file never exists with looser permissions
+    : > "$TARGET/.env"
+    chmod 600 "$TARGET/.env"
+    cat "$src" >> "$TARGET/.env"
+    echo "Seeded .env from preset env-source (mode 0600, gitignored; contents never printed)"
 }
 
 run_offers() {
@@ -325,10 +499,13 @@ run_doctor_tail() {
     doctor_exit=$?
     set -e
     local verdict
+    # doctor's exit contract (KIT-0046 F3): 1 = at least one FAIL,
+    # 2 = warnings only. (The two were swapped here until KIT-0056 —
+    # a FAILing doctor reported as "WARNINGS".)
     case "$doctor_exit" in
         0) verdict="all checks passed" ;;
-        1) verdict="WARNINGS (see above) — install still succeeded" ;;
-        2) verdict="FAILURES (see above) — install still succeeded; fix before working" ;;
+        1) verdict="FAILURES (see above) — install still succeeded; fix before working" ;;
+        2) verdict="WARNINGS (see above) — install still succeeded" ;;
         *) verdict="doctor could not run (exit $doctor_exit)" ;;
     esac
     echo
@@ -349,6 +526,9 @@ main() {
     DESIGN_MATERIALS=""
     WITH_EVALUATORS=""
     WITH_VENV=""
+    BOTS_CLI=""
+    BOTS=""
+    NO_PRESET=0
     LEGACY_SHIM=0
 
     while [ $# -gt 0 ]; do
@@ -370,6 +550,9 @@ main() {
             --target-github)    shift; TARGET_GITHUB="${1:-}"; reject_flaglike --target-github "$TARGET_GITHUB" ;;
             --target-github=*)  TARGET_GITHUB="${1#--target-github=}" ;;
             --no-kit)           NO_KIT=1 ;;
+            --bots)             shift; BOTS_CLI="${1:-}"; reject_flaglike --bots "$BOTS_CLI" ;;
+            --bots=*)           BOTS_CLI="${1#--bots=}" ;;
+            --no-preset)        NO_PRESET=1 ;;
             --design-materials)    DESIGN_MATERIALS="yes" ;;
             --no-design-materials) DESIGN_MATERIALS="no" ;;
             --with-evaluators)     WITH_EVALUATORS="yes" ;;
@@ -383,7 +566,24 @@ main() {
         if [ $# -gt 0 ]; then shift; fi
     done
 
-    # ── Resolve (CLI → preset stub → kit default → prompt) ──
+    # ── Resolve (CLI → preset → kit default → prompt) ──
+    if [ "$LEGACY_SHIM" -eq 1 ]; then
+        # the shims promise byte-identical legacy behavior — a preset
+        # changing what `bootstrap-consumer.sh` does would break that
+        NO_PRESET=1
+        # ...and the legacy channel never writes a bots line, so an
+        # explicit --bots would be silently dropped — reject instead
+        [ -n "$BOTS_CLI" ] &&
+            die_usage "--bots cannot be combined with --legacy-shim (the legacy channel never writes a bots declaration)"
+    fi
+    if [ -n "$BOTS_CLI" ]; then
+        BOTS_CLI="$(normalize_bots "$BOTS_CLI")" || die_usage "invalid --bots value"
+    fi
+    load_preset
+    if [ -n "$PRESET_PATH" ]; then
+        echo "Preset: $PRESET_PATH (pass --no-preset to ignore it)"
+    fi
+
     if [ -z "$MODE" ]; then
         if is_tty; then
             local pick
@@ -404,6 +604,8 @@ main() {
     fi
     TARGET="${TARGET/#\~/$HOME}"
 
+    load_record
+
     SHAPE="$(resolve_setting shape "$SHAPE_CLI")"
     validate_values "$SHAPE" "$PROFILE_CLI" || exit 2
     if [ "$SHAPE" = "planning" ] && [ "$PROFILE_CLI" = "python" ]; then
@@ -415,6 +617,19 @@ main() {
         echo "planning shape → profile none (forced; the only legal pair)"
     fi
     validate_combo || exit 2
+
+    # Preset may answer the planning shape's target-pointer questions —
+    # but only when neither a flag nor the target's record already did
+    # (same record-beats-preset rule as resolve_setting).
+    if [ "$SHAPE" = "planning" ]; then
+        local pv
+        if [ -z "$TARGET_PATH" ] && [ -z "$REC_TARGET_PATH" ] && pv="$(preset_get target-path)"; then
+            TARGET_PATH="$pv"
+        fi
+        if [ -z "$TARGET_GITHUB" ] && [ -z "$REC_TARGET_GITHUB" ] && pv="$(preset_get target-github)"; then
+            TARGET_GITHUB="$pv"
+        fi
+    fi
 
     if [ -n "$TARGET_GITHUB" ] && ! printf '%s' "$TARGET_GITHUB" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
         die_usage "--target-github must look like owner/repo (got: $TARGET_GITHUB)"
@@ -467,6 +682,49 @@ main() {
         fi
     fi
 
+    # ── Bots declaration (KIT-0056, ADR-0027 P5) ──
+    # CLI → preset → TTY prompt. Unanswered = no `bots:` line = both
+    # bots expected (today's behavior — zero migration, N1). A target
+    # whose record already declares bots keeps its declaration (the
+    # engine preserves the region; a conflicting flag errors below).
+    if [ "$LEGACY_SHIM" -eq 0 ] && [ "$DESIGN_MATERIALS" != "yes" ] && [ -z "$REC_BOTS" ]; then
+        local bots_raw
+        if [ -n "$BOTS_CLI" ]; then
+            BOTS="$BOTS_CLI"  # already normalized at parse time
+        elif bots_raw="$(preset_get bots)"; then
+            BOTS="$(normalize_bots "$bots_raw")" ||
+                die_usage "invalid preset key 'bots: $bots_raw'"
+        elif is_tty; then
+            read -r -p "Which bots review PRs here? [coderabbit bugbot / none — Enter = expect both, record nothing] " bots_raw
+            if [ -n "$bots_raw" ]; then
+                BOTS="$(normalize_bots "$bots_raw")" || die_usage "invalid bots answer"
+            fi
+        fi
+    fi
+
+    # ── Preset offer answers + env-source (validated BEFORE any work
+    #    — a bad preset value must abort a pristine run, not a
+    #    half-installed target) ──
+    local offer
+    if [ -z "$WITH_EVALUATORS" ] && offer="$(preset_get evaluators)"; then
+        case "$offer" in
+            yes|no) WITH_EVALUATORS="$offer" ;;
+            *) die_usage "preset key 'evaluators' must be yes or no (got: $offer)" ;;
+        esac
+    fi
+    if [ "$PROFILE" = "python" ] && [ -z "$WITH_VENV" ] && offer="$(preset_get venv)"; then
+        case "$offer" in
+            yes|no) WITH_VENV="$offer" ;;
+            *) die_usage "preset key 'venv' must be yes or no (got: $offer)" ;;
+        esac
+    fi
+    ENV_SOURCE=""
+    if [ "$MODE" = "new" ] && offer="$(preset_get env-source)"; then
+        ENV_SOURCE="${offer/#\~/$HOME}"
+        [ -f "$ENV_SOURCE" ] ||
+            die_usage "preset env-source not found: $ENV_SOURCE — fix the preset (or drop the key)"
+    fi
+
     # ── Orchestrate ──
     if [ "$MODE" = "adopt" ]; then
         check_record_conflict
@@ -492,8 +750,9 @@ main() {
             "$ENGINE_EXPORT" "$@" ||
                 { echo "Error: export engine failed (exit $?)" >&2; exit 1; }
             TARGET="$(cd "$TARGET" && pwd)"
-            "$ENGINE_CONSUMER" --internal-record-only \
-                --shape single --profile "$PROFILE" "$TARGET" ||
+            set -- --internal-record-only --shape single --profile "$PROFILE"
+            [ -n "$BOTS" ] && set -- "$@" --bots "$BOTS"
+            "$ENGINE_CONSUMER" "$@" "$TARGET" ||
                 { echo "Error: install record step failed (exit $?)" >&2; exit 1; }
             if git -C "$TARGET" add CLAUDE.md scripts/local/checks.sh scripts/local/kit_markers.py &&
                git -C "$TARGET" commit --quiet -m "chore: record kit install (shape: single, profile: $PROFILE)"; then
@@ -510,6 +769,7 @@ main() {
             set -- --shape planning
             [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
             [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
+            [ -n "$BOTS" ] && set -- "$@" --bots "$BOTS"
             "$ENGINE_CONSUMER" "$@" "$TARGET" ||
                 { echo "Error: consumer engine failed (exit $?)" >&2; exit 1; }
         fi
@@ -518,8 +778,14 @@ main() {
         [ "$NO_KIT" -eq 1 ] && set -- "$@" --no-kit
         [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
         [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
+        [ -n "$BOTS" ] && set -- "$@" --bots "$BOTS"
         "$ENGINE_CONSUMER" "$@" "$TARGET" ||
             { echo "Error: consumer engine failed (exit $?)" >&2; exit 1; }
+    fi
+
+    # ── Secrets by reference (F6): preset env-source, --new only ──
+    if [ -n "$ENV_SOURCE" ]; then
+        apply_env_source "$ENV_SOURCE"
     fi
 
     run_offers

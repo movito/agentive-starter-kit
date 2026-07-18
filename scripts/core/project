@@ -1274,22 +1274,46 @@ def _print_sync_report(report, *, dry_run, committed, project_dir):
         print("\n   Run without --dry-run to apply.")
 
 
+def _normalize_bots(raw):
+    """Canonical form of a bots declaration, or None when invalid.
+
+    Valid: ``none`` alone, or a non-empty subset of
+    {coderabbit, bugbot} (any order/duplication; normalized to
+    canonical order). Shared by the record reader and the
+    ``--against-preset`` comparison so the two can never disagree on
+    what a declaration means (KIT-0056).
+    """
+    tokens = raw.split()
+    if not tokens:
+        return None
+    for token in tokens:
+        # membership: vocabulary check, not identifier equality
+        if token not in ("coderabbit", "bugbot", "none"):
+            return None
+    if "none" in tokens:
+        return "none" if len(tokens) == 1 else None
+    return " ".join(t for t in ("coderabbit", "bugbot") if t in tokens)
+
+
 def _doctor_install(project_dir):
-    """Read the installation's shape+profile record (KIT-0048 F2/F3,
-    extended by KIT-0050 F4 — one reader, never two).
+    """Read the installation's shape+profile+bots record (KIT-0048
+    F2/F3, extended by KIT-0050 F4 and KIT-0056 F1 — one reader,
+    never two).
 
     The record lives in CLAUDE.md's ``kit-install`` KIT-LOCAL region and
     kit_markers.py is its only reader (N4: one extract, runtime-read, no
-    cache). Returns ``(shape, profile, errors)`` where ``errors`` is a
-    list of ``(record, detail)`` pairs, ``record`` in {"shape-record",
-    "profile-record"}:
+    cache). Returns ``(shape, profile, bots, errors)`` where ``errors``
+    is a list of ``(record, detail)`` pairs, ``record`` in
+    {"shape-record", "profile-record", "bots-record"}:
 
     - anything absent (kit_markers, CLAUDE.md, region) ->
-      ("single", "python", []) — back-compat: absent means today's
-      single shape with the Python toolchain, never an error;
+      ("single", "python", None, []) — back-compat: absent means
+      today's single shape with the Python toolchain, never an error;
     - a readable record: shape in {single, planning}; a missing
       profile: line defaults by shape (single -> python,
-      planning -> none — the KIT-0050 back-compat rule);
+      planning -> none — the KIT-0050 back-compat rule); a missing
+      bots: line is None — "both bots expected", the pre-KIT-0056
+      default, never an error;
     - malformed/unknown value or unreadable record -> the affected
       value(s) are None and ``errors`` carries the detail — the caller
       runs the FULL check set AND emits a DOCTOR:<record>:FAIL line —
@@ -1299,7 +1323,7 @@ def _doctor_install(project_dir):
     kit_markers = project_dir / "scripts" / "local" / "kit_markers.py"
     claude_md = project_dir / "CLAUDE.md"
     if not kit_markers.exists() or not claude_md.exists():
-        return "single", "python", []
+        return "single", "python", None, []
     try:
         result = subprocess.run(
             [
@@ -1315,16 +1339,17 @@ def _doctor_install(project_dir):
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         detail = f"shape record unreadable ({exc.__class__.__name__})"
-        return None, None, [("shape-record", detail)]
+        return None, None, None, [("shape-record", detail)]
     if result.returncode != 0:
         # kit_markers exits 1 with this exact stderr for a missing region
         # (absent = single, back-compat). ANY other failure — crash, bad
         # interpreter, argv error — is an unreadable record and must fail
         # loud, not silently fall back (o3 review).
         if "region not found" in result.stderr:
-            return "single", "python", []
+            return "single", "python", None, []
         detail = result.stderr.strip().splitlines()
         return (
+            None,
             None,
             None,
             [
@@ -1338,12 +1363,15 @@ def _doctor_install(project_dir):
         )
     raw_shape = None
     raw_profile = None
+    raw_bots = None
     for line in result.stdout.splitlines():
         stripped = line.strip()
         if stripped.startswith("shape:") and raw_shape is None:
             raw_shape = stripped.partition(":")[2].strip()
         elif stripped.startswith("profile:") and raw_profile is None:
             raw_profile = stripped.partition(":")[2].strip()
+        elif stripped.startswith("bots:") and raw_bots is None:
+            raw_bots = stripped.partition(":")[2].strip()
 
     errors = []
     shape = None
@@ -1405,7 +1433,25 @@ def _doctor_install(project_dir):
                 "expected python|none; running the full check set",
             )
         )
-    return shape, profile, errors
+
+    # bots declaration (KIT-0056): independent of shape/profile — it
+    # scopes no doctor checks, only the preflight gates and the
+    # --against-preset comparison. Absent = None = both bots expected.
+    # An invalid value fails loud (F4): a typo'd declaration silently
+    # read as "declared absent" could SKIP gates it should not.
+    bots = None
+    if raw_bots is not None:
+        bots = _normalize_bots(raw_bots)
+        if bots is None:
+            errors.append(
+                (
+                    "bots-record",
+                    f"invalid bots declaration '{raw_bots}' in kit-install "
+                    "region — expected 'none' or a subset of: "
+                    "coderabbit bugbot",
+                )
+            )
+    return shape, profile, bots, errors
 
 
 def _check_declared(check_path, keyword):
@@ -1441,6 +1487,111 @@ def _check_declared(check_path, keyword):
     return None
 
 
+def _print_preset_comparison(shape, profile, bots, record_errors):
+    """`doctor --against-preset` (KIT-0056 F8, ADR-0027 P7): compare
+    the project's kit-install record against the operator preset at
+    ~/.config/agentive-kit/preset (XDG_CONFIG_HOME honored).
+
+    INFO-only by design: divergence is reported as
+    ``PRESET:<field>:INFO:<detail>`` lines and NEVER as WARN/FAIL, and
+    the doctor exit code is never affected — a deliberately-lean
+    project is not wrong. Doctor validates the RECORD (the DOCTOR:
+    lines above); the preset is only a comparison baseline. The
+    PRESET: prefix keeps these lines out of DOCTOR: parsers entirely.
+    """
+    config_home = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+    preset_path = Path(config_home) / "agentive-kit" / "preset"
+    print()
+    if not preset_path.is_file():
+        print(
+            f"PRESET:comparison:INFO:no preset found at {preset_path} — "
+            "nothing to compare"
+        )
+        return
+    try:
+        preset_lines = preset_path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        print(
+            f"PRESET:comparison:INFO:preset unreadable "
+            f"({exc.__class__.__name__}) — comparison skipped"
+        )
+        return
+    preset_values = {}
+    for lineno, line in enumerate(preset_lines, 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if ":" not in stripped:
+            # loud, names the line, and skips the WHOLE comparison — a
+            # partial read could report agreement on fields it never
+            # parsed (the masking class, record-reader face)
+            print(
+                f"PRESET:comparison:INFO:preset malformed at line {lineno} "
+                f"('{stripped}') — fix {preset_path}; comparison skipped"
+            )
+            return
+        key, _, value = stripped.partition(":")
+        preset_values[key.strip()] = value.strip()
+
+    if shape is None or profile is None:
+        print(
+            "PRESET:comparison:INFO:kit-install record unreadable "
+            "(see the DOCTOR record FAIL lines) — comparison skipped"
+        )
+        return
+
+    bots_errored = any(record == "bots-record" for record, _ in record_errors)
+    record_values = {
+        "shape": shape,
+        "profile": profile,
+        # absent bots line = both expected (the pre-KIT-0056 default)
+        "bots": bots if bots is not None else "coderabbit bugbot",
+    }
+    defaulted = {"bots": bots is None}
+    compared = 0
+    divergences = 0
+    for key in ("shape", "profile", "bots"):
+        preset_val = preset_values.get(key, "")
+        if not preset_val:
+            continue
+        if key == "bots":
+            if bots_errored:
+                print(
+                    "PRESET:bots:INFO:recorded bots declaration is invalid "
+                    "(see DOCTOR:bots-record above) — bots comparison skipped"
+                )
+                continue
+            normalized = _normalize_bots(preset_val)
+            if normalized is None:
+                print(
+                    f"PRESET:bots:INFO:preset bots value invalid "
+                    f"('{preset_val}') — bots comparison skipped"
+                )
+                continue
+            preset_val = normalized
+        compared += 1
+        if preset_val != record_values[key]:
+            suffix = (
+                " (defaulted — no line in the record)" if defaulted.get(key) else ""
+            )
+            print(
+                f"PRESET:{key}:INFO:record has '{record_values[key]}'{suffix}, "
+                f"preset says '{preset_val}' — informational only, a "
+                "deliberately-lean project is not wrong"
+            )
+            divergences += 1
+    if compared == 0:
+        print(
+            "PRESET:comparison:INFO:preset answers none of the comparable "
+            "fields (shape/profile/bots) — nothing to compare"
+        )
+    elif divergences == 0:
+        print(
+            f"PRESET:comparison:INFO:record matches the preset on all "
+            f"{compared} compared field(s)"
+        )
+
+
 def cmd_doctor(args, project_dir):
     """`project doctor`: run all doctor.d environment checks (ADR-0027 P4).
 
@@ -1462,10 +1613,15 @@ def cmd_doctor(args, project_dir):
     they never mutate config, env, or the working tree.
     """
     doctor_dir = project_dir / "scripts" / "core" / "doctor.d"
+    against_preset = False
     for arg in args:
         # An empty value would resolve Path("") to the cwd and silently
         # diagnose the wrong tree — usage error instead (BugBot round 6).
-        if arg.startswith("--dir="):
+        if arg == "--against-preset":
+            # KIT-0056 F8: compare the record against the operator
+            # preset, INFO-only (see _print_preset_comparison).
+            against_preset = True
+        elif arg.startswith("--dir="):
             # test/advanced seam: run a different check set (resolve now —
             # checks run with a different cwd, so relative would break)
             value = arg.partition("=")[2]
@@ -1488,7 +1644,7 @@ def cmd_doctor(args, project_dir):
             print(f"Unknown option: {arg}")
             print(
                 "Usage: ./scripts/core/project doctor "
-                "[--dir=<checks-dir>] [--root=<checkout>]"
+                "[--dir=<checks-dir>] [--root=<checkout>] [--against-preset]"
             )
             return 3
 
@@ -1509,7 +1665,7 @@ def cmd_doctor(args, project_dir):
     # `# shapes:` / `# profiles:` headers; the driver reads the install
     # record once and stays otherwise declaration-driven. A malformed
     # record runs everything AND fails loud via the record lines below.
-    shape, profile, record_errors = _doctor_install(project_dir)
+    shape, profile, bots, record_errors = _doctor_install(project_dir)
 
     # Scrub ambient GIT_* so a leaked GIT_DIR (the KIT-0043 incident
     # class — e.g. doctor invoked from a pre-commit hook in a worktree)
@@ -1607,6 +1763,8 @@ def cmd_doctor(args, project_dir):
     passes = verdicts.count("PASS")
     skips = verdicts.count("SKIP")
     print(f"\nDoctor: {passes} pass, {warns} warn, {fails} fail, {skips} skip")
+    if against_preset:
+        _print_preset_comparison(shape, profile, bots, record_errors)
     if fails:
         return 1
     if warns:
@@ -1637,10 +1795,11 @@ def cmd_sync(args, project_dir):
     failures pass through the engine's own code. Also a self-review
     checklist item (``.kit/skills/self-review/SKILL.md``).
     """
-    # Sync provisions by SHAPE; the profile only scopes doctor checks,
-    # so a profile-record error alone does not block a sync whose shape
-    # is readable (minimal coupling — KIT-0050).
-    shape, _profile, record_errors = _doctor_install(project_dir)
+    # Sync provisions by SHAPE; the profile only scopes doctor checks
+    # and the bots declaration only scopes preflight gates, so errors
+    # in those records alone do not block a sync whose shape is
+    # readable (minimal coupling — KIT-0050, KIT-0056).
+    shape, _profile, _bots, record_errors = _doctor_install(project_dir)
     if shape is None:
         shape_errors = [d for record, d in record_errors if record == "shape-record"]
         detail = shape_errors[0] if shape_errors else "shape record unreadable"

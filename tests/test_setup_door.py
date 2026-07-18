@@ -40,9 +40,18 @@ for tool in ("bash", "git", "rsync"):
         pytest.skip(f"{tool} not available on PATH", allow_module_level=True)
 
 
+# A nonexistent XDG_CONFIG_HOME keeps every door run hermetic: the
+# operator's REAL ~/.config/agentive-kit/preset (KIT-0056) must never
+# leak into the suite — a filled preset would change door answers and
+# break characterization. Tests that need a preset pass their own
+# XDG_CONFIG_HOME via extra (override wins).
+_HERMETIC_XDG = REPO_ROOT / "tests" / ".no-such-xdg"
+
+
 def _scrubbed_env(**extra: str) -> dict[str, str]:
     """os.environ minus GIT_* (the KIT-0048 GIT_DIR leak class)."""
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env["XDG_CONFIG_HOME"] = str(_HERMETIC_XDG)
     env.update(extra)
     return env
 
@@ -83,7 +92,7 @@ def run_door(
     )
 
 
-def sourced(snippet: str) -> subprocess.CompletedProcess:
+def sourced(snippet: str, env: dict | None = None) -> subprocess.CompletedProcess:
     """Run a snippet with the door's functions loaded (no main)."""
     return subprocess.run(
         ["bash", "-c", f'source "{DOOR}"; {snippet}'],
@@ -91,8 +100,16 @@ def sourced(snippet: str) -> subprocess.CompletedProcess:
         text=True,
         timeout=30,
         stdin=subprocess.DEVNULL,
-        env=_scrubbed_env(),
+        env=env or _scrubbed_env(),
     )
+
+
+def write_preset(base: Path, content: str) -> Path:
+    """A preset under a scratch XDG_CONFIG_HOME; returns the XDG dir."""
+    xdg = base / "xdg-preset"
+    (xdg / "agentive-kit").mkdir(parents=True, exist_ok=True)
+    (xdg / "agentive-kit" / "preset").write_text(content, encoding="utf-8")
+    return xdg
 
 
 class TestResolveValidateUnits:
@@ -130,8 +147,9 @@ class TestResolveValidateUnits:
         result = sourced("resolve_setting profile none single")
         assert result.stdout.strip() == "none"
 
-    def test_preset_layer_is_a_stub(self):
-        # P7 seam: the reserved preset layer answers nothing today.
+    def test_preset_layer_unloaded_answers_nothing(self):
+        # No preset loaded (or --no-preset): the layer answers nothing —
+        # the machine behaves exactly like a preset-less machine (N1).
         # (Guarded call: the sourced door sets -e, so a bare failing
         # preset_get would exit the test shell before the echo.)
         result = sourced('preset_get shape || echo "rc=$?"')
@@ -147,6 +165,109 @@ class TestResolveValidateUnits:
         result = sourced('preset_get() { echo ""; }; resolve_setting shape ""')
         assert result.returncode == 0
         assert result.stdout.strip() == "single"
+
+
+class TestPresetUnits:
+    """KIT-0056 F5: the preset layer inside the ONE resolve chain —
+    CLI > preset > kit default (record short-circuits preset on adopt).
+    All sourced; the preset file lives under a scratch XDG dir, never
+    the real ~/.config."""
+
+    def _env(self, tmp_path, content):
+        return _scrubbed_env(XDG_CONFIG_HOME=str(write_preset(tmp_path, content)))
+
+    def test_preset_beats_kit_default(self, tmp_path):
+        env = self._env(tmp_path, "shape: planning\n")
+        result = sourced('load_preset; resolve_setting shape ""', env=env)
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == "planning"
+
+    def test_cli_beats_preset(self, tmp_path):
+        env = self._env(tmp_path, "shape: planning\n")
+        result = sourced("load_preset; resolve_setting shape single", env=env)
+        assert result.stdout.strip() == "single"
+
+    def test_record_short_circuits_preset(self, tmp_path):
+        # Adopt of a recorded target: the question is not open, so the
+        # preset is not consulted — the chain falls to the kit default
+        # exactly as on a preset-less machine (record wins; divergence
+        # is doctor --against-preset's INFO surface).
+        env = self._env(tmp_path, "profile: none\n")
+        result = sourced(
+            'load_preset; REC_PROFILE=none; resolve_setting profile "" single',
+            env=env,
+        )
+        assert result.stdout.strip() == "python"  # kit default, not the preset
+
+    def test_no_preset_flag_disables_the_layer(self, tmp_path):
+        env = self._env(tmp_path, "shape: planning\n")
+        result = sourced('NO_PRESET=1; load_preset; resolve_setting shape ""', env=env)
+        assert result.stdout.strip() == "single"
+
+    def test_unknown_key_warns_and_skips_never_errors(self, tmp_path):
+        env = self._env(tmp_path, "coffee: espresso\nshape: planning\n")
+        result = sourced('load_preset; resolve_setting shape ""', env=env)
+        assert result.returncode == 0, result.stderr
+        assert "unknown preset key 'coffee'" in result.stderr
+        assert "line 1" in result.stderr
+        # known keys after the unknown one still load (skip, not abort)
+        assert result.stdout.strip() == "planning"
+
+    def test_malformed_line_fails_loud_naming_the_line(self, tmp_path):
+        env = self._env(tmp_path, "shape: single\nprofile python\n")
+        result = sourced("load_preset", env=env)
+        assert result.returncode == 2
+        assert "malformed preset line 2" in result.stderr
+        assert "profile python" in result.stderr
+
+    def test_duplicate_key_fails_loud(self, tmp_path):
+        env = self._env(tmp_path, "shape: single\nshape: planning\n")
+        result = sourced("load_preset", env=env)
+        assert result.returncode == 2
+        assert "duplicate preset key 'shape'" in result.stderr
+
+    def test_empty_value_falls_through(self, tmp_path):
+        # an empty answer is unanswered, never a resolve to ""
+        env = self._env(tmp_path, "shape:\n")
+        result = sourced('load_preset; resolve_setting shape ""', env=env)
+        assert result.returncode == 0
+        assert result.stdout.strip() == "single"
+
+    def test_comments_and_blanks_ignored(self, tmp_path):
+        env = self._env(tmp_path, "# a comment\n\nshape: planning\n")
+        result = sourced('load_preset; resolve_setting shape ""', env=env)
+        assert result.stdout.strip() == "planning"
+
+
+class TestNormalizeBots:
+    """KIT-0056 F1: 'none' alone, or a subset of coderabbit/bugbot —
+    normalized to canonical order, comma- or space-separated input."""
+
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ("coderabbit bugbot", "coderabbit bugbot"),
+            ("bugbot coderabbit", "coderabbit bugbot"),
+            ("bugbot,coderabbit", "coderabbit bugbot"),
+            ("coderabbit", "coderabbit"),
+            ("bugbot", "bugbot"),
+            ("none", "none"),
+        ],
+    )
+    def test_canonical_forms(self, raw, expected):
+        result = sourced(f'normalize_bots "{raw}"')
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == expected
+
+    def test_unknown_bot_rejected(self):
+        result = sourced('normalize_bots horsebot || echo "rc=$?"')
+        assert "unknown bot 'horsebot'" in result.stderr
+        assert result.stdout.strip() == "rc=1"
+
+    def test_none_combined_rejected(self):
+        result = sourced('normalize_bots "none bugbot" || echo "rc=$?"')
+        assert "'none' cannot be combined" in result.stderr
+        assert result.stdout.strip() == "rc=1"
 
 
 class TestExitContract:
@@ -225,6 +346,24 @@ class TestExitContract:
     def test_no_kit_planning_contradiction(self, tmp_path):
         result = run_door("--adopt", str(tmp_path), "--shape", "planning", "--no-kit")
         assert result.returncode == 2
+
+    def test_invalid_bots_flag_exits_2(self, tmp_path):
+        result = run_door("--adopt", str(tmp_path), "--bots", "horsebot")
+        assert result.returncode == 2
+        assert "unknown bot 'horsebot'" in result.stderr
+
+    def test_bots_none_combined_exits_2(self, tmp_path):
+        result = run_door("--adopt", str(tmp_path), "--bots", "none coderabbit")
+        assert result.returncode == 2
+        assert "'none' cannot be combined" in result.stderr
+
+    def test_malformed_preset_exits_2_before_any_work(self, tmp_path):
+        xdg = write_preset(tmp_path, "this is not a preset\n")
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        result = run_door("--new", str(tmp_path / "proj"), env=env, timeout=30)
+        assert result.returncode == 2
+        assert "malformed preset line 1" in result.stderr
+        assert not (tmp_path / "proj").exists()
 
     def test_new_target_must_not_exist(self, tmp_path):
         result = run_door("--new", str(tmp_path))
@@ -465,3 +604,263 @@ class TestNewE2E:
         region = _kit_install_region(target)
         assert "shape: planning" in region
         assert "profile: none" in region
+
+
+SECRET = "KIT0056-FIXTURE-SECRET-NEVER-PRINT"
+
+
+def _demo_preset_xdg(tmp_path: Path) -> Path:
+    """A FULL preset (every door question answered) plus git identity
+    and a 0600 env template carrying a fixture secret."""
+    xdg = _git_identity(tmp_path)  # xdg-config/ with git/config
+    env_template = tmp_path / "env-template"
+    env_template.write_text(f"OPENAI_API_KEY={SECRET}\n", encoding="utf-8")
+    env_template.chmod(0o600)
+    (xdg / "agentive-kit").mkdir()
+    (xdg / "agentive-kit" / "preset").write_text(
+        "# full operator preset (KIT-0056 N4 fixture)\n"
+        "shape: single\n"
+        "profile: python\n"
+        "bots: coderabbit bugbot\n"
+        "evaluators: no\n"
+        "venv: no\n"
+        f"env-source: {env_template}\n",
+        encoding="utf-8",
+    )
+    return xdg
+
+
+@pytest.mark.slow
+class TestPresetE2E:
+    """KIT-0056 P7 end to end. Preset fixtures live under scratch XDG
+    dirs — the suite never reads or writes the real ~/.config (N-rule
+    in the task spec)."""
+
+    def test_one_button_demo(self, tmp_path):
+        """N4, the acceptance bar: a full preset answers every question
+        — zero prompts, zero skipped-offer notices — and the resulting
+        record reflects the preset's declarations. Secrets arrive by
+        reference at mode 0600 and never appear in output or git."""
+        xdg = _demo_preset_xdg(tmp_path)
+        preset_file = xdg / "agentive-kit" / "preset"
+        preset_before = preset_file.read_bytes()
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        target = tmp_path / "one-button"
+        result = run_door("--new", str(target), env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Preset:" in result.stdout  # the layer announced itself
+        # zero prompts is structural (stdin closed); zero NOTICES is the
+        # preset's work — nothing was skipped-with-notice
+        assert "Offer skipped" not in result.stdout
+        _assert_doctor_tail(result.stdout)
+        region = _kit_install_region(target)
+        assert "shape: single" in region
+        assert "profile: python" in region
+        assert "bots: coderabbit bugbot" in region
+        # F6: .env seeded 0600, gitignored, contents NEVER surfaced
+        dotenv = target / ".env"
+        assert dotenv.is_file()
+        assert (dotenv.stat().st_mode & 0o777) == 0o600
+        assert SECRET in dotenv.read_text(encoding="utf-8")
+        assert SECRET not in result.stdout + result.stderr
+        check_ignore = subprocess.run(
+            ["git", "-C", str(target), "check-ignore", "-q", ".env"],
+            env=env,
+            timeout=30,
+        )
+        assert check_ignore.returncode == 0, ".env must be gitignored"
+        status = subprocess.run(
+            ["git", "-C", str(target), "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
+        )
+        assert status.stdout.strip() == ""  # nothing staged, nothing dangling
+        tracked_grep = subprocess.run(
+            ["git", "-C", str(target), "grep", "-l", SECRET, "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
+        )
+        assert tracked_grep.stdout.strip() == ""  # secret in no tracked file
+        # F7: the run read the preset but never touched it
+        assert preset_file.read_bytes() == preset_before
+
+    def test_no_preset_gives_the_stranger_path(self, tmp_path):
+        """--no-preset with a preset present must be byte-identical to
+        a machine with no preset at all (N1's flip side)."""
+        xdg = _demo_preset_xdg(tmp_path)
+        # same basename in different parents: engine banners print the
+        # project NAME, so only the parent path may differ
+        target_a = make_adopt_dir(tmp_path / "a", "proj")
+        target_b = make_adopt_dir(tmp_path / "b", "proj")
+        with_flag = run_door(
+            "--adopt",
+            str(target_a),
+            "--no-preset",
+            env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg)),
+        )
+        stranger = run_door("--adopt", str(target_b))
+        assert with_flag.returncode == 0, with_flag.stderr + with_flag.stdout
+        assert stranger.returncode == 0, stranger.stderr + stranger.stdout
+        normalized_a = with_flag.stdout.replace(str(target_a), "<T>")
+        normalized_b = stranger.stdout.replace(str(target_b), "<T>")
+        assert normalized_a == normalized_b
+
+    def test_adopt_record_beats_preset(self, tmp_path):
+        """A recorded target keeps its identity: the preset answers
+        none of the recorded questions, and the record round-trips
+        untouched (divergence belongs to doctor --against-preset)."""
+        target = make_adopt_dir(tmp_path, "recorded")
+        first = run_door("--adopt", str(target), "--profile", "none", "--bots", "none")
+        assert first.returncode == 0, first.stderr + first.stdout
+        xdg = write_preset(
+            tmp_path, "shape: planning\nprofile: python\nbots: coderabbit bugbot\n"
+        )
+        readopt = run_door(
+            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        )
+        assert readopt.returncode == 0, readopt.stderr + readopt.stdout
+        assert "Setup door: mode=adopt shape=single" in readopt.stdout
+        region = _kit_install_region(target)
+        assert "shape: single" in region
+        assert "profile: none" in region
+        assert "bots: none" in region
+
+    def test_preset_answers_the_offer_questions(self, tmp_path):
+        """Preset 'evaluators:'/'venv:' answers reach run_offers like
+        flags would — the non-interactive skip notices disappear (the
+        preset-less baseline asserts their presence). 'no' keeps the
+        test network-free; the wiring is identical for 'yes'."""
+        xdg = write_preset(tmp_path, "evaluators: no\nvenv: no\n")
+        target = make_adopt_dir(tmp_path, "offers")
+        result = run_door(
+            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Offer skipped (non-interactive): evaluators" not in result.stdout
+        assert "Offer skipped (non-interactive): venv" not in result.stdout
+
+    def test_bad_offer_value_fails_loud(self, tmp_path):
+        xdg = write_preset(tmp_path, "evaluators: maybe\n")
+        target = make_adopt_dir(tmp_path, "badval")
+        result = run_door(
+            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        )
+        assert result.returncode == 2
+        assert "preset key 'evaluators' must be yes or no" in result.stderr
+
+
+@pytest.mark.slow
+class TestBotsDeclarationE2E:
+    """KIT-0056 P5: the --bots flag through door + engine + record."""
+
+    def test_adopt_bots_subset_records_line(self, tmp_path):
+        target = make_adopt_dir(tmp_path, "one-bot")
+        result = run_door("--adopt", str(target), "--bots", "coderabbit")
+        assert result.returncode == 0, result.stderr + result.stdout
+        region = _kit_install_region(target)
+        assert "bots: coderabbit" in region
+        assert "bugbot" not in region
+
+    def test_new_planning_with_bots_records_line(self, tmp_path):
+        # the matrix's other seed path: the planning region body (4
+        # lines incl. the target pointer) gains the bots line too
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
+        target = tmp_path / "planning-bots"
+        result = run_door(
+            "--new", str(target), "--shape", "planning", "--bots", "none", env=env
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        region = _kit_install_region(target)
+        assert "shape: planning" in region
+        assert "target_github:" in region
+        assert "bots: none" in region
+
+    def test_legacy_shim_rejects_bots(self, tmp_path):
+        # the legacy channel never writes a bots line — an explicit
+        # --bots must be rejected, never silently dropped
+        target = make_adopt_dir(tmp_path, "shim")
+        result = run_door("--adopt", str(target), "--legacy-shim", "--bots", "none")
+        assert result.returncode == 2
+        assert "--legacy-shim" in result.stderr
+
+    def test_legacy_shim_ignores_preset(self, tmp_path):
+        # shim fidelity: a filled preset must not change what the
+        # legacy channel does — no preset notice, no recorded bots
+        xdg = write_preset(tmp_path, "bots: none\nprofile: none\n")
+        target = make_adopt_dir(tmp_path, "shim-preset")
+        result = run_door(
+            "--adopt",
+            str(target),
+            "--legacy-shim",
+            env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg)),
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Preset:" not in result.stdout
+        region = _kit_install_region(target)
+        assert "profile: python" in region  # kit default, not the preset
+        assert "bots:" not in region
+
+    def test_readopt_adds_bots_line_surgically(self, tmp_path):
+        """An existing record without the line gains exactly the bots
+        line — shape/profile preserved byte-for-byte (the one-writer
+        path through kit_markers, never a region rewrite)."""
+        target = make_adopt_dir(tmp_path, "add-later")
+        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
+        before = _kit_install_region(target)
+        assert "shape: single\nprofile: none\n" in before
+        assert "bots:" not in before
+        result = run_door("--adopt", str(target), "--bots", "none")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "bots line added" in result.stdout
+        after = _kit_install_region(target)
+        # prior lines byte-preserved, bots appended right after them
+        assert "shape: single\nprofile: none\nbots: none\n" in after
+
+    def test_readopt_conflicting_bots_rejected(self, tmp_path):
+        target = make_adopt_dir(tmp_path, "conflict")
+        assert run_door("--adopt", str(target), "--bots", "none").returncode == 0
+        result = run_door("--adopt", str(target), "--bots", "coderabbit bugbot")
+        assert result.returncode == 2
+        assert "conflicts with the target's existing kit-install record" in (
+            result.stderr
+        )
+        assert "bots: none" in _kit_install_region(target)  # record untouched
+
+    def test_new_without_bots_writes_no_line(self, tmp_path):
+        """N1: no flag, no preset — the record is byte-identical to a
+        pre-KIT-0056 install (no bots line, zero migration)."""
+        target = make_adopt_dir(tmp_path, "no-decl")
+        result = run_door("--adopt", str(target))
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "bots:" not in _kit_install_region(target)
+
+
+class TestPresetNeverDistributed:
+    """F7: nothing under ~/.config/agentive-kit/ rides any sync tier,
+    rsync, or export path. Structural check: the ONLY scripts allowed
+    to reference the preset location are the door (reads it) and the
+    project script (doctor --against-preset compares against it) —
+    engines, sync, and export code must not know it exists."""
+
+    ALLOWED = {"scripts/local/bootstrap", "scripts/core/project"}
+
+    def test_preset_path_referenced_only_by_door_and_doctor(self):
+        offenders = []
+        for path in (REPO_ROOT / "scripts").rglob("*"):
+            if not path.is_file():
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                continue
+            if "agentive-kit" in text:
+                rel = str(path.relative_to(REPO_ROOT))
+                if rel not in self.ALLOWED:
+                    offenders.append(rel)
+        assert (
+            offenders == []
+        ), f"preset location referenced outside the allowed readers: {offenders}"

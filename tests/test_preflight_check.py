@@ -36,6 +36,10 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 _SCRIPT = REPO_ROOT / "scripts" / "core" / "preflight-check.sh"
 _TARGET_REPO_LIB = REPO_ROOT / "scripts" / "core" / "lib" / "target_repo.sh"
+# kit_markers ships to consumers via bootstrap Step 1.5, but an older
+# consumer checkout may lack it — the declaration tests skip then
+# (the test_doctor.py precedent).
+_KIT_MARKERS_SRC = REPO_ROOT / "scripts" / "local" / "kit_markers.py"
 
 if not _SCRIPT.exists():
     pytest.skip(
@@ -151,7 +155,7 @@ def _gates(output: str) -> dict[int, tuple[str, str]]:
     """Parse GATE:<n>:<name>:<verdict>:<detail> lines into {n: (verdict, detail)}."""
     parsed: dict[int, tuple[str, str]] = {}
     for line in output.splitlines():
-        m = re.match(r"^GATE:(\d+):[^:]*:(PASS|FAIL|PENDING):(.*)$", line)
+        m = re.match(r"^GATE:(\d+):[^:]*:(PASS|FAIL|PENDING|SKIP):(.*)$", line)
         if m:
             parsed[int(m.group(1))] = (m.group(2), m.group(3))
     return parsed
@@ -667,6 +671,140 @@ class TestGate2MixedContexts:
             check=True,
         ).stdout.strip()
         assert out == "failure", out
+
+
+# ── Gates 2/3: bots declaration (KIT-0056, ADR-0027 P5) ─────────────────
+@pytest.mark.skipif(
+    not _KIT_MARKERS_SRC.exists(), reason="kit_markers.py absent (consumer checkout)"
+)
+class TestGate23BotsDeclaration:
+    """A `bots:` line in CLAUDE.md's kit-install region turns Gates 2/3
+    into SKIP-with-notice for declared-absent bots — never FAIL, never
+    a silent PASS. No line / no region / invalid line = both bots
+    expected (fail closed, today's behavior).
+    """
+
+    def _install_declaration(self, proj, bots_line: str | None) -> None:
+        local_dir = proj.root / "scripts" / "local"
+        local_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(_KIT_MARKERS_SRC, local_dir / "kit_markers.py")
+        region = "shape: single\nprofile: python\n"
+        if bots_line is not None:
+            region += f"bots: {bots_line}\n"
+        (proj.root / "CLAUDE.md").write_text(
+            "# stub project\n\n"
+            "<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            f"{region}"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+            encoding="utf-8",
+        )
+
+    def _remove_declaration(self, proj) -> None:
+        (proj.root / "CLAUDE.md").unlink(missing_ok=True)
+        (proj.root / "scripts" / "local" / "kit_markers.py").unlink(missing_ok=True)
+
+    def _no_bot_reviews(self, head: str) -> dict[str, str]:
+        """CI green, threads clean, but NO bot activity anywhere — the
+        state a bot-less project is permanently in."""
+        files = _baseline(head)
+        files["graphql"] = _graphql([], resolved=0)
+        return files
+
+    def test_bots_none_skips_both_gates_exit_0(self, proj):
+        self._install_declaration(proj, "none")
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            gates = _gates(result.stdout)
+            for gate_num in (2, 3):
+                verdict, detail = gates[gate_num]
+                assert verdict == "SKIP", result.stdout
+                assert "declared absent in kit-install" in detail
+                assert "bots: none" in detail
+            assert result.returncode == 0, result.stdout + result.stderr
+        finally:
+            self._remove_declaration(proj)
+
+    def test_subset_coderabbit_only(self, proj):
+        # bugbot declared absent → Gate 3 SKIPs; coderabbit declared
+        # present → Gate 2 still evaluated (and passes via its review)
+        self._install_declaration(proj, "coderabbit")
+        try:
+            files = self._no_bot_reviews(proj.head)
+            files["graphql"] = _graphql(
+                [_review("coderabbitai[bot]", "APPROVED", proj.head)]
+            )
+            result = proj.run(files)
+            gates = _gates(result.stdout)
+            assert gates[2][0] == "PASS", result.stdout
+            assert gates[3][0] == "SKIP", result.stdout
+            assert result.returncode == 0
+        finally:
+            self._remove_declaration(proj)
+
+    def test_declared_present_bot_still_fails_when_missing(self, proj):
+        # SKIP is never a free pass: a bot the declaration KEEPS is
+        # still required.
+        self._install_declaration(proj, "bugbot")
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            gates = _gates(result.stdout)
+            assert gates[2][0] == "SKIP", result.stdout
+            assert gates[3][0] == "FAIL", result.stdout
+            assert result.returncode == 1
+        finally:
+            self._remove_declaration(proj)
+
+    def test_region_without_bots_line_is_todays_behavior(self, proj):
+        # N1: a record with no bots: line changes nothing — both bots
+        # expected, both gates FAIL without bot activity.
+        self._install_declaration(proj, None)
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            gates = _gates(result.stdout)
+            assert gates[2][0] == "FAIL", result.stdout
+            assert gates[3][0] == "FAIL", result.stdout
+            assert "NOTICE" not in result.stdout
+        finally:
+            self._remove_declaration(proj)
+
+    def test_invalid_declaration_fails_closed_with_notice(self, proj):
+        # A typo'd declaration must not silently SKIP gates — expect
+        # both bots (the gates run) and say why, loudly.
+        self._install_declaration(proj, "horsebot")
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            assert "NOTICE: invalid bots declaration" in result.stdout
+            assert "horsebot" in result.stdout
+            gates = _gates(result.stdout)
+            assert gates[2][0] == "FAIL", result.stdout
+            assert gates[3][0] == "FAIL", result.stdout
+        finally:
+            self._remove_declaration(proj)
+
+    def test_none_combined_with_bot_is_invalid(self, proj):
+        self._install_declaration(proj, "none coderabbit")
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            assert "NOTICE: invalid bots declaration" in result.stdout
+            assert _gates(result.stdout)[2][0] == "FAIL", result.stdout
+        finally:
+            self._remove_declaration(proj)
+
+    def test_skip_never_masks_a_ci_failure(self, proj):
+        self._install_declaration(proj, "none")
+        try:
+            files = self._no_bot_reviews(proj.head)
+            files["run_list"] = json.dumps(
+                [_run_entry(proj.head, conclusion="failure", name="Lint")]
+            )
+            result = proj.run(files)
+            gates = _gates(result.stdout)
+            assert gates[1][0] == "FAIL", result.stdout
+            assert gates[2][0] == "SKIP"
+            assert gates[3][0] == "SKIP"
+            assert result.returncode == 1
+        finally:
+            self._remove_declaration(proj)
 
 
 class TestGate7RegularFile:

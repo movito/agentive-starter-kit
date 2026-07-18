@@ -498,6 +498,31 @@ Bootstrap an existing project with the implementation tools — agents, scripts,
 
 Use this when you want agentive coding help in an existing repo. Add `--no-kit` to skip the task-management workflow entirely. Run `./scripts/local/bootstrap --help` for the full shape × profile matrix.
 
+### Operator Preset (One-Button Setup)
+
+The door resolves every question as **CLI flag > preset > kit default > interactive prompt**. A preset file at `~/.config/agentive-kit/preset` (flat `key: value` lines) pre-answers exactly the door's questions — `shape`, `profile`, `bots`, `evaluators`, `venv`, `env-source`, and the planning-shape target pointer — so a fully filled preset makes `bootstrap --new <dir>` a genuine one-command project:
+
+```bash
+mkdir -p ~/.config/agentive-kit
+cp docs/preset.example ~/.config/agentive-kit/preset   # then edit it
+./scripts/local/bootstrap --new ~/Github/my-next-app   # zero questions
+```
+
+Rules that keep this safe:
+
+- **Never distributed.** The preset lives outside every repo; no sync tier, rsync, or export touches `~/.config/agentive-kit/`. Pass `--no-preset` for a stranger-mode run; without a preset file, behavior is byte-identical to today.
+- **Secrets by reference.** `env-source: <path>` names your own `.env` template (chmod 600). On `--new` the door copies it to the target's `.env` with mode 0600 — contents are never printed and never staged.
+- **Records beat presets.** On `--adopt` of a project that already carries a kit-install record, the record wins; compare them with `./scripts/core/project doctor --against-preset` (INFO-only — a deliberately-lean project is not wrong).
+- **Malformed fails loud.** A bad line aborts naming the line; unknown keys warn and are skipped.
+
+### Degraded Modes (No Bots, One Key)
+
+Not every adopter runs CodeRabbit + BugBot + three model-provider keys. Declare what you actually run and the gates stay honest instead of failing falsely:
+
+- `bootstrap ... --bots none` (or a subset like `--bots coderabbit`, or the `bots:` preset key) records a `bots:` line in CLAUDE.md's kit-install region. Preflight Gates 2/3 then report `SKIP: declared absent in kit-install` for missing bots — never FAIL, never a silent PASS. No declaration = both bots expected (existing repos need no migration).
+- Installing the bot GitHub Apps is an **operator step** the kit never automates: add CodeRabbit / Cursor BugBot to your GitHub org (org-wide installs cover future repos automatically) via GitHub's UI.
+- With a single model-provider key, run the single-key evaluation mode documented in the code-review-evaluator skill — the review record names the degraded mode.
+
 ---
 
 ## Pulling Updates from the Starter Kit

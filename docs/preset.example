@@ -1,0 +1,58 @@
+# Operator preset for the agentive-starter-kit setup door (KIT-0056,
+# KIT-ADR-0027 P7).
+#
+# Install location (never inside a repo — the preset is personal,
+# per-machine, and never distributed by any sync/export path):
+#
+#   mkdir -p ~/.config/agentive-kit
+#   cp docs/preset.example ~/.config/agentive-kit/preset
+#   $EDITOR ~/.config/agentive-kit/preset
+#
+# The door (scripts/local/bootstrap) resolves every question as
+# CLI flag > preset > kit default > interactive prompt. A preset may
+# pre-answer ONLY the door's questions — the keys below, nothing else.
+# Unknown keys are warned about and ignored; a malformed line (no
+# 'key: value') aborts the run naming the line; a duplicate key is an
+# error. Flat 'key: value' lines only — that is a conscious boundary
+# of the format, not an accident.
+#
+# On --adopt of a target that already carries a kit-install record,
+# the record's values win over the preset (the record is the
+# project's identity). Compare them any time with:
+#   ./scripts/core/project doctor --against-preset   (INFO-only)
+# Bypass the preset entirely for one run with: bootstrap --no-preset
+#
+# Uncomment and edit the lines you want pre-answered:
+
+# shape: single | planning
+#shape: single
+
+# profile: python | none  (planning forces none)
+#profile: python
+
+# bots: which review bots run on your PRs — 'coderabbit bugbot', a
+# subset, or 'none'. Recorded in the project's CLAUDE.md kit-install
+# region; preflight Gates 2/3 SKIP declared-absent bots instead of
+# failing. Omit the key to keep today's default (both expected).
+# NOTE: the bot GitHub Apps themselves are an operator step the kit
+# never automates — install CodeRabbit/Cursor BugBot on your org (or
+# per repo) in GitHub's UI so new repos are actually covered.
+#bots: coderabbit bugbot
+
+# evaluators: yes | no — answer the "install adversarial evaluators
+# now?" offer without being asked.
+#evaluators: yes
+
+# venv: yes | no — answer the Python venv offer (profile python only).
+#venv: yes
+
+# env-source: path to YOUR .env template holding real API keys
+# (chmod 600 it). On --new the door copies it to the target's .env
+# with mode 0600 — never printed, never staged (.env is gitignored).
+# Key material never lives in the preset itself.
+#env-source: ~/.config/agentive-kit/env-template
+
+# target-path / target-github: the product-repo pointer, planning
+# shape only (rarely useful in a global preset — usually per-project).
+#target-path: ../my-product
+#target-github: my-org/my-product

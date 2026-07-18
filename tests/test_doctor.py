@@ -230,7 +230,12 @@ def _shape_fixture(tmp_path: Path, region: str | None) -> tuple[Path, Path]:
     return root, checks
 
 
-def run_doctor_rooted(root: Path, checks: Path) -> subprocess.CompletedProcess:
+def run_doctor_rooted(
+    root: Path,
+    checks: Path,
+    *extra: str,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess:
     return subprocess.run(
         [
             sys.executable,
@@ -238,10 +243,12 @@ def run_doctor_rooted(root: Path, checks: Path) -> subprocess.CompletedProcess:
             "doctor",
             f"--root={root}",
             f"--dir={checks}",
+            *extra,
         ],
         capture_output=True,
         text=True,
         timeout=60,
+        env=env,
     )
 
 
@@ -1093,3 +1100,139 @@ class TestDriverHardening:
         )
         line = next(ln for ln in doctor_lines(result) if ":gitenv:" in ln)
         assert "GIT_DIR=scrubbed" in line
+
+
+@pytest.mark.skipif(
+    not KIT_MARKERS_SRC.exists(), reason="kit_markers.py absent (consumer checkout)"
+)
+class TestBotsRecord:
+    """KIT-0056 F1/F4: the bots declaration in the kit-install record.
+    It scopes no checks — but an invalid line fails loud
+    (DOCTOR:bots-record:FAIL), because a typo silently read as
+    "declared absent" could SKIP preflight gates it should not."""
+
+    def test_valid_bots_line_is_silent(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\nbots: none\n")
+        result = run_doctor_rooted(root, checks)
+        assert "bots-record" not in result.stdout
+        assert result.returncode == 0
+
+    def test_invalid_bots_value_fails_loud(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\nbots: horsebot\n")
+        result = run_doctor_rooted(root, checks)
+        lines = doctor_lines(result)
+        assert any(
+            ln.startswith("DOCTOR:bots-record:FAIL:") and "horsebot" in ln
+            for ln in lines
+        )
+        # maximally diagnostic: all 3 checks still ran (+ the FAIL line)
+        assert len(lines) == 4
+        assert result.returncode == 1
+
+    def test_none_combined_with_bot_fails_loud(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\nbots: none bugbot\n")
+        result = run_doctor_rooted(root, checks)
+        assert any(
+            ln.startswith("DOCTOR:bots-record:FAIL:") for ln in doctor_lines(result)
+        )
+        assert result.returncode == 1
+
+    def test_absent_bots_line_is_not_an_error(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        result = run_doctor_rooted(root, checks)
+        assert "bots-record" not in result.stdout
+        assert result.returncode == 0
+
+
+def _preset_env(tmp_path: Path, content: str | None) -> dict[str, str]:
+    """Env with XDG_CONFIG_HOME pointing at a scratch dir; content=None
+    leaves the preset absent. Never the real ~/.config."""
+    xdg = tmp_path / "xdg"
+    (xdg / "agentive-kit").mkdir(parents=True, exist_ok=True)
+    if content is not None:
+        (xdg / "agentive-kit" / "preset").write_text(content, encoding="utf-8")
+    return {**os.environ, "XDG_CONFIG_HOME": str(xdg)}
+
+
+def preset_lines(result: subprocess.CompletedProcess) -> list[str]:
+    return [ln for ln in result.stdout.splitlines() if ln.startswith("PRESET:")]
+
+
+@pytest.mark.skipif(
+    not KIT_MARKERS_SRC.exists(), reason="kit_markers.py absent (consumer checkout)"
+)
+class TestAgainstPreset:
+    """KIT-0056 F8: `doctor --against-preset` reports record↔preset
+    divergence as PRESET:<field>:INFO lines — INFO only, never
+    WARN/FAIL, exit code never affected (a deliberately-lean project
+    is not wrong)."""
+
+    def test_divergence_is_info_only_exit_unchanged(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\nprofile: python\n")
+        env = _preset_env(tmp_path, "shape: planning\nprofile: python\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        lines = preset_lines(result)
+        assert any(
+            ln.startswith("PRESET:shape:INFO:") and "planning" in ln for ln in lines
+        ), result.stdout
+        assert not any(":WARN" in ln or ":FAIL" in ln for ln in lines)
+        assert result.returncode == 0  # checks all pass; divergence adds nothing
+
+    def test_match_reported(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\nprofile: python\n")
+        env = _preset_env(tmp_path, "shape: single\nprofile: python\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        assert any(
+            "record matches the preset" in ln for ln in preset_lines(result)
+        ), result.stdout
+
+    def test_bots_default_comparison_names_the_default(self, tmp_path):
+        # record has no bots line (= both expected, defaulted); preset
+        # says none → divergence INFO that names the defaulting
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        env = _preset_env(tmp_path, "bots: none\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        bots_info = [ln for ln in preset_lines(result) if ln.startswith("PRESET:bots:")]
+        assert bots_info, result.stdout
+        assert "defaulted" in bots_info[0]
+        assert "coderabbit bugbot" in bots_info[0]
+
+    def test_no_preset_file_reported(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        env = _preset_env(tmp_path, None)
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        assert any(
+            "no preset found" in ln for ln in preset_lines(result)
+        ), result.stdout
+        assert result.returncode == 0
+
+    def test_malformed_preset_skips_comparison_loudly(self, tmp_path):
+        # loud (names the line), and the WHOLE comparison is skipped —
+        # a partial read could report agreement on unparsed fields
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        env = _preset_env(tmp_path, "shape: single\nnot a preset line\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        lines = preset_lines(result)
+        assert any(
+            "malformed at line 2" in ln and "comparison skipped" in ln for ln in lines
+        ), result.stdout
+        assert not any(ln.startswith("PRESET:shape:") for ln in lines)
+        assert result.returncode == 0
+
+    def test_unreadable_record_skips_comparison(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: pyramid\n")
+        env = _preset_env(tmp_path, "shape: single\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        assert any(
+            "record unreadable" in ln and "comparison skipped" in ln
+            for ln in preset_lines(result)
+        ), result.stdout
+        assert result.returncode == 1  # from the record FAIL, not the preset
+
+    def test_without_flag_no_preset_lines(self, tmp_path):
+        # N1: plain doctor output is byte-free of PRESET: lines even
+        # with a preset present on the machine
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        env = _preset_env(tmp_path, "shape: planning\n")
+        result = run_doctor_rooted(root, checks, env=env)
+        assert preset_lines(result) == []
