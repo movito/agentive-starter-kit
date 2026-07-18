@@ -211,7 +211,10 @@ normalize_bots() {  # $1 raw (comma/space separated) → canonical, rc 1 on inva
     # one input can never be valid to one reader and invalid to another.
     local raw tok cr=0 bb=0 none=0
     raw="$(printf '%s' "$1" | tr ',' ' ' | tr '[:upper:]' '[:lower:]')"
-    for tok in $raw; do
+    # read-loop, not `for tok in $raw`: an unquoted for would glob a
+    # token like '*' into filenames before validation (CodeRabbit)
+    while IFS= read -r tok; do
+        [ -n "$tok" ] || continue
         case "$tok" in
             coderabbit) cr=1 ;;
             bugbot)     bb=1 ;;
@@ -221,7 +224,9 @@ normalize_bots() {  # $1 raw (comma/space separated) → canonical, rc 1 on inva
                 return 1
                 ;;
         esac
-    done
+    done <<EOF
+$(printf '%s\n' "$raw" | tr ' ' '\n')
+EOF
     if [ "$none" -eq 1 ]; then
         if [ "$cr" -eq 1 ] || [ "$bb" -eq 1 ]; then
             echo "Error: 'none' cannot be combined with bot names (got: $1)" >&2

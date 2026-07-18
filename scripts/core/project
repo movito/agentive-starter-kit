@@ -1568,11 +1568,35 @@ def _print_preset_comparison(shape, profile, bots, record_errors):
         "bots": bots if bots is not None else "coderabbit bugbot",
     }
     defaulted = {"bots": bots is None}
+    # Vocabulary checks mirror the door's validate_values: a preset
+    # value the door would refuse to install must read as malformed
+    # preset data here, never as legitimate divergence (CodeRabbit).
+    valid_vocab = {
+        "shape": ("single", "planning"),
+        "profile": ("python", "none"),
+    }
+    if (
+        preset_values.get("shape") == "planning"
+        and preset_values.get("profile") == "python"
+    ):
+        print(
+            "PRESET:comparison:INFO:preset declares an illegal pair "
+            "(planning forces profile none) — fix the preset; "
+            "shape/profile comparison skipped"
+        )
+        preset_values.pop("shape", None)
+        preset_values.pop("profile", None)
     compared = 0
     divergences = 0
     for key in ("shape", "profile", "bots"):
         preset_val = preset_values.get(key, "")
         if not preset_val:
+            continue
+        if key in valid_vocab and preset_val not in valid_vocab[key]:
+            print(
+                f"PRESET:{key}:INFO:preset {key} value invalid "
+                f"('{preset_val}') — {key} comparison skipped"
+            )
             continue
         if key == "bots":
             if bots_errored:

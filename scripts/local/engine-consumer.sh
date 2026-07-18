@@ -197,7 +197,10 @@ fi
 # the record's writer and defends its own input — a bad value written
 # here would poison every downstream reader.
 if [ -n "$BOTS" ]; then
-    for _bot in $BOTS; do
+    # read-loop, not `for _bot in $BOTS`: an unquoted for would glob a
+    # token like '*' into filenames before validation (CodeRabbit)
+    while IFS= read -r _bot; do
+        [ -n "$_bot" ] || continue
         case "$_bot" in
             coderabbit|bugbot|none) ;;
             *)
@@ -205,7 +208,9 @@ if [ -n "$BOTS" ]; then
                 exit 1
                 ;;
         esac
-    done
+    done <<EOF
+$(printf '%s\n' "$BOTS" | tr ' ' '\n')
+EOF
     case " $BOTS " in
         *" none "*)
             if [ "$BOTS" != "none" ]; then
@@ -801,7 +806,13 @@ if [ -n "$BOTS" ]; then
         printf '%s' "$1" | tr ',' ' ' | tr '[:upper:]' '[:lower:]' |
             tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/ $//'
     }
-    if [ -z "$EXISTING_BOTS" ]; then
+    if printf '%s\n' "$REGION_NOW" | grep -q '^[[:space:]]*bots:' && [ -z "$EXISTING_BOTS" ]; then
+        # presence-aware (CodeRabbit): a bots: line WITH NO VALUE is a
+        # malformed record, not absence — appending a second line after
+        # it would leave two declarations for downstream readers
+        echo "Error: the target's kit-install region has a bots: line with no value — fix the record in CLAUDE.md, then re-run"
+        exit 1
+    elif [ -z "$EXISTING_BOTS" ]; then
         # no trailing newline: the region body group excludes the
         # newline before END, so extract→replace stays byte-identical
         printf '%s\nbots: %s' "$REGION_NOW" "$BOTS" |

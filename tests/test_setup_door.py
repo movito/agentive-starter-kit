@@ -281,6 +281,22 @@ class TestNormalizeBots:
         assert "unknown bot 'horsebot'" in result.stderr
         assert result.stdout.strip() == "rc=1"
 
+    def test_glob_token_not_expanded(self, tmp_path):
+        # CodeRabbit PR #83: a '*' token must be rejected AS '*', not
+        # glob-expanded into whatever filenames the cwd holds
+        (tmp_path / "coderabbit").touch()  # a file a glob could hit
+        result = subprocess.run(
+            ["bash", "-c", f'source "{DOOR}"; normalize_bots "*"'],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            stdin=subprocess.DEVNULL,
+            env=_scrubbed_env(),
+            cwd=tmp_path,
+        )
+        assert result.returncode == 1
+        assert "unknown bot '*'" in result.stderr
+
     def test_none_combined_rejected(self):
         result = sourced('normalize_bots "none bugbot" || echo "rc=$?"')
         assert "'none' cannot be combined" in result.stderr
@@ -700,6 +716,9 @@ class TestPresetE2E:
             timeout=30,
             env=env,
         )
+        # rc asserted first — a FAILED git call also has empty stdout
+        # (CodeRabbit): empty output only means clean when git ran
+        assert status.returncode == 0, status.stderr
         assert status.stdout.strip() == ""  # nothing staged, nothing dangling
         tracked_grep = subprocess.run(
             ["git", "-C", str(target), "grep", "-l", SECRET, "HEAD"],
@@ -708,6 +727,7 @@ class TestPresetE2E:
             timeout=30,
             env=env,
         )
+        assert tracked_grep.returncode == 1, tracked_grep.stderr  # 1 = no match
         assert tracked_grep.stdout.strip() == ""  # secret in no tracked file
         # F7: the run read the preset but never touched it
         assert preset_file.read_bytes() == preset_before
@@ -942,6 +962,23 @@ class TestBotsDeclarationE2E:
         assert region.count("bots:") == 1
         # the operator's spelling is preserved, not rewritten
         assert "bots: BugBot, CodeRabbit" in region
+
+    def test_valueless_existing_bots_line_fails_loud(self, tmp_path):
+        """CodeRabbit PR #83: a record whose bots: line has NO value is
+        malformed, not absent — appending a second line after it would
+        leave two declarations; the engine refuses loudly instead."""
+        target = make_adopt_dir(tmp_path, "valueless")
+        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
+        claude_md = target / "CLAUDE.md"
+        text = claude_md.read_text(encoding="utf-8")
+        claude_md.write_text(
+            text.replace("\nprofile: none\n", "\nprofile: none\nbots:\n"),
+            encoding="utf-8",
+        )
+        result = run_door("--adopt", str(target), "--bots", "none")
+        assert result.returncode == 1
+        assert "bots: line with no value" in result.stdout + result.stderr
+        assert _kit_install_region(target).count("bots:") == 1  # no second line
 
     def test_new_without_bots_writes_no_line(self, tmp_path):
         """N1: no flag, no preset — the record is byte-identical to a

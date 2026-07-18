@@ -246,15 +246,21 @@ if [ -n "$BOTS_DECLARED" ]; then
     # fail closed to expecting both, and say so. The loop also
     # rebuilds the string with single-space separators so the exact
     # "none" comparison below cannot miss on stray whitespace.
+    # read-loop, not `for _BOT_TOK in $BOTS_DECLARED`: an unquoted for
+    # would glob a token like '*' into filenames before validation
+    # (CodeRabbit)
     _BOTS_VALID=true
     _BOTS_TOKENS=""
-    for _BOT_TOK in $BOTS_DECLARED; do
+    while IFS= read -r _BOT_TOK; do
+        [ -n "$_BOT_TOK" ] || continue
         case "$_BOT_TOK" in
             coderabbit|bugbot|none) ;;
             *) _BOTS_VALID=false ;;
         esac
         _BOTS_TOKENS="$_BOTS_TOKENS$_BOT_TOK "
-    done
+    done <<EOF
+$(printf '%s\n' "$BOTS_DECLARED" | tr ' ' '\n')
+EOF
     BOTS_DECLARED="${_BOTS_TOKENS% }"
     if [ "$_BOTS_VALID" = true ] && [ -n "$BOTS_DECLARED" ]; then
         case " $BOTS_DECLARED " in

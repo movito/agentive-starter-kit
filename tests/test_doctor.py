@@ -1169,7 +1169,9 @@ class TestAgainstPreset:
 
     def test_divergence_is_info_only_exit_unchanged(self, tmp_path):
         root, checks = _shape_fixture(tmp_path, "shape: single\nprofile: python\n")
-        env = _preset_env(tmp_path, "shape: planning\nprofile: python\n")
+        # planning+none is a LEGAL preset pair that diverges from the
+        # record (the illegal planning+python pair has its own test)
+        env = _preset_env(tmp_path, "shape: planning\nprofile: none\n")
         result = run_doctor_rooted(root, checks, "--against-preset", env=env)
         lines = preset_lines(result)
         assert any(
@@ -1336,3 +1338,35 @@ class TestBotsReaderTolerance:
         assert any(
             "record matches the preset" in ln for ln in preset_lines(result)
         ), result.stdout
+
+    @pytest.mark.parametrize(
+        "preset,field,bad",
+        [
+            ("shape: pyramid\n", "shape", "pyramid"),
+            ("profile: elixir\n", "profile", "elixir"),
+        ],
+    )
+    def test_invalid_preset_shape_profile_skips_field(
+        self, tmp_path, preset, field, bad
+    ):
+        # CodeRabbit PR #83: a value the door would refuse to install
+        # reads as malformed preset data, never legitimate divergence
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        env = _preset_env(tmp_path, preset)
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        lines = preset_lines(result)
+        assert any(
+            f"preset {field} value invalid" in ln and bad in ln for ln in lines
+        ), result.stdout
+        assert not any(f"PRESET:{field}:INFO:record" in ln for ln in lines)
+        assert result.returncode == 0
+
+    def test_illegal_preset_pair_skips_both_fields(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        env = _preset_env(tmp_path, "shape: planning\nprofile: python\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        lines = preset_lines(result)
+        assert any("illegal pair" in ln for ln in lines), result.stdout
+        assert not any(ln.startswith("PRESET:shape:INFO:record") for ln in lines)
+        assert not any(ln.startswith("PRESET:profile:INFO:record") for ln in lines)
+        assert result.returncode == 0
