@@ -3,7 +3,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0053 DONE (PRs #81+#82; planner handled the stacked retarget + one CodeRabbit docs fix + merge) — P3 complete, transformation 4/6. THE THREE-INSTALLS SAGA CLOSED: editable dev build on PATH has UNATTENDED, PyPI builds don't; belt-and-braces guidance shipped (1.5.2 + skill); KIT-0055 filed (doctor PATH-origin check); retros corrected. DOWNSTREAM CHECKPOINT NOW OPEN (post-P3). Next: P5+P7 (degraded modes + operator presets) on operator go, then P6 closes the arc (rm -rf allowlist reminder attached).",
+    "brief_note": "KIT-0056 (P5+P7: degraded modes + operator presets, transformation 5/6) specced, evaluated (2 accepted incl. already-satisfied resolver, 1 declined via second-operator trigger), promoted; worktree provisioned. Operator directive: finish the kit before downstream — checkpoint stays open but queued behind P6. After KIT-0056: P6 (homes+prune) closes the arc -> rm-rf allowlist reminder fires, then the downstream pass.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
@@ -11,7 +11,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0053 complete (PRs #81+#82 merged, retro corrected re: three-installs). Next assignment expected: P5+P7 (KIT-0056) once planner specs it.",
+    "brief_note": "KIT-0056 (bots declaration + gate SKIPs + preset reader in resolve() + env-source + one-button demo) ready. Worktree: ../ask-worktrees/KIT-0056 (pull --ff-only first). Characterize door prompts + Gates 2/3 FIRST (N1). HOME-override in all preset tests.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
