@@ -271,6 +271,26 @@ class TestNormalizeBots:
         assert "'none' cannot be combined" in result.stderr
         assert result.stdout.strip() == "rc=1"
 
+    def test_empty_input_is_unanswered_not_error(self):
+        # rc 1 with NO error text: empty means "question still open"
+        # (the caller prompts or writes nothing), never a rejection
+        result = sourced('normalize_bots "" || echo "rc=$?"')
+        assert result.stdout.strip() == "rc=1"
+        assert result.stderr == ""
+
+    def test_env_not_gitignored_refuses_secret_copy(self, tmp_path):
+        # F6's hard guard, exercised directly: a target whose .env is
+        # NOT gitignored must refuse the copy outright — no .env file,
+        # exit 1, and the reason named
+        target = make_adopt_dir(tmp_path, "no-ignore")  # no .gitignore at all
+        src = tmp_path / "env-template"
+        src.write_text("KEY=secret-fixture\n", encoding="utf-8")
+        src.chmod(0o600)
+        result = sourced(f'TARGET="{target}"; apply_env_source "{src}"')
+        assert result.returncode == 1
+        assert "refusing to seed secrets" in result.stderr
+        assert not (target / ".env").exists()
+
 
 class TestExitContract:
     """F6: 0 install-ok / 1 install-failed / 2 usage-or-illegal."""

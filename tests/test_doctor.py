@@ -1286,3 +1286,30 @@ class TestBotsReaderTolerance:
             ln.startswith("DOCTOR:bots-record:FAIL:") for ln in doctor_lines(result)
         ), result.stdout
         assert result.returncode == 1
+
+    def test_invalid_preset_bots_value_skips_that_field(self, tmp_path):
+        root, checks = _shape_fixture(tmp_path, "shape: single\nbots: none\n")
+        env = _preset_env(tmp_path, "bots: horsebot\n")
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        bots_info = [ln for ln in preset_lines(result) if ln.startswith("PRESET:bots:")]
+        assert bots_info, result.stdout
+        assert "invalid" in bots_info[0]
+        assert "horsebot" in bots_info[0]
+        assert result.returncode == 0  # INFO only, never an exit change
+
+    def test_unreadable_preset_file_skips_comparison(self, tmp_path):
+        if os.geteuid() == 0:
+            pytest.skip("permission checks are meaningless as root")
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        env = _preset_env(tmp_path, "shape: single\n")
+        preset = Path(env["XDG_CONFIG_HOME"]) / "agentive-kit" / "preset"
+        preset.chmod(0o000)
+        try:
+            result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+            assert any(
+                "preset unreadable" in ln and "comparison skipped" in ln
+                for ln in preset_lines(result)
+            ), result.stdout
+            assert result.returncode == 0
+        finally:
+            preset.chmod(0o600)
