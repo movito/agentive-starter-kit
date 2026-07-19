@@ -37,6 +37,22 @@ defensive:
       - "--only outside the allowlist errors instead of silently no-op (KIT-0049)"
       - "record readers: a partially-unreadable multi-field record poisons DEPENDENT fields together, never validates them independently — an unreadable shape must poison the profile, else profile-scoped SKIPs silently narrow the promised full check set (KIT-0050, sixth face)"
     caught_by: "o3 FAIL + fast-v2 + claude-code + BugBot + CodeRabbit (convergent, KIT-0049); BugBot record-reader face (KIT-0050)"
+  record_duplicate_keys_first_wins:
+    rule: >
+      The kit-install record (CLAUDE.md KIT-LOCAL region) treats
+      duplicate keys as FIRST-match-wins in every reader — lenient BY
+      DESIGN, not by accident. Rationale: the record has a single
+      machine writer (the consumer engine), so duplicates only arise
+      from manual edits; the cross-reader conformance harness pins
+      first-wins with an explicit duplicate-key fixture, making the
+      leniency a tested contract. Contrast: the operator PRESET file is
+      strict (duplicates abort naming the line) because it is
+      hand-authored. Do not re-litigate in review rounds; a policy
+      change goes through the conformance harness first.
+    examples:
+      - "duplicate shape:/profile:/bots: lines -> first occurrence read, all readers agree (KIT-0056 threads; pinned in the P6 conformance fixture table)"
+      - "preset duplicate keys -> loud abort (KIT-0056 F5)"
+    caught_by: "planner decision 2026-07-19 (KIT-0056 retro item 4)"
   external_cli_integration:
     rule: >
       Before writing subprocess.run() for any external CLI tool, read

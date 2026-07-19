@@ -1,6 +1,6 @@
 # KIT-0056: Degraded modes + operator presets — the floor and the ceiling (ADR-0027 P5+P7)
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 4-6 hours

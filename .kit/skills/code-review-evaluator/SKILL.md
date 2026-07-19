@@ -274,7 +274,9 @@ cat .adversarial/logs/<TASK-ID>-code-review-input--claude-code.md
 
 Concatenate all evaluator outputs into a single review artifact tracked
 in git. Use the aggregation pattern (fail-fast when no logs match) so
-an empty review file can't silently mask evaluator failures:
+an empty review file can't silently mask evaluator failures. **The
+snippet is bash-only** (`shopt`): harness shells may be zsh — run it
+via `bash -c '…'` (KIT-0056 retro):
 
 ```bash
 shopt -s nullglob
