@@ -1,6 +1,6 @@
 # KIT-0056 Handoff — feature-developer
 
-**Task**: `.kit/tasks/2-todo/KIT-0056-degraded-modes-and-presets.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0056-degraded-modes-and-presets.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-18 (planner-f5)
 **Estimated effort**: 4–6 hours

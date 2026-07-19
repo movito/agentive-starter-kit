@@ -189,6 +189,32 @@ key — surface the gap to the operator instead.
 
 If the required API key is missing, fall back to another evaluator. If none of the keys are set, document the failure and proceed to human review.
 
+### Single-key (degraded) mode
+
+Not every project carries all three provider keys (KIT-0056, ADR-0027
+P5). With exactly ONE key available, the trio degrades to a documented
+mode — never a silent partial trio:
+
+1. Run the one evaluator your key supports (see the table above for
+   the key→evaluator mapping).
+2. Run the self-review checklist (`.kit/skills/self-review/SKILL.md`)
+   in full — it substitutes for the missing models' breadth, not for
+   the one evaluator you can run.
+3. **NAME the mode in the persisted review record** (Step 4's
+   artifact). First line of the record, e.g.:
+
+   ```
+   Mode: degraded single-key (only GEMINI_API_KEY present) —
+   code-reviewer-fast only + self-review checklist; code-reviewer and
+   claude-code not run.
+   ```
+
+Gate 5 is unchanged: a review record is still required, and a degraded
+record that names its mode satisfies it. What is NOT acceptable is a
+record that looks like a full trio ran when it didn't — every degraded
+surface names its mode (the `intersection_names_drops` pattern applied
+to service presence).
+
 ```bash
 # Fast gate (every PR)
 adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md

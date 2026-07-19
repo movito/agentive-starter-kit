@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Degraded modes + operator presets** (KIT-0056, KIT-ADR-0027
+  P5+P7; core scripts 3.4.0):
+  - *The floor (P5)*: a `bots:` declaration in the CLAUDE.md
+    kit-install region (`bots: none` | subsets of `coderabbit
+    bugbot`; door flag `--bots`, engine-written, `_doctor_install`
+    family-read) makes preflight Gates 2/3 report honest
+    `SKIP:declared absent in kit-install` instead of false FAILs for
+    bot-less adopters. Absent line = both bots expected — zero
+    migration. Invalid declarations fail closed (gates run) with a
+    NOTICE; doctor FAILs a malformed `bots:` line
+    (`DOCTOR:bots-record:FAIL`). Single-key degraded evaluation is
+    documented in the code-review-evaluator skill — the review record
+    names its mode; Gate 5 unchanged.
+  - *The ceiling (P7)*: the operator preset
+    `~/.config/agentive-kit/preset` (flat `key: value`; keys: shape,
+    profile, bots, evaluators, venv, target-path, target-github,
+    env-source) fills the KIT-0053 `resolve` stub — resolution stays
+    CLI > preset > kit defaults > prompt, one resolver. Unknown keys
+    WARN and skip; malformed/duplicate lines fail loud naming the
+    line; `--no-preset` bypasses; on `--adopt`, an existing
+    kit-install record beats the preset. `env-source:` copies an
+    operator-owned .env template to `--new` targets at mode 0600 —
+    never printed, never staged. `project doctor --against-preset`
+    reports record↔preset divergence as INFO-only `PRESET:` lines.
+    The preset is never distributed; shipped example:
+    `docs/preset.example`.
+
 - **The one setup door** (KIT-0053, KIT-ADR-0027 P3):
   `scripts/local/bootstrap` is the single kit-side entrance —
   `--new`/`--adopt` × `--shape single|planning` × `--profile

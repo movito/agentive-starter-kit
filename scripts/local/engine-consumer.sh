@@ -49,6 +49,16 @@
 #              (planning shape) recorded in the CLAUDE.md kit-install
 #              region and seeded into ## Target Repository. Placeholders
 #              are written when omitted.
+#   --bots <b> (KIT-0056, ADR-0027 P5) record which review bots run on
+#              this project as a `bots:` line in the kit-install region:
+#              'none', or a space-separated subset of
+#              'coderabbit bugbot' (the door normalizes; this engine
+#              validates). Omitted = no line = both bots expected
+#              (today's behavior). Preflight Gates 2/3 SKIP
+#              declared-absent bots. An existing region without the
+#              line gets it added surgically via kit_markers (the one
+#              writer path); a conflicting recorded value is an error,
+#              never a silent overwrite.
 #
 # Prerequisites:
 #   - Target directory exists
@@ -81,8 +91,9 @@ SHAPE="single"
 PROFILE=""
 TARGET_PATH=""
 TARGET_GITHUB=""
+BOTS=""
 RECORD_ONLY=0
-USAGE="Usage: $0 [--no-kit] [--shape single|planning] [--profile python|none] [--target-path <p>] [--target-github <o/r>] <target-directory>"
+USAGE="Usage: $0 [--no-kit] [--shape single|planning] [--profile python|none] [--target-path <p>] [--target-github <o/r>] [--bots <b>] <target-directory>"
 while [ $# -gt 0 ]; do
     case "$1" in
         --no-kit)
@@ -118,6 +129,13 @@ while [ $# -gt 0 ]; do
             ;;
         --target-github=*)
             TARGET_GITHUB="${1#--target-github=}"
+            ;;
+        --bots)
+            shift
+            BOTS="${1:-}"
+            ;;
+        --bots=*)
+            BOTS="${1#--bots=}"
             ;;
         --*)
             echo "Error: unknown flag: $1"
@@ -174,6 +192,33 @@ fi
 if [ -n "$TARGET_GITHUB" ] && ! printf '%s' "$TARGET_GITHUB" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
     echo "Error: --target-github must look like owner/repo (got: $TARGET_GITHUB)"
     exit 1
+fi
+# --bots validation (KIT-0056): the door normalizes, but the engine is
+# the record's writer and defends its own input — a bad value written
+# here would poison every downstream reader.
+if [ -n "$BOTS" ]; then
+    # read-loop, not `for _bot in $BOTS`: an unquoted for would glob a
+    # token like '*' into filenames before validation (CodeRabbit)
+    while IFS= read -r _bot; do
+        [ -n "$_bot" ] || continue
+        case "$_bot" in
+            coderabbit|bugbot|none) ;;
+            *)
+                echo "Error: unknown bot '$_bot' in --bots (expected: 'none' or a subset of 'coderabbit bugbot')"
+                exit 1
+                ;;
+        esac
+    done <<EOF
+$(printf '%s\n' "$BOTS" | tr ' ' '\n')
+EOF
+    case " $BOTS " in
+        *" none "*)
+            if [ "$BOTS" != "none" ]; then
+                echo "Error: 'none' cannot be combined with bot names (--bots $BOTS)"
+                exit 1
+            fi
+            ;;
+    esac
 fi
 
 if [ -z "$TARGET" ]; then
@@ -346,9 +391,9 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.3.0",
+  "core_version": "3.4.0",
   "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-07-14T00:00:00Z",
+  "synced_at": "2026-07-18T00:00:00Z",
   "files": {
     "scripts_core": [
       "core/__init__.py",
@@ -727,14 +772,57 @@ seed_region() {
 }
 
 if [ "$SHAPE" = "planning" ]; then
-    seed_region kit-install \
-        "$(printf 'shape: planning\nprofile: %s\ntarget_path: %s\ntarget_github: %s' \
-            "$PROFILE" "$TP" "$TG")" \
-        "shape: planning, profile: $PROFILE"
+    KIT_INSTALL_BODY="$(printf 'shape: planning\nprofile: %s\ntarget_path: %s\ntarget_github: %s' \
+        "$PROFILE" "$TP" "$TG")"
 else
-    seed_region kit-install \
-        "$(printf 'shape: single\nprofile: %s' "$PROFILE")" \
-        "shape: single, profile: $PROFILE"
+    KIT_INSTALL_BODY="$(printf 'shape: single\nprofile: %s' "$PROFILE")"
+fi
+if [ -n "$BOTS" ]; then
+    KIT_INSTALL_BODY="$KIT_INSTALL_BODY
+bots: $BOTS"
+fi
+seed_region kit-install "$KIT_INSTALL_BODY" \
+    "shape: $SHAPE, profile: $PROFILE${BOTS:+, bots: $BOTS}"
+
+# A PRESERVED region + --bots: the seed above did not touch it, and
+# silently dropping an explicit declaration would be the masking
+# class. Add the line surgically via kit_markers (the one writer
+# path); a conflicting recorded value is an error, never an overwrite.
+if [ -n "$BOTS" ]; then
+    if ! REGION_NOW="$(python3 "$KIT_MARKERS" extract "$CLAUDE_MD" kit-install 2>&1)"; then
+        echo "Error: kit_markers extract kit-install failed on $CLAUDE_MD:"
+        echo "       $REGION_NOW"
+        exit 1
+    fi
+    # whitespace-tolerant like every other record reader — an indented
+    # existing line read as "absent" would append a SECOND bots: line
+    EXISTING_BOTS="$(printf '%s\n' "$REGION_NOW" |
+        sed -n 's/^[[:space:]]*bots:[[:space:]]*//p' | head -1 |
+        sed 's/[[:space:]]*$//')"
+    # sorted-set canonical form for the equality check below — an
+    # existing 'BugBot, CodeRabbit' is the same declaration as
+    # 'coderabbit bugbot', not a conflict (BugBot, this PR)
+    _canon_bots() {
+        printf '%s' "$1" | tr ',' ' ' | tr '[:upper:]' '[:lower:]' |
+            tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/ $//'
+    }
+    if printf '%s\n' "$REGION_NOW" | grep -q '^[[:space:]]*bots:' && [ -z "$EXISTING_BOTS" ]; then
+        # presence-aware (CodeRabbit): a bots: line WITH NO VALUE is a
+        # malformed record, not absence — appending a second line after
+        # it would leave two declarations for downstream readers
+        echo "Error: the target's kit-install region has a bots: line with no value — fix the record in CLAUDE.md, then re-run"
+        exit 1
+    elif [ -z "$EXISTING_BOTS" ]; then
+        # no trailing newline: the region body group excludes the
+        # newline before END, so extract→replace stays byte-identical
+        printf '%s\nbots: %s' "$REGION_NOW" "$BOTS" |
+            python3 "$KIT_MARKERS" replace "$CLAUDE_MD" kit-install --stdin
+        echo "  kit-install region: bots line added (bots: $BOTS)"
+    elif [ "$(_canon_bots "$EXISTING_BOTS")" != "$(_canon_bots "$BOTS")" ]; then
+        echo "Error: --bots '$BOTS' conflicts with the recorded declaration (bots: $EXISTING_BOTS)"
+        echo "       Update the kit-install region in CLAUDE.md first, or drop the flag."
+        exit 1
+    fi
 fi
 
 # Project Rules region (KIT-0050 F6) — seeded per profile, consumer-
