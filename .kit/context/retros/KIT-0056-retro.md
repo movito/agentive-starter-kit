@@ -1,9 +1,14 @@
 ## KIT-0056 — Degraded Modes + Operator Presets, ADR-0027 P5+P7 (PR #83)
 
-**Date**: 2026-07-18
+**Date**: 2026-07-18 (merged 2026-07-19)
 **Agent**: feature-developer-f5
 **Mode**: single-repo
 **Scorecard**: 12 threads, 0 regressions, 5 fix rounds, 13 commits
+**Outcome**: PR #83 squash-merged to main as `2859d25` with all 7
+preflight gates PASS (CodeRabbit APPROVED, BugBot clean, 12/12
+threads resolved). ADR-0027 P5+P7 complete — only P6 remains in the
+arc. Task file rode the squash into `4-in-review`; planner closeout
+pending (see Process Actions).
 
 ### What Worked
 
