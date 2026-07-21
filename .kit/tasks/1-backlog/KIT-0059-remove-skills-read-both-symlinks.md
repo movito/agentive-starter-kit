@@ -26,9 +26,12 @@ read-both deprecation cycle, N1). This task ends the cycle.
 
 ## Requirements
 
-- Delete the three symlinks: `.kit/skills/code-review-evaluator`,
-  `.kit/skills/review-handoff`, `.kit/skills/self-review` — and the
-  now-empty `.kit/skills/` directory.
+- Delete the three read-both entries — real directories
+  `.kit/skills/{code-review-evaluator,review-handoff,self-review}/`
+  each holding a relative `SKILL.md` symlink into `.claude/skills/`
+  (file-level links inside real dirs, so the sync engine's
+  `_read_dir` sees content — see TestReadBothDeprecationCycle) — and
+  the then-empty `.kit/skills/` directory.
 - Retarget the manifest: the `kit_builder` tier's `.kit/skills/` entry
   in `scripts/.core-manifest.json` becomes `.claude/skills/` (or is
   dropped if the tier review says `.claude/` distribution suffices) —

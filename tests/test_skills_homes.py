@@ -2,9 +2,11 @@
 
 `.claude/skills/` is the single repo home for ALL skills — it is Claude
 Code's own resolution path and the home the consumer engine distributes.
-`.kit/skills/<name>` survives ONE release as a relative symlink into the
-canonical home (the read-both deprecation cycle, N1: agents and docs
-reading the old path keep working). The symlinks — and the
+`.kit/skills/<name>/SKILL.md` survives ONE release as a relative
+symlink into the canonical home, inside a REAL directory (the read-both
+deprecation cycle, N1: agents and docs reading the old path keep
+working — see the file-vs-dir symlink rationale in
+TestReadBothDeprecationCycle). The links — and the
 TestReadBothDeprecationCycle class below — are removed in 0.9.0 by
 KIT-0059, alongside KIT-0047 and KIT-0054's pinned removals.
 """
@@ -12,6 +14,7 @@ KIT-0059, alongside KIT-0047 and KIT-0054's pinned removals.
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -43,15 +46,20 @@ class TestCanonicalHome:
 
     def test_no_new_content_in_deprecated_home(self):
         """During the deprecation cycle the old home may hold ONLY the
-        read-both symlinks — a real file or directory there is a skill
+        read-both link structure — real content there is a skill
         landing in the wrong home."""
         if not DEPRECATED.exists():
             pytest.skip(".kit/skills absent (consumer checkout)")
         for entry in DEPRECATED.iterdir():
-            assert entry.is_symlink(), (
-                f"{entry} is real content in the deprecated home — "
+            assert entry.name in BUILDER_SKILLS, (
+                f"{entry} is new content in the deprecated home — "
                 "new skills belong in .claude/skills/"
             )
+            for child in entry.iterdir():
+                assert child.is_symlink(), (
+                    f"{child} is a real file in the deprecated home — "
+                    "content lives only in .claude/skills/"
+                )
 
 
 @pytest.mark.skipif(
@@ -69,12 +77,39 @@ class TestReadBothDeprecationCycle:
         assert old.read_text(encoding="utf-8") == new.read_text(encoding="utf-8")
 
     @pytest.mark.parametrize("skill", BUILDER_SKILLS)
-    def test_old_path_is_relative_symlink_into_canonical_home(self, skill):
-        link = DEPRECATED / skill
+    def test_old_path_is_relative_file_symlink_into_canonical_home(self, skill):
+        """FILE-level symlinks inside real directories, deliberately:
+        the manifest sync engine's _read_dir (rglob + is_file) does not
+        descend into symlinked DIRECTORIES, so a dir-symlink would make
+        a kit_builder pull-sync see .kit/skills/ as empty and prune
+        consumer copies. A file symlink is followed by is_file() and
+        ships as dereferenced content."""
+        skill_dir = DEPRECATED / skill
+        assert skill_dir.is_dir() and not skill_dir.is_symlink(), (
+            f"{skill_dir} must be a real directory (sync engines do not "
+            "descend into symlinked dirs)"
+        )
+        link = skill_dir / "SKILL.md"
         assert link.is_symlink(), f"{link} must be a symlink during the cycle"
         target = os.readlink(link)
         assert not os.path.isabs(target), (
             f"{link} -> {target}: must be relative (absolute links break "
             "on clone/export)"
         )
-        assert (link.parent / target).resolve() == (CANONICAL / skill).resolve()
+        assert (link.parent / target).resolve() == (
+            CANONICAL / skill / "SKILL.md"
+        ).resolve()
+
+    def test_sync_engine_reads_content_through_old_path(self):
+        """The seam this shape exists for: the pull-sync reader must see
+        the three skills as real content under the deprecated entry."""
+        sys.path.insert(0, str(REPO_ROOT / "scripts" / "core"))
+        try:
+            from sync_from_manifest import _read_dir
+        finally:
+            sys.path.pop(0)
+        contents = _read_dir(DEPRECATED)
+        assert set(contents) == {f"{s}/SKILL.md" for s in BUILDER_SKILLS}
+        for skill in BUILDER_SKILLS:
+            canonical = (CANONICAL / skill / "SKILL.md").read_bytes()
+            assert contents[f"{skill}/SKILL.md"].data == canonical
