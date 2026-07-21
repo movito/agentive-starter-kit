@@ -12,7 +12,7 @@ build-backend = "setuptools.build_meta"
 packages = []
 
 [project]
-name = "your-project-name"  # TODO: Change this to your project name
+name = "agentive-starter-kit"
 version = "0.8.0"
 description = "Your project description"  # TODO: Update description
 readme = "README.md"

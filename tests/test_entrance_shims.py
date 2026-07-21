@@ -141,10 +141,16 @@ class TestCreateProjectSurface:
         )
         assert len(log.stdout.strip().splitlines()) == 1
 
-        # identity reset
-        assert 'version = "0.1.0"' in (target / "pyproject.toml").read_text(
-            encoding="utf-8"
+        # identity reset — the target keeps the placeholder + TODO the
+        # onboarding/bootstrap agents rewrite, never the kit's own name
+        # (KIT-0057: the kit's pyproject is agentive-starter-kit now)
+        pyproject = (target / "pyproject.toml").read_text(encoding="utf-8")
+        assert 'version = "0.1.0"' in pyproject
+        assert (
+            'name = "your-project-name"  # TODO: Change this to your project name'
+            in pyproject
         )
+        assert 'name = "agentive-starter-kit"' not in pyproject
         state = json.loads(
             (target / ".kit" / "context" / "current-state.json").read_text(
                 encoding="utf-8"
