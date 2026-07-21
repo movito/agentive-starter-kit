@@ -297,7 +297,7 @@ character class `[A-Za-z0-9_.-]+` accepted `..`. One inline test
 against `CLAUDE.md` would have surfaced it before commit.
 
 This rule and the previous ("Self-contained snippets") apply
-equivalently to skill files in `.kit/skills/` and workflow docs in
+equivalently to skill files in `.claude/skills/` and workflow docs in
 `.kit/context/workflows/`.
 
 ## For refactoring tasks: skip steps 1-11

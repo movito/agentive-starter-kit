@@ -197,7 +197,7 @@ mode — never a silent partial trio:
 
 1. Run the one evaluator your key supports (see the table above for
    the key→evaluator mapping).
-2. Run the self-review checklist (`.kit/skills/self-review/SKILL.md`)
+2. Run the self-review checklist (`.claude/skills/self-review/SKILL.md`)
    in full — it substitutes for the missing models' breadth, not for
    the one evaluator you can run.
 3. **NAME the mode in the persisted review record** (Step 4's

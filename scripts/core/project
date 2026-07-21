@@ -1837,7 +1837,7 @@ def cmd_sync(args, project_dir):
     exit ``2``, never ``0``/``1``; source-acquisition failures exit ``4``
     (``resolve_source()``, matching the engine's I/O-error code); engine
     failures pass through the engine's own code. Also a self-review
-    checklist item (``.kit/skills/self-review/SKILL.md``).
+    checklist item (``.claude/skills/self-review/SKILL.md``).
     """
     # Sync provisions by SHAPE; the profile only scopes doctor checks
     # and the bots declaration only scopes preflight gates, so errors
