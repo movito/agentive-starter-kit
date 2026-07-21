@@ -470,12 +470,14 @@ mkdir -p "$TARGET/scripts/optional"
 rm -f "$TARGET/tests/test_kit_markers.py" \
       "$TARGET/tests/test_bootstrap_consumer.py" \
       "$TARGET/tests/test_bootstrap_shapes.py" \
+      "$TARGET/tests/test_bots_conformance.py" \
       "$TARGET/tests/test_check_hook_seeds.py" \
       "$TARGET/tests/test_entrance_shims.py" \
       "$TARGET/tests/test_setup_door.py"
 "${RSYNC_BASE[@]}" --exclude='test_kit_markers.py' \
     --exclude='test_bootstrap_consumer.py' \
     --exclude='test_bootstrap_shapes.py' \
+    --exclude='test_bots_conformance.py' \
     --exclude='test_check_hook_seeds.py' \
     --exclude='test_entrance_shims.py' \
     --exclude='test_setup_door.py' \
