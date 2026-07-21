@@ -199,11 +199,31 @@ mechanism, never new mechanism.
   channel/pin, Linear on/off, agent set, model-pin policy — and nothing
   else. If bootstrap doesn't ask it, a preset cannot set it. This keeps
   the preset from becoming a shadow config system.
-- **It lives outside every repo**: `~/.config/agentive-kit/preset`
-  (plus an optional `env.source` secrets file, `chmod 600`, *referenced*
-  by the preset, never embedded in it). Presets are never committed to
-  any repo and never travel on any sync channel; the kit ships only a
-  commented example.
+- **It lives outside every repo, in a VISIBLE sibling folder**
+  *(amended 2026-07-21, operator review — the original
+  `~/.config/agentive-kit/` location asked users to keep config in an
+  invisible dotfolder, a threshold many won't cross, protected only by
+  obscurity)*: the config home is
+  **`<parent-of-kit-primary-clone>/agentive-config/`** — wherever the
+  kit is cloned, the config sits next to it, discoverable in the folder
+  the user already works in (for this operator: `~/Github/agentive-config/`).
+  The door resolves the primary clone worktree-safely
+  (`--git-common-dir`) and takes its parent; one
+  `AGENTIVE_KIT_CONFIG_DIR` env override exists for tests and unusual
+  layouts — an override, never a search chain (a fallback list would be
+  the six-doors problem in miniature). Contents: `preset`, optional
+  `env.source` (0600, *referenced* by the preset, never embedded). The
+  door **seeds the folder defensively on first use**: a `.gitignore`
+  excluding `env.source`/`*.env` plus a one-paragraph README — so a
+  later `git init` (an invited, supported pattern: a private config
+  repo makes the preset versioned, backed up, and portable) cannot
+  commit secrets by default. Doctor asserts the safety properties: if
+  the folder has a git remote, visibility must be private (via `gh`)
+  and `env.source` must be untracked. The loaded preset path is always
+  NAMED in door/doctor output; the legacy `~/.config` location gets a
+  one-release migration notice, never a silent fallback. Presets still
+  never travel on any sync channel; the kit ships only a commented
+  example.
 - **Resolution order follows the git-config precedent**: CLI flags >
   preset > kit-neutral defaults, with interactive prompts only for
   questions nothing answered. A stranger with no preset gets the P5
