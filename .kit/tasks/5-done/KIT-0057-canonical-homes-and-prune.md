@@ -1,6 +1,6 @@
 # KIT-0057: Canonical homes + the prune — the arc closes (ADR-0027 P6)
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 4-6 hours

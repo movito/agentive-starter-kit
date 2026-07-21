@@ -3,7 +3,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0056 DONE (PR #83, 2859d25) — P5+P7 complete, closeout done, retro processed (first-wins BLESSED in patterns.yml + conformance-pinned; skill bash-only nit fixed; guards folded into P6). KIT-0057 (P6 — THE ARC'S LAST TASK: skills merge inventory-gated, prune, both guards) specced, evaluated (.claude-prefix abstraction declined: external Claude Code contract), promoted, worktree ready. On merge: arc COMPLETE -> rm-rf reminder fires, 0.9.0 cuttable, downstream pass starts. OPERATOR STEP OPEN: create ~/.config/agentive-kit/preset from docs/preset.example.",
+    "brief_note": "ARC COMPLETE: KIT-0057 DONE (PR #90) — all of ADR-0027 P1-P7 shipped. Closeout done; retro fully processed (Phase 5 pre-format rule in both fd agents, self-review item 14, KIT-0063 filed, o3 calibration finalized 3-real-vs-2-refuted). rm-rf reminder FIRED. NEXT: KIT-0058 (config home + /setup-preset) -> cut 0.9.0 (pinned removals 0047/0054/0059) + operator preset -> downstream migration pass. PR #90's three process-artifact bot threads dispositioned; KIT-0062 (bot scope) queued.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },

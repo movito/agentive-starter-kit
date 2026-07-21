@@ -108,6 +108,8 @@ Read every function in the file you changed (not just the ones you wrote):
 
 13. **When two configuration axes meet a copy/generation step, enumerate the cells**: any code that copies, seeds, or generates content conditioned on one axis (shape, mode, profile) while another axis also varies must be asked "which combinations does this step actually distinguish, and which cells share a path?" — shared cells are where one axis silently masks the other (two of KIT-0053's real bot finds were this shape: the fresh-export reseed and the no-kit×materials contradiction). The `intersection_names_drops` mindset applied to axis products.
 
+14. **Identity renames must be chased through EVERY seeding path**: when a change renames identity-bearing content in a file that gets copied/seeded (pyproject name, package identifiers), grep every `cp`/`rsync`/heredoc that ships that file (`grep -rn '<filename>' scripts/`) and characterize EACH seeding path — not just the one the spec names. KIT-0057 fixed the `--new` export path and missed the adopt path's top-level copy in the same PR; one grep would have pre-empted the bot round.
+
 ## Step 4: Test assertion audit
 
 Before checking boundary coverage, audit test assertion quality:

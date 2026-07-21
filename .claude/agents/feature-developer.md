@@ -246,6 +246,15 @@ Before shipping, audit all changed files:
 
 ## Phase 5: Ship
 
+> **Pre-format before committing (KIT-0057)**: run `black`/`isort` on
+> new or edited Python files BEFORE `git commit` — a mutating hook that
+> rewrites them mid-commit aborts the commit while the 70-second
+> pytest-fast tail still prints "N passed", and the hook's
+> stash/restore dance can silently DROP untracked files created
+> between staging and commit. After ANY pre-commit run that reports a
+> mutating-hook failure: `git log -1` + `git status` before
+> proceeding; never trust the output tail.
+
 ```bash
 # Stage specific files in the code repo (never git add -A)
 GIT_TARGET add <specific files>
