@@ -487,6 +487,16 @@ rm -f "$TARGET/tests/test_kit_markers.py" \
 for f in pyproject.toml .gitignore .pre-commit-config.yaml .env.template .coderabbitignore conftest.py; do
     if [ -f "$PROJECT_ROOT/$f" ] && [ ! -f "$TARGET/$f" ]; then
         cp "$PROJECT_ROOT/$f" "$TARGET/$f"
+        if [ "$f" = "pyproject.toml" ]; then
+            # The kit's own pyproject is named agentive-starter-kit
+            # (KIT-0057); a freshly seeded target must get the
+            # placeholder + TODO the onboarding agents rewrite — the
+            # engine-export.sh reset, applied to this copy path too
+            # (BugBot, PR #90).
+            NAME_PLACEHOLDER='name = "your-project-name"  # TODO: Change this to your project name'
+            sed -i '' "s/^name = .*/$NAME_PLACEHOLDER/" "$TARGET/$f" 2>/dev/null || \
+            sed -i "s/^name = .*/$NAME_PLACEHOLDER/" "$TARGET/$f"
+        fi
     fi
 done
 

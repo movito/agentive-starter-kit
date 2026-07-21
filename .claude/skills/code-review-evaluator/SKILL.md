@@ -184,8 +184,9 @@ across projects: distinct models surface largely non-overlapping findings).
 A commented-out key does not error at launch — the evaluator fails
 mid-run (KIT-0032 hit this as a mid-session blocker: the trio ran 2-of-3
 until the operator uncommented the key). Verify before running the trio:
-`grep -E '^ANTHROPIC_API_KEY=' .env` must match. Never add or commit a
-key — surface the gap to the operator instead.
+`grep -qE '^ANTHROPIC_API_KEY=.+$' .env` must succeed — the `-q` keeps
+the secret off the transcript. Never add or commit a key — surface the
+gap to the operator instead.
 
 If the required API key is missing, fall back to another evaluator. If none of the keys are set, document the failure and proceed to human review.
 

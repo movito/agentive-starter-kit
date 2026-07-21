@@ -161,13 +161,23 @@ class TestManifestConsistency:
 def _planning_heredoc_core_version(engine_text: str) -> str | None:
     """The core_version baked into the consumer engine's planning-shape
     manifest heredoc — the FIRST core_version after the 'planning-shape
-    manifest' comment (the engine's second heredoc, the consumer-manifest
-    seed, comes later in the file and must not be matched)."""
+    manifest' comment, bounded by the heredoc's MANIFEST terminator so a
+    scan can never run on into the engine's second heredoc (the
+    consumer-manifest seed) and match the wrong version (CodeRabbit
+    PR #90)."""
     seen_marker = False
+    in_heredoc = False
     for line in engine_text.splitlines():
         if "planning-shape manifest" in line:
             seen_marker = True
-        if seen_marker:
+        if not seen_marker:
+            continue
+        if "<< 'MANIFEST'" in line:
+            in_heredoc = True
+            continue
+        if in_heredoc:
+            if line.strip() == "MANIFEST":
+                return None  # heredoc closed without a core_version line
             m = re.search(r'"core_version":\s*"([^"]+)"', line)
             if m:
                 return m.group(1)
