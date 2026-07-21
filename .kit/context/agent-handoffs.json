@@ -3,7 +3,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "ARC COMPLETE: KIT-0057 DONE (PR #90) — all of ADR-0027 P1-P7 shipped. Closeout done; retro fully processed (Phase 5 pre-format rule in both fd agents, self-review item 14, KIT-0063 filed, o3 calibration finalized 3-real-vs-2-refuted). rm-rf reminder FIRED. NEXT: KIT-0058 (config home + /setup-preset) -> cut 0.9.0 (pinned removals 0047/0054/0059) + operator preset -> downstream migration pass. PR #90's three process-artifact bot threads dispositioned; KIT-0062 (bot scope) queued.",
+    "brief_note": "KIT-0058 (visible config home + /setup-preset — post-arc fast-follow, last blocker before the operator's one-button) assigned: handoff written with verified anchors (bootstrap:143 resolution line, project ~:1494 against-preset reader, preset.example header), worktree provisioned. Legacy-notice removal joins KIT-0059's 0.9.0 set. After merge: operator runs /setup-preset -> cut 0.9.0 -> downstream pass. rm-rf allowlist fired and with operator.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
@@ -11,7 +11,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0048",
     "task_started": null,
-    "brief_note": "KIT-0057 (P6 finale: inventory-gated skills merge + read-both cycle, pyproject identity fix w/ export characterization, baked-manifest guard, cross-reader conformance harness, prune) ready. Worktree: ../ask-worktrees/KIT-0057 (pull --ff-only first). Inventory artifact BEFORE any move; grep allow_module_level after every move batch.",
+    "brief_note": "KIT-0058 (relocate config to <kit-parent>/agentive-config/ w/ seeded guardrails + doctor config-home check + legacy notice + /setup-preset conversational builder) ready. Worktree: ../ask-worktrees/KIT-0058 (pull --ff-only first). Resolve locates, orchestrate seeds; no hardcoded interview questions — derive from door --help.",
     "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
     "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
   },
