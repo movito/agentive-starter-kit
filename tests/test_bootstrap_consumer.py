@@ -108,6 +108,7 @@ class TestConsumerTestsRsyncBoundary:
         "test_kit_markers.py",
         "test_bootstrap_consumer.py",
         "test_bootstrap_shapes.py",
+        "test_bots_conformance.py",
         "test_check_hook_seeds.py",
         "test_entrance_shims.py",
         "test_setup_door.py",

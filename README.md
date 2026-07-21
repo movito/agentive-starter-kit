@@ -406,11 +406,11 @@ your-project/
 ├── .claude/
 │   ├── agents/              # Implementation agents
 │   ├── commands/            # Implementation commands
-│   ├── skills/              # Implementation skills
+│   ├── skills/              # ALL skills (implementation + builder)
 │   └── settings.local.json  # Claude Code settings
 ├── .kit/                    # Builder layer
 │   ├── templates/           # Agent and task templates
-│   ├── skills/              # Builder skills (self-review, etc.)
+│   ├── skills/              # DEPRECATED symlinks → .claude/skills/ (gone in 0.9.0)
 │   ├── context/             # Agent coordination, workflows, patterns
 │   ├── tasks/               # Task files (numbered folders)
 │   ├── adr/                 # Kit ADRs (KIT-ADR-*)

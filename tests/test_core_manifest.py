@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = REPO_ROOT / "scripts" / ".core-manifest.json"
+CONSUMER_ENGINE = REPO_ROOT / "scripts" / "local" / "engine-consumer.sh"
+VERSION_FILE = REPO_ROOT / "scripts" / "core" / "VERSION"
 
 REQUIRED_TOP_LEVEL_KEYS = {
     "core_version",
@@ -153,3 +156,69 @@ class TestManifestConsistency:
     def test_total_entry_count(self, manifest):
         total = sum(len(entries) for entries in manifest["files"].values())
         assert total == 50, f"Expected 50 total entries, got {total}"
+
+
+def _planning_heredoc_core_version(engine_text: str) -> str | None:
+    """The core_version baked into the consumer engine's planning-shape
+    manifest heredoc — the FIRST core_version after the 'planning-shape
+    manifest' comment, bounded by the heredoc's MANIFEST terminator so a
+    scan can never run on into the engine's second heredoc (the
+    consumer-manifest seed) and match the wrong version (CodeRabbit
+    PR #90)."""
+    seen_marker = False
+    in_heredoc = False
+    for line in engine_text.splitlines():
+        if "planning-shape manifest" in line:
+            seen_marker = True
+        if not seen_marker:
+            continue
+        if "<< 'MANIFEST'" in line:
+            in_heredoc = True
+            continue
+        if in_heredoc:
+            if line.strip() == "MANIFEST":
+                return None  # heredoc closed without a core_version line
+            m = re.search(r'"core_version":\s*"([^"]+)"', line)
+            if m:
+                return m.group(1)
+    return None
+
+
+@pytest.mark.skipif(
+    not CONSUMER_ENGINE.exists(),
+    reason="engine-consumer.sh absent (consumer checkout — scripts/local not synced)",
+)
+class TestBakedManifestVersion:
+    """KIT-0056 retro #1: the planning-shape manifest heredoc baked into
+    engine-consumer.sh must carry the shipped core version. It drifted in
+    KIT-0050 and again in KIT-0056 — this pins the seam permanently."""
+
+    def test_planning_heredoc_matches_version_file(self):
+        baked = _planning_heredoc_core_version(
+            CONSUMER_ENGINE.read_text(encoding="utf-8")
+        )
+        assert baked is not None, (
+            "planning-shape manifest heredoc not found in engine-consumer.sh — "
+            "if the marker comment was reworded, update _planning_heredoc_core_version"
+        )
+        shipped = VERSION_FILE.read_text(encoding="utf-8").strip()
+        assert baked == shipped, (
+            f"engine-consumer.sh bakes core_version {baked!r} into the "
+            f"planning-shape manifest but scripts/core/VERSION is {shipped!r} — "
+            "update the heredoc in the same commit as the version bump"
+        )
+
+    def test_guard_fires_on_desync(self):
+        """Prove the extractor reads the heredoc itself (not VERSION): a
+        deliberately desynced copy of the engine must be detected."""
+        text = CONSUMER_ENGINE.read_text(encoding="utf-8")
+        real = _planning_heredoc_core_version(text)
+        assert real is not None
+        desynced = text.replace(
+            f'"core_version": "{real}"', '"core_version": "0.0.0-desync"', 1
+        )
+        assert _planning_heredoc_core_version(desynced) == "0.0.0-desync"
+        assert (
+            _planning_heredoc_core_version(desynced)
+            != VERSION_FILE.read_text(encoding="utf-8").strip()
+        )

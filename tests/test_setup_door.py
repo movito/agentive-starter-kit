@@ -503,6 +503,15 @@ class TestAdoptE2E:
         assert hook.read_bytes() == none_seed.read_bytes()
         # shipset unchanged by profile: single shape ships the toolchain
         assert (target / "pyproject.toml").is_file()
+        # a seeded pyproject carries the placeholder the onboarding
+        # agents rewrite, never the kit's own identity (BugBot PR #90 —
+        # the engine-export reset applied to the adopt copy path too)
+        seeded = (target / "pyproject.toml").read_text(encoding="utf-8")
+        assert (
+            'name = "your-project-name"  # TODO: Change this to your project name'
+            in seeded
+        )
+        assert 'name = "agentive-starter-kit"' not in seeded
 
     def test_readopt_with_conflicting_profile_rejected(self, tmp_path):
         """CodeRabbit PR #81: explicit flags that contradict the

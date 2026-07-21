@@ -118,6 +118,20 @@ kit-builder scaffolding).
 | **Consumer update path** | `claude plugin update` / `upgrader` agent | **Push**: automated PR into the consumer repo. **Pull**: `./scripts/core/project sync` from the consumer (on-demand, KIT-ADR-0026) |
 | **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | ADR-0008, KIT-ADR-0022, KIT-ADR-0026, `docs/MANIFEST-UPGRADE-GUIDE.md` |
 
+### Canonical homes (KIT-ADR-0027 P6)
+
+One repo home per artifact type; the plugin carries distribution
+copies of each, namespaced `agentive-workflow:<name>`.
+
+| Artifact | Canonical repo home | Plugin |
+|----------|--------------------|--------|
+| Agents | `.claude/agents/` | distribution copies |
+| Commands | `.claude/commands/` | distribution copies |
+| Skills | `.claude/skills/` (implementation AND builder) | distribution copies |
+
+`.kit/skills/` is deprecated: it holds read-both symlinks into
+`.claude/skills/` for one release and is removed in 0.9.0 (KIT-0059).
+
 ## 3. The tiered manifest (Channel B's brain)
 
 `scripts/.core-manifest.json` — `core_version` is the semver of the sync

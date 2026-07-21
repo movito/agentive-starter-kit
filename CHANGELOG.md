@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Canonical homes + the prune** (KIT-0057, KIT-ADR-0027 P6 — the
+  arc's final task):
+  - ONE skills home: the three builder skills (code-review-evaluator,
+    review-handoff, self-review) moved from `.kit/skills/` into
+    `.claude/skills/`; `.kit/skills/<name>` survives one release as
+    read-both symlinks, removed in 0.9.0 (KIT-0059). Plugin copy
+    refresh filed (KIT-0060).
+  - Kit identity: `pyproject.toml` is `agentive-starter-kit`; the
+    export engine now resets a `--new` target's name to the
+    placeholder + TODO itself (characterized — targets never inherit
+    the kit's name).
+  - Seam-guards from KIT-0056's retro: baked planning-manifest
+    `core_version` == `scripts/core/VERSION` (proven to fire on
+    desync), and a cross-reader bots-declaration conformance harness
+    (one fixture table through door/project/preflight, incl.
+    duplicate-key first-wins).
+  - Docs converge on the canonical map (CLAUDE.md/README trees,
+    DISTRIBUTION-ARCHITECTURE canonical-homes table).
+
 ### Added
 
 - **Degraded modes + operator presets** (KIT-0056, KIT-ADR-0027
