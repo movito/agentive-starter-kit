@@ -223,7 +223,12 @@ mechanism, never new mechanism.
   NAMED in door/doctor output; the legacy `~/.config` location gets a
   one-release migration notice, never a silent fallback. Presets still
   never travel on any sync channel; the kit ships only a commented
-  example.
+  example — **plus a conversational authoring path** *(added
+  2026-07-21, operator review)*: a `/setup-preset` command lets a
+  Claude agent interview the user and write the preset; it derives its
+  questions from the door's `--help` at runtime (never a hardcoded
+  list that could drift) and never accepts secret values in
+  conversation — only the `env-source` path reference.
 - **Resolution order follows the git-config precedent**: CLI flags >
   preset > kit-neutral defaults, with interactive prompts only for
   questions nothing answered. A stranger with no preset gets the P5

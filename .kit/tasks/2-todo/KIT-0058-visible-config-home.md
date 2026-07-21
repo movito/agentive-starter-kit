@@ -4,7 +4,7 @@
 **Priority**: high (fast-follow — must land BEFORE the operator creates
 their real preset; nobody has one yet, so relocation is free now)
 **Assigned To**: unassigned
-**Estimated Effort**: 2-3 hours
+**Estimated Effort**: 3-4 hours (F6 conversational builder added 2026-07-21)
 **Created**: 2026-07-21
 **Linear ID**: (automatically backfilled after first sync)
 
@@ -59,6 +59,31 @@ guardrails instead of obscurity.
 - **F5 — docs + example**: `docs/preset.example`, the door's help, and
   the P7 setup docs all point at the new home; `doctor
   --against-preset` reads the new location.
+- **F6 — `/setup-preset` conversational builder** *(added 2026-07-21,
+  operator request: a bare example file assumes knowledge many users
+  won't have)*: a new command at `.claude/commands/setup-preset.md`
+  instructing a Claude agent to interview the user and author their
+  preset. Binding design rules:
+  1. **Derive, never hardcode**: the agent runs
+     `./scripts/local/bootstrap --help` FIRST and builds the interview
+     from the door's actual question set and shape×profile matrix —
+     the command contains NO hardcoded question list that could drift
+     from the door (runtime-read per ADR-0025; self-review item 10
+     applied to our own artifact).
+  2. **Plain language, one question at a time**, each choice's
+     consequence explained (e.g. no bot subscriptions = honest SKIP
+     gates, not failure); an expert shortcut ("full-stack defaults")
+     skips the interview.
+  3. **Secrets never transit the chat**: the agent records only an
+     `env-source` PATH, directs the user to create the 0600 file
+     themselves, and explicitly refuses pasted key material.
+  4. **Finish loudly**: show the written file; validate every written
+     key against the door's accepted set (catch unknown-key WARNs at
+     authoring time); offer the private-repo step with the
+     seeded-gitignore story; state that the first real `--new` run is
+     the end-to-end proof.
+  `docs/preset.example` gains a header line pointing at
+  `/setup-preset`.
 
 ### Non-Functional Requirements
 
@@ -80,6 +105,9 @@ guardrails instead of obscurity.
 - [ ] Legacy location: notice only, never read (test both)
 - [ ] Stranger path characterization green (N2)
 - [ ] One-button demo re-run from the new location (transcript in PR)
+- [ ] `/setup-preset` exists with no hardcoded question list (derives
+      from door `--help`), enforces the no-pasted-secrets rule in its
+      text; `docs/preset.example` header points at it
 
 ## Notes
 
