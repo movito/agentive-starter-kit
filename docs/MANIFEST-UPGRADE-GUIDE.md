@@ -143,6 +143,11 @@ upstream manifest as your starting point, then set `opted_in` based on what you 
 }
 ```
 
+> **Deprecation note (KIT-0057)**: the `kit_builder` tier's
+> `.kit/skills/` entry points at read-both symlinks into the canonical
+> `.claude/skills/` home; the entry retargets when the symlinks are
+> removed in 0.9.0 (KIT-0059).
+
 **Full upgrade** (everything including builder layer):
 
 ```json

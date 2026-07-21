@@ -9,11 +9,11 @@ evaluation, and architectural decision records. For full details, see `README.md
 ```
 .claude/agents/       Implementation agents (feature-developer, ci-checker, etc.)
 .claude/commands/     All slash commands (start-task, babysit-pr, retro, etc.)
-.claude/skills/       Implementation skills (pre-implementation, bot-triage)
+.claude/skills/       ALL skills — implementation (pre-implementation, bot-triage) and builder (self-review, review-handoff, code-review-evaluator)
 .adversarial/         Adversarial evaluation system (config, evaluators, scripts, docs)
 .kit/                 Builder layer (planning, coordination)
 ├── templates/        Agent and task templates (AGENT-TEMPLATE, TASK-STARTER-TEMPLATE)
-├── skills/           Builder skills (self-review, review-handoff, code-review-evaluator)
+├── skills/           DEPRECATED — read-both symlinks into .claude/skills/, removed in 0.9.0 (KIT-0059)
 ├── context/          Agent coordination: handoffs, reviews, patterns.yml, workflows/
 ├── tasks/            Task specs by status: 1-backlog/ through 9-reference/
 ├── adr/             Kit ADRs (KIT-ADR-*)
