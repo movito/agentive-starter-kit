@@ -1503,7 +1503,9 @@ def _config_home(project_dir):
     """
     override = os.environ.get("AGENTIVE_KIT_CONFIG_DIR")
     if override:
-        return Path(override)
+        # leading-~ expansion mirrors the bash resolvers (env files can
+        # carry a literal tilde the shell never expanded)
+        return Path(override).expanduser()
     # scrub GIT_* — a leaked GIT_DIR would resolve the WRONG primary
     # clone (the KIT-0043 incident class; this runs in-process, so the
     # driver's per-check scrub does not cover it)

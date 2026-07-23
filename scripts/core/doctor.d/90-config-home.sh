@@ -40,7 +40,8 @@ LEGACY="${XDG_CONFIG_HOME:-$HOME/.config}/agentive-kit/preset"
 
 resolve_home() {
     if [ -n "${AGENTIVE_KIT_CONFIG_DIR:-}" ]; then
-        printf '%s\n' "$AGENTIVE_KIT_CONFIG_DIR"
+        # leading-~ expansion, mirroring the door's config_home
+        printf '%s\n' "${AGENTIVE_KIT_CONFIG_DIR/#\~/$HOME}"
         return 0
     fi
     local common
@@ -101,7 +102,9 @@ if ! command -v gh >/dev/null 2>&1; then
     exit 0
 fi
 
-VISIBILITY="$(gh repo view "$REMOTE_URL" --json visibility --jq .visibility 2>/dev/null)" || VISIBILITY=""
+# flags first, then `--`: a hostile remote URL beginning with `-` can
+# never be parsed as a gh flag (claude-code review, this PR)
+VISIBILITY="$(gh repo view --json visibility --jq .visibility -- "$REMOTE_URL" 2>/dev/null)" || VISIBILITY=""
 VISIBILITY="$(printf '%s' "$VISIBILITY" | tr '[:upper:]' '[:lower:]')"
 case "$VISIBILITY" in
     private)

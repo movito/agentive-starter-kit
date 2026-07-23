@@ -1354,3 +1354,20 @@ class TestLegacyLocation:
         )
         assert result.returncode == 0, result.stderr + result.stdout
         assert "legacy preset found" not in result.stderr
+
+
+class TestConfigHomeOverrideTilde:
+    """o3 (this PR): an env file can hand the override a literal
+    leading tilde the shell never expanded — all resolvers expand it
+    (the env-source precedent)."""
+
+    def test_tilde_in_override_expands(self, tmp_path):
+        result = sourced(
+            "config_home",
+            env=_scrubbed_env(
+                AGENTIVE_KIT_CONFIG_DIR="~/agentive-config-tilde",
+                HOME=str(tmp_path),
+            ),
+        )
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == str(tmp_path / "agentive-config-tilde")

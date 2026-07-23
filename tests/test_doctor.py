@@ -1586,3 +1586,20 @@ class TestConfigHomeCheck:
         )
         assert "DOCTOR:config-home:SKIP:" in result.stdout
         assert "not a git clone" in result.stdout
+
+    def test_tilde_override_expanded_python_side(self, tmp_path):
+        # o3 (this PR): the Python mirror expands a literal leading
+        # tilde exactly like the bash resolvers
+        root, checks = _shape_fixture(tmp_path, "shape: single\n")
+        home = tmp_path / "fakehome"
+        (home / "agentive-config").mkdir(parents=True)
+        env = {
+            **os.environ,
+            "HOME": str(home),
+            "AGENTIVE_KIT_CONFIG_DIR": "~/agentive-config",
+        }
+        result = run_doctor_rooted(root, checks, "--against-preset", env=env)
+        expected = str(home / "agentive-config" / "preset")
+        assert any(
+            "no preset found at " + expected in ln for ln in preset_lines(result)
+        ), result.stdout

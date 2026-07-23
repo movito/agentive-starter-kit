@@ -64,7 +64,10 @@ git rev-parse --path-format=absolute --git-common-dir
 Take the parent of the parent of that path, plus `/agentive-config`.
 If `AGENTIVE_KIT_CONFIG_DIR` is set in the environment, it overrides
 the location entirely (it is an override, never a search chain — do
-not look anywhere else). If the folder does not exist, create it —
+not look anywhere else). If the `git rev-parse` command fails (you
+are somehow not in a kit clone), STOP and tell the user: this command
+must run from an agentive-starter-kit checkout — never guess or
+invent a path. If the folder does not exist, create it —
 running this command IS the user engaging the preset flow. If a
 preset already exists there, read it and treat the interview as an
 update (show the current values; never silently overwrite an answer
