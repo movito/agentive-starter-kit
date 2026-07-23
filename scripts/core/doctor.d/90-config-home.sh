@@ -71,7 +71,7 @@ fi
 emit_legacy_notice "$HOME_DIR"
 
 if [ ! -d "$HOME_DIR" ]; then
-    echo "DOCTOR:config-home:SKIP:no config home at $HOME_DIR — author one with /setup-preset (path anchors to this checkout's parent; AGENTIVE_KIT_CONFIG_DIR overrides)"
+    echo "DOCTOR:config-home:SKIP:no config home at $HOME_DIR — author one with /setup-preset (path anchors to the primary clone's parent; AGENTIVE_KIT_CONFIG_DIR overrides)"
     exit 0
 fi
 

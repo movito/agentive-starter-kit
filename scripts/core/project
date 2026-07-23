@@ -1574,9 +1574,9 @@ def _print_preset_comparison(shape, profile, bots, record_errors, project_dir):
     if not preset_path.is_file():
         print(
             f"PRESET:comparison:INFO:no preset found at {preset_path} — "
-            "nothing to compare (the path anchors to THIS checkout's "
-            "parent; set AGENTIVE_KIT_CONFIG_DIR if your config home "
-            "lives beside the kit clone elsewhere)"
+            "nothing to compare (the path anchors to this project's "
+            "primary-clone parent; set AGENTIVE_KIT_CONFIG_DIR if your "
+            "config home lives beside the kit clone elsewhere)"
         )
         return
     try:
