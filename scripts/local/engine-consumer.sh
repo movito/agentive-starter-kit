@@ -391,9 +391,9 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.4.0",
+  "core_version": "3.5.0",
   "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-07-18T00:00:00Z",
+  "synced_at": "2026-07-23T00:00:00Z",
   "files": {
     "scripts_core": [
       "core/__init__.py",
@@ -407,6 +407,7 @@ PRECOMMIT
       "core/doctor.d/60-push-sync-token.sh",
       "core/doctor.d/70-core-bare.sh",
       "core/doctor.d/80-bot-presence.sh",
+      "core/doctor.d/90-config-home.sh",
       "core/gh-review-helper.sh",
       "core/lib/target_repo.sh",
       "core/logging_config.py",

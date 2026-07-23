@@ -40,18 +40,24 @@ for tool in ("bash", "git", "rsync"):
         pytest.skip(f"{tool} not available on PATH", allow_module_level=True)
 
 
-# A nonexistent XDG_CONFIG_HOME keeps every door run hermetic: the
-# operator's REAL ~/.config/agentive-kit/preset (KIT-0056) must never
-# leak into the suite — a filled preset would change door answers and
-# break characterization. Tests that need a preset pass their own
-# XDG_CONFIG_HOME via extra (override wins).
+# Nonexistent hermetic paths keep every door run hermetic (N1): the
+# operator's REAL config home (<kit-parent>/agentive-config/,
+# KIT-0058) must never leak into the suite — a filled preset would
+# change door answers and break characterization — and a real legacy
+# ~/.config/agentive-kit/preset would inject the F4 notice.
+# AGENTIVE_KIT_CONFIG_DIR is the door's one override; tests that need
+# a preset pass their own via extra (override wins). XDG_CONFIG_HOME
+# stays pinned too: it scopes the legacy-notice path AND git's own
+# config lookup.
 _HERMETIC_XDG = REPO_ROOT / "tests" / ".no-such-xdg"
+_HERMETIC_CONFIG = REPO_ROOT / "tests" / ".no-such-config-home"
 
 
 def _scrubbed_env(**extra: str) -> dict[str, str]:
     """os.environ minus GIT_* (the KIT-0048 GIT_DIR leak class)."""
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env["XDG_CONFIG_HOME"] = str(_HERMETIC_XDG)
+    env["AGENTIVE_KIT_CONFIG_DIR"] = str(_HERMETIC_CONFIG)
     env.update(extra)
     return env
 
@@ -105,11 +111,13 @@ def sourced(snippet: str, env: dict | None = None) -> subprocess.CompletedProces
 
 
 def write_preset(base: Path, content: str) -> Path:
-    """A preset under a scratch XDG_CONFIG_HOME; returns the XDG dir."""
-    xdg = base / "xdg-preset"
-    (xdg / "agentive-kit").mkdir(parents=True, exist_ok=True)
-    (xdg / "agentive-kit" / "preset").write_text(content, encoding="utf-8")
-    return xdg
+    """A preset in a scratch config home (passed to the door via
+    AGENTIVE_KIT_CONFIG_DIR — never the real sibling folder, N1);
+    returns the config-home dir."""
+    cfg = base / "agentive-config"
+    cfg.mkdir(parents=True, exist_ok=True)
+    (cfg / "preset").write_text(content, encoding="utf-8")
+    return cfg
 
 
 class TestResolveValidateUnits:
@@ -170,11 +178,13 @@ class TestResolveValidateUnits:
 class TestPresetUnits:
     """KIT-0056 F5: the preset layer inside the ONE resolve chain —
     CLI > preset > kit default (record short-circuits preset on adopt).
-    All sourced; the preset file lives under a scratch XDG dir, never
-    the real ~/.config."""
+    All sourced; the preset file lives in a scratch config home
+    (AGENTIVE_KIT_CONFIG_DIR), never the real sibling folder."""
 
     def _env(self, tmp_path, content):
-        return _scrubbed_env(XDG_CONFIG_HOME=str(write_preset(tmp_path, content)))
+        return _scrubbed_env(
+            AGENTIVE_KIT_CONFIG_DIR=str(write_preset(tmp_path, content))
+        )
 
     def test_preset_beats_kit_default(self, tmp_path):
         env = self._env(tmp_path, "shape: planning\n")
@@ -398,8 +408,8 @@ class TestExitContract:
         assert "'none' cannot be combined" in result.stderr
 
     def test_malformed_preset_exits_2_before_any_work(self, tmp_path):
-        xdg = write_preset(tmp_path, "this is not a preset\n")
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        cfg = write_preset(tmp_path, "this is not a preset\n")
+        env = _scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
         result = run_door("--new", str(tmp_path / "proj"), env=env, timeout=30)
         assert result.returncode == 2
         assert "malformed preset line 1" in result.stderr
@@ -658,15 +668,16 @@ class TestNewE2E:
 SECRET = "KIT0056-FIXTURE-SECRET-NEVER-PRINT"
 
 
-def _demo_preset_xdg(tmp_path: Path) -> Path:
-    """A FULL preset (every door question answered) plus git identity
-    and a 0600 env template carrying a fixture secret."""
+def _demo_preset_env(tmp_path: Path) -> tuple[Path, dict[str, str]]:
+    """A FULL preset (every door question answered) in a scratch
+    config home, plus git identity and a 0600 env template carrying a
+    fixture secret. Returns (config_home, env)."""
     xdg = _git_identity(tmp_path)  # xdg-config/ with git/config
     env_template = tmp_path / "env-template"
     env_template.write_text(f"OPENAI_API_KEY={SECRET}\n", encoding="utf-8")
     env_template.chmod(0o600)
-    (xdg / "agentive-kit").mkdir()
-    (xdg / "agentive-kit" / "preset").write_text(
+    cfg = write_preset(
+        tmp_path,
         "# full operator preset (KIT-0056 N4 fixture)\n"
         "shape: single\n"
         "profile: python\n"
@@ -674,9 +685,9 @@ def _demo_preset_xdg(tmp_path: Path) -> Path:
         "evaluators: no\n"
         "venv: no\n"
         f"env-source: {env_template}\n",
-        encoding="utf-8",
     )
-    return xdg
+    env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg), AGENTIVE_KIT_CONFIG_DIR=str(cfg))
+    return cfg, env
 
 
 @pytest.mark.slow
@@ -690,10 +701,9 @@ class TestPresetE2E:
         — zero prompts, zero skipped-offer notices — and the resulting
         record reflects the preset's declarations. Secrets arrive by
         reference at mode 0600 and never appear in output or git."""
-        xdg = _demo_preset_xdg(tmp_path)
-        preset_file = xdg / "agentive-kit" / "preset"
+        cfg, env = _demo_preset_env(tmp_path)
+        preset_file = cfg / "preset"
         preset_before = preset_file.read_bytes()
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg))
         target = tmp_path / "one-button"
         result = run_door("--new", str(target), env=env)
         assert result.returncode == 0, result.stderr + result.stdout
@@ -741,10 +751,27 @@ class TestPresetE2E:
         # F7: the run read the preset but never touched it
         assert preset_file.read_bytes() == preset_before
 
+    @staticmethod
+    def _door_output(stdout: str, target: Path) -> str:
+        # The doctor tail's config-home CHECK reports the environment
+        # (whether a config home exists) — the very thing this test
+        # varies between the two runs (KIT-0058). Mask that one check
+        # line and the verdict-count summary; every other byte of the
+        # two runs still compares exactly.
+        lines = [
+            ln
+            for ln in stdout.replace(str(target), "<T>").splitlines(keepends=True)
+            if not ln.startswith("DOCTOR:config-home:")
+            and not ln.startswith("Doctor: ")
+        ]
+        return "".join(lines)
+
     def test_no_preset_gives_the_stranger_path(self, tmp_path):
         """--no-preset with a preset present must be byte-identical to
-        a machine with no preset at all (N1's flip side)."""
-        xdg = _demo_preset_xdg(tmp_path)
+        a machine with no preset at all (N1's flip side) — modulo the
+        config-home doctor line, which by design names the environment
+        difference this test constructs."""
+        _cfg, env = _demo_preset_env(tmp_path)
         # same basename in different parents: engine banners print the
         # project NAME, so only the parent path may differ
         target_a = make_adopt_dir(tmp_path / "a", "proj")
@@ -753,14 +780,17 @@ class TestPresetE2E:
             "--adopt",
             str(target_a),
             "--no-preset",
-            env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg)),
+            env=env,
         )
         stranger = run_door("--adopt", str(target_b))
         assert with_flag.returncode == 0, with_flag.stderr + with_flag.stdout
         assert stranger.returncode == 0, stranger.stderr + stranger.stdout
-        normalized_a = with_flag.stdout.replace(str(target_a), "<T>")
-        normalized_b = stranger.stdout.replace(str(target_b), "<T>")
+        normalized_a = self._door_output(with_flag.stdout, target_a)
+        normalized_b = self._door_output(stranger.stdout, target_b)
         assert normalized_a == normalized_b
+        # the door's OWN chrome never mentions the preset in either run
+        assert "Preset:" not in with_flag.stdout
+        assert "Seeded" not in with_flag.stdout
 
     def test_adopt_record_beats_preset(self, tmp_path):
         """A recorded target keeps its identity: the preset answers
@@ -769,11 +799,11 @@ class TestPresetE2E:
         target = make_adopt_dir(tmp_path, "recorded")
         first = run_door("--adopt", str(target), "--profile", "none", "--bots", "none")
         assert first.returncode == 0, first.stderr + first.stdout
-        xdg = write_preset(
+        cfg = write_preset(
             tmp_path, "shape: planning\nprofile: python\nbots: coderabbit bugbot\n"
         )
         readopt = run_door(
-            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+            "--adopt", str(target), env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
         )
         assert readopt.returncode == 0, readopt.stderr + readopt.stdout
         assert "Setup door: mode=adopt shape=single" in readopt.stdout
@@ -787,10 +817,10 @@ class TestPresetE2E:
         flags would — the non-interactive skip notices disappear (the
         preset-less baseline asserts their presence). 'no' keeps the
         test network-free; the wiring is identical for 'yes'."""
-        xdg = write_preset(tmp_path, "evaluators: no\nvenv: no\n")
+        cfg = write_preset(tmp_path, "evaluators: no\nvenv: no\n")
         target = make_adopt_dir(tmp_path, "offers")
         result = run_door(
-            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+            "--adopt", str(target), env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
         )
         assert result.returncode == 0, result.stderr + result.stdout
         assert "Offer skipped (non-interactive): evaluators" not in result.stdout
@@ -803,9 +833,9 @@ class TestPresetE2E:
         and ignoring the answer is said out loud."""
         target = make_adopt_dir(tmp_path, "docs-only")
         assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
-        xdg = write_preset(tmp_path, "venv: yes\nevaluators: no\n")
+        cfg = write_preset(tmp_path, "venv: yes\nevaluators: no\n")
         result = run_door(
-            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+            "--adopt", str(target), env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
         )
         assert result.returncode == 0, result.stderr + result.stdout
         assert "Preset venv answer ignored" in result.stdout
@@ -840,10 +870,10 @@ class TestPresetE2E:
         assert "--with-venv requires profile python" in result.stderr
 
     def test_bad_offer_value_fails_loud(self, tmp_path):
-        xdg = write_preset(tmp_path, "evaluators: maybe\n")
+        cfg = write_preset(tmp_path, "evaluators: maybe\n")
         target = make_adopt_dir(tmp_path, "badval")
         result = run_door(
-            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+            "--adopt", str(target), env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
         )
         assert result.returncode == 2
         assert "preset key 'evaluators' must be yes or no" in result.stderr
@@ -853,28 +883,29 @@ class TestPresetE2E:
         # die with bash's raw "Permission denied" (fast-v2 finding)
         if os.geteuid() == 0:
             pytest.skip("permission checks are meaningless as root")
-        xdg = write_preset(tmp_path, "shape: single\n")
-        (xdg / "agentive-kit" / "preset").chmod(0o000)
+        cfg = write_preset(tmp_path, "shape: single\n")
+        (cfg / "preset").chmod(0o000)
         target = make_adopt_dir(tmp_path, "unreadable")
         try:
             result = run_door(
-                "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+                "--adopt",
+                str(target),
+                env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
             )
             assert result.returncode == 2
             assert "not readable" in result.stderr
             assert "--no-preset" in result.stderr  # the escape hatch is named
         finally:
-            (xdg / "agentive-kit" / "preset").chmod(0o600)
+            (cfg / "preset").chmod(0o600)
 
     @pytest.mark.slow
     def test_loose_env_source_perms_warn_but_proceed(self, tmp_path):
         """0600 on the SOURCE is expected-not-enforced by design (F6:
         it is the operator's own file; the target copy is always
         0600) — but the warning must actually fire."""
-        xdg = _demo_preset_xdg(tmp_path)
+        _cfg, env = _demo_preset_env(tmp_path)
         env_template = tmp_path / "env-template"
         env_template.chmod(0o644)
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg))
         target = tmp_path / "loose-perms"
         result = run_door("--new", str(target), env=env)
         assert result.returncode == 0, result.stderr + result.stdout
@@ -887,8 +918,8 @@ class TestPresetE2E:
         secret_file = tmp_path / "env-template"
         secret_file.write_text("KEY=x\n", encoding="utf-8")
         secret_file.chmod(0o000)
-        xdg = write_preset(tmp_path, f"env-source: {secret_file}\n")
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        cfg = write_preset(tmp_path, f"env-source: {secret_file}\n")
+        env = _scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
         try:
             result = run_door("--new", str(tmp_path / "proj"), env=env, timeout=30)
             assert result.returncode == 2
@@ -935,13 +966,13 @@ class TestBotsDeclarationE2E:
     def test_legacy_shim_ignores_preset(self, tmp_path):
         # shim fidelity: a filled preset must not change what the
         # legacy channel does — no preset notice, no recorded bots
-        xdg = write_preset(tmp_path, "bots: none\nprofile: none\n")
+        cfg = write_preset(tmp_path, "bots: none\nprofile: none\n")
         target = make_adopt_dir(tmp_path, "shim-preset")
         result = run_door(
             "--adopt",
             str(target),
             "--legacy-shim",
-            env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg)),
+            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
         )
         assert result.returncode == 0, result.stderr + result.stdout
         assert "Preset:" not in result.stdout
@@ -1042,15 +1073,21 @@ class TestBotsDeclarationE2E:
 
 
 class TestPresetNeverDistributed:
-    """F7: nothing under ~/.config/agentive-kit/ rides any sync tier,
-    rsync, or export path. Structural check: the ONLY scripts allowed
-    to reference the preset location are the door (reads it) and the
-    project script (doctor --against-preset compares against it) —
-    engines, sync, and export code must not know it exists."""
+    """F7: nothing in the config home (<kit-parent>/agentive-config/,
+    KIT-0058) rides any sync tier, rsync, or export path. Structural
+    check: the ONLY scripts allowed to reference the config-home
+    location (or the legacy ~/.config/agentive-kit/ notice path) are
+    the door (reads it), the project script (doctor --against-preset
+    compares against it), and the config-home doctor check — engines,
+    sync, and export code must not know it exists."""
 
-    ALLOWED = {"scripts/local/bootstrap", "scripts/core/project"}
+    ALLOWED = {
+        "scripts/local/bootstrap",
+        "scripts/core/project",
+        "scripts/core/doctor.d/90-config-home.sh",
+    }
 
-    def test_preset_path_referenced_only_by_door_and_doctor(self):
+    def test_preset_path_referenced_only_by_allowed_readers(self):
         offenders = []
         for path in (REPO_ROOT / "scripts").rglob("*"):
             if not path.is_file():
@@ -1059,10 +1096,261 @@ class TestPresetNeverDistributed:
                 text = path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):
                 continue
-            if "agentive-kit" in text:
+            if "agentive-kit" in text or "agentive-config" in text:
                 rel = str(path.relative_to(REPO_ROOT))
                 if rel not in self.ALLOWED:
                     offenders.append(rel)
         assert (
             offenders == []
-        ), f"preset location referenced outside the allowed readers: {offenders}"
+        ), f"config-home location referenced outside the allowed readers: {offenders}"
+
+
+def _scratch_kit_clone(base: Path) -> tuple[Path, Path]:
+    """A throwaway 'kit checkout' (parent/kit) for resolution tests —
+    config_home derives parent/agentive-config from it."""
+    parent = base / "parent"
+    kit = parent / "kit"
+    kit.mkdir(parents=True)
+    subprocess.run(
+        ["git", "init", "--quiet", "-b", "main", str(kit)],
+        check=True,
+        timeout=30,
+        env=_scrubbed_env(),
+    )
+    return parent, kit
+
+
+class TestConfigHomeResolution:
+    """KIT-0058 F1: the config home is <kit-parent>/agentive-config,
+    resolved worktree-safely via --git-common-dir; the env override is
+    an override, never a search chain."""
+
+    def test_override_wins(self, tmp_path):
+        result = sourced(
+            "config_home",
+            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(tmp_path / "elsewhere")),
+        )
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == str(tmp_path / "elsewhere")
+
+    def test_empty_override_falls_through_to_derivation(self, tmp_path):
+        # empty is unset, not "resolve to ''" — matches the Python
+        # mirror's truthiness check so the two can never disagree
+        _parent, kit = _scratch_kit_clone(tmp_path)
+        result = sourced(
+            f'PROJECT_ROOT="{kit}"; config_home',
+            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=""),
+        )
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == str(tmp_path / "parent" / "agentive-config")
+
+    def test_derives_sibling_of_primary_clone(self, tmp_path):
+        parent, kit = _scratch_kit_clone(tmp_path)
+        env = _scrubbed_env()
+        del env["AGENTIVE_KIT_CONFIG_DIR"]
+        result = sourced(f'PROJECT_ROOT="{kit}"; config_home', env=env)
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == str(parent / "agentive-config")
+
+    def test_worktree_resolves_to_primary_sibling(self, tmp_path):
+        # --git-common-dir names the PRIMARY clone's .git from a linked
+        # worktree — both checkouts must agree on ONE config home
+        parent, kit = _scratch_kit_clone(tmp_path)
+        env = _scrubbed_env()
+        del env["AGENTIVE_KIT_CONFIG_DIR"]
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(kit),
+                "-c",
+                "user.name=t",
+                "-c",
+                "user.email=t@example.invalid",
+                "commit",
+                "--allow-empty",
+                "-q",
+                "-m",
+                "seed",
+            ],
+            check=True,
+            timeout=30,
+            env=env,
+        )
+        wt = tmp_path / "worktrees" / "kit-wt"
+        subprocess.run(
+            ["git", "-C", str(kit), "worktree", "add", "-q", str(wt)],
+            check=True,
+            timeout=30,
+            env=env,
+        )
+        from_primary = sourced(f'PROJECT_ROOT="{kit}"; config_home', env=env)
+        from_worktree = sourced(f'PROJECT_ROOT="{wt}"; config_home', env=env)
+        assert from_primary.returncode == 0, from_primary.stderr
+        assert from_worktree.returncode == 0, from_worktree.stderr
+        assert from_primary.stdout.strip() == from_worktree.stdout.strip()
+        assert from_primary.stdout.strip() == str(parent / "agentive-config")
+
+    def test_non_git_checkout_resolves_nothing(self, tmp_path):
+        plain = tmp_path / "not-a-clone"
+        plain.mkdir()
+        env = _scrubbed_env()
+        del env["AGENTIVE_KIT_CONFIG_DIR"]
+        result = sourced(
+            f'PROJECT_ROOT="{plain}"; config_home || echo "rc=$?"', env=env
+        )
+        assert "rc=1" in result.stdout
+
+    def test_door_and_doctor_agree_on_the_path(self, tmp_path):
+        """The 'two can never disagree' pin: the door's config_home and
+        the project script's _config_home resolve the SAME path for the
+        same checkout (doctor --against-preset names it in its
+        no-preset INFO line)."""
+        parent, kit = _scratch_kit_clone(tmp_path)
+        env = _scrubbed_env()
+        del env["AGENTIVE_KIT_CONFIG_DIR"]
+        bash_home = sourced(f'PROJECT_ROOT="{kit}"; config_home', env=env)
+        assert bash_home.returncode == 0, bash_home.stderr
+        checks = tmp_path / "checks"
+        checks.mkdir()
+        stub = checks / "10-stub.sh"
+        stub.write_text('#!/bin/bash\necho "DOCTOR:stub:PASS:ok"\n', encoding="utf-8")
+        stub.chmod(0o755)
+        project_script = REPO_ROOT / "scripts" / "core" / "project"
+        doctor = subprocess.run(
+            [
+                "python3",
+                str(project_script),
+                "doctor",
+                f"--root={kit}",
+                f"--dir={checks}",
+                "--against-preset",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=env,
+        )
+        info = [ln for ln in doctor.stdout.splitlines() if "no preset found at" in ln]
+        assert info, doctor.stdout
+        expected = f"{bash_home.stdout.strip()}/preset"
+        assert expected in info[0]
+
+
+class TestConfigHomeSeeding:
+    """KIT-0058 F2: first-use guardrail seeding — an orchestrate step
+    (resolve locates, writes nothing). Idempotent, never overwrites,
+    never creates the folder (N3)."""
+
+    def _run(self, tmp_path, cfg, *extra):
+        target = make_adopt_dir(tmp_path / f"t{len(list(tmp_path.iterdir()))}", "app")
+        return run_door(
+            "--adopt",
+            str(target),
+            *extra,
+            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
+        )
+
+    def test_first_use_seeds_gitignore_and_readme(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        cfg.mkdir()
+        result = self._run(tmp_path, cfg)
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert (cfg / ".gitignore").read_text(encoding="utf-8") == (
+            "env.source\n*.env\n"
+        )
+        readme = (cfg / "README.md").read_text(encoding="utf-8")
+        assert "env.source" in readme  # the secrets story is told
+        assert "Seeded" in result.stdout  # announced, never silent
+
+    def test_seeding_is_idempotent(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        cfg.mkdir()
+        assert self._run(tmp_path, cfg).returncode == 0
+        before = {p.name: p.read_bytes() for p in cfg.iterdir() if p.is_file()}
+        second = self._run(tmp_path, cfg)
+        assert second.returncode == 0, second.stderr + second.stdout
+        assert "Seeded" not in second.stdout
+        after = {p.name: p.read_bytes() for p in cfg.iterdir() if p.is_file()}
+        assert after == before
+
+    def test_seeding_never_overwrites(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        cfg.mkdir()
+        (cfg / ".gitignore").write_text("my-own-rules\n", encoding="utf-8")
+        result = self._run(tmp_path, cfg)
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert (cfg / ".gitignore").read_text(encoding="utf-8") == "my-own-rules\n"
+        # the OTHER file still seeds — per-file independence
+        assert (cfg / "README.md").is_file()
+
+    def test_no_preset_flag_skips_seeding(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        cfg.mkdir()
+        result = self._run(tmp_path, cfg, "--no-preset")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert list(cfg.iterdir()) == []
+        assert "Seeded" not in result.stdout
+
+    def test_never_creates_the_folder(self, tmp_path):
+        # N3: a preset-less run must not drive-by-create the config
+        # home — engaging the preset flow (mkdir) is the user's move
+        cfg = tmp_path / "agentive-config"  # never created
+        result = self._run(tmp_path, cfg)
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert not cfg.exists()
+
+
+class TestLegacyLocation:
+    """KIT-0058 F4: the legacy ~/.config/agentive-kit/preset is a
+    named notice, NEVER a fallback read — both directions pinned.
+    The notice retires at 0.9.0 (KIT-0059 removal set)."""
+
+    def test_legacy_preset_notice_fires_and_is_never_read(self, tmp_path):
+        xdg = tmp_path / "xdg"
+        (xdg / "agentive-kit").mkdir(parents=True)
+        legacy = xdg / "agentive-kit" / "preset"
+        legacy.write_text("profile: none\n", encoding="utf-8")
+        target = make_adopt_dir(tmp_path, "app")
+        result = run_door(
+            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "legacy preset found" in result.stderr
+        assert str(legacy) in result.stderr  # named, with the full path
+        # never read: no preset layer engaged, kit default recorded
+        assert "Preset:" not in result.stdout
+        assert "profile: python" in _kit_install_region(target)
+
+    def test_new_location_loads_named_and_no_notice(self, tmp_path):
+        cfg = write_preset(tmp_path, "profile: none\n")
+        target = make_adopt_dir(tmp_path, "app")
+        result = run_door(
+            "--adopt",
+            str(target),
+            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "legacy preset found" not in result.stderr
+        # the loaded path is NAMED in door output (the loudness rule)
+        assert f"Preset: {cfg / 'preset'}" in result.stdout
+        assert "profile: none" in _kit_install_region(target)
+
+    def test_no_preset_flag_suppresses_the_notice(self, tmp_path):
+        # --no-preset means "behave as a machine with no preset AT
+        # ALL" — the legacy notice is preset machinery too (this keeps
+        # the stranger-path byte-identity absolute)
+        xdg = tmp_path / "xdg"
+        (xdg / "agentive-kit").mkdir(parents=True)
+        (xdg / "agentive-kit" / "preset").write_text(
+            "profile: none\n", encoding="utf-8"
+        )
+        target = make_adopt_dir(tmp_path, "app")
+        result = run_door(
+            "--adopt",
+            str(target),
+            "--no-preset",
+            env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg)),
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "legacy preset found" not in result.stderr

@@ -1145,13 +1145,14 @@ class TestBotsRecord:
 
 
 def _preset_env(tmp_path: Path, content: str | None) -> dict[str, str]:
-    """Env with XDG_CONFIG_HOME pointing at a scratch dir; content=None
-    leaves the preset absent. Never the real ~/.config."""
-    xdg = tmp_path / "xdg"
-    (xdg / "agentive-kit").mkdir(parents=True, exist_ok=True)
+    """Env with AGENTIVE_KIT_CONFIG_DIR pointing at a scratch config
+    home (KIT-0058); content=None leaves the preset absent. Never the
+    real sibling folder."""
+    cfg = tmp_path / "agentive-config"
+    cfg.mkdir(parents=True, exist_ok=True)
     if content is not None:
-        (xdg / "agentive-kit" / "preset").write_text(content, encoding="utf-8")
-    return {**os.environ, "XDG_CONFIG_HOME": str(xdg)}
+        (cfg / "preset").write_text(content, encoding="utf-8")
+    return {**os.environ, "AGENTIVE_KIT_CONFIG_DIR": str(cfg)}
 
 
 def preset_lines(result: subprocess.CompletedProcess) -> list[str]:
@@ -1304,7 +1305,7 @@ class TestBotsReaderTolerance:
             pytest.skip("permission checks are meaningless as root")
         root, checks = _shape_fixture(tmp_path, "shape: single\n")
         env = _preset_env(tmp_path, "shape: single\n")
-        preset = Path(env["XDG_CONFIG_HOME"]) / "agentive-kit" / "preset"
+        preset = Path(env["AGENTIVE_KIT_CONFIG_DIR"]) / "preset"
         preset.chmod(0o000)
         try:
             result = run_doctor_rooted(root, checks, "--against-preset", env=env)
@@ -1370,3 +1371,218 @@ class TestBotsReaderTolerance:
         assert not any(ln.startswith("PRESET:shape:INFO:record") for ln in lines)
         assert not any(ln.startswith("PRESET:profile:INFO:record") for ln in lines)
         assert result.returncode == 0
+
+
+def run_config_home_check(
+    root: Path,
+    cfg: Path | None,
+    path_dir: Path | None = None,
+    extra_env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess:
+    """Run 90-config-home.sh directly. cfg=None points the override at
+    a nonexistent scratch path — never the real sibling folder — and a
+    hermetic XDG keeps the operator's real legacy location out (N1)."""
+    env = {
+        **os.environ,
+        "DOCTOR_ROOT": str(root),
+        "XDG_CONFIG_HOME": str(root / "no-such-xdg"),
+        "AGENTIVE_KIT_CONFIG_DIR": str(cfg if cfg else root / "no-such-config"),
+    }
+    if path_dir is not None:
+        env["PATH"] = str(path_dir)
+    if extra_env:
+        env.update(extra_env)
+    check = DOCTOR_D / "90-config-home.sh"
+    return subprocess.run(
+        [BASH, str(check)],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+class TestConfigHomeCheck:
+    """KIT-0058 F3: config-home guardrails — private-remote assertion
+    (WARN on public or on gh failure, naming the risk), tracked
+    env.source = FAIL, no git / no remote = PASS, plus the F4
+    legacy-location notice (retires at 0.9.0, KIT-0059 set)."""
+
+    # PATH set for the gh-controlled fixtures: the check's external
+    # tools, with gh's presence decided per test
+    CHECK_TOOLS = ("git", "grep", "head", "tr", "dirname")
+
+    @staticmethod
+    def _repo(cfg: Path, remote: str | None = None) -> None:
+        cfg.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["git", "init", "--quiet", str(cfg)], check=True, timeout=30)
+        if remote is not None:
+            subprocess.run(
+                ["git", "-C", str(cfg), "remote", "add", "origin", remote],
+                check=True,
+                timeout=30,
+            )
+
+    def test_absent_config_home_skips_naming_path(self, tmp_path):
+        result = run_config_home_check(tmp_path, None)
+        assert "DOCTOR:config-home:SKIP:" in result.stdout
+        assert "no-such-config" in result.stdout  # the path is named
+        assert "/setup-preset" in result.stdout  # and the way in
+
+    def test_plain_folder_passes(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        cfg.mkdir()
+        result = run_config_home_check(tmp_path, cfg)
+        assert "DOCTOR:config-home:PASS:" in result.stdout
+        assert "no git repo" in result.stdout
+
+    def test_repo_without_remote_passes(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        self._repo(cfg)
+        result = run_config_home_check(tmp_path, cfg)
+        assert "DOCTOR:config-home:PASS:" in result.stdout
+        assert "no remote" in result.stdout
+
+    def test_private_remote_passes(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        self._repo(cfg, "https://github.com/example/cfg.git")
+        bin_dir = _restricted_bin(tmp_path, tools=self.CHECK_TOOLS)
+        # UPPERCASE pins the case-normalization (GraphQL-style output)
+        _stub_executable(bin_dir / "gh", 'echo "PRIVATE"\n')
+        result = run_config_home_check(tmp_path, cfg, path_dir=bin_dir)
+        assert "DOCTOR:config-home:PASS:" in result.stdout
+        assert "private" in result.stdout
+
+    def test_public_remote_warns(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        self._repo(cfg, "https://github.com/example/cfg.git")
+        bin_dir = _restricted_bin(tmp_path, tools=self.CHECK_TOOLS)
+        _stub_executable(bin_dir / "gh", 'echo "public"\n')
+        result = run_config_home_check(tmp_path, cfg, path_dir=bin_dir)
+        assert "DOCTOR:config-home:WARN:" in result.stdout
+        assert "exposed" in result.stdout  # the risk is named
+        assert "FAIL" not in result.stdout
+
+    def test_gh_missing_warns_never_fails(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        self._repo(cfg, "https://github.com/example/cfg.git")
+        bin_dir = _restricted_bin(tmp_path, tools=self.CHECK_TOOLS)
+        result = run_config_home_check(tmp_path, cfg, path_dir=bin_dir)
+        assert "DOCTOR:config-home:WARN:" in result.stdout
+        assert "gh not installed" in result.stdout
+        assert "FAIL" not in result.stdout
+
+    def test_gh_failure_warns_naming_the_risk(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        self._repo(cfg, "https://github.com/example/cfg.git")
+        bin_dir = _restricted_bin(tmp_path, tools=self.CHECK_TOOLS)
+        _stub_executable(bin_dir / "gh", "exit 1\n")
+        result = run_config_home_check(tmp_path, cfg, path_dir=bin_dir)
+        assert "DOCTOR:config-home:WARN:" in result.stdout
+        assert "cannot verify" in result.stdout
+        assert "exposed" in result.stdout
+
+    def test_tracked_env_source_fails(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        self._repo(cfg)
+        (cfg / "env.source").write_text("KEY=secret\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(cfg), "add", "env.source"], check=True, timeout=30
+        )
+        result = run_config_home_check(tmp_path, cfg)
+        assert "DOCTOR:config-home:FAIL:" in result.stdout
+        assert "env.source is TRACKED" in result.stdout
+        assert "rm --cached" in result.stdout  # the way out is named
+
+    def test_untracked_env_source_is_fine(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        self._repo(cfg)
+        (cfg / "env.source").write_text("KEY=secret\n", encoding="utf-8")
+        result = run_config_home_check(tmp_path, cfg)
+        assert "DOCTOR:config-home:FAIL:" not in result.stdout
+        assert "DOCTOR:config-home:PASS:" in result.stdout
+
+    def test_legacy_location_warns_and_names_the_move(self, tmp_path):
+        xdg = tmp_path / "xdg"
+        (xdg / "agentive-kit").mkdir(parents=True)
+        (xdg / "agentive-kit" / "preset").write_text(
+            "shape: single\n", encoding="utf-8"
+        )
+        result = run_config_home_check(
+            tmp_path, None, extra_env={"XDG_CONFIG_HOME": str(xdg)}
+        )
+        assert "DOCTOR:config-home:WARN:legacy preset found" in result.stdout
+        assert str(xdg / "agentive-kit" / "preset") in result.stdout
+        assert "no longer read" in result.stdout
+        # the WARN rides alongside the normal verdict, never replaces it
+        assert "DOCTOR:config-home:SKIP:" in result.stdout
+
+    def test_no_legacy_no_warn(self, tmp_path):
+        cfg = tmp_path / "agentive-config"
+        cfg.mkdir()
+        result = run_config_home_check(tmp_path, cfg)
+        assert "legacy preset found" not in result.stdout
+
+    def test_hostile_git_dir_cannot_redirect_the_check(self, tmp_path):
+        # the KIT-0043 leak class: a leaked GIT_DIR pointing at a repo
+        # WITH a tracked env.source must not blind the check to the
+        # real (clean) config home
+        decoy = tmp_path / "decoy"
+        self._repo(decoy)
+        (decoy / "env.source").write_text("KEY=secret\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(decoy), "add", "env.source"],
+            check=True,
+            timeout=30,
+        )
+        cfg = tmp_path / "agentive-config"
+        self._repo(cfg)
+        result = run_config_home_check(
+            tmp_path, cfg, extra_env={"GIT_DIR": str(decoy / ".git")}
+        )
+        assert "DOCTOR:config-home:PASS:" in result.stdout
+        assert "FAIL" not in result.stdout
+
+    def test_derivation_without_override_names_the_sibling(self, tmp_path):
+        """The check's own resolution (no override): parent of the
+        DOCTOR_ROOT's primary clone + /agentive-config — the same rule
+        the door and the project script pin in their equivalence test."""
+        parent = tmp_path / "parent"
+        kit = parent / "kit"
+        kit.mkdir(parents=True)
+        subprocess.run(["git", "init", "--quiet", str(kit)], check=True, timeout=30)
+        (parent / "agentive-config").mkdir()
+        env = {
+            **os.environ,
+            "DOCTOR_ROOT": str(kit),
+            "XDG_CONFIG_HOME": str(tmp_path / "no-such-xdg"),
+        }
+        env.pop("AGENTIVE_KIT_CONFIG_DIR", None)
+        check = DOCTOR_D / "90-config-home.sh"
+        result = subprocess.run(
+            [BASH, str(check)],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert "DOCTOR:config-home:PASS:" in result.stdout
+        assert str(parent / "agentive-config") in result.stdout
+
+    def test_non_git_root_skips(self, tmp_path):
+        env = {
+            **os.environ,
+            "DOCTOR_ROOT": str(tmp_path),
+            "XDG_CONFIG_HOME": str(tmp_path / "no-such-xdg"),
+        }
+        env.pop("AGENTIVE_KIT_CONFIG_DIR", None)
+        check = DOCTOR_D / "90-config-home.sh"
+        result = subprocess.run(
+            [BASH, str(check)],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert "DOCTOR:config-home:SKIP:" in result.stdout
+        assert "not a git clone" in result.stdout

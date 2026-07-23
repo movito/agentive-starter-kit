@@ -1490,10 +1490,52 @@ def _check_declared(check_path, keyword):
     return None
 
 
-def _print_preset_comparison(shape, profile, bots, record_errors):
+def _config_home(project_dir):
+    """Locate the operator config home (KIT-0058, ADR-0027 P7
+    amendment): the visible sibling
+    ``<primary-clone-parent>/agentive-config`` of this checkout,
+    resolved worktree-safely via ``--git-common-dir``.
+    ``AGENTIVE_KIT_CONFIG_DIR`` is the ONLY override — an override,
+    never a search chain. Mirrors the door's ``config_home()``; the
+    equivalence test in tests/test_setup_door.py pins the two so the
+    door and doctor can never disagree on the path. Returns None when
+    the checkout is not a git repository (no sibling to name).
+    """
+    override = os.environ.get("AGENTIVE_KIT_CONFIG_DIR")
+    if override:
+        return Path(override)
+    # scrub GIT_* — a leaked GIT_DIR would resolve the WRONG primary
+    # clone (the KIT-0043 incident class; this runs in-process, so the
+    # driver's per-check scrub does not cover it)
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(project_dir),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-common-dir",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            env=env,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    common = result.stdout.strip()
+    if result.returncode != 0 or not common:
+        return None
+    return Path(common).parent.parent / "agentive-config"
+
+
+def _print_preset_comparison(shape, profile, bots, record_errors, project_dir):
     """`doctor --against-preset` (KIT-0056 F8, ADR-0027 P7): compare
     the project's kit-install record against the operator preset at
-    ~/.config/agentive-kit/preset (XDG_CONFIG_HOME honored).
+    ``<kit-parent>/agentive-config/preset`` (KIT-0058;
+    ``AGENTIVE_KIT_CONFIG_DIR`` overrides the location).
 
     INFO-only by design: divergence is reported as
     ``PRESET:<field>:INFO:<detail>`` lines and NEVER as WARN/FAIL, and
@@ -1509,9 +1551,15 @@ def _print_preset_comparison(shape, profile, bots, record_errors):
     door's parser (malformed lines, duplicate keys) do get reported —
     as INFO, with the comparison skipped whole.
     """
-    config_home = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
-    preset_path = Path(config_home) / "agentive-kit" / "preset"
+    home = _config_home(project_dir)
     print()
+    if home is None:
+        print(
+            f"PRESET:comparison:INFO:cannot locate the config home "
+            f"({project_dir} is not a git clone) — nothing to compare"
+        )
+        return
+    preset_path = home / "preset"
     if not preset_path.is_file():
         print(
             f"PRESET:comparison:INFO:no preset found at {preset_path} — "
@@ -1808,7 +1856,7 @@ def cmd_doctor(args, project_dir):
     skips = verdicts.count("SKIP")
     print(f"\nDoctor: {passes} pass, {warns} warn, {fails} fail, {skips} skip")
     if against_preset:
-        _print_preset_comparison(shape, profile, bots, record_errors)
+        _print_preset_comparison(shape, profile, bots, record_errors, project_dir)
     if fails:
         return 1
     if warns:

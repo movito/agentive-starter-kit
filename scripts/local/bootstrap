@@ -62,8 +62,8 @@
 #                        preset, or doctor tail). Removed with the shims.
 #
 # Resolution chain (F5): CLI flag → operator preset
-# (~/.config/agentive-kit/preset — see "Operator preset" below) → kit
-# default → interactive prompt (TTY only). On --adopt of a target that
+# (<kit-parent>/agentive-config/preset — see "Operator preset" below)
+# → kit default → interactive prompt (TTY only). On --adopt of a target that
 # already carries a kit-install record, the record's values win over
 # the preset for shape/profile/bots/target-pointer (the record is the
 # project's identity; divergence is `project doctor --against-preset`'s
@@ -71,17 +71,27 @@
 # a non-TTY run fail with usage (exit 2); optional offers default to
 # "skip, with notice".
 #
-# Operator preset (KIT-0056, ADR-0027 P7): flat `key: value` lines,
-# one per line, '#' comments allowed. Recognized keys (exactly the
-# door's questions, nothing else): shape, profile, bots, evaluators
-# (yes|no), venv (yes|no), target-path, target-github, env-source.
-# `env-source: <path>` names an operator-owned .env template (chmod
-# 600 expected); on --new the door copies it to the target's .env
-# (mode 0600), never printing or staging it. Unknown keys WARN and are
-# skipped; a malformed line fails loud naming the line. Flat keys only
-# is a conscious v1 boundary of the format. The preset lives outside
-# every repo and is never distributed — no sync tier, rsync, or export
-# touches ~/.config/agentive-kit/. Example: docs/preset.example.
+# Operator preset (KIT-0056, relocated KIT-0058; ADR-0027 P7): flat
+# `key: value` lines, one per line, '#' comments allowed. Recognized
+# keys (exactly the door's questions, nothing else): shape, profile,
+# bots, evaluators (yes|no), venv (yes|no), target-path,
+# target-github, env-source. `env-source: <path>` names an
+# operator-owned .env template (chmod 600 expected); on --new the door
+# copies it to the target's .env (mode 0600), never printing or
+# staging it. Unknown keys WARN and are skipped; a malformed line
+# fails loud naming the line. Flat keys only is a conscious v1
+# boundary of the format. The preset lives at
+# <kit-parent>/agentive-config/preset — a VISIBLE sibling of the kit's
+# primary clone (worktree-safe via --git-common-dir), never inside any
+# repo: no sync tier, rsync, or export touches it. The
+# AGENTIVE_KIT_CONFIG_DIR env var overrides the location (tests,
+# unusual layouts) — an override, never a search chain. On first use
+# of an existing config home the door seeds .gitignore + README
+# guardrails (idempotent, never overwriting, never creating the
+# folder itself). The legacy ~/.config/agentive-kit/preset is NEVER
+# read — a one-line notice names it until 0.9.0 (KIT-0059 removal
+# set). Author a preset conversationally with the /setup-preset
+# command; example file: docs/preset.example.
 #
 # Exit contract (F6):
 #   0  install succeeded — the doctor verdict is REPORTED prominently,
@@ -135,13 +145,42 @@ REC_BOTS=""
 REC_TARGET_PATH=""
 REC_TARGET_GITHUB=""
 
+config_home() {
+    # F1 (KIT-0058, ADR-0027 P7 amendment): the operator config home
+    # is a VISIBLE sibling of the kit's primary clone —
+    # <kit-parent>/agentive-config/ — resolved worktree-safely via
+    # --git-common-dir (the common dir names the primary clone's .git
+    # even from a linked worktree). AGENTIVE_KIT_CONFIG_DIR is the
+    # ONLY override — an override, never a search chain. This
+    # function LOCATES and writes nothing (seed_config_home is the
+    # writer); rc 1 when the kit checkout is not a git clone (no
+    # sibling to name — the preset layer then has nothing to read).
+    if [ -n "${AGENTIVE_KIT_CONFIG_DIR:-}" ]; then
+        printf '%s\n' "$AGENTIVE_KIT_CONFIG_DIR"
+        return 0
+    fi
+    local common
+    common="$(git -C "$PROJECT_ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 1
+    printf '%s\n' "$(dirname "$(dirname "$common")")/agentive-config"
+}
+
 load_preset() {
     # Malformed lines fail loud naming the line — never a silent
     # partial read (the record-reader face of the masking class:
     # partial reads poison dependent answers together). Unknown keys
     # WARN and are skipped (forward compatibility), never an error.
-    local file="${XDG_CONFIG_HOME:-$HOME/.config}/agentive-kit/preset"
+    local home file legacy
     [ "$NO_PRESET" -eq 1 ] && return 0
+    # F4 (KIT-0058): the pre-relocation location is a named notice,
+    # NEVER a fallback read — remove at 0.9.0 (KIT-0059 removal set)
+    legacy="${XDG_CONFIG_HOME:-$HOME/.config}/agentive-kit/preset"
+    if [ -f "$legacy" ]; then
+        local new_home
+        new_home="$(config_home)" || new_home="<kit-parent>/agentive-config"
+        echo "Notice: legacy preset found at $legacy — it is no longer read; move it to $new_home/preset" >&2
+    fi
+    home="$(config_home)" || return 0
+    file="$home/preset"
     [ -f "$file" ] || return 0
     if [ ! -r "$file" ]; then
         # set -e would kill the read loop anyway — but with bash's raw
@@ -476,6 +515,50 @@ ensure_git_identity() {
     done
 }
 
+seed_config_home() {
+    # F2 (KIT-0058): defensive seeding on FIRST USE — an orchestrate
+    # step, distinct from config_home (resolve locates and writes
+    # nothing; accepted arch-review finding). Idempotent, never
+    # overwrites an existing file, and never creates the folder
+    # itself (N3: creating it is the operator engaging the preset
+    # flow — /setup-preset guides that; no drive-by dirs on
+    # preset-less runs). A seeding failure warns and continues:
+    # guardrails are a courtesy, never the install's critical path.
+    local home
+    [ "$NO_PRESET" -eq 1 ] && return 0
+    home="$(config_home)" || return 0
+    [ -d "$home" ] || return 0
+    if [ ! -e "$home/.gitignore" ]; then
+        if printf 'env.source\n*.env\n' > "$home/.gitignore" 2>/dev/null; then
+            echo "Seeded $home/.gitignore (env.source and *.env stay out of git)"
+        else
+            echo "Warning: could not seed $home/.gitignore — check the folder's permissions" >&2
+        fi
+    fi
+    if [ ! -e "$home/README.md" ]; then
+        if cat > "$home/README.md" 2>/dev/null <<'CONFIG_README'
+# agentive-config
+
+Operator config for the agentive-starter-kit setup door — a visible
+sibling of the kit checkout, personal and per-machine, never
+distributed by any sync or export path. `preset` pre-answers the
+door's questions (author it conversationally with /setup-preset;
+format reference: docs/preset.example in the kit). Keeping this
+folder in a PRIVATE git repo is welcome — the seeded .gitignore
+keeps `env.source` and `*.env` out of git, and `project doctor`
+warns if the remote is not private. Secrets stay in `env.source`
+(chmod 600), referenced by path from the preset — never committed,
+never pasted into chat.
+CONFIG_README
+        then
+            echo "Seeded $home/README.md (what this folder is; private-repo pattern welcome)"
+        else
+            echo "Warning: could not seed $home/README.md — check the folder's permissions" >&2
+        fi
+    fi
+    return 0
+}
+
 apply_env_source() {  # $1 source path (from the preset) — --new only (F6)
     # Secrets by reference: the preset names an operator-owned .env
     # template; the door copies it 0600. The contents are NEVER
@@ -633,6 +716,10 @@ main() {
     if [ -n "$PRESET_PATH" ]; then
         echo "Preset: $PRESET_PATH (pass --no-preset to ignore it)"
     fi
+    # First-use guardrail seeding (F2) — right after the read, so an
+    # engaged config home gains its .gitignore before any operator
+    # git-init happens around it. No-ops on the stranger path (N2).
+    seed_config_home
 
     if [ -z "$MODE" ]; then
         if is_tty; then

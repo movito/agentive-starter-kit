@@ -1,12 +1,21 @@
 # Operator preset for the agentive-starter-kit setup door (KIT-0056,
-# KIT-ADR-0027 P7).
+# relocated by KIT-0058; KIT-ADR-0027 P7).
 #
-# Install location (never inside a repo — the preset is personal,
-# per-machine, and never distributed by any sync/export path):
+# Prefer the conversational builder: run /setup-preset in a Claude
+# session — it interviews you and writes this file for you.
 #
-#   mkdir -p ~/.config/agentive-kit
-#   cp docs/preset.example ~/.config/agentive-kit/preset
-#   $EDITOR ~/.config/agentive-kit/preset
+# Install location — a VISIBLE sibling of the kit checkout, personal,
+# per-machine, never distributed by any sync/export path (the
+# AGENTIVE_KIT_CONFIG_DIR env var overrides the location; the legacy
+# ~/.config/agentive-kit/ is no longer read):
+#
+#   mkdir -p <kit-parent>/agentive-config
+#   cp docs/preset.example <kit-parent>/agentive-config/preset
+#   $EDITOR <kit-parent>/agentive-config/preset
+#
+# On first use the door seeds a .gitignore (env.source, *.env) and a
+# README into the folder — keeping it in a PRIVATE git repo is
+# welcome, and `project doctor` checks that guardrail.
 #
 # The door (scripts/local/bootstrap) resolves every question as
 # CLI flag > preset > kit default > interactive prompt. A preset may
@@ -49,8 +58,9 @@
 # env-source: path to YOUR .env template holding real API keys
 # (chmod 600 it). On --new the door copies it to the target's .env
 # with mode 0600 — never printed, never staged (.env is gitignored).
-# Key material never lives in the preset itself.
-#env-source: ~/.config/agentive-kit/env-template
+# Key material never lives in the preset itself. Keeping the file
+# next to this preset works well — the seeded .gitignore ignores it.
+#env-source: <kit-parent>/agentive-config/env.source
 
 # target-path / target-github: the product-repo pointer, planning
 # shape only (rarely useful in a global preset — usually per-project).

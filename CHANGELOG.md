@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Visible config home + `/setup-preset`** (KIT-0058, ADR-0027 P7
+  amendment; core scripts 3.5.0):
+  - The operator config moved from the invisible
+    `~/.config/agentive-kit/` to a **visible sibling of the kit
+    checkout** — `<kit-parent>/agentive-config/` — resolved
+    worktree-safely via `--git-common-dir`. `AGENTIVE_KIT_CONFIG_DIR`
+    is the only override (never a search chain); the loaded preset
+    path is named in door output.
+  - First-use guardrail seeding (orchestrate step, idempotent, never
+    overwrites, never creates the folder): `.gitignore` (`env.source`,
+    `*.env`) + README.
+  - New doctor check `doctor.d/90-config-home.sh`: private-remote
+    assertion via `gh repo view` (WARN on public or gh failure),
+    tracked `env.source` = FAIL, no git/no remote = PASS.
+  - The legacy `~/.config/agentive-kit/preset` is **never read** — a
+    one-line notice names it (door + doctor); notice retires at 0.9.0
+    with the KIT-0059 removal set.
+  - `/setup-preset` (`.claude/commands/setup-preset.md`):
+    conversational preset builder that derives its interview from
+    `bootstrap --help` at runtime (no hardcoded question list),
+    refuses pasted secrets (path references only), and validates
+    written keys against the door's accepted set.
+
 ### Changed
 
 - **Canonical homes + the prune** (KIT-0057, KIT-ADR-0027 P6 — the

@@ -1,6 +1,6 @@
 # KIT-0058 Handoff — feature-developer
 
-**Task**: `.kit/tasks/2-todo/KIT-0058-visible-config-home.md`
+**Task**: `.kit/tasks/3-in-progress/KIT-0058-visible-config-home.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-22 (planner-f5)
 **Estimated effort**: 3–4 hours
