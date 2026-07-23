@@ -23,6 +23,13 @@
 # AGENTIVE_KIT_CONFIG_DIR override, else the primary clone's parent
 # via --git-common-dir (worktree-safe) + /agentive-config. Read-only;
 # network only via gh repo view (the visibility probe).
+#
+# Anchoring note (BugBot, PR #91): this check anchors to the checkout
+# it diagnoses (DOCTOR_ROOT), the door to the kit clone — identical
+# exactly when kit and project share a parent (the documented sibling
+# layout). A consumer checkout cannot compute the kit clone's local
+# path, so when layouts diverge the override is the pin, and every
+# verdict line names the resolved path to keep the anchor visible.
 
 set -u
 
@@ -64,7 +71,7 @@ fi
 emit_legacy_notice "$HOME_DIR"
 
 if [ ! -d "$HOME_DIR" ]; then
-    echo "DOCTOR:config-home:SKIP:no config home at $HOME_DIR — author one with /setup-preset"
+    echo "DOCTOR:config-home:SKIP:no config home at $HOME_DIR — author one with /setup-preset (path anchors to this checkout's parent; AGENTIVE_KIT_CONFIG_DIR overrides)"
     exit 0
 fi
 

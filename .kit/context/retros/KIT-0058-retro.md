@@ -3,8 +3,21 @@
 **Date**: 2026-07-23
 **Agent**: feature-developer-f5
 **Mode**: single-repo
-**Scorecard**: 1 thread, 0 regressions, 0 bot fix rounds (1 evaluator
-fix round, pre-PR), 3 commits
+**Scorecard**: 2 threads, 0 regressions, 1 bot fix round (1 evaluator
+fix round, pre-PR), 3 commits + post-retro fix round
+
+> **Post-retro correction (same day)**: BugBot was NOT skipping — its
+> check-runs said "skipping" on the first three commits, then it
+> reviewed the retro commit and filed 1 Medium (doctor anchors the
+> config home to the diagnosed checkout, not the kit clone).
+> Dispositioned deliberate-with-honest-naming (a consumer checkout
+> cannot compute the kit's local path; sibling layout is the
+> agreement condition; anchor + override now named in every doctor
+> output line + README bullet). Scorecard above updated (was: 1
+> thread, 0 bot fix rounds, "BugBot skipped"). The Gate 3 honesty
+> flag (What Was Surprising #3) gains a second face: a "skipping"
+> conclusion is apparently also NON-TERMINAL — BugBot can still
+> review later, so treating it as a final state was itself wrong.
 
 ### What Worked
 

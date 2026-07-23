@@ -514,6 +514,7 @@ Rules that keep this safe:
 
 - **Never distributed.** The preset lives outside every repo; no sync tier, rsync, or export touches the config home. Pass `--no-preset` for a stranger-mode run; without a preset file, behavior is byte-identical to today. The legacy `~/.config/agentive-kit/` location is no longer read (a one-line notice names it until 0.9.0).
 - **Guardrails, not obscurity.** On first use the door seeds a `.gitignore` (`env.source`, `*.env`) and a README into the config home — keeping the folder in a *private* git repo is welcome, and `project doctor` checks it (WARN on a public remote, FAIL on a tracked `env.source`).
+- **Anchored per checkout.** The door anchors to the kit clone; `project doctor` (in any project) anchors to the checkout it diagnoses — the two name the same folder when kit and projects share a parent directory (the sibling layout above). If yours don't, set `AGENTIVE_KIT_CONFIG_DIR`; every doctor line names the path it resolved so a wrong anchor is visible, never silent.
 - **Secrets by reference.** `env-source: <path>` names your own `.env` template (chmod 600). On `--new` the door copies it to the target's `.env` with mode 0600 — contents are never printed and never staged.
 - **Records beat presets.** On `--adopt` of a project that already carries a kit-install record, the record wins; compare them with `./scripts/core/project doctor --against-preset` (INFO-only — a deliberately-lean project is not wrong).
 - **Malformed fails loud.** A bad line aborts naming the line; unknown keys warn and are skipped.

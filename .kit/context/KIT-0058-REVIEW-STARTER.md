@@ -4,9 +4,12 @@
 **Branch**: `feature/KIT-0058-visible-config-home`
 **Task**: `.kit/tasks/4-in-review/KIT-0058-visible-config-home.md`
 **Status**: CI green · CodeRabbit APPROVED (1 trivial thread —
-declined with empirical refutation, resolved) · BugBot check-run
-"skipping" (did not review this PR — noted, not a failure) ·
-evaluator trio run pre-PR (record:
+declined with empirical refutation, resolved) · BugBot reviewed on a
+later commit after early check-runs said "skipping": 1 Medium finding
+(doctor anchors config home to the diagnosed checkout, not the kit) —
+dispositioned as deliberate-with-honest-naming, anchor + override now
+named in every doctor output line, thread resolved · evaluator trio
+run pre-PR (record:
 `.kit/context/reviews/KIT-0058-evaluator-review.md`)
 
 ## What this closes
@@ -53,7 +56,15 @@ gained the entry in this PR).
   (`gh repo view` accepts HTTPS/SSH/`.git` URL forms; empty override
   falls through), 1 pre-existing (defaulted-profile suffix in
   `--against-preset`, KIT-0056 behavior, untouched).
-- BugBot did not review (check-run "skipping") — one bot round total.
+- BugBot's early check-runs said "skipping" but it DID review a later
+  commit (retro flag about Gate 3 honesty still stands — the gate read
+  "skipping" as clean). Its one Medium finding is real at the seams:
+  doctor anchors the config home to the checkout it diagnoses, the
+  door to the kit clone. A consumer checkout cannot compute the kit's
+  local path, so same-anchor is the only computable rule; it matches
+  the door exactly in the documented sibling layout, and the fix
+  makes the anchor + `AGENTIVE_KIT_CONFIG_DIR` escape hatch explicit
+  in every doctor line (README bullet added).
 - The demo transcript in the PR body shows doctor FAILs — scratch-
   environment noise (fixture .env, no evaluators), named there.
 

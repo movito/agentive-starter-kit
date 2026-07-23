@@ -1500,6 +1500,15 @@ def _config_home(project_dir):
     equivalence test in tests/test_setup_door.py pins the two so the
     door and doctor can never disagree on the path. Returns None when
     the checkout is not a git repository (no sibling to name).
+
+    Anchoring note (BugBot, PR #91): each resolver anchors to ITS OWN
+    checkout — the door to the kit clone, doctor to the project it
+    diagnoses. The two name the same folder exactly when kit and
+    project share a parent (the documented sibling layout); a consumer
+    checkout has no pointer to the kit clone's local path, so the
+    kit's parent is not computable from here. When the layouts
+    diverge, the override pins the real location, and every output
+    line below names the resolved path so the anchor is visible.
     """
     override = os.environ.get("AGENTIVE_KIT_CONFIG_DIR")
     if override:
@@ -1565,7 +1574,9 @@ def _print_preset_comparison(shape, profile, bots, record_errors, project_dir):
     if not preset_path.is_file():
         print(
             f"PRESET:comparison:INFO:no preset found at {preset_path} — "
-            "nothing to compare"
+            "nothing to compare (the path anchors to THIS checkout's "
+            "parent; set AGENTIVE_KIT_CONFIG_DIR if your config home "
+            "lives beside the kit clone elsewhere)"
         )
         return
     try:
