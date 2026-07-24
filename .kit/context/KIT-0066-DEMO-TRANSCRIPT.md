@@ -145,7 +145,11 @@ sweep of `/tmp/kit0066-intake-demo/`).
 
 ## Result vs acceptance criteria
 
-- Pair created end-to-end in one procedure pass: ✅ (two local repos)
+- Pair created end-to-end in one procedure pass: ✅ for the local
+  flow (two local repos). **GitHub repo creation + push NOT
+  exercised** — `gh repo create` was deliberately skipped (see
+  Step 2 deviation), so that leg is verified only by inspection of
+  the agent text, not by this run
 - Door exit 0 with doctor verdict relayed: ✅ (both runs)
 - Context region filled from brief + prefix present: ✅ (4 agents)
 - ≥1 backlog stub from next-steps: ✅ (3 stubs, transcription only)

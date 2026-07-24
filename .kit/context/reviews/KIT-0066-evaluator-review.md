@@ -311,7 +311,7 @@ This diff introduces a **prototype graduation workflow** for an AI agent toolkit
 ### [MEDIUM]: Absolute Path of Operator's Config Exposed in Demo Transcript
 
 - **Location**: `.kit/context/KIT-0066-DEMO-TRANSCRIPT.md` — "Preset-resolved run" section
-- **Issue**: The demo transcript hardcodes `/Users/broadcaster_three/Github/agentive-config/preset` — a real, operator-specific absolute path identifying the operator's username and filesystem layout. This is committed into the repository and will appear in git history permanently. While this is a local path rather than a credential, it leaks PII (username) and filesystem structure. The handoff file also contains `/Users/broadcaster_three/Github/ask-worktrees/KIT-0066/`.
+- **Issue**: The demo transcript hardcodes `/Users/<operator>/Github/agentive-config/preset` — a real, operator-specific absolute path identifying the operator's username and filesystem layout. This is committed into the repository and will appear in git history permanently. While this is a local path rather than a credential, it leaks PII (username) and filesystem structure. The handoff file also contains `/Users/<operator>/Github/ask-worktrees/KIT-0066/`.
 - **Remediation**: Replace operator-specific absolute paths in committed artifacts with anonymized placeholders (e.g., `~/Github/agentive-config/preset` or `/Users/<operator>/Github/agentive-config/preset`). Apply to both the demo transcript and the handoff file before merge. Add a pre-commit note to the demo transcript template warning authors to redact personal paths.
 
 ---

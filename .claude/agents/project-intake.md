@@ -66,14 +66,22 @@ Gather at startup (ask only for what's missing; infer what you can):
 3. **Project name** — kebab-case repo name; default: the brief's
    project name, else the code folder's basename. **Validate before
    any shell use**: must match `^[a-z][a-z0-9-]{0,60}$` — no spaces,
-   path separators, or shell metacharacters. The name and paths reach
-   `git -C`, `gh repo create`, and the door verbatim; reject and
-   re-ask rather than sanitize silently.
+   path separators, or shell metacharacters. Reject and re-ask rather
+   than sanitize silently.
 4. **GitHub owner** — the account/org for `owner/<name>` (needed for
    the planning repo's target pointer even if repo creation is
    deferred). Default: `gh api user --jq .login`; if that fails
    (unauthenticated, offline) or returns empty, ask the user — never
-   proceed with an empty owner.
+   proceed with an empty owner. Validate like the name: GitHub
+   accounts are alphanumerics and hyphens only
+   (`^[A-Za-z0-9][A-Za-z0-9-]{0,38}$`).
+
+The same discipline applies to EVERY user-derived value that reaches
+a command — name, owner, code path, parent path: canonicalize paths
+to absolute form, validate before first use, and pass each as its own
+quoted argument (`git -C "<code-path>" …`), never interpolated into
+raw command text. These values reach `git -C`, `gh repo create`, and
+the door verbatim.
 
 > **Bash CWD note**: each Bash call resolves CWD independently — `cd`
 > does not persist. Use absolute paths and `git -C <path>` throughout;
@@ -112,6 +120,15 @@ Confirm where the pair will live. Both repos must be siblings
 └── <name>-planning/  # planning repo (the door creates this)
 ```
 
+**Name and folder must agree first**: every later step (the
+`--target-path ../<name>` flag, the sibling assertion, the seeded
+layout text) assumes `<parent>/<name>` IS the code folder. If the
+code folder's basename differs from the chosen `<name>` (brief says
+`snip-stash`, folder is `Downloads/prototype-v2`), reconcile before
+anything else: either adopt the basename as the project name, or —
+with the user's confirmation — rename/move the folder to
+`<parent>/<name>`. Never proceed with the two disagreeing.
+
 Default: keep the code folder where it is and create the planning repo
 beside it. If the code folder sits somewhere transient (a download
 folder), ask the user for the intended parent directory and move it
@@ -127,7 +144,11 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    repo's working tree is dirty, show `git -C <code-path> status
    --short` and ask: commit everything as the import, or stop for the
    user to review first. If it is clean and already committed, skip
-   steps 2-3.
+   steps 2-3 — but NOT the secret scan: before any first push of a
+   pre-existing repo, run the step-3 credential scan over its tracked
+   files (`git -C <code-path> grep` the same patterns). Deep history
+   scanning is the user's call — offer it as a suggestion
+   (`gitleaks`/`trufflehog`) rather than running it yourself.
 2. Ensure ignore rules cover secrets and artifacts — create
    `.gitignore` or append to an existing one: at minimum `.env` and
    `.env.*`, plus `*.key`, `*.pem`, and the obvious artifacts for the
@@ -233,10 +254,14 @@ CLAUDE.md is already filled by the door from your `--target-path`/
 **4b. Seed the backlog — stubs only.** For each entry in the brief's
 next-steps section, create
 `.kit/tasks/1-backlog/<PREFIX>-NNNN-<slug>.md`, numbered from 0001 in
-the brief's order. Keep slugs short (a few words, kebab-case) and
+the brief's order. Both filename components come from the brief, so
+validate them like Step-0 inputs: prefix must match
+`^[A-Z][A-Z0-9]{1,5}$` (the derivation rule's output shape), slugs
+must match `^[a-z0-9]+(-[a-z0-9]+)*$`, short (a few words) and
 unique — two entries with the same title must not collide into one
 filename (the number already disambiguates; never overwrite an
-existing task file). Use the task skeleton from
+existing task file). The resolved path must stay under
+`.kit/tasks/1-backlog/` — no separators or `..` from brief content. Use the task skeleton from
 `.claude/agents/bootstrap.md` Step 9 (`**Status**: Backlog`), carrying
 the entry's title, what/why sentences, and its "done when" line as the
 first acceptance criterion. **Transcription only**: no elaboration, no
@@ -245,8 +270,11 @@ needs a smarter seeder, that is a separate component — not your job.
 
 **4c. Commit the seeding** on the planning repo's `main` (the planning
 repo works directly on main — `docs/CROSS-REPO-PATTERN.md`,
-Conventions): e.g. "chore: seed project context and backlog from
-prototype brief".
+Conventions). The seeded content is brief-derived, so run the same
+staged-content credential scan as Step 2.3 before committing — a brief
+that leaked a value must not land in the planning repo either. Then
+commit, e.g. "chore: seed project context and backlog from prototype
+brief".
 
 ### Step 5: Finish loudly
 
@@ -273,9 +301,12 @@ Print a completion summary containing, at minimum:
   design. Ask the user — different name, or remove/rename the existing
   directory themselves. Never delete it for them.
 - **Code folder already has a remote**: skip `gh repo create`; take
-  `owner/repo` from the `origin` remote's URL. No remotes → treat as
-  no-remote (Step 2.5); multiple remotes and no `origin` → ask the
-  user which one is canonical.
+  `owner/repo` from the `origin` remote's URL **only if it is a
+  github.com URL** — a GitLab/Bitbucket/local origin is not a valid
+  `--target-github` value, so ask the user for the GitHub repo (or
+  create one) instead. No remotes → treat as no-remote (Step 2.5);
+  multiple remotes and no `origin` → ask the user which one is
+  canonical.
 - **No git identity configured** (fresh machine): the code-repo and
   seeding commits will fail. Surface git's own error and have the
   user set `user.name`/`user.email`; don't invent an identity.
