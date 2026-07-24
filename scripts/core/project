@@ -63,7 +63,11 @@ def _get_evaluator_library_version():
                 r'^\s*library_version\s*=\s*"([^"]+)"', text, re.MULTILINE
             )
             version = match.group(1) if match else None
-    except (FileNotFoundError, OSError):
+    except (FileNotFoundError, OSError, ValueError, AttributeError):
+        # ValueError covers tomllib.TOMLDecodeError (malformed TOML);
+        # AttributeError covers [tool]/[tool.adversarial] not being
+        # tables — either must reach the loud message below, never a
+        # raw traceback (CodeRabbit, KIT-0068).
         version = None
 
     if not version:

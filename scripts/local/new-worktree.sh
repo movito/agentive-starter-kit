@@ -185,6 +185,11 @@ for rel in "${PROVISION_LINKS[@]}"; do
         echo "Error: provisioning destination already exists: $dst" >&2
         echo "       Linking over it would nest the symlink inside the" >&2
         echo "       existing directory. Remove it, then re-run." >&2
+        # An explicit exit bypasses the ERR trap — repeat its recovery
+        # steps so the half-provisioned worktree isn't left unexplained.
+        echo "To retry from scratch:" >&2
+        echo "  git -C $PRIMARY_ROOT worktree remove --force $WORKTREE_PATH" >&2
+        echo "  git -C $PRIMARY_ROOT branch -D $BRANCH" >&2
         exit 1
     fi
     mkdir -p "$(dirname "$dst")"

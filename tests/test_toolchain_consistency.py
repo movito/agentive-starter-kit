@@ -69,13 +69,24 @@ def test_flake8_args_match_ci():
     )
 
 
-def test_ruff_invocation_matches_ci():
-    canonical = "ruff check scripts/ tests/"
-    assert canonical in _read(CI_CHECK), (
-        "ci-check.sh must run the canonical ruff invocation"
-        f" `{canonical}` (KIT-0068 A88)"
+def _ruff_args(text):
+    """The argument string after `ruff ` on the actual invocation line
+    (anchored to a command position so comments/echo lines never match)."""
+    match = re.search(
+        r"(?m)^\s*(?:if\s+)?(?:python3\s+-m\s+)?ruff\s+(check\s+[^\n]*)",
+        text,
     )
-    assert canonical in _read(TEST_YML), (
-        "test.yml must run the canonical ruff invocation"
-        f" `{canonical}` (KIT-0068 A88)"
+    assert match, "no ruff invocation found"
+    args = match.group(1)
+    args = re.sub(r"\s*2>/dev/null.*$", "", args)
+    args = re.sub(r"\s*;\s*then\s*$", "", args)
+    return args.strip()
+
+
+def test_ruff_invocation_matches_ci():
+    local = _ruff_args(_read(CI_CHECK))
+    ci = _ruff_args(_read(TEST_YML))
+    assert local == ci, (
+        f"ruff drift (KIT-0068 A88):\n  ci-check.sh: {local}\n"
+        f"  test.yml:    {ci}\nthe two runners must run the same check."
     )

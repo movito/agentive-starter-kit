@@ -149,7 +149,7 @@ else
 fi
 echo
 
-# 5. Full test suite with coverage
+# 6. Full test suite with coverage
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "6/7 🧪 Running full test suite with coverage..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -161,7 +161,7 @@ else
 fi
 echo
 
-# 6. Cross-repo config validation (KIT-0030 / KIT-ADR-0024 §2)
+# 7. Cross-repo config validation (KIT-0030 / KIT-ADR-0024 §2)
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "7/7 🧭 Validating cross-repo config..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

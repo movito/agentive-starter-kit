@@ -167,7 +167,7 @@ else
 fi
 echo
 
-# 5. Full test suite with coverage
+# 6. Full test suite with coverage
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "6/7 🧪 Running full test suite with coverage..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

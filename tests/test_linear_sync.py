@@ -207,6 +207,31 @@ class TestTaskParser:
         with pytest.raises(ValueError, match="No valid task ID"):
             parse_task_metadata(task_file)
 
+    def test_parse_rejects_embedded_filename_id(self, tmp_path):
+        """The id must LEAD the filename — an embedded id elsewhere
+        (notes-KIT-0068.md) is not this file's identity (CodeRabbit,
+        KIT-0068)."""
+        from scripts.optional.linear_sync_utils import parse_task_metadata
+
+        task_file = tmp_path / "notes-KIT-0068.md"
+        task_file.write_text(
+            "# KIT-0068: Some Task\n\n**Status**: Todo\n", encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match="No valid task ID"):
+            parse_task_metadata(task_file)
+
+    def test_parse_rejects_mismatched_heading_id(self, tmp_path):
+        """A heading carrying a DIFFERENT valid id must raise — it would
+        attach this file's title to the wrong Linear issue."""
+        from scripts.optional.linear_sync_utils import parse_task_metadata
+
+        task_file = tmp_path / "KIT-0068-some-task.md"
+        task_file.write_text(
+            "# ASK-0042: Some Task\n\n**Status**: Todo\n", encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match="Task ID mismatch"):
+            parse_task_metadata(task_file)
+
     def test_parse_raises_on_missing_title(self, tmp_path, task_content_no_title):
         """TaskParser should raise ValueError for missing title."""
         from scripts.optional.linear_sync_utils import parse_task_metadata
