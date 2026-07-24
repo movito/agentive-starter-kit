@@ -34,12 +34,12 @@ dev = [
     "pytest-asyncio>=1.4.0",  # For async test support
     "httpx>=0.25.0",           # For API testing (FastAPI, etc.)
     "black==26.5.1",
-    "ruff>=0.15.21",
+    "ruff>=0.15.22",
     "isort>=5.13.0",
     "flake8>=6.0.0",           # CI lint step (test.yml) invokes bare flake8
-    "pre-commit>=3.5.0",
+    "pre-commit>=4.6.0",
     # Adversarial evaluation (AI reviews task specs)
-    "adversarial-workflow>=0.7.0",  # Multi-evaluator support, citation verification
+    "adversarial-workflow>=1.0.1",  # Floor excludes 0.9.x aider-era builds that mutate the working tree during review
 ]
 local = [
     # Agent coordination (event bus, transition matching, spawning)
