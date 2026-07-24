@@ -43,6 +43,13 @@ read-both deprecation cycle, N1). This task ends the cycle.
   historical records (ADRs, done tasks, retros) before deleting.
 - Update `docs/MANIFEST-UPGRADE-GUIDE.md`'s example manifest alongside
   the real one.
+- **Legacy config-location notice (joined from KIT-0058)**: remove the
+  `~/.config/agentive-kit/preset` notice from both emitters — the
+  door's `load_preset` (the F4 block in `scripts/local/bootstrap`) and
+  `scripts/core/doctor.d/90-config-home.sh` (`LEGACY` var +
+  `emit_legacy_notice`) — plus their legacy-notice tests in
+  `tests/test_setup_door.py` / `tests/test_doctor.py`. The legacy path
+  was never read after KIT-0058; at 0.9.0 it stops being named too.
 
 ## Acceptance Criteria
 

@@ -1,6 +1,6 @@
 # KIT-0058: Relocate the operator config to a visible sibling folder
 
-**Status**: Todo
+**Status**: In Review
 **Priority**: high (fast-follow — must land BEFORE the operator creates
 their real preset; nobody has one yet, so relocation is free now)
 **Assigned To**: unassigned

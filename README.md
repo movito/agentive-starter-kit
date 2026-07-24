@@ -500,17 +500,21 @@ Use this when you want agentive coding help in an existing repo. Add `--no-kit` 
 
 ### Operator Preset (One-Button Setup)
 
-The door resolves every question as **CLI flag > preset > kit default > interactive prompt**. A preset file at `~/.config/agentive-kit/preset` (flat `key: value` lines) pre-answers exactly the door's questions — `shape`, `profile`, `bots`, `evaluators`, `venv`, `env-source`, and the planning-shape target pointer — so a fully filled preset makes `bootstrap --new <dir>` a genuine one-command project:
+The door resolves every question as **CLI flag > preset > kit default > interactive prompt**. A preset file at `<kit-parent>/agentive-config/preset` — a visible sibling of your kit checkout (KIT-0058; `AGENTIVE_KIT_CONFIG_DIR` overrides the location) — pre-answers exactly the door's questions with flat `key: value` lines (`shape`, `profile`, `bots`, `evaluators`, `venv`, `env-source`, and the planning-shape target pointer), so a fully filled preset makes `bootstrap --new <dir>` a genuine one-command project:
 
 ```bash
-mkdir -p ~/.config/agentive-kit
-cp docs/preset.example ~/.config/agentive-kit/preset   # then edit it
-./scripts/local/bootstrap --new ~/Github/my-next-app   # zero questions
+# easiest: run /setup-preset in a Claude session — it interviews you
+# and writes the file. By hand:
+mkdir -p ~/Github/agentive-config                       # sibling of the kit checkout
+cp docs/preset.example ~/Github/agentive-config/preset  # then edit it
+./scripts/local/bootstrap --new ~/Github/my-next-app    # zero questions
 ```
 
 Rules that keep this safe:
 
-- **Never distributed.** The preset lives outside every repo; no sync tier, rsync, or export touches `~/.config/agentive-kit/`. Pass `--no-preset` for a stranger-mode run; without a preset file, behavior is byte-identical to today.
+- **Never distributed.** The preset lives outside every repo; no sync tier, rsync, or export touches the config home. Pass `--no-preset` for a stranger-mode run; without a preset in either location, behavior is byte-identical to today. The legacy `~/.config/agentive-kit/` location is no longer read — a preset that only exists there stops applying (a one-line notice names it until 0.9.0).
+- **Guardrails, not obscurity.** On first use the door seeds a `.gitignore` (`env.source`, `*.env`) and a README into the config home — keeping the folder in a *private* git repo is welcome, and `project doctor` checks it (WARN on a public remote, FAIL on a tracked `env.source`).
+- **Anchored per checkout.** The door anchors to the kit clone; `project doctor` (in any project) anchors to the project it diagnoses — each resolved to the primary clone's parent (worktree-safe). The two name the same folder when kit and projects share a parent directory (the sibling layout above). If yours don't, set `AGENTIVE_KIT_CONFIG_DIR`; every doctor line names the path it resolved so a wrong anchor is visible, never silent.
 - **Secrets by reference.** `env-source: <path>` names your own `.env` template (chmod 600). On `--new` the door copies it to the target's `.env` with mode 0600 — contents are never printed and never staged.
 - **Records beat presets.** On `--adopt` of a project that already carries a kit-install record, the record wins; compare them with `./scripts/core/project doctor --against-preset` (INFO-only — a deliberately-lean project is not wrong).
 - **Malformed fails loud.** A bad line aborts naming the line; unknown keys warn and are skipped.
