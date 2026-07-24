@@ -58,7 +58,7 @@ retire what it supersedes.
 - **F7 — dispatch-kit steps in setup-dev.sh** (A18): per D4.
 - **F8 — docs/adr ownership** (A61, A62): per D5.
 
-## Decisions (operator sign-off before assignment)
+## Decisions (✅ ALL FIVE APPROVED AS RECOMMENDED — operator, 2026-07-24)
 
 - **D1 — launchers + onboarding agent** (recommendation: RETIRE).
   `.kit/launchers/launch|onboarding|preflight` and the onboarding
@@ -143,4 +143,5 @@ Disposition (planner):
    public-surfaces-only clarification.
 
 No outstanding blockers. Working tree verified clean post-run.
-Assignment gate: Decisions D1-D5 need operator sign-off.
+Assignment gate CLEARED: D1-D5 approved as recommended (operator,
+2026-07-24) — assignable when its turn comes in the chain.
