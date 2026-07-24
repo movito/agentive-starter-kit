@@ -253,7 +253,11 @@ Before shipping, audit all changed files:
 > stash/restore dance can silently DROP untracked files created
 > between staging and commit. After ANY pre-commit run that reports a
 > mutating-hook failure: `git log -1` + `git status` before
-> proceeding; never trust the output tail.
+> proceeding; never trust the output tail. The class is not
+> Python-only (KIT-0066): appended evaluator logs carry markdown
+> trailing whitespace, so committing a review record that embeds
+> them trips the trailing-whitespace hook the same way — strip
+> first or expect one hook abort.
 
 ```bash
 # Stage specific files in the code repo (never git add -A)

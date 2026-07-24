@@ -3,7 +3,17 @@
 **Date**: 2026-07-24
 **Agent**: feature-developer-f5
 **Mode**: single-repo
-**Scorecard**: 15 threads, 0 regressions, 4 fix rounds, 8 commits
+**Scorecard**: 17 threads, 0 regressions, 5 bot fix rounds, 11 commits
+
+> **Planner correction (2026-07-24, at closeout)**: retro was written
+> mid-tail; finals per the fd's completion report are 17 threads /
+> 5 rounds / 11 commits (rounds 4-5 were BugBot consistency nits on
+> prose the prior round's fix introduced — the converging-tail class
+> below, one more data point each). Process action 2 (scaffold
+> memory-file purge) was executed by the planner pre-merge as
+> `0045c50` — the tracked file was also the ONLY copy (canonical
+> memory never had it) and its content was obsolete aider-era
+> guidance; `.claude/projects/` is now ignored repo-wide.
 
 ### What Worked
 

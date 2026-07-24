@@ -69,6 +69,19 @@ real findings.
   conclusion as a final state (document the recheck expectation or
   poll semantics). Evidence: `.kit/context/retros/KIT-0058-retro.md`
   (Surprising #3, post-retro correction, Incident Closure #2).
+  **Second occurrence (KIT-0066, PR #92)**: BugBot sat "skipping"
+  through three CI rounds then delivered a terminal PASS with one
+  new finding on round 4, unprompted —
+  `.kit/context/retros/KIT-0066-retro.md` (Surprising #1).
+- **F7 — Gates 2/3 docs-only message honesty (added from KIT-0066
+  retro)**: the gates classified PR #92's prose-agent diff as "No
+  code changes — bot review not required" while both bots produced
+  17 threads across 5 rounds on it. Reword for md-only diffs to
+  name reality ("docs-only diff — bot review not required; bots may
+  still review") so the message can't be read as "bots were
+  skipped". Prose that drives shell commands is not "no code" in
+  any meaningful sense — note that in the gate's comment. Evidence:
+  KIT-0066 retro (Surprising #2, Should Change #3).
 
 ## Acceptance Criteria
 
