@@ -64,10 +64,16 @@ Gather at startup (ask only for what's missing; infer what you can):
    convention).
 2. **Code folder path** — the prototype's files.
 3. **Project name** — kebab-case repo name; default: the brief's
-   project name, else the code folder's basename.
+   project name, else the code folder's basename. **Validate before
+   any shell use**: must match `^[a-z][a-z0-9-]{0,60}$` — no spaces,
+   path separators, or shell metacharacters. The name and paths reach
+   `git -C`, `gh repo create`, and the door verbatim; reject and
+   re-ask rather than sanitize silently.
 4. **GitHub owner** — the account/org for `owner/<name>` (needed for
    the planning repo's target pointer even if repo creation is
-   deferred). Default: `gh api user --jq .login`.
+   deferred). Default: `gh api user --jq .login`; if that fails
+   (unauthenticated, offline) or returns empty, ask the user — never
+   proceed with an empty owner.
 
 > **Bash CWD note**: each Bash call resolves CWD independently — `cd`
 > does not persist. Use absolute paths and `git -C <path>` throughout;
@@ -80,7 +86,10 @@ Gather at startup (ask only for what's missing; infer what you can):
 Read the brief in full. Extract: project name, languages, key
 components, domain vocabulary, task prefix, decisions, solid/rough
 state, known issues, dependency and secret NAMES, and the next-steps
-list. Verify the code folder exists and skim its top level.
+list. Verify the code folder exists (as an absolute path) and skim
+its top level. **Refuse to proceed if the code folder is the kit
+checkout itself or any directory inside it** — the same guard the
+door applies to its own target.
 
 - **Task prefix**: use the brief's suggestion. If absent, derive it
   with the bootstrap agent's rule (`.claude/agents/bootstrap.md`
@@ -106,21 +115,33 @@ Confirm where the pair will live. Both repos must be siblings
 Default: keep the code folder where it is and create the planning repo
 beside it. If the code folder sits somewhere transient (a download
 folder), ask the user for the intended parent directory and move it
-there first.
+there first; if the move fails (permissions, name collision), stop
+and report — do not continue against the old path.
 
 ### Step 2: Code repo — init, commit, GitHub
 
 All commands target the code folder explicitly (`git -C <code-path>`).
 
 1. If the folder is not already a git repo, `git -C <code-path> init`.
-   If it is one, keep its history — do not re-init.
-2. Seed a minimal `.gitignore` if none exists (at minimum `.env`; add
-   the obvious artifacts for the brief's stack, e.g. `node_modules/`,
-   `__pycache__/`, `.venv/`).
-3. First commit of the prototype state
-   (`git -C <code-path> add -A` is acceptable here — this is a fresh
-   export, not a working tree with unrelated changes — then commit,
-   e.g. "chore: import prototype from Cowork handoff").
+   If it is one, keep its history — do not re-init. If the existing
+   repo's working tree is dirty, show `git -C <code-path> status
+   --short` and ask: commit everything as the import, or stop for the
+   user to review first. If it is clean and already committed, skip
+   steps 2-3.
+2. Ensure ignore rules cover secrets and artifacts — create
+   `.gitignore` or append to an existing one: at minimum `.env` and
+   `.env.*`, plus `*.key`, `*.pem`, and the obvious artifacts for the
+   brief's stack (`node_modules/`, `__pycache__/`, `.venv/`). Verify
+   with `git -C <code-path> check-ignore .env` before staging.
+3. Stage and scan, then commit. `git -C <code-path> add -A` is
+   acceptable here (a fresh import, not selective feature work). Then
+   a **mandatory secret scan of the staged files** before the commit
+   — not optional, not a vibe check: grep the staged content for
+   common credential shapes (`sk-`, `ghp_`, `github_pat_`, `xoxb-`,
+   `AKIA`, `BEGIN .* PRIVATE KEY`, long `eyJ` JWT blobs). Any hit:
+   unstage, tell the user, and wait. A tracked `.env` bypasses
+   `.gitignore` — `git rm --cached` it first. Only then commit
+   (e.g. "chore: import prototype from Cowork handoff").
 4. **Visibility question** (AskUserQuestion): create the GitHub repo
    **private (default, recommended)** or public? Rationale to present:
    the split pair keeps planning artifacts out of this repo precisely
@@ -135,7 +156,13 @@ All commands target the code folder explicitly (`git -C <code-path>`).
 
 ### Step 3: Planning repo — run the door
 
-From the kit checkout root, one door run — flags only, so it is
+First re-assert the sibling layout from Step 1: `<parent>/<name>`
+must BE the code folder (one directory check). `--target-path
+../<name>` below is only correct because the two repos are siblings —
+a nested or moved code folder would record a silently wrong pointer
+in the planning repo's CLAUDE.md.
+
+Then, from the kit checkout root, one door run — flags only, so it is
 non-TTY safe (the door never hangs: every question has a flag, the
 operator preset answers the rest, optional offers default to
 skip-with-notice):
@@ -150,8 +177,11 @@ skip-with-notice):
 - `--target-path`/`--target-github` are always passed explicitly —
   they are per-project values a preset cannot know.
 - Do NOT pass `--name` or `--prefix`: the door refuses them for the
-  planning shape (`scripts/local/bootstrap:385-386`, as of
-  2026-07-24). The prefix lands in Step 4 instead.
+  planning shape (`scripts/local/bootstrap:385-386`). The prefix
+  lands in Step 4 instead.
+- **Line anchors in this file are dated 2026-07-24** — they locate
+  behavior, they don't define it. If an anchor doesn't match what you
+  see, trust the current file and the door's own errors/`--help`.
 - Do NOT route the brief through `--design-materials` — that flow is
   adopt+single+python only (`bootstrap:383-384, 394-395, 403-404`).
 
@@ -182,7 +212,9 @@ line (`- **Task Prefix**: TODO — e.g. PROJ-NNNN`) is
 `kit_markers.py:187` (line anchors as of 2026-07-24). In ALL FOUR
 files, replace the placeholder body — keeping the
 `<!-- BEGIN/END KIT-LOCAL: project-context -->` marker lines intact —
-with, from the brief:
+with the content below. If a seeded agent is missing its markers or
+they look malformed, stop and report it as a scaffold defect — never
+free-hand edit outside the markers. Fill from the brief:
 
 - Tech stack (languages, frameworks, runtimes)
 - Layout: this planning repo + the target repo pointer (`../<name>`)
@@ -201,7 +233,10 @@ CLAUDE.md is already filled by the door from your `--target-path`/
 **4b. Seed the backlog — stubs only.** For each entry in the brief's
 next-steps section, create
 `.kit/tasks/1-backlog/<PREFIX>-NNNN-<slug>.md`, numbered from 0001 in
-the brief's order. Use the task skeleton from
+the brief's order. Keep slugs short (a few words, kebab-case) and
+unique — two entries with the same title must not collide into one
+filename (the number already disambiguates; never overwrite an
+existing task file). Use the task skeleton from
 `.claude/agents/bootstrap.md` Step 9 (`**Status**: Backlog`), carrying
 the entry's title, what/why sentences, and its "done when" line as the
 first acceptance criterion. **Transcription only**: no elaboration, no
@@ -237,8 +272,13 @@ Print a completion summary containing, at minimum:
 - **`--new` target already exists** (exit 2): the door refuses by
   design. Ask the user — different name, or remove/rename the existing
   directory themselves. Never delete it for them.
-- **Code folder already has a remote**: skip `gh repo create`; confirm
-  the existing `owner/repo` and use it for `--target-github`.
+- **Code folder already has a remote**: skip `gh repo create`; take
+  `owner/repo` from the `origin` remote's URL. No remotes → treat as
+  no-remote (Step 2.5); multiple remotes and no `origin` → ask the
+  user which one is canonical.
+- **No git identity configured** (fresh machine): the code-repo and
+  seeding commits will fail. Surface git's own error and have the
+  user set `user.name`/`user.email`; don't invent an identity.
 - **Brief and code disagree** (e.g. brief says Python, folder is
   TypeScript): trust the code, note the discrepancy in the
   project-context rules, and tell the user.

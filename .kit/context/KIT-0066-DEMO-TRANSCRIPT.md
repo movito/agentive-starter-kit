@@ -105,7 +105,7 @@ operator preset answered everything except the per-project pointers:
 $ ./scripts/local/bootstrap --new /tmp/kit0066-intake-demo/snip-stash-planning2 \
     --target-path ../snip-stash --target-github demoowner/snip-stash
 door exit: 0
-Preset: /Users/broadcaster_three/Github/agentive-config/preset (pass --no-preset to ignore it)
+Preset: ~/Github/agentive-config/preset (pass --no-preset to ignore it)   [path abbreviated]
 planning shape → profile none (forced; the only legal pair)
   kit-install region written (shape: planning, profile: none, bots: coderabbit bugbot)
 Seeded .env from preset env-source (mode 0600, gitignored; contents never printed)
