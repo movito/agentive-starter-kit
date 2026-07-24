@@ -151,8 +151,9 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    any first push of a pre-existing repo, still verify ignore
    coverage (step 2's check — `.env` and key files must be ignored
    and untracked; a tracked `.env` blocks the push until resolved
-   with the user) and run the step-3 credential scan over its tracked
-   files (`git -C <code-path> grep` the same patterns). Deep history
+   with the user) and run the Step 2.3 credential scan over its
+   tracked files (`git -C <code-path> grep` the same credential
+   patterns listed there). Deep history
    scanning is the user's call — offer it as a suggestion
    (`gitleaks`/`trufflehog`) rather than running it yourself.
 2. Ensure ignore rules cover secrets and artifacts — create
@@ -174,7 +175,11 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    the split pair keeps planning artifacts out of this repo precisely
    so it CAN be published later (`docs/CROSS-REPO-PATTERN.md`) —
    starting private costs nothing and flipping later is one setting.
-5. `gh repo create <owner>/<name> --private --source <code-path> --push`
+5. First check for an existing remote: if the repo already has an
+   `origin`, do NOT run `gh repo create` — derive `owner/repo` from
+   it per the "already has a remote" rules in Edge cases (github.com
+   origins only). Otherwise:
+   `gh repo create <owner>/<name> --private --source <code-path> --push`
    (or `--public` per the answer). If `gh` is unauthenticated or the
    user defers, print the manual commands and continue — the planning
    repo still records `<owner>/<name>` as the pointer.
@@ -263,10 +268,10 @@ next-steps section, create
 the brief's order. Both filename components trace back to the brief:
 the prefix was already validated at Step 0 (`^[A-Z][A-Z0-9]{0,5}$` —
 same rule, don't re-derive here); slugs must match
-`^[a-z0-9]+(-[a-z0-9]+)*$`, be at most 40 characters, and be
-unique — two entries with the same title must not collide into one
-filename (the number already disambiguates; never overwrite an
-existing task file). The resolved path must stay under
+`^[a-z0-9]+(-[a-z0-9]+)*$` and be at most 40 characters. The FULL
+filename must be unique — identical slugs are fine when the `NNNN`
+numbers differ (the number disambiguates); never overwrite an
+existing task file. The resolved path must stay under
 `.kit/tasks/1-backlog/` — no separators or `..` from brief content. Use the task skeleton from
 `.claude/agents/bootstrap.md` Step 9 (`**Status**: Backlog`), carrying
 the entry's title, what/why sentences, and its "done when" line as the
