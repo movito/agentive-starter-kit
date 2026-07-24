@@ -208,6 +208,11 @@ skip-with-notice):
 
 - `--target-path`/`--target-github` are always passed explicitly —
   they are per-project values a preset cannot know.
+- `--target-github` carries the value ESTABLISHED IN STEP 2, not a
+  re-derivation: `<owner>/<name>` when you created the repo, or the
+  origin-derived `owner/repo` for a pre-existing remote. If the
+  remote's repo name differs from the chosen `<name>`, the remote
+  wins — the pointer must name the repo that actually exists.
 - Do NOT pass `--name` or `--prefix`: the door refuses them for the
   planning shape (`scripts/local/bootstrap:385-386`). The prefix
   lands in Step 4 instead.
