@@ -110,6 +110,23 @@ From the agentive-starter-kit directory:
 # codebase at <path>
 ```
 
+**Graduating a prototype?** (Cowork conversation → split pair, KIT-0066)
+The template → agent → pair recipe composes the door run above:
+
+1. **Template**: paste the fenced block from
+   `.kit/templates/PROTOTYPE-HANDOFF-TEMPLATE.md` into the prototyping
+   conversation; save the structured brief it returns (convention:
+   `PROTOTYPE-BRIEF.md` in the code folder).
+2. **Agent**: invoke the `project-intake` agent
+   (`.claude/agents/project-intake.md`) in a new tab from your kit
+   checkout, giving it the brief path, the code folder, and the
+   project name.
+3. **Pair**: the agent creates the code repo (git + GitHub, no kit
+   install), runs the door for the planning repo (the operator preset
+   answers shape/bots/evaluators/env), fills the planning repo's
+   project-context regions from the brief, and seeds `1-backlog/`
+   from the brief's next steps — planner-ready in one invocation.
+
 ### 2. Ensure sibling directory layout
 
 Both repos must be siblings on disk:

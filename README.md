@@ -498,6 +498,8 @@ Bootstrap an existing project with the implementation tools — agents, scripts,
 
 Use this when you want agentive coding help in an existing repo. Add `--no-kit` to skip the task-management workflow entirely. Run `./scripts/local/bootstrap --help` for the full shape × profile matrix.
 
+Graduating a prototype from a Cowork conversation? Paste `.kit/templates/PROTOTYPE-HANDOFF-TEMPLATE.md` into the conversation, then hand the brief + code folder to the `project-intake` agent — it composes the door into the split pair (plain code repo + preset-configured planning repo) in one invocation (see `docs/CROSS-REPO-PATTERN.md`).
+
 ### Operator Preset (One-Button Setup)
 
 The door resolves every question as **CLI flag > preset > kit default > interactive prompt**. A preset file at `<kit-parent>/agentive-config/preset` — a visible sibling of your kit checkout (KIT-0058; `AGENTIVE_KIT_CONFIG_DIR` overrides the location) — pre-answers exactly the door's questions with flat `key: value` lines (`shape`, `profile`, `bots`, `evaluators`, `venv`, `env-source`, and the planning-shape target pointer), so a fully filled preset makes `bootstrap --new <dir>` a genuine one-command project:
