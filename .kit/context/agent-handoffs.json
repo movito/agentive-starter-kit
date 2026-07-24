@@ -1,19 +1,19 @@
 {
   "planner": {
-    "status": "available",
-    "current_task": null,
+    "status": "handoff_ready",
+    "current_task": "KIT-0068",
     "task_started": null,
-    "brief_note": "KIT-0066 closed out 2026-07-24 (PR #92 merged c58bcde; worktree removed, branch deleted, retro processed with scorecard finals 17/5/11, insights extracted). Prototype-intake flow live: PROTOTYPE-HANDOFF-TEMPLATE + project-intake agent. Scaffold memory-file purge shipped pre-merge (0045c50). KIT-0062 gained F7 (docs-only gate message) + skipping second-occurrence evidence. NEXT: cut 0.9.0 (KIT-0047 + KIT-0054 + KIT-0059 incl. legacy-config notice) -> downstream pass.",
-    "details_link": ".kit/tasks/5-done/KIT-0066-prototype-intake-flow.md",
-    "handoff_file": null
+    "brief_note": "KIT-0068 (functional repairs from pre-0.9.0 cruft audit: 3 broken project subcommands, materials-engine consumer leak, config/symlink defects, toolchain drift) assigned: spec evaluated (fast REVISION_SUGGESTED, path-registry declined, two-homes rule accepted), handoff cites audit A-numbers, worktree provisioned. Remediation sequence: 0068 -> 0065 widened -> 0069 -> 0067/0070 merged -> cut 0.9.0.",
+    "details_link": ".kit/tasks/2-todo/KIT-0068-functional-repairs-audit.md",
+    "handoff_file": ".kit/context/KIT-0068-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
-    "status": "idle",
-    "current_task": null,
+    "status": "handoff_ready",
+    "current_task": "KIT-0068",
     "task_started": null,
-    "brief_note": "KIT-0066 delivered and merged (PR #92). No active assignment.",
-    "details_link": null,
-    "handoff_file": null
+    "brief_note": "KIT-0068 ready: behavior-only fixes, evidence in PRE-090-CRUFT-AUDIT review record (A-numbers). Fixture-honesty guard test is headline. Worktree: ../ask-worktrees/KIT-0068 (pull --ff-only first).",
+    "details_link": ".kit/tasks/2-todo/KIT-0068-functional-repairs-audit.md",
+    "handoff_file": ".kit/context/KIT-0068-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {
     "status": "idle",
