@@ -1111,3 +1111,31 @@ class TestCallerPathsRealTree:
         result = self._run(bare_tree, "version")
         assert result.returncode == 1
         assert "VERSION" in result.stdout
+
+
+class TestRefBypassesPinRead:
+    """--ref must not require a readable pyproject pin (o3 review,
+    KIT-0068): planning-shape repos have no pyproject.toml, and the
+    pin reader's own error message tells users to pass --ref."""
+
+    def test_ref_skips_pin_reader(self, tmp_path, capsys):
+        evaluators_dir = tmp_path / ".adversarial" / "evaluators"
+        evaluators_dir.mkdir(parents=True)
+
+        with patch.object(
+            _project_module,
+            "_get_evaluator_library_version",
+            side_effect=AssertionError("pin reader must not run with --ref"),
+        ):
+            with patch.object(_project_module, "subprocess") as mock_subprocess:
+                mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
+                mock_subprocess.run.side_effect = [
+                    MagicMock(returncode=0),  # git --version
+                    MagicMock(returncode=1, stderr="not found"),  # clone fails
+                ]
+                with pytest.raises(SystemExit):
+                    _project_module.cmd_install_evaluators(
+                        ["--ref", "v9.9.9"], tmp_path
+                    )
+
+        assert "v9.9.9" in capsys.readouterr().out

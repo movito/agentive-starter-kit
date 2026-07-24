@@ -59,7 +59,9 @@ def _get_evaluator_library_version():
             )
         else:
             text = pyproject.read_text(encoding="utf-8")
-            match = re.search(r'^library_version\s*=\s*"([^"]+)"', text, re.MULTILINE)
+            match = re.search(
+                r'^\s*library_version\s*=\s*"([^"]+)"', text, re.MULTILINE
+            )
             version = match.group(1) if match else None
     except (FileNotFoundError, OSError):
         version = None
@@ -856,13 +858,18 @@ def cmd_install_evaluators(args, project_dir):
     """Install evaluators from adversarial-evaluator-library."""
     # Parse arguments
     force = "--force" in args
-    version = _get_evaluator_library_version()
 
-    # Check for --ref flag (e.g., --ref v0.3.0 or --ref main)
+    # Check for --ref flag (e.g., --ref v0.3.0 or --ref main) BEFORE
+    # reading the pyproject pin: an explicit --ref must work even where
+    # pyproject.toml is absent (planning-shape repos), and the pin
+    # reader fails loud in that case (o3 review, KIT-0068).
+    version = None
     for i, arg in enumerate(args):
         if arg == "--ref" and i + 1 < len(args):
             version = args[i + 1]
             break
+    if version is None:
+        version = _get_evaluator_library_version()
 
     # 1. Check for git (required for cloning)
     git_check = subprocess.run(["git", "--version"], capture_output=True, text=True)
