@@ -1,6 +1,6 @@
 # KIT-0068 Handoff — feature-developer
 
-**Task**: `.kit/tasks/3-in-progress/KIT-0068-functional-repairs-audit.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0068-functional-repairs-audit.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-24 (planner-f5)
 **Estimated effort**: 1-1.5 days

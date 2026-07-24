@@ -1,6 +1,6 @@
 # KIT-0068: Functional repairs from the pre-0.9.0 cruft audit
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 1-1.5 days
