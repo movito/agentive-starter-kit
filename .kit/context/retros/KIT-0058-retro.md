@@ -3,8 +3,16 @@
 **Date**: 2026-07-23
 **Agent**: feature-developer-f5
 **Mode**: single-repo
-**Scorecard**: 2 threads, 0 regressions, 1 bot fix round (1 evaluator
-fix round, pre-PR), 3 commits + post-retro fix round
+**Scorecard**: 5 threads, 0 regressions, 2 bot fix rounds (1 evaluator
+fix round, pre-PR), 6 commits
+
+> **Planner correction (2026-07-24, at closeout)**: scorecard updated
+> from the retro-time snapshot (2 threads / 1 bot round / 3 commits +
+> post-retro round) — CodeRabbit R2 filed 3 Minor wording threads on
+> the BugBot-fix commit `1d1f6d7`, fixed in `484c9e2`. Observation:
+> bot-round multiplication (the KIT-0032 class) appeared even on a
+> 6-line docs diff — CodeRabbit R2 reviewed the BugBot-fix wording;
+> converged in one round.
 
 > **Post-retro correction (same day)**: BugBot was NOT skipping — its
 > check-runs said "skipping" on the first three commits, then it

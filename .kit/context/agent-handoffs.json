@@ -1,19 +1,19 @@
 {
   "planner": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0048",
+    "status": "available",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "KIT-0058 (visible config home + /setup-preset — post-arc fast-follow, last blocker before the operator's one-button) assigned: handoff written with verified anchors (bootstrap:143 resolution line, project ~:1494 against-preset reader, preset.example header), worktree provisioned. Legacy-notice removal joins KIT-0059's 0.9.0 set. After merge: operator runs /setup-preset -> cut 0.9.0 -> downstream pass. rm-rf allowlist fired and with operator.",
-    "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
-    "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0058 closed out 2026-07-24 (PR #91 merged fda0174; worktree removed, branch deleted, retro processed, insights extracted). ADR-0027 arc + fast-follow COMPLETE. Next sequence: operator runs /setup-preset (real preset at <kit-parent>/agentive-config/) -> cut 0.9.0 (KIT-0047 + KIT-0054 + KIT-0059 incl. legacy-config notice) -> downstream migration pass. Retro spawned: KIT-0062 F6 (Gate 3 skipping honesty), KIT-0064 (dirty-tree export notice), bot-triage syntax-verify rule. Operator owes: rm-rf allowlist + /tmp/kit-0058-demo-1 sweep. Dependabot sweep #2 pending (#84/85/87/88/89).",
+    "details_link": ".kit/tasks/5-done/KIT-0058-visible-config-home.md",
+    "handoff_file": null
   },
   "feature-developer": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0048",
+    "status": "idle",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "KIT-0058 (relocate config to <kit-parent>/agentive-config/ w/ seeded guardrails + doctor config-home check + legacy notice + /setup-preset conversational builder) ready. Worktree: ../ask-worktrees/KIT-0058 (pull --ff-only first). Resolve locates, orchestrate seeds; no hardcoded interview questions — derive from door --help.",
-    "details_link": ".kit/tasks/5-done/KIT-0048-planning-repo-shape.md",
-    "handoff_file": ".kit/context/KIT-0048-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0058 delivered and merged (PR #91). No active assignment.",
+    "details_link": null,
+    "handoff_file": null
   },
   "code-reviewer": {
     "status": "idle",

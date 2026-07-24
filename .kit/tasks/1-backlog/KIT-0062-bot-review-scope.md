@@ -57,6 +57,18 @@ real findings.
 - **F5 — docs**: bot-triage + check-bots skills note the scoping
   ("a thread on an excluded path means the config regressed — check
   the config file first").
+- **F6 — preflight Gate 3 honesty on BugBot "skipping" (added from
+  KIT-0058 retro, 2026-07-24)**: two faces of one bug. (a) Gate 3
+  reports check-run conclusion `skipping`/`skipped` as
+  `PASS:check-run passed, no findings` — reads as reviewed-clean when
+  BugBot explicitly declined; must become a SKIP-flavored PASS naming
+  the skip (`PASS:BugBot skipped this PR (…)`), per the P5
+  gate-honesty principle. (b) "skipping" proved NON-TERMINAL on
+  PR #91 — BugBot said skipping on three commits, then reviewed a
+  later commit and filed a Medium. The gate must not treat a skipping
+  conclusion as a final state (document the recheck expectation or
+  poll semantics). Evidence: `.kit/context/retros/KIT-0058-retro.md`
+  (Surprising #3, post-retro correction, Incident Closure #2).
 
 ## Acceptance Criteria
 
@@ -67,6 +79,8 @@ real findings.
 - [ ] Trade-off + mitigations recorded (with the zero-accepted-
       findings claim verified, not assumed)
 - [ ] Skills updated (F5)
+- [ ] Gate 3 names a skipped BugBot run and does not treat
+      "skipping" as terminal (F6), with tests in the stub-gh harness
 - [ ] Demonstrated on the next process-touching PR: zero threads on
       excluded paths (note in that PR, not this one)
 

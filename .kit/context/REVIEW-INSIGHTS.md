@@ -145,6 +145,11 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Reproduce-or-decline as a spec clause for evaluator-sourced requirements**: KIT-0043 F4's "verify first" gate turned an unverified o3 claim into two green pinning tests plus a documented decline instead of a speculative rewrite. Make this the standing convention whenever a requirement originates from an unverified reviewer claim. (KIT-0043)
 - **Verify-before-believing applies to your OWN inferences, not just reviewers' claims**: the "operator converted the repo to bare" reading was checkable in one command (an intact working tree inside a "bare" repo) and went unchecked for a whole closeout. (KIT-0043)
 - **Weight fast-v2 findings by specificity, not placement**: its self-hedged headline claim was structurally impossible while its secondary finding was the best of the round — twice now. (KIT-0042/0043)
+- **Committable ≠ compilable**: a CodeRabbit committable suggestion was a bash syntax error (heredoc body swallowed the `&&`-chained `mv`/`then` lines) — auto-applying would have broken `seed_config_home`. Syntax-verify (`bash -n` / scratch execution) any committable shell suggestion before applying; rule now in the bot-triage skill. (KIT-0058)
+- **BugBot check-run conclusion "skipping" is NON-TERMINAL, and preflight Gate 3 masks it as reviewed-clean**: BugBot said "skipping" on three commits of PR #91, then reviewed a later commit and filed a Medium; meanwhile Gate 3 reported the skip as `PASS: no findings`. Neither face is safe to assume — gate fix folded into KIT-0062 F6. (KIT-0058)
+- **`git archive` ships HEAD, not the working tree**: a door demo run from a kit tree with uncommitted files silently exported N-1 doctor checks. Any export/demo from a dirty source tree exercises the last commit; one-line notice filed as KIT-0064. (KIT-0058)
+- **Cross-language "two can never disagree" pins don't need imports**: the door↔doctor path-equivalence test compares sourced-bash `config_home` against Python `_config_home` via doctor's own "no preset found at <path>" output line — no importlib gymnastics on an extensionless script, and the contract is enforced where it's observable. (KIT-0058)
+- **o3 calibration, sixth data point**: FAIL decomposed as 2 real / 2 refuted / 1 pre-existing — including a "missing test" that existed in the very diff under review. Verdict-carries-no-signal holds. (KIT-0058)
 
 ### Empirically Disproven Reviewer Claims (decline-by-reference)
 
@@ -152,6 +157,7 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **"`grep -o` extracts the shortest match" — FALSE** (leftmost-longest; `26.3.1` extracts fully, not `26`). Tested live, repro in the same review record. (KIT-0035)
 - When declining any reviewer claim, paste the repro in the review record — it turns later re-litigation (bots repeating an evaluator's false claim) into a one-reply copy-paste. (KIT-0035)
 - Decline-by-reference is proven end-to-end: shown this section plus a fresh repro, fast-v2 *retracted* its prefix-collision claim in the next round. (KIT-0042)
+- **"`gh` rejects full remote URLs as repo arguments" — FALSE** (o3, rated high-risk): three live `gh repo view` calls proved HTTPS, HTTPS+`.git`, and scp-style SSH forms all work. Repro in `.kit/context/reviews/KIT-0058-evaluator-review.md`. (KIT-0058)
 - **CodeRabbit operational facts**: "Internal error occurred during review" can mean *quota exhaustion* (detail text says "Prepaid credits exhausted" only after several crash rounds — check it before re-triggering); the wrong handle `@coderabbit` (no `-ai`) is silently ignored. Outage substitution pattern documented in check-bots.md. (KIT-0042)
 - **Preflight Gate 1 at-cap semantics (since PR #75)**: when `gh run list` returns a full page (raw count = limit), the gate reports PENDING, never PASS — a matrix-heavy repo hitting this should raise `CI_RUN_LIMIT`, not suspect a preflight bug. (KIT-0043)
 - **Worktree tests can MUTATE the real repo, not just fail**: pre-commit exports an absolute `GIT_DIR` in worktrees; a leaked subprocess flipped `core.bare=true` on the primary clone (second occurrence of the KIT-0036 class, this time state-corrupting). Suite-wide `GIT_*` isolation now lives in `tests/conftest.py` (7ef104d); after pre-commit runs in a worktree, `git -C <primary> config core.bare` staying `false` is the canary. (KIT-0043)
@@ -167,4 +173,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-07-05 by planner-f5 (KIT-0040 extraction: harness mutation-testing, detection-path pairing, stale pr-checks, fresh-code finding yield)*
+*Last updated: 2026-07-24 by planner-f5 (KIT-0058 extraction: committable≠compilable, BugBot skipping non-terminal, git-archive-ships-HEAD, cross-language output-line pins, gh-URL refutation)*

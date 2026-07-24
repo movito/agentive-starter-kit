@@ -59,6 +59,12 @@ Reference knowledge for triaging automated review comments. Use `/triage-threads
   more spacing tweak in the same area), it's cheaper to apply than to justify
   declining. Treat it as Fix (easy) and batch with the other fixes.
 - When in doubt on Medium severity, fix it — it's cheaper than debating
+- **Syntax-verify committable suggestions touching shell before applying** —
+  especially heredocs, quoting, or redirects: run `bash -n` (or a scratch
+  execution test) on the suggested code first. Committable ≠ compilable:
+  on KIT-0058 PR #91 a CodeRabbit committable suggestion was a bash syntax
+  error (heredoc body swallowed the `&&`-chained lines). If it fails, decline
+  and paste the test result into the thread.
 - **Triage ALL threads before fixing ANY. Then batch all fixes into one commit.**
 
 ## Batch Strategy
