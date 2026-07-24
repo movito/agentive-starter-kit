@@ -289,11 +289,18 @@ needs a smarter seeder, that is a separate component — not your job.
 
 **4c. Commit the seeding** on the planning repo's `main` (the planning
 repo works directly on main — `docs/CROSS-REPO-PATTERN.md`,
-Conventions). The seeded content is brief-derived, so run the same
-staged-content credential scan as Step 2.3 before committing — a brief
-that leaked a value must not land in the planning repo either. Then
-commit, e.g. "chore: seed project context and backlog from prototype
-brief".
+Conventions). Explicit `git -C` here like everywhere else — the CWD
+rule means a bare `git commit` could hit the wrong repository:
+
+```bash
+git -C <parent>/<name>-planning add -A
+git -C <parent>/<name>-planning diff --cached   # scan this output
+git -C <parent>/<name>-planning commit -m "chore: seed project context and backlog from prototype brief"
+```
+
+The scan between add and commit is the same staged-content credential
+scan as Step 2.3 — the seeded content is brief-derived, and a brief
+that leaked a value must not land in the planning repo either.
 
 ### Step 5: Finish loudly
 
