@@ -267,8 +267,11 @@ next-steps section, create
 `.kit/tasks/1-backlog/<PREFIX>-NNNN-<slug>.md`, numbered from 0001 in
 the brief's order. Both filename components trace back to the brief:
 the prefix was already validated at Step 0 (`^[A-Z][A-Z0-9]{0,5}$` —
-same rule, don't re-derive here); slugs must match
-`^[a-z0-9]+(-[a-z0-9]+)*$` and be at most 40 characters. The FULL
+same rule, don't re-derive here); the slug is DERIVED, not
+transcribed — pick 2-5 key words from the entry's title, lowercase
+them, join with hyphens, and drop filler words until it fits (the
+slug names the file; the full title lives inside it). The result must
+match `^[a-z0-9]+(-[a-z0-9]+)*$` and be at most 40 characters. The FULL
 filename must be unique — identical slugs are fine when the `NNNN`
 numbers differ (the number disambiguates); never overwrite an
 existing task file. The resolved path must stay under
