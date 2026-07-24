@@ -102,7 +102,10 @@ door applies to its own target.
 - **Task prefix**: use the brief's suggestion. If absent, derive it
   with the bootstrap agent's rule (`.claude/agents/bootstrap.md`
   Step 1): uppercase, no hyphens, max 6 chars — "recipe-api" → RECIPE,
-  "my-cool-app" → MCA.
+  "my-cool-app" → MCA. **Validate it HERE**, whichever source it came
+  from: must match `^[A-Z][A-Z0-9]{0,5}$`. A malformed brief
+  suggestion (lowercase, hyphens, too long) gets re-derived from the
+  project name — never written into the planning repo as-is.
 - **No next-steps section**: ask the user for at least one concrete
   next step — the planning repo must open with ≥1 backlog task.
 - **Secrets discipline**: the brief carries secret NAMES only. If you
@@ -144,8 +147,11 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    repo's working tree is dirty, show `git -C <code-path> status
    --short` and ask: commit everything as the import, or stop for the
    user to review first. If it is clean and already committed, skip
-   steps 2-3 — but NOT the secret scan: before any first push of a
-   pre-existing repo, run the step-3 credential scan over its tracked
+   steps 2-3's staging and commit — but NOT the safety checks: before
+   any first push of a pre-existing repo, still verify ignore
+   coverage (step 2's check — `.env` and key files must be ignored
+   and untracked; a tracked `.env` blocks the push until resolved
+   with the user) and run the step-3 credential scan over its tracked
    files (`git -C <code-path> grep` the same patterns). Deep history
    scanning is the user's call — offer it as a suggestion
    (`gitleaks`/`trufflehog`) rather than running it yourself.
@@ -254,10 +260,10 @@ CLAUDE.md is already filled by the door from your `--target-path`/
 **4b. Seed the backlog — stubs only.** For each entry in the brief's
 next-steps section, create
 `.kit/tasks/1-backlog/<PREFIX>-NNNN-<slug>.md`, numbered from 0001 in
-the brief's order. Both filename components come from the brief, so
-validate them like Step-0 inputs: prefix must match
-`^[A-Z][A-Z0-9]{1,5}$` (the derivation rule's output shape), slugs
-must match `^[a-z0-9]+(-[a-z0-9]+)*$`, short (a few words) and
+the brief's order. Both filename components trace back to the brief:
+the prefix was already validated at Step 0 (`^[A-Z][A-Z0-9]{0,5}$` —
+same rule, don't re-derive here); slugs must match
+`^[a-z0-9]+(-[a-z0-9]+)*$`, be at most 40 characters, and be
 unique — two entries with the same title must not collide into one
 filename (the number already disambiguates; never overwrite an
 existing task file). The resolved path must stay under
