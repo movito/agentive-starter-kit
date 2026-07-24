@@ -872,8 +872,6 @@ def cmd_install_evaluators(args, project_dir):
         if arg == "--ref" and i + 1 < len(args):
             version = args[i + 1]
             break
-    if version is None:
-        version = _get_evaluator_library_version()
 
     # 1. Check for git (required for cloning)
     git_check = subprocess.run(["git", "--version"], capture_output=True, text=True)
@@ -892,10 +890,11 @@ def cmd_install_evaluators(args, project_dir):
 
     print("📦 Adversarial Evaluator Library Installer")
     print("=" * 50)
-    print(f"   Version: {version}")
-    print()
 
-    # 2. Check if already installed
+    # 2. Check if already installed — BEFORE resolving the version pin:
+    # the no-op rerun path must keep working on repos with no readable
+    # pyproject pin (planning shape, or installs done only with --ref);
+    # the pin is only needed to clone (BugBot round 2, KIT-0068).
     version_file = evaluators_dir / ".installed-version"
     if version_file.exists() and not force:
         installed = version_file.read_text().strip()
@@ -903,6 +902,11 @@ def cmd_install_evaluators(args, project_dir):
         print("   Use --force to reinstall")
         print("   Use --ref <version> to install a different version")
         return
+
+    if version is None:
+        version = _get_evaluator_library_version()
+    print(f"   Version: {version}")
+    print()
 
     # 3. Clone specific version
     with tempfile.TemporaryDirectory() as tmpdir:

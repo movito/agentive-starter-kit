@@ -1139,3 +1139,28 @@ class TestRefBypassesPinRead:
                     )
 
         assert "v9.9.9" in capsys.readouterr().out
+
+
+class TestNoOpRerunWithoutPin:
+    """A no-op rerun (already installed, no --force) must succeed on a
+    repo with no readable pyproject pin — the pin is only needed to
+    clone (BugBot round 2, KIT-0068)."""
+
+    def test_already_installed_skips_pin_read(self, tmp_path, capsys):
+        evaluators_dir = tmp_path / ".adversarial" / "evaluators"
+        evaluators_dir.mkdir(parents=True)
+        (evaluators_dir / ".installed-version").write_text(
+            "v0.9.0 (abc12345)\n", encoding="utf-8"
+        )
+
+        with patch.object(
+            _project_module,
+            "_get_evaluator_library_version",
+            side_effect=AssertionError("pin reader must not run on no-op rerun"),
+        ):
+            with patch.object(_project_module, "subprocess") as mock_subprocess:
+                mock_subprocess.TimeoutExpired = subprocess.TimeoutExpired
+                mock_subprocess.run.return_value = MagicMock(returncode=0)
+                _project_module.cmd_install_evaluators([], tmp_path)
+
+        assert "already installed" in capsys.readouterr().out
