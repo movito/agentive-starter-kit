@@ -391,7 +391,7 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.5.0",
+  "core_version": "3.6.0",
   "source_repo": "movito/agentive-starter-kit",
   "synced_at": "2026-07-23T00:00:00Z",
   "files": {
@@ -474,6 +474,7 @@ rm -f "$TARGET/tests/test_kit_markers.py" \
       "$TARGET/tests/test_bots_conformance.py" \
       "$TARGET/tests/test_check_hook_seeds.py" \
       "$TARGET/tests/test_entrance_shims.py" \
+      "$TARGET/tests/test_engine_materials.py" \
       "$TARGET/tests/test_setup_door.py"
 "${RSYNC_BASE[@]}" --exclude='test_kit_markers.py' \
     --exclude='test_bootstrap_consumer.py' \
@@ -481,6 +482,7 @@ rm -f "$TARGET/tests/test_kit_markers.py" \
     --exclude='test_bots_conformance.py' \
     --exclude='test_check_hook_seeds.py' \
     --exclude='test_entrance_shims.py' \
+    --exclude='test_engine_materials.py' \
     --exclude='test_setup_door.py' \
     "$PROJECT_ROOT/tests/" "$TARGET/tests/"
 

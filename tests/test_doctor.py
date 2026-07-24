@@ -1010,7 +1010,8 @@ class TestPushSyncTokenCheck:
             "on:\n    push:\n        branches: [main]\n",  # four-space indent
             "on: [push, workflow_dispatch]\n",  # flow style
             "on: push\n",  # scalar style
-            "on:\n  push:  # deploy trigger\n    branches: [main]\n",  # trailing comment
+            # trailing comment
+            "on:\n  push:  # deploy trigger\n    branches: [main]\n",
             "on: push  # deploy trigger\n",  # scalar + trailing comment
             "on:  # triggers\n  push:\n    branches: [main]\n",  # comment on on: line
         ],

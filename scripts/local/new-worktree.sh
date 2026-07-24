@@ -176,6 +176,17 @@ trap 'echo "Provisioning failed — to retry from scratch:" >&2;
 for rel in "${PROVISION_LINKS[@]}"; do
     src="$PRIMARY_ROOT/$rel"
     dst="$WORKTREE_PATH/$rel"
+    # Guard: if dst already exists as a directory, `ln -s` would drop
+    # the link INSIDE it — creating dst/<basename>, and (via an earlier
+    # provisioning link) that lands in the PRIMARY as a self-referential
+    # symlink (the .adversarial/evaluators/evaluators incident,
+    # KIT-0068 A69). Refuse loudly instead.
+    if [ -e "$dst" ] || [ -L "$dst" ]; then
+        echo "Error: provisioning destination already exists: $dst" >&2
+        echo "       Linking over it would nest the symlink inside the" >&2
+        echo "       existing directory. Remove it, then re-run." >&2
+        exit 1
+    fi
     mkdir -p "$(dirname "$dst")"
     ln -s "$src" "$dst"
     echo "Linked $rel -> $src"

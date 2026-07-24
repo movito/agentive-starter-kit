@@ -24,25 +24,55 @@ import tarfile
 import tempfile
 from pathlib import Path
 
+# Caller paths into the optional script layer (v0.4.0 core/local/optional
+# restructure). Module-level so tests can pin them against the real tree —
+# a stale caller path here shipped broken advertised commands for months
+# (KIT-0068 A00/A01).
+LINEARSYNC_SCRIPT = "scripts/optional/sync_tasks_to_linear.py"
+CREATE_AGENT_SCRIPT = "scripts/optional/create-agent.sh"
 
-# Default version tag for reproducibility — reads from pyproject.toml if available
+
 def _get_evaluator_library_version():
-    """Read evaluator library version from pyproject.toml, with fallback."""
+    """Read the evaluator-library pin from pyproject.toml ([tool.adversarial]).
+
+    pyproject.toml is the single source of truth for this pin — there is
+    deliberately no baked-in default: a silent fallback installed a
+    five-minor-versions-old library on Python 3.10 (KIT-0068 A08).
+    Exits naming the source when the pin cannot be read.
+    """
+    pyproject = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
     try:
         import tomllib
+    except ImportError:  # Python 3.10 — no stdlib tomllib
+        try:
+            import tomli as tomllib
+        except ImportError:
+            tomllib = None  # fall back to a regex scan (doctor.d/40 pattern)
 
-        with open("pyproject.toml", "rb") as f:
-            config = tomllib.load(f)
-        return (
-            config.get("tool", {})
-            .get("adversarial", {})
-            .get("library_version", "v0.5.3")
-        )
-    except (FileNotFoundError, ImportError):
-        return "v0.5.3"
+    version = None
+    try:
+        if tomllib is not None:
+            with open(pyproject, "rb") as f:
+                config = tomllib.load(f)
+            version = (
+                config.get("tool", {}).get("adversarial", {}).get("library_version")
+            )
+        else:
+            text = pyproject.read_text(encoding="utf-8")
+            match = re.search(r'^library_version\s*=\s*"([^"]+)"', text, re.MULTILINE)
+            version = match.group(1) if match else None
+    except (FileNotFoundError, OSError):
+        version = None
+
+    if not version:
+        print("❌ Could not read the evaluator-library version pin")
+        print(f"   Source: {pyproject} → [tool.adversarial] library_version")
+        print("   That pin is the single source of truth — fix pyproject.toml")
+        print("   or pass an explicit version with --ref <tag>.")
+        sys.exit(1)
+    return version
 
 
-EVALUATOR_LIBRARY_VERSION = _get_evaluator_library_version()
 EVALUATOR_LIBRARY_REPO = "https://github.com/movito/adversarial-evaluator-library.git"
 
 # Status to folder mapping
@@ -494,7 +524,7 @@ def reconfigure_project(project_dir: Path, *, verify: bool = False) -> bool:
             "title",
         ),
         (
-            "scripts/logging_config.py",
+            "scripts/core/logging_config.py",
             r"infrastructure for the agentive-starter-kit",
             f"infrastructure for the {project_name}",
             "project name",
@@ -826,7 +856,7 @@ def cmd_install_evaluators(args, project_dir):
     """Install evaluators from adversarial-evaluator-library."""
     # Parse arguments
     force = "--force" in args
-    version = EVALUATOR_LIBRARY_VERSION
+    version = _get_evaluator_library_version()
 
     # Check for --ref flag (e.g., --ref v0.3.0 or --ref main)
     for i, arg in enumerate(args):
@@ -2098,10 +2128,12 @@ def main():
     # Get the project directory (parent of scripts/core/)
     project_dir = Path(__file__).resolve().parent.parent.parent
 
-    # Use venv Python if available, otherwise system Python
-    venv_python = project_dir / "venv" / "bin" / "python3"
+    # Use venv Python if available, otherwise system Python. .venv first —
+    # it is what `project setup` creates and what ci-check.sh activates
+    # first; legacy venv/ is accepted second (KIT-0068 A10).
+    venv_python = project_dir / ".venv" / "bin" / "python3"
     if not venv_python.exists():
-        venv_python = project_dir / ".venv" / "bin" / "python3"
+        venv_python = project_dir / "venv" / "bin" / "python3"
     python_cmd = str(venv_python) if venv_python.exists() else "python3"
 
     # Show help if no arguments
@@ -2119,13 +2151,16 @@ def main():
         sys.exit(cmd_sync(sys.argv[2:], project_dir))
 
     if command in ["linearsync", "linear"]:
-        # Linear sync command
+        # Linear sync command (optional layer — consumers may not carry it)
+        sync_script = project_dir / LINEARSYNC_SCRIPT
+        if not sync_script.exists():
+            print(f"❌ {LINEARSYNC_SCRIPT} not found")
+            print("   The optional Linear-sync layer is not present in this")
+            print("   project — see scripts/optional/ in agentive-starter-kit.")
+            sys.exit(1)
         print("🚀 Syncing tasks to Linear...")
         sync_args = sys.argv[2:] if len(sys.argv) > 2 else []
-        cmd = [
-            python_cmd,
-            str(project_dir / "scripts" / "sync_tasks_to_linear.py"),
-        ] + sync_args
+        cmd = [python_cmd, str(sync_script)] + sync_args
 
     elif command in ["teams", "linearteams"]:
         # List Linear teams
@@ -2202,8 +2237,18 @@ except Exception as e:
         sys.exit(0)
 
     elif command == "version":
-        print("Project CLI v1.1.0")
-        print("Project CLI")
+        # scripts/core/VERSION is the single source for the core-scripts
+        # version (KIT-0068 A04 — a hardcoded string here sat six minor
+        # releases behind it).
+        version_file = Path(__file__).resolve().parent / "VERSION"
+        try:
+            core_version = version_file.read_text(encoding="utf-8").strip()
+        except (FileNotFoundError, OSError):
+            print(f"❌ Could not read {version_file}")
+            print("   scripts/core/VERSION is the single source for the")
+            print("   core-scripts version — restore it or re-sync core.")
+            sys.exit(1)
+        print(f"Project CLI v{core_version} (core scripts)")
         sys.exit(0)
 
     elif command == "move":
@@ -2462,10 +2507,12 @@ except Exception as e:
         ]
 
     elif command == "create-agent":
-        # Create a new Claude Code agent from template
-        script = project_dir / "scripts" / "create-agent.sh"
+        # Create a new Claude Code agent from template (optional layer)
+        script = project_dir / CREATE_AGENT_SCRIPT
         if not script.exists():
-            print("❌ scripts/create-agent.sh not found")
+            print(f"❌ {CREATE_AGENT_SCRIPT} not found")
+            print("   The optional agent-creation layer is not present in this")
+            print("   project — see scripts/optional/ in agentive-starter-kit.")
             sys.exit(1)
         result = subprocess.run(
             ["bash", str(script)] + sys.argv[2:],
@@ -2492,7 +2539,7 @@ except Exception as e:
     except FileNotFoundError:
         print(f"❌ Python not found at: {python_cmd}")
         print("   Make sure you have a virtual environment set up:")
-        print("   python3 -m venv venv && source venv/bin/activate")
+        print("   ./scripts/core/project setup")
         sys.exit(1)
 
 

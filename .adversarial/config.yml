@@ -1,23 +1,19 @@
 # Adversarial Workflow Configuration
-# This file configures the adversarial workflow for your project
+# Regenerated from config.yml.template (KIT-0068 A67 — the old copy
+# predated the template rewrite: tasks/ dir, deprecated evaluator_model).
+# Keys verified against the installed adversarial-workflow 1.0.1:
+# auto_run / git_integration / save_artifacts are read nowhere in the
+# CLI and are deliberately absent; evaluator_model is deprecated
+# (models live in per-evaluator YAML under .adversarial/evaluators/).
 
-# Model Configuration
-evaluator_model: gpt-4o
+# Directory containing task specifications
+task_directory: .kit/tasks/
 
-# Directory Structure
-task_directory: tasks/
+# Directory for evaluation logs
 log_directory: .adversarial/logs/
+
+# Directory for temporary artifacts
 artifacts_directory: .adversarial/artifacts/
 
-# Test Configuration
-test_command: pytest
-
-# Workflow Settings
-# Enable/disable automatic script execution
-auto_run: false
-
-# Git integration (requires git repo)
-git_integration: true
-
-# Save artifacts after each phase
-save_artifacts: true
+# Command to run tests (for test validation phase)
+test_command: pytest tests/ -v

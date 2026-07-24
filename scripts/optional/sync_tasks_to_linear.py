@@ -15,15 +15,16 @@ Scans these numbered workflow folders:
     7-blocked/    - Temporarily blocked tasks
 
 Usage:
-    python scripts/sync_tasks_to_linear.py
-    ./scripts/project linearsync
+    python scripts/optional/sync_tasks_to_linear.py
+    ./scripts/core/project linearsync
 
 Environment variables required:
     LINEAR_API_KEY: Your Linear API key (loaded from .env file)
     LINEAR_TEAM_ID: Your Linear team ID (optional, will use default team)
 
 Task file format:
-    Task files must be named: TASK-####-description.md or ASK-####-description.md
+    Task files must be named: PREFIX-####-description.md, where PREFIX is
+    2-6 uppercase letters (e.g. KIT-0068, ASK-0042, MOSS-0001)
     Metadata extracted from frontmatter:
     - **Status**: Backlog | Todo | In Progress | In Review | Done | Canceled | Blocked
     - **Priority**: critical | high | medium | low
@@ -56,7 +57,10 @@ logger = setup_logging("agentive.sync")
 try:
     from dotenv import load_dotenv
 
-    env_path = Path(__file__).parent.parent / ".env"
+    # Repo root is three levels up (scripts/optional/<file> — v0.4.0
+    # layout; parent.parent landed in scripts/ and silently skipped the
+    # root .env, KIT-0068 A15)
+    env_path = Path(__file__).parent.parent.parent / ".env"
     if env_path.exists():
         load_dotenv(env_path)
         logger.info("📋 Loaded environment from %s", env_path)
@@ -530,7 +534,8 @@ def main():
     for folder in workflow_folders:
         folder_path = base_dir / folder
         if folder_path.exists():
-            # Match any task format: PREFIX-NNNN-description.md (e.g., TASK-0001, ASK-0001, TC2-0001)
+            # Match any task format: PREFIX-NNNN-description.md
+            # (e.g., KIT-0001, ASK-0001)
             task_files = list(folder_path.glob("*-[0-9]*.md"))
             all_files.extend(task_files)
 

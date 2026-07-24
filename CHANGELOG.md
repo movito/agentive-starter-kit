@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Functional repairs from the pre-0.9.0 cruft audit** (KIT-0068;
+  core scripts 3.6.0). Behavior-broken surfaces only — the audit's
+  prose findings are KIT-0069's, aider residue KIT-0065's:
+  - `project linearsync`, `project create-agent`, and `project
+    reconfigure`'s identity rewrite now target the real v0.4.0+ paths
+    (`scripts/optional/…`, `scripts/core/logging_config.py`) with
+    friendly errors naming the missing file on consumer checkouts
+    (A00/A01/A02/A11). The reconfigure test fixture that modeled the
+    pre-v0.4.0 layout — and masked the breakage for months — now
+    models the real tree, and a fixture-path guard test pins every
+    modeled path to the actual repo.
+  - Linear sync: the root `.env` resolves again from
+    `scripts/optional/` (A15), and any `[A-Z]{2,6}-NNNN` task id is
+    accepted — the hardcoded `TASK-|ASK-` patterns rejected every
+    live KIT-* task (A14).
+  - `engine-materials.sh` no longer ships `scripts/local/`, kit-only
+    tests, the kit's planning corpus (prefix-agnostic task/context
+    excludes), or `.kit/adversarial/` into consumers, names its drops
+    in output, and gained a `--scaffold-only` test seam with an
+    export-content test (A12/A13).
+  - `.adversarial/config.yml` regenerated from the template and
+    verified against the installed CLI 1.0.1; unread keys
+    (`auto_run`, `git_integration`, `save_artifacts`) deleted from
+    config + template (A67). Self-referential
+    `.adversarial/evaluators/evaluators` symlink removed and
+    `new-worktree.sh` now refuses to link over an existing
+    destination — the creation vector (A69).
+  - Toolchain agreement: pre-commit Black rev matches the pyproject
+    pin with a consistency test (A84); ruff is now enforced
+    (ci-check.sh step 4/7 + CI lint step; 24 mechanical violations
+    fixed) instead of declared-but-never-run (A88); ci-check.sh's
+    flake8 args byte-match CI's, also test-pinned (A91).
+  - `project version` reads `scripts/core/VERSION` (was a hardcoded
+    v1.1.0, six minor releases stale — A04); the evaluator-library
+    pin read fails loud naming pyproject.toml instead of silently
+    installing v0.5.3, with a Python 3.10 tomli/regex fallback (A08);
+    `main()` prefers `.venv` and the recovery hint says
+    `./scripts/core/project setup` (A10); `scripts/core/__init__.py`
+    docstring describes the actual package (A05).
+
 ### Added
 
 - **Visible config home + `/setup-preset`** (KIT-0058, ADR-0027 P7

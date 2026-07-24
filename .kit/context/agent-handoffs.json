@@ -4,7 +4,7 @@
     "current_task": "KIT-0068",
     "task_started": null,
     "brief_note": "KIT-0068 (functional repairs from pre-0.9.0 cruft audit: 3 broken project subcommands, materials-engine consumer leak, config/symlink defects, toolchain drift) assigned: spec evaluated (fast REVISION_SUGGESTED, path-registry declined, two-homes rule accepted), handoff cites audit A-numbers, worktree provisioned. Remediation sequence: 0068 -> 0065 widened -> 0069 -> 0067/0070 merged -> cut 0.9.0.",
-    "details_link": ".kit/tasks/2-todo/KIT-0068-functional-repairs-audit.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0068-functional-repairs-audit.md",
     "handoff_file": ".kit/context/KIT-0068-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0068",
     "task_started": null,
     "brief_note": "KIT-0068 ready: behavior-only fixes, evidence in PRE-090-CRUFT-AUDIT review record (A-numbers). Fixture-honesty guard test is headline. Worktree: ../ask-worktrees/KIT-0068 (pull --ff-only first).",
-    "details_link": ".kit/tasks/2-todo/KIT-0068-functional-repairs-audit.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0068-functional-repairs-audit.md",
     "handoff_file": ".kit/context/KIT-0068-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

@@ -7,6 +7,7 @@ Focus: install-evaluators command with mocked subprocess calls.
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -526,81 +527,69 @@ class TestDeriveRepoUrl:
         assert derive(tmp_path) is None
 
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+# Every file the mock_project fixture models, keyed by its REAL relative
+# path in the repo. test_fixture_paths_exist_in_real_tree pins each key
+# to the actual tree: a fixture modeling a nonexistent layout masked the
+# A02 regression (reconfigure silently skipping the moved
+# scripts/core/logging_config.py) for months (KIT-0068).
+MOCK_PROJECT_FILES = {
+    ".serena/project.yml": "name: my-cool-project\n",
+    ".claude/agents/feature-developer.md": (
+        'mcp__serena__activate_project("agentive-starter-kit")\n'
+    ),
+    ".claude/agents/planner.md": (
+        "# Planner\n\n"
+        "#    [X.Y.Z]: https://github.com/movito/"
+        "agentive-starter-kit/compare/vPREV...vX.Y.Z\n"
+    ),
+    "pyproject.toml": (
+        "# Project configuration for Python projects"
+        " using the Agentive Starter Kit\n"
+        '[build-system]\nrequires = ["setuptools>=61.0"]\n'
+    ),
+    "tests/conftest.py": (
+        '"""\nShared fixtures for the agentive-starter-kit test suite.\n"""\n'
+    ),
+    "CHANGELOG.md": (
+        "# Changelog\n\n"
+        "All notable changes to the Agentive Starter Kit"
+        " will be documented in this file.\n\n"
+        "## [Unreleased]\n\n"
+        "[0.3.2]: https://github.com/movito/"
+        "agentive-starter-kit/compare/v0.3.1...v0.3.2\n"
+        "[0.3.1]: https://github.com/movito/"
+        "agentive-starter-kit/compare/v0.3.0...v0.3.1\n"
+    ),
+    "CLAUDE.md": "# Agentive Starter Kit\n\nSome description.\n",
+    "README.md": "# Agentive Starter Kit\n\nMore content.\n",
+    "scripts/core/logging_config.py": (
+        '"""\nLogging Configuration\n\n'
+        "Configurable logging infrastructure for the"
+        " agentive-starter-kit.\n"
+        '"""\n'
+    ),
+}
+
+# Modeled paths that are runtime-generated in a real checkout (never
+# tracked); each maps to the tracked witness proving the path is still
+# the current layout.
+MOCK_GENERATED_WITNESSES = {
+    ".serena/project.yml": ".serena/project.yml.template",
+}
+
+
 class TestReconfigureExpanded:
     """Tests for expanded reconfigure with 8 new identity patterns."""
 
     @pytest.fixture
     def mock_project(self, tmp_path):
         """Create a temp project with all files containing upstream patterns."""
-        # .serena/project.yml
-        serena_dir = tmp_path / ".serena"
-        serena_dir.mkdir()
-        (serena_dir / "project.yml").write_text(
-            "name: my-cool-project\n", encoding="utf-8"
-        )
-
-        # .claude/agents/
-        agents_dir = tmp_path / ".claude" / "agents"
-        agents_dir.mkdir(parents=True)
-        (agents_dir / "feature-developer-v3.md").write_text(
-            'mcp__serena__activate_project("agentive-starter-kit")\n', encoding="utf-8"
-        )
-        (agents_dir / "planner.md").write_text(
-            "# Planner\n\n"
-            "#    [X.Y.Z]: https://github.com/movito/"
-            "agentive-starter-kit/compare/vPREV...vX.Y.Z\n",
-            encoding="utf-8",
-        )
-
-        # pyproject.toml
-        (tmp_path / "pyproject.toml").write_text(
-            "# Project configuration for Python projects"
-            " using the Agentive Starter Kit\n"
-            '[build-system]\nrequires = ["setuptools>=61.0"]\n',
-            encoding="utf-8",
-        )
-
-        # tests/conftest.py
-        tests_dir = tmp_path / "tests"
-        tests_dir.mkdir()
-        (tests_dir / "conftest.py").write_text(
-            '"""\nShared fixtures for the agentive-starter-kit test suite.\n"""\n',
-            encoding="utf-8",
-        )
-
-        # CHANGELOG.md
-        (tmp_path / "CHANGELOG.md").write_text(
-            "# Changelog\n\n"
-            "All notable changes to the Agentive Starter Kit"
-            " will be documented in this file.\n\n"
-            "## [Unreleased]\n\n"
-            "[0.3.2]: https://github.com/movito/"
-            "agentive-starter-kit/compare/v0.3.1...v0.3.2\n"
-            "[0.3.1]: https://github.com/movito/"
-            "agentive-starter-kit/compare/v0.3.0...v0.3.1\n",
-            encoding="utf-8",
-        )
-
-        # CLAUDE.md
-        (tmp_path / "CLAUDE.md").write_text(
-            "# Agentive Starter Kit\n\nSome description.\n", encoding="utf-8"
-        )
-
-        # README.md
-        (tmp_path / "README.md").write_text(
-            "# Agentive Starter Kit\n\nMore content.\n", encoding="utf-8"
-        )
-
-        # scripts/logging_config.py
-        scripts_dir = tmp_path / "scripts"
-        scripts_dir.mkdir(exist_ok=True)
-        (scripts_dir / "logging_config.py").write_text(
-            '"""\nLogging Configuration\n\n'
-            "Configurable logging infrastructure for the"
-            " agentive-starter-kit.\n"
-            '"""\n',
-            encoding="utf-8",
-        )
+        for rel_path, content in MOCK_PROJECT_FILES.items():
+            target = tmp_path / rel_path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
 
         # Initialize git repo with fake remote
         subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
@@ -660,7 +649,7 @@ class TestReconfigureExpanded:
 
     def test_logging_config_replaced(self, mock_project):
         self._run_reconfigure(mock_project)
-        content = (mock_project / "scripts" / "logging_config.py").read_text(
+        content = (mock_project / "scripts" / "core" / "logging_config.py").read_text(
             encoding="utf-8"
         )
         assert "infrastructure for the my-cool-project" in content
@@ -678,7 +667,7 @@ class TestReconfigureExpanded:
         """Existing Serena activation replacement still works."""
         self._run_reconfigure(mock_project)
         content = (
-            mock_project / ".claude" / "agents" / "feature-developer-v3.md"
+            mock_project / ".claude" / "agents" / "feature-developer.md"
         ).read_text(encoding="utf-8")
         assert 'activate_project("my-cool-project")' in content
 
@@ -1028,3 +1017,97 @@ class TestMoveTaskMetadataSync:
             encoding="utf-8"
         )
         assert f".kit/tasks/3-in-progress/{self.TASK_FILE}" in handoff_md
+
+
+class TestFixtureHonesty:
+    """The A02 guard (KIT-0068): every path a fixture models must exist
+    in the real repo tree. A fixture built on the pre-v0.4.0 layout
+    (scripts/logging_config.py) kept test_logging_config_replaced green
+    while the real command silently skipped the moved file for months."""
+
+    _kit_only = pytest.mark.skipif(
+        not (REPO_ROOT / "scripts" / "local" / "bootstrap").exists(),
+        reason="kit source tree only (consumer checkouts ship a subset)",
+    )
+
+    @_kit_only
+    @pytest.mark.parametrize("rel_path", sorted(MOCK_PROJECT_FILES))
+    def test_fixture_paths_exist_in_real_tree(self, rel_path):
+        if rel_path in MOCK_GENERATED_WITNESSES:
+            witness = MOCK_GENERATED_WITNESSES[rel_path]
+            assert (REPO_ROOT / witness).exists(), (
+                f"fixture models generated file {rel_path}, but its tracked"
+                f" witness {witness} is gone — layout moved, update the fixture"
+            )
+        else:
+            assert (REPO_ROOT / rel_path).exists(), (
+                f"fixture models {rel_path}, which does not exist in the real"
+                f" repo — the fixture is lying about the layout (A02 class)"
+            )
+
+
+class TestCallerPathsRealTree:
+    """Regression pins for KIT-0068 A00/A01: the module-level caller
+    paths in scripts/core/project must point at files that exist."""
+
+    def test_linearsync_script_exists(self):
+        assert (REPO_ROOT / _project_module.LINEARSYNC_SCRIPT).exists()
+
+    def test_create_agent_script_exists(self):
+        assert (REPO_ROOT / _project_module.CREATE_AGENT_SCRIPT).exists()
+
+    @pytest.fixture
+    def bare_tree(self, tmp_path):
+        """A project tree carrying the CLI but no scripts/optional/ —
+        the consumer case the friendly errors exist for."""
+        core = tmp_path / "scripts" / "core"
+        core.mkdir(parents=True)
+        shutil.copy(_script_path, core / "project")
+        return tmp_path
+
+    def _run(self, tree, *args):
+        return subprocess.run(
+            [sys.executable, str(tree / "scripts" / "core" / "project"), *args],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+    def test_linearsync_missing_layer_names_the_file(self, bare_tree):
+        result = self._run(bare_tree, "linearsync")
+        assert result.returncode == 1
+        assert "scripts/optional/sync_tasks_to_linear.py not found" in result.stdout
+
+    def test_create_agent_missing_layer_names_the_file(self, bare_tree):
+        result = self._run(bare_tree, "create-agent")
+        assert result.returncode == 1
+        assert "scripts/optional/create-agent.sh not found" in result.stdout
+
+    def test_version_reads_core_version_file(self, bare_tree):
+        (bare_tree / "scripts" / "core" / "VERSION").write_text(
+            "9.9.9\n", encoding="utf-8"
+        )
+        result = self._run(bare_tree, "version")
+        assert result.returncode == 0
+        assert "v9.9.9" in result.stdout
+
+    def test_version_matches_real_version_file(self):
+        """AC pin: `project version` output matches scripts/core/VERSION."""
+        real_version = (
+            (REPO_ROOT / "scripts" / "core" / "VERSION")
+            .read_text(encoding="utf-8")
+            .strip()
+        )
+        result = subprocess.run(
+            [sys.executable, str(_script_path), "version"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert result.returncode == 0
+        assert f"v{real_version}" in result.stdout
+
+    def test_version_missing_file_fails_loud(self, bare_tree):
+        result = self._run(bare_tree, "version")
+        assert result.returncode == 1
+        assert "VERSION" in result.stdout

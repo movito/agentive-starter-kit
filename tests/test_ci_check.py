@@ -82,7 +82,9 @@ def normalized(result: subprocess.CompletedProcess, tmp_path: Path) -> str:
 
 BAR = "━" * 40
 
-# Pinned from the pre-KIT-0050 script (stub toolchain, all checks green).
+# Pinned gauntlet output (stub toolchain, all checks green). Originally
+# captured from the pre-KIT-0050 script; the ruff step (4/7) joined the
+# gauntlet in KIT-0068 (A88) — golden re-pinned deliberately.
 GOLDEN_PASS = f"""\
 {BAR}
 🔍 Running local CI checks
@@ -92,32 +94,37 @@ GOLDEN_PASS = f"""\
 Python: <TMP>/bin/python3
 
 {BAR}
-1/6 🎨 Checking formatting with Black...
+1/7 🎨 Checking formatting with Black...
 {BAR}
 ✅ Black: All files formatted correctly
 
 {BAR}
-2/6 📋 Checking import sorting with isort...
+2/7 📋 Checking import sorting with isort...
 {BAR}
 ✅ isort: Imports sorted correctly
 
 {BAR}
-3/6 🔎 Linting with flake8...
+3/7 🔎 Linting with flake8...
 {BAR}
 ✅ flake8: No critical linting errors
 
 {BAR}
-4/6 🔍 Running pattern lint (DK rules)...
+4/7 🦀 Linting with ruff...
+{BAR}
+✅ ruff: No linting errors
+
+{BAR}
+5/7 🔍 Running pattern lint (DK rules)...
 {BAR}
 ✅ Pattern lint: No DK violations
 
 {BAR}
-5/6 🧪 Running full test suite with coverage...
+6/7 🧪 Running full test suite with coverage...
 {BAR}
 ✅ Tests: All tests pass (fail_under gate in pyproject.toml)
 
 {BAR}
-6/6 🧭 Validating cross-repo config...
+7/7 🧭 Validating cross-repo config...
 {BAR}
 
 {BAR}
