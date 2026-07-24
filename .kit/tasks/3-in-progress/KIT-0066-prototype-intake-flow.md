@@ -1,6 +1,6 @@
 # KIT-0066: Prototype intake — Cowork conversation to planner-ready split pair
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 4-5 hours
