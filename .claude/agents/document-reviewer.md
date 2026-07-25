@@ -49,8 +49,8 @@ adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 # For large files (>500 lines) requiring confirmation:
 echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
-# Read evaluator feedback
-cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
+# Read evaluator feedback (logs are named <input-name>--<evaluator>.md)
+cat .adversarial/logs/TASK-FILE--*.md
 ```
 
 **Iteration Limits**: Max 2-3 evaluations. Escalate to user if contradictory feedback or after 2 NEEDS_REVISION verdicts.

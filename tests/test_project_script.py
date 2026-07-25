@@ -336,47 +336,57 @@ class TestPythonVersionCheck:
         assert "pyenv" in captured.out
         assert "brew" in captured.out
 
-    def test_python_too_new_error(self, mock_project_dir, capsys):
-        """Python >=3.13 without uv shows clear error with constraint explanation."""
+    def test_python_3_13_proceeds(self, mock_project_dir, capsys):
+        """Python 3.13 is valid — the historical <3.13 ceiling is gone (KIT-0065)."""
         cmd_setup = _project_module.cmd_setup
 
         # Mock sys.version_info to simulate Python 3.13
         mock_version = MockVersionInfo(3, 13, 0)
-        with patch.object(_project_module.sys, "version_info", mock_version):
-            # Mock detect_uv to return False (uv not available)
-            with patch.object(_project_module, "detect_uv", return_value=False):
-                with pytest.raises(SystemExit) as exc_info:
-                    cmd_setup([])
 
-                assert exc_info.value.code == 1
+        # Mock subprocess and Path to prevent actual venv/pip operations
+        mock_run = MagicMock(return_value=MagicMock(returncode=0, stderr=""))
+        mock_path_exists = MagicMock(return_value=True)  # Pretend venv exists
+
+        with patch.object(_project_module.sys, "version_info", mock_version):
+            with patch.object(_project_module.subprocess, "run", mock_run):
+                with patch.object(_project_module.Path, "exists", mock_path_exists):
+                    try:
+                        cmd_setup([])
+                    except (SystemExit, Exception):
+                        pass  # May fail for other mocked reasons
 
         captured = capsys.readouterr()
+        # Should NOT show version rejection errors
+        assert "too old" not in captured.out
+        assert "not yet supported" not in captured.out
+        # Should show version was accepted (the checkmark line)
         assert "3.13.0" in captured.out
-        assert "not yet supported" in captured.out or "not supported" in captured.out
-        # Should explain the constraint source
-        assert "aider-chat" in captured.out or "adversarial-workflow" in captured.out
-        # Should include remediation options (uv is now primary recommendation)
-        assert "uv" in captured.out
-        assert "pyenv" in captured.out
-        assert "brew" in captured.out
 
-    def test_python_future_version_error(self, mock_project_dir, capsys):
-        """Python 3.14+ without uv also shows clear error (future-proofing)."""
+    def test_python_3_14_proceeds(self, mock_project_dir, capsys):
+        """Python 3.14 is valid and proceeds past version check."""
         cmd_setup = _project_module.cmd_setup
 
         # Mock sys.version_info to simulate Python 3.14
         mock_version = MockVersionInfo(3, 14, 1)
-        with patch.object(_project_module.sys, "version_info", mock_version):
-            # Mock detect_uv to return False (uv not available)
-            with patch.object(_project_module, "detect_uv", return_value=False):
-                with pytest.raises(SystemExit) as exc_info:
-                    cmd_setup([])
 
-                assert exc_info.value.code == 1
+        # Mock subprocess and Path to prevent actual venv/pip operations
+        mock_run = MagicMock(return_value=MagicMock(returncode=0, stderr=""))
+        mock_path_exists = MagicMock(return_value=True)  # Pretend venv exists
+
+        with patch.object(_project_module.sys, "version_info", mock_version):
+            with patch.object(_project_module.subprocess, "run", mock_run):
+                with patch.object(_project_module.Path, "exists", mock_path_exists):
+                    try:
+                        cmd_setup([])
+                    except (SystemExit, Exception):
+                        pass  # May fail for other mocked reasons
 
         captured = capsys.readouterr()
+        # Should NOT show version rejection errors
+        assert "too old" not in captured.out
+        assert "not yet supported" not in captured.out
+        # Should show version was accepted
         assert "3.14.1" in captured.out
-        assert "not yet supported" in captured.out or "not supported" in captured.out
 
     def test_python_3_12_proceeds(self, mock_project_dir, capsys):
         """Python 3.12 is valid and proceeds past version check."""

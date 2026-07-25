@@ -37,23 +37,23 @@ echo
 SUMMARY=()
 
 # ─────────────────────────────────────────
-# Step 1: Find suitable Python (3.10-3.12)
+# Step 1: Find suitable Python (3.10+)
 # ─────────────────────────────────────────
-echo "1/6 🐍 Finding Python 3.10-3.12..."
+echo "1/6 🐍 Finding Python 3.10+..."
 
 PYTHON=""
 
-# Validate a candidate Python: must be executable and report version 3.10-3.12
+# Validate a candidate Python: must be executable and report version 3.10+
 is_supported_python() {
     local candidate="$1"
     local major minor
     major="$("$candidate" -c 'import sys; print(sys.version_info.major)' 2>/dev/null)" || return 1
     minor="$("$candidate" -c 'import sys; print(sys.version_info.minor)' 2>/dev/null)" || return 1
-    [ "$major" -eq 3 ] && [ "$minor" -ge 10 ] && [ "$minor" -lt 13 ]
+    [ "$major" -eq 3 ] && [ "$minor" -ge 10 ]
 }
 
-# Search explicit versioned commands first (don't use bare python3 — may be 3.13+)
-for candidate in python3.12 python3.11 python3.10; do
+# Prefer bare python3, then explicit versioned commands (newest first)
+for candidate in python3 python3.14 python3.13 python3.12 python3.11 python3.10; do
     resolved="$(command -v "$candidate" 2>/dev/null)" || continue
     if is_supported_python "$resolved"; then
         PYTHON="$resolved"
@@ -63,7 +63,7 @@ done
 
 # If not found, check Homebrew paths (Apple Silicon + Intel)
 if [ -z "$PYTHON" ]; then
-    for version in 3.12 3.11 3.10; do
+    for version in 3.14 3.13 3.12 3.11 3.10; do
         for prefix in /opt/homebrew/opt /usr/local/opt; do
             candidate="$prefix/python@$version/bin/python$version"
             if [ -x "$candidate" ] && is_supported_python "$candidate"; then
@@ -75,9 +75,9 @@ if [ -z "$PYTHON" ]; then
 fi
 
 if [ -z "$PYTHON" ]; then
-    echo "❌ No Python 3.10-3.12 found"
-    echo "   Install one of: python3.12, python3.11, python3.10"
-    echo "   macOS: brew install python@3.12"
+    echo "❌ No Python 3.10+ found"
+    echo "   Install a recent Python 3 (3.10 or newer)"
+    echo "   macOS: brew install python@3.14"
     exit 1
 fi
 
@@ -99,11 +99,11 @@ if [ -d ".venv" ]; then
         VENV_MAJOR=$(".venv/bin/python" -c 'import sys; print(sys.version_info.major)' 2>/dev/null || echo "0")
         VENV_MINOR=$(".venv/bin/python" -c 'import sys; print(sys.version_info.minor)' 2>/dev/null || echo "0")
 
-        if [ "$VENV_MAJOR" -eq 3 ] && [ "$VENV_MINOR" -ge 10 ] && [ "$VENV_MINOR" -lt 13 ]; then
+        if [ "$VENV_MAJOR" -eq 3 ] && [ "$VENV_MINOR" -ge 10 ]; then
             echo "✅ .venv exists with Python $VENV_VERSION (compatible)"
             SUMMARY+=("venv: already exists (Python $VENV_VERSION)")
         else
-            echo "❌ .venv exists but has Python $VENV_VERSION (need 3.10-3.12)"
+            echo "❌ .venv exists but has Python $VENV_VERSION (need 3.10+)"
             echo "   Remove .venv manually and re-run: rm -rf .venv"
             exit 1
         fi

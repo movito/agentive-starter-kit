@@ -1025,7 +1025,7 @@ Proceed with implementation knowing exactly what needs to change.
 ```markdown
 ## Stage 1: Plan Evaluation
 - Coordinator reviews implementation plan
-- Uses aider + GPT-4o for evaluation
+- Uses the `adversarial` CLI + an external evaluator model
 - Output: APPROVED / NEEDS_REVISION
 
 ## Stage 2: Implementation

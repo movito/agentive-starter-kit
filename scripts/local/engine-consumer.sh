@@ -344,7 +344,7 @@ if [ "$SHAPE" = "planning" ]; then
         fi
     done
 
-    # .adversarial/ — config + scripts + docs; evaluators are offered
+    # .adversarial/ — config + docs + templates; evaluators are offered
     # (install-evaluators), never bundled; inputs/logs stay local
     "${RSYNC_BASE[@]}" --exclude='evaluators/' --exclude='logs/' --exclude='inputs/' \
         "$PROJECT_ROOT/.adversarial/" "$TARGET/.adversarial/"
@@ -391,7 +391,7 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.6.0",
+  "core_version": "3.7.0",
   "source_repo": "movito/agentive-starter-kit",
   "synced_at": "2026-07-23T00:00:00Z",
   "files": {

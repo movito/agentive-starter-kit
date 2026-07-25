@@ -128,15 +128,15 @@ adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 # For large files (>500 lines) requiring confirmation:
 echo y | adversarial evaluate .kit/tasks/3-in-progress/TASK-FILE.md
 
-# Read results
-cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
+# Read results (logs are named <input-name>--<evaluator>.md)
+cat .adversarial/logs/TASK-FILE--*.md
 ```
 
 **Iteration Limits**: Max 2-3 evaluations per task. Escalate to user if feedback is contradictory or after 2 NEEDS_REVISION verdicts.
 
 **When to Ask User**: Business decisions, contradictory feedback, or strategic test priorities.
 
-**Technical**: External AI via adversarial-workflow (`--yes` flag), cost varies by evaluator, fully autonomous.
+**Technical**: External AI via adversarial-workflow (unattended: `echo y | ADVERSARIAL_UNATTENDED=1 adversarial …`), cost varies by evaluator, fully autonomous.
 
 ## Primary Testing Protocol
 1. Run the full test suite: `pytest tests/ -v`
