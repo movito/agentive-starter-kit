@@ -154,6 +154,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Demo-as-validation catches defects diff inspection cannot**: running the door for KIT-0066's demo pair exposed a tracked session-memory file shipping in every consumer export since PR #41 — invisible in any diff under review, obvious in the artifact the flow produces. For flows that produce artifacts, the demo run is a reviewer. (KIT-0066)
 - **"Docs-only" gate classification diverges from bot reality on prose-agent PRs**: preflight Gates 2/3 said "No code changes — bot review not required" while both bots produced 17 threads on the same PR. Prose that drives shell commands is code in every sense that matters to a reviewer. Message fix in KIT-0062 F7. (KIT-0066)
 - **o3 calibration, seventh data point**: FAIL included a factually wrong ordering claim (asserted `.gitignore` written after `git add -A`; the step order was already ignore-then-add). Recent record: 4-for-4 FAILs containing at least one refutable claim. (KIT-0066)
+- **Test fixtures can pin a DEAD layout and mask real breakage for months**: `test_project_script.py` built its mock tree at pre-v0.4.0 paths, so `reconfigure`'s identity rewrite "passed" while silently skipping in every real repo. Structural fix: a fixture-honesty guard test asserting every fixture-modeled path also exists in the actual tree (`TestFixtureHonesty`). Audit any fixture that hand-builds a repo layout. (KIT-0068 A02)
+- **`ln -s <src> <existing-dir>` drops the link INSIDE the directory** — the provisioning-script vector that created a self-referential `.adversarial/evaluators/evaluators` symlink in the primary clone. Guard provisioning links with an existence refusal before `ln -s`. (KIT-0068 A69)
+- **o3 calibration, eighth data point**: FAIL = 1 real (a genuine `--ref` rescue gap, fixed with regression test), 2 refuted by reading the code, 2 out-of-diff. The one real find was worth the round. (KIT-0068)
 
 ### Empirically Disproven Reviewer Claims (decline-by-reference)
 
@@ -177,4 +180,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-07-24 by planner-f5 (KIT-0066 extraction: prose-hardening self-feeding tail, demo-as-validation, docs-only gate divergence, o3 seventh data point, BugBot skipping second occurrence)*
+*Last updated: 2026-07-25 by planner-f5 (KIT-0068 extraction: dead-layout fixture masking + fixture-honesty guard, ln-s-into-existing-dir vector, o3 eighth data point; two_homes_get_a_pin now in patterns.yml)*
