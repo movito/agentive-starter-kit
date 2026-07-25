@@ -17,19 +17,13 @@ Usage:
 TDD Phase: RED (tests written, implementation pending)
 """
 
-import re
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+import importlib.util
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 # Check if gql is available for tests that need it
-try:
-    import gql
-
-    GQL_AVAILABLE = True
-except ImportError:
-    GQL_AVAILABLE = False
+GQL_AVAILABLE = importlib.util.find_spec("gql") is not None
 
 requires_gql = pytest.mark.skipif(
     not GQL_AVAILABLE,
@@ -188,6 +182,55 @@ class TestTaskParser:
 
         # Assert
         assert metadata["priority"] == "high"
+
+    def test_parse_accepts_arbitrary_prefixes(self, tmp_path):
+        """Any PREFIX-NNNN id parses — the kit mints arbitrary prefixes
+        (KIT-0068 A14: hardcoded TASK-|ASK- rejected every live KIT-*
+        task and every exported consumer prefix)."""
+        from scripts.optional.linear_sync_utils import parse_task_metadata
+
+        for task_id in ["KIT-0068", "MOSS-0001", "DK-0042", "LABELS-0007"]:
+            task_file = tmp_path / f"{task_id}-some-task.md"
+            task_file.write_text(
+                f"# {task_id}: Some Task\n\n**Status**: Todo\n", encoding="utf-8"
+            )
+            metadata = parse_task_metadata(task_file)
+            assert metadata["task_id"] == task_id
+            assert metadata["title"] == "Some Task"
+
+    def test_parse_rejects_filename_without_task_id(self, tmp_path):
+        """A filename with no PREFIX-NNNN id raises ValueError."""
+        from scripts.optional.linear_sync_utils import parse_task_metadata
+
+        task_file = tmp_path / "notes.md"
+        task_file.write_text("# notes\n\n**Status**: Todo\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="No valid task ID"):
+            parse_task_metadata(task_file)
+
+    def test_parse_rejects_embedded_filename_id(self, tmp_path):
+        """The id must LEAD the filename — an embedded id elsewhere
+        (notes-KIT-0068.md) is not this file's identity (CodeRabbit,
+        KIT-0068)."""
+        from scripts.optional.linear_sync_utils import parse_task_metadata
+
+        task_file = tmp_path / "notes-KIT-0068.md"
+        task_file.write_text(
+            "# KIT-0068: Some Task\n\n**Status**: Todo\n", encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match="No valid task ID"):
+            parse_task_metadata(task_file)
+
+    def test_parse_rejects_mismatched_heading_id(self, tmp_path):
+        """A heading carrying a DIFFERENT valid id must raise — it would
+        attach this file's title to the wrong Linear issue."""
+        from scripts.optional.linear_sync_utils import parse_task_metadata
+
+        task_file = tmp_path / "KIT-0068-some-task.md"
+        task_file.write_text(
+            "# ASK-0042: Some Task\n\n**Status**: Todo\n", encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match="Task ID mismatch"):
+            parse_task_metadata(task_file)
 
     def test_parse_raises_on_missing_title(self, tmp_path, task_content_no_title):
         """TaskParser should raise ValueError for missing title."""

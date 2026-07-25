@@ -23,10 +23,8 @@ artifacts_directory: .adversarial/artifacts/
 # Command to run tests (for test validation phase)
 test_command: pytest tests/ -v
 
-# Workflow Settings
-auto_run: false
-git_integration: true
-save_artifacts: true
+# Note: auto_run / git_integration / save_artifacts were removed —
+# adversarial-workflow 1.0.1 reads none of them (KIT-0068 A67).
 
 # Note: evaluator_model field is deprecated.
 # To use different models, create custom evaluators in .adversarial/evaluators/

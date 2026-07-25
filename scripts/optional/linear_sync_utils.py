@@ -283,28 +283,40 @@ def parse_task_metadata(task_file: Path) -> Dict[str, Any]:
     if not content.strip():
         raise ValueError(f"Task file is empty: {task_file}")
 
-    # Extract task ID from filename
+    # Extract task ID from filename. Any PREFIX-NNNN id is valid — the
+    # kit mints arbitrary prefixes (KIT-, ASK-, consumer prefixes from
+    # engine-export --prefix); hardcoding TASK-|ASK- rejected every live
+    # task (KIT-0068 A14). Anchored at the start: task files are named
+    # PREFIX-NNNN-description.md, and an embedded id elsewhere in the
+    # name (notes-KIT-0068.md) must not be mistaken for the task's own.
     filename = task_file.name
-    task_id_match = re.search(r"(TASK-\d{4})", filename)
+    task_id_match = re.match(r"([A-Z]{2,6}-\d{4})", filename)
     if not task_id_match:
-        # Try ASK pattern (for starter kit)
-        task_id_match = re.search(r"(ASK-\d{4})", filename)
-        if not task_id_match:
-            raise ValueError(f"No valid task ID found in filename: {filename}")
+        raise ValueError(f"No valid task ID found in filename: {filename}")
 
     task_id = task_id_match.group(1)
 
     # Extract title from first heading
-    # Pattern: # TASK-0001: Title or # TASK-0001-slug: Title
+    # Pattern: # KIT-0001: Title or # KIT-0001-slug: Title
     title_match = re.search(
-        r"^#\s+(?:TASK-\d{4}|ASK-\d{4})(?:[-_a-zA-Z0-9]*):\s*(.+)$",
+        r"^#\s+([A-Z]{2,6}-\d{4})(?:[-_a-zA-Z0-9]*):\s*(.+)$",
         content,
         re.MULTILINE,
     )
     if not title_match:
         raise ValueError(f"No title found in task file: {filename}")
 
-    title = title_match.group(1).strip()
+    # One canonical id: a heading carrying a DIFFERENT valid id would
+    # silently attach this file's title to the wrong Linear issue
+    # (CodeRabbit, KIT-0068).
+    heading_id = title_match.group(1)
+    if heading_id != task_id:
+        raise ValueError(
+            f"Task ID mismatch in {filename}: filename says {task_id},"
+            f" heading says {heading_id}"
+        )
+
+    title = title_match.group(2).strip()
 
     # Extract metadata fields
     status = _extract_metadata_field(content, "Status")

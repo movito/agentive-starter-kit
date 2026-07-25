@@ -111,9 +111,10 @@ class TestManifestFileExistence:
         for entry in manifest["files"]["kit_builder"]:
             path = base / entry
             if entry.endswith("/"):
-                assert (
-                    path.is_dir()
-                ), f"kit_builder directory missing on disk: {entry} (expected at {path})"
+                assert path.is_dir(), (
+                    f"kit_builder directory missing on disk: {entry}"
+                    f" (expected at {path})"
+                )
             else:
                 assert (
                     path.exists()

@@ -41,7 +41,7 @@ Exit codes:
 import re
 import sys
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 # A concrete sibling-code path like ``../label-maker-code`` or ``../foo-web``.
 # Captures the project stem so placeholder examples can be filtered out.

@@ -76,6 +76,12 @@ target-version = "py310"
 select = ["E", "F", "I", "N", "W"]
 ignore = ["E203"]  # Conflicts with black
 
+[tool.ruff.lint.per-file-ignores]
+# Fixture re-exports: pytest injects `proj` by parameter name, which
+# reads as unused-import + redefinition to a linter, and isort owns
+# this file's import layout (ruff's I001 rewrite conflicts with it).
+"tests/test_bots_conformance.py" = ["E402", "F401", "F811", "I001"]
+
 [tool.isort]
 profile = "black"
 line_length = 88

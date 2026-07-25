@@ -24,11 +24,9 @@ Bug ledger coverage:
 import json
 import re
 import shutil
-from pathlib import Path
 
 import pytest
 
-from conftest import CREATE_AGENT_LOCK_DIR as LOCK_DIR
 from conftest import CREATE_AGENT_SCRIPT as SCRIPT_PATH
 from conftest import run_create_agent_script as run_script
 from conftest import setup_temp_project
@@ -135,23 +133,26 @@ class TestInputValidation:
     def test_missing_description_rejected(self):
         """Running with name but no description produces exit 1."""
         result = run_script(["test-agent"], self.project_dir)
-        assert (
-            result.returncode == 1
-        ), f"Expected exit 1 for missing description, got {result.returncode}: {result.stderr}"
+        assert result.returncode == 1, (
+            f"Expected exit 1 for missing description,"
+            f" got {result.returncode}: {result.stderr}"
+        )
 
     def test_invalid_name_uppercase_rejected(self):
         """Uppercase characters in agent name are rejected (exit 1)."""
         result = run_script(["BadName", "A test agent description"], self.project_dir)
-        assert (
-            result.returncode == 1
-        ), f"Expected exit 1 for uppercase name, got {result.returncode}: {result.stderr}"
+        assert result.returncode == 1, (
+            f"Expected exit 1 for uppercase name,"
+            f" got {result.returncode}: {result.stderr}"
+        )
 
     def test_invalid_name_too_short_rejected(self):
         """Agent name shorter than 2 characters is rejected (exit 1)."""
         result = run_script(["x", "A test agent description"], self.project_dir)
-        assert (
-            result.returncode == 1
-        ), f"Expected exit 1 for name too short, got {result.returncode}: {result.stderr}"
+        assert result.returncode == 1, (
+            f"Expected exit 1 for name too short,"
+            f" got {result.returncode}: {result.stderr}"
+        )
 
     def test_invalid_name_special_chars_rejected(self):
         """Agent name with special characters (spaces, dots) is rejected (exit 1).
@@ -161,9 +162,10 @@ class TestInputValidation:
         result = run_script(
             ["bad.agent name!", "A test agent description"], self.project_dir
         )
-        assert (
-            result.returncode == 1
-        ), f"Expected exit 1 for special chars in name, got {result.returncode}: {result.stderr}"
+        assert result.returncode == 1, (
+            f"Expected exit 1 for special chars in name,"
+            f" got {result.returncode}: {result.stderr}"
+        )
 
     def test_valid_name_accepted(self):
         """A properly formatted name (lowercase, hyphens, 2-30 chars) is accepted."""
@@ -184,9 +186,10 @@ class TestInputValidation:
         result = run_script(
             ["test-agent", "A test agent", "--position", "3"], self.project_dir
         )
-        assert (
-            result.returncode == 1
-        ), f"Expected exit 1 for unknown flag --position, got {result.returncode}: {result.stderr}"
+        assert result.returncode == 1, (
+            f"Expected exit 1 for unknown flag --position,"
+            f" got {result.returncode}: {result.stderr}"
+        )
 
 
 # ===================================================================
@@ -220,9 +223,10 @@ class TestDuplicateDetection:
         result = run_script(
             ["existing-agent", "Another agent with same name"], self.project_dir
         )
-        assert (
-            result.returncode == 1
-        ), f"Expected exit 1 for duplicate name, got {result.returncode}: {result.stderr}"
+        assert result.returncode == 1, (
+            f"Expected exit 1 for duplicate name,"
+            f" got {result.returncode}: {result.stderr}"
+        )
 
     def test_force_overwrites_duplicate(self):
         """--force allows overwriting an existing agent (exit 0)."""
@@ -486,9 +490,10 @@ class TestExitCodes:
     def test_exit_1_on_user_error(self):
         """Invalid input (user error) exits with code 1."""
         result = run_script([], self.project_dir)
-        assert (
-            result.returncode == 1
-        ), f"Expected exit 1 for user error (no args), got {result.returncode}: {result.stderr}"
+        assert result.returncode == 1, (
+            f"Expected exit 1 for user error (no args),"
+            f" got {result.returncode}: {result.stderr}"
+        )
 
     def test_exit_2_on_system_error(self):
         """System error (e.g., missing template) exits with code 2.

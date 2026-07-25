@@ -24,9 +24,11 @@ repos:
       - id: check-toml
         name: Check TOML syntax
 
-  # Python code formatting
+  # Python code formatting — rev must match the pyproject.toml black==
+  # pin (tests/test_toolchain_consistency.py enforces the pair; drift
+  # here means local commits format with a different Black than CI)
   - repo: https://github.com/psf/black
-    rev: 26.1.0
+    rev: 26.5.1
     hooks:
       - id: black
         name: Format code with Black

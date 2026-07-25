@@ -10,7 +10,11 @@
 # this path — the door execs this engine as its final act.
 #
 # Usage (door-internal):
-#   engine-materials.sh <target-directory>
+#   engine-materials.sh <target-directory> [--scaffold-only]
+#
+#   --scaffold-only stops after the copy step (no git init, no
+#   setup-dev.sh, no agent launch) — the seam tests/test_engine_materials.py
+#   uses to pin the copy boundary (KIT-0068 A12/A13).
 #
 # Prerequisites:
 #   - Target directory exists (with your design materials in it)
@@ -51,6 +55,10 @@ if [ ! -d "$TARGET" ]; then
 fi
 TARGET="$(cd "$TARGET" && pwd)"
 PROJECT_NAME="$(basename "$TARGET")"
+SCAFFOLD_ONLY=0
+if [ "${2:-}" = "--scaffold-only" ]; then
+    SCAFFOLD_ONLY=1
+fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🚀 Bootstrapping: $PROJECT_NAME"
@@ -70,13 +78,19 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 # .claude/ — agent definitions, commands, skills, settings
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
-# .kit/ — builder layer (adversarial, context, delegation, agents, etc.)
+# .kit/ — builder layer (templates, workflows, launchers, docs). The
+# kit's own planning corpus stays home: task-ID excludes are
+# prefix-AGNOSTIC ([A-Z]*-NNNN — the ASK-* literals missed every KIT-*
+# file after the prefix rename, KIT-0068 A13), and .kit/adversarial/ is
+# operator-owned untracked state, excluded wholesale.
 "${RSYNC_BASE[@]}" \
-    --exclude='adversarial/logs/' --exclude='adversarial/artifacts/' --exclude='adversarial/inputs/' --exclude='adversarial/evaluators/' \
-    --exclude='context/ASK-*' --exclude='context/retros/' --exclude='context/reviews/' --exclude='context/research/' \
+    --exclude='adversarial/' \
+    --exclude='context/[A-Z]*-[0-9][0-9][0-9][0-9]*' \
+    --exclude='context/retros/' --exclude='context/reviews/' --exclude='context/research/' \
     --exclude='context/*SESSION-HANDOVER*' --exclude='context/*LINEAR-SYNC*' --exclude='context/*MIRIAD*' \
     --exclude='context/*code-review-lessons*' --exclude='context/*code-review-test*' \
-    --exclude='tasks/ASK-*' \
+    --exclude='tasks/*/[A-Z]*-[0-9][0-9][0-9][0-9]*' \
+    --exclude='tasks/[A-Z]*-[0-9][0-9][0-9][0-9]*' \
     "$PROJECT_ROOT/.kit/" "$TARGET/.kit/"
 
 # .serena/ — setup script and template
@@ -89,11 +103,26 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 # docs/ — only the structural parts (decisions, testing guide)
 "${RSYNC_BASE[@]}" --exclude='proposals/' "$PROJECT_ROOT/docs/" "$TARGET/docs/"
 
-# scripts/ — project management, CI, setup
-"${RSYNC_BASE[@]}" "$PROJECT_ROOT/scripts/" "$TARGET/scripts/"
+# scripts/ — project management, CI, setup. scripts/local/ is the
+# kit-side layer (door + engines) and "never ships on any sync tier or
+# consumer rsync" (the door's own contract, bootstrap:8-9) — the
+# wholesale copy here violated it (KIT-0068 A12).
+"${RSYNC_BASE[@]}" --exclude='local/' "$PROJECT_ROOT/scripts/" "$TARGET/scripts/"
 
-# tests/ — conftest and test infrastructure
-"${RSYNC_BASE[@]}" "$PROJECT_ROOT/tests/" "$TARGET/tests/"
+# tests/ — conftest and test infrastructure, minus the kit-only tests
+# that import or read scripts/local/ (they would fail consumer pytest
+# at collection time). Keep this list in sync with engine-consumer.sh's
+# tests/ excludes.
+"${RSYNC_BASE[@]}" \
+    --exclude='test_kit_markers.py' \
+    --exclude='test_bootstrap_consumer.py' \
+    --exclude='test_bootstrap_shapes.py' \
+    --exclude='test_bots_conformance.py' \
+    --exclude='test_check_hook_seeds.py' \
+    --exclude='test_entrance_shims.py' \
+    --exclude='test_setup_door.py' \
+    --exclude='test_engine_materials.py' \
+    "$PROJECT_ROOT/tests/" "$TARGET/tests/"
 
 # Top-level files (only if they don't exist in target)
 for f in CLAUDE.md pyproject.toml .gitignore .pre-commit-config.yaml .env.template .coderabbitignore conftest.py; do
@@ -103,7 +132,18 @@ for f in CLAUDE.md pyproject.toml .gitignore .pre-commit-config.yaml .env.templa
 done
 
 echo "✅ Scaffolding copied (existing files preserved)"
+# Name the drops (patterns.yml intersection_names_drops): an exclusion
+# list that doesn't say what it drops reads as "copied everything".
+echo "   Not copied (kit-side only): scripts/local/ (door + engines),"
+echo "   kit task specs and task-ID context files (.kit/tasks/, .kit/context/),"
+echo "   .kit/adversarial/ (operator-owned), retros/reviews/research,"
+echo "   and kit-only tests (test_setup_door.py, test_kit_markers.py, ...)"
 echo
+
+if [ "$SCAFFOLD_ONLY" = "1" ]; then
+    echo "── --scaffold-only: stopping before git/setup/agent steps ──"
+    exit 0
+fi
 
 # ─────────────────────────────────────────
 # Step 2: Initialize git (if needed)

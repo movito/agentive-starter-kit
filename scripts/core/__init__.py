@@ -1,7 +1,7 @@
 """
-Scripts package for project automation.
+Core scripts package for project automation (synced from agentive-starter-kit).
 
-Contains:
-    - sync_tasks_to_linear: Sync task files to Linear
-    - linear_sync_utils: Helper functions for Linear sync
+Contains the project CLI (task lifecycle, setup, doctor, evaluator
+install), the core-file sync engine, preflight/CI helpers, and the
+doctor.d check suite. Linear-sync modules live in scripts/optional/.
 """
