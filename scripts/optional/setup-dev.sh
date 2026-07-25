@@ -52,8 +52,8 @@ is_supported_python() {
     [ "$major" -eq 3 ] && [ "$minor" -ge 10 ]
 }
 
-# Prefer bare python3, then explicit versioned commands (newest first)
-for candidate in python3 python3.14 python3.13 python3.12 python3.11 python3.10; do
+# Prefer explicit versioned commands (newest first), then bare python3
+for candidate in python3.14 python3.13 python3.12 python3.11 python3.10 python3; do
     resolved="$(command -v "$candidate" 2>/dev/null)" || continue
     if is_supported_python "$resolved"; then
         PYTHON="$resolved"

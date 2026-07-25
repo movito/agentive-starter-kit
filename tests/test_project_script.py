@@ -350,10 +350,7 @@ class TestPythonVersionCheck:
         with patch.object(_project_module.sys, "version_info", mock_version):
             with patch.object(_project_module.subprocess, "run", mock_run):
                 with patch.object(_project_module.Path, "exists", mock_path_exists):
-                    try:
-                        cmd_setup([])
-                    except (SystemExit, Exception):
-                        pass  # May fail for other mocked reasons
+                    cmd_setup([])  # must complete without raising
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors
@@ -376,10 +373,7 @@ class TestPythonVersionCheck:
         with patch.object(_project_module.sys, "version_info", mock_version):
             with patch.object(_project_module.subprocess, "run", mock_run):
                 with patch.object(_project_module.Path, "exists", mock_path_exists):
-                    try:
-                        cmd_setup([])
-                    except (SystemExit, Exception):
-                        pass  # May fail for other mocked reasons
+                    cmd_setup([])  # must complete without raising
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors
@@ -402,10 +396,7 @@ class TestPythonVersionCheck:
         with patch.object(_project_module.sys, "version_info", mock_version):
             with patch.object(_project_module.subprocess, "run", mock_run):
                 with patch.object(_project_module.Path, "exists", mock_path_exists):
-                    try:
-                        cmd_setup([])
-                    except (SystemExit, Exception):
-                        pass  # May fail for other mocked reasons
+                    cmd_setup([])  # must complete without raising
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors
@@ -428,10 +419,7 @@ class TestPythonVersionCheck:
         with patch.object(_project_module.sys, "version_info", mock_version):
             with patch.object(_project_module.subprocess, "run", mock_run):
                 with patch.object(_project_module.Path, "exists", mock_path_exists):
-                    try:
-                        cmd_setup([])
-                    except (SystemExit, Exception):
-                        pass  # May fail for other mocked reasons
+                    cmd_setup([])  # must complete without raising
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors

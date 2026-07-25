@@ -439,7 +439,7 @@ The Evaluator workflow is a **critical quality assurance mechanism** that preven
 - ✅ All agents have access to quality assurance
 - ✅ Uniform invocation pattern (reduces confusion)
 - ✅ Proper escalation safeguards (prevents infinite loops)
-- ✅ Clear cost expectations (users know GPT-4o usage)
+- ✅ Clear cost expectations (cost varies by configured evaluator model)
 
 ---
 
