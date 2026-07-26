@@ -1,6 +1,6 @@
 # KIT-0065 Handoff — feature-developer
 
-**Task**: `.kit/tasks/4-in-review/KIT-0065-purge-aider-era-evaluator-scripts.md`
+**Task**: `.kit/tasks/5-done/KIT-0065-purge-aider-era-evaluator-scripts.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-25 (planner-f5)
 **Estimated effort**: 3-4 hours

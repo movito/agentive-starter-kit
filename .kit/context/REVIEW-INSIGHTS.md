@@ -157,6 +157,11 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Test fixtures can pin a DEAD layout and mask real breakage for months**: `test_project_script.py` built its mock tree at pre-v0.4.0 paths, so `reconfigure`'s identity rewrite "passed" while silently skipping in every real repo. Structural fix: a fixture-honesty guard test asserting every fixture-modeled path also exists in the actual tree (`TestFixtureHonesty`). Audit any fixture that hand-builds a repo layout. (KIT-0068 A02)
 - **`ln -s <src> <existing-dir>` drops the link INSIDE the directory** — the provisioning-script vector that created a self-referential `.adversarial/evaluators/evaluators` symlink in the primary clone. Guard provisioning links with an existence refusal before `ln -s`. (KIT-0068 A69)
 - **o3 calibration, eighth data point**: FAIL = 1 real (a genuine `--ref` rescue gap, fixed with regression test), 2 refuted by reading the code, 2 out-of-diff. The one real find was worth the round. (KIT-0068)
+- **Lifted constraints leave organs — hunt them**: removing the `<3.13` ceiling deleted not just three messages but a whole subsystem that existed only to route around it (`detect_uv`, `create_venv_with_uv`, a 418-line test file; net −1,555). When a bound/workaround/pin dies, grep for everything that cites it — its accreted infrastructure is now dead too. (KIT-0065)
+- **Permission-denial chains can steer into hazards**: `rm -rf` denied → `rmtree` sandbox-blocked → `venv --clear` as the "safe" third choice → symlink traversal emptied the primary's venv. Each step was locally reasonable; the hazard lived in the provisioning convention. When a denial forces a workaround chain, pause at step two and ask what the sanctioned path is (here: the setup door). (KIT-0065; structural fix KIT-0071)
+- **Worktree `.venv` was a SYMLINK to the primary's venv** — any in-worktree venv rebuild destroys the primary through it. `ls -la .venv` before any venv operation in a worktree until KIT-0071 lands; doctor check specced there. (KIT-0065 incident)
+- **o3 calibration, ninth data point — it now fabricates empirical confirmations**: "3.14 install explodes (confirmed with AW 1.0.1)" was contradicted by the session's own passing install transcript; a second "confirmed" uv claim fell to one live probe. 0 real / 2 refuted. Claims tagged "confirmed/tested" by an evaluator get NO extra weight — reproduce or refute, same as any claim. (KIT-0065)
+- **The sanctioned door beats a scratch experiment**: with `pip install` deny-ruled, running the rewritten `project setup` on 3.14 tested the new code path AND produced the ceiling-lift evidence in one motion. When verification needs an environment, build it with the tool under test. (KIT-0065)
 
 ### Empirically Disproven Reviewer Claims (decline-by-reference)
 
@@ -180,4 +185,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-07-25 by planner-f5 (KIT-0068 extraction: dead-layout fixture masking + fixture-honesty guard, ln-s-into-existing-dir vector, o3 eighth data point; two_homes_get_a_pin now in patterns.yml)*
+*Last updated: 2026-07-27 by planner-f5 (KIT-0065 extraction: lifted-constraints-leave-organs, denial-chain steering, worktree venv symlink vector, o3 fabricated-confirmation ninth data point, sanctioned-door-as-experiment)*

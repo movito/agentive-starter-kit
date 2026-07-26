@@ -110,6 +110,8 @@ Read every function in the file you changed (not just the ones you wrote):
 
 14. **Identity renames must be chased through EVERY seeding path**: when a change renames identity-bearing content in a file that gets copied/seeded (pyproject name, package identifiers), grep every `cp`/`rsync`/heredoc that ships that file (`grep -rn '<filename>' scripts/`) and characterize EACH seeding path — not just the one the spec names. KIT-0057 fixed the `--new` export path and missed the adopt path's top-level copy in the same PR; one grep would have pre-empted the bot round.
 
+15. **After fixing any recurring token in a file, grep THAT FILE for the token before moving on**: the in-file cousin of item 14 (mirror-guards family). Editing one occurrence of a stale name/model/claim and missing an identical sibling a few lines away is the cheapest bot thread to prevent — one `grep -n '<token>' <file>` after the first edit. KIT-0065: fixed a GPT-4o mention at AGENT-CREATION-WORKFLOW.md:423 and missed the identical claim at :442; CodeRabbit found it (the session's one regression-class thread).
+
 ## Step 4: Test assertion audit
 
 Before checking boundary coverage, audit test assertion quality:

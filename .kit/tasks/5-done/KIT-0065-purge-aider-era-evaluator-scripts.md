@@ -1,6 +1,6 @@
 # KIT-0065: Purge aider-era evaluator scripts and stale references
 
-**Status**: In Review
+**Status**: Done
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1 hour

@@ -1,6 +1,14 @@
 # ASK-0049: Replace Aider Transport with LiteLLM in Adversarial Pipeline
 
-**Status**: Backlog
+> **CANCELED (planner, 2026-07-27): MOOT — upstream shipped it.**
+> adversarial-workflow 1.0.x replaced the aider transport with
+> LiteLLM (upstream #59 resolved); the kit floors
+> `adversarial-workflow>=1.0.1`, and KIT-0065 (PR #94) purged all
+> aider residue and lifted the Python `<3.13` ceiling this task
+> existed to unblock. ASK-0050's dependency on this task is void for
+> the same reason — re-scope ASK-0050 on its own merits if revived.
+
+**Status**: Canceled
 **Priority**: high
 **Assigned To**: feature-developer-v3
 **Estimated Effort**: 3-5 hours
