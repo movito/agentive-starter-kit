@@ -4,7 +4,7 @@
 # Evaluators:
 # - Built-in: evaluate, proofread, review (require OPENAI_API_KEY)
 # - Custom: Add YAML files to .adversarial/evaluators/
-# - Library: Run ./scripts/project install-evaluators
+# - Library: Run ./scripts/core/project install-evaluators
 #
 # Commands:
 #   adversarial list-evaluators     # See available evaluators
@@ -28,4 +28,4 @@ test_command: pytest tests/ -v
 
 # Note: evaluator_model field is deprecated.
 # To use different models, create custom evaluators in .adversarial/evaluators/
-# See: .adversarial/evaluators/README.md
+# See: https://github.com/movito/adversarial-evaluator-library

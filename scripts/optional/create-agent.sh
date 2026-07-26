@@ -214,7 +214,7 @@ validate_name() {
 # =============================================================================
 show_help() {
     cat <<'USAGE'
-Usage: scripts/create-agent.sh <name> <description> [options]
+Usage: scripts/optional/create-agent.sh <name> <description> [options]
 
 Required:
   <name>            Agent name (lowercase, hyphens allowed, 2-30 chars)

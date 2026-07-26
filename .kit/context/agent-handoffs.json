@@ -4,7 +4,7 @@
     "current_task": "KIT-0069",
     "task_started": null,
     "brief_note": "KIT-0065 closed out 2026-07-27 (PR #94 merged 74b183c; ceiling lifted to >=3.10, CI matrix 3.10/3.12/3.14; retro processed: self-review item 15 added, ASK-0049 CANCELED as moot, KIT-0071 filed for the worktree-venv symlink destruction vector, insights extracted). CHAIN NEXT: KIT-0069 assigned (truth sweep; handoff carries VENV HAZARD warning + re-verify-vs-current-main note since #93/#94 merged after the audit). Then KIT-0071 -> KIT-0067 -> cut 0.9.0.",
-    "details_link": ".kit/tasks/2-todo/KIT-0069-audit-truth-sweep.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0069-audit-truth-sweep.md",
     "handoff_file": ".kit/context/KIT-0069-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0069",
     "task_started": null,
     "brief_note": "KIT-0069 ready: make every live prose surface true; A-number checklist w/ binding ownership rule; item 15 constantly; NEVER rebuild .venv in the worktree (symlink hazard, KIT-0071 pending). Worktree: ../ask-worktrees/KIT-0069 (pull --ff-only first).",
-    "details_link": ".kit/tasks/2-todo/KIT-0069-audit-truth-sweep.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0069-audit-truth-sweep.md",
     "handoff_file": ".kit/context/KIT-0069-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

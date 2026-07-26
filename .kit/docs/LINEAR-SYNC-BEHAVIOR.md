@@ -4,7 +4,8 @@ Reference document describing how Linear issue synchronization works in this
 project. Covers the folder-to-status mapping, status determination priority,
 and common commands.
 
-**Version**: 1.0.0
+**Version**: 1.1.0
+**Last updated**: 2026-07-27
 
 ## Overview
 
@@ -15,11 +16,15 @@ between folders is equivalent to dragging a card across a Kanban board.
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/sync_tasks_to_linear.py` | Creates or updates Linear issues from task files |
-| `scripts/linear_sync_utils.py` | Status mapping, metadata parsing, legacy migration |
+| `scripts/optional/sync_tasks_to_linear.py` | Creates or updates Linear issues from task files |
+| `scripts/optional/linear_sync_utils.py` | Status mapping, metadata parsing, legacy migration |
 
-The CLI wrapper `./scripts/project` exposes these through subcommands (see
-**Common Commands** below).
+Both live in the **optional** layer — consumers that did not opt into
+Linear sync will not carry them, and `linearsync` reports a friendly
+error rather than failing obscurely.
+
+The CLI wrapper `./scripts/core/project` exposes these through subcommands
+(see **Common Commands** below).
 
 ## Folder-to-Status Mapping
 
@@ -70,7 +75,7 @@ The migration permanently rewrites the `**Status**` field in the task file.
 ## Manual Sync (No Daemon)
 
 There is currently no automatic file-watching daemon. When you move a task
-file between folders, run `./scripts/project linearsync` to push the updated
+file between folders, run `./scripts/core/project linearsync` to push the updated
 status to Linear.
 
 ## Task File Format
@@ -105,16 +110,22 @@ Set these in the project `.env` file. Obtain an API key at
 ### Sync all tasks to Linear
 
 ```bash
-./scripts/project linearsync    # or: ./scripts/project sync
+./scripts/core/project linearsync    # or: linear
 ```
 
 Scans folders `1-backlog/` through `7-blocked/`, parses every matching task
 file, and creates or updates the corresponding Linear issue.
 
+> ⚠️ **`sync` is NOT an alias for `linearsync`.** It used to be, but
+> KIT-0036 repurposed `./scripts/core/project sync` to mean the
+> **pull-based core-scripts sync** — it rewrites files in your repo from
+> upstream and has nothing to do with Linear. Use `linearsync` or
+> `linear` for task sync.
+
 ### Check sync status
 
 ```bash
-./scripts/project sync-status
+./scripts/core/project sync-status
 ```
 
 Compares local tasks against Linear issues and reports mismatches.
@@ -122,10 +133,10 @@ Compares local tasks against Linear issues and reports mismatches.
 ### Move a task between statuses
 
 ```bash
-./scripts/project move ASK-0037 in-progress
-./scripts/project start ASK-0037       # Shorthand: move to in-progress
-./scripts/project complete ASK-0037    # Shorthand: move to done
-./scripts/project block ASK-0037       # Shorthand: move to blocked
+./scripts/core/project move ASK-0037 in-progress
+./scripts/core/project start ASK-0037       # Shorthand: move to in-progress
+./scripts/core/project complete ASK-0037    # Shorthand: move to done
+./scripts/core/project block ASK-0037       # Shorthand: move to blocked
 ```
 
 Moves the file to the correct numbered folder and updates `**Status**`.
@@ -133,8 +144,8 @@ Moves the file to the correct numbered folder and updates `**Status**`.
 ### Other commands
 
 ```bash
-./scripts/project teams       # List Linear teams (find LINEAR_TEAM_ID)
-./scripts/project validate    # Check status fields match folders
+./scripts/core/project teams       # List Linear teams (find LINEAR_TEAM_ID)
+./scripts/core/project validate    # Check status fields match folders
 ```
 
 ## Troubleshooting
@@ -143,8 +154,8 @@ Moves the file to the correct numbered folder and updates `**Status**`.
 |---------|-----|
 | "gql package not installed" | `pip install 'gql[requests]'` |
 | "LINEAR_API_KEY not found" | Add `LINEAR_API_KEY=lin_api_...` to `.env` |
-| Mismatch detected by sync-status | Run `./scripts/project linearsync`, then `./scripts/project sync-status` |
-| Status field disagrees with folder | Run `./scripts/project validate`, then move file or edit status |
+| Mismatch detected by sync-status | Run `./scripts/core/project linearsync`, then `./scripts/core/project sync-status` |
+| Status field disagrees with folder | Run `./scripts/core/project validate`, then move file or edit status |
 
 ## References
 

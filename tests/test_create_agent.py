@@ -1,9 +1,7 @@
 """
-Tests for scripts/create-agent.sh — Agent creation automation.
+Tests for scripts/optional/create-agent.sh — Agent creation automation.
 
-TDD Red Phase: These tests define the behavioral contract for the script.
-The script does NOT exist yet; all tests that invoke it will fail until
-the Green Phase implementation is complete.
+These tests define the behavioral contract for the script.
 
 Bug ledger coverage:
   S1  — test_description_with_special_chars (sed escaping)
@@ -50,7 +48,7 @@ class TestScriptExists:
     """Verify that the create-agent script exists and has correct attributes."""
 
     def test_script_file_exists(self):
-        """Script file exists at scripts/create-agent.sh."""
+        """Script file exists at scripts/optional/create-agent.sh."""
         assert SCRIPT_PATH.exists(), f"Script not found at {SCRIPT_PATH}"
 
     def test_script_has_bash_shebang(self):

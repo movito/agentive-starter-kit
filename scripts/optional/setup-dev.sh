@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Setup development environment
-# Usage: ./scripts/setup-dev.sh
+# Usage: ./scripts/optional/setup-dev.sh
 #
 # Metadata:
 #   version: 1.0.0
@@ -232,4 +232,4 @@ done
 echo
 echo "Next steps:"
 echo "  source .venv/bin/activate    # activate the venv"
-echo "  ./scripts/ci-check.sh        # run CI checks"
+echo "  ./scripts/core/ci-check.sh        # run CI checks"

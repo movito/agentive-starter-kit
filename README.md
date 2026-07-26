@@ -227,7 +227,7 @@ adversarial proofread docs/guide.md
 adversarial list-evaluators
 
 # Install additional evaluators (Gemini, Mistral, more)
-./scripts/project install-evaluators
+./scripts/core/project install-evaluators
 ```
 
 Built-in evaluators use OpenAI. Custom evaluators can use other providers (Google, Mistral, Anthropic). Results saved to `.adversarial/logs/`.
@@ -322,7 +322,7 @@ When configured, the task system:
 
 **Manual sync:**
 ```bash
-./scripts/project linearsync
+./scripts/core/project linearsync
 ```
 
 **Auto-sync:** Pushing to `main` or `develop` triggers GitHub Actions workflow.
@@ -544,7 +544,7 @@ git fetch upstream
 git merge upstream/main
 
 # Update agent files with your project name
-./scripts/project reconfigure
+./scripts/core/project reconfigure
 ```
 
 The `reconfigure` command updates Serena activation calls in agent files after pulling upstream changes. It replaces any `activate_project("...")` value (whether it's the placeholder `"your-project"` or upstream's `"agentive-starter-kit"`) with your project name from `.serena/project.yml`.

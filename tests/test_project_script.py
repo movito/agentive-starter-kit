@@ -1,5 +1,5 @@
 """
-Tests for scripts/project CLI commands.
+Tests for scripts/core/project CLI commands.
 
 Focus: install-evaluators command with mocked subprocess calls.
 """

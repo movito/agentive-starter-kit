@@ -1,5 +1,6 @@
 """
-Integration tests for concurrent agent creation via scripts/create-agent.sh.
+Integration tests for concurrent agent creation via
+scripts/optional/create-agent.sh.
 
 Covers: concurrency (S6), locking (S5, T2, T5), sequential creation,
 and end-to-end workflows. All tests are marked @pytest.mark.slow and
