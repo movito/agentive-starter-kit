@@ -329,7 +329,7 @@ git push origin main         # Push to GitHub ✅
 
 ## Documentation
 
-- **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- **Quick Reference**: `CLAUDE.md`
 - **Full Guide**: This document
 - **Pre-commit Config**: `.pre-commit-config.yaml`
 - **Git Setup**: See `README.md` → Development section

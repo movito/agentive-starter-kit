@@ -211,7 +211,7 @@ get_agent_icon() {
 MINIMAL_TEMPLATE = """---
 name: [agent-name]
 description: [One sentence description of agent role and primary responsibility]
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-5
 tools:
   - Read
   - Write

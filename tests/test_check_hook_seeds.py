@@ -8,7 +8,7 @@ paths).
 
 Consumer-rsync boundary: this module reads scripts/local/ content
 (the seed templates), so it is excluded from the consumer tests/ rsync
-in bootstrap-consumer.sh (exclude + rm -f sweep) and module-skips when
+in engine-consumer.sh (exclude + rm -f sweep) and module-skips when
 the templates are absent — the tests/test_kit_markers.py pattern.
 
 The scratch/stub harness is shared with tests/test_ci_check.py in

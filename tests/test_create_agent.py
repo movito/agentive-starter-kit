@@ -209,7 +209,7 @@ class TestDuplicateDetection:
             "---\n"
             f"name: {name}\n"
             "description: Pre-existing agent\n"
-            "model: claude-sonnet-4-5-20250929\n"
+            "model: claude-sonnet-5\n"
             "---\n"
             f"# {name}\n",
             encoding="utf-8",

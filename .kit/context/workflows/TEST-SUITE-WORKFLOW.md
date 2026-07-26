@@ -152,7 +152,7 @@ Compare current pass rate to baseline:
 
 ## Documentation
 
-- **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- **Quick Reference**: `CLAUDE.md`
 - **Full Guide**: This document
 - **Coverage Analysis**: [COVERAGE-WORKFLOW.md](./COVERAGE-WORKFLOW.md)
 - **Test Infrastructure**: `tests/conftest.py`

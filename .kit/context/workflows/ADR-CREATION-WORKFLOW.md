@@ -202,7 +202,7 @@ Update `docs/adr/about-adr.md`:
 
 ## Documentation
 
-- **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- **Quick Reference**: `CLAUDE.md`
 - **Full Guide**: This document
 - **ADR Index**: `docs/adr/about-adr.md`
 - **Existing ADRs**: `docs/adr/`

@@ -158,7 +158,7 @@ if sys.platform == "win32":  # pragma: no cover
 
 ## Documentation
 
-- **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- **Quick Reference**: `CLAUDE.md`
 - **Full Guide**: This document
 - **Test Analysis**: [TEST-SUITE-WORKFLOW.md](./TEST-SUITE-WORKFLOW.md)
 - **Coverage Config**: `pyproject.toml` → `[tool.coverage.run]`

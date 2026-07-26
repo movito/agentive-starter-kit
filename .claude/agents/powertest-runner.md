@@ -185,7 +185,7 @@ cat .adversarial/logs/TASK-FILE--*.md
 
 ## Task Starter Protocol (Multi-Session Workflows)
 
-**📖 Template**: `.claude/agents/TASK-STARTER-TEMPLATE.md`
+**📖 Template**: `.kit/templates/TASK-STARTER-TEMPLATE.md`
 
 When you receive task assignments, they come in a standardized format with:
 - Task file: Full specification in `.kit/tasks/[folder]/[TASK-ID].md`
@@ -275,7 +275,7 @@ For longer tasks requiring multiple agent sessions or handoffs:
 
 **Example**: After completing TDD implementation and testing, create task starter for document-reviewer to handle documentation phase.
 
-See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
+See `.kit/templates/TASK-STARTER-TEMPLATE.md` for complete example.
 
 ## Coordination Protocol
 

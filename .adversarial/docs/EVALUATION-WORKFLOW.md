@@ -258,7 +258,7 @@ Each provider requires its own API key (set in `.env`):
 - `GOOGLE_API_KEY` for Gemini evaluators
 - `MISTRAL_API_KEY` for Mistral evaluators
 
-**Documentation**: `.adversarial/evaluators/README.md`
+**Documentation**: <https://github.com/movito/adversarial-evaluator-library>
 **Library**: https://github.com/movito/adversarial-evaluator-library
 
 ---

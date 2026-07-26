@@ -349,7 +349,7 @@ that shells out must build an explicitly scrubbed env
 
 ## Documentation
 
-- **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- **Quick Reference**: `CLAUDE.md`
 - **Full Guide**: This document
 - **Test Infrastructure**: See `tests/conftest.py` for fixtures and configuration
 - **CI/CD**: `.github/workflows/tests.yml`

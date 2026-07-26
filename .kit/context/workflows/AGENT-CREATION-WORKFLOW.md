@@ -64,7 +64,7 @@ CREATE NEW AGENT ✅
 2. **Check for overlap**: Ensure new role doesn't duplicate existing agent responsibilities
 3. **Define scope clearly**: Write 1-2 sentence description of agent's unique role
 4. **Identify tools needed**: Determine which Claude Code tools this agent requires
-5. **Choose model**: Decide between `claude-sonnet-4-5-20250929` (complex tasks) or `claude-3-5-haiku-20241022` (simpler/faster)
+5. **Choose model**: Decide between `claude-sonnet-5` (complex tasks) or `claude-haiku-4-5` (simpler/faster)
 
 ### Required Information
 
@@ -85,7 +85,7 @@ Before creating agent, gather:
 
 **Option A: Manual Copy**
 ```bash
-cp .claude/agents/AGENT-TEMPLATE.md .claude/agents/your-agent-name.md
+cp .kit/templates/AGENT-TEMPLATE.md .claude/agents/your-agent-name.md
 ```
 
 **Option B: Automation Script (Recommended)**
@@ -109,7 +109,7 @@ Edit the YAML frontmatter at the top of the file:
 ---
 name: api-tester  # Unique identifier (kebab-case)
 description: API testing and validation specialist for DaVinci Resolve integration  # One sentence
-model: claude-sonnet-4-5-20250929  # Choose appropriate model
+model: claude-sonnet-5  # Choose appropriate model
 tools:  # Select tools this agent needs
   - Read
   - Write
@@ -124,8 +124,8 @@ tools:  # Select tools this agent needs
 ```
 
 **Model Selection Guide**:
-- **claude-sonnet-4-5-20250929**: Complex tasks, architectural decisions, coordination, code review
-- **claude-3-5-haiku-20241022**: Simple tasks, testing, straightforward implementations
+- **claude-sonnet-5**: Complex tasks, architectural decisions, coordination, code review
+- **claude-haiku-4-5**: Simple tasks, testing, straightforward implementations
 
 **Common Tool Combinations**:
 - **Implementation agents**: Read, Write, Edit, Bash, Glob, Grep, TodoWrite
@@ -239,8 +239,8 @@ Customize the documentation links for this agent's role:
 ## Quick Reference Documentation
 
 **Agent Coordination**:
-- Task specifications: `.kit/tasks/active/`
-- Agent procedures: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- Task specifications: `.kit/tasks/`
+- Agent procedures: `CLAUDE.md`
 - Your role context: `.kit/context/agent-handoffs.json` → `"api-tester"`
 - Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`
 - Test suite management: `.kit/context/workflows/TEST-SUITE-WORKFLOW.md`
@@ -325,49 +325,18 @@ If your agent needs additional context, add custom sections:
 
 ---
 
-### Step 11: Update Procedural Knowledge Index
+### Step 11: Register the Agent
 
-Add your new agent to `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`:
+There is no procedural knowledge index in this kit — `CLAUDE.md` is the
+de facto quick reference. If the agent is broadly useful rather than
+task-specific, add a row to its **Key Agents** table:
 
 ```markdown
-## [Agent Role] Procedures
-
-### [Primary Procedure Name]
-
-**Where**: [Link to workflow document if exists]
-
-**Quick Reference**:
-```bash
-# Key commands this agent uses
+| `[agent-name]` | [One-line role description] |
 ```
 
-**Documentation**:
-- Agent file: `.claude/agents/[agent-name].md`
-- [Role-specific docs]
-```
-
-**Example**:
-```markdown
-## API Tester Procedures
-
-### API Testing Workflow
-
-**Where**: `.kit/context/workflows/API-TESTING-WORKFLOW.md` (if created)
-
-**Quick Reference**:
-```bash
-# Run API tests
-pytest tests/integration/api/ -v
-
-# Generate coverage report
-pytest tests/integration/api/ --cov=thematic_cuts.api --cov-report=html
-```
-
-**Documentation**:
-- Agent file: `.claude/agents/api-tester.md`
-- Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`
-- ADR-0008: DaVinci API Integration
-```
+`scripts/optional/create-agent.sh` already registers the agent with the
+launcher, so no launcher edit is required.
 
 ---
 
@@ -375,7 +344,7 @@ pytest tests/integration/api/ --cov=thematic_cuts.api --cov-report=html
 
 Before committing, verify agent works:
 
-1. **Create test task specification** in `.kit/tasks/active/`
+1. **Create test task specification** in `.kit/tasks/2-todo/`
 2. **Launch agent** via your agent system
 3. **Verify agent can**:
    - Access required tools
@@ -392,15 +361,14 @@ Before committing, verify agent works:
 # Stage new agent file
 git add .claude/agents/[agent-name].md
 
-# Stage procedural index update
-git add .kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md
+# Stage the CLAUDE.md registration, if you added a Key Agents row
+git add CLAUDE.md
 
 # Commit with descriptive message
 git commit -m "docs: Add [agent-name] agent with Evaluator workflow
 
 - Create specialized agent for [role description]
 - Include standardized Evaluator instructions (autonomous)
-- Add to procedural knowledge index
 - Implements agent creation workflow from .kit/context/workflows/AGENT-CREATION-WORKFLOW.md"
 
 # Push to branch
@@ -458,7 +426,7 @@ Let's walk through creating an "api-tester" agent from start to finish.
 
 - **Name**: api-tester
 - **Description**: API testing and validation specialist for DaVinci Resolve integration
-- **Model**: claude-sonnet-4-5-20250929 (complex API testing requires reasoning)
+- **Model**: claude-sonnet-5 (complex API testing requires reasoning)
 - **Tools**: Read, Write, Edit, Bash, Glob, Grep, TodoWrite
 - **Core responsibilities**:
   1. Test DaVinci Resolve API endpoints
@@ -478,7 +446,7 @@ scripts/optional/create-agent.sh api-tester "API testing and validation speciali
 # ✅ Created .claude/agents/api-tester.md
 # 📝 Next steps:
 #    1. Edit api-tester.md and customize all [bracketed] sections
-#    2. Add to .kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md
+#    2. Add a Key Agents row to CLAUDE.md (if broadly useful)
 #    3. Test agent with sample task
 ```
 
@@ -488,7 +456,7 @@ scripts/optional/create-agent.sh api-tester "API testing and validation speciali
 ---
 name: api-tester
 description: API testing and validation specialist for DaVinci Resolve integration
-model: claude-sonnet-4-5-20250929
+model: claude-sonnet-5
 tools:
   - Read
   - Write
@@ -582,38 +550,17 @@ Follow these practices when testing APIs:
 - Cannot modify evaluation logs (read-only outputs)
 ```
 
-### 11. Update Procedural Index
+### 11. Register the Agent
 
-Add to `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`:
+Add a row to the **Key Agents** table in `CLAUDE.md`:
 
 ```markdown
-## API Tester Procedures
-
-### API Testing Workflow
-
-**Where**: `.kit/context/workflows/TESTING-WORKFLOW.md`
-
-**Quick Reference**:
-```bash
-# Run API integration tests
-pytest tests/integration/api/ -v
-
-# Generate coverage report
-pytest tests/integration/api/ --cov=thematic_cuts.api --cov-report=html
-
-# Run performance tests
-pytest tests/integration/api/ -m performance
-```
-
-**Documentation**:
-- Agent file: `.claude/agents/api-tester.md`
-- ADR-0008: DaVinci API Integration
-- API implementation: `your_project/api/davinci/`
+| `api-tester` | API integration testing and coverage |
 ```
 
 ### 12. Test Agent
 
-Create `.kit/tasks/active/TASK-2025-TEST-api-basic-validation.md`:
+Create `.kit/tasks/2-todo/TASK-2025-TEST-api-basic-validation.md`:
 
 ```markdown
 # TASK-2025-TEST: API Basic Validation Test
@@ -642,15 +589,14 @@ Launch api-tester agent and verify it completes the test task successfully.
 
 ```bash
 git add .claude/agents/api-tester.md
-git add .kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md
+git add CLAUDE.md
 git commit -m "docs: Add api-tester agent with Evaluator workflow
 
-- Create specialized agent for DaVinci Resolve API testing
+- Create specialized agent for API integration testing
 - Include standardized Evaluator instructions (autonomous)
-- Add to procedural knowledge index
-- Enables comprehensive API integration testing"
+- Register in the CLAUDE.md Key Agents table"
 
-git push -u origin claude/review-adversarial-workflow-docs-011CUrJoZmtBvWYGwiyvibxK
+git push -u origin feature/add-api-tester-agent
 ```
 
 **Done!** ✅ New agent created, documented, and ready to use.
@@ -665,7 +611,7 @@ git push -u origin claude/review-adversarial-workflow-docs-011CUrJoZmtBvWYGwiyvi
 2. **Be specific about role** - Clear boundaries prevent overlap with other agents
 3. **Customize Evaluator scenarios** - Make "When to Request Evaluation" relevant to agent's domain
 4. **Test before committing** - Verify agent can complete basic tasks
-5. **Update procedural index** - Ensure agent is discoverable
+5. **Register the agent** - Add a CLAUDE.md Key Agents row so it is discoverable
 6. **Document coordination** - Specify which agents this one interacts with
 7. **Include examples** - Show concrete examples of agent's work
 8. **Version control** - Add template version and last updated date
@@ -676,7 +622,7 @@ git push -u origin claude/review-adversarial-workflow-docs-011CUrJoZmtBvWYGwiyvi
 1. **Don't copy/paste from random agents** - Use template for consistency
 2. **Don't skip Evaluator section** - Critical quality assurance mechanism
 3. **Don't create overly broad roles** - Specific agents are more effective
-4. **Don't forget procedural index** - Agent won't be discoverable
+4. **Don't forget registration** - Agent won't be discoverable
 5. **Don't skip testing** - Catch issues before they affect real work
 6. **Don't use manual user invocation** - Evaluator must be autonomous
 7. **Don't overlap with existing agents** - Check for duplicates first
@@ -717,11 +663,11 @@ Before committing new agent, verify:
 - [ ] Shows `adversarial evaluate` command (autonomous)
 - [ ] Includes iteration limits (2-3 max)
 - [ ] Includes escalation guidance (when to ask user)
-- [ ] Includes technical details (GPT-4o, cost, autonomy)
+- [ ] Includes technical details (evaluator, cost, autonomy)
 - [ ] Role-specific "When to Request Evaluation" scenarios
 
 ### Documentation
-- [ ] Added to `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- [ ] Registered in `CLAUDE.md`'s Key Agents table (if broadly useful)
 - [ ] All documentation links work
 - [ ] Role-specific workflows referenced (if exist)
 - [ ] Related ADRs linked (if applicable)
@@ -734,7 +680,7 @@ Before committing new agent, verify:
 
 ### Version Control
 - [ ] File committed with descriptive message
-- [ ] Procedural index update committed
+- [ ] CLAUDE.md registration committed (if applicable)
 - [ ] Pushed to correct branch
 
 ---
@@ -772,7 +718,7 @@ You still need to manually:
 3. Select correct tools for agent's role
 4. Customize Evaluator "When to Request Evaluation" scenarios
 5. Add role-specific guidelines and documentation
-6. Update procedural knowledge index
+6. Register in the CLAUDE.md Key Agents table
 7. Test agent with sample task
 8. Commit changes
 
@@ -783,7 +729,7 @@ The script handles **basic setup only**. It cannot:
 - ❌ Select appropriate tools
 - ❌ Write role-specific guidelines
 - ❌ Customize Evaluator scenarios
-- ❌ Update procedural index
+- ❌ Register in CLAUDE.md
 - ❌ Test agent functionality
 
 **Think of the script as a starting point**, not a complete solution.
@@ -793,7 +739,7 @@ The script handles **basic setup only**. It cannot:
 If script fails:
 - Check you provided both name and description
 - Ensure you're in project root directory
-- Verify template file exists at `.claude/agents/AGENT-TEMPLATE.md`
+- Verify template file exists at `.kit/templates/AGENT-TEMPLATE.md`
 - Check file permissions (script needs write access)
 
 ---
@@ -911,15 +857,15 @@ This will help me proceed without further evaluation loops."
 
 ---
 
-### Issue: Agent missing from procedural knowledge index
+### Issue: Agent missing from documentation
 
 **Symptom**: Can't find agent in documentation
 
 **Solution**:
-1. Add agent section to `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
-2. Follow format of existing agent entries
-3. Include key procedures and documentation links
-4. Commit update with agent creation
+1. Add a row to the Key Agents table in `CLAUDE.md`
+2. Follow the format of the existing rows
+3. Keep the description to one line
+4. Commit the update alongside the agent file
 
 ---
 
@@ -942,15 +888,15 @@ grep -n '\[' .claude/agents/your-agent.md
 
 ## Related Documentation
 
-- **Agent Template**: `.claude/agents/AGENT-TEMPLATE.md` (reusable template)
+- **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md` (reusable template)
 - **Evaluator Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (complete guide)
-- **Procedural Index**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md` (central reference)
+- **Quick Reference**: `CLAUDE.md` (agents, scripts, workflows)
 - **Agent System Guide**: `.kit/context/AGENT-SYSTEM-GUIDE.md` (overall architecture)
-- **ADR-0011**: `docs/adr/0011-adversarial-workflow-integration.md` (decision rationale)
+- **KIT-ADR-0004**: `.kit/adr/KIT-ADR-0004-adversarial-workflow-integration.md` (decision rationale)
 - **Automation Script**: `scripts/optional/create-agent.sh` (agent creation automation)
 
 ---
 
 **Last Updated**: 2025-11-06
 **Maintained By**: Coordinator agent, document-reviewer agent
-**Questions?** See PROCEDURAL-KNOWLEDGE-INDEX.md or ask user
+**Questions?** See `CLAUDE.md` or ask the user
