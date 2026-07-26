@@ -178,8 +178,8 @@ EOF
 # Run evaluation (use echo y | for large files if needed)
 adversarial evaluate /tmp/agent-[name]-definition.md
 
-# Read results
-cat .adversarial/logs/*-PLAN-EVALUATION.md
+# Read results (logs are named <input-name>--<evaluator>.md)
+cat .adversarial/logs/agent-[name]-definition--*.md
 ```
 
 Present evaluation feedback and ask if user wants to make improvements.

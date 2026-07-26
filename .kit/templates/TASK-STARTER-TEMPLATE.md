@@ -292,7 +292,7 @@ See template structure below for creating handoff files.
 ---
 
 **Task File**: `.kit/tasks/[folder]/[TASK-ID]-[slug].md`
-**Evaluation Log**: `.adversarial/logs/[TASK-ID]-PLAN-EVALUATION.md` (if applicable)
+**Evaluation Log**: `.adversarial/logs/[input-name]--[evaluator].md` (if applicable)
 **Handoff Date**: YYYY-MM-DD
 **Coordinator**: [Name]
 ```

@@ -8,7 +8,7 @@ and SKIP by declaration everywhere else (planning repos force profile
 none; a docs-only single repo can opt out with --profile none).
 
 Incidents:
-- adversarial-workflow (KIT-0044): the venv carried aider-era 0.9.7,
+- adversarial-workflow (KIT-0044): the venv carried the 0.9.7 build,
   which MUTATED the working tree during reviews, while the system had
   moved on — the skew went undetected until a review run applied its
   own edit.

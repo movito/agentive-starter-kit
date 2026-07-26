@@ -124,7 +124,6 @@ Look for things not in the standard layout:
 - `agents/` at root (launcher scripts — all repos have this)
 - `tasks/` at root (ADV has stale task files here)
 - `audit-results/`, `htmlcov/`, `.vscode/`, `.nova/` (build artifacts, IDE config)
-- `.aider.chat.history.md`, `.aider.input.history` (aider history, gitignored)
 - `SETUP.md`, `QUICK_START.md`, `UPGRADE.md` at root (may need relocation)
 
 ---

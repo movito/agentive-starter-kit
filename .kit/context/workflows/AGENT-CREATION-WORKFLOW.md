@@ -420,7 +420,7 @@ git push -u origin [branch-name]
 3. ✅ **Bash command examples** - Show `adversarial evaluate` command
 4. ✅ **Iteration limits** - Max 2-3 evaluations, escalate if stuck
 5. ✅ **Escalation guidance** - When to ask user vs re-evaluate
-6. ✅ **Technical details** - GPT-4o, Aider, cost, autonomy note
+6. ✅ **Technical details** - evaluator model, cost, autonomy note
 
 ### Customizable Elements
 
@@ -439,7 +439,7 @@ The Evaluator workflow is a **critical quality assurance mechanism** that preven
 - ✅ All agents have access to quality assurance
 - ✅ Uniform invocation pattern (reduces confusion)
 - ✅ Proper escalation safeguards (prevents infinite loops)
-- ✅ Clear cost expectations (users know GPT-4o usage)
+- ✅ Clear cost expectations (cost varies by configured evaluator model)
 
 ---
 

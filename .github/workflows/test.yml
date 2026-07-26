@@ -15,8 +15,14 @@ on:
 
 jobs:
   test:
-    name: Run Tests
+    name: Run Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.10 = floor, 3.14 = ceiling-lift proof (KIT-0065: the old
+        # <3.13 bound belonged to a retired dependency)
+        python-version: ['3.10', '3.12', '3.14']
 
     steps:
       - name: Checkout repository
@@ -25,7 +31,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
       - name: Install dependencies
@@ -41,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: coverage-report
+          name: coverage-report-py${{ matrix.python-version }}
           path: coverage.xml
           retention-days: 30
 

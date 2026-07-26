@@ -130,9 +130,6 @@ dmypy.json
 tasks/*.diff
 tasks/*.txt
 tasks/review_notes.md
-.aider.chat.history.md
-.aider.input.history
-.aider/
 adversarial-workflow/test_venv*/
 
 # Adversarial Workflow
@@ -148,7 +145,6 @@ audio-processing/
 
 # Parser output logs (temporary)
 logs/parser-output/
-.aider*
 
 # Teleport (kiro) directory
 .kiro/

@@ -37,7 +37,7 @@
 
 ## Overview
 
-The adversarial workflow provides independent quality assurance using **external AI** (via Aider CLI) for three types of content:
+The adversarial workflow provides independent quality assurance using **external AI** (via the `adversarial` CLI) for three types of content:
 
 1. **Plan Evaluation** (`adversarial evaluate`) - Review implementation plans and architectural decisions
 2. **Proofreading** (`adversarial proofread`) - Review teaching/documentation content quality
@@ -223,7 +223,7 @@ adversarial security src/auth/login.py
 |-------|----------|-------------|
 | `name` | Yes | Command name (lowercase, no spaces) |
 | `description` | Yes | Short description shown in `list-evaluators` |
-| `model` | No | AI model to use (see aider docs for formats) |
+| `model` | No | AI model to use (LiteLLM model identifier format) |
 | `api_key_env` | No | Environment variable for API key |
 | `prompt` | Yes | System prompt for the evaluator |
 | `output_suffix` | No | Suffix for output files (default: EVALUATION) |
@@ -268,7 +268,7 @@ Each provider requires its own API key (set in `.env`):
 ### ✅ What It IS:
 
 - **External AI evaluator** invoked via `adversarial evaluate` or `adversarial proofread` CLI commands
-- Uses Aider to call external AI APIs (OpenAI, Google, Mistral, etc.)
+- Calls external AI APIs via LiteLLM (OpenAI, Google, Mistral, etc.)
 - Saves output to `.adversarial/logs/` with different suffixes:
   - Evaluation: `TASK-*-PLAN-EVALUATION.md`
   - Proofreading: `<doc-name>-PROOFREADING.md`
@@ -359,7 +359,7 @@ adversarial evaluate delegation/tasks/2-todo/TASK-XXXX-description.md
 # For large files (>500 lines) requiring interactive confirmation:
 echo y | adversarial evaluate delegation/tasks/2-todo/TASK-XXXX-description.md
 ```
-- This invokes Aider with the configured evaluator model
+- This invokes the configured evaluator model
 - The evaluator analyzes the plan using evaluation criteria
 - Output saved to `.adversarial/logs/TASK-XXXX-PLAN-EVALUATION.md`
 
@@ -410,7 +410,7 @@ adversarial proofread docs/agentive-development/01-foundation/01-structured-ai-c
 # For large files (>500 lines) requiring interactive confirmation:
 echo y | adversarial proofread docs/agentive-development/01-foundation/01-structured-ai-collaboration/concept.md
 ```
-- This invokes Aider with the configured evaluator model
+- This invokes the configured evaluator model
 - The evaluator analyzes content using proofreading criteria
 - Output saved to `.adversarial/logs/concept-PROOFREADING.md`
 
@@ -465,7 +465,7 @@ adversarial review src/feature/
 # Review with context from task spec:
 adversarial review src/feature/ --context delegation/tasks/3-in-progress/TASK-0001.md
 ```
-- This invokes Aider with the configured evaluator model
+- This invokes the configured evaluator model
 - The evaluator analyzes code using review criteria
 - Output saved to `.adversarial/logs/<identifier>-CODE-REVIEW.md`
 
@@ -762,8 +762,8 @@ Agents can approve NEEDS_REVISION content when:
 **Symptoms**:
 - OpenRouter authentication window opens unexpectedly
 - "Invalid authorization header" errors
-- Aider falls back to alternative providers
-**Root Cause**: When OpenAI rate limits are hit, Aider attempts to use OpenRouter as fallback
+- The evaluation engine falls back to alternative providers
+**Root Cause**: When OpenAI rate limits are hit, the engine may attempt OpenRouter as fallback
 **Solution**:
 - Break large tasks into smaller subtasks (recommended)
 - Upgrade OpenAI account tier for higher rate limits
@@ -776,7 +776,7 @@ Agents can approve NEEDS_REVISION content when:
 
 ### 4. Git Warning
 **Issue**: May show "Unable to list files in git repo: BadObject" warning
-**Solution**: Ignore - non-critical, Aider still functions correctly
+**Solution**: Ignore - non-critical, evaluations still function correctly
 **Context**: Related to git history cleanup, doesn't affect evaluations
 
 ---
@@ -889,8 +889,7 @@ Markdown with structured sections:
 - **Workflow verification**: `delegation/handoffs/EVALUATOR-WORKFLOW-VERIFICATION-2025-10-24.md` (293 lines)
 - **Evaluation logs**: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md` (all evaluations)
 - **Proofreading logs**: `.adversarial/logs/*-PROOFREADING.md` (all proofreading)
-- **Evaluation wrapper script**: `.adversarial/scripts/evaluate_plan.sh`
-- **Proofreading wrapper script**: `.adversarial/scripts/proofread_content.sh`
+- **Review input helper**: `scripts/core/prepare-review-input.sh` (assembles code-review input for the `adversarial` CLI)
 - **Bugfix docs**: `.adversarial/docs/BUGFIX-OUTPUT-CAPTURE.md` (tee output capture fix)
 - **ADR**: `docs/adr/ADR-0011-adversarial-workflow-integration.md`
 

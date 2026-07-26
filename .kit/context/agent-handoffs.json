@@ -4,7 +4,7 @@
     "current_task": "KIT-0065",
     "task_started": null,
     "brief_note": "KIT-0068 closed out 2026-07-25 (PR #93 merged d40fa88; two_homes_get_a_pin added to patterns.yml, KIT-0070 filed for sync-script hardening, insights extracted from report+review record \u2014 fd retro still offered/outstanding). CHAIN NEXT: KIT-0065 assigned (whole-repo aider purge + <3.13 re-derivation; handoff notes onboarding.md skip per KIT-0067 D1). Then KIT-0069 -> KIT-0067 -> cut 0.9.0.",
-    "details_link": ".kit/tasks/2-todo/KIT-0065-purge-aider-era-evaluator-scripts.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0065-purge-aider-era-evaluator-scripts.md",
     "handoff_file": ".kit/context/KIT-0065-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0065",
     "task_started": null,
     "brief_note": "KIT-0065 ready: delete 4 dead aider scripts, fix live refs (skip onboarding.md per D1), re-derive Python <3.13 bound empirically (system 3.14 venv experiment). Closure grep in PR body. Worktree: ../ask-worktrees/KIT-0065 (pull --ff-only first).",
-    "details_link": ".kit/tasks/2-todo/KIT-0065-purge-aider-era-evaluator-scripts.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0065-purge-aider-era-evaluator-scripts.md",
     "handoff_file": ".kit/context/KIT-0065-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

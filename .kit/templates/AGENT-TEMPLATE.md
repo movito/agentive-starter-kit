@@ -121,10 +121,10 @@ adversarial evaluate .kit/tasks/2-todo/TASK-FILE.md
 **Reading Results**:
 ```bash
 # Evaluation output automatically saved to:
-# .adversarial/logs/TASK-*-PLAN-EVALUATION.md
+# .adversarial/logs/<input-name>--<evaluator>.md
 
 # Read the evaluation:
-cat .adversarial/logs/TASK-*-PLAN-EVALUATION.md
+cat .adversarial/logs/TASK-2025-042-feature-name--*.md
 ```
 
 **Evaluation Output Format**:
@@ -180,7 +180,7 @@ This will help me proceed without further evaluation loops."
 
 **Technical Details**:
 - **Evaluator**: External AI via adversarial-workflow
-- **Runs**: Non-interactively with `aider --yes` flag
+- **Runs**: Non-interactively via `echo y | ADVERSARIAL_UNATTENDED=1 adversarial <evaluator> <input>`
 - **API Key**: Varies by evaluator (see `adversarial list-evaluators`)
 - **Cost**: Varies by evaluator (see `adversarial list-evaluators`)
 - **No User Required**: Fully autonomous workflow (with escalation safety valve)
@@ -196,7 +196,7 @@ This will help me proceed without further evaluation loops."
 **Evaluation Workflow**:
 - **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
 - Quick command: `adversarial evaluate <task-file>` (you run this directly)
-- Output location: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md`
+- Output location: `.adversarial/logs/<input-name>--<evaluator>.md`
 
 **[Role-Specific Documentation]**:
 - [Link to relevant ADRs, e.g., "ADR-0011: Adversarial Workflow Integration"]

@@ -154,12 +154,11 @@ Built with [Agentive Starter Kit](https://github.com/movito/agentive-starter-kit
 
 ### Step 5: Verify adversarial-workflow setup
 
-The export already includes a working `.adversarial/` (config, docs, scripts,
+The export already includes a working `.adversarial/` (config, docs,
 templates, inputs). **Do not run `adversarial init --force`** — it is
 destructive and will delete the kit's customizations:
 
 - `.adversarial/docs/EVALUATION-WORKFLOW.md`
-- `.adversarial/scripts/{evaluate_plan,proofread_content,review_implementation,validate_tests}.sh`
 - `.adversarial/templates/{arch-assess,code-review,spec-compliance}-input-template.md`
 - `.adversarial/config.yml.template`
 

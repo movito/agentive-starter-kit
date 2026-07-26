@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Whole-repo aider purge + Python ceiling lift** (KIT-0065; core
+  scripts 3.7.0). Aider is retired everywhere; the four dead
+  `.adversarial/scripts/*.sh` wrappers (evaluate_plan,
+  proofread_content, review_implementation, validate_tests) are
+  deleted — the evaluation path is the `adversarial` CLI +
+  `scripts/core/prepare-review-input.sh`. Verified `adversarial init`
+  (1.0.x) does not re-provision them. The Python `requires-python`
+  ceiling `<3.13` — justified only by the retired dependency — is
+  lifted after the full suite and dev stack passed on 3.14
+  (`>=3.10` now; CI matrix runs 3.10/3.12/3.14). `project setup`
+  drops the uv-based 3.12-venv workaround and its detection helpers;
+  agent/template docs point at the current
+  `<input-name>--<evaluator>.md` log naming and the
+  `echo y | ADVERSARIAL_UNATTENDED=1` unattended invocation.
+
 ### Fixed
 
 - **Functional repairs from the pre-0.9.0 cruft audit** (KIT-0068;

@@ -250,9 +250,10 @@ the log file existing with a verdict. Symptom→cause: "evaluation
 
 **First: run `git status` immediately after every evaluator invocation,
 before staging anything.** During KIT-0044, an evaluator running through
-a stale venv (adversarial-workflow 0.9.7, the aider-era engine) applied
-its suggested edit directly to a script mid-review. The root cause was
-fixed (venv upgraded to the aider-free 1.0.1), but the check stays as
+a stale venv (adversarial-workflow 0.9.7, whose engine edited files
+in place) applied its suggested edit directly to a script mid-review.
+The root cause was fixed (venv upgraded to 1.0.1, whose engine never
+writes to the working tree), but the check stays as
 defense in depth: an unexpected working-tree change after a review run
 must be inspected and consciously kept or reverted — never silently
 swept into the next commit.
