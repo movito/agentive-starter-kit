@@ -768,14 +768,18 @@ append_region_if_absent() {
 # export carried the kit's python Project Rules next to profile: none).
 # Body passes via the environment — awk -v would mangle backslashes.
 replace_region() {
+    # mktemp, not a predictable suffix: a pre-planted symlink at a
+    # fixed tmp name could redirect the write (CodeRabbit, this PR —
+    # same class as remove_region_if_unmodified below)
+    RESEED_TMP="$(mktemp "$CLAUDE_MD.kit-reseed.XXXXXX")"
     REGION_BODY="$2" awk -v region="$1" '
         $0 == "<!-- BEGIN KIT-LOCAL: " region " -->" {
             print; print ENVIRON["REGION_BODY"]; skip=1; next
         }
         $0 == "<!-- END KIT-LOCAL: " region " -->" { skip=0 }
         !skip { print }
-    ' "$CLAUDE_MD" > "$CLAUDE_MD.kit-reseed.tmp"
-    mv "$CLAUDE_MD.kit-reseed.tmp" "$CLAUDE_MD"
+    ' "$CLAUDE_MD" > "$RESEED_TMP"
+    mv "$RESEED_TMP" "$CLAUDE_MD"
     echo "  $1 region reseeded ($3)"
 }
 
@@ -897,12 +901,15 @@ remove_region_if_unmodified() {
         echo "  $1 region customized — left in place (consumer-owned)"
         return 0
     fi
+    # mktemp, not a predictable suffix (CodeRabbit, this PR): a
+    # pre-planted symlink at a fixed tmp name could redirect the write
+    REMOVE_TMP="$(mktemp "$CLAUDE_MD.kit-remove.XXXXXX")"
     awk -v region="$1" '
         $0 == "<!-- BEGIN KIT-LOCAL: " region " -->" { skip=1; next }
         $0 == "<!-- END KIT-LOCAL: " region " -->" { skip=0; next }
         !skip { print }
-    ' "$CLAUDE_MD" > "$CLAUDE_MD.kit-remove.tmp"
-    mv "$CLAUDE_MD.kit-remove.tmp" "$CLAUDE_MD"
+    ' "$CLAUDE_MD" > "$REMOVE_TMP"
+    mv "$REMOVE_TMP" "$CLAUDE_MD"
     echo "  $1 region removed ($3)"
 }
 

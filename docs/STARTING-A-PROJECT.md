@@ -17,7 +17,7 @@ never build product code inside it. Every project you create is a
 **sibling folder** next to it — stamped out by the kit's one setup
 door (`scripts/local/bootstrap`) and then independent of the factory.
 
-```
+```text
 ~/Github/
 ├── agentive-starter-kit/    ← the factory: one permanent clone
 ├── agentive-config/         ← your operator preset (private, optional)
@@ -96,7 +96,7 @@ private planning repo that manages it (why this split: see
    clone and invoke the `project-intake` agent, giving it the brief
    and the code folder:
 
-   ```
+   ```text
    Use the project-intake agent. Brief: ~/Downloads/my-prototype-brief.md
    Code: ~/Downloads/my-prototype/
    ```
@@ -134,7 +134,7 @@ Kit tooling never asks you to `cd` around inside one long session.
 When a step finishes somewhere else — a project got created, a task
 got assigned — the tool prints a **LAUNCH block**:
 
-```
+```text
 ⚠️ LAUNCH
 Open a new tab with working directory /Users/you/Github/my-product-planning
 ```
@@ -152,9 +152,10 @@ make this work:
 
 ## Your first session in a new planning repo
 
-Open the tab the LAUNCH line named, then **invoke the `planner`
-agent** (in a new tab, per the convention above). The planner triages
-the backlog — in a graduated prototype it has the seeded tasks from
+Open the tab the LAUNCH line named **as a planner session** — start it
+with `claude --agent .claude/agents/planner.md`, or open the tab and
+ask for the planner agent by name. (That tab *is* the agent's tab; no
+further hop needed.) The planner triages the backlog — in a graduated prototype it has the seeded tasks from
 your brief; in a blank pair it helps you write the first tasks — and
 recommends what to start. The seeded `CLAUDE.md` in every new project
 carries this same first-session instruction, so an agent opening the

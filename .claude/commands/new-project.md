@@ -86,7 +86,7 @@ should be caught here, not by the intake agent one tab later.
 Then hand off — agents run in a **new tab**, never in this session.
 Print the invocation for the user:
 
-```
+```text
 ⚠️ LAUNCH
 Open a new tab in this kit checkout and invoke the project-intake
 agent with:
@@ -122,12 +122,12 @@ handoff — do not run the door yourself on this route.
 End with the LAUNCH line for wherever work continues (the door route:
 the created project; on a planning shape, that's the planning repo):
 
-```
+```text
 ⚠️ LAUNCH
 Open a new tab with working directory <absolute-path-to-created-project>
 ```
 
-Then state the first-session instruction in one line: in that new
-tab, invoke the `planner` agent — it triages the backlog and
-recommends what to start (the project's seeded `CLAUDE.md` says the
-same thing).
+Then state the first-session instruction in one line: open that tab
+as a planner session (`claude --agent .claude/agents/planner.md`) —
+the planner triages the backlog and recommends what to start (the
+project's seeded `CLAUDE.md` says the same thing).

@@ -472,6 +472,26 @@ class TestProfiles:
         assert "first-session region customized — left in place" in result.stdout
         assert custom_line in claude_path.read_text(encoding="utf-8")
 
+    def test_no_kit_malformed_marker_fails_loud_without_data_loss(self, tmp_path):
+        # CodeRabbit (this PR): a first-session BEGIN marker whose END
+        # marker is missing must abort the --no-kit re-bootstrap loudly
+        # — never let the removal awk eat the file to EOF
+        target = make_consumer_dir(tmp_path, "malformed")
+        assert run_bootstrap(target).returncode == 0
+        claude_path = target / "CLAUDE.md"
+        before = claude_path.read_text(encoding="utf-8")
+        claude_path.write_text(
+            before.replace("<!-- END KIT-LOCAL: first-session -->\n", ""),
+            encoding="utf-8",
+        )
+        mangled = claude_path.read_text(encoding="utf-8")
+        result = run_bootstrap(target, "--no-kit")
+        assert result.returncode == 1
+        assert "kit_markers extract first-session failed" in (
+            result.stdout + result.stderr
+        )
+        assert claude_path.read_text(encoding="utf-8") == mangled
+
     def test_first_session_region_seeded_with_kit(self, tmp_path):
         # KIT-0067 F3: the seeded CLAUDE.md closes with the planner
         # self-direction region wherever the kit workflow (and thus
