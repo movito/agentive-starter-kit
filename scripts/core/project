@@ -421,10 +421,14 @@ def reconfigure_project(project_dir: Path, *, verify: bool = False) -> bool:
     if not serena_config.exists():
         print("Error: .serena/project.yml not found")
         # displayed_commands_are_contracts: complete, root-scoped,
-        # quoted (the launcher this pointed at was retired, KIT-0067 D1)
+        # quoted (the launcher this pointed at was retired, KIT-0067
+        # D1). No decorative outer quotes: with a space-containing
+        # project path the shlex quoting would nest inside them and
+        # make the copy-paste boundary ambiguous (o3, PR 2 trio).
         print(
-            f"Run 'cd {shlex.quote(str(project_dir))} && "
-            "bash .serena/setup-serena.sh' to configure your project"
+            f"Run: cd {shlex.quote(str(project_dir))} && "
+            "bash .serena/setup-serena.sh"
+            "  # configures Serena for this project"
         )
         return False
 

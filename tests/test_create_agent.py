@@ -357,8 +357,10 @@ class TestLauncherIntegration:
 
     def test_launcher_absent_skips_registration(self):
         """KIT-0067 D1: no launcher present -> agent still created, menu
-        registration skipped with a notice, exit 0 (never an error)."""
-        (self.project_dir / ".kit" / "launchers" / "launch").unlink()
+        registration skipped with a notice, exit 0 (never an error).
+        The whole .kit/launchers/ directory is removed (the fresh-0.9.0
+        shape), not just the file — nothing may recreate it (o3, PR #98)."""
+        shutil.rmtree(self.project_dir / ".kit" / "launchers")
         result = run_script(
             ["no-launcher-agent", "Agent created without a launcher"],
             self.project_dir,

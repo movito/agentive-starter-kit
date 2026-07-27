@@ -1307,12 +1307,17 @@ class TestReconfigureMissingConfigRemedy:
     when .serena/project.yml is missing must be a complete, parseable
     shell command — pinned against the ACTUAL printed output."""
 
-    def test_missing_serena_config_remedy_is_valid_shell(self, tmp_path, capsys):
+    @pytest.mark.parametrize("dirname", ["plain", "dir with spaces"])
+    def test_missing_serena_config_remedy_is_valid_shell(
+        self, tmp_path, capsys, dirname
+    ):
         import re as _re
 
-        assert _project_module.reconfigure_project(tmp_path) is False
+        project_dir = tmp_path / dirname
+        project_dir.mkdir()
+        assert _project_module.reconfigure_project(project_dir) is False
         out = capsys.readouterr().out
-        match = _re.search(r"Run '(.+)' to configure", out)
+        match = _re.search(r"Run: (.+?)  #", out)
         assert match, f"remedy line missing from output:\n{out}"
         proc = subprocess.run(
             ["bash", "-n", "-c", match.group(1)],
@@ -1321,4 +1326,4 @@ class TestReconfigureMissingConfigRemedy:
         )
         assert proc.returncode == 0, proc.stderr
         # root-scoped: the command names the project dir, not a cwd guess
-        assert str(tmp_path) in match.group(1)
+        assert dirname in match.group(1)
