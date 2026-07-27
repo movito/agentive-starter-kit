@@ -22,7 +22,7 @@
 #
 # What this does:
 #   1. Copies ASK scaffolding into your project (preserves your files)
-#   2. Runs setup-dev.sh (Python, venv, dispatch-kit, deps, tmux, dispatch init)
+#   2. Runs setup-dev.sh (Python, venv, deps, tmux; dispatch-kit only via --with-dispatch)
 #   3. Launches the bootstrap agent to read your materials and configure everything
 #
 # What it does NOT do:

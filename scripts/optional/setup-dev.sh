@@ -1,23 +1,63 @@
 #!/usr/bin/env bash
 # Setup development environment
-# Usage: ./scripts/optional/setup-dev.sh
+# Usage: ./scripts/optional/setup-dev.sh [--with-dispatch]
 #
 # Metadata:
-#   version: 1.0.0
+#   version: 1.1.0
 #   origin: dispatch-kit
 #   origin-version: 0.3.2
-#   last-updated: 2026-02-27
+#   last-updated: 2026-07-28
 #   created-by: "@movito with planner2"
 #
-# Creates .venv, installs project in editable mode,
-# verifies tmux, and runs project init if applicable.
-# Safe to re-run (idempotent).
+# Creates .venv, installs the project in editable mode, and verifies
+# tmux. Safe to re-run (idempotent).
+#
+# --with-dispatch (KIT-0067 D4/A18): additionally install dispatch-kit
+# from a local clone and run `dispatch init`. dispatch-kit is NOT on
+# PyPI — this only works on a machine that has the clone (default
+# ~/Github/dispatch-kit; override with DISPATCH_KIT_PATH). The default
+# run skips both steps so this script works on any machine.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT"
+
+WITH_DISPATCH=0
+for arg in "$@"; do
+    case "$arg" in
+        --with-dispatch)
+            WITH_DISPATCH=1
+            ;;
+        -h|--help)
+            echo "Usage: ./scripts/optional/setup-dev.sh [--with-dispatch]"
+            echo
+            echo "  --with-dispatch  also install dispatch-kit from a local clone"
+            echo "                   (not on PyPI; DISPATCH_KIT_PATH overrides the"
+            echo "                   default ~/Github/dispatch-kit) and run"
+            echo "                   'dispatch init'"
+            exit 0
+            ;;
+        *)
+            echo "Error: unknown argument: $arg"
+            echo "Usage: ./scripts/optional/setup-dev.sh [--with-dispatch]"
+            exit 1
+            ;;
+    esac
+done
+
+# Step numbering adapts to the dispatch opt-in (4 base steps, 6 with)
+if [ "$WITH_DISPATCH" -eq 1 ]; then
+    TOTAL_STEPS=6
+else
+    TOTAL_STEPS=4
+fi
+STEP=0
+step_banner() {
+    STEP=$((STEP + 1))
+    echo "$STEP/$TOTAL_STEPS $1"
+}
 
 # Detect project name from pyproject.toml or directory name
 PROJECT_NAME=""
@@ -39,7 +79,7 @@ SUMMARY=()
 # ─────────────────────────────────────────
 # Step 1: Find suitable Python (3.10+)
 # ─────────────────────────────────────────
-echo "1/6 🐍 Finding Python 3.10+..."
+step_banner "🐍 Finding Python 3.10+..."
 
 PYTHON=""
 
@@ -90,7 +130,7 @@ echo
 # ─────────────────────────────────────────
 # Step 2: Create .venv (prefer uv)
 # ─────────────────────────────────────────
-echo "2/6 📦 Setting up virtual environment..."
+step_banner "📦 Setting up virtual environment..."
 
 if [ -d ".venv" ]; then
     # Check existing venv's Python version
@@ -128,9 +168,13 @@ fi
 echo
 
 # ─────────────────────────────────────────
-# Step 3: Install dispatch-kit (local)
+# Step 3 (opt-in): Install dispatch-kit (local)
 # ─────────────────────────────────────────
-echo "3/6 🚀 Installing dispatch-kit..."
+# Gated behind --with-dispatch (KIT-0067 D4/A18): installs from a
+# hardcoded operator-machine clone and is skipped by default so the
+# door's venv offer works on any machine.
+if [ "$WITH_DISPATCH" -eq 1 ]; then
+step_banner "🚀 Installing dispatch-kit..."
 
 # dispatch-kit is not yet on PyPI — install from local clone.
 # Override the path with DISPATCH_KIT_PATH env var if needed.
@@ -156,11 +200,12 @@ else
     SUMMARY+=("dispatch-kit: NOT FOUND (optional)")
 fi
 echo
+fi  # WITH_DISPATCH (step 3)
 
 # ─────────────────────────────────────────
-# Step 4: Install project (editable)
+# Step: Install project (editable)
 # ─────────────────────────────────────────
-echo "4/6 📥 Installing $PROJECT_NAME..."
+step_banner "📥 Installing $PROJECT_NAME..."
 
 # Use full paths — don't rely on source activate
 if command -v uv >/dev/null 2>&1; then
@@ -179,7 +224,7 @@ echo
 # ─────────────────────────────────────────
 # Step 5: Check tmux availability
 # ─────────────────────────────────────────
-echo "5/6 🖥️  Checking tmux..."
+step_banner "🖥️  Checking tmux..."
 
 if command -v tmux >/dev/null 2>&1; then
     TMUX_VERSION=$(tmux -V 2>/dev/null || echo "unknown")
@@ -193,9 +238,10 @@ fi
 echo
 
 # ─────────────────────────────────────────
-# Step 6: Project-specific initialization
+# Step (opt-in): dispatch-kit initialization
 # ─────────────────────────────────────────
-echo "6/6 ⚙️  Checking project configuration..."
+if [ "$WITH_DISPATCH" -eq 1 ]; then
+step_banner "⚙️  Checking dispatch configuration..."
 
 # dispatch-kit: run dispatch init if config is missing
 if command -v dispatch >/dev/null 2>&1 || [ -x ".venv/bin/dispatch" ]; then
@@ -214,10 +260,15 @@ if command -v dispatch >/dev/null 2>&1 || [ -x ".venv/bin/dispatch" ]; then
         fi
     fi
 else
-    echo "✅ No project-specific initialization needed"
-    SUMMARY+=("config: N/A")
+    echo "⚠️  dispatch CLI not found — install skipped or failed above"
+    SUMMARY+=("config: skipped (dispatch CLI not found)")
 fi
 echo
+else
+    echo "ℹ️  dispatch-kit steps skipped (not on PyPI; opt in with --with-dispatch)"
+    SUMMARY+=("dispatch-kit: skipped (opt in with --with-dispatch)")
+    echo
+fi  # WITH_DISPATCH (init step)
 
 # ─────────────────────────────────────────
 # Summary
