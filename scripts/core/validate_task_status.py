@@ -6,7 +6,7 @@ Validate Task Status
 Pre-commit hook to validate that task Status field matches folder location.
 
 Usage:
-    python scripts/validate_task_status.py [file1.md file2.md ...]
+    python scripts/core/validate_task_status.py [file1.md file2.md ...]
 
 Exit codes:
     0 - All tasks valid

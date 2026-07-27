@@ -136,7 +136,6 @@ class TestTaskParser:
 
     def test_parse_extracts_task_id_from_filename(self, tmp_task_file):
         """TaskParser should extract task ID from filename."""
-        # Import will fail until implementation exists
         from scripts.optional.linear_sync_utils import parse_task_metadata
 
         # Act

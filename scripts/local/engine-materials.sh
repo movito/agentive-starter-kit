@@ -100,9 +100,9 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 # .github/ — CI workflows, dependabot
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
-# docs/ — everything except proposals/ (this includes docs/adr/ and the
-# testing guide, but is NOT limited to them)
-"${RSYNC_BASE[@]}" --exclude='proposals/' "$PROJECT_ROOT/docs/" "$TARGET/docs/"
+# docs/ — everything ships (docs/adr/ included); no exclusions needed:
+# proposals/ and the old TESTING.md no longer exist (ASK-0044/ASK-0047)
+"${RSYNC_BASE[@]}" "$PROJECT_ROOT/docs/" "$TARGET/docs/"
 
 # scripts/ — project management, CI, setup. scripts/local/ is the
 # kit-side layer (door + engines) and "never ships on any sync tier or
@@ -197,7 +197,6 @@ MATERIAL_FILES=$(find "$TARGET" -maxdepth 2 \
     -not -path '*/scripts/*' \
     -not -path '*/tests/*' \
     -not -path '*/docs/adr/*' \
-    -not -path '*/docs/TESTING.md' \
     -not -name 'pyproject.toml' \
     -not -name 'CLAUDE.md' \
     -not -name '.gitignore' \
