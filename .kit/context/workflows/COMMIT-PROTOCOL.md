@@ -131,7 +131,7 @@ EOF
 
 Runs the **SAME checks** as GitHub Actions:
 - Full test suite (including slow tests)
-- Coverage threshold check (53%+)
+- Coverage threshold check (`fail_under` gate in pyproject.toml, currently 80%)
 - Pre-commit hooks (formatting, linting)
 - Uncommitted changes verification
 
@@ -329,7 +329,7 @@ git push origin main         # Push to GitHub ✅
 
 ## Documentation
 
-- **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- **Quick Reference**: `CLAUDE.md`
 - **Full Guide**: This document
 - **Pre-commit Config**: `.pre-commit-config.yaml`
 - **Git Setup**: See `README.md` → Development section

@@ -4,7 +4,7 @@
 **Updated**: 2026-02-01 (multi-evaluator architecture, provider-agnostic)
 **Purpose**: Complete guide to using the adversarial evaluation workflow
 **Audience**: All agents (especially Planner)
-**Tool**: `adversarial` CLI (v0.7.0+)
+**Tool**: `adversarial` CLI (>=1.0.1 — the floor in pyproject.toml, which excludes 0.9.x aider-era builds that mutate the working tree during review)
 **Evaluator**: External AI via adversarial-workflow (built-in or custom)
 
 ---
@@ -49,7 +49,7 @@ The adversarial workflow provides independent quality assurance using **external
 
 ## Available Evaluators
 
-As of adversarial-workflow v0.7.0, three built-in evaluators are available (require OPENAI_API_KEY):
+The built-in evaluators below require `OPENAI_API_KEY`. The project floor is `adversarial-workflow>=1.0.1`; anything older is not a supported install here.
 
 | Command | Purpose | Best For |
 |---------|---------|----------|
@@ -258,7 +258,7 @@ Each provider requires its own API key (set in `.env`):
 - `GOOGLE_API_KEY` for Gemini evaluators
 - `MISTRAL_API_KEY` for Mistral evaluators
 
-**Documentation**: `.adversarial/evaluators/README.md`
+**Documentation**: <https://github.com/movito/adversarial-evaluator-library>
 **Library**: https://github.com/movito/adversarial-evaluator-library
 
 ---
@@ -637,7 +637,32 @@ The evaluator reviews implemented code using these criteria:
 
 ## Verdict Types
 
-The evaluator will provide one of three verdicts (applies to all evaluation modes):
+> ⚠️ **Verdict vocabulary is per-evaluator, not library-wide.** Do not
+> grep for a single token. Across the installed set (v0.10.0, 25
+> evaluators that declare verdicts):
+>
+> | Vocabulary | Evaluators | Examples |
+> |---|---|---|
+> | `APPROVED` / `NEEDS_REVISION` / `REJECT` | majority | `claude-adversarial`, `mistral-adversarial`, `gpt55-synthesis` |
+> | `APPROVED` / `REVISION_SUGGESTED` | several | `arch-review`, `arch-review-fast`, `mistral-arch` |
+> | `APPROVED` / `REJECT` (no middle) | several | `claude-code`, `gemini-code`, `gpt5-codex` |
+> | `PASS` / `CONCERNS` / `FAIL` | three | `code-reviewer`, `code-reviewer-fast(-v2)` |
+>
+> **The kit's recommended trio spans two of these**: `code-reviewer-fast`
+> and `code-reviewer` emit PASS/CONCERNS/FAIL, while `claude-code` emits
+> APPROVED/REJECT. An agent that greps one log for `APPROVED` and another
+> for `PASS` will silently miss a verdict in one of them. **Read the log
+> and interpret the verdict; do not pattern-match a fixed token.**
+> Confirm the vocabulary for any evaluator with
+> `grep -o -E '\*\*[A-Z_]+\*\*' .adversarial/evaluators/<provider>/<name>/evaluator.yml | sort -u`.
+>
+> (KIT-0069 / A74. The audit recorded this the other way round — that the
+> library had moved to PASS/CONCERNS/FAIL — after sampling a single
+> evaluator. The per-evaluator counts above were measured across the
+> installed tree.)
+
+The verdict names below are the most common set; substitute your
+evaluator's own vocabulary using the table above.
 
 ### ✅ APPROVED
 - **Meaning**: Content is sound, proceed to next step

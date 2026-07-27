@@ -314,7 +314,7 @@ No problem! When you're ready to create a custom agent, you have two options:
    Run `.kit/launchers/launch agent-creator` and it will guide you through the process.
 
 2. **Create one manually:**
-   Copy `.claude/agents/AGENT-TEMPLATE.md` to a new file like `.claude/agents/my-agent.md`
+   Copy `.kit/templates/AGENT-TEMPLATE.md` to a new file like `.claude/agents/my-agent.md`
    and customize it.
 
 For now, let's continue with the core agents!
@@ -330,7 +330,7 @@ Guide them through creating a new agent file in `.claude/agents/`:
 
 Then copy the template and customize it:
 ```bash
-cp .claude/agents/AGENT-TEMPLATE.md .claude/agents/[agent-name].md
+cp .kit/templates/AGENT-TEMPLATE.md .claude/agents/[agent-name].md
 ```
 
 Help the user edit the new file to set:

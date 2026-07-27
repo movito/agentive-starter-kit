@@ -30,7 +30,7 @@ adversarial library install google/arch-review-fast openai/arch-review --yes
 adversarial library info <provider>/<name>
 ```
 
-Installed evaluators land in `.adversarial/evaluators/` as flat YAML files (e.g. `google-arch-review-fast.yml`).
+Installed evaluators land in `.adversarial/evaluators/<provider>/<name>/evaluator.yml` — one directory per evaluator, grouped by provider (`anthropic/`, `google/`, `mistral/`, `openai/`). There are no flat `*.yml` files at the `evaluators/` root; the whole tree is install-generated and gitignored.
 
 ## After Installing
 
@@ -40,11 +40,33 @@ Installed evaluators land in `.adversarial/evaluators/` as flat YAML files (e.g.
 
 ## Conflict Resolution
 
-If you see "conflicts with existing; skipping" warnings, it means there are duplicate evaluator definitions — typically a manually-created copy in a provider subdirectory (e.g. `.adversarial/evaluators/google/arch-review-fast/`) alongside the library-installed flat file. Remove the manual copy:
+If you see "conflicts with existing; skipping" warnings, two definitions
+claim the same evaluator name.
+
+> ⚠️ **Do not `rm -rf` a provider directory.** This section previously
+> advised deleting `.adversarial/evaluators/<provider>/<name>/`, which is
+> exactly where the library installs — following it removed the installed
+> evaluator rather than a stray copy (KIT-0069 / A40).
+
+Diagnose before deleting anything:
 
 ```bash
-rm -rf .adversarial/evaluators/<provider>/<evaluator-name>
+# What is actually installed, and from which library version
+adversarial list-evaluators
+cat .adversarial/evaluators/.installed-version
 ```
+
+The whole `.adversarial/evaluators/` tree is install-generated and
+gitignored, so the safe recovery from any conflict is to reinstall from
+the pinned library rather than hand-delete:
+
+```bash
+./scripts/core/project install-evaluators --force
+```
+
+`--force` is required: the installer exits early with "Evaluators already
+installed" whenever `.adversarial/evaluators/.installed-version` exists, so
+the bare command repairs nothing.
 
 The library-installed version is canonical.
 

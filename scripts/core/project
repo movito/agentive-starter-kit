@@ -6,12 +6,12 @@ Project CLI - Command Launcher for Agentive Projects
 Simple memorable command interface for common project operations.
 
 Usage:
-    ./project sync           - Pull core files from upstream (KIT-ADR-0026)
-    ./project linearsync     - Sync tasks to Linear
-    ./project move <id> <status> - Move task and update Status field
-    ./project complete <id>  - Move task to done
-    ./project validate       - Validate all task statuses
-    ./project help           - Show help
+    ./scripts/core/project sync           - Pull core files from upstream (KIT-ADR-0026)
+    ./scripts/core/project linearsync     - Sync tasks to Linear
+    ./scripts/core/project move <id> <status> - Move task and update Status field
+    ./scripts/core/project complete <id>  - Move task to done
+    ./scripts/core/project validate       - Validate all task statuses
+    ./scripts/core/project help           - Show help
 """
 
 import json
@@ -265,7 +265,7 @@ def validate_all_tasks(project_dir: Path) -> bool:
         print(f"❌ Found {len(errors)} status mismatches:\n")
         for error in errors:
             print(f"  • {error}")
-        print(f"\nTo fix, use: ./project move <task-id> <status>")
+        print(f"\nTo fix, use: ./scripts/core/project move <task-id> <status>")
         return False
 
     print(f"✅ All {checked} tasks have matching Status and folder")
@@ -658,7 +658,7 @@ def cmd_setup(args):
             if not venv_python.exists():
                 print("⚠️  Corrupted venv detected (missing python)")
                 print(
-                    "   Run with --force to recreate: ./scripts/project setup --force"
+                    "   Run with --force to recreate: ./scripts/core/project setup --force"
                 )
                 sys.exit(1)
             print(f"✅ Virtual environment exists: {venv_dir}")
@@ -745,7 +745,7 @@ def cmd_setup(args):
         print("Then you can run:")
         print("    pytest tests/ -v          # Run tests")
         print("    adversarial --help        # Evaluation CLI")
-        print("    ./scripts/project help    # Project commands")
+        print("    ./scripts/core/project help    # Project commands")
 
 
 def cmd_install_evaluators(args, project_dir):
@@ -2159,8 +2159,8 @@ except Exception as e:
     elif command == "move":
         # Move task to new status folder
         if len(sys.argv) < 4:
-            print("Usage: ./scripts/project move <task-id> <status>")
-            print("       ./project move ASK-0001 done")
+            print("Usage: ./scripts/core/project move <task-id> <status>")
+            print("       ./scripts/core/project move ASK-0001 done")
             print(f"       Valid statuses: {', '.join(STATUS_FOLDER_MAP.keys())}")
             sys.exit(1)
         task_id = sys.argv[2]
@@ -2171,7 +2171,7 @@ except Exception as e:
     elif command == "complete":
         # Shorthand for moving to done
         if len(sys.argv) < 3:
-            print("Usage: ./scripts/project complete <task-id>")
+            print("Usage: ./scripts/core/project complete <task-id>")
             sys.exit(1)
         task_id = sys.argv[2]
         success = move_task(task_id, "done", project_dir)
@@ -2180,7 +2180,7 @@ except Exception as e:
     elif command == "start":
         # Shorthand for moving to in-progress
         if len(sys.argv) < 3:
-            print("Usage: ./scripts/project start <task-id>")
+            print("Usage: ./scripts/core/project start <task-id>")
             sys.exit(1)
         task_id = sys.argv[2]
         success = move_task(task_id, "in-progress", project_dir)
@@ -2189,7 +2189,7 @@ except Exception as e:
     elif command == "block":
         # Shorthand for moving to blocked
         if len(sys.argv) < 3:
-            print("Usage: ./scripts/project block <task-id>")
+            print("Usage: ./scripts/core/project block <task-id>")
             sys.exit(1)
         task_id = sys.argv[2]
         success = move_task(task_id, "blocked", project_dir)
@@ -2206,7 +2206,7 @@ except Exception as e:
         unknown = [a for a in args if a.startswith("-") and a != "--verify"]
         if unknown:
             print(f"❌ Unknown option(s): {', '.join(unknown)}")
-            print("Usage: ./scripts/project reconfigure [--verify]")
+            print("Usage: ./scripts/core/project reconfigure [--verify]")
             sys.exit(1)
         verify = "--verify" in args
         success = reconfigure_project(project_dir, verify=verify)
@@ -2387,7 +2387,7 @@ try:
             if len(missing) > 5:
                 print(f'  ... and {len(missing) - 5} more')
         print()
-        print('Run: ./project linearsync')
+        print('Run: ./scripts/core/project linearsync')
     else:
         diff = linear_count - local_count
         print(f'Status: ⚠️  Mismatch detected ({diff} extra in Linear)')
@@ -2428,7 +2428,7 @@ except Exception as e:
 
     else:
         print(f"❌ Unknown command: {command}")
-        print("Run './project help' for available commands.")
+        print("Run './scripts/core/project help' for available commands.")
         sys.exit(1)
 
     # Run the command from project directory
@@ -2454,7 +2454,7 @@ def print_help():
 Project CLI - Agentive Starter Kit
 ==================================
 
-Usage: ./scripts/project <command> [options]
+Usage: ./scripts/core/project <command> [options]
 
 Setup:
   setup [--force]        Create venv and install dependencies
@@ -2495,12 +2495,12 @@ Other:
   version              Show version information
 
 Examples:
-  ./project complete ASK-0001    Move task to done, update Status
-  ./project move ASK-0002 todo   Move task to todo folder
-  ./project validate             Check all statuses match folders
-  ./project reconfigure          Update project identity after pulling upstream
-  ./project reconfigure --verify Same + verify no leaks remain
-  ./project linearsync           Sync all tasks to Linear
+  ./scripts/core/project complete ASK-0001    Move task to done, update Status
+  ./scripts/core/project move ASK-0002 todo   Move task to todo folder
+  ./scripts/core/project validate             Check all statuses match folders
+  ./scripts/core/project reconfigure          Update project identity after pulling upstream
+  ./scripts/core/project reconfigure --verify Same + verify no leaks remain
+  ./scripts/core/project linearsync           Sync all tasks to Linear
 
 Valid statuses for 'move':
   backlog, todo, in-progress, in-review, done, canceled, blocked

@@ -156,6 +156,8 @@ logs/
 
 # Serena config (generated from template)
 .serena/project.yml
+# Local-only override stub Serena writes on project activation
+.serena/project.local.yml
 
 # Adversarial Workflow
 # Evaluators are installed via: ./scripts/core/project install-evaluators

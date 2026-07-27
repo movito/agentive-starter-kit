@@ -58,9 +58,11 @@ addopts = [
 ]
 markers = [
     "slow: marks tests as slow (>1s runtime, deselect with '-m \"not slow\"')",
-    "integration: integration tests requiring external services",
-    "unit: fast unit tests (default)",
-    "requires_gql: tests requiring gql package for Linear API (skip with '-m \"not requires_gql\"')",
+    # `integration`, `unit` and `requires_gql` were registered but applied by
+    # zero tests, so `--strict-markers` guarded nothing and the advertised
+    # `-m "not requires_gql"` selector matched nothing. `requires_gql` in
+    # test_linear_sync.py is a skipif alias, not a mark. Re-register any of
+    # them alongside real usage. (KIT-0069 / A80)
 ]
 
 [tool.black]

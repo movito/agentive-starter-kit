@@ -40,7 +40,7 @@ Override with `--repo owner/name` if needed:
 (`preflight-check.sh KIT-0044 --pr 76`) fails with "Unknown argument"
 (KIT-0044 retro #4).
 
-The script outputs structured `GATE:<number>:<name>:PASS|FAIL|PENDING:<detail>` lines
+The script outputs structured `GATE:<number>:<name>:PASS|FAIL|PENDING|SKIP:<detail>` lines
 and exits 0 (all pass), 1 (any fail), or 2 (no failures, but at least one gate PENDING).
 
 **PENDING** (Gate 1 only, KIT-0034): CI runs are not yet registered for the head
@@ -52,17 +52,24 @@ so a preflight run may block for up to ~10 seconds.
 
 ## Step 2: Present results
 
-Parse the `GATE:` lines and format as a PASS/FAIL table:
+Parse the `GATE:` lines and format as a status table. Preserve the status
+the script emitted — do not collapse `PENDING` or `SKIP` into `FAIL`. Only
+the gates below can emit more than PASS/FAIL:
 
 | # | Gate | Status | Detail |
 |---|------|--------|--------|
-| 1 | CI green | PASS/FAIL | [workflow status] |
-| 2 | CodeRabbit reviewed | PASS/FAIL | [review state on latest commit] |
-| 3 | BugBot reviewed | PASS/FAIL | [review state on latest commit] |
+| 1 | CI green | PASS/FAIL/PENDING | [workflow status] |
+| 2 | CodeRabbit reviewed | PASS/FAIL/SKIP | [review state on latest commit] |
+| 3 | BugBot reviewed | PASS/FAIL/SKIP | [review state on latest commit] |
 | 4 | Zero unresolved threads | PASS/FAIL | [N fresh unresolved, N lingering unresolved] |
 | 5 | Evaluator review persisted | PASS/FAIL | [file path or "missing"] |
 | 6 | Review starter exists | PASS/FAIL | [file path or "missing"] |
 | 7 | Task in correct folder | PASS/FAIL | [folder/file] |
+
+`SKIP` means the gate does not apply (a `bots:` declaration says the bot is
+absent — KIT-0056) and **counts as satisfied**; the "wait for the bot"
+remedies below do not apply to it. `PENDING` means not yet determined —
+neither pass nor fail.
 
 ### Verdict
 

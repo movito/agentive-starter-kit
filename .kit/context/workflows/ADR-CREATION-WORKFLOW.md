@@ -179,9 +179,9 @@ Real-world outcomes:
 ## Example ADRs
 
 See existing ADRs for reference:
-- `docs/adr/0001-exact-timecode-arithmetic.md` (385 lines)
-- `docs/adr/0002-two-phase-consistent-assembly.md` (498 lines)
-- `docs/adr/0011-adversarial-workflow-integration.md` (150 lines)
+- `.kit/adr/KIT-ADR-0004-adversarial-workflow-integration.md`
+- `.kit/adr/KIT-ADR-0012-task-status-linear-alignment.md`
+- `docs/adr/ADR-0008-tiered-manifest-sync.md`
 
 ---
 
@@ -202,7 +202,7 @@ Update `docs/adr/about-adr.md`:
 
 ## Documentation
 
-- **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- **Quick Reference**: `CLAUDE.md`
 - **Full Guide**: This document
 - **ADR Index**: `docs/adr/about-adr.md`
 - **Existing ADRs**: `docs/adr/`

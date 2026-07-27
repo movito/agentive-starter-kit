@@ -1,6 +1,6 @@
 #!/bin/bash
 # Wait for BugBot and CodeRabbit to review the current PR
-# Usage: ./scripts/wait-for-bots.sh [PR_NUMBER] [--interval SECONDS] [--timeout SECONDS]
+# Usage: ./scripts/core/wait-for-bots.sh [PR_NUMBER] [--interval SECONDS] [--timeout SECONDS]
 #
 # Metadata:
 #   version: 1.0.0
@@ -31,7 +31,7 @@ PR_ARG=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --help|-h)
-            echo "Usage: ./scripts/wait-for-bots.sh [PR_NUMBER] [--interval SECONDS] [--timeout SECONDS]"
+            echo "Usage: ./scripts/core/wait-for-bots.sh [PR_NUMBER] [--interval SECONDS] [--timeout SECONDS]"
             echo ""
             echo "Wait for both CodeRabbit and BugBot to review the current PR."
             echo "Polls check-bots.sh in a loop until both bots report CURRENT,"
@@ -50,10 +50,10 @@ while [[ $# -gt 0 ]]; do
             echo "  1  Timeout or error"
             echo ""
             echo "Examples:"
-            echo "  ./scripts/wait-for-bots.sh              # Auto-detect PR, defaults"
-            echo "  ./scripts/wait-for-bots.sh 42            # Specific PR"
-            echo "  ./scripts/wait-for-bots.sh --interval 15 # Poll every 15s"
-            echo "  ./scripts/wait-for-bots.sh --timeout 300 # 5-minute timeout"
+            echo "  ./scripts/core/wait-for-bots.sh              # Auto-detect PR, defaults"
+            echo "  ./scripts/core/wait-for-bots.sh 42            # Specific PR"
+            echo "  ./scripts/core/wait-for-bots.sh --interval 15 # Poll every 15s"
+            echo "  ./scripts/core/wait-for-bots.sh --timeout 300 # 5-minute timeout"
             exit 0
             ;;
         --interval)
@@ -74,7 +74,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -*)
             echo "Unknown option: $1" >&2
-            echo "Run: ./scripts/wait-for-bots.sh --help" >&2
+            echo "Run: ./scripts/core/wait-for-bots.sh --help" >&2
             exit 1
             ;;
         *)

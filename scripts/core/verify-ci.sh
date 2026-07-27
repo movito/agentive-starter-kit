@@ -1,6 +1,6 @@
 #!/bin/bash
 # Check GitHub Actions CI status for a branch
-# Usage: ./scripts/verify-ci.sh [branch-name] [--repo owner/name] [--wait]
+# Usage: ./scripts/core/verify-ci.sh [branch-name] [--repo owner/name] [--wait]
 #
 # Options:
 #   --repo    Target GitHub repo (overrides CLAUDE.md ## Target Repository)

@@ -1,6 +1,6 @@
 #!/bin/bash
 # GitHub review helper — wraps complex gh api calls for agent autonomy
-# Usage: ./scripts/gh-review-helper.sh [--repo owner/name] <subcommand> [args...]
+# Usage: ./scripts/core/gh-review-helper.sh [--repo owner/name] <subcommand> [args...]
 #
 # Metadata:
 #   version: 1.2.2
@@ -36,7 +36,7 @@ cd "$PROJECT_ROOT" || exit 1
 
 # ─── Usage ──────────────────────────────────────────────────────────
 print_usage() {
-    echo "Usage: ./scripts/gh-review-helper.sh [--repo owner/name] <subcommand> [args...]"
+    echo "Usage: ./scripts/core/gh-review-helper.sh [--repo owner/name] <subcommand> [args...]"
     echo ""
     echo "Options:"
     echo "  --repo owner/name  Target GitHub repo (overrides CLAUDE.md ## Target Repository)"
@@ -55,10 +55,10 @@ print_usage() {
     echo "  2 — API error"
     echo ""
     echo "Examples:"
-    echo "  ./scripts/gh-review-helper.sh summary 53"
-    echo "  ./scripts/gh-review-helper.sh --repo movito/ixda-services threads 53"
-    echo "  ./scripts/gh-review-helper.sh reply 53 2861292837 'Fixed in abc1234: description.'"
-    echo "  ./scripts/gh-review-helper.sh resolve PRRT_kwDORNcO0s5wPovc"
+    echo "  ./scripts/core/gh-review-helper.sh summary 53"
+    echo "  ./scripts/core/gh-review-helper.sh --repo movito/ixda-services threads 53"
+    echo "  ./scripts/core/gh-review-helper.sh reply 53 2861292837 'Fixed in abc1234: description.'"
+    echo "  ./scripts/core/gh-review-helper.sh resolve PRRT_kwDORNcO0s5wPovc"
 }
 
 # ─── Parse global flags (before subcommand) ────────────────────────

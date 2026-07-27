@@ -345,7 +345,7 @@ Before sending task starter to user:
 
 ## Integration with Agent Workflows
 
-### For Coordinators (Tycho)
+### For Coordinators (planner)
 
 After creating task specification and addressing evaluation feedback:
 

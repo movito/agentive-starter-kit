@@ -185,7 +185,7 @@ cat .adversarial/logs/TASK-FILE--*.md
 
 ## Task Starter Protocol (Multi-Session Workflows)
 
-**📖 Template**: `.claude/agents/TASK-STARTER-TEMPLATE.md`
+**📖 Template**: `.kit/templates/TASK-STARTER-TEMPLATE.md`
 
 When you receive task assignments, they come in a standardized format with:
 - Task file: Full specification in `.kit/tasks/[folder]/[TASK-ID].md`
@@ -275,7 +275,7 @@ For longer tasks requiring multiple agent sessions or handoffs:
 
 **Example**: After completing TDD implementation and testing, create task starter for document-reviewer to handle documentation phase.
 
-See `.claude/agents/TASK-STARTER-TEMPLATE.md` for complete example.
+See `.kit/templates/TASK-STARTER-TEMPLATE.md` for complete example.
 
 ## Coordination Protocol
 
@@ -410,21 +410,28 @@ After implementation is complete and CI passes, you **MUST** request code review
 5. **Address feedback**: Fix any issues raised by reviewer
 6. **After approval**: Move to `5-done` with `./scripts/core/project complete <TASK-ID>`
 
-### Invoking Code Reviewer
+### Requesting Code Review
 
-After CI passes and task is in `4-in-review`, invoke the code-reviewer agent:
+**Do NOT spawn the code-reviewer via the Task tool.** `code-reviewer`
+carries the Bash tool, and agents launched through `Task` do not inherit
+`.claude/settings.json` allow patterns — the run dies on "Permission to
+use Bash has been denied". This is the same failure this file already
+documents for `ci-checker`, and the kit-wide convention (planner,
+feature-developer, project-intake) is user-invoked tabs.
 
+Instead, after CI passes and the task is in `4-in-review`, write a review
+starter and hand off to the user:
+
+```bash
+# Write .kit/context/<TASK-ID>-REVIEW-STARTER.md containing:
+#   - Task file: .kit/tasks/4-in-review/<TASK-ID>.md
+#   - Commits to review: [hashes]
+#   - Focus areas: TDD compliance, test coverage, code quality
+#   - Recommended agent: code-reviewer
 ```
-Use the Task tool with these parameters:
-- subagent_type: "code-reviewer"
-- description: "Code review for <TASK-ID>"
-- prompt: "Please review the implementation for <TASK-ID>.
-  Task file: .kit/tasks/4-in-review/<TASK-ID>.md
-  Recent commits: [list relevant commit hashes]
-  Focus areas: [TDD compliance, test coverage, code quality]"
-```
 
-The code-reviewer agent will:
+Then tell the user to open a new tab and launch `code-reviewer` against
+that starter. The reviewing agent will:
 - Review code changes for quality, patterns, edge cases
 - Check TDD compliance and test coverage
 - Report ✅ APPROVED / 🔄 CHANGES REQUESTED / ❌ REJECTED

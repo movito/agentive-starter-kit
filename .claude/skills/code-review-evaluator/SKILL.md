@@ -178,7 +178,14 @@ add `claude-code` for security-sensitive code. Each model catches
 different classes of issues with minimal overlap (validated empirically
 across projects: distinct models surface largely non-overlapping findings).
 
-**Note**: `spec-compliance-fast` is NOT available — use manual spec checks or `/check-spec` (Gemini Flash via API) instead.
+**Note**: there is no spec-compliance evaluator, and there never was one
+in this library. It originated as a dispatch-kit project-local custom
+evaluator and did not survive the port into this kit, so
+`adversarial spec-compliance-fast` matches nothing — do not run it.
+`/check-spec` now performs a **manual** requirement-to-code trace instead
+of an evaluator call; use it for spec compliance. KIT-0072 tracks
+upstreaming the evaluator into the library, after which `/check-spec`
+becomes an evaluator call again and gains a row in the table above.
 
 **`claude-code` requires `ANTHROPIC_API_KEY` *uncommented* in `.env`.**
 A commented-out key does not error at launch — the evaluator fails

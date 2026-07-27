@@ -115,7 +115,7 @@ See existing handoffs for examples:
 
 ## Documentation
 
-- **Quick Reference**: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- **Quick Reference**: `CLAUDE.md`
 - **Full Protocol**: This document
 - **Handoff Examples**: `.kit/context/*-HANDOFF-*.md`
 - **Task Templates**: `.kit/templates/TASK-STARTER-TEMPLATE.md`

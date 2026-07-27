@@ -28,7 +28,7 @@ your-project/
 ├── .claude/               # Implementation layer (stays — Claude Code constraint)
 │   ├── agents/            #   agent definitions (synced from ASK via agents_core tier)
 │   ├── commands/          #   slash commands (synced via commands_core tier)
-│   └── skills/            #   implementation skills (synced via skills_core tier)
+│   └── skills/            #   ALL skills live here (KIT-0057); .kit/skills is retired
 ├── .dispatch/             # Coordination (stays at root — dispatch-kit hardcodes path)
 ├── .kit/                  # Builder layer (NEW — synced via kit_builder tier)
 │   ├── adr/               #   kit architectural decisions (from docs/decisions/starter-kit-adr/)
@@ -39,7 +39,7 @@ your-project/
 │   │   └── workflows/     #     COMMIT-PROTOCOL, TESTING-WORKFLOW, etc.
 │   ├── docs/              #   builder documentation
 │   ├── launchers/         #   launch, onboarding, preflight scripts (from agents/ at root)
-│   ├── skills/            #   builder-only skills (self-review, review-handoff, etc.)
+│   ├── skills/            #   RETIRED — KIT-0057 moved ALL skills to .claude/skills/;
 │   ├── tasks/             #   task specs (from delegation/tasks/)
 │   │   ├── 1-backlog/
 │   │   ├── 2-todo/

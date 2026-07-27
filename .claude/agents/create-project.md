@@ -236,7 +236,8 @@ cd <target-dir> && gh repo set-default
 
 If the push fails, it's likely because the export is too large. This should
 NOT happen with the script (no git history), but if it does:
-- Check `git log --oneline` — should be exactly 1 commit
+- Check `git log --oneline` — should be exactly 2 commits (export + install
+  record). The customization commit lands later, in Step 9.
 - Check for large binary files: `find . -size +10M -type f`
 - Fix and retry
 

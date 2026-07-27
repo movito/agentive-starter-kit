@@ -3,8 +3,8 @@
 > How `agentive-starter-kit` distributes agents, commands, and shared
 > tooling to downstream projects — and how to keep everything updated.
 
-**Version**: 1.1.0
-**Last updated**: 2026-07-04
+**Version**: 1.2.0
+**Last updated**: 2026-07-27
 **Status**: Current
 **Related**: `docs/MANIFEST-UPGRADE-GUIDE.md`, `docs/PLUGIN-UPGRADE-GUIDE.md`,
 `docs/CROSS-REPO-PATTERN.md`, ADR-0008, KIT-ADR-0022, KIT-ADR-0024, KIT-ADR-0025,
@@ -18,10 +18,18 @@ KIT-ADR-0026
 - **Two distribution channels**: a **plugin** (install-based) and a
   **manifest sync** GitHub Action (vendored-file-based).
 - **Commands & scripts propagate two ways** (Channel B): a **push** —
-  merging to `main` fires the sync Action, which opens PRs downstream — and,
-  since KIT-ADR-0026, a **pull** — a consumer runs `./scripts/core/project
-  sync` to fetch updates on demand (selective or full, version-pinnable).
-  Both feed one tested engine, so they can't drift.
+  merging to `main` fires the sync Action, which opens PRs downstream
+  (**currently parked** — see below) — and, since KIT-ADR-0026, a **pull**
+  — a consumer runs `./scripts/core/project sync` to fetch updates on
+  demand (selective or full, version-pinnable). Both feed one tested
+  engine, so they can't drift.
+
+> ⚠️ **The push path is parked (KIT-0045).** `sync-core-scripts.yml` is
+> `workflow_dispatch`-only: the push trigger was disabled 2026-07-14 after
+> 22 consecutive failures caused by a `CROSS_REPO_TOKEN` secret that was
+> never provisioned. **Pull and manual dispatch are the live mechanisms
+> today** — merging to `main` opens no downstream PRs. Revert these notes
+> when KIT-0045 re-enables it.
 - **Agents do not auto-propagate** via either path today — the pull channel
   carries scripts/commands/kit files, **not** agents, which still ship
   through the plugin or a bootstrap merge. Closing that asymmetry is tracked
@@ -40,6 +48,10 @@ lives here. Nothing is authored in a consumer repo and pushed back up.
 
 ## 2. Two distribution channels
 
+> Both diagrams below show Channel B's **push** arrow as designed. That
+> trigger is **parked** (KIT-0045) — `workflow_dispatch` and the pull path
+> are the live mechanisms today.
+
 Rendered view (GitHub renders Mermaid natively):
 
 ```mermaid
@@ -55,11 +67,11 @@ flowchart TD
     subgraph B["Channel B — Manifest sync (vendored files)"]
         ACT["sync-core-scripts.yml Action<br/>driven by scripts/.core-manifest.json<br/><br/>carries: scripts/core · .claude/commands · .kit/**"]
         CONSB["consumer repo<br/>vendored files + PR to review<br/>opted_in tiers preserved"]
-        ACT -->|"auto PR on push to main<br/>(CROSS_REPO_TOKEN)"| CONSB
+        ACT -->|"auto PR on push to main<br/>(CROSS_REPO_TOKEN)<br/>⚠ PARKED — KIT-0045"| CONSB
     end
 
     SRC -->|"publish / re-publish"| PLUGIN
-    SRC -->|"push to watched paths"| ACT
+    SRC -->|"push to watched paths<br/>⚠ PARKED — KIT-0045"| ACT
 
     AGENTS{{"Agents: NOT watched by the Action<br/>ship via plugin (a) or bootstrap merge (b)<br/>— KIT-ADR-0025 / KIT-0033"}}
     SRC -.->|"special case"| AGENTS
@@ -115,7 +127,7 @@ kit-builder scaffolding).
 |---|---|---|
 | **What** | `agentive-workflow` plugin, from the `movito/agentive-skills` marketplace | `sync-core-scripts.yml` Action + `scripts/.core-manifest.json` |
 | **Carries** | Agents, commands, skills as **namespaced installs** (`agentive-workflow:feature-developer-v7`, `agentive-workflow:check-ci`) | **Vendored file copies**: `scripts/core/`, `.claude/commands/`, `.kit/` templates/skills/ADRs/workflows |
-| **Consumer update path** | `claude plugin update` / `upgrader` agent | **Push**: automated PR into the consumer repo. **Pull**: `./scripts/core/project sync` from the consumer (on-demand, KIT-ADR-0026) |
+| **Consumer update path** | `claude plugin update` / `upgrader` agent | **Push** (⚠ parked, KIT-0045 — manual `workflow_dispatch` until re-enabled): automated PR into the consumer repo. **Pull** (live): `./scripts/core/project sync` from the consumer (on-demand, KIT-ADR-0026) |
 | **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | ADR-0008, KIT-ADR-0022, KIT-ADR-0026, `docs/MANIFEST-UPGRADE-GUIDE.md` |
 
 ### Canonical homes (KIT-ADR-0027 P6)
@@ -135,15 +147,20 @@ copies of each, namespaced `agentive-workflow:<name>`.
 ## 3. The tiered manifest (Channel B's brain)
 
 `scripts/.core-manifest.json` — `core_version` is the semver of the sync
-unit (currently `3.0.0`). Files are grouped into **tiers**, and tier
-membership decides who receives what:
+unit. Files are grouped into **tiers**, and tier membership decides who
+receives what:
 
-| Tier | Count | Sync rule |
-|------|-------|-----------|
-| `scripts_core` | 17 | Always sync to every downstream |
-| `commands_core` | 6 | Always sync to every downstream |
-| `commands_optional` | 5 | Sync **only if** consumer opted in |
-| `kit_builder` | 14 | Sync **only to** kit-family repos (`is_kit: true`) |
+| Tier | Sync rule |
+|------|-----------|
+| `scripts_core` | Always sync to every downstream |
+| `commands_core` | Always sync to every downstream |
+| `commands_optional` | Sync **only if** consumer opted in |
+| `kit_builder` | Sync **only to** kit-family repos (`is_kit: true`) |
+
+> The current `core_version` and the per-tier file counts live in
+> `scripts/.core-manifest.json` — read them there. They were hardcoded
+> here once and were three minor versions and nine files out of date by
+> the time anyone noticed (KIT-0069 / A57).
 
 `commands_core` is the "most essential commands" set:
 `check-ci`, `check-bots`, `wait-for-bots`, `start-task`,
@@ -155,9 +172,11 @@ choices.
 
 ## 4. The sync Action mechanics
 
-`.github/workflows/sync-core-scripts.yml` fires on push to `main` when any
-watched path changes (`scripts/core/**`, `.claude/commands/**`,
-`.kit/templates/**`, the manifest itself, and more). It:
+`.github/workflows/sync-core-scripts.yml` is **`workflow_dispatch`-only
+today** (parked, KIT-0045). As designed — and as it will behave again once
+re-enabled — it fires on push to `main` when any watched path changes
+(`scripts/core/**`, `.claude/commands/**`, `.kit/templates/**`, the
+manifest itself, and more). It:
 
 1. runs a **matrix** over downstream repos (today: `dispatch-kit`,
    `adversarial-workflow`, `adversarial-evaluator-library`),
@@ -294,9 +313,10 @@ Documents (like this one) are semver-stamped too — see the header.
 1. Edit the canonical agent/command in `agentive-starter-kit`, bump its
    `version` + `last-updated`, commit to a branch → PR → merge to `main`.
 2. **Commands & scripts** (two paths, one engine):
-   - **Push** — merging to `main` auto-fires `sync-core-scripts.yml`, which
-     opens update PRs in each downstream. Consumers merge on their schedule;
-     `opted_in` tiers are respected.
+   - **Push** (parked, KIT-0045 — run it manually via `workflow_dispatch`
+     until then) — merging to `main` auto-fires `sync-core-scripts.yml`,
+     which opens update PRs in each downstream. Consumers merge on their
+     schedule; `opted_in` tiers are respected.
    - **Pull** — a consumer runs `./scripts/core/project sync --dry-run` to see
      what changed and `./scripts/core/project sync` to apply it (selective via
      `--tier`/`--only`, pinnable via `--ref`) without waiting for a push PR.

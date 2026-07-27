@@ -14,7 +14,7 @@ Test Categories:
 Usage:
     pytest tests/test_linear_sync.py -v
 
-TDD Phase: RED (tests written, implementation pending)
+Fixtures model the live .kit/tasks/ layout (KIT-0069 / A79).
 """
 
 import importlib.util
@@ -101,11 +101,7 @@ Task without status field.
 def tmp_task_file(tmp_path, task_content_valid):
     """Create a temporary task file."""
     task_file = (
-        tmp_path
-        / "delegation"
-        / "tasks"
-        / "2-todo"
-        / "TASK-0001-implement-feature-x.md"
+        tmp_path / ".kit" / "tasks" / "2-todo" / "TASK-0001-implement-feature-x.md"
     )
     task_file.parent.mkdir(parents=True, exist_ok=True)
     task_file.write_text(task_content_valid, encoding="utf-8")
@@ -115,9 +111,7 @@ def tmp_task_file(tmp_path, task_content_valid):
 @pytest.fixture
 def tmp_task_file_legacy(tmp_path, task_content_legacy_status):
     """Create a temporary task file with legacy status."""
-    task_file = (
-        tmp_path / "delegation" / "tasks" / "1-backlog" / "TASK-0002-legacy-status.md"
-    )
+    task_file = tmp_path / ".kit" / "tasks" / "1-backlog" / "TASK-0002-legacy-status.md"
     task_file.parent.mkdir(parents=True, exist_ok=True)
     task_file.write_text(task_content_legacy_status, encoding="utf-8")
     return task_file
@@ -126,9 +120,7 @@ def tmp_task_file_legacy(tmp_path, task_content_legacy_status):
 @pytest.fixture
 def tmp_task_file_archive(tmp_path, task_content_valid):
     """Create a temporary task file in archive folder."""
-    task_file = (
-        tmp_path / "delegation" / "tasks" / "8-archive" / "TASK-0099-archived.md"
-    )
+    task_file = tmp_path / ".kit" / "tasks" / "8-archive" / "TASK-0099-archived.md"
     task_file.parent.mkdir(parents=True, exist_ok=True)
     task_file.write_text(task_content_valid, encoding="utf-8")
     return task_file
@@ -237,9 +229,7 @@ class TestTaskParser:
         from scripts.optional.linear_sync_utils import parse_task_metadata
 
         # Arrange
-        task_file = (
-            tmp_path / "delegation" / "tasks" / "2-todo" / "TASK-0099-no-title.md"
-        )
+        task_file = tmp_path / ".kit" / "tasks" / "2-todo" / "TASK-0099-no-title.md"
         task_file.parent.mkdir(parents=True, exist_ok=True)
         task_file.write_text(task_content_no_title, encoding="utf-8")
 
@@ -252,9 +242,7 @@ class TestTaskParser:
         from scripts.optional.linear_sync_utils import parse_task_metadata
 
         # Arrange
-        task_file = (
-            tmp_path / "delegation" / "tasks" / "2-todo" / "TASK-0003-no-status.md"
-        )
+        task_file = tmp_path / ".kit" / "tasks" / "2-todo" / "TASK-0003-no-status.md"
         task_file.parent.mkdir(parents=True, exist_ok=True)
         task_file.write_text(task_content_no_status, encoding="utf-8")
 
@@ -269,7 +257,7 @@ class TestTaskParser:
         from scripts.optional.linear_sync_utils import parse_task_metadata
 
         # Arrange
-        task_file = tmp_path / "delegation" / "tasks" / "2-todo" / "TASK-0000-empty.md"
+        task_file = tmp_path / ".kit" / "tasks" / "2-todo" / "TASK-0000-empty.md"
         task_file.parent.mkdir(parents=True, exist_ok=True)
         task_file.write_text("", encoding="utf-8")
 
@@ -325,7 +313,7 @@ class TestStatusDetermination:
         """1-backlog folder should map to Backlog status."""
         from scripts.optional.linear_sync_utils import determine_status_from_path
 
-        task_file = tmp_path / "delegation" / "tasks" / "1-backlog" / "TASK-0001.md"
+        task_file = tmp_path / ".kit" / "tasks" / "1-backlog" / "TASK-0001.md"
 
         assert determine_status_from_path(task_file) == "Backlog"
 
@@ -333,7 +321,7 @@ class TestStatusDetermination:
         """2-todo folder should map to Todo status."""
         from scripts.optional.linear_sync_utils import determine_status_from_path
 
-        task_file = tmp_path / "delegation" / "tasks" / "2-todo" / "TASK-0001.md"
+        task_file = tmp_path / ".kit" / "tasks" / "2-todo" / "TASK-0001.md"
 
         assert determine_status_from_path(task_file) == "Todo"
 
@@ -341,7 +329,7 @@ class TestStatusDetermination:
         """3-in-progress folder should map to In Progress status."""
         from scripts.optional.linear_sync_utils import determine_status_from_path
 
-        task_file = tmp_path / "delegation" / "tasks" / "3-in-progress" / "TASK-0001.md"
+        task_file = tmp_path / ".kit" / "tasks" / "3-in-progress" / "TASK-0001.md"
 
         assert determine_status_from_path(task_file) == "In Progress"
 
@@ -349,7 +337,7 @@ class TestStatusDetermination:
         """4-in-review folder should map to In Review status."""
         from scripts.optional.linear_sync_utils import determine_status_from_path
 
-        task_file = tmp_path / "delegation" / "tasks" / "4-in-review" / "TASK-0001.md"
+        task_file = tmp_path / ".kit" / "tasks" / "4-in-review" / "TASK-0001.md"
 
         assert determine_status_from_path(task_file) == "In Review"
 
@@ -357,7 +345,7 @@ class TestStatusDetermination:
         """5-done folder should map to Done status."""
         from scripts.optional.linear_sync_utils import determine_status_from_path
 
-        task_file = tmp_path / "delegation" / "tasks" / "5-done" / "TASK-0001.md"
+        task_file = tmp_path / ".kit" / "tasks" / "5-done" / "TASK-0001.md"
 
         assert determine_status_from_path(task_file) == "Done"
 
@@ -365,7 +353,7 @@ class TestStatusDetermination:
         """6-canceled folder should map to Canceled status."""
         from scripts.optional.linear_sync_utils import determine_status_from_path
 
-        task_file = tmp_path / "delegation" / "tasks" / "6-canceled" / "TASK-0001.md"
+        task_file = tmp_path / ".kit" / "tasks" / "6-canceled" / "TASK-0001.md"
 
         assert determine_status_from_path(task_file) == "Canceled"
 
@@ -373,7 +361,7 @@ class TestStatusDetermination:
         """7-blocked folder should map to Blocked status."""
         from scripts.optional.linear_sync_utils import determine_status_from_path
 
-        task_file = tmp_path / "delegation" / "tasks" / "7-blocked" / "TASK-0001.md"
+        task_file = tmp_path / ".kit" / "tasks" / "7-blocked" / "TASK-0001.md"
 
         assert determine_status_from_path(task_file) == "Blocked"
 
@@ -381,9 +369,7 @@ class TestStatusDetermination:
         """Unknown folder should return None."""
         from scripts.optional.linear_sync_utils import determine_status_from_path
 
-        task_file = (
-            tmp_path / "delegation" / "tasks" / "unknown-folder" / "TASK-0001.md"
-        )
+        task_file = tmp_path / ".kit" / "tasks" / "unknown-folder" / "TASK-0001.md"
 
         assert determine_status_from_path(task_file) is None
 
@@ -525,7 +511,7 @@ class TestSyncExclusion:
         from scripts.optional.linear_sync_utils import should_sync_task
 
         # Arrange
-        task_file = tmp_path / "delegation" / "tasks" / "9-reference" / "TASK-0001.md"
+        task_file = tmp_path / ".kit" / "tasks" / "9-reference" / "TASK-0001.md"
         task_file.parent.mkdir(parents=True, exist_ok=True)
         task_file.write_text(task_content_valid, encoding="utf-8")
 

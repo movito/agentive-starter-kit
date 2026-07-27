@@ -100,7 +100,8 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 # .github/ — CI workflows, dependabot
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
-# docs/ — only the structural parts (decisions, testing guide)
+# docs/ — everything except proposals/ (this includes docs/adr/ and the
+# testing guide, but is NOT limited to them)
 "${RSYNC_BASE[@]}" --exclude='proposals/' "$PROJECT_ROOT/docs/" "$TARGET/docs/"
 
 # scripts/ — project management, CI, setup. scripts/local/ is the
@@ -193,7 +194,6 @@ MATERIAL_FILES=$(find "$TARGET" -maxdepth 2 \
     -not -path '*/.github/*' \
     -not -path '*/.git/*' \
     -not -path '*/.venv/*' \
-    -not -path '*/delegation/*' \
     -not -path '*/scripts/*' \
     -not -path '*/tests/*' \
     -not -path '*/docs/adr/*' \

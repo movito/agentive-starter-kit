@@ -191,6 +191,14 @@ Setup takes approximately 5-10 minutes.
 | `ci-checker` | CI/CD verification |
 | `agent-creator` | Create new specialized agents |
 | `create-project` | Spin up a new project from this kit (clean export, GitHub repo, evaluator install) |
+| `project-intake` | Graduate a prototype into the split pair (plain code repo + preset-configured planning repo) |
+| `bootstrap` | Read design materials and configure a new agentive project |
+| `onboarding` | First-run setup for a new project |
+| `upgrader` | Raise a project to a newer plugin version; refresh model pins |
+| `planner-f5` / `feature-developer-f5` | Fable 5 variants of the two core agents |
+
+The full set lives in `.claude/agents/` — `ls .claude/agents/` is the
+authoritative inventory.
 
 ### Task Management (`.kit/tasks/`)
 
@@ -227,7 +235,7 @@ adversarial proofread docs/guide.md
 adversarial list-evaluators
 
 # Install additional evaluators (Gemini, Mistral, more)
-./scripts/project install-evaluators
+./scripts/core/project install-evaluators
 ```
 
 Built-in evaluators use OpenAI. Custom evaluators can use other providers (Google, Mistral, Anthropic). Results saved to `.adversarial/logs/`.
@@ -322,7 +330,7 @@ When configured, the task system:
 
 **Manual sync:**
 ```bash
-./scripts/project linearsync
+./scripts/core/project linearsync
 ```
 
 **Auto-sync:** Pushing to `main` or `develop` triggers GitHub Actions workflow.
@@ -389,7 +397,7 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 
 ## Documentation
 
-- **Agentive Development Guide**: `docs/agentive-development/README.md`
+- **Agentive Development Guide** (archived): `docs/archive/agentive-development/README.md`
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md`
 - **Task Template**: `.kit/tasks/9-reference/templates/task-template.md`
 - **Evaluation Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
@@ -544,7 +552,7 @@ git fetch upstream
 git merge upstream/main
 
 # Update agent files with your project name
-./scripts/project reconfigure
+./scripts/core/project reconfigure
 ```
 
 The `reconfigure` command updates Serena activation calls in agent files after pulling upstream changes. It replaces any `activate_project("...")` value (whether it's the placeholder `"your-project"` or upstream's `"agentive-starter-kit"`) with your project name from `.serena/project.yml`.
@@ -588,5 +596,6 @@ Developed through real-world use on production projects. Special thanks to the C
 
 ---
 
-**Version**: 0.5.0
-**Last Updated**: 2026-03-30
+**Version**: see `version` in `pyproject.toml` (the single source of truth;
+this footer was hand-maintained and sat three releases behind — KIT-0069 /
+A53)

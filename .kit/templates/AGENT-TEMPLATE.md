@@ -1,7 +1,7 @@
 ---
 name: [agent-name]
 description: [One sentence description of agent role and primary responsibility]
-model: claude-sonnet-4-20250514
+model: claude-sonnet-5
 tools:
   - Read
   - Write
@@ -189,17 +189,17 @@ This will help me proceed without further evaluation loops."
 
 **Agent Coordination**:
 - Task specifications: `.kit/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
-- Agent procedures: `.kit/context/PROCEDURAL-KNOWLEDGE-INDEX.md`
+- Agent procedures: `CLAUDE.md`
 - Your role context: `.kit/context/agent-handoffs.json` → `"[agent-name]"`
 - [Role-specific workflow documents - e.g., "Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`"]
 
 **Evaluation Workflow**:
-- **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
+- **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 - Quick command: `adversarial evaluate <task-file>` (you run this directly)
 - Output location: `.adversarial/logs/<input-name>--<evaluator>.md`
 
 **[Role-Specific Documentation]**:
-- [Link to relevant ADRs, e.g., "ADR-0011: Adversarial Workflow Integration"]
+- [Link to relevant ADRs, e.g., "KIT-ADR-0004: Adversarial Workflow Integration"]
 - [Link to relevant technical docs]
 - [Link to relevant code examples or patterns]
 
@@ -327,13 +327,24 @@ If you push code changes to GitHub:
 
 Choose your model based on task complexity:
 
-| Model | Model ID | Cost | Best For |
-|-------|----------|------|----------|
-| **Opus 4.6** | `claude-opus-4-6` | $5/$25 per 1M tokens | Complex planning, code generation, security analysis |
-| **Sonnet 4.5** | `claude-sonnet-4-5-20250929` | $3/$15 per 1M tokens | Documentation, testing, agent creation, day-to-day tasks |
-| **Haiku 4.5** | `claude-haiku-4-5-20251001` | $1/$5 per 1M tokens | CI checks, simple validation, fast operations |
+| Model | Model ID | Best For |
+|-------|----------|----------|
+| **Opus 5** | `claude-opus-5` | Complex planning, code generation, security analysis |
+| **Sonnet 5** | `claude-sonnet-5` | Documentation, testing, agent creation, day-to-day tasks |
+| **Haiku 4.5** | `claude-haiku-4-5-20251001` | CI checks, simple validation, fast operations |
 
-**Note**: Opus 4.6 uses ~50% fewer tokens for the same quality output, often making total cost similar to Sonnet despite higher per-token price.
+**Verify before pinning.** Model IDs change with each release, and a stale
+pin is silent — the agent still loads. Check the current catalog rather
+than trusting this table or memory:
+
+```bash
+curl -s https://api.anthropic.com/v1/models \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01"
+```
+
+Per-token pricing is deliberately not listed here; see
+<https://platform.claude.com/docs/en/pricing>.
 
 To set a model, edit the `model:` line in the frontmatter above with one of the Model IDs.
 

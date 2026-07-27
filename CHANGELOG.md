@@ -727,6 +727,13 @@ project upgrades were deliberately deferred to the next phase.
 - Agent handoff protocol via `.agent-context/`
 - Pre-configured Claude Code settings and permissions
 
+<!-- Release tags v0.5.1, v0.6.0 and v0.7.0 were never cut, so no compare
+     link can exist for those three headings. The [0.8.0] link therefore
+     spans v0.5.0...v0.8.0. Cutting the missing tags (or accepting the gap
+     deliberately) is a release-hygiene decision for the 0.9.0 cut.
+     Found during KIT-0069 / A66. -->
+[Unreleased]: https://github.com/movito/agentive-starter-kit/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/movito/agentive-starter-kit/compare/v0.5.0...v0.8.0
 [0.5.0]: https://github.com/movito/agentive-starter-kit/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/movito/agentive-starter-kit/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/movito/agentive-starter-kit/compare/v0.3.2...v0.3.3

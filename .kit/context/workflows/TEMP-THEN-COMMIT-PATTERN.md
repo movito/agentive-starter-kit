@@ -63,7 +63,10 @@ done
 ```
 
 Live implementation: the marker-merge step in
-`scripts/local/bootstrap-consumer.sh` (Step 2, kit workflow agents).
+`scripts/local/engine-consumer.sh` (Step 2, kit workflow agents). It moved
+there in KIT-0053; `bootstrap-consumer.sh` is now a deprecated exec shim
+with no marker-merge of its own, and is slated for removal in 0.9.0
+(KIT-0054).
 
 ## When To Apply
 

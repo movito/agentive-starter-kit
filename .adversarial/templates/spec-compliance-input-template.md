@@ -2,7 +2,7 @@
 
 ## Task Specification
 
-Paste the FULL task spec below (from `delegation/tasks/3-in-progress/`).
+Paste the FULL task spec below (from `.kit/tasks/3-in-progress/`).
 The evaluator needs every requirement, acceptance criterion, and "must not" constraint.
 
 ```markdown

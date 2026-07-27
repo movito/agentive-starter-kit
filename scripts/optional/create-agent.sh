@@ -20,7 +20,7 @@ set -euo pipefail
 # =============================================================================
 LOCK_STALE_SECS="${CREATE_AGENT_LOCK_STALE_SECS:-60}"
 LOCK_WAIT_SECS="${CREATE_AGENT_LOCK_WAIT_SECS:-30}"
-DEFAULT_MODEL="claude-sonnet-4-5-20250929"
+DEFAULT_MODEL="claude-sonnet-5"
 
 # Path resolution: env var > script-relative
 if [[ -n "${CREATE_AGENT_PROJECT_ROOT:-}" ]]; then
@@ -214,14 +214,14 @@ validate_name() {
 # =============================================================================
 show_help() {
     cat <<'USAGE'
-Usage: scripts/create-agent.sh <name> <description> [options]
+Usage: scripts/optional/create-agent.sh <name> <description> [options]
 
 Required:
   <name>            Agent name (lowercase, hyphens allowed, 2-30 chars)
   <description>     One-sentence description (quoted string)
 
 Options:
-  --model <id>      Claude model ID (default: claude-sonnet-4-5-20250929)
+  --model <id>      Claude model ID (default: claude-sonnet-5)
   --emoji <char>    Icon emoji for launcher menu (default: auto-assigned)
   --serena          Enable Serena auto-activation for this agent
   --force           Overwrite existing agent (replaces file + launcher entries)

@@ -1,15 +1,15 @@
 ---
 description: Check Spec Compliance
-version: 1.0.0
+version: 1.1.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-07-27
 created-by: "@movito with planner2"
 ---
 
 # Check Spec Compliance
 
-Run the spec-compliance evaluator to verify all task requirements are implemented before committing.
+Verify that all task requirements are implemented before committing.
 
 **When**: After tests pass + self-review, BEFORE `/commit-push-pr`.
 
@@ -25,30 +25,55 @@ git branch --show-current
 ls .kit/tasks/3-in-progress/
 ```
 
-## Step 2: Build the evaluator input
+## Step 2: Assemble the material
 
-Create the input file at `.adversarial/inputs/<TASK-ID>-spec-compliance-input.md` using the template at `.adversarial/templates/spec-compliance-input-template.md`.
+Gather everything the trace needs. The template at
+`.adversarial/templates/spec-compliance-input-template.md` gives the
+structure; write the assembled material to
+`.adversarial/inputs/<TASK-ID>-spec-compliance-input.md` if you want a
+durable record (KIT-0072 will feed this same file to the evaluator).
 
-You MUST include:
+You MUST have in front of you:
 
-1. **Full task spec** — copy the entire task file content
-2. **Full source of every changed file** — use `git diff --name-only main` to find them, then include each file's complete content
+1. **Full task spec** — the entire task file content
+2. **Full source of every changed file** — use `git diff --name-only main` to find them, then read each file completely
 3. **Full test file content** — for every test file that was modified
 
-Use the Bash tool to read files and assemble the input. Do NOT summarize or truncate — the evaluator needs complete content to trace requirements to code.
+Do NOT summarize or truncate — tracing requirements to code needs complete
+content, and a partial read is how a requirement gets marked implemented
+when it isn't.
 
-## Step 3: Run the evaluator
+## Step 3: Trace the spec yourself
 
-```bash
-adversarial spec-compliance-fast .adversarial/inputs/<TASK-ID>-spec-compliance-input.md
-```
+> **The `spec-compliance` evaluator is not installed** (KIT-0069 / A35).
+> It was never a library evaluator — it originated as a dispatch-kit
+> project-local custom evaluator and did not survive the port into this
+> kit. `adversarial spec-compliance-fast` therefore matches nothing;
+> do not run it. **KIT-0072** tracks upstreaming it into the
+> adversarial-evaluator-library, after which this step becomes an
+> evaluator call again.
 
-## Step 4: Read and act on results
+Until then, do the trace directly. For each numbered requirement and each
+acceptance criterion in the task spec, record:
 
-The output lands in `.adversarial/logs/`. Read it and:
+- **Implemented?** YES / PARTIAL / NO — with the `file:function` that
+  implements it
+- **Tested?** YES / NO — with the test that covers it
+- **Evidence**: a brief code reference
 
-- **PASS** -> Proceed to `/commit-push-pr`
-- **PARTIAL** -> Fix the gaps, re-run tests, re-run evaluator
-- **FAIL** -> Fix critical gaps before proceeding
+Then check for spec drift in both directions:
 
-Report the verdict and any findings to the user.
+- Does the implementation add behavior the spec never asked for?
+- Does it change the spec's intent rather than satisfy it?
+- Were there implicit requirements the spec assumed but never stated?
+
+## Step 4: Report
+
+- **PASS** — every requirement traced to code AND a test -> proceed to
+  `/commit-push-pr`
+- **PARTIAL** — some requirements traced; list the gaps, fix them, re-run
+  tests, re-trace
+- **FAIL** — core requirements unimplemented; fix before proceeding
+
+Report the verdict and the per-requirement trace to the user. State
+plainly that this was a manual trace, not an evaluator run.
