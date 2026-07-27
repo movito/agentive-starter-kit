@@ -53,3 +53,38 @@ per round.
 Verdict-vocabulary note: the trio spans PASS/CONCERNS/FAIL and
 APPROVED/REJECT vocabularies — logs read and interpreted, not
 token-grepped.
+
+## PR 2 — retirements (F4 D1, F5 D2, F6 D3, F7 D4, F8 D5)
+
+Input: diff of the retirements branch vs the PR-1 branch (base
+`feature/KIT-0067-factory-front-door-and-structural-cleanup`,
+`--format diff` — the full-format input vs main was 966KB of
+already-reviewed PR-1 content plus moved archive text; the new
+content appears in full as diff additions). Diff-only caveat applied:
+every finding verified against the TREE before action.
+
+### code-reviewer-fast (gemini-2.5-flash): FAIL — all 3 "correctness" findings REFUTED on the tree
+
+| Finding | Disposition |
+|---|---|
+| "Remedy points at deleted setup-serena.sh" | **REFUTED**: `.serena/setup-serena.sh` exists and is tracked — the deleted file was `.serena/claude-code/verify-serena.sh` |
+| "Engines don't substitute ${PROJECT_NAME} into project.yml" | **REFUTED**: the engines never copy the template; `setup-serena.sh` (sed) and `new-worktree.sh` (bash substitution) do, both verified |
+| "CLAUDE.md still lists launchers/" | **REFUTED**: zero launcher references in CLAUDE.md — the evaluator read the deletion diff as an addition |
+| setup-dev doesn't exit on dispatch-init failure | **DECLINED — designed behavior**: opt-in fire-and-forget tooling; the summary reports skipped/failed states honestly (pre-existing, unchanged by D4's gate) |
+| engine-materials rsync leaves stale launchers in consumers | **DECLINED — wrong channel**: materials is one-shot adopt tooling; consumer cleanup is the manifest sync's deletion pruning (KIT-0049), which the removed `.kit/launchers/` entry feeds at 0.9.0 |
+
+### code-reviewer (o3): CONCERNS — 1 real, 1 test gap, 3 refuted/declined
+
+| Finding | Disposition |
+|---|---|
+| create-agent "still recreates `.kit/launchers/.locks`" | **REFUTED — fabricated path**: `LOCK_DIR` is `/tmp/agent-creation-<hash>.lock` (env-overridable); nothing touches `.kit/launchers` (tenth o3 fabrication data point) |
+| Unchecked mkdir in that path | Moot with the above (the lock mkdir IS the atomic primitive, in a retry loop) |
+| Remedy display ambiguity on space paths | **REAL (latent) — fixed** (`a8dbb05`): outer decorative quotes dropped (`Run: <cmd>  # …`); test parametrized over a dir-with-spaces |
+| setup-dev banner "mis-ordering" | **DECLINED — unsubstantiated**: banners number strictly sequentially via one counter |
+| Launcher-dir-absent untested | **Accepted — fixed** (`a8dbb05`): test removes the whole directory |
+| Verified clean by the evaluator | skip-with-notice, 6/6 banners, manifest counts, dashed paths |
+
+### claude-code (security): APPROVED
+
+Explicitly confirmed: verdict-vocabulary table correctly migrated to
+the live skill; no security findings.
