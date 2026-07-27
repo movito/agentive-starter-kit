@@ -5,9 +5,9 @@
 > a CLASS — worktree provisioning that shares or misdirects state
 > with the primary clone. KIT-0069 hit four instances in one session.
 
-**Status**: Todo
+**Status**: In Review
 **Priority**: high
-**Assigned To**: unassigned
+**Assigned To**: feature-developer-f5
 **Estimated Effort**: 2-3 hours
 **Created**: 2026-07-27
 **Linear ID**: (automatically backfilled after first sync)
