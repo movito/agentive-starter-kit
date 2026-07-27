@@ -4,7 +4,8 @@
 topology — the primary clone stays on `main` for the planner, code
 happens in isolated worktrees
 **Agents**: planner (creation + removal), feature-developer (the session)
-**Last Updated**: 2026-07-14 (KIT-0044, codifying the KIT-0043 pilot)
+**Last Updated**: 2026-07-27 (KIT-0071, worktree provisioning
+correctness; previously KIT-0044, codifying the KIT-0043 pilot)
 
 ---
 
@@ -38,19 +39,53 @@ The helper:
    local `main` that may be silently stale (the KIT-0043 pilot's
    pre-created branch was 10 commits behind).
 2. Provisions the gitignored runtime artifacts from an **explicit,
-   enumerated list** maintained inside the helper itself — currently
-   `.venv`, `.env`, and `.adversarial/evaluators/`, all symlinked to
-   the primary clone. New artifacts get added to the list by name,
-   never via an "everything gitignored" glob.
-3. Refuses cleanly if the worktree path or branch already exists.
-4. Prints the launch instruction (below).
+   enumerated list** maintained inside the helper itself (the helper
+   is the source of truth for the list; this doc describes the
+   contract). Symlinks are for **read-only use only** — currently
+   `.env` and `.adversarial/evaluators/`, symlinked to the primary
+   clone. New artifacts get added to the list by name, never via an
+   "everything gitignored" glob.
+3. Provisions a **real per-worktree `.venv`** (via
+   `project setup --no-hooks`) — never a symlink. The pre-KIT-0071
+   design symlinked `.venv`; an in-worktree `python3 -m venv --clear`
+   followed the link and **emptied the primary clone's venv**
+   (KIT-0065), and the shared venv was the KIT-0044 stale-venv
+   split-brain in permanent form. Mutable state is never shared behind
+   a symlink. `--no-hooks` because git hooks live in the shared common
+   git dir and are already installed by the primary's setup. If venv
+   provisioning fails (e.g. network), the helper says so and the
+   session runs `./scripts/core/project setup --no-hooks` itself.
+4. Generates a worktree-local `.serena/project.yml` with a
+   **per-worktree project name** (when the primary uses Serena) — see
+   the Serena section below.
+5. Refuses cleanly if the worktree path or branch already exists.
+6. Prints the launch instruction (below).
 
-Deliberately **not** provisioned: `.serena/project.yml` (Serena
-registers the project by name against the primary path — a second copy
-at another path collides), `.adversarial/logs/` (regenerates),
+Deliberately **not** provisioned: `.adversarial/logs/` (regenerates),
 `.dispatch/` runtime files and tool caches (regenerate on demand), and
 user-owned untracked directories such as `.kit/adversarial/` (stay in
 the primary; never copied, staged, or deleted).
+
+`project doctor` audits this contract from inside a worktree (the
+`worktree-*` checks): a symlinked `.venv` WARNs, a missing or
+name-colliding Serena config WARNs, and the shared-by-design set is
+enumerated so nobody re-diagnoses it.
+
+## Serena in worktrees
+
+Serena resolves a project **name** to its **registered path** — inside
+a worktree, `activate_project("<primary-name>")` targets the PRIMARY
+clone, so bulk edits (`replace_in_files`) would hit main's checkout
+(KIT-0069, caught pre-use). The rule:
+
+- **Activate by absolute path**, never by the primary's name:
+  `activate_project("/path/to/ask-worktrees/<TASK-ID>")`. This
+  registers a separate per-path project.
+- The helper pre-generates `.serena/project.yml` with a per-worktree
+  `project_name` (`<primary-name>-<TASK-ID>`) so path activation is
+  one obvious step; the file is gitignored (`.serena/project.yml` and
+  `.serena/project.local.yml` in the root `.gitignore`), so removal
+  stays clean.
 
 ## Launch
 
@@ -90,6 +125,33 @@ The contract, since commit `7ef104d`:
   from the pilot was never conclusively pinned, so the canary is the
   proof the isolation holds — a `true` here means a new vector is live:
   stop, restore (`git -C <primary> config core.bare false`), and file it.
+
+## Triage: venv failures inside a worktree
+
+**Symptom**: `Unable to create directory .venv`, `Errno None` from
+`shutil.rmtree`, sandbox-blocked deletions, or a venv rebuild that
+"succeeds" but breaks tooling in the *primary* clone.
+
+**First move**: `ls -la .venv`. If it is a **symlink**, this is a
+pre-KIT-0071 worktree carrying the KIT-0065 destruction vector —
+**never** run `python3 -m venv --clear`, `--force` rebuilds, or any
+deletion *through* the link (the mutation follows the link into the
+primary clone's venv; KIT-0065 emptied it exactly this way). The fix:
+
+```bash
+rm .venv                                  # removes the LINK only
+./scripts/core/project setup --no-hooks   # real per-worktree venv
+```
+
+(`project setup` refuses on its own when `.venv` is a symlink, and
+`project doctor` WARNs on one — trust those signals.)
+
+**Scratch directories** (settled policy, operator decision
+2026-07-27): the kit's tracked `Bash(rm -rf*)` deny **stays** — it
+overrides any allow, by design, and is not a gap to fix. Agents use
+`mktemp -d` for scratch space and end the session with a paste-able
+sweep list of leftovers for the operator; nothing in the kit asks for
+an rm-rf allowlist.
 
 ## Closeout
 

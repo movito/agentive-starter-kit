@@ -391,9 +391,9 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.7.0",
+  "core_version": "3.8.0",
   "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-07-23T00:00:00Z",
+  "synced_at": "2026-07-27T00:00:00Z",
   "files": {
     "scripts_core": [
       "core/__init__.py",
@@ -404,6 +404,7 @@ PRECOMMIT
       "core/doctor.d/30-evaluators.sh",
       "core/doctor.d/40-version-skew.py",
       "core/doctor.d/50-plugin-source.sh",
+      "core/doctor.d/55-worktree-provisioning.sh",
       "core/doctor.d/60-push-sync-token.sh",
       "core/doctor.d/70-core-bare.sh",
       "core/doctor.d/80-bot-presence.sh",
@@ -475,6 +476,7 @@ rm -f "$TARGET/tests/test_kit_markers.py" \
       "$TARGET/tests/test_check_hook_seeds.py" \
       "$TARGET/tests/test_entrance_shims.py" \
       "$TARGET/tests/test_engine_materials.py" \
+      "$TARGET/tests/test_new_worktree.py" \
       "$TARGET/tests/test_setup_door.py"
 "${RSYNC_BASE[@]}" --exclude='test_kit_markers.py' \
     --exclude='test_bootstrap_consumer.py' \
@@ -483,6 +485,7 @@ rm -f "$TARGET/tests/test_kit_markers.py" \
     --exclude='test_check_hook_seeds.py' \
     --exclude='test_entrance_shims.py' \
     --exclude='test_engine_materials.py' \
+    --exclude='test_new_worktree.py' \
     --exclude='test_setup_door.py' \
     "$PROJECT_ROOT/tests/" "$TARGET/tests/"
 

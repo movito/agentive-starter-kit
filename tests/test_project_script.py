@@ -350,7 +350,15 @@ class TestPythonVersionCheck:
         with patch.object(_project_module.sys, "version_info", mock_version):
             with patch.object(_project_module.subprocess, "run", mock_run):
                 with patch.object(_project_module.Path, "exists", mock_path_exists):
-                    cmd_setup([])  # must complete without raising
+                    # is_symlink False: the KIT-0071 symlink guard reads
+                    # the REAL .venv otherwise (a pre-KIT-0071 worktree
+                    # would trip it) — this test is about versions only
+                    with patch.object(
+                        _project_module.Path,
+                        "is_symlink",
+                        MagicMock(return_value=False),
+                    ):
+                        cmd_setup([])  # must complete without raising
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors
@@ -373,7 +381,15 @@ class TestPythonVersionCheck:
         with patch.object(_project_module.sys, "version_info", mock_version):
             with patch.object(_project_module.subprocess, "run", mock_run):
                 with patch.object(_project_module.Path, "exists", mock_path_exists):
-                    cmd_setup([])  # must complete without raising
+                    # is_symlink False: the KIT-0071 symlink guard reads
+                    # the REAL .venv otherwise (a pre-KIT-0071 worktree
+                    # would trip it) — this test is about versions only
+                    with patch.object(
+                        _project_module.Path,
+                        "is_symlink",
+                        MagicMock(return_value=False),
+                    ):
+                        cmd_setup([])  # must complete without raising
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors
@@ -396,7 +412,15 @@ class TestPythonVersionCheck:
         with patch.object(_project_module.sys, "version_info", mock_version):
             with patch.object(_project_module.subprocess, "run", mock_run):
                 with patch.object(_project_module.Path, "exists", mock_path_exists):
-                    cmd_setup([])  # must complete without raising
+                    # is_symlink False: the KIT-0071 symlink guard reads
+                    # the REAL .venv otherwise (a pre-KIT-0071 worktree
+                    # would trip it) — this test is about versions only
+                    with patch.object(
+                        _project_module.Path,
+                        "is_symlink",
+                        MagicMock(return_value=False),
+                    ):
+                        cmd_setup([])  # must complete without raising
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors
@@ -419,7 +443,15 @@ class TestPythonVersionCheck:
         with patch.object(_project_module.sys, "version_info", mock_version):
             with patch.object(_project_module.subprocess, "run", mock_run):
                 with patch.object(_project_module.Path, "exists", mock_path_exists):
-                    cmd_setup([])  # must complete without raising
+                    # is_symlink False: the KIT-0071 symlink guard reads
+                    # the REAL .venv otherwise (a pre-KIT-0071 worktree
+                    # would trip it) — this test is about versions only
+                    with patch.object(
+                        _project_module.Path,
+                        "is_symlink",
+                        MagicMock(return_value=False),
+                    ):
+                        cmd_setup([])  # must complete without raising
 
         captured = capsys.readouterr()
         # Should NOT show version rejection errors
@@ -1162,3 +1194,109 @@ class TestNoOpRerunWithoutPin:
                 _project_module.cmd_install_evaluators([], tmp_path)
 
         assert "already installed" in capsys.readouterr().out
+
+
+class TestSetupVenvSymlinkGuard:
+    """KIT-0071 (KIT-0065 incident): `project setup` must refuse to
+    operate through a symlinked .venv — a rebuild through the link
+    mutates the TARGET venv (KIT-0065 emptied the primary clone's).
+
+    Runs the REAL script copied into a tmp tree (cmd_setup derives the
+    project dir from __file__, so the copy anchors it at the fixture)."""
+
+    @staticmethod
+    def _fake_tree(tmp_path):
+        script_src = Path(__file__).parent.parent / "scripts" / "core" / "project"
+        core = tmp_path / "scripts" / "core"
+        core.mkdir(parents=True)
+        shutil.copy(script_src, core / "project")
+        return core / "project"
+
+    def _run_setup(self, script, *args):
+        return subprocess.run(
+            [sys.executable, str(script), "setup", *args],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+    def test_symlinked_venv_refused(self, tmp_path):
+        script = self._fake_tree(tmp_path)
+        target = tmp_path / "target-venv"
+        (target / "bin").mkdir(parents=True)
+        sentinel = target / "bin" / "python"
+        sentinel.write_text("#!/bin/sh\n", encoding="utf-8")
+        (tmp_path / ".venv").symlink_to(target)
+
+        result = self._run_setup(script)
+        assert result.returncode == 1
+        assert "SYMLINK" in result.stdout
+        assert "KIT-0065" in result.stdout
+        # the guard fired before anything touched the target venv
+        assert sentinel.exists()
+        assert (tmp_path / ".venv").is_symlink()
+
+    def test_symlinked_venv_refused_even_with_force(self, tmp_path):
+        script = self._fake_tree(tmp_path)
+        target = tmp_path / "target-venv"
+        target.mkdir()
+        (tmp_path / ".venv").symlink_to(target)
+
+        result = self._run_setup(script, "--force")
+        assert result.returncode == 1
+        assert "SYMLINK" in result.stdout
+        assert target.exists()
+
+    def test_dangling_venv_symlink_refused(self, tmp_path):
+        # exists() is False for a dangling link — the guard must still fire
+        script = self._fake_tree(tmp_path)
+        (tmp_path / ".venv").symlink_to(tmp_path / "gone")
+
+        result = self._run_setup(script)
+        assert result.returncode == 1
+        assert "SYMLINK" in result.stdout
+
+    def test_no_hooks_flag_skips_hook_install(self, tmp_path):
+        """--no-hooks (worktree provisioning): hooks live in the SHARED
+        common git dir; a worktree setup must not re-point them."""
+        script = self._fake_tree(tmp_path)
+        venv_bin = tmp_path / ".venv" / "bin"
+        venv_bin.mkdir(parents=True)
+        (venv_bin / "python").write_text("#!/bin/sh\n", encoding="utf-8")
+        for stub in ("pip", "pre-commit"):
+            stub_path = venv_bin / stub
+            stub_path.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            stub_path.chmod(0o755)
+
+        result = self._run_setup(script, "--no-hooks")
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "Skipping pre-commit hook install" in result.stdout
+        assert "Pre-commit hooks installed" not in result.stdout
+
+    def test_refusal_in_worktree_recommends_no_hooks(self, tmp_path):
+        """BugBot (this PR): in a linked worktree (.git is a FILE) the
+        refusal's rerun advice must carry --no-hooks."""
+        script = self._fake_tree(tmp_path)
+        (tmp_path / ".git").write_text(
+            "gitdir: /somewhere/.git/worktrees/x\n", encoding="utf-8"
+        )
+        target = tmp_path / "target-venv"
+        target.mkdir()
+        (tmp_path / ".venv").symlink_to(target)
+
+        result = self._run_setup(script)
+        assert result.returncode == 1
+        assert "setup --no-hooks" in result.stdout
+
+    def test_refusal_outside_worktree_plain_setup(self, tmp_path):
+        """In a normal clone (.git is a dir or absent) the advice stays
+        plain setup — hooks belong here."""
+        script = self._fake_tree(tmp_path)
+        (tmp_path / ".git").mkdir()
+        target = tmp_path / "target-venv"
+        target.mkdir()
+        (tmp_path / ".venv").symlink_to(target)
+
+        result = self._run_setup(script)
+        assert result.returncode == 1
+        assert "--no-hooks" not in result.stdout

@@ -17,6 +17,7 @@ Usage:
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -618,10 +619,19 @@ def get_activate_command(venv_dir: Path) -> str:
 
 
 def cmd_setup(args):
-    """Set up virtual environment and install dependencies."""
+    """Set up virtual environment and install dependencies.
+
+    --force     recreate an existing venv
+    --no-hooks  skip the pre-commit hook install — worktree provisioning
+                uses this: hooks live in the SHARED common git dir and
+                are already installed by the primary clone's setup;
+                reinstalling from a worktree would re-point them at a
+                venv that dies with the worktree (KIT-0071)
+    """
     project_dir = Path(__file__).resolve().parent.parent.parent
     venv_dir = project_dir / ".venv"
     force = "--force" in args
+    install_hooks = "--no-hooks" not in args
 
     # 1. Verify Python version (3.10+ required)
     major, minor = sys.version_info[:2]
@@ -641,6 +651,31 @@ def cmd_setup(args):
     # dependency; adversarial-workflow >=1.0.1 requires only >=3.10
     # (verified empirically on 3.14 — KIT-0065)
     print(f"✅ Python {version_str}")
+
+    # Refuse to operate through a symlinked .venv — mutating it mutates
+    # the TARGET venv: KIT-0065's `venv --clear` through such a link
+    # emptied the primary clone's venv. is_symlink() also catches a
+    # dangling link, which exists() would miss. Must sit before ANY
+    # venv mutation (steps 2-3).
+    if venv_dir.is_symlink():
+        # In a linked worktree (.git is a FILE), the rerun must say
+        # --no-hooks: hooks live in the shared common git dir and a
+        # reinstall would re-point them at a venv that dies with the
+        # worktree (BugBot, KIT-0071). Root-scoped + shlex-quoted so a
+        # paste from any cwd hits THIS checkout and hostile path
+        # characters cannot break the snippet (bot rounds, PR #96).
+        flags = " --no-hooks" if (project_dir / ".git").is_file() else ""
+        rerun = (
+            f"rm {shlex.quote(str(venv_dir))} && "
+            f"(cd {shlex.quote(str(project_dir))} && "
+            f"./scripts/core/project setup{flags})"
+        )
+        print(f"❌ .venv is a SYMLINK: {venv_dir} -> {os.readlink(venv_dir)}")
+        print("   Refusing: rebuilding through the link would mutate the TARGET")
+        print("   venv (KIT-0065: this emptied the primary clone's venv).")
+        print("   Remove the link first, then re-run:")
+        print(f"       {rerun}")
+        sys.exit(1)
 
     # 2. Handle existing venv
     if venv_dir.exists():
@@ -707,7 +742,9 @@ def cmd_setup(args):
 
     # 5. Install pre-commit hooks (optional - skip if pre-commit not installed)
     pre_commit = venv_dir / "bin" / "pre-commit"
-    if pre_commit.exists():
+    if not install_hooks:
+        print("\n⏭️  Skipping pre-commit hook install (--no-hooks)")
+    elif pre_commit.exists():
         print("\n🔧 Installing pre-commit hooks...")
         try:
             result = subprocess.run(
@@ -2457,7 +2494,10 @@ Project CLI - Agentive Starter Kit
 Usage: ./scripts/core/project <command> [options]
 
 Setup:
-  setup [--force]        Create venv and install dependencies
+  setup [--force] [--no-hooks]  Create venv and install dependencies
+                         (--no-hooks: skip pre-commit hook install —
+                         used by worktree provisioning; refuses if
+                         .venv is a symlink, KIT-0065)
   install-evaluators     Install evaluators from adversarial-evaluator-library
                          Options: --force (reinstall), --ref <tag> (version)
   doctor                 Run incident-mapped environment checks (doctor.d/)
