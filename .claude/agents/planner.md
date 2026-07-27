@@ -431,6 +431,13 @@ not inherit `.claude/settings.json` allow patterns. Bash-only sub-agents
 block on permission prompts. This is why planner does not delegate via
 Task — the user invokes agents in new tabs instead.
 
+**Splitting work by finding-number splits FILES jointly** — when tasks
+divide an audit/review by finding ID rather than by file, some files
+end up owned by two tasks (KIT-0069: `COVERAGE-WORKFLOW.md` carried
+one task's A42 fix and another's A41 rewrite). Enumerate the
+jointly-owned files explicitly in each handoff so the implementer
+expects the seam instead of discovering it. (KIT-0069 retro #5)
+
 **Verify the branch before every commit** — planner sessions can share a
 working directory with an active implementation session, and the checkout
 can change under you mid-turn. Run `git branch --show-current`

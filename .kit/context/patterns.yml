@@ -37,6 +37,22 @@ defensive:
       - "--only outside the allowlist errors instead of silently no-op (KIT-0049)"
       - "record readers: a partially-unreadable multi-field record poisons DEPENDENT fields together, never validates them independently — an unreadable shape must poison the profile, else profile-scoped SKIPs silently narrow the promised full check set (KIT-0050, sixth face)"
     caught_by: "o3 FAIL + fast-v2 + claude-code + BugBot + CodeRabbit (convergent, KIT-0049); BugBot record-reader face (KIT-0050)"
+  fix_by_class_not_instance:
+    rule: >
+      An audit enumerates INSTANCES; only a class sweep closes a
+      CLASS. When a task fixes findings that share a shape (stale
+      path, ghost citation, dead flag), grep the class pattern
+      repo-wide (grep -Rn, never rg — see self-review item 16)
+      rather than fixing only the enumerated sites — and know the
+      limit: a zero-hit grep proves the TOKEN is gone, not the
+      class; the same claim reworded (docstring vs print, comment vs
+      table, prose vs diagram label) survives every pattern. Full
+      closure = token sweep + reading every touched file +
+      tree-grounded verification.
+    examples:
+      - "KIT-0069 class greps found ~15% more sites than the audit's 92-finding list (.env.template, bare ./project help form, filename-less prose mentions)"
+      - "…and still missed 6 sibling instances that only file-reads/tree-verification caught (6 regressions, all one failure mode)"
+    caught_by: "KIT-0069 retro (What Worked 1 + Surprising 5); planner adopted 2026-07-27"
   evidence_files_append_only:
     rule: >
       Evidence records (audit records, retros, review records) are

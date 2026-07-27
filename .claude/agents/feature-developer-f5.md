@@ -392,6 +392,18 @@ or use the `/code-review-evaluator` skill.
 > pre-PR, and say so in the review record. Rationale lives in the
 > code-review-evaluator skill ("Ordering").
 
+> **Prose-sweep exception (KIT-0069)**: on a PROSE-DOMINATED sweep
+> (many small text fixes across many files), the trio is unreliable —
+> a diff-only input makes evaluators reconstruct unchanged regions
+> from assumption, and they reconstruct the PRE-fix state (KIT-0069:
+> trio 0-for-7 while CodeRabbit went 6-for-6). For such PRs: still
+> record one trio run (Gate 5 evidence) but NEVER action a finding
+> without reproducing it against the tree, and tell the planner the
+> PR needs **tree-grounded verification before merge** (the planner
+> runs sectioned verifiers against the branch; KIT-0069's caught 3
+> residuals the class greps missed). That verification is the real
+> gate for this PR shape.
+
 ### Step 1 — Prepare the input
 
 ```bash

@@ -1,6 +1,6 @@
 # KIT-0069 Handoff — feature-developer
 
-**Task**: `.kit/tasks/3-in-progress/KIT-0069-audit-truth-sweep.md`
+**Task**: `.kit/tasks/5-done/KIT-0069-audit-truth-sweep.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-27 (planner-f5)
 **Estimated effort**: 1-1.5 days

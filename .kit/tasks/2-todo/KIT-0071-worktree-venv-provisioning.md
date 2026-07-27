@@ -78,6 +78,15 @@ also the KIT-0044 stale-venv split-brain in permanent form.
   overrides any allow, by design). Agents use `mktemp -d` for
   scratch and list leftovers for operator sweep — codify that line
   in F3's triage entry; the check must NOT nag about an allowlist.
+- **F7 — doctor note: valid key ≠ usable key (KIT-0069 incident
+  closure #3)**: `claude-code` evaluator failed at runtime with a
+  VALID Anthropic key — zero credit balance. `doctor.d/20-env-keys.py`
+  checks presence only; balance has no cheap API. Add the
+  can't-check-this note naming the symptom ("valid key, evaluator
+  writes no log → check credit balance") — copy the shape of the
+  CodeRabbit-quota note in `80-bot-presence.sh`. Rides this task
+  because it's a one-note doctor.d change alongside F2/F6's doctor
+  work; not worktree-specific, say so in the note.
 
 ## Acceptance Criteria
 

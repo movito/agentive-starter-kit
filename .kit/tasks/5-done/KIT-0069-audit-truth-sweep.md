@@ -1,6 +1,6 @@
 # KIT-0069: Audit truth sweep — every prose surface matches reality
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-1.5 days

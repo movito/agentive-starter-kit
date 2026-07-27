@@ -120,6 +120,10 @@ Read every function in the file you changed (not just the ones you wrote):
     - `rg` skips hidden directories by default, and nearly every kit surface lives in one (`.kit/`, `.claude/`, `.adversarial/`, `.serena/`). A class grep without `--hidden` returns a *false all-clear*. During KIT-0069 this made a 20-site ghost-citation class look already-fixed.
     - Even with `--hidden`, `rg` returned two more false-empties in the same session against patterns `grep -Rn` matched. **For class-closure evidence, use `grep -Rn`** — an under-reporting grep in a truth sweep is worse than no grep, because it manufactures false confidence.
 
+    **Remedies are citations too — EXECUTE a command before recommending it** (KIT-0069 T3, Major): a doc fix replaced destructive advice with advice that *does nothing* (`install-evaluators` returns early without `--force`). Paths and versions got verified relentlessly; the recommended command's behavior never did. Run it once, or trace its dispatch to the early-return, before the diff closes.
+
+    **When you edit a line to fix one false claim, verify EVERY claim on that line** (twice in KIT-0069): correcting one token while leaving a neighboring falsehood makes the citation read as freshly-verified — a partially-corrected line launders the surviving error. And a zero-hit token grep proves a *token* is gone, not a *class*: the same claim reworded (docstring vs print, comment vs table, prose vs Mermaid label) survives every pattern. Closing a class = token sweep + a read of every file you touched.
+
 ## Step 4: Test assertion audit
 
 Before checking boundary coverage, audit test assertion quality:
