@@ -431,7 +431,21 @@ class TestProfiles:
         assert (target / "scripts" / "core" / "ci-check.sh").is_file()
         assert (target / "scripts" / "local" / "checks.sh").is_file()
         assert not (target / ".claude" / "agents" / "planner.md").exists()
-        assert "profile: python" in (target / "CLAUDE.md").read_text(encoding="utf-8")
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "profile: python" in claude
+        # KIT-0067 F3: no planner shipped -> no planner self-direction
+        assert "first-session" not in claude
+
+    def test_first_session_region_seeded_with_kit(self, tmp_path):
+        # KIT-0067 F3: the seeded CLAUDE.md closes with the planner
+        # self-direction region wherever the kit workflow (and thus
+        # the planner agent) ships
+        target = make_consumer_dir(tmp_path, "firstsession")
+        result = run_bootstrap(target)
+        assert result.returncode == 0, result.stderr + result.stdout
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "<!-- BEGIN KIT-LOCAL: first-session -->" in claude
+        assert "invoke the `planner` agent" in claude
 
     def test_equals_form_flags_parse(self, tmp_path):
         # o3 review gap: the --flag=value forms had no functional run

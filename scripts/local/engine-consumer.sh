@@ -875,6 +875,15 @@ RULES
     fi
     seed_region project-rules "$RULES_BODY" "profile: $PROFILE"
 fi
+
+# First-session self-direction (KIT-0067 F3): the seeded CLAUDE.md
+# closes by telling a cold-open session what to do first. Only where
+# the planner actually ships (--no-kit prunes the kit agents).
+if [ "$KIT_ENABLED" -eq 1 ]; then
+    seed_region first-session \
+"First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start." \
+        "planner self-direction"
+fi
 echo
 
 # ─────────────────────────────────────────
