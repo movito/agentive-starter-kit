@@ -58,11 +58,14 @@ def _make_executable(path: Path, body: str) -> None:
     path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
-def _primary_fixture(tmp_path: Path, setup_stub_exit: int = 0) -> Path:
-    """A primary clone named kit/ with a local bare origin, carrying the
-    real helper, the real Serena template, and a stub `project` that
-    records its argv to setup-args.txt in its own checkout."""
-    primary = tmp_path / "kit"
+def _primary_fixture(
+    tmp_path: Path, setup_stub_exit: int = 0, primary_name: str = "kit"
+) -> Path:
+    """A primary clone (default name kit/) with a local bare origin,
+    carrying the real helper, the real Serena template, and a stub
+    `project` that records its argv to setup-args.txt in its own
+    checkout."""
+    primary = tmp_path / primary_name
     (primary / "scripts" / "local").mkdir(parents=True)
     (primary / "scripts" / "core").mkdir(parents=True)
     (primary / ".serena").mkdir()
@@ -162,3 +165,14 @@ class TestProvisioning:
         wt = tmp_path / "ask-worktrees" / "KIT-1234"
         assert not (wt / ".serena" / "project.yml").exists()
         assert "Serena config generated" not in result.stdout
+
+    def test_ampersand_in_primary_dirname_survives_substitution(self, tmp_path):
+        # BugBot round 2: bash >= 5.2 patsub_replacement expands & in
+        # the replacement — the helper disables it so the name stays
+        # literal (on older bash this was always literal)
+        primary = _primary_fixture(tmp_path, primary_name="kit&co")
+        result = _run_helper(primary, "KIT-1234", "demo")
+        assert result.returncode == 0, result.stdout + result.stderr
+        wt = tmp_path / "ask-worktrees" / "KIT-1234"
+        serena = (wt / ".serena" / "project.yml").read_text(encoding="utf-8")
+        assert 'project_name: "kit&co-KIT-1234"' in serena

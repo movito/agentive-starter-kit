@@ -219,7 +219,10 @@ if [ -f "$PRIMARY_ROOT/.serena/project.yml" ] \
     && [ -f "$WORKTREE_PATH/.serena/project.yml.template" ]; then
     SERENA_NAME="$(basename "$PRIMARY_ROOT")-$TASK_ID"
     # bash substitution, not sed: a metacharacter in the dirname (&, \)
-    # would corrupt a sed replacement string
+    # would corrupt a sed replacement string. bash >= 5.2 re-introduces
+    # the & hazard via patsub_replacement (on by default) — disable it
+    # so SERENA_NAME stays literal; no-op on older bash (BugBot).
+    shopt -u patsub_replacement 2>/dev/null || true
     TEMPLATE_CONTENT="$(cat "$WORKTREE_PATH/.serena/project.yml.template")"
     printf '%s\n' "${TEMPLATE_CONTENT//\$\{PROJECT_NAME\}/$SERENA_NAME}" \
         > "$WORKTREE_PATH/.serena/project.yml"
