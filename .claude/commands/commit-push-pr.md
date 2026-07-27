@@ -52,7 +52,9 @@ git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>&1 || echo "No upstream b
 - Extract the task ID from the branch name (e.g., `feature/TASK-0010-foo` -> `TASK-0010`)
 - Write a concise commit message: `[type]: [description]` where type is feat/fix/chore/docs/test/refactor
 - If `$ARGUMENTS` is provided, use it as the commit message instead
-- Include `Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>` trailer
+- Include a `Co-Authored-By: Claude <noreply@anthropic.com>` trailer
+  (model-agnostic — do NOT pin a model version; the agents and
+  COMMIT-PROTOCOL.md already use this unversioned form)
 - Use a HEREDOC for the message to preserve formatting
 
 ## Step 3: Push
