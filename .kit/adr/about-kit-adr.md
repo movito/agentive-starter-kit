@@ -44,6 +44,20 @@ This folder contains ADRs inherited from the **agentive-starter-kit** template. 
 | KIT-ADR-0017 | API Testing Infrastructure | Accepted |
 | KIT-ADR-0018 | Workflow Observation | Accepted |
 
+## Legacy-prefix ADRs in this directory
+
+Two kit decisions predate the KIT-ADR numbering and keep their
+original `ADR-` filenames (moved here from `docs/adr/` by KIT-0067 D5
+— that directory belongs to the consumer project's own decisions):
+
+| File | Title | Status |
+|------|-------|--------|
+| `ADR-0007-unified-artifact-registry.md` | Unified Artifact Registry | Proposed (owning task ASK-0048 parked) |
+| `ADR-0008-tiered-manifest-sync.md` | Tiered Manifest Sync | Accepted (cited by DISTRIBUTION-ARCHITECTURE, MANIFEST-UPGRADE-GUIDE) |
+
+They are unrelated to KIT-ADR-0007/KIT-ADR-0008 above despite the
+similar numbers.
+
 ## When to Reference These
 
 Reference these KIT-ADRs when:

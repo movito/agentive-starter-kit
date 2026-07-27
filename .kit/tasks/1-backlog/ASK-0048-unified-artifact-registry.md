@@ -108,8 +108,8 @@ Write a helper script (`scripts/core/compute_content_hash.py` or similar) to com
 
 | Resource | Location |
 |----------|----------|
-| ADR (full spec) | `docs/adr/ADR-0007-unified-artifact-registry.md` |
-| Task starter (detailed) | `docs/adr/ASK-UNIFIED-REGISTRY-TASK-STARTER.md` |
+| ADR (full spec) | `.kit/adr/ADR-0007-unified-artifact-registry.md` |
+| Task starter (detailed) | `.kit/context/ASK-UNIFIED-REGISTRY-TASK-STARTER.md` (superseded banner — re-evaluate first) |
 | GitHub issue | movito/agentive-starter-kit#44 |
 | Existing agents | `.claude/agents/*.md` |
 | Existing manifest | `.core-manifest.json` |

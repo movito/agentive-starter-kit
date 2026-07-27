@@ -289,6 +289,6 @@ update `last-updated` and `version` (semver patch for a pin-only bump).
 
 ## Reference
 
-- **ADR-0008**: `docs/adr/ADR-0008-tiered-manifest-sync.md` — architectural decision
+- **ADR-0008**: `.kit/adr/ADR-0008-tiered-manifest-sync.md` — architectural decision
 - **KIT-ADR-0022**: `.kit/adr/KIT-ADR-0022-manifest-based-sync-ownership.md` — original internal ADR
 - **Migration playbook**: `.kit/docs/KIT-MIGRATION-PLAYBOOK.md` — full `.kit/` layout migration (broader scope)

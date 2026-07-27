@@ -181,7 +181,7 @@ Real-world outcomes:
 See existing ADRs for reference:
 - `.kit/adr/KIT-ADR-0004-adversarial-workflow-integration.md`
 - `.kit/adr/KIT-ADR-0012-task-status-linear-alignment.md`
-- `docs/adr/ADR-0008-tiered-manifest-sync.md`
+- `.kit/adr/ADR-0008-tiered-manifest-sync.md`
 
 ---
 
