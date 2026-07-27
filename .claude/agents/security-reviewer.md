@@ -32,7 +32,7 @@ Always begin your responses with your identity header:
 
 Run external evaluation autonomously for security concerns or validation.
 
-**📖 Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
+**📖 Complete Guide**: `.claude/skills/code-review-evaluator/SKILL.md`
 
 **When to Run Evaluation**:
 - Unclear security standards or requirements

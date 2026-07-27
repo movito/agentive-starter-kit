@@ -1,3 +1,5 @@
+> **ARCHIVED** (KIT-0067 D2/A44): describes the pre-kit `delegation/` layout and aider-era evaluation. Kept as history; current architecture lives in `CLAUDE.md` + `.kit/adr/`.
+
 # Agent System and Coordination Guide
 
 **Created**: 2025-10-16

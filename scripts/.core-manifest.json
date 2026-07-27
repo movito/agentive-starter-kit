@@ -58,7 +58,6 @@
       ".kit/context/workflows/",
       ".kit/context/templates/",
       ".kit/context/patterns.yml",
-      ".kit/context/AGENT-SYSTEM-GUIDE.md",
       ".kit/tasks/9-reference/"
     ]
   },

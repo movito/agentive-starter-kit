@@ -331,7 +331,7 @@ Be **specific** about what the agent does.
 **Essential Reading** (reference these during agent creation):
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md` (base template)
 - **Creation Workflow**: `.kit/context/workflows/AGENT-CREATION-WORKFLOW.md` (comprehensive guide)
-- **Evaluator Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (for Evaluator section)
+- **Evaluator Workflow**: `.claude/skills/code-review-evaluator/SKILL.md` (for Evaluator section)
 - **Existing Agents**: `.claude/agents/` (examples to learn from)
 
 **Quick Commands**:

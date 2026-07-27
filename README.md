@@ -381,7 +381,7 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 - **Agentive Development Guide** (archived): `docs/archive/agentive-development/README.md`
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md`
 - **Task Template**: `.kit/tasks/9-reference/templates/task-template.md`
-- **Evaluation Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
+- **Evaluation Guidance**: `.claude/skills/code-review-evaluator/SKILL.md` (full historical guide archived at `docs/archive/EVALUATION-WORKFLOW.md`)
 - **Starter Kit ADRs**: `.kit/adr/` (18+ architectural decisions)
 - **Your Project ADRs**: `docs/adr/` (start fresh here)
 

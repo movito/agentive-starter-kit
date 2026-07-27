@@ -246,7 +246,7 @@ Customize the documentation links for this agent's role:
 - Test suite management: `.kit/context/workflows/TEST-SUITE-WORKFLOW.md`
 
 **Evaluation Workflow**:
-- **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
+- **Complete guide**: `.claude/skills/code-review-evaluator/SKILL.md`
 - Quick command: `adversarial evaluate <task-file>` (you run this directly)
 - Output location: `.adversarial/logs/<input-name>--<evaluator-name>.md`
 
@@ -384,7 +384,7 @@ git push -u origin [branch-name]
 ### Non-Negotiable Elements
 
 1. ✅ **Autonomous workflow** - Agents invoke directly, not via user
-2. ✅ **Complete guide reference** - Link to `.adversarial/docs/EVALUATION-WORKFLOW.md`
+2. ✅ **Complete guide reference** - Link to `.claude/skills/code-review-evaluator/SKILL.md`
 3. ✅ **Bash command examples** - Show `adversarial evaluate` command
 4. ✅ **Iteration limits** - Max 2-3 evaluations, escalate if stuck
 5. ✅ **Escalation guidance** - When to ask user vs re-evaluate
@@ -659,7 +659,7 @@ Before committing new agent, verify:
 - [ ] Restrictions (explicit)
 
 ### Evaluator Section (Critical)
-- [ ] References `.adversarial/docs/EVALUATION-WORKFLOW.md`
+- [ ] References `.claude/skills/code-review-evaluator/SKILL.md`
 - [ ] Shows `adversarial evaluate` command (autonomous)
 - [ ] Includes iteration limits (2-3 max)
 - [ ] Includes escalation guidance (when to ask user)
@@ -889,9 +889,9 @@ grep -n '\[' .claude/agents/your-agent.md
 ## Related Documentation
 
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md` (reusable template)
-- **Evaluator Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (complete guide)
+- **Evaluator Workflow**: `.claude/skills/code-review-evaluator/SKILL.md` (complete guide)
 - **Quick Reference**: `CLAUDE.md` (agents, scripts, workflows)
-- **Agent System Guide**: `.kit/context/AGENT-SYSTEM-GUIDE.md` (overall architecture)
+- **Agent System Guide**: `docs/archive/AGENT-SYSTEM-GUIDE.md` (archived — pre-kit layout; KIT-0067 D2)
 - **KIT-ADR-0004**: `.kit/adr/KIT-ADR-0004-adversarial-workflow-integration.md` (decision rationale)
 - **Automation Script**: `scripts/optional/create-agent.sh` (agent creation automation)
 

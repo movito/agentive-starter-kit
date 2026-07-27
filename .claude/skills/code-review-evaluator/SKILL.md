@@ -279,6 +279,23 @@ cat .adversarial/logs/<TASK-ID>-code-review-input--claude-code.md
 | **CONCERNS** | Address test gaps and robustness issues, push |
 | **PASS** | Proceed to human review |
 
+> ⚠️ **Verdict vocabulary is per-evaluator, not library-wide** — do
+> not grep a single token across logs. Across the installed set
+> (v0.10.0, 25 verdict-declaring evaluators; measured, KIT-0069/A74):
+>
+> | Vocabulary | Evaluators | Examples |
+> |---|---|---|
+> | `APPROVED` / `NEEDS_REVISION` / `REJECT` | majority | `claude-adversarial`, `mistral-adversarial`, `gpt55-synthesis` |
+> | `APPROVED` / `REVISION_SUGGESTED` | several | `arch-review`, `arch-review-fast`, `mistral-arch` |
+> | `APPROVED` / `REJECT` (no middle) | several | `claude-code`, `gemini-code`, `gpt5-codex` |
+> | `PASS` / `CONCERNS` / `FAIL` | three | `code-reviewer`, `code-reviewer-fast(-v2)` |
+>
+> The recommended trio itself spans two vocabularies (`claude-code`
+> emits APPROVED/REJECT). **Read each log and interpret the verdict;
+> never pattern-match a fixed token.** Confirm any evaluator's
+> vocabulary with:
+> `grep -o -E '\*\*[A-Z_]+\*\*' .adversarial/evaluators/<provider>/<name>/evaluator.yml | sort -u`
+
 ## Step 4: Persist Output
 
 Concatenate all evaluator outputs into a single review artifact tracked
