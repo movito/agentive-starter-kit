@@ -37,6 +37,18 @@ defensive:
       - "--only outside the allowlist errors instead of silently no-op (KIT-0049)"
       - "record readers: a partially-unreadable multi-field record poisons DEPENDENT fields together, never validates them independently — an unreadable shape must poison the profile, else profile-scoped SKIPs silently narrow the promised full check set (KIT-0050, sixth face)"
     caught_by: "o3 FAIL + fast-v2 + claude-code + BugBot + CodeRabbit (convergent, KIT-0049); BugBot record-reader face (KIT-0050)"
+  evidence_files_append_only:
+    rule: >
+      Evidence records (audit records, retros, review records) are
+      APPEND-ONLY during any task that consumes them. A class-wide
+      sweep that touches the evidence base rewrites its own
+      before/after quotes — silently, and plausibly enough to survive
+      review. For sweeps spanning live surfaces AND historical
+      records, use dry-run-then-select (occurrence-level selection),
+      never a blind repo-wide replace.
+    examples:
+      - "AGENT-TEMPLATE path sweep: 26 occurrences in 10 files, only 6 legitimate — the other 20 included the cruft-audit record quoting the stale paths as evidence (KIT-0069, caught by replace_in_files dry_run + occurrence_ids)"
+    caught_by: "fd implementation notes (KIT-0069 §4); planner adopted 2026-07-27"
   two_homes_get_a_pin:
     rule: >
       When one fact lives in two places (a version pinned in two
