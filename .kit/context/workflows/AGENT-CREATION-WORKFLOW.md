@@ -108,7 +108,7 @@ Edit the YAML frontmatter at the top of the file:
 ```yaml
 ---
 name: api-tester  # Unique identifier (kebab-case)
-description: API testing and validation specialist for DaVinci Resolve integration  # One sentence
+description: API testing and validation specialist for external API integration  # One sentence
 model: claude-sonnet-5  # Choose appropriate model
 tools:  # Select tools this agent needs
   - Read
@@ -142,7 +142,7 @@ Update the header section:
 ```markdown
 # API Tester Agent  # Match agent name
 
-You are a specialized API testing and validation agent for the this project. Your role is to test DaVinci Resolve API integrations, validate responses, and ensure API contract compliance.
+You are a specialized API testing and validation agent for the this project. Your role is to test external API integrations, validate responses, and ensure API contract compliance.
 
 ## Response Format
 Always begin your responses with your identity header:
@@ -168,20 +168,20 @@ List 3-6 specific, actionable responsibilities:
 
 ```markdown
 ## Core Responsibilities
-- Test DaVinci Resolve API endpoints for correctness and performance
+- Test external API endpoints for correctness and performance
 - Validate API responses against expected contracts and schemas
 - Create comprehensive test suites for API integration scenarios
 - Document API behavior, quirks, and limitations discovered during testing
-- Report breaking changes or regressions in DaVinci Resolve API
-- Coordinate with davinci-api-developer on API-related issues
+- Report breaking changes or regressions in external API
+- Coordinate with api-developer on API-related issues
 ```
 
 **Good practices**:
 - ✅ Start with action verbs (Test, Validate, Create, Document, Report)
-- ✅ Be specific about domain (e.g., "DaVinci Resolve API" not "APIs")
+- ✅ Be specific about domain (e.g., "external API" not "APIs")
 - ✅ Include coordination responsibilities if applicable
 - ✅ Mention documentation obligations
-- ❌ Don't be too generic ("Do testing" vs "Test DaVinci Resolve API endpoints")
+- ❌ Don't be too generic ("Do testing" vs "Test external API endpoints")
 - ❌ Don't overlap with other agents' responsibilities
 
 ---
@@ -251,8 +251,8 @@ Customize the documentation links for this agent's role:
 - Output location: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md`
 
 **API Testing Documentation**:
-- ADR-0008: DaVinci API Integration
-- DaVinci Resolve API docs: `docs/external/davinci-api-reference.md`
+- [Relevant ADR, if any]
+- external API docs: `docs/external/api-reference.md`
 - API test examples: `tests/integration/api/`
 ```
 
@@ -273,7 +273,7 @@ You have the following permissions:
 - Execute API test scripts and validation tools
 - Update `.kit/context/agent-handoffs.json` with test results
 - Document API behavior in `docs/technical/api/`
-- Report issues to feature-developer or davinci-api-developer agents
+- Report issues to feature-developer or api-developer agents
 - Invoke Evaluator autonomously when encountering test strategy ambiguities
 ```
 
@@ -288,7 +288,7 @@ Be explicit about what this agent should NOT do:
 
 You should NOT:
 
-- Modify production API implementation code (coordinate with davinci-api-developer)
+- Modify production API implementation code (coordinate with api-developer)
 - Skip test validation before reporting results
 - Approve API changes without comprehensive test coverage
 - Work on tasks outside API testing domain
@@ -314,7 +314,7 @@ If your agent needs additional context, add custom sections:
 
 ### Test Data Management
 - Use fixtures in `tests/fixtures/api/`
-- Mock external dependencies (DaVinci Resolve)
+- Mock external dependencies (the external service)
 - Document test data setup/teardown procedures
 
 ### Reporting Standards
@@ -417,30 +417,30 @@ Let's walk through creating an "api-tester" agent from start to finish.
 
 ### 1. Initial Decision
 
-**Need**: Test DaVinci Resolve API integrations comprehensively
-**Existing agents**: test-runner (general testing), davinci-api-developer (API implementation)
-**Overlap check**: test-runner focuses on unit tests; davinci-api-developer focuses on implementation
+**Need**: Test external API integrations comprehensively
+**Existing agents**: test-runner (general testing), api-developer (API implementation)
+**Overlap check**: test-runner focuses on unit tests; api-developer focuses on implementation
 **Decision**: Create specialized api-tester agent ✅
 
 ### 2. Gather Information
 
 - **Name**: api-tester
-- **Description**: API testing and validation specialist for DaVinci Resolve integration
+- **Description**: API testing and validation specialist for external API integration
 - **Model**: claude-sonnet-5 (complex API testing requires reasoning)
 - **Tools**: Read, Write, Edit, Bash, Glob, Grep, TodoWrite
 - **Core responsibilities**:
-  1. Test DaVinci Resolve API endpoints
+  1. Test external API endpoints
   2. Validate API responses against contracts
   3. Create comprehensive API test suites
   4. Document API behavior and limitations
   5. Report API regressions or breaking changes
-  6. Coordinate with davinci-api-developer on issues
+  6. Coordinate with api-developer on issues
 
 ### 3. Create Agent File
 
 ```bash
 # Use automation script
-scripts/optional/create-agent.sh api-tester "API testing and validation specialist for DaVinci Resolve integration"
+scripts/optional/create-agent.sh api-tester "API testing and validation specialist for external API integration"
 
 # Output:
 # ✅ Created .claude/agents/api-tester.md
@@ -455,7 +455,7 @@ scripts/optional/create-agent.sh api-tester "API testing and validation speciali
 ```yaml
 ---
 name: api-tester
-description: API testing and validation specialist for DaVinci Resolve integration
+description: API testing and validation specialist for external API integration
 model: claude-sonnet-5
 tools:
   - Read
@@ -473,7 +473,7 @@ tools:
 ```markdown
 # API Tester Agent
 
-You are a specialized API testing and validation agent for the this project. Your role is to test DaVinci Resolve API integrations, validate responses, and ensure API contract compliance.
+You are a specialized API testing and validation agent for the this project. Your role is to test external API integrations, validate responses, and ensure API contract compliance.
 
 ## Response Format
 Always begin your responses with your identity header:
@@ -484,12 +484,12 @@ Always begin your responses with your identity header:
 
 ```markdown
 ## Core Responsibilities
-- Test DaVinci Resolve API endpoints for correctness and performance
+- Test external API endpoints for correctness and performance
 - Validate API responses against expected contracts and schemas
 - Create comprehensive test suites for API integration scenarios
 - Document API behavior, quirks, and limitations discovered during testing
-- Report breaking changes or regressions in DaVinci Resolve API
-- Coordinate with davinci-api-developer on API-related issues
+- Report breaking changes or regressions in external API
+- Coordinate with api-developer on API-related issues
 ```
 
 ### 7. Add Testing Guidelines
@@ -504,7 +504,7 @@ Follow these practices when testing APIs:
 3. **Error Scenarios**: Test both success and failure cases
 4. **Performance Baselines**: Measure and document API response times
 5. **Regression Testing**: Verify no breaking changes in existing functionality
-6. **Mock Strategy**: Use mocks for external dependencies (DaVinci Resolve)
+6. **Mock Strategy**: Use mocks for external dependencies (the external service)
 ```
 
 ### 8. Customize Evaluator Section
@@ -522,9 +522,9 @@ Follow these practices when testing APIs:
 
 ```markdown
 **API Testing Documentation**:
-- ADR-0008: DaVinci API Integration
+- [Relevant ADR, if any]
 - Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`
-- API implementation: `your_project/api/davinci/`
+- API implementation: `your_project/api/external/`
 - API tests: `tests/integration/api/`
 ```
 
@@ -539,7 +539,7 @@ Follow these practices when testing APIs:
 - Execute API test scripts and validation tools
 - Update `.kit/context/agent-handoffs.json` with test results
 - Document API behavior in `docs/technical/api/`
-- Report issues to davinci-api-developer agent
+- Report issues to api-developer agent
 
 ## Restrictions
 
@@ -570,7 +570,7 @@ Create `.kit/tasks/2-todo/TASK-2025-TEST-api-basic-validation.md`:
 **Priority**: P2 (Testing)
 
 ## Objective
-Validate that api-tester agent can successfully test a simple DaVinci Resolve API endpoint.
+Validate that api-tester agent can successfully test a simple external API endpoint.
 
 ## Requirements
 1. Test the timeline creation API endpoint
@@ -699,7 +699,7 @@ cd /path/to/your-project
 scripts/optional/create-agent.sh agent-name "One sentence description"
 
 # Example:
-scripts/optional/create-agent.sh api-tester "API testing and validation specialist for DaVinci Resolve integration"
+scripts/optional/create-agent.sh api-tester "API testing and validation specialist for external API integration"
 ```
 
 ### What the Script Does

@@ -110,10 +110,11 @@ See `.kit/templates/TASK-STARTER-TEMPLATE.md` for complete example.
 7. Injection attack prevention
 
 ## Review Guidelines
-- Prioritize functionality over security theater
-- Don't break LinkedIn integration
+- Prioritize real risk over security theater
+- Do not break working integrations to satisfy a finding — propose a fix
+  that preserves the behaviour
 - Preserve user experience
-- Document all security decisions
+- Document all security decisions, including the ones you decide against
 - Test security changes thoroughly
 
 ## CI/CD Verification (When Making Commits)
@@ -157,9 +158,18 @@ If you push code changes to GitHub (security reports, review documentation, etc.
 - **Must verify CI/CD passes when pushing any changes**
 
 ## Important Context
-- This app already had security issues from hasty implementation
-- LinkedIn CORS must work
-- Local-only deployment (not public facing)
-- Dropbox and Notion integrations are critical
+
+> **EXTENSION POINT.** Replace this section at project onboarding with the
+> security context an incoming reviewer would otherwise get wrong: the
+> deployment posture (public-facing vs internal vs local-only), the
+> integrations that must keep working, the trust boundaries, and any
+> known history of security debt. A reviewer without this context
+> over-reports on threats the deployment does not face and under-reports
+> on the ones it does.
+
+- Deployment posture: [public-facing / internal / local-only]
+- Integrations that must not break: [list]
+- Trust boundaries: [where untrusted input enters]
+- Known security debt: [prior incidents or hasty implementations]
 
 Remember: Security should enhance, not hinder functionality.

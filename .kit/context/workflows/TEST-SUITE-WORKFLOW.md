@@ -22,7 +22,7 @@
 pytest tests/ -v
 
 # With coverage
-pytest tests/ --cov=thematic_cuts --cov-report=term-missing --cov-report=html
+pytest tests/ --cov=scripts --cov-report=term-missing --cov-report=html
 
 # Specific module
 pytest tests/path/to/module/ -v
@@ -137,8 +137,8 @@ Compare current pass rate to baseline:
 
 ## Coverage Analysis
 
-- **Overall**: 53% (baseline maintained ✅)
-- **New Code**: 78% (acceptable ✅)
+- **Overall**: [N]% (at or above the `fail_under` gate in pyproject.toml ✅)
+- **New Code**: [N]% (acceptable ✅)
 - **Gaps**: See coverage report for details
 
 ## Recommendation

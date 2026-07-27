@@ -34,7 +34,7 @@ pytest tests/path/to/test_file.py -v
 pytest tests/path/to/test_file.py::test_name -v
 
 # With coverage
-pytest tests/ --cov=thematic_cuts --cov-report=term-missing
+pytest tests/ --cov=scripts --cov-report=term-missing
 
 # Verbose output (shows print statements)
 pytest tests/ -vv -s
@@ -134,7 +134,7 @@ If pre-commit hook blocks your commit:
 ### Slow Tests
 
 Tests marked with `@pytest.mark.slow`:
-- `test_error_handling_cascade` (10.01s - DaVinci API integration)
+- `test_error_handling_cascade` (10.01s - external API integration)
 - `test_check_resolve_connection_failure` (4.01s - timeout test)
 
 These run in CI only, not in pre-commit hooks.
@@ -220,7 +220,7 @@ See `tests/test_template.py` for a ready-to-use template with examples:
 
 Runs the **SAME checks** as GitHub Actions CI:
 1. ✅ Full test suite (including slow tests)
-2. ✅ Coverage check (53%+ threshold)
+2. ✅ Coverage check (`fail_under` gate in pyproject.toml, currently 80%)
 3. ✅ Pre-commit hooks (formatting, linting)
 4. ✅ Uncommitted changes check
 

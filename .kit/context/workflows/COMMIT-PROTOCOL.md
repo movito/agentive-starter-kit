@@ -131,7 +131,7 @@ EOF
 
 Runs the **SAME checks** as GitHub Actions:
 - Full test suite (including slow tests)
-- Coverage threshold check (53%+)
+- Coverage threshold check (`fail_under` gate in pyproject.toml, currently 80%)
 - Pre-commit hooks (formatting, linting)
 - Uncommitted changes verification
 
