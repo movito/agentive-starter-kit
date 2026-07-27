@@ -14,12 +14,14 @@
 #     pre-use). Worktree sessions activate by ABSOLUTE PATH.
 #
 # Verdicts (one line per concern; the driver aggregates):
-#   worktree-venv    WARN  .venv is a symlink (the destruction vector)
+#   worktree-venv    WARN  .venv is a symlink (the destruction vector);
+#                          also fires for the alternate venv/ layout
 #                    PASS  real venv, or no venv yet
 #   worktree-audit   SKIP  outside a linked worktree — the remaining
 #                          concerns only exist inside one
-#   worktree-serena  WARN  no worktree-local .serena/project.yml, or a
-#                          project_name colliding with the primary's
+#   worktree-serena  WARN  no worktree-local .serena/project.yml, an
+#                          unnamed one, or a name colliding with the
+#                          primary's
 #                    SKIP  the project does not use Serena
 #                    PASS  worktree-local config with its own name
 #   worktree-shared  PASS  enumerates what a worktree SHARES by design
@@ -50,6 +52,11 @@ elif [ -d "$ROOT/.venv" ]; then
 else
     echo "DOCTOR:worktree-venv:PASS:no .venv — provision one with ./scripts/core/project setup when needed"
 fi
+# The alternate venv/ layout (40-version-skew probes it too) carries
+# the same hazard class; silent when absent or a real directory.
+if [ -L "$ROOT/venv" ]; then
+    echo "DOCTOR:worktree-venv:WARN:venv is a symlink -> $(readlink "$ROOT/venv") — same destruction vector as a symlinked .venv (KIT-0065); replace it with a real venv"
+fi
 
 # ── the rest of the audit only applies inside a linked worktree ──
 GIT_DIR_PATH="$(git -C "$ROOT" rev-parse --path-format=absolute --git-dir 2>/dev/null)" || GIT_DIR_PATH=""
@@ -65,9 +72,30 @@ fi
 PRIMARY_ROOT="$(dirname "$GIT_COMMON")"
 
 # ── Serena: name-based activation resolves to the PRIMARY ──
-serena_name() {  # $1 = project.yml path; prints the project_name value
-    sed -n 's/^project_name:[[:space:]]*//p' "$1" 2>/dev/null \
-        | head -1 | sed "s/[\"']//g"
+serena_name() {  # $1 = project.yml path; prints the project name
+    # Mirrors the reader in scripts/core/project (reconfigure): accepts
+    # top-level `name:` OR `project_name:`, first non-empty value wins,
+    # and strips SURROUNDING quotes only — an internal apostrophe is
+    # part of the name, not quoting (code-reviewer, this PR).
+    local line value
+    while IFS= read -r line; do
+        case "$line" in
+            name:* | project_name:*)
+                value="${line#*:}"
+                value="$(printf '%s' "$value" \
+                    | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+                case "$value" in
+                    \"*\") value="${value#\"}"; value="${value%\"}" ;;
+                    \'*\') value="${value#\'}"; value="${value%\'}" ;;
+                esac
+                if [ -n "$value" ]; then
+                    printf '%s\n' "$value"
+                    return 0
+                fi
+                ;;
+        esac
+    done < "$1"
+    return 0
 }
 if [ ! -f "$PRIMARY_ROOT/.serena/project.yml" ]; then
     echo "DOCTOR:worktree-serena:SKIP:project does not use Serena (no .serena/project.yml in the primary clone)"
@@ -76,10 +104,14 @@ elif [ ! -f "$ROOT/.serena/project.yml" ]; then
 else
     WT_NAME="$(serena_name "$ROOT/.serena/project.yml")"
     PRIMARY_NAME="$(serena_name "$PRIMARY_ROOT/.serena/project.yml")"
-    if [ -n "$WT_NAME" ] && [ "$WT_NAME" = "$PRIMARY_NAME" ]; then
-        echo "DOCTOR:worktree-serena:WARN:worktree Serena project_name '$WT_NAME' collides with the primary's — name-based activation is ambiguous and may resolve to the primary (KIT-0069); regenerate with a per-worktree name (scripts/local/new-worktree.sh does this) or activate by ABSOLUTE PATH: $ROOT"
+    if [ -z "$WT_NAME" ]; then
+        # An unnamed config is not a collision, but it defeats the
+        # per-worktree identity the contract promises (fast-v2, this PR)
+        echo "DOCTOR:worktree-serena:WARN:worktree .serena/project.yml has no name/project_name — regenerate it (scripts/local/new-worktree.sh does this) or activate by ABSOLUTE PATH: $ROOT"
+    elif [ "$WT_NAME" = "$PRIMARY_NAME" ]; then
+        echo "DOCTOR:worktree-serena:WARN:worktree Serena project name '$WT_NAME' collides with the primary's — name-based activation is ambiguous and may resolve to the primary (KIT-0069); regenerate with a per-worktree name (scripts/local/new-worktree.sh does this) or activate by ABSOLUTE PATH: $ROOT"
     else
-        echo "DOCTOR:worktree-serena:PASS:worktree-local Serena config (project_name '${WT_NAME:-unset}') — activate by absolute path: $ROOT"
+        echo "DOCTOR:worktree-serena:PASS:worktree-local Serena config (project name '$WT_NAME') — activate by absolute path: $ROOT"
     fi
 fi
 

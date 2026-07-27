@@ -1751,3 +1751,68 @@ class TestWorktreeProvisioningCheck:
         )
         assert "DOCTOR:worktree-audit:SKIP" not in result.stdout
         assert "DOCTOR:worktree-shared:PASS:" in result.stdout
+
+    def test_alternate_venv_layout_symlink_warns(self, tmp_path):
+        # code-reviewer (this PR): the venv/ layout 40-version-skew
+        # probes carries the same hazard class
+        target = tmp_path / "elsewhere-venv"
+        target.mkdir()
+        (tmp_path / "venv").symlink_to(target)
+        result = run_worktree_check(tmp_path)
+        assert "DOCTOR:worktree-venv:WARN:" in result.stdout
+        assert "venv is a symlink" in result.stdout
+
+    def test_serena_short_name_key_collision_detected(self, tmp_path):
+        # code-reviewer (this PR): the project reader accepts `name:` as
+        # well as `project_name:` — the collision check must match it
+        primary, worktree = _worktree_pair(tmp_path)
+        for root in (primary, worktree):
+            (root / ".serena").mkdir()
+            (root / ".serena" / "project.yml").write_text(
+                'name: "same-proj"\n', encoding="utf-8"
+            )
+        result = run_worktree_check(worktree)
+        assert "DOCTOR:worktree-serena:WARN:" in result.stdout
+        assert "collides" in result.stdout
+
+    def test_serena_apostrophe_name_not_mangled(self, tmp_path):
+        # strip surrounding quotes only: operator's-toolkit must not
+        # false-collide with operators-toolkit
+        primary, worktree = _worktree_pair(tmp_path)
+        (primary / ".serena").mkdir()
+        (primary / ".serena" / "project.yml").write_text(
+            'project_name: "operator\'s-toolkit"\n', encoding="utf-8"
+        )
+        (worktree / ".serena").mkdir()
+        (worktree / ".serena" / "project.yml").write_text(
+            'project_name: "operators-toolkit"\n', encoding="utf-8"
+        )
+        result = run_worktree_check(worktree)
+        assert "DOCTOR:worktree-serena:PASS:" in result.stdout
+        assert "collides" not in result.stdout
+
+    def test_serena_unnamed_config_warns(self, tmp_path):
+        # fast-v2 (this PR): an unnamed worktree config defeats the
+        # per-worktree identity — WARN, not a silent PASS
+        primary, worktree = _worktree_pair(tmp_path)
+        (primary / ".serena").mkdir()
+        (primary / ".serena" / "project.yml").write_text(
+            'project_name: "primary-proj"\n', encoding="utf-8"
+        )
+        (worktree / ".serena").mkdir()
+        (worktree / ".serena" / "project.yml").write_text(
+            "languages:\n  - python\n", encoding="utf-8"
+        )
+        result = run_worktree_check(worktree)
+        assert "DOCTOR:worktree-serena:WARN:" in result.stdout
+        assert "no name/project_name" in result.stdout
+
+    def test_hostile_git_common_dir_cannot_redirect_audit(self, tmp_path):
+        # code-reviewer (this PR): GIT_COMMON_DIR alone must be scrubbed
+        # exactly like GIT_DIR
+        primary, worktree = _worktree_pair(tmp_path)
+        result = run_worktree_check(
+            worktree, extra_env={"GIT_COMMON_DIR": str(primary / ".git")}
+        )
+        assert "DOCTOR:worktree-audit:SKIP" not in result.stdout
+        assert "DOCTOR:worktree-shared:PASS:" in result.stdout
