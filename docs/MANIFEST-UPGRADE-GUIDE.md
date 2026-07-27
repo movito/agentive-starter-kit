@@ -134,7 +134,6 @@ upstream manifest as your starting point, then set `opted_in` based on what you 
       ".kit/context/workflows/",
       ".kit/context/templates/",
       ".kit/context/patterns.yml",
-      ".kit/context/AGENT-SYSTEM-GUIDE.md",
       ".kit/tasks/9-reference/"
     ]
   },
