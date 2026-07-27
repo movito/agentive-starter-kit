@@ -1830,16 +1830,25 @@ class TestWorktreeProvisioningCheck:
             for ln in result.stdout.splitlines()
             if ln.startswith("DOCTOR:worktree-venv:WARN:")
         )
-        # the remedy must be a PURE copy-able command, root-scoped so a
-        # paste from any cwd hits the diagnosed checkout; the rationale
-        # follows the closing paren, never sits inside the command
-        # (BugBot + CodeRabbit round 2)
+        # the remedy must be a copy-able command, root-scoped so a paste
+        # from any cwd hits the diagnosed checkout; the rationale is a
+        # trailing SHELL COMMENT so the whole tail parses (BugBot +
+        # CodeRabbit rounds 2-3)
         expected = (
             f'rm "{worktree}/.venv" && '
-            f'(cd "{worktree}" && ./scripts/core/project setup --no-hooks) —'
+            f'(cd "{worktree}" && ./scripts/core/project setup --no-hooks)'
         )
         assert expected in line
         assert "--no-hooks (" not in line
+        # the paste-able tail (command + note) must be valid shell:
+        # bash -n parses without executing — this catches any prose
+        # that is not a comment
+        paste = line[line.index("rm ") :]
+        parse = subprocess.run(
+            [BASH, "-n", "-c", paste], capture_output=True, text=True, timeout=30
+        )
+        assert parse.returncode == 0, f"remedy does not parse: {paste!r}"
+        assert "# hooks stay shared" in paste
 
     def test_symlinked_venv_outside_worktree_remedy_plain_setup(self, tmp_path):
         # outside a worktree, plain setup (with hooks) is the right advice

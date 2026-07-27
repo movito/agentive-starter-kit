@@ -56,14 +56,14 @@ if [ -n "$GIT_DIR_PATH" ] && [ -n "$GIT_COMMON" ] \
 fi
 # SETUP_CMD stays a pure, copy-able command — root-scoped via cd so a
 # paste from ANY cwd provisions the diagnosed checkout, never the
-# caller's (CodeRabbit round 2); the rationale rides in SETUP_NOTE
-# after the closing paren, never inside the command string (BugBot
-# round 2: an embedded parenthetical is invalid shell when pasted).
+# caller's (CodeRabbit round 2). The rationale rides in SETUP_NOTE as
+# a SHELL COMMENT, so pasting the remedy tail whole stays executable
+# (CodeRabbit round 3; BugBot round 2 killed the embedded prose).
 SETUP_CMD="(cd \"$ROOT\" && ./scripts/core/project setup)"
 SETUP_NOTE=""
 if [ -n "$IN_WORKTREE" ]; then
     SETUP_CMD="(cd \"$ROOT\" && ./scripts/core/project setup --no-hooks)"
-    SETUP_NOTE=" — hooks stay shared with the primary, hence --no-hooks"
+    SETUP_NOTE="  # hooks stay shared with the primary, hence --no-hooks"
 fi
 
 # ── .venv: must never be a symlink, worktree or not ──
