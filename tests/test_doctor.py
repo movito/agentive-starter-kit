@@ -1831,12 +1831,12 @@ class TestWorktreeProvisioningCheck:
             if ln.startswith("DOCTOR:worktree-venv:WARN:")
         )
         # the remedy must be a copy-able command, root-scoped so a paste
-        # from any cwd hits the diagnosed checkout; the rationale is a
-        # trailing SHELL COMMENT so the whole tail parses (BugBot +
-        # CodeRabbit rounds 2-3)
+        # from any cwd hits the diagnosed checkout (paths %q-escaped —
+        # bare for a plain path); the rationale is a trailing SHELL
+        # COMMENT so the whole tail parses (bot rounds 2-4)
         expected = (
-            f'rm "{worktree}/.venv" && '
-            f'(cd "{worktree}" && ./scripts/core/project setup --no-hooks)'
+            f"rm {worktree}/.venv && "
+            f"(cd {worktree} && ./scripts/core/project setup --no-hooks)"
         )
         assert expected in line
         assert "--no-hooks (" not in line
@@ -1849,6 +1849,28 @@ class TestWorktreeProvisioningCheck:
         )
         assert parse.returncode == 0, f"remedy does not parse: {paste!r}"
         assert "# hooks stay shared" in paste
+
+    def test_remedy_survives_hostile_path_characters(self, tmp_path):
+        # CodeRabbit round 4: quotes / $() in the checkout path must
+        # neither break the pasted snippet nor smuggle substitution —
+        # %q escaping keeps the tail parseable
+        base = tmp_path / 'evil "dir$(x)'
+        base.mkdir()
+        _, worktree = _worktree_pair(base)
+        target = tmp_path / "elsewhere-venv"
+        target.mkdir()
+        (worktree / ".venv").symlink_to(target)
+        result = run_worktree_check(worktree)
+        line = next(
+            ln
+            for ln in result.stdout.splitlines()
+            if ln.startswith("DOCTOR:worktree-venv:WARN:")
+        )
+        paste = line[line.index("rm ") :]
+        parse = subprocess.run(
+            [BASH, "-n", "-c", paste], capture_output=True, text=True, timeout=30
+        )
+        assert parse.returncode == 0, f"remedy does not parse: {paste!r}"
 
     def test_symlinked_venv_outside_worktree_remedy_plain_setup(self, tmp_path):
         # outside a worktree, plain setup (with hooks) is the right advice

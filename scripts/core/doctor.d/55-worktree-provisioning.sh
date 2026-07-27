@@ -56,20 +56,24 @@ if [ -n "$GIT_DIR_PATH" ] && [ -n "$GIT_COMMON" ] \
 fi
 # SETUP_CMD stays a pure, copy-able command — root-scoped via cd so a
 # paste from ANY cwd provisions the diagnosed checkout, never the
-# caller's (CodeRabbit round 2). The rationale rides in SETUP_NOTE as
-# a SHELL COMMENT, so pasting the remedy tail whole stays executable
-# (CodeRabbit round 3; BugBot round 2 killed the embedded prose).
-SETUP_CMD="(cd \"$ROOT\" && ./scripts/core/project setup)"
+# caller's (CodeRabbit round 2). Paths are %q-escaped so quotes,
+# spaces, or substitution characters in the path cannot break or
+# execute inside the pasted snippet (CodeRabbit round 4). The
+# rationale rides in SETUP_NOTE as a SHELL COMMENT, so pasting the
+# remedy tail whole stays executable (rounds 2-3).
+ROOT_Q="$(printf '%q' "$ROOT")"
+VENV_Q="$(printf '%q' "$ROOT/.venv")"
+SETUP_CMD="(cd $ROOT_Q && ./scripts/core/project setup)"
 SETUP_NOTE=""
 if [ -n "$IN_WORKTREE" ]; then
-    SETUP_CMD="(cd \"$ROOT\" && ./scripts/core/project setup --no-hooks)"
+    SETUP_CMD="(cd $ROOT_Q && ./scripts/core/project setup --no-hooks)"
     SETUP_NOTE="  # hooks stay shared with the primary, hence --no-hooks"
 fi
 
 # ── .venv: must never be a symlink, worktree or not ──
 if [ -L "$ROOT/.venv" ]; then
     TARGET="$(readlink "$ROOT/.venv")"
-    echo "DOCTOR:worktree-venv:WARN:.venv is a symlink -> $TARGET — split-brain (KIT-0044) and a destruction vector: a venv --clear or rebuild through the link empties the TARGET venv (KIT-0065 emptied the primary clone's); replace it: rm \"$ROOT/.venv\" && $SETUP_CMD$SETUP_NOTE"
+    echo "DOCTOR:worktree-venv:WARN:.venv is a symlink -> $TARGET — split-brain (KIT-0044) and a destruction vector: a venv --clear or rebuild through the link empties the TARGET venv (KIT-0065 emptied the primary clone's); replace it: rm $VENV_Q && $SETUP_CMD$SETUP_NOTE"
 elif [ -d "$ROOT/.venv" ]; then
     echo "DOCTOR:worktree-venv:PASS:.venv is a real directory (not a symlink)"
 else

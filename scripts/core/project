@@ -17,6 +17,7 @@ Usage:
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -660,15 +661,20 @@ def cmd_setup(args):
         # In a linked worktree (.git is a FILE), the rerun must say
         # --no-hooks: hooks live in the shared common git dir and a
         # reinstall would re-point them at a venv that dies with the
-        # worktree (BugBot, KIT-0071).
-        rerun = "./scripts/core/project setup"
-        if (project_dir / ".git").is_file():
-            rerun += " --no-hooks"
+        # worktree (BugBot, KIT-0071). Root-scoped + shlex-quoted so a
+        # paste from any cwd hits THIS checkout and hostile path
+        # characters cannot break the snippet (bot rounds, PR #96).
+        flags = " --no-hooks" if (project_dir / ".git").is_file() else ""
+        rerun = (
+            f"rm {shlex.quote(str(venv_dir))} && "
+            f"(cd {shlex.quote(str(project_dir))} && "
+            f"./scripts/core/project setup{flags})"
+        )
         print(f"❌ .venv is a SYMLINK: {venv_dir} -> {os.readlink(venv_dir)}")
         print("   Refusing: rebuilding through the link would mutate the TARGET")
         print("   venv (KIT-0065: this emptied the primary clone's venv).")
         print("   Remove the link first, then re-run:")
-        print(f"       rm .venv && {rerun}")
+        print(f"       {rerun}")
         sys.exit(1)
 
     # 2. Handle existing venv
