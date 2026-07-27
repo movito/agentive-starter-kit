@@ -370,10 +370,9 @@ the diff hunks — ID2-0002 retro documented Claude Sonnet flagging
 outside the reviewed range.
 
 > **Helper availability**: `prepare-review-input.sh` and its
-> `lib/target_repo.sh` dependency currently ship in projects bootstrapped
-> since 2026-04 (reference implementations: ixda-services-2.0,
-> suwinex-planning). Upstreaming them into this kit's `scripts/core/` is
-> tracked via the manifest sync work (KIT-0026 / KIT-0030).
+> `lib/target_repo.sh` dependency ship in this kit's `scripts/core/` as of
+> 0.7.0 (2026-06-13) and sync to every downstream via the `scripts_core`
+> tier — no per-project bootstrapping needed.
 
 ### Recommended evaluator trio
 
@@ -400,17 +399,18 @@ from the current working-directory repo. No flag change required.
 
 ### Fitting into the agent workflow
 
-The feature-developer agent's evaluator gate (Phase 7 in v6/v7) expects
+The feature-developer agent's evaluator gate (Phase 7) expects
 you to prepare the input, run the trio (or at least the fast gate),
 triage FAIL/CONCERNS findings, and persist the results to the planning
 repo's review directory before handoff.
 
 ## Open Questions
 
-1. **First-class `target_repo` config**: a framework-enforced config that
-   agents and commands auto-detect would reduce per-project setup. Tracked
-   as KIT-0027; the `## Target Repository` CLAUDE.md section is the current
-   convention.
+1. ~~**First-class `target_repo` config**~~ — **resolved** by ADR-0027 P2
+   (KIT-0048): `bootstrap --shape planning --target-path --target-github`
+   provisions it directly, as shown in Setup §1 above. The
+   `## Target Repository` CLAUDE.md section remains the convention agents
+   read. KIT-0027 was retired as part of that work.
 2. **Automatic cross-repo task completion**: a GitHub Action in the target
    repo that calls back to the planning repo on PR merge would close the
    atomicity gap.

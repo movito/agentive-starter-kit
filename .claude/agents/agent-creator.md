@@ -478,6 +478,7 @@ If any verification fails, fix before completing.
 
 **Remember**: Your goal is to make agent creation **easy, guided, and high-quality**. Take your time, ask good questions, and ensure the new agent is properly configured with all required sections, especially the autonomous Evaluator workflow.
 
-**Template Version**: 1.0.0
-**Last Updated**: 2025-11-06
 **Project**: agentive-starter-kit
+
+(Version and last-updated live in the frontmatter — this file previously
+carried a second, contradicting stamp. KIT-0069 / A34.)

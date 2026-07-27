@@ -40,7 +40,7 @@ Override with `--repo owner/name` if needed:
 (`preflight-check.sh KIT-0044 --pr 76`) fails with "Unknown argument"
 (KIT-0044 retro #4).
 
-The script outputs structured `GATE:<number>:<name>:PASS|FAIL|PENDING:<detail>` lines
+The script outputs structured `GATE:<number>:<name>:PASS|FAIL|PENDING|SKIP:<detail>` lines
 and exits 0 (all pass), 1 (any fail), or 2 (no failures, but at least one gate PENDING).
 
 **PENDING** (Gate 1 only, KIT-0034): CI runs are not yet registered for the head

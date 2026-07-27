@@ -191,6 +191,14 @@ Setup takes approximately 5-10 minutes.
 | `ci-checker` | CI/CD verification |
 | `agent-creator` | Create new specialized agents |
 | `create-project` | Spin up a new project from this kit (clean export, GitHub repo, evaluator install) |
+| `project-intake` | Graduate a prototype into the split pair (plain code repo + preset-configured planning repo) |
+| `bootstrap` | Read design materials and configure a new agentive project |
+| `onboarding` | First-run setup for a new project |
+| `upgrader` | Raise a project to a newer plugin version; refresh model pins |
+| `planner-f5` / `feature-developer-f5` | Fable 5 variants of the two core agents |
+
+The full set lives in `.claude/agents/` — `ls .claude/agents/` is the
+authoritative inventory.
 
 ### Task Management (`.kit/tasks/`)
 
@@ -389,7 +397,7 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 
 ## Documentation
 
-- **Agentive Development Guide**: `docs/agentive-development/README.md`
+- **Agentive Development Guide** (archived): `docs/archive/agentive-development/README.md`
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md`
 - **Task Template**: `.kit/tasks/9-reference/templates/task-template.md`
 - **Evaluation Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
@@ -588,5 +596,6 @@ Developed through real-world use on production projects. Special thanks to the C
 
 ---
 
-**Version**: 0.5.0
-**Last Updated**: 2026-03-30
+**Version**: see `version` in `pyproject.toml` (the single source of truth;
+this footer was hand-maintained and sat three releases behind — KIT-0069 /
+A53)

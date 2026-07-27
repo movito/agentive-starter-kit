@@ -314,7 +314,7 @@ If no: print the manual commands for later.
 1. **Never create .env** — only edit .env.template. The user creates .env themselves.
 2. **Preserve all user files** — never overwrite or delete design materials.
 3. **Infer, don't ask** — the design materials have what you need. Only ask for
-   GitHub repo creation (Step 11).
+   GitHub repo creation (Step 12).
 4. **Keep it fast** — no unnecessary pauses, explanations, or confirmations.
 5. **Task quality matters** — backlog tasks should be specific enough that a
    feature-developer agent can implement them with the design materials as reference.

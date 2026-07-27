@@ -178,7 +178,62 @@ invented price is worse than a link.
   caught residual "procedural index" prose mentions in two files after the
   filename-level fix looked complete.
 
-## 10. Operator-owed items hit again
+## 10. Two audit findings were REFUTED by direct measurement
+
+Both survived the audit's adversarial verification. Both are wrong. This
+is the strongest argument for the verify-before-believing reflex — a
+verified finding is still a claim.
+
+**A74 — evaluator verdict vocabulary. Refuted, and backwards.** The audit
+said the doc's `APPROVED / NEEDS_REVISION / REJECT` vocabulary "will never
+match a current evaluator verdict" because the library emits
+`PASS / CONCERNS / FAIL`. Measured across the installed tree (25
+evaluators declaring verdicts):
+
+| Vocabulary | Count |
+|---|---|
+| `APPROVED` / `NEEDS_REVISION` / `REJECT` (and `REVISION_SUGGESTED`, `APPROVED`/`REJECT`) | 22 |
+| `PASS` / `CONCERNS` / `FAIL` | 3 |
+
+The audit generalised from the single evaluator it sampled
+(`openai/code-reviewer`). Rewriting the doc as suggested would have broken
+it for 22 of 25 evaluators.
+
+**But there is a real bug underneath, which the audit missed**: the kit's
+own recommended trio spans both vocabularies —
+`code-reviewer-fast` and `code-reviewer` emit PASS/CONCERNS/FAIL while
+`claude-code` emits APPROVED/REJECT. An agent grepping one fixed token
+across the trio silently misses a verdict. The doc now says vocabulary is
+per-evaluator, tabulates the variants, and tells agents to read the log
+rather than pattern-match.
+
+**A48 (part) — "the 3.5.0 manifest has no tiers at all".** Refuted. The
+manifest groups files under `files.{scripts_core, commands_core,
+commands_optional, kit_builder}`; `kit_builder` has 13 entries and does
+sync `.kit/` contents. The playbook sentence the audit flagged is true and
+was left alone. A48's *skills* claim was valid and was fixed.
+
+**Planner action**: when a sweep task is derived from an audit, budget for
+findings that are wrong, and require measured evidence in the disposition
+rather than "as the audit says".
+
+## 11. New findings surfaced while sweeping (not in the audit)
+
+1. **The manifest still syncs the retired `.kit/skills/`.**
+   `files.kit_builder` contains `.kit/skills/`, which KIT-0059 removes in
+   0.9.0. Removing the directory without pulling the manifest entry points
+   the sync engine at a missing path on every kit-family consumer. **This
+   belongs in KIT-0059's checklist.**
+2. **Three documented releases were never tagged.** `v0.5.1`, `v0.6.0`,
+   `v0.7.0` have CHANGELOG headings but no git tags, so no compare link
+   can exist for them (the `[0.8.0]` link now spans `v0.5.0...v0.8.0`).
+   Adding links for them would have manufactured broken URLs — the same
+   class this task exists to remove. Cutting the tags retroactively, or
+   accepting the gap, is a release-hygiene call for the 0.9.0 cut.
+3. **`.env.template` carried a pre-v0.4.0 path** and appears in no audit
+   finding — found only by the class grep (see §7).
+
+## 12. Operator-owed items hit again
 
 - **`rm -rf` allowlist** — blocked the F3 scratch-generation test; worked
   around with `mktemp -d`. Memory says this is the fifth consecutive task
