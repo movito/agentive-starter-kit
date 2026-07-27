@@ -1830,7 +1830,11 @@ class TestWorktreeProvisioningCheck:
             for ln in result.stdout.splitlines()
             if ln.startswith("DOCTOR:worktree-venv:WARN:")
         )
-        assert "--no-hooks" in line
+        # the remedy must be a PURE copy-able command — the rationale
+        # follows an em-dash, never sits inside the command string
+        # (BugBot round 2: pasted parenthetical is invalid shell)
+        assert "rm .venv && ./scripts/core/project setup --no-hooks —" in line
+        assert "--no-hooks (" not in line
 
     def test_symlinked_venv_outside_worktree_remedy_plain_setup(self, tmp_path):
         # outside a worktree, plain setup (with hooks) is the right advice

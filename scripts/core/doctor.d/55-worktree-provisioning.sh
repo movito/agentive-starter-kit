@@ -54,19 +54,24 @@ if [ -n "$GIT_DIR_PATH" ] && [ -n "$GIT_COMMON" ] \
     && [ "$GIT_DIR_PATH" != "$GIT_COMMON" ]; then
     IN_WORKTREE=1
 fi
+# SETUP_CMD stays a pure, copy-able command — the rationale rides in
+# SETUP_NOTE after an em-dash, never inside the command string (BugBot
+# round 2: an embedded parenthetical is invalid shell when pasted).
 SETUP_CMD="./scripts/core/project setup"
+SETUP_NOTE=""
 if [ -n "$IN_WORKTREE" ]; then
-    SETUP_CMD="./scripts/core/project setup --no-hooks (hooks are shared with the primary)"
+    SETUP_CMD="./scripts/core/project setup --no-hooks"
+    SETUP_NOTE=" — hooks stay shared with the primary, hence --no-hooks"
 fi
 
 # ── .venv: must never be a symlink, worktree or not ──
 if [ -L "$ROOT/.venv" ]; then
     TARGET="$(readlink "$ROOT/.venv")"
-    echo "DOCTOR:worktree-venv:WARN:.venv is a symlink -> $TARGET — split-brain (KIT-0044) and a destruction vector: a venv --clear or rebuild through the link empties the TARGET venv (KIT-0065 emptied the primary clone's); replace it: rm .venv && $SETUP_CMD"
+    echo "DOCTOR:worktree-venv:WARN:.venv is a symlink -> $TARGET — split-brain (KIT-0044) and a destruction vector: a venv --clear or rebuild through the link empties the TARGET venv (KIT-0065 emptied the primary clone's); replace it: rm .venv && $SETUP_CMD$SETUP_NOTE"
 elif [ -d "$ROOT/.venv" ]; then
     echo "DOCTOR:worktree-venv:PASS:.venv is a real directory (not a symlink)"
 else
-    echo "DOCTOR:worktree-venv:PASS:no .venv — provision one with $SETUP_CMD when needed"
+    echo "DOCTOR:worktree-venv:PASS:no .venv — provision one with $SETUP_CMD when needed$SETUP_NOTE"
 fi
 # The alternate venv/ layout (40-version-skew probes it too) carries
 # the same hazard class; silent when absent or a real directory.
