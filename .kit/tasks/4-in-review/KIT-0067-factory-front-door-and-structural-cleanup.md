@@ -1,6 +1,6 @@
 # KIT-0067: The factory front door + structural cleanup
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 1-1.5 days
