@@ -1300,3 +1300,25 @@ class TestSetupVenvSymlinkGuard:
         result = self._run_setup(script)
         assert result.returncode == 1
         assert "--no-hooks" not in result.stdout
+
+
+class TestReconfigureMissingConfigRemedy:
+    """displayed_commands_are_contracts (KIT-0067): the remedy printed
+    when .serena/project.yml is missing must be a complete, parseable
+    shell command — pinned against the ACTUAL printed output."""
+
+    def test_missing_serena_config_remedy_is_valid_shell(self, tmp_path, capsys):
+        import re as _re
+
+        assert _project_module.reconfigure_project(tmp_path) is False
+        out = capsys.readouterr().out
+        match = _re.search(r"Run '(.+)' to configure", out)
+        assert match, f"remedy line missing from output:\n{out}"
+        proc = subprocess.run(
+            ["bash", "-n", "-c", match.group(1)],
+            capture_output=True,
+            text=True,
+        )
+        assert proc.returncode == 0, proc.stderr
+        # root-scoped: the command names the project dir, not a cwd guess
+        assert str(tmp_path) in match.group(1)

@@ -128,12 +128,10 @@ grep -ri "agentive.starter.kit\|agentive-starter-kit" \
    - `docs/archive/agentive-development/` — archive directory path
    - `tests/test_project_script.py` — test fixtures that detect upstream patterns
    - `scripts/local/bootstrap` + `scripts/local/engine-*.sh` — the kit setup door and its engines reference ASK as the source (correct)
-   - `onboarding.md` — references to ASK git URLs for upstream tracking
    - README footer: "Built with Agentive Starter Kit" link (this is attribution)
 
 4. **Delete files that don't apply** to new projects:
    - `CHANGELOG.md` — starter kit history, not relevant to the new project
-   - `.claude/agents/onboarding.md` — only used for first-run of ASK itself
    - `docs/UPSTREAM-CHANGES-*.md` — upgrade notes for ASK users, not new projects
 
 **Rule of thumb**: If the reference describes *this project*, replace it.

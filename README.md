@@ -4,14 +4,14 @@
 
 Using agents to build software works better if you add a bit of structure. Anthropic calls this a [harness](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents). We created the tools in this kit to overcome the usual problems of agentive development: documentation, testing, architecture, and value for money (and tokens).
 
-When we start a new project, we clone this repo and complete the onboarding. This gives us tests, tasks, documentation, and token-efficient tools, all in about ten minutes. You can tweak things as you wish, including how the agents work, and what models you use.
+When we start a new project, we stamp it out from one permanent clone of this kit. This gives us tests, tasks, documentation, and token-efficient tools, all in about ten minutes. You can tweak things as you wish, including how the agents work, and what models you use.
 
 **Starting a project?** Read **[docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md)** — the operator flow from a permanent kit clone to a planner-ready project, including the `/new-project` command and the prototype-graduation path.
 
 ----
 ## What's inside?
 
-1. An **onboarding agent** to help you get started.
+1. A **front door for new projects** — the `/new-project` command and the one setup door (`scripts/local/bootstrap`) stamp out configured projects from one permanent kit clone (see [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md)).
 
 2. A selection of **specialized agents** that have specific tasks, instructions, and tools. Some of them create and track plans, others write code, and so on.
 
@@ -58,15 +58,17 @@ If you'd like to try this kit, here are the tools you'll need:
 | **OpenAI API Key** | Adversarial evaluation (built-in evaluators) | [platform.openai.com](https://platform.openai.com/api-keys) |
 | **Linear Integration** | Task sync with Linear issues | See [Linear Integration](#linear-integration) section below |
 
-### Not sure if you have everythng you need?
+### Not sure if you have everything you need?
 
-Clone the repo and run this script to validate your environment:
+The setup door validates what it needs as it runs, and every created
+project carries the health surface:
 
 ```bash
-.kit/launchers/preflight
+./scripts/core/project doctor  # run inside any created project
 ```
 
-It will check all requirements and tell you what's missing.
+It checks your environment (gh auth, API keys, evaluators, toolchain
+pins) and tells you what's missing.
 
 ---
 
@@ -76,7 +78,7 @@ There are three ways to spin up a new project from this kit, in order of least t
 
 - **Option A — From a URL (zero setup)**: open Claude Code anywhere, paste the kit's URL, and ask it to set up a new project. Claude clones the kit and follows the `create-project` recipe itself. Best when you just want it done.
 - **Option B — Agent-driven (deterministic)**: clone the kit yourself, then explicitly invoke the `create-project` agent. Same end result as Option A, but you control where the kit checkout lives. Best for repeat use.
-- **Option C — Launcher-based**: clone the kit straight into your project folder and run the onboarding launcher. Best when you're comfortable inheriting the kit's git history (or plan to re-init).
+- **Option C — Guided interview (`/new-project`)**: from your kit clone, run the `/new-project` command in a Claude Code session. It interviews you in plain language and drives the setup door. Best once you keep a permanent kit clone (the [factory model](docs/STARTING-A-PROJECT.md)).
 
 ### Option A — From a URL (Zero Setup)
 
@@ -139,41 +141,30 @@ cd agentive-starter-kit
 
 When it finishes, `cd` into your new project directory and start working.
 
-### Option C — Launcher-Based Onboarding
+### Option C — Guided Interview (/new-project)
 
-Use this if you want to clone the kit directly as your project (you'll inherit the kit's git history unless you `rm -rf .git && git init`).
+Use this once you keep a permanent kit clone (see
+[docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md) for the full
+factory model).
 
-**1. Clone the repository into your project folder**:
-
-```bash
-cd ~/Github
-git clone https://github.com/movito/agentive-starter-kit.git your-project-name
-cd your-project-name
-```
-
-For example, if you're building a weather app:
-```bash
-git clone https://github.com/movito/agentive-starter-kit.git weather-app
-cd weather-app
-```
-
-**2. Run first-time onboarding**:
+**1. Open a Claude Code session in your kit clone**:
 
 ```bash
-.kit/launchers/onboarding
+cd ~/Github/agentive-starter-kit && claude
 ```
 
-**3. Follow the interactive setup**. The onboarding agent will guide you through:
+**2. Run `/new-project`**. It asks what you're making in plain
+language, one question at a time, and routes you to the right flow:
 
-1. **Project Configuration** - Name your project
-2. **Language Selection** - Configure Serena for your languages
-3. **API Keys** - Set up Anthropic, OpenAI, and Linear (optional)
-4. **Feature Selection** - Enable evaluation, task sync, etc.
-5. **First Task** - Create your first task to get started
+- **A prototype exists** → hands off to the `project-intake` agent
+  (split pair: plain code repo + private planning repo)
+- **Fresh start** → runs the setup door (`scripts/local/bootstrap`)
+  directly, with your [operator preset](#operator-preset-one-button-setup)
+  answering most questions
 
-**Important**: When asked for your project name, use the **same name** you chose for the folder (e.g., `weather-app`). Onboarding uses this to configure Serena and update agent files so they can navigate your codebase.
-
-Setup takes approximately 5-10 minutes.
+**3. Open the tab it prints.** The command finishes with a LAUNCH
+line naming your new project's directory; your first session there
+starts by invoking the `planner` agent.
 
 ---
 
@@ -195,7 +186,6 @@ Setup takes approximately 5-10 minutes.
 | `create-project` | Spin up a new project from this kit (clean export, GitHub repo, evaluator install) |
 | `project-intake` | Graduate a prototype into the split pair (plain code repo + preset-configured planning repo) |
 | `bootstrap` | Read design materials and configure a new agentive project |
-| `onboarding` | First-run setup for a new project |
 | `upgrader` | Raise a project to a newer plugin version; refresh model pins |
 | `planner-f5` / `feature-developer-f5` | Fable 5 variants of the two core agents |
 
@@ -259,18 +249,10 @@ Reduces token consumption by 70-98% for code navigation tasks.
 
 ## Configuration
 
-The **onboarding agent** handles all configuration automatically:
-
-```bash
-.kit/launchers/onboarding
-```
-
-This guides you through setting up:
-- Project name and task prefix
-- Programming languages (for Serena)
-- API keys (OpenAI, Linear)
-- GitHub repository
-- First task creation
+New projects are configured by the **setup door** at creation time —
+run `/new-project` from your kit clone (or the door directly; see
+[Quick Start](#quick-start)). An [operator preset](#operator-preset-one-button-setup)
+pre-answers the door's questions so repeat projects need none.
 
 If you prefer to handle setup yourself, copy these template files and configure manually:
 - `.env.template` → `.env` (API keys)
@@ -350,31 +332,27 @@ Tasks work fine without Linear - they're just markdown files. Agents can create,
 
 ## Usage
 
-### First-Time Setup
+### Launching Agents
+
+Agents run in their own Claude Code tabs (one tab per agent — the
+main session is for coordination):
 
 ```bash
-# Run onboarding (first time only)
-.kit/launchers/onboarding
+# From your project root, launch a session with a specific agent:
+claude --agent .claude/agents/planner.md
+claude --agent .claude/agents/feature-developer.md
+claude --agent .claude/agents/test-runner.md
 ```
 
-### Launching Agents (After Setup)
-
-```bash
-# Interactive menu
-.kit/launchers/launch
-
-# Launch specific agent
-.kit/launchers/launch planner
-.kit/launchers/launch feature-developer
-.kit/launchers/launch test-runner
-```
+Or, inside any Claude Code session, ask for the agent by name ("use
+the planner agent") — it opens with that agent's instructions.
 
 ### Creating Tasks
 
 **The easy way:** Just tell `planner` what you want to build. The agent will create and manage tasks for you.
 
 ```bash
-.kit/launchers/launch planner
+claude --agent .claude/agents/planner.md
 # Then: "I want to add user authentication to my app"
 ```
 
@@ -425,7 +403,6 @@ your-project/
 │   ├── context/             # Agent coordination, workflows, patterns
 │   ├── tasks/               # Task files (numbered folders)
 │   ├── adr/                 # Kit ADRs (KIT-ADR-*)
-│   ├── launchers/           # Agent launcher scripts
 │   └── docs/                # Builder documentation
 ├── .serena/
 │   └── project.yml          # Serena configuration
@@ -482,17 +459,16 @@ Clone the kit yourself, then explicitly invoke the `create-project` agent. Same 
 
 See [Quick Start → Option B](#option-b--agent-driven-setup-deterministic). Use this when starting new projects often and want a stable kit checkout to reuse.
 
-### Kit Project (Full Setup, Manual)
+### Guided Interview (/new-project)
 
-Clone the repo and run the onboarding launcher. You get everything: planning agents, evaluators, task management, Linear sync, and the full builder layer in `.kit/` — but the kit's git history travels with you.
+Keep one permanent kit clone and run `/new-project` in a Claude Code session there. The command interviews you in plain language and drives the setup door — prototype graduation, blank split pair, or single repo.
 
 ```bash
-git clone https://github.com/movito/agentive-starter-kit.git my-project
-cd my-project
-.kit/launchers/onboarding
+cd ~/Github/agentive-starter-kit && claude
+# then, in the session:  /new-project
 ```
 
-See [Quick Start → Option C](#option-c--launcher-based-onboarding). Use this when you want full control over the setup steps or are comfortable with the kit history.
+See [Quick Start → Option C](#option-c--guided-interview-new-project) and [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md). Use this once the kit clone is your permanent project factory.
 
 ### Consumer Project (Lightweight)
 

@@ -125,7 +125,6 @@ upstream manifest as your starting point, then set `opted_in` based on what you 
     "kit_builder": [
       ".kit/templates/",
       ".kit/skills/",
-      ".kit/launchers/",
       ".kit/adr/",
       ".kit/docs/",
       ".adversarial/config.yml.template",

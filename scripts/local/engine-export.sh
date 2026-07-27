@@ -225,7 +225,7 @@ CHANGELOG_EOF
 sed -i '' "s/^version = .*/version = \"0.1.0\"/" pyproject.toml 2>/dev/null || \
 sed -i "s/^version = .*/version = \"0.1.0\"/" pyproject.toml
 
-# Reset the package name to the placeholder the onboarding/bootstrap
+# Reset the package name to the placeholder the bootstrap/setup
 # agents rewrite (KIT-0057): the kit's own pyproject is named
 # agentive-starter-kit, and a --new target must never inherit the
 # kit's identity — it gets the placeholder + TODO, exactly the

@@ -78,7 +78,7 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 # .claude/ — agent definitions, commands, skills, settings
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
-# .kit/ — builder layer (templates, workflows, launchers, docs). The
+# .kit/ — builder layer (templates, workflows, docs). The
 # kit's own planning corpus stays home: task-ID excludes are
 # prefix-AGNOSTIC ([A-Z]*-NNNN — the ASK-* literals missed every KIT-*
 # file after the prefix rename, KIT-0068 A13), and .kit/adversarial/ is
