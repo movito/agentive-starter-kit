@@ -6,6 +6,16 @@ Incident (KIT-0032): the evaluator trio ran 2-of-3 because
 ANTHROPIC_API_KEY sat commented out in .env — nothing surfaced it
 until a mid-review "missing key" failure.
 
+Not-checkable note (per the incident-closure lifecycle rule; not
+worktree-specific despite riding KIT-0071's doctor work): a VALID key
+is not necessarily a USABLE key. KIT-0069's claude-code evaluator
+failed at runtime with a valid ANTHROPIC_API_KEY because the account's
+credit balance was zero — and balance has no cheap API, so this check
+stops at presence by design. The symptom to recognize: valid key,
+evaluator writes no log file → check the Anthropic console credit
+balance (same shape as the CodeRabbit quota note in
+80-bot-presence.sh).
+
 Never prints key values — presence and comment-state only (read-only,
 N3). Root comes from DOCTOR_ROOT (set by the driver; tests point it at
 tmp fixtures), falling back to the repo root relative to this file.
@@ -92,7 +102,12 @@ def main():
         )
         return 0
 
-    print("DOCTOR:env-keys:PASS:required and evaluator keys present and uncommented")
+    print(
+        "DOCTOR:env-keys:PASS:required and evaluator keys present and "
+        "uncommented (presence only — credit balance is not checkable: "
+        "a valid key whose evaluator writes no log usually means zero "
+        "balance, KIT-0069)"
+    )
     return 0
 
 

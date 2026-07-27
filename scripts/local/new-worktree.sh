@@ -17,8 +17,9 @@
 #
 # Result:
 #   ../ask-worktrees/<TASK-ID>/  on branch feature/<TASK-ID>-<slug>,
-#   created from origin/main, with .venv, .env and .adversarial/evaluators
-#   symlinked to the primary clone.
+#   created from origin/main, with .env and .adversarial/evaluators
+#   symlinked to the primary clone, a REAL per-worktree .venv (never a
+#   symlink — KIT-0065), and a worktree-local Serena project config.
 #
 # Refuses (exit 1) if the worktree path or the branch already exists.
 
@@ -51,9 +52,16 @@ WORKTREES_DIR="$(dirname "$PRIMARY_ROOT")/ask-worktrees"
 # Provisioning list — explicit and enumerated, never a glob
 # ─────────────────────────────────────────
 # Gitignored runtime artifacts a session needs, symlinked from the primary.
-# Audited against .gitignore 2026-07-14 (KIT-0044). Deliberately absent:
-#   .serena/project.yml   — Serena registers by name against the primary
-#                           path; a second copy would collide
+# Symlinks are for READ-ONLY use only. Audited against .gitignore
+# 2026-07-14 (KIT-0044). Deliberately absent:
+#   .venv                 — MUTABLE state must never be a symlink: an
+#                           in-worktree `venv --clear` follows the link
+#                           and empties the PRIMARY's venv (KIT-0065).
+#                           A real per-worktree venv is provisioned below.
+#   .serena/project.yml   — Serena resolves a project NAME to the
+#                           REGISTERED path (the primary), so worktrees
+#                           get their OWN config with a per-worktree
+#                           name, generated below (KIT-0069)
 #   .adversarial/logs/    — regenerates; history is nice-to-have only
 #   .dispatch/*, caches   — runtime, regenerate on demand
 # Add new entries here by name when a session needs them — never switch
@@ -62,7 +70,6 @@ WORKTREES_DIR="$(dirname "$PRIMARY_ROOT")/ask-worktrees"
 # patterns don't match the symlink, which then blocks a plain
 # `git worktree remove` at end of life.
 PROVISION_LINKS=(
-    ".venv"
     ".env"
     ".adversarial/evaluators"
 )
@@ -197,7 +204,51 @@ for rel in "${PROVISION_LINKS[@]}"; do
     echo "Linked $rel -> $src"
 done
 
+# ─────────────────────────────────────────
+# Serena: worktree-local project config with a per-worktree name
+# ─────────────────────────────────────────
+# Serena resolves a project NAME to its REGISTERED path — inside a
+# worktree, activate_project("<primary-name>") targets the PRIMARY
+# clone, so bulk edits would hit main's checkout (KIT-0069, caught
+# pre-use). Worktree sessions must activate by ABSOLUTE PATH; a
+# pre-generated project.yml with a per-worktree name makes that one
+# obvious step. Only generated when the primary actually uses Serena.
+# Both project.yml and the generated name are gitignored (root
+# .gitignore: .serena/project.yml), so removal stays clean.
+if [ -f "$PRIMARY_ROOT/.serena/project.yml" ] \
+    && [ -f "$WORKTREE_PATH/.serena/project.yml.template" ]; then
+    SERENA_NAME="$(basename "$PRIMARY_ROOT")-$TASK_ID"
+    # bash substitution, not sed: a metacharacter in the dirname (&, \)
+    # would corrupt a sed replacement string
+    TEMPLATE_CONTENT="$(cat "$WORKTREE_PATH/.serena/project.yml.template")"
+    printf '%s\n' "${TEMPLATE_CONTENT//\$\{PROJECT_NAME\}/$SERENA_NAME}" \
+        > "$WORKTREE_PATH/.serena/project.yml"
+    echo "Serena config generated (project_name: $SERENA_NAME)"
+fi
+
 trap - ERR
+
+# ─────────────────────────────────────────
+# Per-worktree venv — a REAL venv, never a symlink (KIT-0065)
+# ─────────────────────────────────────────
+# The pre-KIT-0071 design symlinked .venv to the primary clone; an
+# in-worktree `python3 -m venv --clear` followed the link and EMPTIED
+# THE PRIMARY'S VENV. It was also the KIT-0044 stale-venv split-brain
+# in permanent form. Cost of the real venv: ~1-2 minutes per worktree.
+# --no-hooks: git hooks live in the SHARED common git dir and are
+# already installed by the primary's setup — reinstalling from here
+# would re-point them at a venv that dies with the worktree.
+# Failure is non-fatal by design: a network hiccup must not scrap the
+# worktree, it just defers venv creation to the session.
+echo ""
+echo "Provisioning per-worktree venv (real venv, never a symlink)..."
+if "$WORKTREE_PATH/scripts/core/project" setup --no-hooks; then
+    echo "Venv ready: $WORKTREE_PATH/.venv"
+else
+    echo "⚠️  venv provisioning failed — the worktree is still usable." >&2
+    echo "    Provision it from the session before running tests:" >&2
+    echo "    cd $WORKTREE_PATH && ./scripts/core/project setup --no-hooks" >&2
+fi
 
 # ─────────────────────────────────────────
 # Launch instruction (pilot friction #1 — un-skippable in the starter too)
@@ -209,3 +260,12 @@ echo "⚠️  LAUNCH: open the session tab with its working directory set to"
 echo "    $WORKTREE_PATH"
 echo "    Running the session from the primary clone costs a cd prefix on"
 echo "    every command (measured: ~40 in the KIT-0043 pilot)."
+echo ""
+echo "    Serena: activate by ABSOLUTE PATH, never by the primary's name —"
+echo "    activate_project(\"$WORKTREE_PATH\")"
+echo "    (the name resolves to the PRIMARY clone; bulk edits would hit"
+echo "    main's checkout — KIT-0069)."
+echo ""
+echo "    .venv here is a real per-worktree venv (never a symlink —"
+echo "    KIT-0065). Scratch dirs: use mktemp -d and list leftovers for"
+echo "    operator sweep; the rm -rf deny is settled policy."

@@ -1604,3 +1604,150 @@ class TestConfigHomeCheck:
         assert any(
             "no preset found at " + expected in ln for ln in preset_lines(result)
         ), result.stdout
+
+
+def run_worktree_check(root: Path, extra_env: dict[str, str] | None = None):
+    check = DOCTOR_D / "55-worktree-provisioning.sh"
+    env = {**os.environ, "DOCTOR_ROOT": str(root), **(extra_env or {})}
+    return subprocess.run(
+        [BASH, str(check)],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+def _worktree_pair(tmp_path: Path) -> tuple[Path, Path]:
+    """A real primary clone plus a linked worktree (the KIT-0071 topology)."""
+    primary = tmp_path / "primary"
+    primary.mkdir()
+    subprocess.run(["git", "init", "--quiet", str(primary)], check=True, timeout=30)
+    for key, value in (("user.email", "t@example.com"), ("user.name", "t")):
+        subprocess.run(
+            ["git", "-C", str(primary), "config", key, value],
+            check=True,
+            timeout=30,
+        )
+    subprocess.run(
+        ["git", "-C", str(primary), "commit", "--allow-empty", "-m", "init"],
+        check=True,
+        capture_output=True,
+        timeout=30,
+    )
+    worktree = tmp_path / "wt"
+    subprocess.run(
+        ["git", "-C", str(primary), "worktree", "add", str(worktree)],
+        check=True,
+        capture_output=True,
+        timeout=30,
+    )
+    return primary, worktree
+
+
+class TestWorktreeProvisioningCheck:
+    """KIT-0071: the .venv symlink destruction vector (KIT-0065) and the
+    Serena name-misdirection (KIT-0069), plus the shared-by-design
+    enumeration."""
+
+    def test_symlinked_venv_warns(self, tmp_path):
+        target = tmp_path / "elsewhere-venv"
+        target.mkdir()
+        (tmp_path / ".venv").symlink_to(target)
+        result = run_worktree_check(tmp_path)
+        assert "DOCTOR:worktree-venv:WARN:" in result.stdout
+        assert "KIT-0065" in result.stdout
+        assert "symlink" in result.stdout
+
+    def test_real_venv_is_silent(self, tmp_path):
+        (tmp_path / ".venv").mkdir()
+        result = run_worktree_check(tmp_path)
+        assert "DOCTOR:worktree-venv:PASS:" in result.stdout
+        assert "worktree-venv:WARN" not in result.stdout
+
+    def test_absent_venv_is_silent(self, tmp_path):
+        result = run_worktree_check(tmp_path)
+        assert "DOCTOR:worktree-venv:PASS:" in result.stdout
+        assert "worktree-venv:WARN" not in result.stdout
+
+    def test_dangling_venv_symlink_still_warns(self, tmp_path):
+        # is_symlink-style detection: a dangling link is still the hazard
+        (tmp_path / ".venv").symlink_to(tmp_path / "gone")
+        result = run_worktree_check(tmp_path)
+        assert "DOCTOR:worktree-venv:WARN:" in result.stdout
+
+    def test_non_git_root_audit_skips(self, tmp_path):
+        result = run_worktree_check(tmp_path)
+        assert "DOCTOR:worktree-audit:SKIP:" in result.stdout
+        assert "not a git checkout" in result.stdout
+
+    def test_primary_clone_audit_skips(self, tmp_path):
+        primary, _ = _worktree_pair(tmp_path)
+        result = run_worktree_check(primary)
+        assert "DOCTOR:worktree-audit:SKIP:" in result.stdout
+        assert "primary clone" in result.stdout
+
+    def test_worktree_without_serena_usage_skips_serena(self, tmp_path):
+        _, worktree = _worktree_pair(tmp_path)
+        result = run_worktree_check(worktree)
+        assert "DOCTOR:worktree-serena:SKIP:" in result.stdout
+        assert "does not use Serena" in result.stdout
+
+    def test_worktree_missing_serena_config_warns(self, tmp_path):
+        primary, worktree = _worktree_pair(tmp_path)
+        (primary / ".serena").mkdir()
+        (primary / ".serena" / "project.yml").write_text(
+            'project_name: "primary-proj"\n', encoding="utf-8"
+        )
+        result = run_worktree_check(worktree)
+        assert "DOCTOR:worktree-serena:WARN:" in result.stdout
+        assert "ABSOLUTE PATH" in result.stdout
+        assert "KIT-0069" in result.stdout
+
+    def test_worktree_serena_name_collision_warns(self, tmp_path):
+        primary, worktree = _worktree_pair(tmp_path)
+        for root in (primary, worktree):
+            (root / ".serena").mkdir()
+            (root / ".serena" / "project.yml").write_text(
+                'project_name: "primary-proj"\n', encoding="utf-8"
+            )
+        result = run_worktree_check(worktree)
+        assert "DOCTOR:worktree-serena:WARN:" in result.stdout
+        assert "collides" in result.stdout
+
+    def test_worktree_serena_distinct_name_passes(self, tmp_path):
+        primary, worktree = _worktree_pair(tmp_path)
+        (primary / ".serena").mkdir()
+        (primary / ".serena" / "project.yml").write_text(
+            'project_name: "primary-proj"\n', encoding="utf-8"
+        )
+        (worktree / ".serena").mkdir()
+        (worktree / ".serena" / "project.yml").write_text(
+            'project_name: "primary-proj-KIT-9999"\n', encoding="utf-8"
+        )
+        result = run_worktree_check(worktree)
+        assert "DOCTOR:worktree-serena:PASS:" in result.stdout
+        assert "worktree-serena:WARN" not in result.stdout
+
+    def test_worktree_emits_shared_by_design_enumeration(self, tmp_path):
+        _, worktree = _worktree_pair(tmp_path)
+        result = run_worktree_check(worktree)
+        line = next(
+            ln
+            for ln in result.stdout.splitlines()
+            if ln.startswith("DOCTOR:worktree-shared:PASS:")
+        )
+        assert ".env" in line
+        assert ".adversarial/evaluators" in line
+        # settled policy: the audit never asks for permission changes
+        assert "allowlist" not in result.stdout
+
+    def test_hostile_git_env_cannot_redirect_audit(self, tmp_path):
+        """A leaked GIT_DIR pointing at the primary must not make the
+        worktree look like a primary clone (the KIT-0043 leak class)."""
+        primary, worktree = _worktree_pair(tmp_path)
+        result = run_worktree_check(
+            worktree, extra_env={"GIT_DIR": str(primary / ".git")}
+        )
+        assert "DOCTOR:worktree-audit:SKIP" not in result.stdout
+        assert "DOCTOR:worktree-shared:PASS:" in result.stdout
