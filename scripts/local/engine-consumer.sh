@@ -876,14 +876,25 @@ RULES
     seed_region project-rules "$RULES_BODY" "profile: $PROFILE"
 fi
 
-# Drop a KIT-LOCAL region, markers included. Only for regions an
-# install MODE invalidates: --no-kit prunes the planner agents above,
-# so a first-session region from an earlier kit-enabled install must
-# go with them (same active-prune symmetry as the rm -f of the
-# agents; fast-gate evaluator, KIT-0067). Consumer-owned regions are
-# otherwise never removed.
-remove_region() {
+# Drop a KIT-LOCAL region, markers included — but ONLY if its body is
+# still byte-identical to what the kit seeded ($2). A customized body
+# is consumer-owned and stays (with a notice), same KIT-LOCAL
+# semantics as everywhere else. The body is read via kit_markers
+# extract, whose regex requires a BALANCED marker pair — so a
+# malformed file (BEGIN without END) fails loud here instead of
+# letting the awk below eat everything to EOF (fast-gate evaluator
+# round 2, KIT-0067). Only for regions an install MODE invalidates.
+remove_region_if_unmodified() {
     if ! printf '%s\n' "$REGIONS_OUT" | grep -qx "$1"; then
+        return 0
+    fi
+    if ! REGION_BODY_NOW="$(python3 "$KIT_MARKERS" extract "$CLAUDE_MD" "$1" 2>&1)"; then
+        echo "Error: kit_markers extract $1 failed on $CLAUDE_MD:"
+        echo "       $REGION_BODY_NOW"
+        exit 1
+    fi
+    if [ "$REGION_BODY_NOW" != "$2" ]; then
+        echo "  $1 region customized — left in place (consumer-owned)"
         return 0
     fi
     awk -v region="$1" '
@@ -892,19 +903,19 @@ remove_region() {
         !skip { print }
     ' "$CLAUDE_MD" > "$CLAUDE_MD.kit-remove.tmp"
     mv "$CLAUDE_MD.kit-remove.tmp" "$CLAUDE_MD"
-    echo "  $1 region removed ($2)"
+    echo "  $1 region removed ($3)"
 }
 
 # First-session self-direction (KIT-0067 F3): the seeded CLAUDE.md
 # closes by telling a cold-open session what to do first. Only where
 # the planner actually ships (--no-kit prunes the kit agents — and
-# removes a stale region from an earlier kit-enabled install).
+# removes an unmodified region left by an earlier kit-enabled install).
+FIRST_SESSION_BODY="First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start."
 if [ "$KIT_ENABLED" -eq 1 ]; then
-    seed_region first-session \
-"First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start." \
-        "planner self-direction"
+    seed_region first-session "$FIRST_SESSION_BODY" "planner self-direction"
 else
-    remove_region first-session "--no-kit: planner not shipped"
+    remove_region_if_unmodified first-session "$FIRST_SESSION_BODY" \
+        "--no-kit: planner not shipped"
 fi
 echo
 

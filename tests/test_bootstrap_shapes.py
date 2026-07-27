@@ -450,6 +450,28 @@ class TestProfiles:
         claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
         assert "first-session" not in claude
 
+    def test_no_kit_rebootstrap_keeps_customized_first_session(self, tmp_path):
+        # fast-gate evaluator round 2 (KIT-0067): a CUSTOMIZED region
+        # body is consumer-owned — --no-kit removes only the kit's own
+        # unmodified seed, never consumer edits
+        target = make_consumer_dir(tmp_path, "customized")
+        assert run_bootstrap(target).returncode == 0
+        claude_path = target / "CLAUDE.md"
+        custom_line = "My own first-session ritual: read the runbook."
+        claude_path.write_text(
+            claude_path.read_text(encoding="utf-8").replace(
+                "First session in this repo: invoke the `planner` agent"
+                " (in a new tab) — it triages the backlog and recommends"
+                " what to start.",
+                custom_line,
+            ),
+            encoding="utf-8",
+        )
+        result = run_bootstrap(target, "--no-kit")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "first-session region customized — left in place" in result.stdout
+        assert custom_line in claude_path.read_text(encoding="utf-8")
+
     def test_first_session_region_seeded_with_kit(self, tmp_path):
         # KIT-0067 F3: the seeded CLAUDE.md closes with the planner
         # self-direction region wherever the kit workflow (and thus

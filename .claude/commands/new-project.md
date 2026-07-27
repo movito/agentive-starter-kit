@@ -79,9 +79,9 @@ The intake agent needs two inputs; collect what's missing:
    result as a markdown file, and come back.
 2. **The code folder.** The path to the prototype's code.
 
-Verify both paths actually exist (a quick `ls`) before handing off —
-a dangling path should be caught here, not by the intake agent one
-tab later.
+Before handing off, confirm the brief is a readable, non-empty file
+and the code path is a directory — a dangling or wrong-kind path
+should be caught here, not by the intake agent one tab later.
 
 Then hand off — agents run in a **new tab**, never in this session.
 Print the invocation for the user:
