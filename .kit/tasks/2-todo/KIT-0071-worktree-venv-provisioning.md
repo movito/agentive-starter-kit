@@ -73,8 +73,11 @@ also the KIT-0044 stale-venv split-brain in permanent form.
   resolving outside the worktree (WARN if detectable), and INFO
   naming what IS shared by design (`.env`,
   `.adversarial/evaluators` — read-only use). The fourth instance
-  (rm -rf allowlist) is operator-owned — the check may INFO-mention
-  it, nothing more.
+  (rm -rf) is SETTLED POLICY, not a gap: the operator decided
+  2026-07-27 to KEEP the kit's tracked `Bash(rm -rf*)` deny (it
+  overrides any allow, by design). Agents use `mktemp -d` for
+  scratch and list leftovers for operator sweep — codify that line
+  in F3's triage entry; the check must NOT nag about an allowlist.
 
 ## Acceptance Criteria
 
