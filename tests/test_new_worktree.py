@@ -151,10 +151,12 @@ class TestProvisioning:
         assert result.returncode == 0, result.stdout + result.stderr
         wt = tmp_path / "ask-worktrees" / "KIT-1234"
         assert wt.is_dir()
-        # the worktree survives; the fallback names the recovery command
+        # the worktree survives; the fallback names a paste-safe,
+        # %q-escaped recovery command (BugBot round 5 — bare for a
+        # plain path)
         combined = result.stdout + result.stderr
         assert "venv provisioning failed" in combined
-        assert "project setup --no-hooks" in combined
+        assert f"cd {wt} && ./scripts/core/project setup --no-hooks" in combined
         assert "Worktree ready" in result.stdout
 
     def test_no_serena_generation_when_primary_lacks_config(self, tmp_path):

@@ -248,9 +248,12 @@ echo "Provisioning per-worktree venv (real venv, never a symlink)..."
 if "$WORKTREE_PATH/scripts/core/project" setup --no-hooks; then
     echo "Venv ready: $WORKTREE_PATH/.venv"
 else
+    # %q keeps the recovery line paste-safe for paths with spaces or
+    # metacharacters — same contract as the doctor/cmd_setup remedies
+    WORKTREE_Q="$(printf '%q' "$WORKTREE_PATH")"
     echo "⚠️  venv provisioning failed — the worktree is still usable." >&2
     echo "    Provision it from the session before running tests:" >&2
-    echo "    cd $WORKTREE_PATH && ./scripts/core/project setup --no-hooks" >&2
+    echo "    cd $WORKTREE_Q && ./scripts/core/project setup --no-hooks" >&2
 fi
 
 # ─────────────────────────────────────────
