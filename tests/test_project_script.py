@@ -1272,3 +1272,31 @@ class TestSetupVenvSymlinkGuard:
         assert result.returncode == 0, result.stdout + result.stderr
         assert "Skipping pre-commit hook install" in result.stdout
         assert "Pre-commit hooks installed" not in result.stdout
+
+    def test_refusal_in_worktree_recommends_no_hooks(self, tmp_path):
+        """BugBot (this PR): in a linked worktree (.git is a FILE) the
+        refusal's rerun advice must carry --no-hooks."""
+        script = self._fake_tree(tmp_path)
+        (tmp_path / ".git").write_text(
+            "gitdir: /somewhere/.git/worktrees/x\n", encoding="utf-8"
+        )
+        target = tmp_path / "target-venv"
+        target.mkdir()
+        (tmp_path / ".venv").symlink_to(target)
+
+        result = self._run_setup(script)
+        assert result.returncode == 1
+        assert "setup --no-hooks" in result.stdout
+
+    def test_refusal_outside_worktree_plain_setup(self, tmp_path):
+        """In a normal clone (.git is a dir or absent) the advice stays
+        plain setup — hooks belong here."""
+        script = self._fake_tree(tmp_path)
+        (tmp_path / ".git").mkdir()
+        target = tmp_path / "target-venv"
+        target.mkdir()
+        (tmp_path / ".venv").symlink_to(target)
+
+        result = self._run_setup(script)
+        assert result.returncode == 1
+        assert "--no-hooks" not in result.stdout

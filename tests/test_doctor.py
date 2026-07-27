@@ -1816,3 +1816,31 @@ class TestWorktreeProvisioningCheck:
         )
         assert "DOCTOR:worktree-audit:SKIP" not in result.stdout
         assert "DOCTOR:worktree-shared:PASS:" in result.stdout
+
+    def test_symlinked_venv_in_worktree_remedy_says_no_hooks(self, tmp_path):
+        # BugBot (this PR): inside a linked worktree the remedy must say
+        # --no-hooks — hooks are shared with the primary
+        primary, worktree = _worktree_pair(tmp_path)
+        target = tmp_path / "elsewhere-venv"
+        target.mkdir()
+        (worktree / ".venv").symlink_to(target)
+        result = run_worktree_check(worktree)
+        line = next(
+            ln
+            for ln in result.stdout.splitlines()
+            if ln.startswith("DOCTOR:worktree-venv:WARN:")
+        )
+        assert "--no-hooks" in line
+
+    def test_symlinked_venv_outside_worktree_remedy_plain_setup(self, tmp_path):
+        # outside a worktree, plain setup (with hooks) is the right advice
+        target = tmp_path / "elsewhere-venv"
+        target.mkdir()
+        (tmp_path / ".venv").symlink_to(target)
+        result = run_worktree_check(tmp_path)
+        line = next(
+            ln
+            for ln in result.stdout.splitlines()
+            if ln.startswith("DOCTOR:worktree-venv:WARN:")
+        )
+        assert "--no-hooks" not in line

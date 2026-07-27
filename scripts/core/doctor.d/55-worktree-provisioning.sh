@@ -43,14 +43,30 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${DOCTOR_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
+# Worktree-ness first: the venv remedy differs inside one — hooks are
+# SHARED with the primary, so an in-worktree setup must say --no-hooks
+# or the reinstall re-points them at a venv that dies with the
+# worktree (BugBot, this PR).
+GIT_DIR_PATH="$(git -C "$ROOT" rev-parse --path-format=absolute --git-dir 2>/dev/null)" || GIT_DIR_PATH=""
+GIT_COMMON="$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || GIT_COMMON=""
+IN_WORKTREE=""
+if [ -n "$GIT_DIR_PATH" ] && [ -n "$GIT_COMMON" ] \
+    && [ "$GIT_DIR_PATH" != "$GIT_COMMON" ]; then
+    IN_WORKTREE=1
+fi
+SETUP_CMD="./scripts/core/project setup"
+if [ -n "$IN_WORKTREE" ]; then
+    SETUP_CMD="./scripts/core/project setup --no-hooks (hooks are shared with the primary)"
+fi
+
 # ── .venv: must never be a symlink, worktree or not ──
 if [ -L "$ROOT/.venv" ]; then
     TARGET="$(readlink "$ROOT/.venv")"
-    echo "DOCTOR:worktree-venv:WARN:.venv is a symlink -> $TARGET — split-brain (KIT-0044) and a destruction vector: a venv --clear or rebuild through the link empties the TARGET venv (KIT-0065 emptied the primary clone's); replace it: rm .venv && ./scripts/core/project setup"
+    echo "DOCTOR:worktree-venv:WARN:.venv is a symlink -> $TARGET — split-brain (KIT-0044) and a destruction vector: a venv --clear or rebuild through the link empties the TARGET venv (KIT-0065 emptied the primary clone's); replace it: rm .venv && $SETUP_CMD"
 elif [ -d "$ROOT/.venv" ]; then
     echo "DOCTOR:worktree-venv:PASS:.venv is a real directory (not a symlink)"
 else
-    echo "DOCTOR:worktree-venv:PASS:no .venv — provision one with ./scripts/core/project setup when needed"
+    echo "DOCTOR:worktree-venv:PASS:no .venv — provision one with $SETUP_CMD when needed"
 fi
 # The alternate venv/ layout (40-version-skew probes it too) carries
 # the same hazard class; silent when absent or a real directory.
@@ -59,13 +75,11 @@ if [ -L "$ROOT/venv" ]; then
 fi
 
 # ── the rest of the audit only applies inside a linked worktree ──
-GIT_DIR_PATH="$(git -C "$ROOT" rev-parse --path-format=absolute --git-dir 2>/dev/null)" || GIT_DIR_PATH=""
-GIT_COMMON="$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || GIT_COMMON=""
 if [ -z "$GIT_DIR_PATH" ] || [ -z "$GIT_COMMON" ]; then
     echo "DOCTOR:worktree-audit:SKIP:not a git checkout — no worktree provisioning to audit"
     exit 0
 fi
-if [ "$GIT_DIR_PATH" = "$GIT_COMMON" ]; then
+if [ -z "$IN_WORKTREE" ]; then
     echo "DOCTOR:worktree-audit:SKIP:primary clone (not a linked worktree) — worktree audit not applicable"
     exit 0
 fi

@@ -657,11 +657,18 @@ def cmd_setup(args):
     # dangling link, which exists() would miss. Must sit before ANY
     # venv mutation (steps 2-3).
     if venv_dir.is_symlink():
+        # In a linked worktree (.git is a FILE), the rerun must say
+        # --no-hooks: hooks live in the shared common git dir and a
+        # reinstall would re-point them at a venv that dies with the
+        # worktree (BugBot, KIT-0071).
+        rerun = "./scripts/core/project setup"
+        if (project_dir / ".git").is_file():
+            rerun += " --no-hooks"
         print(f"❌ .venv is a SYMLINK: {venv_dir} -> {os.readlink(venv_dir)}")
         print("   Refusing: rebuilding through the link would mutate the TARGET")
         print("   venv (KIT-0065: this emptied the primary clone's venv).")
         print("   Remove the link first, then re-run:")
-        print("       rm .venv && ./scripts/core/project setup")
+        print(f"       rm .venv && {rerun}")
         sys.exit(1)
 
     # 2. Handle existing venv
