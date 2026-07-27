@@ -133,6 +133,8 @@ grep -ri "agentive.starter.kit\|agentive-starter-kit" \
 4. **Delete files that don't apply** to new projects:
    - `CHANGELOG.md` — starter kit history, not relevant to the new project
    - `docs/UPSTREAM-CHANGES-*.md` — upgrade notes for ASK users, not new projects
+   - `.claude/agents/onboarding.md` — **if present**: retired from the kit
+     (KIT-0067 D1); only trees scaffolded from pre-0.9.0 exports still carry it
 
 **Rule of thumb**: If the reference describes *this project*, replace it.
 If it's a URL, path, test fixture, or attribution link, leave it.
