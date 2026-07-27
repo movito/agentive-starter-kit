@@ -436,6 +436,20 @@ class TestProfiles:
         # KIT-0067 F3: no planner shipped -> no planner self-direction
         assert "first-session" not in claude
 
+    def test_no_kit_rebootstrap_removes_first_session_region(self, tmp_path):
+        # fast-gate evaluator (KIT-0067): --no-kit prunes the planner,
+        # so a first-session region from an earlier kit-enabled install
+        # must go with it — never a stale instruction to invoke an
+        # agent that no longer ships
+        target = make_consumer_dir(tmp_path, "downgrade")
+        assert run_bootstrap(target).returncode == 0
+        assert "first-session" in (target / "CLAUDE.md").read_text(encoding="utf-8")
+        result = run_bootstrap(target, "--no-kit")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "first-session region removed" in result.stdout
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "first-session" not in claude
+
     def test_first_session_region_seeded_with_kit(self, tmp_path):
         # KIT-0067 F3: the seeded CLAUDE.md closes with the planner
         # self-direction region wherever the kit workflow (and thus

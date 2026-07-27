@@ -876,13 +876,35 @@ RULES
     seed_region project-rules "$RULES_BODY" "profile: $PROFILE"
 fi
 
+# Drop a KIT-LOCAL region, markers included. Only for regions an
+# install MODE invalidates: --no-kit prunes the planner agents above,
+# so a first-session region from an earlier kit-enabled install must
+# go with them (same active-prune symmetry as the rm -f of the
+# agents; fast-gate evaluator, KIT-0067). Consumer-owned regions are
+# otherwise never removed.
+remove_region() {
+    if ! printf '%s\n' "$REGIONS_OUT" | grep -qx "$1"; then
+        return 0
+    fi
+    awk -v region="$1" '
+        $0 == "<!-- BEGIN KIT-LOCAL: " region " -->" { skip=1; next }
+        $0 == "<!-- END KIT-LOCAL: " region " -->" { skip=0; next }
+        !skip { print }
+    ' "$CLAUDE_MD" > "$CLAUDE_MD.kit-remove.tmp"
+    mv "$CLAUDE_MD.kit-remove.tmp" "$CLAUDE_MD"
+    echo "  $1 region removed ($2)"
+}
+
 # First-session self-direction (KIT-0067 F3): the seeded CLAUDE.md
 # closes by telling a cold-open session what to do first. Only where
-# the planner actually ships (--no-kit prunes the kit agents).
+# the planner actually ships (--no-kit prunes the kit agents — and
+# removes a stale region from an earlier kit-enabled install).
 if [ "$KIT_ENABLED" -eq 1 ]; then
     seed_region first-session \
 "First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start." \
         "planner self-direction"
+else
+    remove_region first-session "--no-kit: planner not shipped"
 fi
 echo
 

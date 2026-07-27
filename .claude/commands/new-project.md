@@ -51,9 +51,10 @@ kit clone — never hunt for the door elsewhere.
    its help output) and let the preset answer the rest.
 
 4. **Secrets never transit the chat.** If the user pastes anything
-   that looks like key material, REFUSE it. Secrets reach a new
-   project only by reference, through the preset's secrets-file key
-   (authored via `/setup-preset`, edited in the user's own editor).
+   that looks like key material (API keys, tokens, passwords),
+   REFUSE it. Secrets reach a new project only by reference, through
+   the preset's secrets-file key (authored via `/setup-preset`,
+   edited in the user's own editor).
 
 ## Step 1: route the flow
 
@@ -77,6 +78,10 @@ The intake agent needs two inputs; collect what's missing:
    into the conversation that built the prototype, save the filled
    result as a markdown file, and come back.
 2. **The code folder.** The path to the prototype's code.
+
+Verify both paths actually exist (a quick `ls`) before handing off —
+a dangling path should be caught here, not by the intake agent one
+tab later.
 
 Then hand off — agents run in a **new tab**, never in this session.
 Print the invocation for the user:
