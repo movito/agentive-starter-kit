@@ -248,7 +248,7 @@ Customize the documentation links for this agent's role:
 **Evaluation Workflow**:
 - **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
 - Quick command: `adversarial evaluate <task-file>` (you run this directly)
-- Output location: `.adversarial/logs/TASK-*-PLAN-EVALUATION.md`
+- Output location: `.adversarial/logs/<input-name>--<evaluator-name>.md`
 
 **API Testing Documentation**:
 - [Relevant ADR, if any]

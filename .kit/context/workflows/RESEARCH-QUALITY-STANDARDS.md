@@ -99,7 +99,7 @@ Every research document must pass these gates before being considered complete:
 adversarial evaluate <document-path>
 
 # Read results
-cat .adversarial/logs/<document>-EVALUATION.md
+cat .adversarial/logs/<document>--<evaluator-name>.md
 ```
 
 **Evaluator Selection**:
