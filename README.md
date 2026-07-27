@@ -256,7 +256,7 @@ pre-answers the door's questions so repeat projects need none.
 
 If you prefer to handle setup yourself, copy these template files and configure manually:
 - `.env.template` → `.env` (API keys)
-- `.serena/project.yml.template` → `.serena/project.yml` (languages)
+- `.serena/project.yml.template` → `.serena/project.yml` (language servers)
 - `.adversarial/config.yml.template` → `.adversarial/config.yml` (evaluation settings)
 
 ---
