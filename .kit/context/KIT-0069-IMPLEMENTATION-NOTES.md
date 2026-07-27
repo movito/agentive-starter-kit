@@ -301,7 +301,49 @@ symbols"), now observed for whole files rather than symbols.
 3. Consider whether the trio is the right gate for prose-only PRs at all,
    or whether a class-grep + full test suite is the stronger evidence.
 
-## 13. Operator-owed items hit again
+## 13. Bot round 1: 6 findings, 6 real — and 4 were my own errors
+
+Inverse of the evaluator result in §12. CodeRabbit produced six findings;
+**every one reproduced**. Nothing to dispute.
+
+More usefully, they cluster into two self-inflicted patterns:
+
+**(a) Three were self-review item 15 violations — the rule I wrote in this
+very PR.** "After fixing a recurring token in a file, grep THAT FILE for
+the token before moving on." I fixed one instance of a claim and left
+siblings standing:
+
+| Thread | I fixed | I missed |
+|---|---|---|
+| T1 | `preflight.md` GATE format string gained `SKIP` | the 7-row result table two sections below still allowed only PASS/FAIL |
+| T2 | `(347 lines)` in `AGENT-TEMPLATE.md` | the identical claim in `AGENT-CREATION-WORKFLOW.md:249` |
+| T5 | three prose sites marked the push path parked | the Mermaid diagram, the ASCII diagram and the channel table still showed it live |
+
+The rule as written says grep *that file*. **That is too narrow.** Every
+one of these misses was a sibling in a *different* file, or in a different
+*representation* (diagram/table vs prose) within the same file. Item 15
+should read: grep the token **repo-wide**, and check whether the claim also
+exists in non-prose form — diagrams, tables, code comments, help text.
+
+**(b) One was a new bug I introduced while fixing a bug (T3, Major).**
+Fixing A40 — a section whose old advice was destructive (`rm -rf` on the
+installed evaluator tree) — I replaced it with a recovery command that
+**does not work**: `install-evaluators` returns early with "Evaluators
+already installed" unless `--force` is passed. I documented a remedy
+without running it.
+
+**Generalisable**: when replacing bad advice with a command, *execute the
+command* (or read its guard clauses) before writing it down. A remedy is a
+citation like any other, and item 16 applies to it — I verified paths and
+versions but not the *behaviour* of a command I was recommending.
+
+**Also**: CodeRabbit's T1 suggestion said to expand all seven gate rows to
+the full status set. Measuring `preflight-check.sh` shows only Gate 1 emits
+`PENDING` and only Gates 2/3 emit `SKIP`; gates 4-7 are PASS/FAIL only.
+Applying the suggestion verbatim would have introduced four new false
+claims while fixing one. **Bot suggestions are claims too.**
+
+## 14. Operator-owed items hit again
 
 - **`rm -rf` allowlist** — blocked the F3 scratch-generation test; worked
   around with `mktemp -d`. Memory says this is the fifth consecutive task

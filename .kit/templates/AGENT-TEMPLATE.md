@@ -331,7 +331,7 @@ Choose your model based on task complexity:
 |-------|----------|----------|
 | **Opus 5** | `claude-opus-5` | Complex planning, code generation, security analysis |
 | **Sonnet 5** | `claude-sonnet-5` | Documentation, testing, agent creation, day-to-day tasks |
-| **Haiku 4.5** | `claude-haiku-4-5` | CI checks, simple validation, fast operations |
+| **Haiku 4.5** | `claude-haiku-4-5-20251001` | CI checks, simple validation, fast operations |
 
 **Verify before pinning.** Model IDs change with each release, and a stale
 pin is silent — the agent still loads. Check the current catalog rather

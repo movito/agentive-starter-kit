@@ -48,6 +48,10 @@ lives here. Nothing is authored in a consumer repo and pushed back up.
 
 ## 2. Two distribution channels
 
+> Both diagrams below show Channel B's **push** arrow as designed. That
+> trigger is **parked** (KIT-0045) — `workflow_dispatch` and the pull path
+> are the live mechanisms today.
+
 Rendered view (GitHub renders Mermaid natively):
 
 ```mermaid
@@ -63,11 +67,11 @@ flowchart TD
     subgraph B["Channel B — Manifest sync (vendored files)"]
         ACT["sync-core-scripts.yml Action<br/>driven by scripts/.core-manifest.json<br/><br/>carries: scripts/core · .claude/commands · .kit/**"]
         CONSB["consumer repo<br/>vendored files + PR to review<br/>opted_in tiers preserved"]
-        ACT -->|"auto PR on push to main<br/>(CROSS_REPO_TOKEN)"| CONSB
+        ACT -->|"auto PR on push to main<br/>(CROSS_REPO_TOKEN)<br/>⚠ PARKED — KIT-0045"| CONSB
     end
 
     SRC -->|"publish / re-publish"| PLUGIN
-    SRC -->|"push to watched paths"| ACT
+    SRC -->|"push to watched paths<br/>⚠ PARKED — KIT-0045"| ACT
 
     AGENTS{{"Agents: NOT watched by the Action<br/>ship via plugin (a) or bootstrap merge (b)<br/>— KIT-ADR-0025 / KIT-0033"}}
     SRC -.->|"special case"| AGENTS
@@ -123,7 +127,7 @@ kit-builder scaffolding).
 |---|---|---|
 | **What** | `agentive-workflow` plugin, from the `movito/agentive-skills` marketplace | `sync-core-scripts.yml` Action + `scripts/.core-manifest.json` |
 | **Carries** | Agents, commands, skills as **namespaced installs** (`agentive-workflow:feature-developer-v7`, `agentive-workflow:check-ci`) | **Vendored file copies**: `scripts/core/`, `.claude/commands/`, `.kit/` templates/skills/ADRs/workflows |
-| **Consumer update path** | `claude plugin update` / `upgrader` agent | **Push**: automated PR into the consumer repo. **Pull**: `./scripts/core/project sync` from the consumer (on-demand, KIT-ADR-0026) |
+| **Consumer update path** | `claude plugin update` / `upgrader` agent | **Push** (⚠ parked, KIT-0045 — manual `workflow_dispatch` until re-enabled): automated PR into the consumer repo. **Pull** (live): `./scripts/core/project sync` from the consumer (on-demand, KIT-ADR-0026) |
 | **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | ADR-0008, KIT-ADR-0022, KIT-ADR-0026, `docs/MANIFEST-UPGRADE-GUIDE.md` |
 
 ### Canonical homes (KIT-ADR-0027 P6)

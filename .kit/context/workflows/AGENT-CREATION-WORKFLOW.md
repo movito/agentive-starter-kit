@@ -2,7 +2,7 @@
 
 **Purpose**: Step-by-step guide for creating new specialized agents with standardized Evaluator instructions
 **Audience**: Coordinators, project maintainers
-**Last Updated**: 2025-11-06
+**Last Updated**: 2026-07-27
 
 ---
 
@@ -246,7 +246,7 @@ Customize the documentation links for this agent's role:
 - Test suite management: `.kit/context/workflows/TEST-SUITE-WORKFLOW.md`
 
 **Evaluation Workflow**:
-- **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (347 lines)
+- **Complete guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
 - Quick command: `adversarial evaluate <task-file>` (you run this directly)
 - Output location: `.adversarial/logs/<input-name>--<evaluator-name>.md`
 
@@ -897,6 +897,6 @@ grep -n '\[' .claude/agents/your-agent.md
 
 ---
 
-**Last Updated**: 2025-11-06
+**Last Updated**: 2026-07-27
 **Maintained By**: Coordinator agent, document-reviewer agent
 **Questions?** See `CLAUDE.md` or ask the user

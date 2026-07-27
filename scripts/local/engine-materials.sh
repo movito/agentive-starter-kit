@@ -100,7 +100,8 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 # .github/ — CI workflows, dependabot
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
-# docs/ — only the structural parts (docs/adr/, testing guide)
+# docs/ — everything except proposals/ (this includes docs/adr/ and the
+# testing guide, but is NOT limited to them)
 "${RSYNC_BASE[@]}" --exclude='proposals/' "$PROJECT_ROOT/docs/" "$TARGET/docs/"
 
 # scripts/ — project management, CI, setup. scripts/local/ is the

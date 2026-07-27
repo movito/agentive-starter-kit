@@ -61,8 +61,12 @@ gitignored, so the safe recovery from any conflict is to reinstall from
 the pinned library rather than hand-delete:
 
 ```bash
-./scripts/core/project install-evaluators
+./scripts/core/project install-evaluators --force
 ```
+
+`--force` is required: the installer exits early with "Evaluators already
+installed" whenever `.adversarial/evaluators/.installed-version` exists, so
+the bare command repairs nothing.
 
 The library-installed version is canonical.
 
