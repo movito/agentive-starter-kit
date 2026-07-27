@@ -168,6 +168,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Inherited memory framing needs verify-before-believing too**: the fd reported the rm-rf deny as "operator debt" because five tasks of memory said so — the operator had settled it as deliberate policy. Memory entries are testimony with a timestamp, same as retros. (KIT-0069)
 - **Audit findings can be wrong despite surviving adversarial verification**: 2 of 54 were refuted by measurement (A74 was backwards — the audit generalized from one sampled evaluator — yet hid a REAL bug underneath: the recommended trio spans two verdict vocabularies). Sweep dispositions require measured evidence, never "as the audit says". (KIT-0069)
 - **An honest scorecard beats a flattering one**: the fd revised its retro post-merge to raise its own regression count from 3 to 6 after the tree-verification landed — that revision is what made the class-closure lesson (grep ≠ class) legible. Retro-after-verification is the better ordering for sweep tasks. (KIT-0069)
+- **The KIT-0065 destruction command is now provably harmless**: `venv --clear` in a fresh worktree cleared only its own venv (167→2 entries) with the primary untouched (170→170) — live-demo transcripts beat fixture tests for destructive-path acceptance criteria. Bonus: the existing suite caught the live hazard by accident (`TestPythonVersionCheck` runs cmd_setup in-process, so the new guard fired on the session's own symlinked .venv). (KIT-0071)
+- **BugBot's check-run status lies in BOTH directions**: "skipping" while actively posting threads (KIT-0071), "skipping" then late terminal pass-with-finding (KIT-0058/0066). The status field carries no signal — always fetch threads; folded into KIT-0062 as the definitive fix requirement. (KIT-0071, third face)
+- **`displayed_commands_are_contracts`** (patterns.yml): five bot findings across rounds 2-6 were one class — printed remedy commands that weren't paste-safe. Fixed instance-by-instance at a cost of four extra rounds; a fresh regression of `fix_by_class_not_instance` within days of shipping it. When a rule is new, its violations are still warm. (KIT-0071)
+- **A provisioning helper can't demo its own payload pre-merge**: the fresh-worktree demo executes origin/main's copy of the payload script until the PR merges — an inherent blind spot to note in review records, not a bug to fix. (KIT-0071)
 
 ### Empirically Disproven Reviewer Claims (decline-by-reference)
 
@@ -191,4 +195,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-07-27 by planner-f5 (KIT-0069 extraction: grep-closes-a-token-not-a-class, diff-only pre-fix reconstruction + prose-sweep Phase-7 exception, partially-corrected citations, memory-as-testimony, audit-findings-can-be-wrong, honest-scorecard ordering)*
+*Last updated: 2026-07-27 by planner-f5 (KIT-0071 extraction: live-demo acceptance proof, BugBot status lies both ways, displayed_commands_are_contracts, provisioning-payload blind spot)*

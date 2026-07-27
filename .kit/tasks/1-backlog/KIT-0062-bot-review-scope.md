@@ -73,6 +73,17 @@ real findings.
   through three CI rounds then delivered a terminal PASS with one
   new finding on round 4, unprompted —
   `.kit/context/retros/KIT-0066-retro.md` (Surprising #1).
+  **Third occurrence, and the inverse (KIT-0071, PR #96)**: BugBot
+  reported `skipping` for five consecutive scans WHILE actively
+  posting Medium-severity threads (round-1 thread posted DURING a
+  skipping status), then flipped to pass. Conclusion for the fix:
+  **the check-run status field carries no signal in either
+  direction — Gate 2/3 logic and the bot-triage skill must treat it
+  as advisory only and always fetch the threads; the threads are the
+  truth.** Gate 3 printed "check-run passed, no findings" about a PR
+  BugBot had filed four threads against.
+  `.kit/context/retros/KIT-0071-retro.md` (Surprising #1, Should
+  Change #3).
 - **F7 — Gates 2/3 docs-only message honesty (added from KIT-0066
   retro)**: the gates classified PR #92's prose-agent diff as "No
   code changes — bot review not required" while both bots produced

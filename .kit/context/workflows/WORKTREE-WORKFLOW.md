@@ -163,6 +163,23 @@ When the task completes:
 2. **Planner**: completes the task in the primary clone (task move to
    `5-done`, retro archived, merged branch deleted).
 
+### Handoff bookkeeping in worktree mode (KIT-0071 retro)
+
+Preflight Gates 5-7 read from the session's cwd, so **the branch must
+carry** the task move to `4-in-review` and the review starter. The
+**primary clone** simultaneously needs the mirrored working-tree state
+for the planner (handoff paths, retro dropped as an untracked file) —
+the session prepares these UNCOMMITTED in the primary; the planner
+commits them at closeout. After the squash-merge, reconcile in this
+order: **restore any conflicting working-tree paths to HEAD, pull
+--ff-only, then VERIFY `git rev-parse HEAD` == `origin/main` before
+any bookkeeping** — a pull can print "Updating x..y" and still abort
+on uncommitted mirrored files, leaving the primary silently stale
+(this happened at KIT-0071's own closeout: `project complete` ran
+against the pre-merge tree and a fresh worktree got provisioned by
+the OLD helper). Then `project complete`, and delete any leftover
+duplicate task copy at the old path.
+
 ## Lifecycle — who removes the worktree, and when
 
 The **planner** removes the worktree at task completion, **after the

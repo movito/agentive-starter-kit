@@ -1,6 +1,6 @@
 # KIT-0071 Handoff — feature-developer
 
-**Task**: `.kit/tasks/2-todo/KIT-0071-worktree-venv-provisioning.md`
+**Task**: `.kit/tasks/5-done/KIT-0071-worktree-venv-provisioning.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-27 (planner-f5)
 **Estimated effort**: 3-4 hours (widened scope: F1-F7)
