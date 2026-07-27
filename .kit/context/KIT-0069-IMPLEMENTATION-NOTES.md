@@ -219,11 +219,26 @@ rather than "as the audit says".
 
 ## 11. New findings surfaced while sweeping (not in the audit)
 
-1. **The manifest still syncs the retired `.kit/skills/`.**
-   `files.kit_builder` contains `.kit/skills/`, which KIT-0059 removes in
-   0.9.0. Removing the directory without pulling the manifest entry points
-   the sync engine at a missing path on every kit-family consumer. **This
-   belongs in KIT-0059's checklist.**
+1. ~~**The manifest still syncs the retired `.kit/skills/`.**~~
+   **WITHDRAWN — I over-claimed this as a new finding; it is already
+   tracked.** `files.kit_builder` does contain `.kit/skills/`, but
+   KIT-0059's Requirements already name the exact remedy ("Retarget the
+   manifest: the `kit_builder` tier's `.kit/skills/` entry in
+   `scripts/.core-manifest.json` becomes `.claude/skills/` … keep
+   `tests/test_core_manifest.py` counts in sync in the same commit") and
+   its Acceptance Criteria include "Manifest + manifest tests updated
+   together". Nothing to file.
+
+   Worth keeping as a process data point: `code-reviewer-fast` returned
+   **FAIL** on this PR resting entirely on this item, calling it an
+   "active correctness bug" causing "sync failures for consumer projects".
+   Two independent checks refute that: (a) `.kit/skills/` **exists today**,
+   so the manifest entry resolves and sync works — the hazard only appears
+   *after* KIT-0059 deletes it; and (b) 0.9.0 removals are explicitly out
+   of this task's scope per the handoff. The evaluator also could not see
+   `scripts/.core-manifest.json` (not in the diff) and inferred its content
+   from a doc — it reasoned about a file it had not read. **An evaluator
+   verdict is a claim; check it the same way you check a doc citation.**
 2. **Three documented releases were never tagged.** `v0.5.1`, `v0.6.0`,
    `v0.7.0` have CHANGELOG headings but no git tags, so no compare link
    can exist for them (the `[0.8.0]` link now spans `v0.5.0...v0.8.0`).
@@ -233,7 +248,60 @@ rather than "as the audit says".
 3. **`.env.template` carried a pre-v0.4.0 path** and appears in no audit
    finding — found only by the class grep (see §7).
 
-## 12. Operator-owed items hit again
+## 12. Evaluator trio: both verdicts were FAIL, and both were wrong
+
+Run pre-PR per the standing ordering rule. Outcome:
+
+| Evaluator | Result | Findings | Survived verification |
+|---|---|---|---|
+| `code-reviewer-fast` (Gemini Flash) | **FAIL** | 1 blocking | 0 |
+| `claude-code` (Sonnet) | **did not run** | — | — |
+| `code-reviewer` (o3) | **FAIL** | 6 | **0 of 6** |
+
+**`claude-code` could not run**: `litellm.BadRequestError … credit balance
+is too low`. No log file was written — which is exactly why the standing
+rule is "the log file with a verdict is the proof, never the exit code".
+**Operator-owed: top up the Anthropic API balance.**
+
+**`code-reviewer-fast`'s FAIL** rested entirely on the manifest still
+listing `.kit/skills/`, called an "active correctness bug" causing
+"sync failures for consumer projects". Refuted twice over: `.kit/skills/`
+exists today so the entry resolves, and the remedy is already an explicit
+named requirement in KIT-0059. The evaluator reasoned about
+`scripts/.core-manifest.json`, which was **not in the diff** — it inferred
+file contents from a doc that mentioned it.
+
+**`code-reviewer` (o3) produced six findings; all six are fabricated.**
+Each was checked against the tree:
+
+| Claim | Measured reality |
+|---|---|
+| `scripts/core/project` hard-codes `delegation/tasks/` | 0 occurrences of `delegation`; 8 `.kit/tasks` references |
+| `linear_sync_utils.py` scans `delegation/` | 0 occurrences; `sync_tasks_to_linear.py:517` reads `.kit/tasks` |
+| `create-agent.sh` copies `.claude/agents/AGENT-TEMPLATE.md` | line 42 reads `.kit/templates/AGENT-TEMPLATE.md` |
+| Tests still use `@pytest.mark.integration` / `.unit`, so `--strict-markers` breaks collection | 0 usages; the full suite passed **799/12s after** the markers were removed |
+| Helper error text still prints `./scripts/<name>.sh --help` | every one prints `./scripts/core/...` |
+| Two `AGENT-TEMPLATE.md` copies now diverge silently | `.claude/agents/AGENT-TEMPLATE.md` does not exist — its absence *was* finding A21 |
+
+**The common failure mode across both evaluators**: reasoning confidently
+about files **not present in the input**. A diff-only input invites the
+model to reconstruct the unchanged side from assumption, and it reconstructs
+the *pre-fix* state — so a truth-sweep PR reads as "the old paths are still
+there". This is the same hazard the code-review-evaluator skill already
+warns about ("diff-only input causes models to hallucinate missing
+symbols"), now observed for whole files rather than symbols.
+
+**Planner actions:**
+1. For sweep-shaped PRs, either supply full-file context (cost permitting)
+   or state in the input that unchanged regions must not be reasoned about
+   — and expect FAIL verdicts that are artifacts of the input form.
+2. **Never action an evaluator finding without reproducing it.** Two FAILs,
+   seven findings, zero real. The verdict carries no signal on its own;
+   this is now the tenth recorded o3 data point in that direction.
+3. Consider whether the trio is the right gate for prose-only PRs at all,
+   or whether a class-grep + full test suite is the stronger evidence.
+
+## 13. Operator-owed items hit again
 
 - **`rm -rf` allowlist** — blocked the F3 scratch-generation test; worked
   around with `mktemp -d`. Memory says this is the fifth consecutive task
