@@ -1,8 +1,10 @@
 # Operator preset for the agentive-starter-kit setup door (KIT-0056,
 # relocated by KIT-0058; KIT-ADR-0027 P7).
 #
-# Prefer the conversational builder: run /setup-preset in a Claude
-# session — it interviews you and writes this file for you.
+# Prefer the conversational builder: in the kit clone run `claude`,
+# then type /setup-preset at Claude's prompt — it interviews you and
+# writes this file for you (slash-commands exist only inside a
+# Claude Code session, not in the shell).
 #
 # Install location — a VISIBLE sibling of the kit checkout, personal,
 # per-machine, never distributed by any sync/export path (the

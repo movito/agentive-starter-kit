@@ -46,12 +46,29 @@ door (`scripts/local/bootstrap`) and then independent of the factory.
 └── my-notes/                ← a single-repo project
 ```
 
+### How every kit conversation starts
+
+Slash-commands like `/new-project` and `/setup-preset` only exist
+INSIDE a Claude Code session — they are not shell commands. The
+literal keystrokes, every time:
+
+```bash
+cd ~/Github/agentive-starter-kit   # the factory clone
+claude                             # opens the Claude Code session
+```
+
+Then, at Claude's prompt, type the command — `/new-project`,
+`/setup-preset` — or ask for an agent by name. (The interactive agent
+menu is also available from the shell: `./.kit/launchers/launch`.)
+Everywhere this guide says "run /X in the kit clone", it means exactly
+these steps.
+
 Three things follow from this model:
 
-- **The kit clone is where creation happens.** You open a Claude Code
-  session in `agentive-starter-kit/` to create projects (the
+- **The kit clone is where creation happens.** You start a session in
+  `agentive-starter-kit/` (as above) to create projects — the
   `/new-project` command, the `project-intake` agent, the setup door
-  itself). You do everything else in the created project's own folder.
+  itself. You do everything else in the created project's own folder.
 - **Projects never contain the factory.** A created project gets the
   agents, scripts, and workflow it needs — not the kit's git history,
   its internal tasks, or the door.
@@ -91,9 +108,10 @@ clone — pre-answers the door's questions (project shape, review bots,
 evaluator install, secrets file, and so on), so with a filled preset,
 creating a project is genuinely one command with zero questions.
 
-Author yours conversationally: open a Claude Code session in the kit
-clone and run `/setup-preset`. It interviews you in plain language and
-writes the file. This is worth doing before your first real project —
+Author yours conversationally: start a session in the kit clone
+(`cd ~/Github/agentive-starter-kit && claude`) and type
+`/setup-preset` at Claude's prompt. It interviews you in plain
+language and writes the file. This is worth doing before your first real project —
 most of the door's questions then never come up again.
 
 A few rules keep the preset safe:
@@ -145,8 +163,9 @@ private planning repo that manages it (why this split: see
 
 ### 2. Blank split pair (production default, no code yet)
 
-The same two-repo shape, started empty. Open a Claude Code session in
-the kit clone and run `/new-project` — it asks what you're making, in
+The same two-repo shape, started empty. Start a session in the kit
+clone (`cd ~/Github/agentive-starter-kit && claude`) and type
+`/new-project` at Claude's prompt — it asks what you're making, in
 plain language, and drives the door for you.
 
 Direct door use (no interview) works too; see `--shape planning` and
