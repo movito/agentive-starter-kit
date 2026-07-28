@@ -165,10 +165,6 @@ logs/
 # primary clone's install, and dir-only patterns don't match symlinks
 .adversarial/evaluators
 
-# Dispatch (runtime artifacts)
-.dispatch/config.local.yml
-.dispatch/bus.jsonl
-
 # Claude Code session state (harness-owned; never repo content — a stray
 # memory file tracked here shipped into every bootstrapped export until
 # 2026-07-24, KIT-0066 follow-up)

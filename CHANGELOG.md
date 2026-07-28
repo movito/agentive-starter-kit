@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`.kit/context/` is legible again** (KIT-0077): the 100 handoffs,
+  review starters, and session records belonging to tasks in a terminal
+  folder moved to `.kit/context/archive/`. The flat listing is now live
+  coordination only (`agent-handoffs.json`, `patterns.yml`,
+  `current-state.json`, `REVIEW-INSIGHTS.md`, the in-flight task's
+  handoff). Pure `git mv` — no history lost. Both consumer copy paths
+  learned to drop the new directory: `engine-export.sh` gained an
+  explicit `rm -rf` (its `.kit/context/` scrubs are `-maxdepth 1`) and
+  `engine-materials.sh` an `--exclude='context/archive/'` (its task-ID
+  pattern is anchored at depth 1). A guard test now covers each path.
+
+### Removed
+
+- **dispatch-kit integration retired** (KIT-0077) — the operator no
+  longer runs it. `.dispatch/config.yml` is archived to
+  `docs/archive/dispatch-config.yml.archived`; `setup-dev.sh` loses its
+  `--with-dispatch` gate and both dispatch steps (2.0.0 — a removed
+  flag); the `local` extra leaves `pyproject.toml` (dispatch-kit was
+  its only member); the `.dispatch/` runtime entries leave
+  `.gitignore`; and the unguarded `dispatch emit` instructions leave
+  the `code-reviewer` agent and the `/wrap-up` command. **Kept**: the
+  `origin: dispatch-kit` provenance headers, the guarded
+  fire-and-forget emits in shipped `scripts/core/` and the shipped
+  commands (portable no-ops that still serve `movito/dispatch-kit` as
+  a downstream sync consumer), and every historical record.
+- **Two version-pinned docs archived** (KIT-0077):
+  `.kit/docs/UPGRADE-0.4.0.md` and `.serena/claude-code/USE-CASES.md`
+  moved to `docs/archive/` (the latter as `SERENA-USE-CASES.md`), with
+  all six live citers repointed.
+
+### Added
+
+- Builder-only commands (`/new-project`, `/setup-preset`, `/wrap-up`)
+  now declare `distribution: builder-only` in frontmatter with a note
+  that their absence from `scripts/.core-manifest.json` is intended
+  (KIT-0077 F5) — closing the taxonomy question the dedup analysis
+  raised.
+
 ## [0.9.0] - 2026-07-28
 
 The ADR-0027 release: the kit's historical setup entrances became ONE

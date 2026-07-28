@@ -31,7 +31,19 @@ Documented procedures for common operations:
 - `ADR-CREATION-WORKFLOW.md` - Architectural decisions
 
 ### `templates/`
-Templates for handoff documents and coordination files.
+Templates for handoff documents and coordination files:
+- `review-starter-template.md` - copied by the `review-handoff` skill to
+  create `<TASK-ID>-REVIEW-STARTER.md` (implementer → reviewer)
+- `review-template.md` - used by the `code-reviewer` agent for its
+  review output (reviewer → implementer)
+
+### `archive/`
+Handoffs, review starters, and session artifacts for tasks that have
+reached a terminal folder (`5-done`, `6-canceled`, `7-blocked`,
+`8-archive`), plus dated one-off session records. Frozen history —
+read for precedent, never edit. Live coordination stays in this
+directory's flat listing; when a task finishes, its artifacts move
+here (KIT-0077).
 
 ## Usage
 
@@ -58,4 +70,4 @@ Example: `2025-11-25-PROJECT-SETUP-COMPLETE.md`
 
 ---
 
-**Documentation Version**: 1.0.0
+**Documentation Version**: 1.1.0

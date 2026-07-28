@@ -117,6 +117,10 @@ find .kit/tasks/ -name "*.md" ! -name "README.md" ! -path "*/9-reference/*" -del
 # Context — remove handoffs, reviews, retros, research, starters
 find .kit/context/ -maxdepth 1 -name "*.md" ! -name "README.md" ! -name "patterns.yml" -delete 2>/dev/null || true
 find .kit/context/ -maxdepth 1 -name "*.json" ! -name "agent-handoffs.json" ! -name "current-state.json" -delete 2>/dev/null || true
+# archive/ holds finished-task handoffs (KIT-0077); it sits below the
+# -maxdepth 1 sweeps above, so it needs its own removal or consumers
+# would inherit the kit's entire session history.
+rm -rf .kit/context/archive/ 2>/dev/null || true
 rm -rf .kit/context/research/ 2>/dev/null || true
 find .kit/context/retros/ -name "*.md" -delete 2>/dev/null || true
 find .kit/context/reviews/ -name "*.md" -delete 2>/dev/null || true

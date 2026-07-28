@@ -1,12 +1,16 @@
 ---
 description: Interview the user and author their setup-door preset in the visible config home
-version: 1.0.0
+version: 1.1.0
 origin: agentive-starter-kit
-last-updated: 2026-07-23
+last-updated: 2026-07-28
 created-by: "@movito with feature-developer-f5 (KIT-0058)"
+distribution: builder-only
 ---
 
 # Setup Preset
+
+> **Builder-side command**: operates the kit factory; not distributed
+> via `scripts/.core-manifest.json` (intended — see KIT-0077).
 
 Author (or update) the operator preset for the setup door
 (`scripts/local/bootstrap`) by interviewing the user in plain

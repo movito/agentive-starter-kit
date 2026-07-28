@@ -41,10 +41,9 @@ dev = [
     # Adversarial evaluation (AI reviews task specs)
     "adversarial-workflow>=1.0.1",  # Floor excludes 0.9.x aider-era builds that mutate the working tree during review
 ]
-local = [
-    # Agent coordination (event bus, transition matching, spawning)
-    "dispatch-kit>=0.4.0",         # Install locally: pip install -e /path/to/dispatch-kit
-]
+# The `local` extra was removed in KIT-0077. Its only member was
+# dispatch-kit (agent event bus), retired with the rest of the
+# dispatch integration; nothing installed `.[local]`.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

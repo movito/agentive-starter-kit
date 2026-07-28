@@ -1,12 +1,16 @@
 ---
 description: Interview the user and create their new project through the setup door or the intake agent
-version: 1.0.0
+version: 1.1.0
 origin: agentive-starter-kit
 last-updated: 2026-07-28
 created-by: "@movito with feature-developer-f5 (KIT-0067)"
+distribution: builder-only
 ---
 
 # New Project
+
+> **Builder-side command**: operates the kit factory; not distributed
+> via `scripts/.core-manifest.json` (intended — see KIT-0077).
 
 Create a new project from this kit — the front door to the factory
 flow described in `docs/STARTING-A-PROJECT.md`. Interview the user in

@@ -43,9 +43,10 @@ after a gate failure:
      lead's evaluator record (and notes any per-task skip rationale).
 
 Reference shape: the KIT-0037/38/39 bundle (PR #71) —
-`.kit/context/KIT-0038-REVIEW-STARTER.md` and
+`.kit/context/archive/KIT-0038-REVIEW-STARTER.md` and
 `.kit/context/reviews/KIT-0038-evaluator-review.md` are the canonical
-examples of pointer files.
+examples of pointer files. (Finished tasks' starters live under
+`.kit/context/archive/`; write new ones to the flat listing.)
 
 **Multi-PR task** (one task ID, several sequential PRs — KIT-0035's
 shape): the task-level artifacts live on ONE branch (put them on the

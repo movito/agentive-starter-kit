@@ -29,7 +29,8 @@ your-project/
 │   ├── agents/            #   agent definitions (synced from ASK via agents_core tier)
 │   ├── commands/          #   slash commands (synced via commands_core tier)
 │   └── skills/            #   ALL skills live here (KIT-0057); .kit/skills is retired
-├── .dispatch/             # Coordination (stays at root — dispatch-kit hardcodes path)
+├── .dispatch/             # LEGACY — only if the repo still runs dispatch-kit
+│                          #   (stays at root; the CLI hardcodes the path)
 ├── .kit/                  # Builder layer (NEW — synced via kit_builder tier)
 │   ├── adr/               #   kit architectural decisions (from docs/decisions/starter-kit-adr/)
 │   ├── context/           #   handoffs, reviews, workflows, patterns (from .agent-context/)
@@ -67,7 +68,7 @@ your-project/
 | Directory | Why it stays |
 |-----------|-------------|
 | `.adversarial/` | CLI hardcodes path (ADV-0053 tracks fix) |
-| `.dispatch/` | dispatch-kit hardcodes path |
+| `.dispatch/` | dispatch-kit hardcodes path (legacy — only in repos that still run it) |
 | `.serena/` | Serena hardcodes path |
 | `.claude/` | Claude Code resolution constraint |
 | `.pre-commit-config.yaml` | Standard location |
@@ -248,6 +249,11 @@ git rm -r agents/ 2>/dev/null         # only if completely empty (launchers move
 **Do NOT force-remove non-empty directories.** If something is left, investigate.
 
 ### Step 8: Update `.dispatch/config.yml`
+
+Skip this step unless the repo you are migrating still runs dispatch-kit.
+The kit itself retired the integration in KIT-0077 (its own config is
+archived at `docs/archive/dispatch-config.yml.archived`), so a fresh
+kit-derived project has no `.dispatch/` at all.
 
 If the repo uses dispatch-kit, update the paths:
 

@@ -113,9 +113,10 @@ What should the next agent do with this?
 
 ## Example Handoff Document
 
-See existing handoffs for examples:
-- `.kit/context/ASK-0043-HANDOFF-feature-developer.md`
-- `.kit/context/ASK-0044-HANDOFF-feature-developer.md`
+See existing handoffs for examples (finished tasks' handoffs live under
+`.kit/context/archive/`; write new ones to the flat `.kit/context/`):
+- `.kit/context/archive/ASK-0043-HANDOFF-feature-developer.md`
+- `.kit/context/archive/ASK-0044-HANDOFF-feature-developer.md`
 
 ---
 
@@ -123,7 +124,7 @@ See existing handoffs for examples:
 
 - **Quick Reference**: `CLAUDE.md`
 - **Full Protocol**: This document
-- **Handoff Examples**: `.kit/context/*-HANDOFF-*.md`
+- **Handoff Examples**: `.kit/context/archive/*-HANDOFF-*.md`
 - **Task Templates**: `.kit/templates/TASK-STARTER-TEMPLATE.md`
 
 ---

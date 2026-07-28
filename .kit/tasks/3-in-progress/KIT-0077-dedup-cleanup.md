@@ -1,6 +1,6 @@
 # KIT-0077: Dedup cleanup — context archive, dispatch retirement, doc archival
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: medium (sequenced AFTER 0.9.0 merges)
 **Assigned To**: unassigned
 **Estimated Effort**: 3-4 hours
@@ -58,3 +58,33 @@ prerequisite hygiene)
 
 - Evaluation skipped (planner): executes an adversarially-produced,
   operator-approved analysis. Fast-only trio; tree gate.
+
+## Implementation findings (feature-developer, 2026-07-28)
+
+- **F4 verdict: keep both templates — no merge, no archive.** The §4
+  "conceptual duplicate" is refuted by the citers; they do different
+  jobs and each has exactly one live consumer:
+  - `review-starter-template.md` ← `.claude/skills/review-handoff/SKILL.md`
+    (implementer → reviewer; becomes `<TASK-ID>-REVIEW-STARTER.md`)
+  - `review-template.md` ← `.claude/agents/code-reviewer.md`
+    (the reviewer's own output: verdict + criteria table)
+  Both roles are now named in `.kit/context/README.md` so a future
+  dedup pass does not re-raise the question. Nothing to repoint.
+- **F1 was larger than specced**: 100 files, not 74 — the 0.9.0 tasks
+  completed after the analysis, and `8-archive` is terminal too (the
+  spec named only 5/6/7).
+- **Two consumer-leak regressions were introduced and fixed**: moving
+  files into `context/archive/` put them below both engines' depth-1
+  sweeps. `engine-export.sh` needed `rm -rf .kit/context/archive/`;
+  `engine-materials.sh` needed `--exclude='context/archive/'`. The
+  materials leak was caught by the existing
+  `test_engine_materials.py::test_no_task_id_files_in_kit_dirs`; the
+  export path had no equivalent guard, so one was added
+  (`test_setup_door.py::test_new_export_carries_no_planning_corpus`).
+- **`agent-handoffs.json` needed no edit** — its only path fields point
+  at the live KIT-0077 handoff (verified, not assumed).
+- **Deliberately out of scope**: `movito/dispatch-kit` as a *downstream
+  sync target* (sync-core-scripts.yml, DISTRIBUTION-ARCHITECTURE.md,
+  KIT-0026/0031/0045/0072) is a different thing from the retired local
+  integration; the guarded emit blocks in shipped scripts still serve
+  it. See the PR body.

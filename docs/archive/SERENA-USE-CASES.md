@@ -1,5 +1,10 @@
 # Serena Use Case Matrix
 
+> **ARCHIVED** (KIT-0077): moved here from `.serena/claude-code/USE-CASES.md`.
+> The measurements date from 2025-11 and the operator no longer works from
+> this matrix. Kept as history and as background for the agents that still
+> cite it. Current Serena setup lives in `.serena/claude-code/SETUP-GUIDE.md`.
+
 **Version**: 2.0
 **Date**: 2025-11-20
 **Data Source**: Python + TypeScript validation testing
