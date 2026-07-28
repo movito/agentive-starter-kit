@@ -7,8 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-28
+
+The ADR-0027 release: the kit's historical setup entrances became ONE
+door with shapes, profiles, operator presets, and a doctor — and every
+compatibility shim that transition created is now gone (the
+shims-with-filed-removal rule, enforced). Also in this release: the
+factory front door for new projects, per-worktree venvs, and the truth
+sweep + doc curation that grounded the docs in the tree.
+
+### Removed
+
+- **The 0.9.0 removal set — every deprecation window closes**
+  (KIT-0076, executing KIT-0047 + KIT-0054 + KIT-0059; core scripts
+  4.0.0 — removing a core script is a breaking change to the sync
+  surface):
+  - `scripts/core/verify-setup.sh` (a deprecation shim over
+    `./scripts/core/project doctor` since KIT-0046) is deleted.
+  - The three entrance shims (`scripts/local/bootstrap-consumer.sh`,
+    `scripts/local/bootstrap.sh`, `scripts/optional/create-project.sh`)
+    and the door's `--legacy-shim` fidelity channel are deleted:
+    `scripts/local/bootstrap` is the only entrance, and every run gets
+    the record-conflict check, offers, record augmentation, and doctor
+    tail. Characterization suites re-pinned on the door's own flags.
+  - The `.kit/skills/` read-both symlinks are deleted:
+    `.claude/skills/` is the only skills home; the manifest's
+    `kit_builder` tier retargets to it.
+  - The legacy `~/.config/agentive-kit/preset` notice (door + doctor)
+    retires — the path was never read after KIT-0058; now it is no
+    longer named anywhere.
+- **Downstream migration note**: consumers get the retired surfaces
+  deletion-pruned on their next `project sync` (the downstream pass
+  runs the sync per repo). Frozen pre-KIT-0053 `create-project.sh`
+  copies inside consumer checkouts keep working — they are full
+  implementations, not shims.
+
+### Added
+
+- **`project doctor`** (KIT-0046, KIT-ADR-0027 P4; core scripts
+  3.2.0): pluggable `doctor.d/` health checks behind one driver — the
+  4-field `DOCTOR:check:VERDICT:detail` contract, exit contract
+  0 ok / 1 fail / 2 warn-only / 3 driver error; `verify-setup.sh`
+  became its deprecation shim (removal filed then, executed above).
+- **Planning-repo shape + shape-scoped sync** (KIT-0048, KIT-0049,
+  KIT-ADR-0027 P2): `--shape planning` installs coordination without
+  toolchain (no venv — verified on system Python), and `project sync`
+  gained a manifest-intersection allowlist so planning repos sync
+  safely (updates-not-additions, deletion pruning, schema refusals).
+- **Factory front door** (KIT-0067, KIT-0066): the `/new-project`
+  skill + `docs/STARTING-A-PROJECT.md` route every new-project path
+  through one interview; the `project-intake` agent graduates a
+  prototype + handoff brief (`.kit/templates/
+  PROTOTYPE-HANDOFF-TEMPLATE.md`) into the split planning/code pair.
+- **Real per-worktree venvs** (KIT-0071): `new-worktree.sh` provisions
+  a real virtualenv per worktree (the `.venv` symlink destruction
+  vector is closed — `project setup` refuses symlinked venvs), plus
+  the `55-worktree-provisioning.sh` doctor check.
+
 ### Changed
 
+- **Truth sweep + doc curation** (KIT-0069, KIT-0073): the pre-0.9.0
+  cruft audit's prose findings fixed and verified tree-grounded
+  (complete-coverage verification, residuals fixed same-day); a
+  33-document curation pass (trims, merges, archives) cut the README
+  from ~580 to 96 lines.
 - **Whole-repo aider purge + Python ceiling lift** (KIT-0065; core
   scripts 3.7.0). Aider is retired everywhere; the four dead
   `.adversarial/scripts/*.sh` wrappers (evaluate_plan,
@@ -732,7 +794,8 @@ project upgrades were deliberately deferred to the next phase.
      spans v0.5.0...v0.8.0. Cutting the missing tags (or accepting the gap
      deliberately) is a release-hygiene decision for the 0.9.0 cut.
      Found during KIT-0069 / A66. -->
-[Unreleased]: https://github.com/movito/agentive-starter-kit/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/movito/agentive-starter-kit/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/movito/agentive-starter-kit/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/movito/agentive-starter-kit/compare/v0.5.0...v0.8.0
 [0.5.0]: https://github.com/movito/agentive-starter-kit/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/movito/agentive-starter-kit/compare/v0.3.3...v0.4.0

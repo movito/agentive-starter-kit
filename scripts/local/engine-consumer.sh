@@ -391,9 +391,9 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.9.0",
+  "core_version": "4.0.0",
   "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-07-27T00:00:00Z",
+  "synced_at": "2026-07-28T00:00:00Z",
   "files": {
     "scripts_core": [
       "core/__init__.py",
