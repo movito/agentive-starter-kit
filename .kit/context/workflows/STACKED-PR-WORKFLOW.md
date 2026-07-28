@@ -97,6 +97,29 @@ Two clean nudges (in preference order):
 Avoid `git commit --allow-empty` — it pollutes history for the same effect
 nudge 1 gets with a real change.
 
+**KIT-0067 corrections to the above (both nudges failed there):**
+
+- **Reopen did NOT trigger CI in practice** — with `pull_request:
+  branches: [main]` filters the reopened event still produced no run.
+  The reliable fallback is a **manual dispatch**:
+  `gh workflow run test.yml --ref <head-branch>` (test.yml carries
+  `workflow_dispatch`). The run attaches to the head SHA but may not
+  render in the PR's checks rollup — the run on the branch is the
+  proof; say so when giving a merge go.
+- **Auto-retarget only happens when the merged base BRANCH IS
+  DELETED.** If PR 1's branch survives its squash-merge, PR 2 keeps
+  pointing at the dead branch and presents as "ready to merge" —
+  merging it there would land PR 2's work OFF main. Verify
+  `gh pr view <n> --json baseRefName` after every stack-parent merge;
+  retarget explicitly with `gh pr edit <n> --base main` if needed,
+  then delete the parent branch.
+- **Bot coverage on a stacked base**: CodeRabbit refuses non-default
+  bases entirely; BugBot scans anyway (under a `skipping` status —
+  threads are the truth, KIT-0062). A fresh CodeRabbit pass after
+  retarget needs an explicit `@coderabbitai review` comment — and
+  budget for it re-reviewing ALL files, including archival moves
+  (12-nit round on KIT-0067's #98).
+
 ---
 
 ## Gotcha: force-push may be permission-blocked

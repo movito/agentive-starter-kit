@@ -1,6 +1,6 @@
 # KIT-0067 Handoff — feature-developer
 
-**Task**: `.kit/tasks/4-in-review/KIT-0067-factory-front-door-and-structural-cleanup.md`
+**Task**: `.kit/tasks/5-done/KIT-0067-factory-front-door-and-structural-cleanup.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-27 (planner-f5)
 **Estimated effort**: 1-1.5 days

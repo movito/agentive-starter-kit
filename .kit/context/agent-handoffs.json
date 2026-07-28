@@ -1,19 +1,19 @@
 {
   "planner": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0067",
+    "status": "available",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "KIT-0071 closed out 2026-07-27 (PR #96 merged 8e695bb; retro processed: displayed_commands_are_contracts pattern, WORKTREE-WORKFLOW bookkeeping+pull-verify section, KIT-0062 third-face evidence). CLOSEOUT INCIDENT self-caught: pull printed Updating-but-aborted on mirrored files -> stale-tree bookkeeping + old-helper worktree; recovered, rule codified (verify rev-parse HEAD==origin/main after every pull). KIT-0067 worktree is the FIRST with a real per-worktree venv (3.14). CHAIN FINAL LINK: KIT-0067 assigned. Then cut 0.9.0 (KIT-0047+0054+0059).",
-    "details_link": ".kit/tasks/4-in-review/KIT-0067-factory-front-door-and-structural-cleanup.md",
-    "handoff_file": ".kit/context/KIT-0067-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0067 closed out 2026-07-28 (PRs #97+#98 merged, a979da2 tip; stacked-merge near-miss caught: #98 based on dead branch pre-retarget \u2014 recipe now in STACKED-PR-WORKFLOW; retro processed: KIT-0074 filed [stacked tooling], bot-triage fence-sweep line, PR-SIZE archival rules, insights). REMEDIATION CHAIN COMPLETE (0068/0065/0069/0071/0067 all done). NOW: doc-curation audit (operator-requested, pre-0.9.0) -> KIT-0073 curation+README task -> 0.9.0 release task (KIT-0047+0054+0059 + downstream launcher pruning note).",
+    "details_link": ".kit/tasks/5-done/KIT-0067-factory-front-door-and-structural-cleanup.md",
+    "handoff_file": null
   },
   "feature-developer": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0067",
+    "status": "idle",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "KIT-0067 ready: factory front door (STARTING-A-PROJECT + /new-project + seeded self-direction) + execute approved D1-D5 (retire launchers/onboarding, archive dead docs, prune serena, gate dispatch, adr fix). Jointly-owned files enumerated in handoff. Worktree: ../ask-worktrees/KIT-0067 (real venv, pull --ff-only first).",
-    "details_link": ".kit/tasks/4-in-review/KIT-0067-factory-front-door-and-structural-cleanup.md",
-    "handoff_file": ".kit/context/KIT-0067-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0067 delivered and merged (PRs #97+#98). No active assignment.",
+    "details_link": null,
+    "handoff_file": null
   },
   "code-reviewer": {
     "status": "idle",

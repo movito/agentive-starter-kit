@@ -172,6 +172,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **BugBot's check-run status lies in BOTH directions**: "skipping" while actively posting threads (KIT-0071), "skipping" then late terminal pass-with-finding (KIT-0058/0066). The status field carries no signal — always fetch threads; folded into KIT-0062 as the definitive fix requirement. (KIT-0071, third face)
 - **`displayed_commands_are_contracts`** (patterns.yml): five bot findings across rounds 2-6 were one class — printed remedy commands that weren't paste-safe. Fixed instance-by-instance at a cost of four extra rounds; a fresh regression of `fix_by_class_not_instance` within days of shipping it. When a rule is new, its violations are still warm. (KIT-0071)
 - **A provisioning helper can't demo its own payload pre-merge**: the fresh-worktree demo executes origin/main's copy of the payload script until the PR merges — an inherent blind spot to note in review records, not a bug to fix. (KIT-0071)
+- **Stacked-PR mechanics, the complete recipe**: auto-retarget fires only when the merged parent BRANCH is deleted (a surviving branch leaves PR 2 aimed at a dead base, presenting as mergeable — merging would strand the work off main); reopen does NOT retrigger CI despite standard `pull_request` types (branch filters); `gh workflow run --ref <head>` is the reliable kick, attaching by SHA but possibly invisible in the PR rollup; CodeRabbit refuses stacked bases while BugBot scans them under a `skipping` status. All now in STACKED-PR-WORKFLOW; automation gaps filed as KIT-0074. (KIT-0067 closeout)
+- **"Delete three scripts" can be a 150-line design problem**: `.kit/launchers/launch` was the registration target for create-agent.sh — retirement needed degrade-gracefully (skip-with-notice) because pre-0.9.0 consumers still carry launchers. Before approving a deletion decision, grep for programmatic consumers, not just doc citations. (KIT-0067)
+- **Evaluator input size is a review-quality variable**: `--format full` on an archival PR ballooned to 966KB (every moved file's text re-included); scoping to the stack parent cut it 4x but bought the diff-only hallucination mode on cue. There is no free lunch between context-starvation and context-flood — which is why tree-grounded verification, not the trio, gates deletion-heavy PRs. (KIT-0067)
+- **The archive-polish noise class, purest specimen**: a fresh CodeRabbit pass on the archival PR filed markdownlint findings against files INSIDE docs/archive/ — polish requests on documents archived precisely because they're frozen. Resolve-without-fixing citing the archive's purpose; KIT-0062 excludes the paths. (KIT-0067)
 
 ### Empirically Disproven Reviewer Claims (decline-by-reference)
 
@@ -195,4 +199,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-07-27 by planner-f5 (KIT-0071 extraction: live-demo acceptance proof, BugBot status lies both ways, displayed_commands_are_contracts, provisioning-payload blind spot)*
+*Last updated: 2026-07-28 by planner-f5 (KIT-0067 extraction: stacked-PR complete recipe, deletions-have-programmatic-consumers, evaluator input-size trade-off, archive-polish noise specimen)*

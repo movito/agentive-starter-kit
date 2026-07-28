@@ -138,3 +138,23 @@ If implementation reveals the task is larger than estimated:
 | 300-500 lines | ~12 | 0-1 | 1 |
 | 1000-2000 lines | ~28 | 2-3 | 2-3 |
 | > 2000 lines | 30 (cap) | 2-3 | 3-4 |
+
+## Archival and mass-move PRs (KIT-0067)
+
+Line counts mislead on archival diffs: a `git mv` renders as
+delete-plus-add, doubling the apparent size at near-zero review
+density. But **bot review effort scales with FILES TOUCHED, not
+risk** — a full re-review of KIT-0067's 55-file archival PR produced
+a 12-thread all-Minor round, including markdownlint polish on the
+archived files themselves.
+
+Rules:
+
+- **Split behavioral edits from mass archival.** The behavioral slice
+  (script gating, test changes, config edits) ships as its own crisp
+  PR; the moves/deletions ship separately as a skim-reviewable one.
+- Judge an archival PR by its **behavioral line count**, not its
+  gross diff.
+- Expect and pre-empt archive-polish noise: archived files are frozen
+  history — resolve such threads without fixing, citing the archive's
+  purpose (KIT-0062 will exclude the paths).
