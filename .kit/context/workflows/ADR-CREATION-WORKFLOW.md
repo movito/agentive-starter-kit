@@ -123,7 +123,7 @@ Real-world outcomes:
 ## References
 
 - Related ADRs: [ADR-XXXX](./XXXX-title.md)
-- Task files: `.kit/tasks/active/TASK-YYYY-####.md`
+- Task files: `.kit/tasks/<status-folder>/<TASK-ID>-name.md`
 - Commits: abc1234, def5678
 - External docs: Links to libraries, standards, etc.
 
@@ -152,9 +152,7 @@ Real-world outcomes:
 
 ### Target Length:
 
-- **Average**: 300+ lines for comprehensive ADRs
-- **Minimum**: 150 lines for simpler decisions
-- **Maximum**: No limit (be thorough, not verbose)
+- As long as the decision needs, no longer — be thorough, not verbose
 
 ---
 
@@ -165,7 +163,7 @@ Real-world outcomes:
 - Be honest about trade-offs and limitations
 - Cross-reference related ADRs and tasks
 - Verify all links and references work
-- Update index (README.md) when adding new ADR
+- Update the matching ADR index (see ADR Index Maintenance below)
 - Use actual metrics and test results
 
 ### ❌ DON'T:
