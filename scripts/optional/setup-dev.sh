@@ -195,9 +195,12 @@ elif [ -d "$DISPATCH_KIT_PATH" ] && [ -f "$DISPATCH_KIT_PATH/pyproject.toml" ]; 
     echo "✅ dispatch-kit $DK_VER installed from local repo"
     SUMMARY+=("dispatch-kit: installed from local ($DK_VER)")
 else
-    echo "⚠️  dispatch-kit not found (optional — needed for agent coordination)"
+    # --with-dispatch is an explicit request — an unmet one is a
+    # failure, never a warning-that-reads-as-success (CodeRabbit,
+    # PR #98). The skip-quietly behavior is the DEFAULT mode's.
+    echo "❌ dispatch-kit requested (--with-dispatch) but no clone found"
     echo "   Set DISPATCH_KIT_PATH or clone to ~/Github/dispatch-kit/"
-    SUMMARY+=("dispatch-kit: NOT FOUND (optional)")
+    exit 1
 fi
 echo
 fi  # WITH_DISPATCH (step 3)
@@ -255,13 +258,15 @@ if command -v dispatch >/dev/null 2>&1 || [ -x ".venv/bin/dispatch" ]; then
             echo "✅ dispatch init complete"
             SUMMARY+=("config: created via dispatch init")
         else
-            echo "⚠️  dispatch init did not create config (dispatch-kit may not be installed)"
-            SUMMARY+=("config: skipped (dispatch-kit not available)")
+            # explicit opt-in unmet -> failure (CodeRabbit, PR #98)
+            echo "❌ dispatch init did not create .dispatch/config.yml"
+            exit 1
         fi
     fi
 else
-    echo "⚠️  dispatch CLI not found — install skipped or failed above"
-    SUMMARY+=("config: skipped (dispatch CLI not found)")
+    # explicit opt-in unmet -> failure (CodeRabbit, PR #98)
+    echo "❌ --with-dispatch requested but no dispatch CLI found after install"
+    exit 1
 fi
 echo
 else

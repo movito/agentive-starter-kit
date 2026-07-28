@@ -1325,5 +1325,10 @@ class TestReconfigureMissingConfigRemedy:
             text=True,
         )
         assert proc.returncode == 0, proc.stderr
+        # pin the actual remedy, not just any parseable shell
+        # (CodeRabbit, PR #98): cd into the named project dir, then the
+        # real setup script
+        assert match.group(1).startswith("cd ")
+        assert match.group(1).endswith("&& bash .serena/setup-serena.sh")
         # root-scoped: the command names the project dir, not a cwd guess
         assert dirname in match.group(1)

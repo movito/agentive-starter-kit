@@ -301,12 +301,14 @@ npm install -g typescript-language-server typescript
 ```
 
 **C. Check PATH**
+
 ```bash
-echo $PATH | grep nvm
-# Should show your node bin directory (e.g. ~/.nvm/versions/node/<version>/bin)
+dirname "$(command -v typescript-language-server)"
+# Should print your node bin directory (nvm, Homebrew, Volta, asdf, or system)
 ```
 
-If not in PATH, add to shell profile (~/.zshrc or ~/.bashrc):
+If not in PATH, add your node bin directory to the shell profile (~/.zshrc or ~/.bashrc), e.g.:
+
 ```bash
 export PATH="$HOME/.nvm/versions/node/<your-version>/bin:$PATH"  # substitute your node version
 ```

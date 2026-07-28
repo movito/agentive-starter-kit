@@ -1,6 +1,6 @@
-> **ARCHIVED** (KIT-0067 D2/A68): built around the pre-kit `delegation/` tree and dead cross-references. Current evaluator guidance: `.claude/skills/code-review-evaluator/SKILL.md` (the per-evaluator verdict-vocabulary table below, KIT-0069/A74, is preserved there too).
-
 # Adversarial Evaluation Workflow
+
+> **ARCHIVED** (KIT-0067 D2/A68): built around the pre-kit `delegation/` tree and dead cross-references. Current evaluator guidance: `.claude/skills/code-review-evaluator/SKILL.md` (the per-evaluator verdict-vocabulary table below, KIT-0069/A74, is preserved there too).
 
 **Created**: 2025-11-01
 **Updated**: 2026-02-01 (multi-evaluator architecture, provider-agnostic)

@@ -199,7 +199,7 @@ git mv delegation/handoffs/* .kit/context/ 2>/dev/null
 
 ```bash
 # Retire the pre-kit launcher scripts (superseded by the setup door)
-git rm agents/launch agents/onboarding agents/preflight 2>/dev/null
+git rm --ignore-unmatch agents/launch agents/onboarding agents/preflight
 ```
 
 **After removing**: If `agents/` is now empty, remove it with `git rm -r agents/`.

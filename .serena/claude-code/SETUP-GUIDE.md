@@ -299,10 +299,18 @@ Then use other Serena tools
 ### Claude Code MCP Registration
 
 Serena is registered with Claude Code as a user-scoped MCP server —
-the same command `.serena/setup-serena.sh` runs:
+the same commands `.serena/setup-serena.sh` runs. With `uvx`
+available (the common case):
 
 ```bash
 claude mcp add --scope user serena -- uvx --from "git+https://github.com/oraios/serena" serena start-mcp-server
+```
+
+Without `uvx` (serena installed via `pipx`, so the CLI is already on
+PATH), the script registers the binary directly:
+
+```bash
+claude mcp add --scope user serena -- serena start-mcp-server
 ```
 
 Inspect or manage the registration with the CLI (never edit config

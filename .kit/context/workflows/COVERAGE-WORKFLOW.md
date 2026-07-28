@@ -9,11 +9,18 @@ actually enforces
 
 ## The rule
 
-**80% for new code.** `pyproject.toml` pins the enforced gate
-(`[tool.coverage.report] fail_under = 80`) — the test suite FAILS
-below it. That pin is the single source of the threshold; this doc
-deliberately does not restate exclusions or omit-lists (read
-`[tool.coverage.run]` / `[tool.coverage.report]` in `pyproject.toml`).
+Two related thresholds, one enforced and one reviewed:
+
+- **Enforced — 80% aggregate.** `pyproject.toml` pins
+  `[tool.coverage.report] fail_under = 80`: the test suite FAILS when
+  *project-wide* reported coverage drops below it. That pin is the
+  single source of the number; this doc deliberately does not restate
+  exclusions or omit-lists (read `[tool.coverage.run]` /
+  `[tool.coverage.report]` in `pyproject.toml`).
+- **Reviewed — 80% for new code.** There is no per-diff mechanical
+  gate; new-code coverage is held in review: the `Missing` column for
+  files you touched is the evidence, and uncovered new logic needs a
+  documented reason in the PR (see Judgment calls).
 
 ## The commands
 

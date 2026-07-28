@@ -292,8 +292,12 @@ cat .adversarial/logs/<TASK-ID>-code-review-input--claude-code.md
 >
 > The recommended trio itself spans two vocabularies (`claude-code`
 > emits APPROVED/REJECT). **Read each log and interpret the verdict;
-> never pattern-match a fixed token.** Confirm any evaluator's
-> vocabulary with:
+> never pattern-match a fixed token.** To preview an evaluator's
+> vocabulary, grep its prompt text — `evaluator.yml` declares no
+> structured vocabulary field, so the bold uppercase tokens in the
+> prompt are the only mechanical signal (a heuristic: it can
+> over-match other bold caps; the read-the-log rule above is the
+> binding one):
 > `grep -o -E '\*\*[A-Z_]+\*\*' .adversarial/evaluators/<provider>/<name>/evaluator.yml | sort -u`
 
 ## Step 4: Persist Output

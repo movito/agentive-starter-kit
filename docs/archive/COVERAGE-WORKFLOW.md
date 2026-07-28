@@ -1,6 +1,6 @@
-> **ARCHIVED** (KIT-0067 D2/A41): written for the thematic-cuts source project (53% baseline, DaVinci examples). Replaced by the minimal `.kit/context/workflows/COVERAGE-WORKFLOW.md`.
-
 # Coverage Workflow
+
+> **ARCHIVED** (KIT-0067 D2/A41): written for the thematic-cuts source project (53% baseline, DaVinci examples). Replaced by the minimal `.kit/context/workflows/COVERAGE-WORKFLOW.md`.
 
 **Purpose**: Measure and analyze test coverage to identify untested code
 **Agent**: Primarily test-runner, but feature-developer should also use
@@ -72,7 +72,7 @@ pytest tests/ --cov=thematic_cuts --cov-fail-under=53
 
 ### Terminal Output:
 
-```
+```text
 Name                                    Stmts   Miss  Cover   Missing
 ---------------------------------------------------------------------
 your_project/core/timecode.py            245     12    95%   123, 456-478
@@ -144,6 +144,7 @@ if sys.platform == "win32":  # pragma: no cover
 ## Best Practices
 
 ### ✅ DO:
+
 - Maintain or improve baseline coverage (≥53%)
 - Focus on critical paths first (timecode, assembly, validation)
 - Use HTML report for detailed line-by-line analysis
@@ -151,6 +152,7 @@ if sys.platform == "win32":  # pragma: no cover
 - Include coverage metrics in test reports
 
 ### ❌ DON'T:
+
 - Don't aim for 100% coverage blindly (diminishing returns)
 - Don't test implementation details (test behavior, not internals)
 - Don't let coverage drop below baseline without coordinator approval
