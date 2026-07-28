@@ -9,7 +9,7 @@ fresh consumers (BugBot, PR #66) or survives a --no-kit opt-out (CodeRabbit,
 PR #68). The bash arrays are text-parsed; the script is never executed.
 
 KIT-0053 moved the implementation from the bootstrap-consumer.sh entrance
-(now a shim over the setup door) to engine-consumer.sh — the arrays live
+(shim removed in 0.9.0, KIT-0054) to engine-consumer.sh — the arrays live
 in the engine.
 """
 

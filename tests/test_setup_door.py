@@ -578,16 +578,6 @@ class TestAdoptE2E:
         result = run_door("--adopt", str(target))
         assert "re-run with --design-materials" not in result.stdout
 
-    def test_legacy_shim_channel_is_chrome_free(self, tmp_path):
-        """--legacy-shim: engine output only — no door banner, no offers,
-        no doctor tail (byte-fidelity for the three entrance shims)."""
-        target = make_adopt_dir(tmp_path, "app")
-        result = run_door("--adopt", str(target), "--legacy-shim")
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Setup door:" not in result.stdout
-        assert "Doctor verdict:" not in result.stdout
-        assert "Offer skipped" not in result.stdout
-
 
 @pytest.mark.slow
 class TestNewE2E:
@@ -954,31 +944,6 @@ class TestBotsDeclarationE2E:
         assert "shape: planning" in region
         assert "target_github:" in region
         assert "bots: none" in region
-
-    def test_legacy_shim_rejects_bots(self, tmp_path):
-        # the legacy channel never writes a bots line — an explicit
-        # --bots must be rejected, never silently dropped
-        target = make_adopt_dir(tmp_path, "shim")
-        result = run_door("--adopt", str(target), "--legacy-shim", "--bots", "none")
-        assert result.returncode == 2
-        assert "--legacy-shim" in result.stderr
-
-    def test_legacy_shim_ignores_preset(self, tmp_path):
-        # shim fidelity: a filled preset must not change what the
-        # legacy channel does — no preset notice, no recorded bots
-        cfg = write_preset(tmp_path, "bots: none\nprofile: none\n")
-        target = make_adopt_dir(tmp_path, "shim-preset")
-        result = run_door(
-            "--adopt",
-            str(target),
-            "--legacy-shim",
-            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Preset:" not in result.stdout
-        region = _kit_install_region(target)
-        assert "profile: python" in region  # kit default, not the preset
-        assert "bots:" not in region
 
     def test_readopt_adds_bots_line_surgically(self, tmp_path):
         """An existing record without the line gains exactly the bots

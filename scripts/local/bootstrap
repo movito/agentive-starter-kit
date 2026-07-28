@@ -56,10 +56,6 @@
 #                        answer the venv offer (profile python only)
 #   --no-preset          ignore the operator preset for this run (the
 #                        stranger path — behaves as if no preset exists)
-#   --legacy-shim        internal: fidelity channel for the three old
-#                        entrance shims — byte-identical passthrough
-#                        (no door chrome, offers, record augmentation,
-#                        preset, or doctor tail). Removed with the shims.
 #
 # Resolution chain (F5): CLI flag → operator preset
 # (<kit-parent>/agentive-config/preset — see "Operator preset" below)
@@ -677,7 +673,6 @@ main() {
     BOTS_CLI=""
     BOTS=""
     NO_PRESET=0
-    LEGACY_SHIM=0
 
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -707,7 +702,6 @@ main() {
             --without-evaluators)  WITH_EVALUATORS="no" ;;
             --with-venv)           WITH_VENV="yes" ;;
             --without-venv)        WITH_VENV="no" ;;
-            --legacy-shim)      LEGACY_SHIM=1 ;;
             --help|-h)          usage; exit 0 ;;
             *)                  die_usage "unknown argument: $1" ;;
         esac
@@ -715,15 +709,6 @@ main() {
     done
 
     # ── Resolve (CLI → preset → kit default → prompt) ──
-    if [ "$LEGACY_SHIM" -eq 1 ]; then
-        # the shims promise byte-identical legacy behavior — a preset
-        # changing what `bootstrap-consumer.sh` does would break that
-        NO_PRESET=1
-        # ...and the legacy channel never writes a bots line, so an
-        # explicit --bots would be silently dropped — reject instead
-        [ -n "$BOTS_CLI" ] &&
-            die_usage "--bots cannot be combined with --legacy-shim (the legacy channel never writes a bots declaration)"
-    fi
     if [ -n "$BOTS_CLI" ]; then
         BOTS_CLI="$(normalize_bots "$BOTS_CLI")" || die_usage "invalid --bots value"
     fi
@@ -765,7 +750,7 @@ main() {
     fi
     PROFILE="$(resolve_setting profile "$PROFILE_CLI" "$SHAPE")"
     validate_pair "$SHAPE" "$PROFILE" || exit 2
-    if [ "$SHAPE" = "planning" ] && [ -z "$PROFILE_CLI" ] && [ "$LEGACY_SHIM" -eq 0 ]; then
+    if [ "$SHAPE" = "planning" ] && [ -z "$PROFILE_CLI" ]; then
         echo "planning shape → profile none (forced; the only legal pair)"
     fi
     # The EFFECTIVE profile: on adopt of a recorded target the record
@@ -805,28 +790,6 @@ main() {
             die_usage "target is the kit source repo itself ($PROJECT_ROOT)"
     fi
 
-    # ── Legacy fidelity channel: validate, then hand straight off ──
-    if [ "$LEGACY_SHIM" -eq 1 ]; then
-        case "$MODE" in
-            new)
-                set -- "$TARGET"
-                [ -n "$NAME" ] && set -- "$@" --name "$NAME"
-                [ -n "$PREFIX" ] && set -- "$@" --prefix "$PREFIX"
-                exec "$ENGINE_EXPORT" "$@"
-                ;;
-            adopt)
-                if [ "$DESIGN_MATERIALS" = "yes" ]; then
-                    exec "$ENGINE_MATERIALS" "$TARGET"
-                fi
-                set -- --shape "$SHAPE" --profile "$PROFILE"
-                [ "$NO_KIT" -eq 1 ] && set -- "$@" --no-kit
-                [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
-                [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
-                exec "$ENGINE_CONSUMER" "$@" "$TARGET"
-                ;;
-        esac
-    fi
-
     # ── Design-material detection (adopt, single: a git-less target is
     #    materials-shaped — bootstrap.sh's historical precondition) ──
     if [ "$MODE" = "adopt" ] && [ "$SHAPE" = "single" ] && [ -z "$DESIGN_MATERIALS" ]; then
@@ -847,7 +810,7 @@ main() {
     # bots expected (today's behavior — zero migration, N1). A target
     # whose record already declares bots keeps its declaration (the
     # engine preserves the region; a conflicting flag errors below).
-    if [ "$LEGACY_SHIM" -eq 0 ] && [ "$DESIGN_MATERIALS" != "yes" ] && [ -z "$REC_BOTS" ]; then
+    if [ "$DESIGN_MATERIALS" != "yes" ] && [ -z "$REC_BOTS" ]; then
         local bots_raw
         if [ -n "$BOTS_CLI" ]; then
             BOTS="$BOTS_CLI"  # already normalized at parse time
