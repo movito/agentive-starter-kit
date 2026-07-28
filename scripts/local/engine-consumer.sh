@@ -768,14 +768,18 @@ append_region_if_absent() {
 # export carried the kit's python Project Rules next to profile: none).
 # Body passes via the environment — awk -v would mangle backslashes.
 replace_region() {
+    # mktemp, not a predictable suffix: a pre-planted symlink at a
+    # fixed tmp name could redirect the write (CodeRabbit, this PR —
+    # same class as remove_region_if_unmodified below)
+    RESEED_TMP="$(mktemp "$CLAUDE_MD.kit-reseed.XXXXXX")"
     REGION_BODY="$2" awk -v region="$1" '
         $0 == "<!-- BEGIN KIT-LOCAL: " region " -->" {
             print; print ENVIRON["REGION_BODY"]; skip=1; next
         }
         $0 == "<!-- END KIT-LOCAL: " region " -->" { skip=0 }
         !skip { print }
-    ' "$CLAUDE_MD" > "$CLAUDE_MD.kit-reseed.tmp"
-    mv "$CLAUDE_MD.kit-reseed.tmp" "$CLAUDE_MD"
+    ' "$CLAUDE_MD" > "$RESEED_TMP"
+    mv "$RESEED_TMP" "$CLAUDE_MD"
     echo "  $1 region reseeded ($3)"
 }
 
@@ -874,6 +878,51 @@ RULES
 )"
     fi
     seed_region project-rules "$RULES_BODY" "profile: $PROFILE"
+fi
+
+# Drop a KIT-LOCAL region, markers included — but ONLY if its body is
+# still byte-identical to what the kit seeded ($2). A customized body
+# is consumer-owned and stays (with a notice), same KIT-LOCAL
+# semantics as everywhere else. The body is read via kit_markers
+# extract, whose regex requires a BALANCED marker pair — so a
+# malformed file (BEGIN without END) fails loud here instead of
+# letting the awk below eat everything to EOF (fast-gate evaluator
+# round 2, KIT-0067). Only for regions an install MODE invalidates.
+remove_region_if_unmodified() {
+    if ! printf '%s\n' "$REGIONS_OUT" | grep -qx "$1"; then
+        return 0
+    fi
+    if ! REGION_BODY_NOW="$(python3 "$KIT_MARKERS" extract "$CLAUDE_MD" "$1" 2>&1)"; then
+        echo "Error: kit_markers extract $1 failed on $CLAUDE_MD:"
+        echo "       $REGION_BODY_NOW"
+        exit 1
+    fi
+    if [ "$REGION_BODY_NOW" != "$2" ]; then
+        echo "  $1 region customized — left in place (consumer-owned)"
+        return 0
+    fi
+    # mktemp, not a predictable suffix (CodeRabbit, this PR): a
+    # pre-planted symlink at a fixed tmp name could redirect the write
+    REMOVE_TMP="$(mktemp "$CLAUDE_MD.kit-remove.XXXXXX")"
+    awk -v region="$1" '
+        $0 == "<!-- BEGIN KIT-LOCAL: " region " -->" { skip=1; next }
+        $0 == "<!-- END KIT-LOCAL: " region " -->" { skip=0; next }
+        !skip { print }
+    ' "$CLAUDE_MD" > "$REMOVE_TMP"
+    mv "$REMOVE_TMP" "$CLAUDE_MD"
+    echo "  $1 region removed ($3)"
+}
+
+# First-session self-direction (KIT-0067 F3): the seeded CLAUDE.md
+# closes by telling a cold-open session what to do first. Only where
+# the planner actually ships (--no-kit prunes the kit agents — and
+# removes an unmodified region left by an earlier kit-enabled install).
+FIRST_SESSION_BODY="First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start."
+if [ "$KIT_ENABLED" -eq 1 ]; then
+    seed_region first-session "$FIRST_SESSION_BODY" "planner self-direction"
+else
+    remove_region_if_unmodified first-session "$FIRST_SESSION_BODY" \
+        "--no-kit: planner not shipped"
 fi
 echo
 

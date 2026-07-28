@@ -4,7 +4,7 @@
     "current_task": "KIT-0067",
     "task_started": null,
     "brief_note": "KIT-0071 closed out 2026-07-27 (PR #96 merged 8e695bb; retro processed: displayed_commands_are_contracts pattern, WORKTREE-WORKFLOW bookkeeping+pull-verify section, KIT-0062 third-face evidence). CLOSEOUT INCIDENT self-caught: pull printed Updating-but-aborted on mirrored files -> stale-tree bookkeeping + old-helper worktree; recovered, rule codified (verify rev-parse HEAD==origin/main after every pull). KIT-0067 worktree is the FIRST with a real per-worktree venv (3.14). CHAIN FINAL LINK: KIT-0067 assigned. Then cut 0.9.0 (KIT-0047+0054+0059).",
-    "details_link": ".kit/tasks/2-todo/KIT-0067-factory-front-door-and-structural-cleanup.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0067-factory-front-door-and-structural-cleanup.md",
     "handoff_file": ".kit/context/KIT-0067-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0067",
     "task_started": null,
     "brief_note": "KIT-0067 ready: factory front door (STARTING-A-PROJECT + /new-project + seeded self-direction) + execute approved D1-D5 (retire launchers/onboarding, archive dead docs, prune serena, gate dispatch, adr fix). Jointly-owned files enumerated in handoff. Worktree: ../ask-worktrees/KIT-0067 (real venv, pull --ff-only first).",
-    "details_link": ".kit/tasks/2-todo/KIT-0067-factory-front-door-and-structural-cleanup.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0067-factory-front-door-and-structural-cleanup.md",
     "handoff_file": ".kit/context/KIT-0067-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

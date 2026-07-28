@@ -431,7 +431,77 @@ class TestProfiles:
         assert (target / "scripts" / "core" / "ci-check.sh").is_file()
         assert (target / "scripts" / "local" / "checks.sh").is_file()
         assert not (target / ".claude" / "agents" / "planner.md").exists()
-        assert "profile: python" in (target / "CLAUDE.md").read_text(encoding="utf-8")
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "profile: python" in claude
+        # KIT-0067 F3: no planner shipped -> no planner self-direction
+        assert "first-session" not in claude
+
+    def test_no_kit_rebootstrap_removes_first_session_region(self, tmp_path):
+        # fast-gate evaluator (KIT-0067): --no-kit prunes the planner,
+        # so a first-session region from an earlier kit-enabled install
+        # must go with it — never a stale instruction to invoke an
+        # agent that no longer ships
+        target = make_consumer_dir(tmp_path, "downgrade")
+        assert run_bootstrap(target).returncode == 0
+        assert "first-session" in (target / "CLAUDE.md").read_text(encoding="utf-8")
+        result = run_bootstrap(target, "--no-kit")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "first-session region removed" in result.stdout
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "first-session" not in claude
+
+    def test_no_kit_rebootstrap_keeps_customized_first_session(self, tmp_path):
+        # fast-gate evaluator round 2 (KIT-0067): a CUSTOMIZED region
+        # body is consumer-owned — --no-kit removes only the kit's own
+        # unmodified seed, never consumer edits
+        target = make_consumer_dir(tmp_path, "customized")
+        assert run_bootstrap(target).returncode == 0
+        claude_path = target / "CLAUDE.md"
+        custom_line = "My own first-session ritual: read the runbook."
+        claude_path.write_text(
+            claude_path.read_text(encoding="utf-8").replace(
+                "First session in this repo: invoke the `planner` agent"
+                " (in a new tab) — it triages the backlog and recommends"
+                " what to start.",
+                custom_line,
+            ),
+            encoding="utf-8",
+        )
+        result = run_bootstrap(target, "--no-kit")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "first-session region customized — left in place" in result.stdout
+        assert custom_line in claude_path.read_text(encoding="utf-8")
+
+    def test_no_kit_malformed_marker_fails_loud_without_data_loss(self, tmp_path):
+        # CodeRabbit (this PR): a first-session BEGIN marker whose END
+        # marker is missing must abort the --no-kit re-bootstrap loudly
+        # — never let the removal awk eat the file to EOF
+        target = make_consumer_dir(tmp_path, "malformed")
+        assert run_bootstrap(target).returncode == 0
+        claude_path = target / "CLAUDE.md"
+        before = claude_path.read_text(encoding="utf-8")
+        claude_path.write_text(
+            before.replace("<!-- END KIT-LOCAL: first-session -->\n", ""),
+            encoding="utf-8",
+        )
+        mangled = claude_path.read_text(encoding="utf-8")
+        result = run_bootstrap(target, "--no-kit")
+        assert result.returncode == 1
+        assert "kit_markers extract first-session failed" in (
+            result.stdout + result.stderr
+        )
+        assert claude_path.read_text(encoding="utf-8") == mangled
+
+    def test_first_session_region_seeded_with_kit(self, tmp_path):
+        # KIT-0067 F3: the seeded CLAUDE.md closes with the planner
+        # self-direction region wherever the kit workflow (and thus
+        # the planner agent) ships
+        target = make_consumer_dir(tmp_path, "firstsession")
+        result = run_bootstrap(target)
+        assert result.returncode == 0, result.stderr + result.stdout
+        claude = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "<!-- BEGIN KIT-LOCAL: first-session -->" in claude
+        assert "invoke the `planner` agent" in claude
 
     def test_equals_form_flags_parse(self, tmp_path):
         # o3 review gap: the --flag=value forms had no functional run

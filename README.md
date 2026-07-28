@@ -6,6 +6,8 @@ Using agents to build software works better if you add a bit of structure. Anthr
 
 When we start a new project, we clone this repo and complete the onboarding. This gives us tests, tasks, documentation, and token-efficient tools, all in about ten minutes. You can tweak things as you wish, including how the agents work, and what models you use.
 
+**Starting a project?** Read **[docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md)** — the operator flow from a permanent kit clone to a planner-ready project, including the `/new-project` command and the prototype-graduation path.
+
 ----
 ## What's inside?
 
@@ -397,6 +399,7 @@ pytest tests/ --cov=your_project --cov-report=term-missing
 
 ## Documentation
 
+- **Starting a Project** (the operator flow): `docs/STARTING-A-PROJECT.md`
 - **Agentive Development Guide** (archived): `docs/archive/agentive-development/README.md`
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md`
 - **Task Template**: `.kit/tasks/9-reference/templates/task-template.md`
