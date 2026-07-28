@@ -186,8 +186,9 @@ Even if `ci-check.sh` passes locally, CI can still fail due to:
    failing test, error, and a brief analysis — then offer to fix it
 2. **If the user says yes**: read the logs
    (`gh run view <run-id> --log-failed`), analyze the root cause,
-   implement the fix, commit and push the specific files, then re-run
-   CI verification (repeat until green)
+   implement the fix, run `./scripts/core/ci-check.sh`, then commit
+   and push the specific files and re-run CI verification (repeat
+   until green)
 3. **If the user says no**: document the failure in task notes, pause
    task completion, and await instructions
 

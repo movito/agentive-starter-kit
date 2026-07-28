@@ -46,9 +46,10 @@ clean export with no shared git history, so expect to review carefully:
 # Add the starter kit as upstream (one time)
 git remote add upstream https://github.com/movito/agentive-starter-kit.git
 
-# Pull updates
+# Pull updates (created projects share no git history with the kit,
+# so the merge must allow unrelated histories)
 git fetch upstream
-git merge upstream/main
+git merge --allow-unrelated-histories upstream/main
 
 # Update agent files with your project name
 ./scripts/core/project reconfigure
