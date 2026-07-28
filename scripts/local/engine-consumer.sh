@@ -463,7 +463,7 @@ mkdir -p "$TARGET/scripts/optional"
     "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
 # tests/ — test infrastructure. Exclude tests that import or read
-# scripts/local/ content (kit_markers.py, bootstrap-consumer.sh):
+# scripts/local/ content (kit_markers.py, the setup door):
 # scripts/local is an ASK-only layer that is never synced to consumers,
 # so shipping these tests would break consumer pytest (and the
 # pytest-fast pre-commit hook) at collection time. The rm -f sweep
