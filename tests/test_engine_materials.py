@@ -87,6 +87,21 @@ def test_no_task_id_files_in_kit_dirs(export):
     assert not leaked, f"kit planning corpus leaked into export: {leaked}"
 
 
+def test_context_archive_not_shipped(export):
+    """context/archive/ is excluded WHOLESALE, not by task-ID pattern.
+
+    The guard above only matches ^[A-Z]+-NNNN, but the archive also holds
+    non-task-ID history (README.md, dated session handovers, the
+    RELEASE-0.3.0 starter). Those would leak unnoticed if the exclude
+    regressed to a name pattern, so pin the directory itself."""
+    target, _ = export
+    archive = target / ".kit" / "context" / "archive"
+    assert not archive.exists(), (
+        "the kit's finished-task archive must never ship to a consumer"
+        f" — found {sorted(p.name for p in archive.rglob('*'))}"
+    )
+
+
 def test_kit_adversarial_not_shipped(export):
     target, _ = export
     assert not (target / ".kit" / "adversarial").exists(), (
