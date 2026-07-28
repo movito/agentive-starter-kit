@@ -1,6 +1,6 @@
 # KIT-0073: Doc curation — execute the approved dispositions + the 120-line README
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: high
 **Assigned To**: feature-developer-f5
 **Estimated Effort**: 1 day
