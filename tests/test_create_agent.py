@@ -372,6 +372,8 @@ class TestLauncherIntegration:
             self.project_dir / ".claude" / "agents" / "no-launcher-agent.md"
         ).is_file()
         assert "none present — skipped" in result.stdout
+        # and nothing recreated the retired directory (CodeRabbit, PR #98)
+        assert not (self.project_dir / ".kit" / "launchers").exists()
 
     def test_agent_added_to_agent_order(self):
         """New agent appears in the agent_order array in .kit/launchers/launch."""

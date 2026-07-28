@@ -19,7 +19,7 @@ The agentive ecosystem distributes agents, evaluators, and skills across project
 
 This is a multi-phase effort. Phase 1 is non-breaking and can ship independently.
 
-Your mission: Read ADR-0007 in full, then implement Phase 1 (metadata adoption) and Phase 2 (CLI tooling) as separate PRs.
+**Original mission (SUSPENDED — do not follow; see the banner above):** ~~Read ADR-0007 in full, then implement Phase 1 (metadata adoption) and Phase 2 (CLI tooling) as separate PRs.~~ Any revival starts with re-evaluating ASK-0048, not with this checklist.
 
 ## ADR Summary
 

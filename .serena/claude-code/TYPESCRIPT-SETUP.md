@@ -303,7 +303,9 @@ npm install -g typescript-language-server typescript
 **C. Check PATH**
 
 ```bash
-dirname "$(command -v typescript-language-server)"
+command -v typescript-language-server >/dev/null \
+    && dirname "$(command -v typescript-language-server)" \
+    || echo "typescript-language-server: not installed"
 # Should print your node bin directory (nvm, Homebrew, Volta, asdf, or system)
 ```
 
