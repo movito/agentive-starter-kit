@@ -27,15 +27,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/archive/dispatch-config.yml.archived`; `setup-dev.sh` loses its
   `--with-dispatch` gate and both dispatch steps (2.0.0 — a removed
   flag); the `local` extra leaves `pyproject.toml` (dispatch-kit was
-  its only member); the `.dispatch/` runtime entries leave
-  the unguarded `dispatch emit` instructions leave the `code-reviewer`
-  agent and the `/wrap-up` command. **Kept**: the `origin: dispatch-kit`
-  provenance headers, the guarded fire-and-forget emits in shipped
+  its only member); and the unguarded `dispatch emit` instructions leave
+  the `code-reviewer` agent and the `/wrap-up` command.
+  What is retired is the kit's **adoption** of dispatch — configuration,
+  installer, and agent instructions. **Kept**: the `origin: dispatch-kit`
+  provenance headers; the guarded fire-and-forget emits in shipped
   `scripts/core/` and the shipped commands (they still serve
-  `movito/dispatch-kit` as a downstream sync consumer, and on any
-  machine with the CLI on PATH they genuinely fire), the `.dispatch/`
-  runtime entries in `.gitignore` (those emits regenerate
-  `bus.jsonl` — verified), and every historical record.
+  `movito/dispatch-kit` as a downstream sync consumer, and on any machine
+  with the CLI on PATH they genuinely fire); the `.dispatch/` runtime
+  entries in `.gitignore` — precisely because those emits still
+  regenerate `bus.jsonl`, so it must stay ignored (verified: a preflight
+  run recreated it during this task); and every historical record.
 - **Two version-pinned docs archived** (KIT-0077):
   `.kit/docs/UPGRADE-0.4.0.md` and `.serena/claude-code/USE-CASES.md`
   moved to `docs/archive/` (the latter as `SERENA-USE-CASES.md`), with
