@@ -72,8 +72,9 @@ When configured, the task system:
 ./scripts/core/project linearsync
 ```
 
-**Auto-sync:** pushing to `main` or `develop` triggers the GitHub
-Actions workflow.
+**Auto-sync:** the GitHub Actions workflow fires on pushes to `main`
+or `develop` that change task files (`.kit/tasks/**`) — other pushes
+do not trigger it.
 
 **GitHub Actions setup:**
 

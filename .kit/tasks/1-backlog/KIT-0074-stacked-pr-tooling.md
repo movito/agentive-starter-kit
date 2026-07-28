@@ -33,6 +33,12 @@ Two tooling gaps the KIT-0067 stacked pair paid for by hand:
   diff-only hallucination trade-off in its help text.
 - **F2**: input size guard — warn (not fail) above ~500KB, naming
   the likely cause (mass moves / wrong base) and the `--base` remedy.
+- **F3.5 — pytest-fast hook flag de-dupe (rider, KIT-0073 retro
+  #4)**: `.pre-commit-config.yaml`'s fast hook passes both `-x` and
+  `--maxfail=3` (`-x` wins; redundant). Drop one, and update the
+  TESTING-WORKFLOW line that quotes the hook verbatim in the same
+  commit (two_homes: the doc deliberately quotes the hook — keep
+  them in sync, or better, cite-by-pointer).
 - **F3**: preflight Gate 1 recognizes the stacked shape: when the
   PR's base is not the default branch, report
   `PENDING:stacked on <base> — CI runs on retarget`, never "no runs

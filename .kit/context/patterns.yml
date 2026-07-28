@@ -46,7 +46,13 @@ defensive:
       trailing `#` comment — and pinned by a test that `bash -n`
       parses the ACTUAL printed output. When one such finding lands
       in review, grep every echo/print carrying `&&`, `cd `, or
-      `rm ` repo-wide and fix the class in ONE round.
+      `rm ` repo-wide and fix the class in ONE round. Execution-
+      context rule (KIT-0073): "execute every displayed command"
+      means execute it IN THE CONTEXT the doc addresses — a mutating
+      command run in the wrong context is an incident, not a
+      verification (`project reconfigure` in a kit worktree rewrote
+      9 files). If the addressed context isn't safely available,
+      verify inputs/flags instead and say so.
     examples:
       - "KIT-0071 bot rounds 2-6 were five faces of this one class, fixed instance-by-instance — four rounds were the cost of not sweeping at round 2 (a fresh fix_by_class_not_instance regression)"
       - "same family as bot-triage's committable-but-uncompilable rule (KIT-0058): displayed shell is code, verify it as code"

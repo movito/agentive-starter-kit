@@ -4,7 +4,7 @@
     "current_task": "KIT-0073",
     "task_started": null,
     "brief_note": "KIT-0073 (execute approved doc curation: 5 archives, 1 merge, 6 trims, README 580->~120 + 2 reference pages) assigned: binding checklist = DOC-CURATION-AUDIT-2026-07-28.md (operator approved ALL 2026-07-28; zero verifier challenges). Eval skipped (verified-audit + approval); planner tree-grounded verification gates the PR pre-merge. KIT-0059 coordination inside F2. AFTER: spec 0.9.0 release task (KIT-0047+0054+0059 + downstream launcher pruning note + KIT-0074 optional).",
-    "details_link": ".kit/tasks/4-in-review/KIT-0073-doc-curation-and-readme.md",
+    "details_link": ".kit/tasks/5-done/KIT-0073-doc-curation-and-readme.md",
     "handoff_file": ".kit/context/KIT-0073-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0073",
     "task_started": null,
     "brief_note": "KIT-0073 ready: curation report is the binding checklist; evidence files append-only; prose-sweep gate = planner tree verification. Worktree: ../ask-worktrees/KIT-0073 (real venv; pull + rev-parse verify first).",
-    "details_link": ".kit/tasks/4-in-review/KIT-0073-doc-curation-and-readme.md",
+    "details_link": ".kit/tasks/5-done/KIT-0073-doc-curation-and-readme.md",
     "handoff_file": ".kit/context/KIT-0073-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

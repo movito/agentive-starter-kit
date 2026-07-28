@@ -1,6 +1,6 @@
 # KIT-0073 Handoff — feature-developer
 
-**Task**: `.kit/tasks/4-in-review/KIT-0073-doc-curation-and-readme.md`
+**Task**: `.kit/tasks/5-done/KIT-0073-doc-curation-and-readme.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-28 (planner-f5)
 **Estimated effort**: 1 day

@@ -396,12 +396,14 @@ or use the `/code-review-evaluator` skill.
 > (many small text fixes across many files), the trio is unreliable —
 > a diff-only input makes evaluators reconstruct unchanged regions
 > from assumption, and they reconstruct the PRE-fix state (KIT-0069:
-> trio 0-for-7 while CodeRabbit went 6-for-6). For such PRs: still
-> record one trio run (Gate 5 evidence) but NEVER action a finding
-> without reproducing it against the tree, and tell the planner the
-> PR needs **tree-grounded verification before merge** (the planner
-> runs sectioned verifiers against the branch; KIT-0069's caught 3
-> residuals the class greps missed). That verification is the real
+> trio 0-for-7; KIT-0073: 0-for-8 — two sweeps, two shutouts, while
+> bots went 3-for-4 tree-grounded). For such PRs: run
+> **code-reviewer-fast ONLY** as the Gate 5 record (planner decision
+> 2026-07-28 — the deep evaluator's spend buys nothing here), NEVER
+> action a finding without reproducing it against the tree, and tell
+> the planner the PR needs **tree-grounded verification before
+> merge** (sectioned verifiers against the branch; KIT-0069's caught
+> 3 residuals the class greps missed). That verification is the real
 > gate for this PR shape.
 
 ### Step 1 — Prepare the input

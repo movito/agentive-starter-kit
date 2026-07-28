@@ -180,6 +180,18 @@ against the pre-merge tree and a fresh worktree got provisioned by
 the OLD helper). Then `project complete`, and delete any leftover
 duplicate task copy at the old path.
 
+### Identity-reading commands never run in kit worktrees (KIT-0073)
+
+`project reconfigure` (and anything keyed off `.serena/project.yml`)
+reads the WORKTREE-LOCAL Serena config — in a worktree named
+`<project>-<TASK-ID>` it rewrote identity strings in 9 tracked files
+(README H1, CHANGELOG, more) before being caught by `git status` and
+reverted. Symptom: tracked files suddenly carry the worktree's
+task-suffixed identity. Rule: run identity-reading commands only in
+the primary clone; when a doc displays such a command, verify it in
+the context the doc addresses (see patterns.yml
+`displayed_commands_are_contracts`).
+
 ## Lifecycle — who removes the worktree, and when
 
 The **planner** removes the worktree at task completion, **after the

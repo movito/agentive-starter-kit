@@ -40,7 +40,7 @@
    - Honest trade-offs (pros AND cons)
    - Cross-references to related ADRs, tasks, commits
 
-5. **Update index**: Add new ADR to `docs/adr/about-adr.md`
+5. **Update index**: Add the new ADR to the index matching its home — `docs/adr/about-adr.md` (project ADRs) or `.kit/adr/about-kit-adr.md` (kit ADRs)
 
 6. **Verify cross-references**: Ensure all links work
 
