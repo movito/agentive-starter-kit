@@ -1,19 +1,19 @@
 {
   "planner": {
     "status": "handoff_ready",
-    "current_task": "KIT-0073",
+    "current_task": "KIT-0076",
     "task_started": null,
-    "brief_note": "KIT-0073 (execute approved doc curation: 5 archives, 1 merge, 6 trims, README 580->~120 + 2 reference pages) assigned: binding checklist = DOC-CURATION-AUDIT-2026-07-28.md (operator approved ALL 2026-07-28; zero verifier challenges). Eval skipped (verified-audit + approval); planner tree-grounded verification gates the PR pre-merge. KIT-0059 coordination inside F2. AFTER: spec 0.9.0 release task (KIT-0047+0054+0059 + downstream launcher pruning note + KIT-0074 optional).",
-    "details_link": ".kit/tasks/5-done/KIT-0073-doc-curation-and-readme.md",
-    "handoff_file": ".kit/context/KIT-0073-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0076 (cut 0.9.0: execute pinned removals KIT-0047+0054+0059 + release mechanics) assigned 2026-07-28. Eval skipped (removals pre-specced/ADR); planner tree verification gates the deletion-heavy PR; fast-only trio per standing rule. KIT-0054 launcher-mention superseded by the launch restoration (KIT-0075). Meanwhile: dedup analysis delegated to a background Opus agent (report lands at .kit/context/reviews/DEDUP-ANALYSIS-2026-07-28.md; findings = post-0.9.0 theme). After 0.9.0: tag, downstream pass decision.",
+    "details_link": ".kit/tasks/2-todo/KIT-0076-cut-090.md",
+    "handoff_file": ".kit/context/KIT-0076-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
     "status": "handoff_ready",
-    "current_task": "KIT-0073",
+    "current_task": "KIT-0076",
     "task_started": null,
-    "brief_note": "KIT-0073 ready: curation report is the binding checklist; evidence files append-only; prose-sweep gate = planner tree verification. Worktree: ../ask-worktrees/KIT-0073 (real venv; pull + rev-parse verify first).",
-    "details_link": ".kit/tasks/5-done/KIT-0073-doc-curation-and-readme.md",
-    "handoff_file": ".kit/context/KIT-0073-HANDOFF-feature-developer.md"
+    "brief_note": "KIT-0076 ready: read KIT-0047/0054/0059 specs IN FULL (they are the requirements); launch stays (KIT-0054 delta noted); fast-only trio; planner tree verification = merge gate. Worktree: ../ask-worktrees/KIT-0076.",
+    "details_link": ".kit/tasks/2-todo/KIT-0076-cut-090.md",
+    "handoff_file": ".kit/context/KIT-0076-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {
     "status": "idle",
