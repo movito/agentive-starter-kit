@@ -141,18 +141,6 @@ Runs the **SAME checks** as GitHub Actions:
 - **Catches failures locally** (no email alerts)
 - **Faster feedback** than waiting for CI (15-30s vs minutes)
 
-### Recommended Alias
-
-Add to `~/.bashrc` or `~/.zshrc`:
-```bash
-alias gpush="./scripts/core/ci-check.sh && git push origin main"
-```
-
-Then use:
-```bash
-gpush  # Runs CI check + pushes if passes
-```
-
 ---
 
 ## After Push (MANDATORY)
@@ -194,52 +182,15 @@ Even if `ci-check.sh` passes locally, CI can still fail due to:
 
 **When CI fails, agents MUST offer to fix it automatically:**
 
-1. ❌ **Report failure to user** with clear summary:
-   ```markdown
-   ❌ CI/CD failed on GitHub:
-
-   Failed workflow: Tests (Python 3.11, 3.12, 3.13)
-   Failure: tests/test_infrastructure_validation.py::test_task_management_structure
-   Error: AssertionError: Missing task directory: active
-
-   This appears to be [brief analysis: e.g., "a test expecting old folder structure"]
-
-   Should I analyze the logs and implement a fix? (y/n)
-   ```
-
-2. **If user says YES:**
-   - 📋 Read detailed logs: `gh run view <run-id> --log-failed`
-   - 🔍 Analyze the failure (what broke, why, what needs to change)
-   - 💡 Propose fix with explanation
-   - 🔧 Implement the fix
-   - ✅ Commit and push: `git add . && git commit -m "fix: ..." && git push`
-   - 🔄 Re-run CI verification (recursive until pass)
-
-3. **If user says NO:**
-   - 📝 Document the failure in task notes
-   - ⏸️ Pause task completion
-   - 🤝 Await user instructions
-
-**Example Interaction:**
-
-```
-Agent: ❌ CI failed with 1 test failure in test_infrastructure_validation.py
-       The test expects folder "active" but we reorganized to numbered folders.
-
-       Should I fix this test to check for the new folder structure? (y/n)
-
-User: y
-
-Agent: Analyzing logs... [reads gh run view output]
-
-       Fix needed: Update test to check for "1-backlog", "2-todo", "3-in-progress"
-       instead of "active", "completed", "templates"
-
-       [Implements fix, commits, pushes]
-
-       Verifying CI... ✅ All tests passing!
-       Task complete.
-```
+1. **Report the failure** with a clear summary — failed workflow,
+   failing test, error, and a brief analysis — then offer to fix it
+2. **If the user says yes**: read the logs
+   (`gh run view <run-id> --log-failed`), analyze the root cause,
+   implement the fix, run `./scripts/core/ci-check.sh`, then commit
+   and push the specific files and re-run CI verification (repeat
+   until green)
+3. **If the user says no**: document the failure in task notes, pause
+   task completion, and await instructions
 
 **Soft Block Policy:**
 
@@ -266,31 +217,6 @@ If CI is still running after timeout:
 ```
 
 **DO NOT** skip steps 4-6. CI verification is NOT optional.
-
----
-
-## Updated Git Workflow
-
-### Before (old workflow)
-```bash
-git add .
-git commit -m "message"  # Only formatting/linting
-git push origin main     # Hope CI passes 🤞
-```
-
-### After (new workflow - MANDATORY)
-```bash
-git add .
-git commit -m "message"      # Formatting + linting + fast tests ✅
-./scripts/core/ci-check.sh        # MANDATORY pre-push verification ✅
-git push origin main         # Push to GitHub ✅
-./scripts/core/verify-ci.sh       # MANDATORY post-push CI verification ✅
-```
-
-**Key changes**:
-1. Pre-push verification is now **mandatory**, not optional
-2. Post-push CI verification is **mandatory** before task completion
-3. Agents must wait for CI pass before marking tasks complete
 
 ---
 

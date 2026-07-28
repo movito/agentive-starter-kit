@@ -48,5 +48,4 @@ their line numbers. Add `--cov-report=html` and open
 ---
 
 **Related**: [TESTING-WORKFLOW.md](./TESTING-WORKFLOW.md) ·
-[TEST-SUITE-WORKFLOW.md](./TEST-SUITE-WORKFLOW.md) ·
 `pyproject.toml` → `[tool.coverage.*]`

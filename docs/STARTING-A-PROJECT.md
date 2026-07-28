@@ -5,8 +5,28 @@ planner-ready project — using one permanent clone of this kit as your
 project factory.
 
 This guide is written for someone who has never seen the kit before.
-It covers the mental model, the three ways to create a project, and
-what to do in your first session.
+It covers the mental model, the ways to create a project, and what to
+do in your first session.
+
+---
+
+## What you need first
+
+- **Claude Code** installed (`claude --version`) and a Claude account
+- **git** configured, plus **gh** (the GitHub CLI), authenticated —
+  check with `gh auth status`
+- For code projects: **Python 3.10–3.12** and **uvx or pipx** (for
+  `adversarial-workflow`); docs-only and planning repos skip the
+  toolchain
+- Optional: a model-provider API key for adversarial evaluation, and
+  Linear if you want task sync (see `docs/LINEAR-INTEGRATION.md`)
+
+Don't audit this by hand. The door validates what it needs as it runs,
+and every created project carries the health surface:
+
+```bash
+./scripts/core/project doctor  # run inside any created project
+```
 
 ---
 
@@ -76,9 +96,27 @@ clone and run `/setup-preset`. It interviews you in plain language and
 writes the file. This is worth doing before your first real project —
 most of the door's questions then never come up again.
 
+A few rules keep the preset safe:
+
+- **Never distributed.** It lives outside every repo; no sync tier or
+  export touches the config home. `--no-preset` gives a stranger-mode
+  run.
+- **Guardrails, not obscurity.** On first use the door seeds a
+  `.gitignore` and README into the config home; keeping the folder in
+  a *private* git repo is welcome, and `project doctor` checks it
+  (WARN on a public remote, FAIL on a tracked `env.source`).
+- **Secrets by reference.** `env-source: <path>` names your own `.env`
+  template; on `--new` the door copies it to the target (mode 0600) —
+  contents are never printed and never staged.
+- **Records beat presets.** On `--adopt` of a project that already
+  carries a kit-install record, the record wins; compare with
+  `./scripts/core/project doctor --against-preset`.
+- **Malformed fails loud.** A bad line aborts naming the line; unknown
+  keys warn and are skipped.
+
 ---
 
-## Three ways to create a project
+## Four ways to create a project
 
 ### 1. Graduate a prototype (you already have code)
 
@@ -125,6 +163,58 @@ cd ~/Github/agentive-starter-kit && ./scripts/local/bootstrap --new ~/Github/my-
 
 Docs-only repos (no Python toolchain) are a profile choice within this
 shape — again, `bootstrap --help` is the reference.
+
+### 4. Adopt an existing repo (you already have a project)
+
+Bootstrap an existing repo with the implementation tools — agents,
+scripts, commands, and the minimal `.kit/` workflow skeleton — without
+the full builder layer:
+
+```bash
+cd ~/Github/agentive-starter-kit && ./scripts/local/bootstrap --adopt ~/Github/my-app
+```
+
+Add `--no-kit` to skip the task-management workflow entirely.
+Docs-only and planning variants are shape × profile choices —
+`bootstrap --help` is the reference, as always.
+
+**Running without the full review stack?** Declare it and the
+completion gates stay honest: `--bots none` (or a subset like
+`--bots coderabbit`) records the declaration, so preflight reports
+SKIP for the missing bots instead of failing falsely. Installing the
+CodeRabbit / BugBot GitHub Apps is an operator step the kit never
+automates, and single-key evaluation mode is documented in the
+`code-review-evaluator` skill.
+
+---
+
+## Other ways through the door
+
+Both of these end at the same door — they exist for when you're not
+sitting in a permanent kit clone yet.
+
+- **From a URL (zero setup).** Open Claude Code anywhere and paste:
+
+  ```text
+  https://github.com/movito/agentive-starter-kit
+
+  Please set up a new project from this kit.
+  ```
+
+  Claude clones the kit and follows the `create-project` agent's
+  recipe — same questions, same door. Honest caveat: this relies on
+  Claude reading and following the recipe in the main session, so it
+  is not a deterministic script and behavior may vary slightly between
+  sessions. For a predictable run, clone the kit and use the agent
+  directly.
+
+- **The `create-project` agent (deterministic).** From a kit clone,
+  open Claude Code and ask: *"Use the create-project agent to set up a
+  new project for me."* The agent asks for the target directory, name,
+  task prefix, and GitHub visibility, then runs the door, sets your
+  project identity, installs evaluators, and creates the GitHub repo.
+  The agent file (`.claude/agents/create-project.md`) is the
+  authoritative recipe.
 
 ---
 
@@ -187,3 +277,5 @@ the health surface from inside any created project:
 | The split-pair pattern explained | `docs/CROSS-REPO-PATTERN.md` |
 | The prototype handoff template | `.kit/templates/PROTOTYPE-HANDOFF-TEMPLATE.md` |
 | Health checks in a created project | `./scripts/core/project doctor` |
+| Linear task sync | `docs/LINEAR-INTEGRATION.md` |
+| Keeping a created project updated | `docs/UPDATING-YOUR-PROJECT.md` |

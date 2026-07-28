@@ -44,6 +44,9 @@ pytest tests/ --lf
 
 # Run tests in parallel
 pytest tests/ -n auto
+
+# Show 10 slowest tests
+pytest tests/ --durations=10
 ```
 
 ---
@@ -91,6 +94,54 @@ KIT-0035 was a rejection case no live test could produce.
 
 ---
 
+## Test Analysis & Reporting
+
+**Added**: 2026-07-28 (KIT-0073 — merged from TEST-SUITE-WORKFLOW.md)
+
+For dedicated test-verification passes (test-runner assignments,
+pre-merge checks), go deeper than pass/fail:
+
+1. **Baseline**: run the full suite, record the counts
+2. **Analysis**: categorize each failure —
+   - Regressions (used to pass, now fail) — these always block merge
+   - Expected failures (marked `xfail`)
+   - New bugs (never worked)
+3. **Investigation**: read each failure's traceback, find the root cause
+4. **Verification**: re-run targeted tests (`pytest tests/ --lf`) to
+   confirm fixes
+5. **Reporting**: for review-facing passes, record results in
+   `.kit/context/` using the template below
+
+### Test Results Document Template
+
+```markdown
+# Test Results: <TASK-ID>
+
+**Date**: YYYY-MM-DD
+**Branch**: feature/branch-name
+
+## Summary
+
+- **Total / Passing / Failing / Xfailed / Skipped**: counts from the run
+- **Regressions**: none (any regression blocks merge)
+
+## Failing Tests
+
+### test_module.py::test_function_name
+- **Root Cause**: [what actually broke]
+- **Action**: fix required before merge
+
+## Coverage
+
+- **Overall**: [N]% (must meet the `fail_under` gate in pyproject.toml)
+
+## Recommendation
+
+✅ APPROVE / ❌ DO NOT MERGE — with reasons
+```
+
+---
+
 ## Pre-Commit Enforcement
 
 **Added**: 2025-11-01 (TASK-2025-045)
@@ -99,9 +150,9 @@ Tests now run automatically before every commit via pre-commit hooks:
 
 ### Fast Test Subset
 - **What runs**: All tests except those marked with `@pytest.mark.slow`
-- **Duration**: ~2 seconds (431/433 tests)
+  (`pytest tests/ -x -m "not slow" --maxfail=3`)
 - **Coverage**: Catches 80%+ of test failures before commit
-- **Tests excluded**: 2 slow integration tests (10s, 4s)
+- **Tests excluded**: everything marked `@pytest.mark.slow` (runs in CI only)
 
 ### Usage
 
@@ -133,11 +184,9 @@ If pre-commit hook blocks your commit:
 
 ### Slow Tests
 
-Tests marked with `@pytest.mark.slow`:
-- `test_error_handling_cascade` (10.01s - external API integration)
-- `test_check_resolve_connection_failure` (4.01s - timeout test)
-
-These run in CI only, not in pre-commit hooks.
+Tests marked with `@pytest.mark.slow` (currently the entrance-shim,
+setup-door end-to-end, and `tests/integration/` suites) run in CI only,
+not in pre-commit hooks.
 
 ---
 
@@ -250,22 +299,11 @@ kit never overwrites it, and it rides no sync tier. Without the hook,
 
 **Before EVERY push**:
 ```bash
-# Check passes ✅
 ./scripts/core/ci-check.sh
-
-# Only push if check passes ✅
-git push origin main
 ```
 
-**Recommended alias** (add to `~/.bashrc` or `~/.zshrc`):
-```bash
-# Add these aliases for convenience
-alias gci="./scripts/core/ci-check.sh"
-alias gpush="./scripts/core/ci-check.sh && git push origin main"
-
-# Then use:
-gpush  # Runs CI check + pushes if passes
-```
+Push your feature branch only after the check passes, then verify CI on
+GitHub (`./scripts/core/verify-ci.sh` or `/check-ci`).
 
 ### When ci-check.sh Fails
 
@@ -357,6 +395,5 @@ that shells out must build an explicitly scrubbed env
 ---
 
 **Related Workflows**:
-- [TEST-SUITE-WORKFLOW.md](./TEST-SUITE-WORKFLOW.md) - Comprehensive test analysis
 - [COVERAGE-WORKFLOW.md](./COVERAGE-WORKFLOW.md) - Coverage measurement
 - [COMMIT-PROTOCOL.md](./COMMIT-PROTOCOL.md) - Committing after tests pass

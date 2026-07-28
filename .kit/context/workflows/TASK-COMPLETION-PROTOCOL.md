@@ -9,8 +9,14 @@
 ## When to Use
 
 - ✅ When all implementation work is complete
-- ✅ Before handing off to coordinator or other agent
+- ✅ Before handing off for review
 - ✅ Before marking task as COMPLETE in `.kit/tasks/`
+
+> **Enforced path**: the PR-readiness gates (CI, bots, threads,
+> evaluator, review starter, task folder) are checked mechanically by
+> `/preflight`, and `/wrap-up` finalizes the session. This protocol
+> covers what those gates don't: deliverables, documentation, no
+> regressions, and the handoff document.
 
 ---
 
@@ -48,8 +54,8 @@ Detailed description of what you actually built/fixed
 - ✅ Deliverable 3
 
 ## Test Results
-- Before: XXX/350 tests passing (XX.X%)
-- After: YYY/350 tests passing (YY.Y%)
+- Before: [passing/total from the baseline run]
+- After: [passing/total after your changes]
 - New tests added: Z
 - Regressions: None / List any
 
@@ -84,7 +90,7 @@ What should the next agent do with this?
 5. **Update `.kit/context/agent-handoffs.json`** with task completion
 6. **Stage and commit** handoff + agent-handoffs.json update
 7. **Push to remote repository**
-8. **Notify coordinator** (or wait for coordinator to pick up)
+8. **Notify the user** (or the planner) with the PR link and status
 
 ---
 
@@ -94,7 +100,7 @@ What should the next agent do with this?
 - Be thorough - don't skip checklist items
 - Include test metrics in handoff (before/after pass rates)
 - Document any known issues or limitations honestly
-- Provide clear next steps for coordinator/user
+- Provide clear next steps for the user or reviewing agent
 - Update agent-handoffs.json status to "task_complete"
 
 ### ❌ DON'T:
@@ -125,4 +131,4 @@ See existing handoffs for examples:
 **Related Workflows**:
 - [TESTING-WORKFLOW.md](./TESTING-WORKFLOW.md) - Verify tests before completion
 - [COMMIT-PROTOCOL.md](./COMMIT-PROTOCOL.md) - Commit changes properly
-- [Evaluation guidance](../../../.claude/skills/code-review-evaluator/SKILL.md) - For coordinators assigning tasks
+- [Evaluation guidance](../../../.claude/skills/code-review-evaluator/SKILL.md) - For planners assigning tasks

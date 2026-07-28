@@ -2,554 +2,82 @@
 
 **A bit of structure to help you get more out of agentive software development**
 
-Using agents to build software works better if you add a bit of structure. Anthropic calls this a [harness](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents). We created the tools in this kit to overcome the usual problems of agentive development: documentation, testing, architecture, and value for money (and tokens).
+Using agents to build software works better if you add a bit of structure — Anthropic calls this a [harness](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents). This kit packages the structure we use to overcome the usual problems of agentive development: documentation, testing, architecture, and value for money (and tokens). From one permanent clone, you stamp out configured projects in about ten minutes, then tweak anything — agents, models, workflow — as you wish.
 
-When we start a new project, we stamp it out from one permanent clone of this kit. This gives us tests, tasks, documentation, and token-efficient tools, all in about ten minutes. You can tweak things as you wish, including how the agents work, and what models you use.
-
-**Starting a project?** Read **[docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md)** — the operator flow from a permanent kit clone to a planner-ready project, including the `/new-project` command and the prototype-graduation path.
-
-----
-## What's inside?
-
-1. A **front door for new projects** — the `/new-project` command and the one setup door (`scripts/local/bootstrap`) stamp out configured projects from one permanent kit clone (see [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md)).
-
-2. A selection of **specialized agents** that have specific tasks, instructions, and tools. Some of them create and track plans, others write code, and so on.
-
-3. A package we created called `adversarial-workflow` which lets agents get a "second opinion" from specialized **Evaluators**. Built-in evaluators handle plan review, code review, and documentation proofreading. You can also create custom evaluators for security audits, performance analysis, and more. We found that constructive critique among agents gives a big productivity boost.
-
-4. A **task management setup** with task templates, a task tracking system, and an optional Linear sync.
-
-5. Infrastructure for **test-driven development** (TDD), with test templates, quality gates, pre-commit hooks, and more.
-
-6. A system for creating and maintaining **architectural decision records**; think of it as a knowledgebase for agents – and humans.
-
-7. Integration with Serena, by Oraios, for helping agents work more effectively with the codebase.
-
-8. Detailed documentation on how to select the right agent, size tasks correctly, write good tests, and more
+**Starting a project?** Read **[docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md)** — the operator flow from a permanent kit clone to a planner-ready project.
 
 ---
 
-## Requirements
+## What's inside
 
-If you'd like to try this kit, here are the tools you'll need:
-
-### To get started
-
-| Requirement | How to Check | How to Get |
-|-------------|--------------|------------|
-| **A Claude account** | Log in to [claude.ai](https://claude.ai) | [Sign up](https://claude.ai) |
-| **Claude Code installed** in your terminal or IDE | `claude --version` | [Download](https://claude.ai/download) or install VS Code/Cursor extension |
-| **GitHub account** | Log in to [github.com](https://github.com) | [Sign up](https://github.com/signup) |
-| **Git configured** | `git config user.name && git config user.email` | [Setup guide](https://docs.github.com/en/get-started/quickstart/set-up-git) |
-
-> **New to Git?** Check out [GitHub's Git Handbook](https://guides.github.com/introduction/git-handbook/) for a quick introduction.
-
-### To start building
-
-| Requirement | How to Check | How to Get |
-|-------------|--------------|------------|
-| **Python 3.10-3.12** | `python3 --version` | [python.org](https://www.python.org/downloads/) or `brew install python@3.12` |
-| **uvx or pipx** | `uvx --version` or `pipx --version` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-
-### Evaluation and planning support
-
-| Requirement | Purpose | How to Get |
-|-------------|---------|------------|
-| **OpenAI API Key** | Adversarial evaluation (built-in evaluators) | [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Linear Integration** | Task sync with Linear issues | See [Linear Integration](#linear-integration) section below |
-
-### Not sure if you have everything you need?
-
-The setup door validates what it needs as it runs, and every created
-project carries the health surface:
-
-```bash
-./scripts/core/project doctor  # run inside any created project
-```
-
-It checks your environment (gh auth, API keys, evaluators, toolchain
-pins) and tells you what's missing.
+- A **front door for new projects** — the `/new-project` command and the one setup door (`scripts/local/bootstrap`)
+- **Specialized agents** for planning, implementation, testing, and review (`.claude/agents/`)
+- **Adversarial evaluators** — independent AI second opinions on plans, code, and docs
+- **Task management** as markdown files in status folders (`.kit/tasks/README.md`), with optional Linear sync ([docs/LINEAR-INTEGRATION.md](docs/LINEAR-INTEGRATION.md))
+- **Test-driven development** infrastructure — test templates, quality gates, pre-commit hooks
+- **Architectural decision records** — a knowledgebase for agents and humans
+- **Serena integration** (by Oraios) — semantic code navigation that cuts token consumption by 70–98%
 
 ---
 
-## Quick Start
+## Quickstart
 
-There are three ways to spin up a new project from this kit, in order of least to most manual:
-
-- **Option A — From a URL (zero setup)**: open Claude Code anywhere, paste the kit's URL, and ask it to set up a new project. Claude clones the kit and follows the `create-project` recipe itself. Best when you just want it done.
-- **Option B — Agent-driven (deterministic)**: clone the kit yourself, then explicitly invoke the `create-project` agent. Same end result as Option A, but you control where the kit checkout lives. Best for repeat use.
-- **Option C — Guided interview (`/new-project`)**: from your kit clone, run the `/new-project` command in a Claude Code session. It interviews you in plain language and drives the setup door. Best once you keep a permanent kit clone (the [factory model](docs/STARTING-A-PROJECT.md)).
-
-### Option A — From a URL (Zero Setup)
-
-If you have Claude Code installed, you don't need to clone anything yourself. Just open a Claude Code session in any directory and paste:
-
-```
-https://github.com/movito/agentive-starter-kit
-
-Please set up a new project from this kit.
-```
-
-Claude will:
-
-1. Clone the kit to a working directory (it will pick a sensible location, or ask)
-2. Read `.claude/agents/create-project.md` and follow that recipe
-3. Ask you the same questions the `create-project` agent asks (target directory, project name, task prefix, description, GitHub visibility, optional target codebase)
-4. Run `./scripts/local/bootstrap --new <target-dir>` (the kit's one setup door), customize identity files, init adversarial-workflow, install evaluators, and create the GitHub repo
-
-**What you need installed beforehand**:
-
-- Claude Code (`claude --version`)
-- `git`, `gh` (GitHub CLI, authenticated via `gh auth status`)
-- `uvx` or `pipx` (for `adversarial-workflow`)
-
-**Honest caveat**: this path relies on Claude reading the `create-project` agent file and following its instructions in the main session. It's not a deterministic shell script — if anything in the recipe changes, behavior may vary slightly between sessions. For a fully predictable run, use Option B.
-
-### Option B — Agent-Driven Setup (Deterministic)
-
-This path uses the `create-project` agent to create a brand new project on GitHub from a clean export of the kit.
-
-**1. Clone the kit somewhere persistent** (you'll reuse this checkout for future projects):
+You need Claude Code, git + gh (authenticated), and Python 3.10–3.12 for code projects — `./scripts/core/project doctor` inside any created project tells you what's missing.
 
 ```bash
 cd ~/Github
 git clone https://github.com/movito/agentive-starter-kit.git
-cd agentive-starter-kit
+cd agentive-starter-kit && claude
 ```
 
-**2. Open Claude Code in that directory and invoke the agent**:
+Then run `/new-project` in the session. It interviews you in plain language and drives the setup door; when it finishes, open the tab its LAUNCH line names and start with the `planner` agent.
 
-```
-> Use the create-project agent to set up a new project for me
-```
-
-**3. Answer the agent's questions**. It will ask for:
-
-- Target directory (e.g., `~/Github/my-new-project`)
-- Project name and one-sentence description
-- Task prefix (2-4 uppercase letters, e.g., `MNP`)
-- GitHub visibility (private or public)
-- Optional: path to an existing codebase if this project will analyze it
-
-**4. The agent does the rest**. It will:
-
-- Run `./scripts/local/bootstrap --new <dir>` (the one setup door) to export a clean copy (via `git archive`, no kit history)
-- Customize `CLAUDE.md`, `pyproject.toml`, and `README.md` with your project identity
-- Initialize `adversarial-workflow` and install the default evaluator library
-- Create the GitHub repo with `gh repo create` and push the first commit
-- Print a summary with next steps (add `.env`, open the new project in Claude, invoke `planner`)
-
-When it finishes, `cd` into your new project directory and start working.
-
-### Option C — Guided Interview (/new-project)
-
-Use this once you keep a permanent kit clone (see
-[docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md) for the full
-factory model).
-
-**1. Open a Claude Code session in your kit clone**:
-
-```bash
-cd ~/Github/agentive-starter-kit && claude
-```
-
-**2. Run `/new-project`**. It asks what you're making in plain
-language, one question at a time, and routes you to the right flow:
-
-- **A prototype exists** → hands off to the `project-intake` agent
-  (split pair: plain code repo + private planning repo)
-- **Fresh start** → runs the setup door (`scripts/local/bootstrap`)
-  directly, with your [operator preset](#operator-preset-one-button-setup)
-  answering most questions
-
-**3. Open the tab it prints.** The command finishes with a LAUNCH
-line naming your new project's directory; your first session there
-starts by invoking the `planner` agent.
+Full guide — factory model, prototype graduation, adopting an existing repo, operator presets: [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md). Authoritative option matrix: `./scripts/local/bootstrap --help`.
 
 ---
 
-## What's Included
-
-### Agents (`.claude/agents/`)
+## Headline agents
 
 | Agent | Purpose |
 |-------|---------|
 | `planner` | Helps you plan, tracks work, keeps things on track |
-| `feature-developer` | Implementation tasks |
+| `feature-developer` | Implementation tasks with gated workflow |
 | `test-runner` | TDD and testing |
-| `powertest-runner` | Comprehensive test suites |
-| `document-reviewer` | Documentation quality |
-| `security-reviewer` | Security analysis |
 | `code-reviewer` | Reviews implementations for quality |
-| `ci-checker` | CI/CD verification |
-| `agent-creator` | Create new specialized agents |
-| `create-project` | Spin up a new project from this kit (clean export, GitHub repo, evaluator install) |
-| `project-intake` | Graduate a prototype into the split pair (plain code repo + preset-configured planning repo) |
-| `bootstrap` | Read design materials and configure a new agentive project |
-| `upgrader` | Raise a project to a newer plugin version; refresh model pins |
-| `planner-f5` / `feature-developer-f5` | Fable 5 variants of the two core agents |
+| `create-project` | Spin up a new project from this kit |
+| `project-intake` | Graduate a prototype into the split pair |
 
-The full set lives in `.claude/agents/` — `ls .claude/agents/` is the
-authoritative inventory.
+The full set lives in `.claude/agents/` — `ls .claude/agents/` is the authoritative inventory.
 
-### Task Management (`.kit/tasks/`)
+## Evaluation
 
-Linear-compatible folder structure:
-
-```
-.kit/tasks/
-├── 1-backlog/      → Backlog (planned, not started)
-├── 2-todo/         → Todo (ready to start)
-├── 3-in-progress/  → In Progress (active work)
-├── 4-in-review/    → In Review (awaiting review)
-├── 5-done/         → Done (completed)
-├── 6-canceled/     → Canceled
-├── 7-blocked/      → Blocked (waiting on dependencies)
-├── 8-archive/      → Archive (historical)
-└── 9-reference/    → Reference (templates, docs)
-```
-
-### Adversarial Evaluation (`.adversarial/`)
-
-Independent AI review of your plans, code, and documentation:
-
-```bash
-# Review a task plan before implementation
-adversarial evaluate .kit/tasks/2-todo/TASK-0001-my-task.md
-
-# Review implemented code before merge
-adversarial review src/feature/
-
-# Proofread documentation
-adversarial proofread docs/guide.md
-
-# Discover all available evaluators
-adversarial list-evaluators
-
-# Install additional evaluators (Gemini, Mistral, more)
-./scripts/core/project install-evaluators
-```
-
-Built-in evaluators use OpenAI. Custom evaluators can use other providers (Google, Mistral, Anthropic). Results saved to `.adversarial/logs/`.
-
-### Serena Integration (`.serena/`)
-
-Semantic code navigation with LSP support:
-
-- Python (pylsp)
-- TypeScript/JavaScript (typescript-language-server)
-- Swift (sourcekit-lsp)
-- And more...
-
-Reduces token consumption by 70-98% for code navigation tasks.
-
-> **Note**: When Serena is configured, your browser may briefly open with the Serena dashboard when launching agents. This is normal behavior - you can close it and continue working in your terminal.
+Independent AI review of your plans, code, and documentation, via the `adversarial-workflow` package. Discover what's available with `adversarial list-evaluators`; install the evaluator library with `./scripts/core/project install-evaluators`. Guidance lives in the `code-review-evaluator` skill (`.claude/skills/code-review-evaluator/SKILL.md`).
 
 ---
 
-## Configuration
+## Pointers
 
-New projects are configured by the **setup door** at creation time —
-run `/new-project` from your kit clone (or the door directly; see
-[Quick Start](#quick-start)). An [operator preset](#operator-preset-one-button-setup)
-pre-answers the door's questions so repeat projects need none.
-
-If you prefer to handle setup yourself, copy these template files and configure manually:
-- `.env.template` → `.env` (API keys)
-- `.serena/project.yml.template` → `.serena/project.yml` (language servers)
-- `.adversarial/config.yml.template` → `.adversarial/config.yml` (evaluation settings)
-
----
-
-## Linear Integration
-
-The starter kit includes a built-in task management system that helps agents do better work and helps you track progress. Tasks are stored as markdown files in `.kit/tasks/` folders.
-
-**You can optionally sync these tasks with [Linear](https://linear.app)** for team visibility and project management. This is more involved than just adding an API key.
-
-### Setting Up Linear (Optional)
-
-**1. Create a Linear account**
-
-Sign up at [linear.app](https://linear.app) if you don't have an account.
-
-**2. Create a new team**
-
-Go to Settings → Teams → [Create new team](https://linear.app/settings/new-team)
-
-**Important:** Use the same identifier for your Linear team as you use for task prefixes in the codebase. For example:
-- If your task files are named `ABC-0001-feature.md`, `ABC-0002-bugfix.md`
-- Set your Linear team identifier to `ABC`
-
-This keeps task IDs consistent between your codebase and Linear.
-
-**3. Get your Linear API key**
-
-Go to your Linear workspace settings:
-`https://linear.app/{workspace}/settings/account/security`
-(Replace `{workspace}` with your Linear workspace name, e.g., `ixda`)
-
-- Scroll down to "Personal API keys"
-- Click "Create new API key"
-- Give it a name (e.g., "agentive-starter-kit")
-- Copy the key (starts with `lin_api_`)
-
-**4. Get your Team ID**
-
-Your Team ID is the identifier you chose in step 2 (e.g., `ABC`).
-
-**5. Configure your `.env` file**
-
-```bash
-LINEAR_API_KEY=lin_api_your-key-here
-LINEAR_TEAM_ID=ABC
-```
-
-### How Linear Sync Works
-
-When configured, the task system:
-- Syncs task files in `.kit/tasks/` folders to Linear issues
-- Maps folder locations to Linear statuses (e.g., `2-todo/` → "Todo")
-- Adds GitHub links to task files in Linear issue descriptions
-
-**Manual sync:**
-```bash
-./scripts/core/project linearsync
-```
-
-**Auto-sync:** Pushing to `main` or `develop` triggers GitHub Actions workflow.
-
-**GitHub Actions setup:**
-1. Go to your repo Settings → Secrets and variables → Actions
-2. Add `LINEAR_API_KEY` secret
-3. Add `LINEAR_TEAM_ID` secret (optional)
-
-### Without Linear
-
-Tasks work fine without Linear - they're just markdown files. Agents can create, track, and complete tasks using the folder structure alone. Linear adds team visibility and integrations, but isn't required.
-
----
-
-## Usage
-
-### Launching Agents
-
-Agents run in their own Claude Code tabs (one tab per agent — the
-main session is for coordination):
-
-```bash
-# From your project root, launch a session with a specific agent:
-claude --agent .claude/agents/planner.md
-claude --agent .claude/agents/feature-developer.md
-claude --agent .claude/agents/test-runner.md
-```
-
-Or, inside any Claude Code session, ask for the agent by name ("use
-the planner agent") — it opens with that agent's instructions.
-
-### Creating Tasks
-
-**The easy way:** Just tell `planner` what you want to build. The agent will create and manage tasks for you.
-
-```bash
-claude --agent .claude/agents/planner.md
-# Then: "I want to add user authentication to my app"
-```
-
-**Manual task creation** (if you prefer):
-
-1. Copy task template: `.kit/tasks/9-reference/templates/task-template.md`
-2. Create task file: `.kit/tasks/2-todo/TASK-0001-my-task.md`
-3. Run evaluation: `adversarial evaluate .kit/tasks/2-todo/TASK-0001-my-task.md`
-4. Assign to agent via `planner`
-
-### Running Tests
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run with coverage
-pytest tests/ --cov=your_project --cov-report=term-missing
-```
-
----
-
-## Documentation
-
-- **Starting a Project** (the operator flow): `docs/STARTING-A-PROJECT.md`
-- **Agentive Development Guide** (archived): `docs/archive/agentive-development/README.md`
-- **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md`
-- **Task Template**: `.kit/tasks/9-reference/templates/task-template.md`
-- **Evaluation Guidance**: `.claude/skills/code-review-evaluator/SKILL.md` (full historical guide archived at `docs/archive/EVALUATION-WORKFLOW.md`)
-- **Starter Kit ADRs**: `.kit/adr/` (18+ architectural decisions)
-- **Your Project ADRs**: `docs/adr/` (start fresh here)
-
----
-
-## Project Structure
-
-```
-your-project/
-├── .adversarial/            # Evaluation config, evaluators, scripts, docs
-├── .claude/
-│   ├── agents/              # Implementation agents
-│   ├── commands/            # Implementation commands
-│   ├── skills/              # ALL skills (implementation + builder)
-│   └── settings.local.json  # Claude Code settings
-├── .kit/                    # Builder layer
-│   ├── templates/           # Agent and task templates
-│   ├── skills/              # DEPRECATED symlinks → .claude/skills/ (gone in 0.9.0)
-│   ├── context/             # Agent coordination, workflows, patterns
-│   ├── tasks/               # Task files (numbered folders)
-│   ├── adr/                 # Kit ADRs (KIT-ADR-*)
-│   └── docs/                # Builder documentation
-├── .serena/
-│   └── project.yml          # Serena configuration
-├── docs/
-│   ├── adr/                 # Your project ADRs
-│   └── prd/                 # Product Requirements Documents
-├── scripts/                 # Project scripts
-├── tests/                   # Test suite
-├── .env                     # Environment variables (git-ignored)
-├── .pre-commit-config.yaml  # Pre-commit hooks
-└── pyproject.toml           # Python project config
-```
+| You want | Where |
+|----------|-------|
+| Starting a project (all paths) | [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md) |
+| Setup-door options (shapes × profiles, `--adopt`, `--bots`) | `./scripts/local/bootstrap --help` |
+| Operator preset (answer the door's questions once) | `/setup-preset` + [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md) |
+| The split-pair pattern | [docs/CROSS-REPO-PATTERN.md](docs/CROSS-REPO-PATTERN.md) |
+| Linear task sync | [docs/LINEAR-INTEGRATION.md](docs/LINEAR-INTEGRATION.md) |
+| Keeping a project updated | [docs/UPDATING-YOUR-PROJECT.md](docs/UPDATING-YOUR-PROJECT.md) |
+| Task system and status folders | `.kit/tasks/README.md` |
+| Evaluation guidance | `.claude/skills/code-review-evaluator/SKILL.md` |
+| Agent template | `.kit/templates/AGENT-TEMPLATE.md` |
+| Starter-kit ADRs / your project's ADRs | `.kit/adr/` · `docs/adr/` |
 
 ---
 
 ## Philosophy
 
-### Progressive Refinement Over Perfectionism
-- Start simple, iterate based on real feedback
-- 2-3 iteration maximum on any task
-- Ship with known limitations
-
-### Test-Driven Development
-- Tests before implementation
-- 80%+ coverage for new code
-- Pre-commit hooks catch issues early
-
-### Multi-Model Collaboration
-- Claude for implementation
-- Evaluators for independent review (plans, code, docs)
-- Planner for orchestration
-
-### Context Management
-- Documentation is infrastructure
-- Handoffs prevent context loss
-- Shared memory enables coordination
-
----
-
-## Four Ways to Use This Kit
-
-### From a URL (Zero Setup)
-
-Open Claude Code anywhere, paste the kit URL, ask Claude to set up a new project. Claude clones the kit and follows the `create-project` recipe. See [Quick Start → Option A](#option-a--from-a-url-zero-setup).
-
-### Agent-Driven Project (Deterministic)
-
-Clone the kit yourself, then explicitly invoke the `create-project` agent. Same end result as the URL flow, but you control where the kit checkout lives.
-
-```bash
-# In a checkout of agentive-starter-kit, open Claude Code and:
-> Use the create-project agent to set up a new project for me
-```
-
-See [Quick Start → Option B](#option-b--agent-driven-setup-deterministic). Use this when starting new projects often and want a stable kit checkout to reuse.
-
-### Guided Interview (/new-project)
-
-Keep one permanent kit clone and run `/new-project` in a Claude Code session there. The command interviews you in plain language and drives the setup door — prototype graduation, blank split pair, or single repo.
-
-```bash
-cd ~/Github/agentive-starter-kit && claude
-# then, in the session:  /new-project
-```
-
-See [Quick Start → Option C](#option-c--guided-interview-new-project) and [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md). Use this once the kit clone is your permanent project factory.
-
-### Consumer Project (Lightweight)
-
-Bootstrap an existing project with the implementation tools — agents, scripts, commands, and the minimal `.kit/` workflow skeleton — without the full builder layer (no evaluator library, no kit ADRs).
-
-```bash
-# From your agentive-starter-kit checkout (the one setup door):
-./scripts/local/bootstrap --adopt ~/Github/my-app
-
-# Docs-only repo (no toolchain gauntlet) / planning repo (forces profile none):
-./scripts/local/bootstrap --adopt ~/Github/my-docs --profile none
-./scripts/local/bootstrap --adopt ~/Github/my-planning --shape planning
-```
-
-Use this when you want agentive coding help in an existing repo. Add `--no-kit` to skip the task-management workflow entirely. Run `./scripts/local/bootstrap --help` for the full shape × profile matrix.
-
-Graduating a prototype from a Cowork conversation? Paste `.kit/templates/PROTOTYPE-HANDOFF-TEMPLATE.md` into the conversation, then hand the brief + code folder to the `project-intake` agent — it composes the door into the split pair (plain code repo + preset-configured planning repo) in one invocation (see `docs/CROSS-REPO-PATTERN.md`).
-
-### Operator Preset (One-Button Setup)
-
-The door resolves every question as **CLI flag > preset > kit default > interactive prompt**. A preset file at `<kit-parent>/agentive-config/preset` — a visible sibling of your kit checkout (KIT-0058; `AGENTIVE_KIT_CONFIG_DIR` overrides the location) — pre-answers exactly the door's questions with flat `key: value` lines (`shape`, `profile`, `bots`, `evaluators`, `venv`, `env-source`, and the planning-shape target pointer), so a fully filled preset makes `bootstrap --new <dir>` a genuine one-command project:
-
-```bash
-# easiest: run /setup-preset in a Claude session — it interviews you
-# and writes the file. By hand:
-mkdir -p ~/Github/agentive-config                       # sibling of the kit checkout
-cp docs/preset.example ~/Github/agentive-config/preset  # then edit it
-./scripts/local/bootstrap --new ~/Github/my-next-app    # zero questions
-```
-
-Rules that keep this safe:
-
-- **Never distributed.** The preset lives outside every repo; no sync tier, rsync, or export touches the config home. Pass `--no-preset` for a stranger-mode run; without a preset in either location, behavior is byte-identical to today. The legacy `~/.config/agentive-kit/` location is no longer read — a preset that only exists there stops applying (a one-line notice names it until 0.9.0).
-- **Guardrails, not obscurity.** On first use the door seeds a `.gitignore` (`env.source`, `*.env`) and a README into the config home — keeping the folder in a *private* git repo is welcome, and `project doctor` checks it (WARN on a public remote, FAIL on a tracked `env.source`).
-- **Anchored per checkout.** The door anchors to the kit clone; `project doctor` (in any project) anchors to the project it diagnoses — each resolved to the primary clone's parent (worktree-safe). The two name the same folder when kit and projects share a parent directory (the sibling layout above). If yours don't, set `AGENTIVE_KIT_CONFIG_DIR`; every doctor line names the path it resolved so a wrong anchor is visible, never silent.
-- **Secrets by reference.** `env-source: <path>` names your own `.env` template (chmod 600). On `--new` the door copies it to the target's `.env` with mode 0600 — contents are never printed and never staged.
-- **Records beat presets.** On `--adopt` of a project that already carries a kit-install record, the record wins; compare them with `./scripts/core/project doctor --against-preset` (INFO-only — a deliberately-lean project is not wrong).
-- **Malformed fails loud.** A bad line aborts naming the line; unknown keys warn and are skipped.
-
-### Degraded Modes (No Bots, One Key)
-
-Not every adopter runs CodeRabbit + BugBot + three model-provider keys. Declare what you actually run and the gates stay honest instead of failing falsely:
-
-- `bootstrap ... --bots none` (or a subset like `--bots coderabbit`, or the `bots:` preset key) records a `bots:` line in CLAUDE.md's kit-install region. Preflight Gates 2/3 then report `SKIP: declared absent in kit-install` for missing bots — never FAIL, never a silent PASS. No declaration = both bots expected (existing repos need no migration).
-- Installing the bot GitHub Apps is an **operator step** the kit never automates: add CodeRabbit / Cursor BugBot to your GitHub org (org-wide installs cover future repos automatically) via GitHub's UI.
-- With a single model-provider key, run the single-key evaluation mode documented in the code-review-evaluator skill — the review record names the degraded mode.
-
----
-
-## Pulling Updates from the Starter Kit
-
-As we improve the starter kit, you can pull updates into your project:
-
-```bash
-# Add the starter kit as upstream (one time)
-git remote add upstream https://github.com/movito/agentive-starter-kit.git
-
-# Pull updates
-git fetch upstream
-git merge upstream/main
-
-# Update agent files with your project name
-./scripts/core/project reconfigure
-```
-
-The `reconfigure` command updates Serena activation calls in agent files after pulling upstream changes. It replaces any `activate_project("...")` value (whether it's the placeholder `"your-project"` or upstream's `"agentive-starter-kit"`) with your project name from `.serena/project.yml`.
-
-**How merging works:**
-- Files **only you changed** → your changes preserved
-- Files **only upstream changed** → you get the updates
-- Files **both changed** → merge conflict (you decide what to keep)
-
-**Best practices for easy updates:**
-- Keep customizations in **new files** when possible (new agents, new docs)
-- Avoid heavily editing core starter kit files
-- When you do edit core files, the merge is usually straightforward
-
-**Your stuff stays safe:**
-- Custom agents you created
-- Your `.env` configuration (gitignored)
-- Project-specific docs and tasks
+- **Progressive refinement over perfectionism** — start simple, iterate on real feedback, ship with known limitations
+- **Test-driven development** — tests before implementation, 80%+ coverage for new code, hooks catch issues early
+- **Multi-model collaboration** — Claude implements, evaluators critique independently, the planner orchestrates
+- **Documentation is infrastructure** — handoffs and ADRs prevent context loss and enable coordination
 
 ---
 
@@ -561,20 +89,8 @@ This starter kit is extracted from real development practices. Contributions wel
 2. Tried this approach? Share your results
 3. Adapted for your domain? Share variations
 
----
-
 ## License
 
-MIT
+MIT. Developed through real-world use on production projects — special thanks to the Claude team and all AI provider teams for making agentive development possible.
 
----
-
-## Acknowledgments
-
-Developed through real-world use on production projects. Special thanks to the Claude team and all AI provider teams for making agentive development possible.
-
----
-
-**Version**: see `version` in `pyproject.toml` (the single source of truth;
-this footer was hand-maintained and sat three releases behind — KIT-0069 /
-A53)
+**Version**: see `version` in `pyproject.toml`

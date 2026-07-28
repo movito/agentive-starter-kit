@@ -44,7 +44,7 @@ only a `GEMINI_API_KEY` (free tier), no OpenAI key required.
 ### Non-Functional Requirements
 - [ ] Zero-config experience: `GEMINI_API_KEY` + `adversarial arch-review-fast task.md` works out of the box
 - [ ] No regression: all existing evaluator library commands still work
-- [ ] Documentation updated: EVALUATION-WORKFLOW.md, README references
+- [ ] Documentation updated: code-review-evaluator skill (`.claude/skills/code-review-evaluator/SKILL.md`), README references
 
 ## Implementation Plan
 
@@ -59,7 +59,7 @@ only a `GEMINI_API_KEY` (free tier), no OpenAI key required.
 
 ### Step 3: Update agent instructions
 - Planner agent: update default evaluator commands
-- EVALUATION-WORKFLOW.md: update recommended flow
+- code-review-evaluator skill: update recommended flow
 - CLAUDE.md: update any evaluator references
 
 ### Step 4: Deprecation cleanup
@@ -77,7 +77,7 @@ only a `GEMINI_API_KEY` (free tier), no OpenAI key required.
 
 ### Should Have
 - [ ] Onboarding flow updated
-- [ ] EVALUATION-WORKFLOW.md updated
+- [ ] code-review-evaluator skill updated
 - [ ] Built-in evaluators marked as legacy/deprecated
 
 ### Nice to Have
@@ -99,7 +99,7 @@ only a `GEMINI_API_KEY` (free tier), no OpenAI key required.
 ## References
 
 - **Evaluator library**: github.com/movito/adversarial-evaluator-library
-- **Current workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
+- **Current workflow**: `.claude/skills/code-review-evaluator/SKILL.md`
 - **Config**: `.adversarial/config.yml`
 - **Install mechanism**: `./scripts/core/project install-evaluators`
 

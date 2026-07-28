@@ -41,8 +41,10 @@ read-both deprecation cycle, N1). This task ends the cycle.
   `TestCanonicalHome`, dropping the deprecated-home guard clause.
 - Grep first (the N3 rule): `grep -rn '.kit/skills'` must show only
   historical records (ADRs, done tasks, retros) before deleting.
-- Update `docs/MANIFEST-UPGRADE-GUIDE.md`'s example manifest alongside
-  the real one.
+- `docs/MANIFEST-UPGRADE-GUIDE.md`: KIT-0073 already replaced the
+  inline example manifest with a pointer to the live
+  `scripts/.core-manifest.json`, so only the KIT-0057 deprecation note
+  in that guide (Step 2) needs removing when the symlinks go.
 - **Legacy config-location notice (joined from KIT-0058)**: remove the
   `~/.config/agentive-kit/preset` notice from both emitters — the
   door's `load_preset` (the F4 block in `scripts/local/bootstrap`) and

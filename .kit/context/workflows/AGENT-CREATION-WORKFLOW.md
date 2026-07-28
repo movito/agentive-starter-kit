@@ -2,7 +2,7 @@
 
 **Purpose**: Step-by-step guide for creating new specialized agents with standardized Evaluator instructions
 **Audience**: Coordinators, project maintainers
-**Last Updated**: 2026-07-27
+**Last Updated**: 2026-07-28
 
 ---
 
@@ -12,11 +12,9 @@
 2. [Before You Start](#before-you-start)
 3. [Step-by-Step Process](#step-by-step-process)
 4. [Evaluator Instructions Standard](#evaluator-instructions-standard)
-5. [Complete Example Walkthrough](#complete-example-walkthrough)
-6. [Best Practices](#best-practices)
-7. [Verification Checklist](#verification-checklist)
-8. [Using the Automation Script](#using-the-automation-script)
-9. [Troubleshooting](#troubleshooting)
+5. [Best Practices](#best-practices)
+6. [Using the Automation Script](#using-the-automation-script)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -243,7 +241,6 @@ Customize the documentation links for this agent's role:
 - Agent procedures: `CLAUDE.md`
 - Your role context: `.kit/context/agent-handoffs.json` → `"api-tester"`
 - Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`
-- Test suite management: `.kit/context/workflows/TEST-SUITE-WORKFLOW.md`
 
 **Evaluation Workflow**:
 - **Complete guide**: `.claude/skills/code-review-evaluator/SKILL.md`
@@ -411,198 +408,6 @@ The Evaluator workflow is a **critical quality assurance mechanism** that preven
 
 ---
 
-## Complete Example Walkthrough
-
-Let's walk through creating an "api-tester" agent from start to finish.
-
-### 1. Initial Decision
-
-**Need**: Test external API integrations comprehensively
-**Existing agents**: test-runner (general testing), api-developer (API implementation)
-**Overlap check**: test-runner focuses on unit tests; api-developer focuses on implementation
-**Decision**: Create specialized api-tester agent ✅
-
-### 2. Gather Information
-
-- **Name**: api-tester
-- **Description**: API testing and validation specialist for external API integration
-- **Model**: claude-sonnet-5 (complex API testing requires reasoning)
-- **Tools**: Read, Write, Edit, Bash, Glob, Grep, TodoWrite
-- **Core responsibilities**:
-  1. Test external API endpoints
-  2. Validate API responses against contracts
-  3. Create comprehensive API test suites
-  4. Document API behavior and limitations
-  5. Report API regressions or breaking changes
-  6. Coordinate with api-developer on issues
-
-### 3. Create Agent File
-
-```bash
-# Use automation script
-scripts/optional/create-agent.sh api-tester "API testing and validation specialist for external API integration"
-
-# Output:
-# ✅ Created .claude/agents/api-tester.md
-# 📝 Next steps:
-#    1. Edit api-tester.md and customize all [bracketed] sections
-#    2. Add a Key Agents row to CLAUDE.md (if broadly useful)
-#    3. Test agent with sample task
-```
-
-### 4. Customize Frontmatter
-
-```yaml
----
-name: api-tester
-description: API testing and validation specialist for external API integration
-model: claude-sonnet-5
-tools:
-  - Read
-  - Write
-  - Edit
-  - Bash
-  - Glob
-  - Grep
-  - TodoWrite
----
-```
-
-### 5. Update Identity Header
-
-```markdown
-# API Tester Agent
-
-You are a specialized API testing and validation agent for the this project. Your role is to test external API integrations, validate responses, and ensure API contract compliance.
-
-## Response Format
-Always begin your responses with your identity header:
-🧪 **API-TESTER** | Task: [current task description]
-```
-
-### 6. Define Core Responsibilities
-
-```markdown
-## Core Responsibilities
-- Test external API endpoints for correctness and performance
-- Validate API responses against expected contracts and schemas
-- Create comprehensive test suites for API integration scenarios
-- Document API behavior, quirks, and limitations discovered during testing
-- Report breaking changes or regressions in external API
-- Coordinate with api-developer on API-related issues
-```
-
-### 7. Add Testing Guidelines
-
-```markdown
-## API Testing Guidelines
-
-Follow these practices when testing APIs:
-
-1. **Test Organization**: Group tests by API endpoint/functionality
-2. **Coverage Requirements**: Aim for 80%+ coverage of critical API paths
-3. **Error Scenarios**: Test both success and failure cases
-4. **Performance Baselines**: Measure and document API response times
-5. **Regression Testing**: Verify no breaking changes in existing functionality
-6. **Mock Strategy**: Use mocks for external dependencies (the external service)
-```
-
-### 8. Customize Evaluator Section
-
-```markdown
-**When to Request Evaluation**:
-- Ambiguous test acceptance criteria in task specification
-- Multiple valid approaches to testing strategy (integration vs unit vs E2E)
-- Unclear performance baseline requirements or SLAs
-- Potential breaking changes to existing test infrastructure
-- Need external perspective on test coverage adequacy or risk areas
-```
-
-### 9. Add Quick Reference
-
-```markdown
-**API Testing Documentation**:
-- [Relevant ADR, if any]
-- Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`
-- API implementation: `your_project/api/external/`
-- API tests: `tests/integration/api/`
-```
-
-### 10. Define Operations and Restrictions
-
-```markdown
-## Allowed Operations
-
-- Read all project files (Python, TypeScript, documentation)
-- Create and modify test files in `tests/integration/api/` directory
-- Run pytest and API test validation commands
-- Execute API test scripts and validation tools
-- Update `.kit/context/agent-handoffs.json` with test results
-- Document API behavior in `docs/technical/api/`
-- Report issues to api-developer agent
-
-## Restrictions
-
-- Cannot modify production API implementation code in `your_project/api/`
-- Must not skip test validation before reporting results
-- Should not approve API changes without comprehensive test coverage
-- Must not work on tasks outside API testing domain
-- Cannot modify evaluation logs (read-only outputs)
-```
-
-### 11. Register the Agent
-
-Add a row to the **Key Agents** table in `CLAUDE.md`:
-
-```markdown
-| `api-tester` | API integration testing and coverage |
-```
-
-### 12. Test Agent
-
-Create `.kit/tasks/2-todo/TASK-2025-TEST-api-basic-validation.md`:
-
-```markdown
-# TASK-2025-TEST: API Basic Validation Test
-
-**Status**: Active
-**Assigned To**: api-tester
-**Priority**: P2 (Testing)
-
-## Objective
-Validate that api-tester agent can successfully test a simple external API endpoint.
-
-## Requirements
-1. Test the timeline creation API endpoint
-2. Validate response schema
-3. Document any issues found
-
-## Success Criteria
-- Test passes or fails with clear diagnostics
-- Agent demonstrates autonomous Evaluator invocation (if needed)
-- Test results documented
-```
-
-Launch api-tester agent and verify it completes the test task successfully.
-
-### 13. Commit
-
-```bash
-git add .claude/agents/api-tester.md
-git add CLAUDE.md
-git commit -m "docs: Add api-tester agent with Evaluator workflow
-
-- Create specialized agent for API integration testing
-- Include standardized Evaluator instructions (autonomous)
-- Register in the CLAUDE.md Key Agents table"
-
-git push -u origin feature/add-api-tester-agent
-```
-
-**Done!** ✅ New agent created, documented, and ready to use.
-
----
-
 ## Best Practices
 
 ### ✅ DO
@@ -635,53 +440,6 @@ git push -u origin feature/add-api-tester-agent
 3. **Clear restrictions**: Explicit boundaries prevent scope creep
 4. **Role-specific docs**: Link to relevant ADRs, technical docs, code examples
 5. **Coordination clarity**: Specify which agents this one hands off to/receives from
-
----
-
-## Verification Checklist
-
-Before committing new agent, verify:
-
-### Frontmatter
-- [ ] Unique `name:` (kebab-case, no duplicates)
-- [ ] Clear `description:` (one sentence, role-specific)
-- [ ] Appropriate `model:` (sonnet-4-5 or haiku)
-- [ ] Correct `tools:` list (only tools needed)
-
-### Agent Content
-- [ ] Identity header with emoji and name
-- [ ] 3-6 core responsibilities (specific, actionable)
-- [ ] Role-specific guidelines or procedures section
-- [ ] Evaluator workflow section (complete, autonomous)
-- [ ] "When to Request Evaluation" scenarios (role-specific, not generic)
-- [ ] Quick reference documentation (relevant links)
-- [ ] Allowed operations (explicit)
-- [ ] Restrictions (explicit)
-
-### Evaluator Section (Critical)
-- [ ] References `.claude/skills/code-review-evaluator/SKILL.md`
-- [ ] Shows `adversarial evaluate` command (autonomous)
-- [ ] Includes iteration limits (2-3 max)
-- [ ] Includes escalation guidance (when to ask user)
-- [ ] Includes technical details (evaluator, cost, autonomy)
-- [ ] Role-specific "When to Request Evaluation" scenarios
-
-### Documentation
-- [ ] Registered in `CLAUDE.md`'s Key Agents table (if broadly useful)
-- [ ] All documentation links work
-- [ ] Role-specific workflows referenced (if exist)
-- [ ] Related ADRs linked (if applicable)
-
-### Testing
-- [ ] Agent file syntax valid (YAML + Markdown)
-- [ ] Test task created and completed successfully
-- [ ] Agent demonstrates expected behavior
-- [ ] Evaluator invocation works (if tested)
-
-### Version Control
-- [ ] File committed with descriptive message
-- [ ] CLAUDE.md registration committed (if applicable)
-- [ ] Pushed to correct branch
 
 ---
 
@@ -803,72 +561,6 @@ name: api-tester
 
 ---
 
-### Issue: Agent role overlaps with existing agent
-
-**Symptom**: Confusion about which agent to use for tasks
-
-**Solution**:
-1. Review existing agents: `ls .claude/agents/`
-2. Read their core responsibilities
-3. Consider if existing agent can be extended instead
-4. If creating new agent, document clear boundaries in restrictions
-5. Update both agents' documentation to clarify coordination
-
----
-
-### Issue: Agent's scope too broad
-
-**Symptom**: Agent trying to do too many different things
-
-**Solution**:
-1. Split into multiple specialized agents
-2. Define clear boundaries for each
-3. Document coordination between agents
-4. Update task specifications to route to correct agent
-
-Example:
-- ❌ "testing-agent" (too broad)
-- ✅ "unit-test-runner" + "integration-test-runner" + "api-tester" (specific)
-
----
-
-### Issue: Evaluator gives contradictory feedback
-
-**Symptom**: Round 1 says approach A, Round 2 says approach B
-
-**Solution**:
-1. Agent should escalate to user after 2 contradictory iterations
-2. User provides tiebreaker decision
-3. Document decision in task specification
-4. Agent proceeds with user's guidance
-
-**Example escalation message**:
-```markdown
-"I've received contradictory evaluation feedback on TASK-2025-042:
-- Round 1: Recommended approach A (performance optimization)
-- Round 2: Recommended approach B (code simplicity)
-
-These conflict. Please advise which is more important for this task:
-1. Performance (approach A)
-2. Simplicity (approach B)
-
-This will help me proceed without further evaluation loops."
-```
-
----
-
-### Issue: Agent missing from documentation
-
-**Symptom**: Can't find agent in documentation
-
-**Solution**:
-1. Add a row to the Key Agents table in `CLAUDE.md`
-2. Follow the format of the existing rows
-3. Keep the description to one line
-4. Commit the update alongside the agent file
-
----
-
 ### Issue: Template placeholders still in agent file
 
 **Symptom**: Agent file has [bracketed] text still present
@@ -897,6 +589,6 @@ grep -n '\[' .claude/agents/your-agent.md
 
 ---
 
-**Last Updated**: 2026-07-27
+**Last Updated**: 2026-07-28
 **Maintained By**: Coordinator agent, document-reviewer agent
 **Questions?** See `CLAUDE.md` or ask the user

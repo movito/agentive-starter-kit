@@ -80,71 +80,21 @@ ls .claude/commands/
 
 ### Step 2: Replace the manifest
 
-Replace `scripts/.core-manifest.json` with the tiered format. Use the current
-upstream manifest as your starting point, then set `opted_in` based on what you want.
+Replace `scripts/.core-manifest.json` with the tiered format. **Use the
+live upstream manifest as your starting point** — `scripts/.core-manifest.json`
+in the agentive-starter-kit checkout is always current (this guide
+deliberately does not inline a copy: an inlined example drifts the
+moment upstream changes). Copy it, then set `opted_in` to what you
+want — the snippets below show **only that one field**, not a
+complete manifest.
 
-**Minimal upgrade** (scripts + core commands only):
+**Minimal upgrade** (scripts + core commands + optional commands):
 
 ```json
 {
-  "core_version": "2.0.0",
-  "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-04-13T00:00:00Z",
-  "files": {
-    "scripts_core": [
-      "core/__init__.py",
-      "core/check-bots.sh",
-      "core/ci-check.sh",
-      "core/gh-review-helper.sh",
-      "core/logging_config.py",
-      "core/pattern_lint.py",
-      "core/preflight-check.sh",
-      "core/project",
-      "core/sync_from_manifest.py",
-      "core/validate_task_status.py",
-      "core/verify-ci.sh",
-      "core/verify-setup.sh",
-      "core/wait-for-bots.sh",
-      "core/VERSION"
-    ],
-    "commands_core": [
-      "check-ci.md",
-      "check-bots.md",
-      "wait-for-bots.md",
-      "start-task.md",
-      "commit-push-pr.md",
-      "preflight.md"
-    ],
-    "commands_optional": [
-      "babysit-pr.md",
-      "retro.md",
-      "triage-threads.md",
-      "status.md",
-      "check-spec.md"
-    ],
-    "kit_builder": [
-      ".kit/templates/",
-      ".kit/skills/",
-      ".kit/adr/",
-      ".kit/docs/",
-      ".adversarial/config.yml.template",
-      ".adversarial/scripts/",
-      ".adversarial/docs/",
-      ".adversarial/templates/",
-      ".kit/context/workflows/",
-      ".kit/context/templates/",
-      ".kit/context/patterns.yml",
-      ".kit/tasks/9-reference/"
-    ]
-  },
   "opted_in": ["commands_optional"]
 }
 ```
-
-> **Deprecation note (KIT-0057)**: the `kit_builder` tier's
-> `.kit/skills/` entry points at read-both symlinks into the canonical
-> `.claude/skills/` home; the entry retargets when the symlinks are
-> removed in 0.9.0 (KIT-0059).
 
 **Full upgrade** (everything including builder layer):
 
@@ -153,6 +103,11 @@ upstream manifest as your starting point, then set `opted_in` based on what you 
   "opted_in": ["commands_optional", "kit_builder"]
 }
 ```
+
+> **Deprecation note (KIT-0057)**: the live manifest's `kit_builder`
+> tier includes a `.kit/skills/` entry that points at read-both
+> symlinks into the canonical `.claude/skills/` home; that entry
+> retargets when the symlinks are removed in 0.9.0 (KIT-0059).
 
 ### Step 3: Decide what to opt into
 
@@ -166,39 +121,15 @@ upstream manifest as your starting point, then set `opted_in` based on what you 
 Add the tier names you want to the `opted_in` array. Core tiers (`scripts_core`,
 `commands_core`) are always synced regardless of `opted_in`.
 
-### Step 4: Copy missing commands
+### Step 4: Sync and clean up
 
-If your repo is missing commands that should be there, copy them from upstream:
+Once the manifest is upgraded, a sync run delivers any missing commands
+and newer scripts — see **Pull-based sync** below (or wait for the push
+Action). One bit of manual cleanup: v1.x had both `source` and
+`source_repo`; v2.0.0 only uses `source_repo`, so drop the redundant
+`source` field.
 
-```bash
-# From the agentive-starter-kit checkout:
-cp .claude/commands/babysit-pr.md  /path/to/downstream/.claude/commands/
-cp .claude/commands/retro.md       /path/to/downstream/.claude/commands/
-cp .claude/commands/triage-threads.md /path/to/downstream/.claude/commands/
-# etc.
-```
-
-Or wait for the next sync run — once the manifest is upgraded, sync will deliver them.
-
-### Step 5: Update scripts (if needed)
-
-If your `scripts/core/` files are older than upstream, sync will update them. You can
-also manually copy:
-
-```bash
-# Check upstream VERSION
-cat /path/to/agentive-starter-kit/scripts/core/VERSION
-
-# Compare with yours
-cat scripts/core/VERSION
-```
-
-### Step 6: Remove the `source` field (optional cleanup)
-
-v1.x had both `source` and `source_repo`. v2.0.0 only uses `source_repo`. The
-`source` field is harmless but redundant — remove it for cleanliness.
-
-### Step 7: Commit
+### Step 5: Commit
 
 ```bash
 git add scripts/.core-manifest.json .claude/commands/
