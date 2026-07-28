@@ -179,8 +179,6 @@ cd <target-dir>
 cp -r .adversarial .adversarial.bak
 adversarial init --force
 # Restore kit customizations that init wipes:
-cp -r .adversarial.bak/docs .adversarial/
-cp -r .adversarial.bak/scripts .adversarial/
 cp -r .adversarial.bak/templates .adversarial/
 cp -r .adversarial.bak/inputs .adversarial/
 cp .adversarial.bak/config.yml.template .adversarial/
