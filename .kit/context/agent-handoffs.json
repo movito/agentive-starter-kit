@@ -4,7 +4,7 @@
     "current_task": "KIT-0077",
     "task_started": null,
     "brief_note": "v0.9.0 SHIPPED+TAGGED 2026-07-28 (PR #100, 21fbfc4; closeout d44b3f8). KIT-0077 assigned (dedup cleanup: context archive w/ RECOMPUTED list, dispatch retirement, doc archival, template pair, builder-only annotations). Fast-only trio; planner tree gate. After: downstream pass (KIT-0061 HIGH first) and/or split-repo ADR (dedup report section 8).",
-    "details_link": ".kit/tasks/2-todo/KIT-0077-dedup-cleanup.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0077-dedup-cleanup.md",
     "handoff_file": ".kit/context/KIT-0077-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0077",
     "task_started": null,
     "brief_note": "KIT-0077 ready: dedup report is binding; RECOMPUTE the archive list (grew since analysis); evidence files append-only; own handoff must not be archived. Worktree: ../ask-worktrees/KIT-0077.",
-    "details_link": ".kit/tasks/2-todo/KIT-0077-dedup-cleanup.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0077-dedup-cleanup.md",
     "handoff_file": ".kit/context/KIT-0077-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

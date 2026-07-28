@@ -103,7 +103,7 @@ Confirm in your response: "✅ Serena activated: [languages]. Ready for code nav
 - ❌ Config files (YAML/JSON - use Grep)
 - ❌ Reading entire files (no benefit - use Read tool)
 
-**Reference**: `.serena/claude-code/USE-CASES.md`
+**Reference**: `docs/archive/SERENA-USE-CASES.md` (archived KIT-0077)
 
 ## Testing Protocol
 

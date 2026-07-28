@@ -20,6 +20,7 @@ it is excluded from the consumer tests/ rsync in engine-consumer.sh
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -609,6 +610,30 @@ class TestNewE2E:
             env=env,
         )
         assert status.stdout.strip() == ""
+
+    def test_new_export_carries_no_planning_corpus(self, tmp_path):
+        """The export engine's .kit/context/ scrubs are -maxdepth 1, so
+        every SUBDIRECTORY of context/ needs its own removal. KIT-0077
+        added context/archive/ (100 finished-task handoffs) and it
+        escaped the sweep until engine-export.sh gained an explicit
+        rm -rf. Mirrors test_engine_materials.py's corpus guard so the
+        class is closed on both consumer copy paths, not just one."""
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
+        target = tmp_path / "clean-app"
+        result = run_door("--new", str(target), env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+
+        context = target / ".kit" / "context"
+        assert context.is_dir(), "export should still scaffold .kit/context/"
+        leaked = [
+            str(p.relative_to(target))
+            for p in context.rglob("*")
+            if p.is_file() and re.match(r"^[A-Z]+-\d{4}", p.name)
+        ]
+        assert not leaked, f"kit planning corpus leaked into export: {leaked}"
+        assert not (
+            context / "archive"
+        ).exists(), "the kit's finished-task archive must never ship to a new project"
 
     def test_new_single_profile_none_reseeds_rules(self, tmp_path):
         """BugBot PR #81: the export carries the kit's python Project

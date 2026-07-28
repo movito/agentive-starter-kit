@@ -2,9 +2,9 @@
 name: code-reviewer
 description: Reviews completed implementations for quality, consistency, and standards adherence
 model: claude-sonnet-5
-version: 1.0.0
+version: 1.1.0
 origin: agentive-starter-kit
-last-updated: 2026-07-03
+last-updated: 2026-07-28
 created-by: "@movito"
 tools:
   - Read
@@ -345,21 +345,13 @@ If CI is failing, verdict should be CHANGES_REQUESTED regardless of code quality
 - Check git history and diffs
 - Write review reports to `.kit/context/reviews/`
 
-## Bus Integration
+## Reporting the Verdict
 
-After completing a review, emit one of:
-
-```bash
-# If approved:
-dispatch emit phase_complete --agent code-reviewer \
-  --task $TASK_ID \
-  --summary "Code review approved"
-
-# If changes requested:
-dispatch emit changes_requested --agent code-reviewer \
-  --task $TASK_ID \
-  --summary "Changes requested: brief description"
-```
+After completing a review, write the report to
+`.kit/context/reviews/<TASK-ID>-review.md`, then state the verdict
+(`APPROVED` / `CHANGES_REQUESTED` / `ESCALATE_TO_HUMAN`) with a one-line
+rationale in your final message to the coordinator. The planner drives
+the task's next move from there.
 
 ## Restrictions
 

@@ -63,7 +63,7 @@ WORKTREES_DIR="$(dirname "$PRIMARY_ROOT")/ask-worktrees"
 #                           get their OWN config with a per-worktree
 #                           name, generated below (KIT-0069)
 #   .adversarial/logs/    — regenerates; history is nice-to-have only
-#   .dispatch/*, caches   — runtime, regenerate on demand
+#   tool caches           — runtime, regenerate on demand
 # Add new entries here by name when a session needs them — never switch
 # to "everything gitignored" (evaluator finding, KIT-0044 spec F1.2).
 # Each entry must be gitignored WITHOUT a trailing slash: dir-only

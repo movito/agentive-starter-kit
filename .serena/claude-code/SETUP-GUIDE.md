@@ -534,7 +534,7 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 ### Documentation
 
 - **Setup Guide**: This file
-- **Use Case Matrix**: `.serena/claude-code/USE-CASES.md`
+- **Use Case Matrix**: `docs/archive/SERENA-USE-CASES.md` (archived KIT-0077)
 
 ### External Resources
 
@@ -565,7 +565,7 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 
 After successful installation:
 
-1. **Read USE-CASES.md** - Learn specific use cases and when to use Serena
+1. **Read `docs/archive/SERENA-USE-CASES.md`** - Learn specific use cases and when to use Serena
 2. **Practice navigation** - Try finding classes/methods in your Python code
 3. **Monitor performance** - Track token usage and speed in real workflows
 4. **Report issues** - Document any problems or unexpected behavior

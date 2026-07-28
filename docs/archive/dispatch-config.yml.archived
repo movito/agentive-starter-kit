@@ -1,3 +1,15 @@
+# ARCHIVED 2026-07-28 (KIT-0077) — was `.dispatch/config.yml`.
+#
+# dispatch-kit provided an event bus and transition engine that spawned
+# agents on phase_complete events. The kit no longer uses it: hand-off
+# is driven by the planner and the task-folder lifecycle instead. Kept
+# for reference because it records the transition graph the workflow
+# used to encode.
+#
+# Nothing loads this file. Restoring it would mean reinstating
+# dispatch-kit (never published to PyPI) and re-adding the setup-dev.sh
+# install steps removed in the same change.
+
 version: 1
 interfaces:
   agent_dir: .claude/agents/

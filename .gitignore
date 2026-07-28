@@ -165,7 +165,12 @@ logs/
 # primary clone's install, and dir-only patterns don't match symlinks
 .adversarial/evaluators
 
-# Dispatch (runtime artifacts)
+# Dispatch runtime artifacts. KIT-0077 retired the kit's dispatch-kit
+# ADOPTION (config, setup-dev install, agent instructions) but these
+# entries STAY: the shipped scripts/core/ scripts keep their guarded
+# fire-and-forget `dispatch emit` calls, and on any machine with the CLI
+# on PATH those calls really do write bus.jsonl. Verified 2026-07-28 —
+# a preflight run regenerated .dispatch/bus.jsonl in this very worktree.
 .dispatch/config.local.yml
 .dispatch/bus.jsonl
 

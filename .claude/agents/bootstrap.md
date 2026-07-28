@@ -285,7 +285,6 @@ If no: print the manual commands for later.
 
   📂 Design materials:  preserved
   🔧 Dev environment:   .venv/ (Python X.Y)
-  🚀 Dispatch:          .dispatch/config.yml
   📋 Tasks:             N tasks in 1-backlog/
   🔑 API keys:          ⚠️ Add to .env (see below)
 

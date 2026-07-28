@@ -22,7 +22,7 @@
 #
 # What this does:
 #   1. Copies ASK scaffolding into your project (preserves your files)
-#   2. Runs setup-dev.sh (Python, venv, deps, tmux; dispatch-kit only via --with-dispatch)
+#   2. Runs setup-dev.sh (Python, venv, deps, tmux)
 #   3. Launches the bootstrap agent to read your materials and configure everything
 #
 # What it does NOT do:
@@ -83,9 +83,13 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 # prefix-AGNOSTIC ([A-Z]*-NNNN — the ASK-* literals missed every KIT-*
 # file after the prefix rename, KIT-0068 A13), and .kit/adversarial/ is
 # operator-owned untracked state, excluded wholesale.
+# NOTE: the task-ID pattern is anchored at context/ depth 1, so
+# context/archive/ (finished-task handoffs, KIT-0077) needs its own
+# wholesale exclude — same shape as retros/reviews/research.
 "${RSYNC_BASE[@]}" \
     --exclude='adversarial/' \
     --exclude='context/[A-Z]*-[0-9][0-9][0-9][0-9]*' \
+    --exclude='context/archive/' \
     --exclude='context/retros/' --exclude='context/reviews/' --exclude='context/research/' \
     --exclude='context/*SESSION-HANDOVER*' --exclude='context/*LINEAR-SYNC*' --exclude='context/*MIRIAD*' \
     --exclude='context/*code-review-lessons*' --exclude='context/*code-review-test*' \
@@ -137,6 +141,7 @@ echo "✅ Scaffolding copied (existing files preserved)"
 # list that doesn't say what it drops reads as "copied everything".
 echo "   Not copied (kit-side only): scripts/local/ (door + engines),"
 echo "   kit task specs and task-ID context files (.kit/tasks/, .kit/context/),"
+echo "   .kit/context/archive/ (finished-task handoffs),"
 echo "   .kit/adversarial/ (operator-owned), retros/reviews/research,"
 echo "   and kit-only tests (test_setup_door.py, test_kit_markers.py, ...)"
 echo

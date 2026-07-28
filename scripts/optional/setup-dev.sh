@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Setup development environment
-# Usage: ./scripts/optional/setup-dev.sh [--with-dispatch]
+# Usage: ./scripts/optional/setup-dev.sh
 #
 # Metadata:
-#   version: 1.1.0
+#   version: 2.0.0
 #   origin: dispatch-kit
 #   origin-version: 0.3.2
 #   last-updated: 2026-07-28
@@ -12,11 +12,8 @@
 # Creates .venv, installs the project in editable mode, and verifies
 # tmux. Safe to re-run (idempotent).
 #
-# --with-dispatch (KIT-0067 D4/A18): additionally install dispatch-kit
-# from a local clone and run `dispatch init`. dispatch-kit is NOT on
-# PyPI — this only works on a machine that has the clone (default
-# ~/Github/dispatch-kit; override with DISPATCH_KIT_PATH). The default
-# run skips both steps so this script works on any machine.
+# The --with-dispatch opt-in (KIT-0067 D4/A18) was removed in KIT-0077
+# when dispatch-kit was retired; the script now takes no arguments.
 
 set -e
 
@@ -24,35 +21,24 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
-WITH_DISPATCH=0
 for arg in "$@"; do
     case "$arg" in
-        --with-dispatch)
-            WITH_DISPATCH=1
-            ;;
         -h|--help)
-            echo "Usage: ./scripts/optional/setup-dev.sh [--with-dispatch]"
+            echo "Usage: ./scripts/optional/setup-dev.sh"
             echo
-            echo "  --with-dispatch  also install dispatch-kit from a local clone"
-            echo "                   (not on PyPI; DISPATCH_KIT_PATH overrides the"
-            echo "                   default ~/Github/dispatch-kit) and run"
-            echo "                   'dispatch init'"
+            echo "Creates .venv, installs the project in editable mode,"
+            echo "and checks for tmux. Takes no options."
             exit 0
             ;;
         *)
             echo "Error: unknown argument: $arg"
-            echo "Usage: ./scripts/optional/setup-dev.sh [--with-dispatch]"
+            echo "Usage: ./scripts/optional/setup-dev.sh"
             exit 1
             ;;
     esac
 done
 
-# Step numbering adapts to the dispatch opt-in (4 base steps, 6 with)
-if [ "$WITH_DISPATCH" -eq 1 ]; then
-    TOTAL_STEPS=6
-else
-    TOTAL_STEPS=4
-fi
+TOTAL_STEPS=4
 STEP=0
 step_banner() {
     STEP=$((STEP + 1))
@@ -168,45 +154,7 @@ fi
 echo
 
 # ─────────────────────────────────────────
-# Step 3 (opt-in): Install dispatch-kit (local)
-# ─────────────────────────────────────────
-# Gated behind --with-dispatch (KIT-0067 D4/A18): installs from a
-# hardcoded operator-machine clone and is skipped by default so the
-# door's venv offer works on any machine.
-if [ "$WITH_DISPATCH" -eq 1 ]; then
-step_banner "🚀 Installing dispatch-kit..."
-
-# dispatch-kit is not yet on PyPI — install from local clone.
-# Override the path with DISPATCH_KIT_PATH env var if needed.
-DISPATCH_KIT_PATH="${DISPATCH_KIT_PATH:-$HOME/Github/dispatch-kit}"
-
-if .venv/bin/python -c "import dispatch_kit" 2>/dev/null; then
-    DK_VER=$(.venv/bin/python -c "from importlib.metadata import version; print(version('dispatch-kit'))" 2>/dev/null || echo "unknown")
-    echo "✅ dispatch-kit $DK_VER already installed"
-    SUMMARY+=("dispatch-kit: already installed ($DK_VER)")
-elif [ -d "$DISPATCH_KIT_PATH" ] && [ -f "$DISPATCH_KIT_PATH/pyproject.toml" ]; then
-    echo "  Installing from $DISPATCH_KIT_PATH..."
-    if command -v uv >/dev/null 2>&1; then
-        uv pip install -e "$DISPATCH_KIT_PATH" --python .venv/bin/python
-    else
-        .venv/bin/pip install -e "$DISPATCH_KIT_PATH"
-    fi
-    DK_VER=$(.venv/bin/python -c "from importlib.metadata import version; print(version('dispatch-kit'))" 2>/dev/null || echo "unknown")
-    echo "✅ dispatch-kit $DK_VER installed from local repo"
-    SUMMARY+=("dispatch-kit: installed from local ($DK_VER)")
-else
-    # --with-dispatch is an explicit request — an unmet one is a
-    # failure, never a warning-that-reads-as-success (CodeRabbit,
-    # PR #98). The skip-quietly behavior is the DEFAULT mode's.
-    echo "❌ dispatch-kit requested (--with-dispatch) but no clone found"
-    echo "   Set DISPATCH_KIT_PATH or clone to ~/Github/dispatch-kit/"
-    exit 1
-fi
-echo
-fi  # WITH_DISPATCH (step 3)
-
-# ─────────────────────────────────────────
-# Step: Install project (editable)
+# Step 3: Install project (editable)
 # ─────────────────────────────────────────
 step_banner "📥 Installing $PROJECT_NAME..."
 
@@ -225,7 +173,7 @@ echo "✅ $PROJECT_NAME installed in editable mode"
 echo
 
 # ─────────────────────────────────────────
-# Step 5: Check tmux availability
+# Step 4: Check tmux availability
 # ─────────────────────────────────────────
 step_banner "🖥️  Checking tmux..."
 
@@ -239,41 +187,6 @@ else
     SUMMARY+=("tmux: NOT FOUND (optional)")
 fi
 echo
-
-# ─────────────────────────────────────────
-# Step (opt-in): dispatch-kit initialization
-# ─────────────────────────────────────────
-if [ "$WITH_DISPATCH" -eq 1 ]; then
-step_banner "⚙️  Checking dispatch configuration..."
-
-# dispatch-kit: run dispatch init if config is missing
-if command -v dispatch >/dev/null 2>&1 || [ -x ".venv/bin/dispatch" ]; then
-    if [ -f ".dispatch/config.yml" ]; then
-        echo "✅ .dispatch/config.yml exists (skipping init)"
-        SUMMARY+=("config: already exists")
-    else
-        echo "  Running dispatch init..."
-        .venv/bin/dispatch init 2>/dev/null || dispatch init 2>/dev/null || true
-        if [ -f ".dispatch/config.yml" ]; then
-            echo "✅ dispatch init complete"
-            SUMMARY+=("config: created via dispatch init")
-        else
-            # explicit opt-in unmet -> failure (CodeRabbit, PR #98)
-            echo "❌ dispatch init did not create .dispatch/config.yml"
-            exit 1
-        fi
-    fi
-else
-    # explicit opt-in unmet -> failure (CodeRabbit, PR #98)
-    echo "❌ --with-dispatch requested but no dispatch CLI found after install"
-    exit 1
-fi
-echo
-else
-    echo "ℹ️  dispatch-kit steps skipped (not on PyPI; opt in with --with-dispatch)"
-    SUMMARY+=("dispatch-kit: skipped (opt in with --with-dispatch)")
-    echo
-fi  # WITH_DISPATCH (init step)
 
 # ─────────────────────────────────────────
 # Summary

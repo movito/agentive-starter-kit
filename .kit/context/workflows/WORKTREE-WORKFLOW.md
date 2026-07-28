@@ -62,9 +62,9 @@ The helper:
 6. Prints the launch instruction (below).
 
 Deliberately **not** provisioned: `.adversarial/logs/` (regenerates),
-`.dispatch/` runtime files and tool caches (regenerate on demand), and
-user-owned untracked directories such as `.kit/adversarial/` (stay in
-the primary; never copied, staged, or deleted).
+tool caches (regenerate on demand), and user-owned untracked
+directories such as `.kit/adversarial/` (stay in the primary; never
+copied, staged, or deleted).
 
 `project doctor` audits this contract from inside a worktree (the
 `worktree-*` checks): a symlinked `.venv` WARNs, a missing or

@@ -1,5 +1,10 @@
 # Upgrading to v0.4.0
 
+> **ARCHIVED** (KIT-0077): a version-pinned migration guide for the v0.4.0
+> scripts restructure, moved here from `.kit/docs/`. The kit is well past
+> 0.4.0 and its downstream projects have migrated. Kept as history — for
+> current upgrade paths see `docs/UPDATING-YOUR-PROJECT.md`.
+
 This release restructures `scripts/` into three subdirectories. Every script
 path changed, so downstream projects need a coordinated migration.
 
