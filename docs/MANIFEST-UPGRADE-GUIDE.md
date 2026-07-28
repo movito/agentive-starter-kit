@@ -104,11 +104,6 @@ complete manifest.
 }
 ```
 
-> **Deprecation note (KIT-0057)**: the live manifest's `kit_builder`
-> tier includes a `.kit/skills/` entry that points at read-both
-> symlinks into the canonical `.claude/skills/` home; that entry
-> retargets when the symlinks are removed in 0.9.0 (KIT-0059).
-
 ### Step 3: Decide what to opt into
 
 | Tier | What you get | Who needs it |

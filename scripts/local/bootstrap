@@ -86,10 +86,8 @@
 # environment: the door reads and seeds whatever it names). On first use
 # of an existing config home the door seeds .gitignore + README
 # guardrails (idempotent, never overwriting, never creating the
-# folder itself). The legacy ~/.config/agentive-kit/preset is NEVER
-# read — a one-line notice names it until 0.9.0 (KIT-0059 removal
-# set). Author a preset conversationally with the /setup-preset
-# command; example file: docs/preset.example.
+# folder itself). Author a preset conversationally with the
+# /setup-preset command; example file: docs/preset.example.
 #
 # Exit contract (F6):
 #   0  install succeeded — the doctor verdict is REPORTED prominently,
@@ -169,16 +167,8 @@ load_preset() {
     # partial read (the record-reader face of the masking class:
     # partial reads poison dependent answers together). Unknown keys
     # WARN and are skipped (forward compatibility), never an error.
-    local home file legacy
+    local home file
     [ "$NO_PRESET" -eq 1 ] && return 0
-    # F4 (KIT-0058): the pre-relocation location is a named notice,
-    # NEVER a fallback read — remove at 0.9.0 (KIT-0059 removal set)
-    legacy="${XDG_CONFIG_HOME:-$HOME/.config}/agentive-kit/preset"
-    if [ -f "$legacy" ]; then
-        local new_home
-        new_home="$(config_home)" || new_home="<kit-parent>/agentive-config"
-        echo "Notice: legacy preset found at $legacy — it is no longer read; move it to $new_home/preset" >&2
-    fi
     home="$(config_home)" || return 0
     file="$home/preset"
     [ -f "$file" ] || return 0

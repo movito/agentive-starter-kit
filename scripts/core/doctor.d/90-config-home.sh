@@ -14,9 +14,7 @@
 #   SKIP  no config home yet (path named), or nothing to resolve from
 #   PASS  home exists with no git repo, or a repo with no remote
 #   WARN  remote visibility is not private, or gh cannot verify it
-#         (the risk is named either way); also the legacy-location
-#         notice (F4 — ~/.config/agentive-kit/preset is NEVER read;
-#         the notice retires at 0.9.0 with the KIT-0059 removal set)
+#         (the risk is named either way)
 #   FAIL  env.source is TRACKED in the config home's git repo
 #
 # Resolution mirrors the door's config_home():
@@ -43,8 +41,6 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${DOCTOR_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
-LEGACY="${XDG_CONFIG_HOME:-$HOME/.config}/agentive-kit/preset"
-
 resolve_home() {
     if [ -n "${AGENTIVE_KIT_CONFIG_DIR:-}" ]; then
         # leading-~ expansion, mirroring the door's config_home
@@ -56,19 +52,10 @@ resolve_home() {
     printf '%s\n' "$(dirname "$(dirname "$common")")/agentive-config"
 }
 
-emit_legacy_notice() {  # $1 = config home to name in the move advice
-    if [ -f "$LEGACY" ]; then
-        echo "DOCTOR:config-home:WARN:legacy preset found at $LEGACY — it is no longer read; move it to $1/preset (notice retires at 0.9.0)"
-    fi
-}
-
 if ! HOME_DIR="$(resolve_home)"; then
-    emit_legacy_notice "<kit-parent>/agentive-config"
     echo "DOCTOR:config-home:SKIP:cannot resolve the config home ($ROOT is not a git clone)"
     exit 0
 fi
-
-emit_legacy_notice "$HOME_DIR"
 
 if [ ! -d "$HOME_DIR" ]; then
     echo "DOCTOR:config-home:SKIP:no config home at $HOME_DIR — author one with /setup-preset (path anchors to the primary clone's parent; AGENTIVE_KIT_CONFIG_DIR overrides)"

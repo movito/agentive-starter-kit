@@ -13,7 +13,6 @@ evaluation, and architectural decision records. For full details, see `README.md
 .adversarial/         Adversarial evaluation system (config, evaluators, scripts, docs)
 .kit/                 Builder layer (planning, coordination)
 ├── templates/        Agent and task templates (AGENT-TEMPLATE, TASK-STARTER-TEMPLATE)
-├── skills/           DEPRECATED — read-both symlinks into .claude/skills/, removed in 0.9.0 (KIT-0059)
 ├── context/          Agent coordination: handoffs, reviews, patterns.yml, workflows/
 ├── tasks/            Task specs by status: 1-backlog/ through 9-reference/
 ├── adr/             Kit ADRs (KIT-ADR-*)

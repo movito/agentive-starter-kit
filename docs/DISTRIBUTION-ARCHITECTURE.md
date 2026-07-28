@@ -141,8 +141,8 @@ copies of each, namespaced `agentive-workflow:<name>`.
 | Commands | `.claude/commands/` | distribution copies |
 | Skills | `.claude/skills/` (implementation AND builder) | distribution copies |
 
-`.kit/skills/` is deprecated: it holds read-both symlinks into
-`.claude/skills/` for one release and is removed in 0.9.0 (KIT-0059).
+`.kit/skills/` is retired (0.9.0, KIT-0059): its one-release read-both
+symlinks are gone; `.claude/skills/` is the only skills home.
 
 ## 3. The tiered manifest (Channel B's brain)
 

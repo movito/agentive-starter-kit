@@ -48,7 +48,7 @@
     ],
     "kit_builder": [
       ".kit/templates/",
-      ".kit/skills/",
+      ".claude/skills/",
       ".kit/adr/",
       ".kit/docs/",
       ".adversarial/config.yml.template",
