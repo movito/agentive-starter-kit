@@ -94,6 +94,8 @@ The `/retro` command has its own cross-repo detection — it will automatically 
 
 If `/retro` fails (e.g., no PR found), note the failure but continue to
 Step 3 — the task move and the completion summary still need to happen.
+Carry the failure forward: Step 4's summary must report that the retro
+was not written, never print a path to a file that does not exist.
 
 ## Step 3: Move task to done
 
@@ -118,5 +120,15 @@ Retro: .kit/context/retros/<TASK-ID>-retro.md
 
 Ready for human review.
 ```
+
+Every line is a claim — verify before printing it. If Step 2's `/retro`
+failed, replace the retro line with the failure, e.g.:
+
+```text
+Retro: NOT WRITTEN — /retro failed (<one-line reason>)
+```
+
+Same for the task move: if Step 3 skipped because the PR is unmerged,
+say the task stays in `4-in-review` rather than implying completion.
 
 Remind the user to `/rename` the session with the task ID for easy `/resume` later.
