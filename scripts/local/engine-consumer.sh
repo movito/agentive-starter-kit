@@ -292,9 +292,9 @@ PLANNING_LOCAL=(
 )
 # Deliberately NOT shipped to planning repos (the never-ship contract,
 # tested in both directions): pyproject.toml, conftest.py, tests/,
-# ci-check.sh (the Python gauntlet), pattern_lint.py, verify-setup.sh
-# (shim over doctor), scripts/optional/, .github/ (Python CI),
-# .serena/, the full .pre-commit-config.yaml.
+# ci-check.sh (the Python gauntlet), pattern_lint.py,
+# scripts/optional/, .github/ (Python CI), .serena/, the full
+# .pre-commit-config.yaml.
 
 # .claude/ — implementation agents, commands, skills, settings — ships to
 # every shape. Reviewer agents stay builder-only. The consumer-customizable
@@ -526,7 +526,6 @@ if [ ! -f "$TARGET/scripts/.core-manifest.json" ]; then
       "core/sync_from_manifest.py",
       "core/validate_task_status.py",
       "core/verify-ci.sh",
-      "core/verify-setup.sh",
       "core/wait-for-bots.sh",
       "core/VERSION"
     ],

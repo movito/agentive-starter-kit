@@ -158,7 +158,6 @@ PLANNING_MUST_NOT_SHIP = (
     "tests",
     "scripts/core/pattern_lint.py",
     "scripts/core/ci-check.sh",
-    "scripts/core/verify-setup.sh",
     "scripts/optional",
     ".github",
     ".serena",
