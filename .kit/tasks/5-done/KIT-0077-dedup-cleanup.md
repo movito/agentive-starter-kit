@@ -1,6 +1,6 @@
 # KIT-0077: Dedup cleanup — context archive, dispatch retirement, doc archival
 
-**Status**: In Review
+**Status**: Done
 **Priority**: medium (sequenced AFTER 0.9.0 merges)
 **Assigned To**: unassigned
 **Estimated Effort**: 3-4 hours
