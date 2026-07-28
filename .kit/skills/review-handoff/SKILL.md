@@ -1,1 +1,0 @@
-../../../.claude/skills/review-handoff/SKILL.md

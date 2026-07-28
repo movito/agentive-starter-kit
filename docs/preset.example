@@ -6,8 +6,7 @@
 #
 # Install location — a VISIBLE sibling of the kit checkout, personal,
 # per-machine, never distributed by any sync/export path (the
-# AGENTIVE_KIT_CONFIG_DIR env var overrides the location; the legacy
-# ~/.config/agentive-kit/ is no longer read):
+# AGENTIVE_KIT_CONFIG_DIR env var overrides the location):
 #
 #   mkdir -p <kit-parent>/agentive-config
 #   cp docs/preset.example <kit-parent>/agentive-config/preset

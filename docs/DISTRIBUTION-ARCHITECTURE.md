@@ -65,7 +65,7 @@ flowchart TD
     end
 
     subgraph B["Channel B — Manifest sync (vendored files)"]
-        ACT["sync-core-scripts.yml Action<br/>driven by scripts/.core-manifest.json<br/><br/>carries: scripts/core · .claude/commands · .kit/**"]
+        ACT["sync-core-scripts.yml Action<br/>driven by scripts/.core-manifest.json<br/><br/>carries: scripts/core · .claude/commands · .claude/skills · .kit/**"]
         CONSB["consumer repo<br/>vendored files + PR to review<br/>opted_in tiers preserved"]
         ACT -->|"auto PR on push to main<br/>(CROSS_REPO_TOKEN)<br/>⚠ PARKED — KIT-0045"| CONSB
     end
@@ -107,7 +107,7 @@ Plain-text view (terminals, diffs, non-Mermaid viewers):
       │                               │   │ carries:                          │
       │ consumer updates via:         │   │  • scripts/core/**                │
       │  claude plugin update         │   │  • .claude/commands/**            │
-      │  (or the `upgrader` agent)    │   │  • .kit/** templates/skills/ADRs  │
+      │  (or the `upgrader` agent)    │   │  • .kit/** + .claude/skills/**    │
       └───────────────┬──────────────┘   └────────────────┬─────────────────┘
                       │                                    │
                       ▼                                    ▼
@@ -126,7 +126,7 @@ kit-builder scaffolding).
 | | **Channel A — Plugin** | **Channel B — Manifest sync** |
 |---|---|---|
 | **What** | `agentive-workflow` plugin, from the `movito/agentive-skills` marketplace | `sync-core-scripts.yml` Action + `scripts/.core-manifest.json` |
-| **Carries** | Agents, commands, skills as **namespaced installs** (`agentive-workflow:feature-developer-v7`, `agentive-workflow:check-ci`) | **Vendored file copies**: `scripts/core/`, `.claude/commands/`, `.kit/` templates/skills/ADRs/workflows |
+| **Carries** | Agents, commands, skills as **namespaced installs** (`agentive-workflow:feature-developer-v7`, `agentive-workflow:check-ci`) | **Vendored file copies**: `scripts/core/`, `.claude/commands/`, `.claude/skills/`, `.kit/` templates/ADRs/workflows |
 | **Consumer update path** | `claude plugin update` / `upgrader` agent | **Push** (⚠ parked, KIT-0045 — manual `workflow_dispatch` until re-enabled): automated PR into the consumer repo. **Pull** (live): `./scripts/core/project sync` from the consumer (on-demand, KIT-ADR-0026) |
 | **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | ADR-0008 (`.kit/adr/`), KIT-ADR-0022, KIT-ADR-0026, `docs/MANIFEST-UPGRADE-GUIDE.md` |
 
@@ -141,8 +141,8 @@ copies of each, namespaced `agentive-workflow:<name>`.
 | Commands | `.claude/commands/` | distribution copies |
 | Skills | `.claude/skills/` (implementation AND builder) | distribution copies |
 
-`.kit/skills/` is deprecated: it holds read-both symlinks into
-`.claude/skills/` for one release and is removed in 0.9.0 (KIT-0059).
+`.kit/skills/` is retired (0.9.0, KIT-0059): its one-release read-both
+symlinks are gone; `.claude/skills/` is the only skills home.
 
 ## 3. The tiered manifest (Channel B's brain)
 

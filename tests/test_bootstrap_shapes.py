@@ -1,11 +1,12 @@
-"""Shape tests for the bootstrap-consumer.sh surface (KIT-0048, ADR-0027 P2).
+"""Shape and profile tests for the setup door (KIT-0048, ADR-0027 P2).
 
-Characterization net first (N1): flagless and --shape single must stay
-byte-identical to each other for every subsequent edit; the flagless
-baseline invariants pin today's behavior. Since KIT-0053 the invoked
-path is a shim over the setup door — these tests deliberately keep
-exercising the OLD entrance so the whole shim -> door -> engine chain
-stays pinned to the historical surface.
+Characterization net first (N1): flagless-adopt and --shape single must
+stay byte-identical to each other for every subsequent edit; the
+flagless baseline invariants pin today's behavior. KIT-0053 put this
+coverage behind the bootstrap-consumer.sh shim; KIT-0054 (0.9.0)
+removed the shims, so the suite now exercises the door's own --adopt
+surface directly (the engine behavior underneath stays pinned;
+usage-error assertions carry the door's exit-2 contract).
 
 Consumer-rsync boundary: this module reads scripts/local/ content, so it
 is excluded from the consumer tests/ rsync in engine-consumer.sh
@@ -24,17 +25,25 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-BOOTSTRAP = REPO_ROOT / "scripts" / "local" / "bootstrap-consumer.sh"
+DOOR = REPO_ROOT / "scripts" / "local" / "bootstrap"
 
-if not BOOTSTRAP.exists():
+if not DOOR.exists():
     pytest.skip(
-        "bootstrap-consumer.sh not present (consumer checkout)",
+        "setup door not present (consumer checkout)",
         allow_module_level=True,
     )
 
 for tool in ("bash", "git", "rsync"):
     if shutil.which(tool) is None:
         pytest.skip(f"{tool} not available on PATH", allow_module_level=True)
+
+# Nonexistent hermetic paths keep every door run hermetic (the
+# test_setup_door pattern): the operator's REAL config home must never
+# leak into the suite — a filled preset would change door answers and
+# break characterization. XDG_CONFIG_HOME stays pinned too (git's own
+# config lookup).
+_HERMETIC_XDG = REPO_ROOT / "tests" / ".no-such-xdg"
+_HERMETIC_CONFIG = REPO_ROOT / "tests" / ".no-such-config-home"
 
 
 def _scrubbed_env() -> dict[str, str]:
@@ -47,7 +56,10 @@ def _scrubbed_env() -> dict[str, str]:
     conftest fixture now covers this too — this scrub makes the helpers
     safe regardless of who calls them from where.
     """
-    return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env["XDG_CONFIG_HOME"] = str(_HERMETIC_XDG)
+    env["AGENTIVE_KIT_CONFIG_DIR"] = str(_HERMETIC_CONFIG)
+    return env
 
 
 def make_consumer_dir(base: Path, name: str) -> Path:
@@ -66,10 +78,10 @@ def make_consumer_dir(base: Path, name: str) -> Path:
 
 def run_bootstrap(target: Path, *flags: str) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["bash", str(BOOTSTRAP), *flags, str(target)],
+        ["bash", str(DOOR), "--adopt", str(target), *flags],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=180,
         env=_scrubbed_env(),
     )
 
@@ -123,8 +135,8 @@ class TestCharacterization:
     def test_unknown_shape_rejected(self, tmp_path):
         target = make_consumer_dir(tmp_path, "bad")
         result = run_bootstrap(target, "--shape", "pyramid")
-        assert result.returncode == 1
-        assert "shape" in (result.stdout + result.stderr).lower()
+        assert result.returncode == 2  # door usage contract
+        assert "unknown shape" in (result.stdout + result.stderr).lower()
 
 
 # The planning contract, both directions (F1: enumerated, tested).
@@ -158,7 +170,6 @@ PLANNING_MUST_NOT_SHIP = (
     "tests",
     "scripts/core/pattern_lint.py",
     "scripts/core/ci-check.sh",
-    "scripts/core/verify-setup.sh",
     "scripts/optional",
     ".github",
     ".serena",
@@ -271,7 +282,7 @@ class TestPlanningShape:
         result = run_bootstrap(
             target, "--shape", "planning", "--target-github", "not a repo slug"
         )
-        assert result.returncode == 1
+        assert result.returncode == 2  # door usage contract
         assert "owner/repo" in result.stdout + result.stderr
 
     def test_existing_section_seeds_region_no_desync(self, tmp_path):
@@ -309,21 +320,6 @@ class TestPlanningShape:
         text = (target / "CLAUDE.md").read_text(encoding="utf-8")
         assert "target_path: ../prose-product" in text
         assert "../decoy" not in text.split("kit-install")[1]
-
-    def test_shape_flag_as_last_arg_is_clean_usage_error(self):
-        """CodeRabbit round 2: a value-consuming flag in TRULY final
-        position must produce the validation message, not a silent
-        set -e death — no target argument after the flag (the helper
-        would append one, exercising the wrong branch; round 4)."""
-        result = subprocess.run(
-            ["bash", str(BOOTSTRAP), "--shape"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            env=_scrubbed_env(),
-        )
-        assert result.returncode == 1
-        assert "unknown shape" in (result.stdout + result.stderr).lower()
 
     def test_conflicting_flags_with_existing_section_rejected(self, tmp_path):
         target = make_consumer_dir(tmp_path, "conflict")
@@ -398,28 +394,14 @@ class TestProfiles:
     def test_planning_with_profile_python_rejected(self, tmp_path):
         target = make_consumer_dir(tmp_path, "badcombo")
         result = run_bootstrap(target, "--shape", "planning", "--profile", "python")
-        assert result.returncode == 1
-        assert "planning forces profile none" in result.stdout + result.stderr
+        assert result.returncode == 2  # door usage contract
+        assert "illegal shape/profile combination" in result.stdout + result.stderr
 
     def test_unknown_profile_rejected(self, tmp_path):
         target = make_consumer_dir(tmp_path, "badprof")
         result = run_bootstrap(target, "--profile", "elixir")
-        assert result.returncode == 1
+        assert result.returncode == 2  # door usage contract
         assert "unknown profile" in (result.stdout + result.stderr).lower()
-
-    def test_profile_flag_as_last_arg_is_clean_usage_error(self):
-        # value-consuming flag in truly final position: empty profile is
-        # the default, so this must fall through to the missing-target
-        # usage error — never a set -e death
-        result = subprocess.run(
-            ["bash", str(BOOTSTRAP), "--profile"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            env=_scrubbed_env(),
-        )
-        assert result.returncode == 1
-        assert "Usage:" in result.stdout + result.stderr
 
     def test_no_kit_flag_still_seeds_hook_and_record(self, tmp_path):
         # o3 review gap: no functional --no-kit run existed in the

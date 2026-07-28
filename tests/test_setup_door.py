@@ -43,12 +43,10 @@ for tool in ("bash", "git", "rsync"):
 # Nonexistent hermetic paths keep every door run hermetic (N1): the
 # operator's REAL config home (<kit-parent>/agentive-config/,
 # KIT-0058) must never leak into the suite — a filled preset would
-# change door answers and break characterization — and a real legacy
-# ~/.config/agentive-kit/preset would inject the F4 notice.
+# change door answers and break characterization.
 # AGENTIVE_KIT_CONFIG_DIR is the door's one override; tests that need
 # a preset pass their own via extra (override wins). XDG_CONFIG_HOME
-# stays pinned too: it scopes the legacy-notice path AND git's own
-# config lookup.
+# stays pinned too: git's own config lookup goes through it.
 _HERMETIC_XDG = REPO_ROOT / "tests" / ".no-such-xdg"
 _HERMETIC_CONFIG = REPO_ROOT / "tests" / ".no-such-config-home"
 
@@ -578,16 +576,6 @@ class TestAdoptE2E:
         result = run_door("--adopt", str(target))
         assert "re-run with --design-materials" not in result.stdout
 
-    def test_legacy_shim_channel_is_chrome_free(self, tmp_path):
-        """--legacy-shim: engine output only — no door banner, no offers,
-        no doctor tail (byte-fidelity for the three entrance shims)."""
-        target = make_adopt_dir(tmp_path, "app")
-        result = run_door("--adopt", str(target), "--legacy-shim")
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Setup door:" not in result.stdout
-        assert "Doctor verdict:" not in result.stdout
-        assert "Offer skipped" not in result.stdout
-
 
 @pytest.mark.slow
 class TestNewE2E:
@@ -955,31 +943,6 @@ class TestBotsDeclarationE2E:
         assert "target_github:" in region
         assert "bots: none" in region
 
-    def test_legacy_shim_rejects_bots(self, tmp_path):
-        # the legacy channel never writes a bots line — an explicit
-        # --bots must be rejected, never silently dropped
-        target = make_adopt_dir(tmp_path, "shim")
-        result = run_door("--adopt", str(target), "--legacy-shim", "--bots", "none")
-        assert result.returncode == 2
-        assert "--legacy-shim" in result.stderr
-
-    def test_legacy_shim_ignores_preset(self, tmp_path):
-        # shim fidelity: a filled preset must not change what the
-        # legacy channel does — no preset notice, no recorded bots
-        cfg = write_preset(tmp_path, "bots: none\nprofile: none\n")
-        target = make_adopt_dir(tmp_path, "shim-preset")
-        result = run_door(
-            "--adopt",
-            str(target),
-            "--legacy-shim",
-            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Preset:" not in result.stdout
-        region = _kit_install_region(target)
-        assert "profile: python" in region  # kit default, not the preset
-        assert "bots:" not in region
-
     def test_readopt_adds_bots_line_surgically(self, tmp_path):
         """An existing record without the line gains exactly the bots
         line — shape/profile preserved byte-for-byte (the one-writer
@@ -1076,10 +1039,9 @@ class TestPresetNeverDistributed:
     """F7: nothing in the config home (<kit-parent>/agentive-config/,
     KIT-0058) rides any sync tier, rsync, or export path. Structural
     check: the ONLY scripts allowed to reference the config-home
-    location (or the legacy ~/.config/agentive-kit/ notice path) are
-    the door (reads it), the project script (doctor --against-preset
-    compares against it), and the config-home doctor check — engines,
-    sync, and export code must not know it exists."""
+    location are the door (reads it), the project script (doctor
+    --against-preset compares against it), and the config-home doctor
+    check — engines, sync, and export code must not know it exists."""
 
     ALLOWED = {
         "scripts/local/bootstrap",
@@ -1301,28 +1263,12 @@ class TestConfigHomeSeeding:
         assert not cfg.exists()
 
 
-class TestLegacyLocation:
-    """KIT-0058 F4: the legacy ~/.config/agentive-kit/preset is a
-    named notice, NEVER a fallback read — both directions pinned.
-    The notice retires at 0.9.0 (KIT-0059 removal set)."""
+class TestPresetPathNamed:
+    """The loudness rule: the loaded preset path is NAMED in door
+    output. (The legacy ~/.config/agentive-kit notice and its tests
+    retired at 0.9.0 with the KIT-0059 removal set.)"""
 
-    def test_legacy_preset_notice_fires_and_is_never_read(self, tmp_path):
-        xdg = tmp_path / "xdg"
-        (xdg / "agentive-kit").mkdir(parents=True)
-        legacy = xdg / "agentive-kit" / "preset"
-        legacy.write_text("profile: none\n", encoding="utf-8")
-        target = make_adopt_dir(tmp_path, "app")
-        result = run_door(
-            "--adopt", str(target), env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg))
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "legacy preset found" in result.stderr
-        assert str(legacy) in result.stderr  # named, with the full path
-        # never read: no preset layer engaged, kit default recorded
-        assert "Preset:" not in result.stdout
-        assert "profile: python" in _kit_install_region(target)
-
-    def test_new_location_loads_named_and_no_notice(self, tmp_path):
+    def test_new_location_loads_named(self, tmp_path):
         cfg = write_preset(tmp_path, "profile: none\n")
         target = make_adopt_dir(tmp_path, "app")
         result = run_door(
@@ -1331,29 +1277,8 @@ class TestLegacyLocation:
             env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
         )
         assert result.returncode == 0, result.stderr + result.stdout
-        assert "legacy preset found" not in result.stderr
-        # the loaded path is NAMED in door output (the loudness rule)
         assert f"Preset: {cfg / 'preset'}" in result.stdout
         assert "profile: none" in _kit_install_region(target)
-
-    def test_no_preset_flag_suppresses_the_notice(self, tmp_path):
-        # --no-preset means "behave as a machine with no preset AT
-        # ALL" — the legacy notice is preset machinery too (this keeps
-        # the stranger-path byte-identity absolute)
-        xdg = tmp_path / "xdg"
-        (xdg / "agentive-kit").mkdir(parents=True)
-        (xdg / "agentive-kit" / "preset").write_text(
-            "profile: none\n", encoding="utf-8"
-        )
-        target = make_adopt_dir(tmp_path, "app")
-        result = run_door(
-            "--adopt",
-            str(target),
-            "--no-preset",
-            env=_scrubbed_env(XDG_CONFIG_HOME=str(xdg)),
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "legacy preset found" not in result.stderr
 
 
 class TestConfigHomeOverrideTilde:

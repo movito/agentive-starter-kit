@@ -1503,27 +1503,6 @@ class TestConfigHomeCheck:
         assert "DOCTOR:config-home:FAIL:" not in result.stdout
         assert "DOCTOR:config-home:PASS:" in result.stdout
 
-    def test_legacy_location_warns_and_names_the_move(self, tmp_path):
-        xdg = tmp_path / "xdg"
-        (xdg / "agentive-kit").mkdir(parents=True)
-        (xdg / "agentive-kit" / "preset").write_text(
-            "shape: single\n", encoding="utf-8"
-        )
-        result = run_config_home_check(
-            tmp_path, None, extra_env={"XDG_CONFIG_HOME": str(xdg)}
-        )
-        assert "DOCTOR:config-home:WARN:legacy preset found" in result.stdout
-        assert str(xdg / "agentive-kit" / "preset") in result.stdout
-        assert "no longer read" in result.stdout
-        # the WARN rides alongside the normal verdict, never replaces it
-        assert "DOCTOR:config-home:SKIP:" in result.stdout
-
-    def test_no_legacy_no_warn(self, tmp_path):
-        cfg = tmp_path / "agentive-config"
-        cfg.mkdir()
-        result = run_config_home_check(tmp_path, cfg)
-        assert "legacy preset found" not in result.stdout
-
     def test_hostile_git_dir_cannot_redirect_the_check(self, tmp_path):
         # the KIT-0043 leak class: a leaked GIT_DIR pointing at a repo
         # WITH a tracked env.source must not blind the check to the

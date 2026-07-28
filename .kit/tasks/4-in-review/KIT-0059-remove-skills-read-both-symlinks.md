@@ -1,6 +1,6 @@
 # KIT-0059: Remove the .kit/skills read-both symlinks (KIT-0057 follow-through)
 
-**Status**: Backlog
+**Status**: In Review
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: <1 hour

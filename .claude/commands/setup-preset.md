@@ -73,10 +73,6 @@ preset already exists there, read it and treat the interview as an
 update (show the current values; never silently overwrite an answer
 the user did not revisit).
 
-If the user has a file at the legacy `~/.config/agentive-kit/preset`
-location, tell them it is no longer read anywhere and offer to move
-it here as the starting point for the interview.
-
 ## Step 2: run the interview
 
 Ask one question per turn, derived from the help output (rule 1),

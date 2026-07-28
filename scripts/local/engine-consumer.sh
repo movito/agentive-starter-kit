@@ -233,7 +233,7 @@ fi
 TARGET="$(cd "$TARGET" && pwd)"
 if [ "$TARGET" = "$PROJECT_ROOT" ]; then
     echo "Error: target is the kit source repo ($PROJECT_ROOT)."
-    echo "   bootstrap-consumer.sh provisions a *consumer* checkout; running it"
+    echo "   the consumer engine provisions a *consumer* checkout; running it"
     echo "   against the kit itself would rsync/sweep its own files. Aborting."
     exit 1
 fi
@@ -292,9 +292,9 @@ PLANNING_LOCAL=(
 )
 # Deliberately NOT shipped to planning repos (the never-ship contract,
 # tested in both directions): pyproject.toml, conftest.py, tests/,
-# ci-check.sh (the Python gauntlet), pattern_lint.py, verify-setup.sh
-# (shim over doctor), scripts/optional/, .github/ (Python CI),
-# .serena/, the full .pre-commit-config.yaml.
+# ci-check.sh (the Python gauntlet), pattern_lint.py,
+# scripts/optional/, .github/ (Python CI), .serena/, the full
+# .pre-commit-config.yaml.
 
 # .claude/ — implementation agents, commands, skills, settings — ships to
 # every shape. Reviewer agents stay builder-only. The consumer-customizable
@@ -391,9 +391,9 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.9.0",
+  "core_version": "4.0.0",
   "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-07-27T00:00:00Z",
+  "synced_at": "2026-07-28T00:00:00Z",
   "files": {
     "scripts_core": [
       "core/__init__.py",
@@ -463,7 +463,7 @@ mkdir -p "$TARGET/scripts/optional"
     "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
 # tests/ — test infrastructure. Exclude tests that import or read
-# scripts/local/ content (kit_markers.py, bootstrap-consumer.sh):
+# scripts/local/ content (kit_markers.py, the setup door):
 # scripts/local is an ASK-only layer that is never synced to consumers,
 # so shipping these tests would break consumer pytest (and the
 # pytest-fast pre-commit hook) at collection time. The rm -f sweep
@@ -526,7 +526,6 @@ if [ ! -f "$TARGET/scripts/.core-manifest.json" ]; then
       "core/sync_from_manifest.py",
       "core/validate_task_status.py",
       "core/verify-ci.sh",
-      "core/verify-setup.sh",
       "core/wait-for-bots.sh",
       "core/VERSION"
     ],
