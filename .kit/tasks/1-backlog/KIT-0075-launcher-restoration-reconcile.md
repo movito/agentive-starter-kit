@@ -61,3 +61,19 @@ the record and modernizes the tool.
   in-spec except F4 (present options in the PR).
 - Lesson banked in REVIEW-INSIGHTS: a deletion decision must
   enumerate the tool's FUNCTIONS, not its directory.
+
+## Added evidence + scope (2026-07-29, fresh-project test)
+
+Operator launched the create-project agent via `launch`: (a) the
+agent was silent at start — `--append-system-prompt` sessions cannot
+speak first, so interview-first agents wait for input they were
+supposed to solicit; (b) on "Are we ready?" the persona LOST to
+ambient context (CLAUDE.md + project memory) and did planner-style
+kit triage instead of its startup step. Both strengthen F2 (native
+`claude --agent` invocation — a real agent identity should win
+persona priority) — and F2 gains: verify whether native invocation
+can pass an INITIAL prompt so interview agents open the
+conversation; if not, the launcher prints "type 'begin' to start"
+as the launch instruction. Interim mitigation shipped: FIRST-TURN
+CONTRACT blocks in create-project/project-intake/bootstrap agents
+(planner, same day).
