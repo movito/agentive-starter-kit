@@ -31,7 +31,7 @@ Executes the five operator-approved dedup dispositions. 130 files changed,
 - `scripts/local/engine-materials.sh` — `--exclude='context/archive/'` (leak fix)
 - `scripts/optional/setup-dev.sh` — `--with-dispatch` gate + 2 steps removed (**2.0.0**)
 - `pyproject.toml` — the `local` extra removed
-- `.gitignore` — `.dispatch/` runtime entries removed
+- `.gitignore` — `.dispatch/` runtime entries **kept** (see §3)
 
 ### Agent/command/doc surfaces
 - `.claude/agents/code-reviewer.md` (1.1.0) — unguarded `dispatch emit` → verdict reporting
@@ -88,11 +88,25 @@ spec — but it is slated for unblocking in the downstream pass. Reversible.
 
 `movito/dispatch-kit` is still a *downstream consumer* of this repo's synced
 core scripts (`sync-core-scripts.yml:73`) — a different thing from the local
-integration the operator retired. The `command -v dispatch`-guarded emits in
-`scripts/core/*.sh` and the shipped commands are no-ops here and functional
-there; `tests/test_preflight_check.py:214` stubs `dispatch` precisely because
-that path is expected to exist. Removed only the **unguarded instructions**
+integration the operator retired. So the `command -v dispatch`-guarded emits
+in `scripts/core/*.sh` and the shipped commands stay;
+`tests/test_preflight_check.py:214` stubs `dispatch` precisely because that
+path is expected to exist. Removed only the **unguarded instructions**
 (code-reviewer agent, `/wrap-up`) that told an agent to run a missing command.
+
+**⚠️ Corrected mid-PR — I initially got this wrong.** I first assumed those
+guarded emits were dead no-ops on this machine and, per the handoff, deleted
+the `.dispatch/` entries from `.gitignore`. Then a preflight run
+**regenerated `.dispatch/bus.jsonl` in this worktree**: `dispatch` is
+installed globally at `/Library/Frameworks/Python.framework/Versions/3.11/bin/`,
+so the guard succeeds and the emits really fire. Un-ignoring that file would
+have left regenerating runtime debris exposed to the next `git add -A`. The
+`.gitignore` entries are **restored**, with the evidence in a comment.
+
+The operator's "dispatch-kit is no longer in use" means the *workflow* no
+longer runs on it (no transitions, no spawning) — not that the CLI is absent.
+The retirement therefore covers adoption (config, installer, agent
+instructions), not the runtime debris the shipped scripts still produce.
 
 Consequently **out of scope**: the sync matrix, `DISTRIBUTION-ARCHITECTURE.md`,
 `scripts/README.md`, KIT-0026/0031/0045/0072.
