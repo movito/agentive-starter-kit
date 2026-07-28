@@ -1,6 +1,6 @@
 # KIT-0054: Remove the entrance shims (KIT-0053 follow-through)
 
-**Status**: In Review
+**Status**: Done
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours

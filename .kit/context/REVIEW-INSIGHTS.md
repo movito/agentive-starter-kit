@@ -179,6 +179,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Prose-sweep gate, second consecutive vindication — trio now fast-only on prose PRs**: KIT-0073's trio went 0-for-8 on correctness (all pre-fix reconstructions) while bots went 3-for-4 tree-grounded, including CodeRabbit PROBING a months-old broken command. Planner decision 2026-07-28: prose-dominated PRs record code-reviewer-fast only; the deep evaluator's spend moves to the planner's tree verification. (KIT-0073; both fd agents amended)
 - **`project reconfigure` is context-destructive in worktrees**: run as a displayed-command check, it read the worktree-local Serena name and rewrote identity in 9 tracked files (reverted same turn). Two closures: WORKTREE-WORKFLOW identity-commands caveat + the patterns.yml execution-context rule (execute displayed commands IN the context the doc addresses, or verify-and-say-so). (KIT-0073)
 - **Right diagnosis, wrong fix is a decline shape**: CodeRabbit was correct that `-x --maxfail=3` is redundant and wrong that the DOC should change — the doc quotes the hook verbatim; "fixing" it reintroduces doc-vs-hook drift. The cleanup target is the hook (KIT-0074 rider). When a finding targets a quotation, fix the source, never the quote. (KIT-0073)
+- **A release cut should rename [Unreleased], not run archaeology**: seven merged tasks had no CHANGELOG entry at the 0.9.0 cut — the entries were reconstructed from memory records and had to be tree-verified by the gate. CHANGELOG discipline now in TASK-COMPLETION-PROTOCOL: user-visible PRs carry their own entry. (KIT-0076)
+- **A rule on the books is not a rule in effect**: KIT-0076's one regression violated item 15's every-representation bullet (added from KIT-0069's identical failure) — fixed the prose claim, missed the Mermaid label, plain diagram, and table in the SAME file. CodeRabbit caught it citing the lesson this repo taught it. Rules reduce, not eliminate; tree-grounded verification remains the backstop. (KIT-0076)
+- **Removing a core script is a MAJOR sync-surface bump**: core scripts 3.x→4.0.0 for the verify-setup removal — consumers' manifests reference files by name, so a deletion is breaking by definition. Semver discipline held. (KIT-0076)
 - **The archive-polish noise class, purest specimen**: a fresh CodeRabbit pass on the archival PR filed markdownlint findings against files INSIDE docs/archive/ — polish requests on documents archived precisely because they're frozen. Resolve-without-fixing citing the archive's purpose; KIT-0062 excludes the paths. (KIT-0067)
 
 ### Empirically Disproven Reviewer Claims (decline-by-reference)
@@ -203,4 +206,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-07-28 by planner-f5 (KIT-0073 extraction: prose-sweep second shutout + fast-only decision, reconfigure worktree incident, right-diagnosis-wrong-fix decline shape)*
+*Last updated: 2026-07-28 by planner-f5 (KIT-0076 extraction: CHANGELOG-at-cut archaeology, rules-on-books-vs-in-effect, core-script-removal-is-major)*

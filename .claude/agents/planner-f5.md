@@ -435,6 +435,12 @@ not inherit `.claude/settings.json` allow patterns. Bash-only sub-agents
 block on permission prompts. This is why planner does not delegate via
 Task — the user invokes agents in new tabs instead.
 
+**zsh eats bare `=word` arguments** — in Bash-tool commands, a bare
+`===` separator or `=x` token triggers zsh filename expansion and
+fails ("no such file or directory"). Quote separators
+(`echo "==="`) and prefer explicit strings. (KIT-0069/KIT-0076
+sessions both hit it.)
+
 **Splitting work by finding-number splits FILES jointly** — when tasks
 divide an audit/review by finding ID rather than by file, some files
 end up owned by two tasks (KIT-0069: `COVERAGE-WORKFLOW.md` carried

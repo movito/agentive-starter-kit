@@ -4,7 +4,7 @@
     "current_task": "KIT-0076",
     "task_started": null,
     "brief_note": "KIT-0076 (cut 0.9.0: execute pinned removals KIT-0047+0054+0059 + release mechanics) assigned 2026-07-28. Eval skipped (removals pre-specced/ADR); planner tree verification gates the deletion-heavy PR; fast-only trio per standing rule. KIT-0054 launcher-mention superseded by the launch restoration (KIT-0075). Meanwhile: dedup analysis delegated to a background Opus agent (report lands at .kit/context/reviews/DEDUP-ANALYSIS-2026-07-28.md; findings = post-0.9.0 theme). After 0.9.0: tag, downstream pass decision.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0076-cut-090.md",
+    "details_link": ".kit/tasks/5-done/KIT-0076-cut-090.md",
     "handoff_file": ".kit/context/KIT-0076-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0076",
     "task_started": null,
     "brief_note": "KIT-0076 ready: read KIT-0047/0054/0059 specs IN FULL (they are the requirements); launch stays (KIT-0054 delta noted); fast-only trio; planner tree verification = merge gate. Worktree: ../ask-worktrees/KIT-0076.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0076-cut-090.md",
+    "details_link": ".kit/tasks/5-done/KIT-0076-cut-090.md",
     "handoff_file": ".kit/context/KIT-0076-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

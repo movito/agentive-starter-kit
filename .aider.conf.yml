@@ -1,0 +1,10 @@
+# Default model for implementation
+model: claude-sonnet-4-5
+
+# Git integration settings
+auto-commits: false
+dirty-commits: false
+git: true
+
+# Show diffs in responses
+show-diffs: true

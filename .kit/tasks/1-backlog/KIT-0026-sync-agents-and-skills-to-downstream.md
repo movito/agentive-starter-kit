@@ -19,6 +19,11 @@
 > Related stale claim: ASK-0048 asserted it superseded this task; that PR
 > was closed unmerged 2026-07-14.
 
+> **SUPERSEDED NOTE (0.9.0, planner 2026-07-28)**: any
+> `.kit/skills/` reference below is historical — that home was
+> removed at 0.9.0 (KIT-0059); skills live only in `.claude/skills/`.
+> Re-scope against current main before promoting this task.
+
 ## Related Tasks
 
 **Parent Task**: ASK-0044 (Separate Kit Internals — builder/project boundary)

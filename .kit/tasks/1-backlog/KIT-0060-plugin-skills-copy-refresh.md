@@ -7,6 +7,11 @@
 **Created**: 2026-07-21
 **Target Completion**: next agentive-workflow plugin release
 
+> **SUPERSEDED NOTE (0.9.0, planner 2026-07-28)**: any
+> `.kit/skills/` reference below is historical — that home was
+> removed at 0.9.0 (KIT-0059); skills live only in `.claude/skills/`.
+> Re-scope against current main before promoting this task.
+
 ## Related Tasks
 
 **Parent**: KIT-0057 (canonical homes + the prune) / KIT-ADR-0027 P6

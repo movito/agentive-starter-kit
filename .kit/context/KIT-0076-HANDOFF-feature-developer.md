@@ -1,6 +1,6 @@
 # KIT-0076 Handoff — feature-developer
 
-**Task**: `.kit/tasks/3-in-progress/KIT-0076-cut-090.md`
+**Task**: `.kit/tasks/5-done/KIT-0076-cut-090.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-28 (planner-f5)
 **Estimated effort**: 0.5-1 day

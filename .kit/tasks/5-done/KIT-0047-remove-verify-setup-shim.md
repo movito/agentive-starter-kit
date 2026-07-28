@@ -1,6 +1,6 @@
 # KIT-0047: Remove the verify-setup.sh shim
 
-**Status**: In Review
+**Status**: Done
 **Priority**: low
 **Assigned To**: unassigned
 **Estimated Effort**: <1 hour

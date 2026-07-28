@@ -1407,7 +1407,7 @@ class TestConfigHomeCheck:
     """KIT-0058 F3: config-home guardrails — private-remote assertion
     (WARN on public or on gh failure, naming the risk), tracked
     env.source = FAIL, no git / no remote = PASS, plus the F4
-    legacy-location notice (retires at 0.9.0, KIT-0059 set)."""
+    legacy-location notice retired at 0.9.0 (KIT-0059)."""
 
     # PATH set for the gh-controlled fixtures: the check's external
     # tools, with gh's presence decided per test

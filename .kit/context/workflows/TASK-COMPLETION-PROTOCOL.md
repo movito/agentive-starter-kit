@@ -132,3 +132,13 @@ See existing handoffs for examples:
 - [TESTING-WORKFLOW.md](./TESTING-WORKFLOW.md) - Verify tests before completion
 - [COMMIT-PROTOCOL.md](./COMMIT-PROTOCOL.md) - Commit changes properly
 - [Evaluation guidance](../../../.claude/skills/code-review-evaluator/SKILL.md) - For planners assigning tasks
+
+## CHANGELOG discipline (KIT-0076 retro)
+
+Any task whose PR changes user-visible behavior (features, removals,
+CLI/output changes, doc restructures) adds its `[Unreleased]`
+CHANGELOG entry **in the same PR**. At the 0.9.0 cut, seven merged
+tasks had no entry and the release notes had to be reconstructed from
+memory records — a release cut should be a rename of `[Unreleased]`,
+not an archaeology session. Reviewers (bots and planner verification)
+may treat a missing entry on a user-visible PR as a finding.

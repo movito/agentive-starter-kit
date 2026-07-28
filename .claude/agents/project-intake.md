@@ -231,8 +231,8 @@ never re-derive install state:
 | 1 | An engine or record step failed | Stop. Report the door's output to the user; do not improvise repairs |
 | 2 | Usage error / illegal combination | Stop. Your invocation is wrong — fix the flags, don't retry blindly |
 
-Relay any notices the door prints (skipped offers, legacy-preset
-notice) rather than suppressing them.
+Relay any notices the door prints (e.g. skipped offers) rather than
+suppressing them.
 
 ### Step 4: Seed the planning repo from the brief
 

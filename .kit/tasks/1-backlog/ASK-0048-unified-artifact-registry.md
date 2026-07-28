@@ -21,6 +21,11 @@
 > claim below is likewise stale (KIT-0026 itself needs re-scoping
 > post-plugin). Closed PR kept as reference: #45.
 
+> **SUPERSEDED NOTE (0.9.0, planner 2026-07-28)**: any
+> `.kit/skills/` reference below is historical — that home was
+> removed at 0.9.0 (KIT-0059); skills live only in `.claude/skills/`.
+> Re-scope against current main before promoting this task.
+
 ## Related Tasks
 
 **Parent Task**: None (new initiative)
