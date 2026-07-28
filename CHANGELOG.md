@@ -34,8 +34,8 @@ sweep + doc curation that grounded the docs in the tree.
     `.claude/skills/` is the only skills home; the manifest's
     `kit_builder` tier retargets to it.
   - The legacy `~/.config/agentive-kit/preset` notice (door + doctor)
-    retires — the path was never read after KIT-0058; now it is no
-    longer named anywhere.
+    retires — the path was never read after KIT-0058; runtime code no
+    longer reads or surfaces it.
 - **Downstream migration note**: consumers get the retired surfaces
   deletion-pruned on their next `project sync` (the downstream pass
   runs the sync per repo). Frozen pre-KIT-0053 `create-project.sh`

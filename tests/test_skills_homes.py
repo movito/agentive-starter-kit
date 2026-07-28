@@ -44,8 +44,10 @@ class TestDeprecatedHomeRetired:
     def test_kit_skills_is_gone(self):
         """KIT-0059 (0.9.0): the read-both deprecation cycle is over —
         nothing may land in .kit/skills/ again; skills live only in
-        .claude/skills/."""
-        assert not DEPRECATED.exists(), (
+        .claude/skills/. is_symlink() is checked separately because
+        exists() follows links and reports False for a dangling one
+        (CodeRabbit, PR #100)."""
+        assert not DEPRECATED.exists() and not DEPRECATED.is_symlink(), (
             f"{DEPRECATED} has reappeared — the skills home is "
             ".claude/skills/ only (KIT-0057/KIT-0059)"
         )
