@@ -2,7 +2,7 @@
 
 **Status**: In Progress
 **Priority**: high
-**Assigned To**: unassigned
+**Assigned To**: feature-developer-f5
 **Estimated Effort**: 1 day
 **Created**: 2026-07-28
 **Linear ID**: (automatically backfilled after first sync)

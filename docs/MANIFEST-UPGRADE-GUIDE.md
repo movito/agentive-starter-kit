@@ -84,7 +84,9 @@ Replace `scripts/.core-manifest.json` with the tiered format. **Use the
 live upstream manifest as your starting point** — `scripts/.core-manifest.json`
 in the agentive-starter-kit checkout is always current (this guide
 deliberately does not inline a copy: an inlined example drifts the
-moment upstream changes). Copy it, then set `opted_in` to what you want.
+moment upstream changes). Copy it, then set `opted_in` to what you
+want — the snippets below show **only that one field**, not a
+complete manifest.
 
 **Minimal upgrade** (scripts + core commands + optional commands):
 
