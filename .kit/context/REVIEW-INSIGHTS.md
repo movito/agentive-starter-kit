@@ -182,6 +182,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **A release cut should rename [Unreleased], not run archaeology**: seven merged tasks had no CHANGELOG entry at the 0.9.0 cut — the entries were reconstructed from memory records and had to be tree-verified by the gate. CHANGELOG discipline now in TASK-COMPLETION-PROTOCOL: user-visible PRs carry their own entry. (KIT-0076)
 - **A rule on the books is not a rule in effect**: KIT-0076's one regression violated item 15's every-representation bullet (added from KIT-0069's identical failure) — fixed the prose claim, missed the Mermaid label, plain diagram, and table in the SAME file. CodeRabbit caught it citing the lesson this repo taught it. Rules reduce, not eliminate; tree-grounded verification remains the backstop. (KIT-0076)
 - **Removing a core script is a MAJOR sync-surface bump**: core scripts 3.x→4.0.0 for the verify-setup removal — consumers' manifests reference files by name, so a deletion is breaking by definition. Semver discipline held. (KIT-0076)
+- **Repair loops are where regressions live now (the opus-5 data point)**: KIT-0077's three regressions were ALL self-inflicted during fixes — none in the original implementation; collateral edits to correct adjacent prose, unre-read. Thread count matched Fable baselines; regression density didn't. Model-agnostic lesson: after any fix, re-read the full hunk you touched, not just the line you changed. (KIT-0077, deliberate model comparison)
+- **A guard can be green-by-construction**: the export guard passed WHILE SABOTAGED because `git archive` exports HEAD and the fixtures were uncommitted. Sabotage-verification is only evidence when the sabotage can actually reach the code under test. Now in TESTING-WORKFLOW. (KIT-0077)
+- **Retirement has two surfaces — adoption and runtime**: "the operator retired dispatch" meant the workflow stopped using it, not that the globally-installed CLI stopped emitting. Remove-X instructions must name what evidence would falsify them. Planner footgun added; doctor presence-check folded into KIT-0055. (KIT-0077)
+- **`depth_anchored_sweeps`** (patterns.yml): two engines leaked the same new subdirectory in one hour via `find -maxdepth 1` and a depth-1 exclude — adding a subdir under any swept path requires grepping every engine for depth-anchored matchers. (KIT-0077)
 - **The archive-polish noise class, purest specimen**: a fresh CodeRabbit pass on the archival PR filed markdownlint findings against files INSIDE docs/archive/ — polish requests on documents archived precisely because they're frozen. Resolve-without-fixing citing the archive's purpose; KIT-0062 excludes the paths. (KIT-0067)
 
 ### Empirically Disproven Reviewer Claims (decline-by-reference)
@@ -206,4 +210,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-07-28 by planner-f5 (KIT-0076 extraction: CHANGELOG-at-cut archaeology, rules-on-books-vs-in-effect, core-script-removal-is-major)*
+*Last updated: 2026-07-28 by planner-f5 (KIT-0077 extraction: repair-loop regressions, green-by-construction guards, retirement two-surfaces, depth_anchored_sweeps)*

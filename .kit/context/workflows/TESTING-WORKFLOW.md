@@ -397,3 +397,13 @@ that shells out must build an explicitly scrubbed env
 **Related Workflows**:
 - [COVERAGE-WORKFLOW.md](./COVERAGE-WORKFLOW.md) - Coverage measurement
 - [COMMIT-PROTOCOL.md](./COMMIT-PROTOCOL.md) - Committing after tests pass
+
+## Testing the export engine: `git archive` reads HEAD (KIT-0077)
+
+Any test exercising `engine-export.sh` is testing **HEAD**, not the
+working tree — `git archive` exports committed state, so uncommitted
+fixtures are invisible and a new guard can be green-by-construction
+(KIT-0077's export guard passed while sabotaged until the moves were
+committed). Standing rule, now with teeth: **sabotage-verify every
+new guard** (remove the fix, watch the test fail) — and for
+export-path guards, do it POST-commit or the sabotage proves nothing.

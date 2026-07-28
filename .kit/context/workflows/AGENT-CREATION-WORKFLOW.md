@@ -249,7 +249,6 @@ Customize the documentation links for this agent's role:
 
 **API Testing Documentation**:
 - [Relevant ADR, if any]
-- external API docs: `docs/external/api-reference.md`
 - API test examples: `tests/integration/api/`
 ```
 

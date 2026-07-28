@@ -54,3 +54,13 @@ retro flip-flop in the incident traces to this blind spot.
 - Source: planner empirical matrix 2026-07-17 (KIT-0053 closeout).
   The incident cost three retro corrections across three tasks; the
   check makes the environment shape visible in one doctor line.
+
+## Added scope (KIT-0077 incident closure #1, 2026-07-28)
+
+New check in the same doctor.d change: report `dispatch` CLI
+presence (`command -v dispatch`) and, when present, that
+`.dispatch/bus.jsonl` is gitignored — the kit's shipped core
+scripts emit to dispatch whenever it is on PATH, so presence is an
+environment fact that changes behavior. KIT-0077's false premise
+("the emits are dead no-ops here") would have been refuted by this
+check before it was acted on. Cite KIT-0077 in the check header.

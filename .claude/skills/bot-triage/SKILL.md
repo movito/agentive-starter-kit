@@ -59,6 +59,12 @@ Reference knowledge for triaging automated review comments. Use `/triage-threads
   more spacing tweak in the same area), it's cheaper to apply than to justify
   declining. Treat it as Fix (easy) and batch with the other fixes.
 - When in doubt on Medium severity, fix it — it's cheaper than debating
+- **Check-run status is NOT review state** — `gh pr checks` reported
+  `pass` twice while CodeRabbit had filed CHANGES_REQUESTED
+  (KIT-0077, the fourth KIT-0062 face). They are different API
+  objects. The ONLY truth for review state is the `reviewThreads`
+  GraphQL query (+ review decision); never proceed on a green
+  check-run without fetching threads.
 - **Class sweeps must be indentation-tolerant** — when sweeping a
   markdown/format class from one finding (e.g. MD040 bare fences), the
   pattern is `^\s*` + token, never `^` + token: KIT-0067's `^```$`

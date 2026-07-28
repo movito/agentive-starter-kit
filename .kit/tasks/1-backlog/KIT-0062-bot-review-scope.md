@@ -84,6 +84,12 @@ real findings.
   BugBot had filed four threads against.
   `.kit/context/retros/KIT-0071-retro.md` (Surprising #1, Should
   Change #3).
+  **Fourth face (KIT-0077, PR #101)**: `gh pr checks` reported
+  `pass` TWICE while CodeRabbit had filed CHANGES_REQUESTED —
+  check-run status and review verdict are different API objects.
+  bot-triage skill now warns; the durable fix rides this task's
+  gate work. `.kit/context/retros/KIT-0077-retro.md` (Surprising
+  #4).
 - **F7 — Gates 2/3 docs-only message honesty (added from KIT-0066
   retro)**: the gates classified PR #92's prose-agent diff as "No
   code changes — bot review not required" while both bots produced

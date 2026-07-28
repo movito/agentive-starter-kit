@@ -178,3 +178,7 @@ logs/
 # memory file tracked here shipped into every bootstrapped export until
 # 2026-07-24, KIT-0066 follow-up)
 .claude/projects/
+
+# Operator-owned untracked state — one careless `git add -A` from
+# being committed without this line (KIT-0077 staged-diff near-miss)
+.kit/adversarial/

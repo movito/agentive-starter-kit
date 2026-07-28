@@ -52,11 +52,26 @@ defensive:
       command run in the wrong context is an incident, not a
       verification (`project reconfigure` in a kit worktree rewrote
       9 files). If the addressed context isn't safely available,
-      verify inputs/flags instead and say so.
+      verify inputs/flags instead and say so. WIDENED (KIT-0077):
+      not only commands — ANY line a tool prints as fact is a
+      claim (a summary asserting a file exists, a count, a status);
+      verify it before printing, or print the failure instead.
     examples:
       - "KIT-0071 bot rounds 2-6 were five faces of this one class, fixed instance-by-instance — four rounds were the cost of not sweeping at round 2 (a fresh fix_by_class_not_instance regression)"
       - "same family as bot-triage's committable-but-uncompilable rule (KIT-0058): displayed shell is code, verify it as code"
     caught_by: "KIT-0071 retro (Surprising #2, Should Change #1); planner adopted 2026-07-27"
+  depth_anchored_sweeps:
+    rule: >
+      When adding a SUBDIRECTORY under any path that copy/scrub/
+      exclude logic touches, grep every engine for that path and
+      check whether its matcher is depth-anchored — `find
+      -maxdepth 1`, depth-1 rsync excludes, and single-level globs
+      all silently stop covering the tree the moment it nests.
+      Two engines leaked the same new subdirectory within one hour
+      via two different depth-anchored mechanisms.
+    examples:
+      - "KIT-0077: .kit/context/archive/ escaped engine-export.sh (find -maxdepth 1) AND engine-materials.sh (depth-1 exclude pattern) — either would have shipped the kit's session history into every new project; both now guarded, sabotage-verified"
+    caught_by: "existing guard test + fd self-review (KIT-0077); planner adopted 2026-07-28"
   fix_by_class_not_instance:
     rule: >
       An audit enumerates INSTANCES; only a class sweep closes a

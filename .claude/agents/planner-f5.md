@@ -441,6 +441,14 @@ fails ("no such file or directory"). Quote separators
 (`echo "==="`) and prefer explicit strings. (KIT-0069/KIT-0076
 sessions both hit it.)
 
+**Retirement specs must separate ADOPTION from RUNTIME surfaces** —
+"the operator retired X" means the workflow no longer runs on it,
+not that the binary is gone. KIT-0077's handoff said "remove the
+.dispatch gitignore entries"; the globally-installed dispatch CLI
+was still emitting to that path and the removal had to be reverted.
+A remove-X instruction should name what evidence would falsify it
+(what still writes/reads X?). (KIT-0077 retro #5)
+
 **Splitting work by finding-number splits FILES jointly** — when tasks
 divide an audit/review by finding ID rather than by file, some files
 end up owned by two tasks (KIT-0069: `COVERAGE-WORKFLOW.md` carried
