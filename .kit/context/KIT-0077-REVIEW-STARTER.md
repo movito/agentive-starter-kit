@@ -113,24 +113,42 @@ Consequently **out of scope**: the sync matrix, `DISTRIBUTION-ARCHITECTURE.md`,
 
 ## Gates
 
+Final preflight: **7/7 PASS, exit 0.**
+
 | Gate | State |
 |---|---|
-| CI | ✅ green ×2 rounds (Lint + Python 3.10/3.12/3.14) |
-| CodeRabbit | ✅ **APPROVED** (round 1: CHANGES_REQUESTED → 1 fixed, 1 refuted) |
-| Bugbot | ✅ pass round 1; `skipping` round 2 (KIT-0062 F6 state) |
-| Threads | ✅ 0 unresolved (2 of 2 answered + resolved) |
+| CI | ✅ green ×5 rounds (Lint + Python 3.10/3.12/3.14) |
+| CodeRabbit | ✅ **APPROVED** @ 18:14:59 |
+| Bugbot | ✅ pass round 1; `skipping` rounds 2-5 (KIT-0062 F6 state) |
+| Threads | ✅ **3 of 3 resolved, 0 unresolved** |
 | Evaluator | ✅ fast-only by design — `.kit/context/reviews/KIT-0077-evaluator-review.md` |
 | Tests | ✅ 817 passed, 12 skipped |
 
-⚠️ **The round-1 check status said `pass` while CodeRabbit had filed
-CHANGES_REQUESTED.** KIT-0062 holds — threads are the truth.
+⚠️ **Twice the check status said `pass` while CodeRabbit had filed
+CHANGES_REQUESTED** (rounds 1 and 2). KIT-0062 holds — threads are the
+truth, and `gh pr checks` is not. Both were caught only by querying
+`reviewThreads` directly.
 
-## Bot round 1 triage
+## Bot triage — 3 findings across 2 rounds
+
+### Round 1
 
 | Finding | Disposition |
 |---|---|
 | `/wrap-up` summary prints a retro path that may not exist | **FIXED** at the template; extended to the adjacent unmerged-PR case |
 | Add `../../` to archived-doc paths in `SETUP-GUIDE.md` | **REFUTED** — 0 markdown links in the file; convention is repo-relative (`main`'s line was already repo-relative; line 547 points outside `.serena/`) |
+
+### Round 2
+
+| Finding | Disposition |
+|---|---|
+| CHANGELOG contradicts itself on the `.dispatch/` gitignore entries | **FIXED** — and worse than reported: the prior commit had truncated the sentence mid-clause |
+
+**Note for the retro.** Two of the three bot findings were regressions I
+introduced *while fixing something else* — the `.gitignore` removal (caught by
+me, from the tree) and the CHANGELOG truncation (caught by the bot). The
+second is a clean miss of self-review **item 15**: I patched the "Kept" clause
+and never re-read the "Removed" clause four lines above it.
 
 ## Evaluator triage (fast-only, CONCERNS)
 
