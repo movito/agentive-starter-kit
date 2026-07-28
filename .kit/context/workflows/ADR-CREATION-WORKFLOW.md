@@ -181,21 +181,24 @@ Real-world outcomes:
 See existing ADRs for reference:
 - `.kit/adr/KIT-ADR-0004-adversarial-workflow-integration.md`
 - `.kit/adr/KIT-ADR-0012-task-status-linear-alignment.md`
-- `docs/adr/ADR-0008-tiered-manifest-sync.md`
+- `.kit/adr/ADR-0008-tiered-manifest-sync.md`
 
 ---
 
 ## ADR Index Maintenance
 
-Update `docs/adr/about-adr.md`:
+Two homes, two indexes (KIT-0067 D5): **kit decisions** live in
+`.kit/adr/` and are indexed in `.kit/adr/about-kit-adr.md`; **your
+project's decisions** live in `docs/adr/` and are indexed in
+`docs/adr/about-adr.md`. Update the index that matches where you
+created the ADR, e.g.:
 
 ```markdown
 ## Architecture Decision Records
 
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
-| [0001](./0001-exact-timecode-arithmetic.md) | Exact Timecode Arithmetic | Accepted | 2024-09-15 |
-| [0013](./0013-gui-electron-integration.md) | GUI Electron Integration | Accepted | 2025-11-01 |
+| [0001](./ADR-0001-your-first-decision.md) | Your First Decision | Accepted | YYYY-MM-DD |
 ```
 
 ---
@@ -204,8 +207,8 @@ Update `docs/adr/about-adr.md`:
 
 - **Quick Reference**: `CLAUDE.md`
 - **Full Guide**: This document
-- **ADR Index**: `docs/adr/about-adr.md`
-- **Existing ADRs**: `docs/adr/`
+- **ADR Indexes**: `.kit/adr/about-kit-adr.md` (kit) / `docs/adr/about-adr.md` (your project)
+- **Existing ADRs**: `.kit/adr/` (kit) / `docs/adr/` (your project)
 
 ---
 

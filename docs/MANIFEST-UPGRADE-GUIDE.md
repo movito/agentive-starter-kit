@@ -125,7 +125,6 @@ upstream manifest as your starting point, then set `opted_in` based on what you 
     "kit_builder": [
       ".kit/templates/",
       ".kit/skills/",
-      ".kit/launchers/",
       ".kit/adr/",
       ".kit/docs/",
       ".adversarial/config.yml.template",
@@ -135,7 +134,6 @@ upstream manifest as your starting point, then set `opted_in` based on what you 
       ".kit/context/workflows/",
       ".kit/context/templates/",
       ".kit/context/patterns.yml",
-      ".kit/context/AGENT-SYSTEM-GUIDE.md",
       ".kit/tasks/9-reference/"
     ]
   },
@@ -290,6 +288,6 @@ update `last-updated` and `version` (semver patch for a pin-only bump).
 
 ## Reference
 
-- **ADR-0008**: `docs/adr/ADR-0008-tiered-manifest-sync.md` — architectural decision
+- **ADR-0008**: `.kit/adr/ADR-0008-tiered-manifest-sync.md` — architectural decision
 - **KIT-ADR-0022**: `.kit/adr/KIT-ADR-0022-manifest-based-sync-ownership.md` — original internal ADR
 - **Migration playbook**: `.kit/docs/KIT-MIGRATION-PLAYBOOK.md` — full `.kit/` layout migration (broader scope)

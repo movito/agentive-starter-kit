@@ -342,13 +342,38 @@ class TestTemplateProcessing:
 # 6. TestLauncherIntegration — .kit/launchers/launch modifications
 # ===================================================================
 class TestLauncherIntegration:
-    """Verify that .kit/launchers/launch is correctly updated with new agent entries."""
+    """Verify that .kit/launchers/launch is correctly updated with new agent entries.
+
+    The kit itself retired the launcher (KIT-0067 D1); these tests run
+    against the fixture's fallback launcher and pin the behavior for
+    pre-0.9.0 consumer projects that still carry one.
+    """
 
     def setup_method(self):
         self.project_dir = setup_temp_project()
 
     def teardown_method(self):
         shutil.rmtree(self.project_dir, ignore_errors=True)
+
+    def test_launcher_absent_skips_registration(self):
+        """KIT-0067 D1: no launcher present -> agent still created, menu
+        registration skipped with a notice, exit 0 (never an error).
+        The whole .kit/launchers/ directory is removed (the fresh-0.9.0
+        shape), not just the file — nothing may recreate it (o3, PR #98)."""
+        shutil.rmtree(self.project_dir / ".kit" / "launchers")
+        result = run_script(
+            ["no-launcher-agent", "Agent created without a launcher"],
+            self.project_dir,
+        )
+        assert (
+            result.returncode == 0
+        ), f"Expected exit 0, got {result.returncode}: {result.stderr}"
+        assert (
+            self.project_dir / ".claude" / "agents" / "no-launcher-agent.md"
+        ).is_file()
+        assert "none present — skipped" in result.stdout
+        # and nothing recreated the retired directory (CodeRabbit, PR #98)
+        assert not (self.project_dir / ".kit" / "launchers").exists()
 
     def test_agent_added_to_agent_order(self):
         """New agent appears in the agent_order array in .kit/launchers/launch."""

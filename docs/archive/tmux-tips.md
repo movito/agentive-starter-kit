@@ -1,5 +1,7 @@
 # tmux Quick Reference for dispatch-kit
 
+> **ARCHIVED** (KIT-0067 D2/A50): recipes reference retired paths (`delegation/`, root `agents/`, `scripts/ci-check.sh`). Kept as history.
+
 dispatch-kit uses tmux to run agents in separate panes. This guide covers
 the full workflow from spawning to cleanup.
 

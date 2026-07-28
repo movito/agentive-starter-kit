@@ -3,8 +3,11 @@
 # create-agent.sh — Agent Creation Automation Script
 # Agent creation automation script
 #
-# Creates a new Claude Code agent from AGENT-TEMPLATE.md and registers it
-# in the .kit/launchers/launch launcher script.
+# Creates a new Claude Code agent from AGENT-TEMPLATE.md. If the project
+# still carries a .kit/launchers/launch menu script (pre-0.9.0 consumers),
+# the agent is also registered there; the kit itself retired the
+# launchers (KIT-0067 D1) — agents are invoked via new tabs or
+# `claude --agent <file>`.
 #
 # Uses mkdir-based atomic locking for concurrent safety.
 # NFS caveat: mkdir atomicity is not guaranteed on NFS. This script targets
@@ -222,9 +225,9 @@ Required:
 
 Options:
   --model <id>      Claude model ID (default: claude-sonnet-5)
-  --emoji <char>    Icon emoji for launcher menu (default: auto-assigned)
+  --emoji <char>    Icon emoji for launcher menu, if one exists (default: auto-assigned)
   --serena          Enable Serena auto-activation for this agent
-  --force           Overwrite existing agent (replaces file + launcher entries)
+  --force           Overwrite existing agent (replaces file + any launcher entries)
   --dry-run         Show what would be done without making changes
   --help            Show usage information
 
@@ -495,9 +498,14 @@ main() {
         system_error "Agent template not found: $TEMPLATE_FILE"
     fi
 
-    # Check launcher exists
-    if [[ ! -f "$LAUNCHER_FILE" ]]; then
-        system_error "Launcher script not found: $LAUNCHER_FILE"
+    # Launcher menu registration is OPTIONAL (KIT-0067 D1): the kit
+    # retired .kit/launchers/ — agents are invoked via new Claude Code
+    # tabs / `claude --agent`. Projects that still carry a launcher
+    # (pre-0.9.0 consumers) keep the menu registration; absence is a
+    # notice, never an error.
+    local has_launcher="false"
+    if [[ -f "$LAUNCHER_FILE" ]]; then
+        has_launcher="true"
     fi
 
     local agent_file="$PROJECT_ROOT/.claude/agents/${name}.md"
@@ -525,9 +533,13 @@ main() {
         echo "  Model: $model"
         echo "  Emoji: $emoji"
         echo "  Serena: $serena"
-        echo "  Launcher: $LAUNCHER_FILE (would update agent_order, icon)"
-        if [[ "$serena" == "true" ]]; then
-            echo "  Launcher: would also update serena_agents"
+        if [[ "$has_launcher" == "true" ]]; then
+            echo "  Launcher: $LAUNCHER_FILE (would update agent_order, icon)"
+            if [[ "$serena" == "true" ]]; then
+                echo "  Launcher: would also update serena_agents"
+            fi
+        else
+            echo "  Launcher: none present — menu registration would be skipped"
         fi
         if [[ -f "$agent_file" ]]; then
             echo "  Note: existing agent would be overwritten (--force implied by --dry-run preview)"
@@ -549,21 +561,25 @@ main() {
     log_json "INFO" "template" "started" ""
     process_template "$name" "$description" "$model" "$agent_file"
 
-    # Update launcher
-    log_json "INFO" "launcher" "started" ""
-    update_agent_order "$name" "$LAUNCHER_FILE" "$force"
+    # Update launcher (only where one exists — see has_launcher above)
+    if [[ "$has_launcher" == "true" ]]; then
+        log_json "INFO" "launcher" "started" ""
+        update_agent_order "$name" "$LAUNCHER_FILE" "$force"
 
-    if [[ "$serena" == "true" ]]; then
-        update_serena_agents "$name" "$LAUNCHER_FILE" "$force"
-    fi
+        if [[ "$serena" == "true" ]]; then
+            update_serena_agents "$name" "$LAUNCHER_FILE" "$force"
+        fi
 
-    update_agent_icon "$name" "$emoji" "$LAUNCHER_FILE" "$force"
-    log_json "INFO" "launcher" "completed" ""
+        update_agent_icon "$name" "$emoji" "$LAUNCHER_FILE" "$force"
+        log_json "INFO" "launcher" "completed" ""
 
-    # Verify launcher is still valid bash (while still holding lock)
-    if ! bash -n "$LAUNCHER_FILE" 2>/dev/null; then
-        release_lock
-        system_error "Launcher syntax validation failed after modification"
+        # Verify launcher is still valid bash (while still holding lock)
+        if ! bash -n "$LAUNCHER_FILE" 2>/dev/null; then
+            release_lock
+            system_error "Launcher syntax validation failed after modification"
+        fi
+    else
+        log_json "INFO" "launcher" "skipped" ""
     fi
 
     # Release lock after validation
@@ -573,7 +589,11 @@ main() {
 
     echo "Agent '$name' created successfully."
     echo "  File: $agent_file"
-    echo "  Launcher: $LAUNCHER_FILE (updated)"
+    if [[ "$has_launcher" == "true" ]]; then
+        echo "  Launcher: $LAUNCHER_FILE (updated)"
+    else
+        echo "  Launcher: none present — skipped (invoke with: claude --agent $agent_file)"
+    fi
 }
 
 main "$@"

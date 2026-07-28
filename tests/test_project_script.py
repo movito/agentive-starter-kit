@@ -1300,3 +1300,35 @@ class TestSetupVenvSymlinkGuard:
         result = self._run_setup(script)
         assert result.returncode == 1
         assert "--no-hooks" not in result.stdout
+
+
+class TestReconfigureMissingConfigRemedy:
+    """displayed_commands_are_contracts (KIT-0067): the remedy printed
+    when .serena/project.yml is missing must be a complete, parseable
+    shell command — pinned against the ACTUAL printed output."""
+
+    @pytest.mark.parametrize("dirname", ["plain", "dir with spaces"])
+    def test_missing_serena_config_remedy_is_valid_shell(
+        self, tmp_path, capsys, dirname
+    ):
+        import re as _re
+
+        project_dir = tmp_path / dirname
+        project_dir.mkdir()
+        assert _project_module.reconfigure_project(project_dir) is False
+        out = capsys.readouterr().out
+        match = _re.search(r"Run: (.+?)  #", out)
+        assert match, f"remedy line missing from output:\n{out}"
+        proc = subprocess.run(
+            ["bash", "-n", "-c", match.group(1)],
+            capture_output=True,
+            text=True,
+        )
+        assert proc.returncode == 0, proc.stderr
+        # pin the actual remedy, not just any parseable shell
+        # (CodeRabbit, PR #98): cd into the named project dir, then the
+        # real setup script
+        assert match.group(1).startswith("cd ")
+        assert match.group(1).endswith("&& bash .serena/setup-serena.sh")
+        # root-scoped: the command names the project dir, not a cwd guess
+        assert dirname in match.group(1)

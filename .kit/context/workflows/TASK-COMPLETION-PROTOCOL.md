@@ -125,4 +125,4 @@ See existing handoffs for examples:
 **Related Workflows**:
 - [TESTING-WORKFLOW.md](./TESTING-WORKFLOW.md) - Verify tests before completion
 - [COMMIT-PROTOCOL.md](./COMMIT-PROTOCOL.md) - Commit changes properly
-- [Evaluation Workflow](../../adversarial/docs/EVALUATION-WORKFLOW.md) - For coordinators assigning tasks
+- [Evaluation guidance](../../../.claude/skills/code-review-evaluator/SKILL.md) - For coordinators assigning tasks

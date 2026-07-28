@@ -17,7 +17,6 @@ evaluation, and architectural decision records. For full details, see `README.md
 ├── context/          Agent coordination: handoffs, reviews, patterns.yml, workflows/
 ├── tasks/            Task specs by status: 1-backlog/ through 9-reference/
 ├── adr/             Kit ADRs (KIT-ADR-*)
-├── launchers/        Agent launcher scripts (launch, onboarding, preflight)
 └── docs/             Builder documentation
 .serena/              Serena MCP configuration (semantic code navigation)
 docs/                 Documentation, ADRs (adr/)
@@ -106,8 +105,6 @@ See `.kit/templates/AGENT-TEMPLATE.md` for creating new agents.
 | `./scripts/core/pattern_lint.py` | Check for defensive coding violations |
 | `./scripts/optional/create-agent.sh` | Create a new agent definition |
 | `./scripts/local/bootstrap` | The one setup door: `--new`/`--adopt` × shape × profile (KIT-0053) |
-| `.kit/launchers/launch` | Interactive agent launcher |
-| `.kit/launchers/onboarding` | First-time project setup |
 
 ## Version
 

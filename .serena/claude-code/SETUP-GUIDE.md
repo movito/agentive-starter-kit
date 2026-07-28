@@ -296,26 +296,31 @@ Then use other Serena tools
 
 ## Configuration Files
 
-### Claude Code MCP Config Location
+### Claude Code MCP Registration
 
-Serena configuration is stored in:
-```
-~/.config/claude/mcp_settings.json
-```
+Serena is registered with Claude Code as a user-scoped MCP server —
+the same commands `.serena/setup-serena.sh` runs. With `uvx`
+available (the common case):
 
-**Example entry**:
-```json
-{
-  "servers": {
-    "serena": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server"]
-    }
-  }
-}
+```bash
+claude mcp add --scope user serena -- uvx --from "git+https://github.com/oraios/serena" serena start-mcp-server
 ```
 
-**Note**: Don't edit manually - use `claude mcp add-json` command
+Without `uvx` (serena installed via `pipx`, so the CLI is already on
+PATH), the script registers the binary directly:
+
+```bash
+claude mcp add --scope user serena -- serena start-mcp-server
+```
+
+Inspect or manage the registration with the CLI (never edit config
+files by hand):
+
+```bash
+claude mcp list     # show registered servers
+claude mcp get serena
+claude mcp remove serena  # to re-register from scratch
+```
 
 ---
 
@@ -539,7 +544,7 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 
 ### Project-Specific
 
-- **ADR-0040**: Architectural decision for Serena adoption
+- **KIT-ADR-0002**: `.kit/adr/KIT-ADR-0002-serena-mcp-integration.md` — the Serena adoption decision record
 
 ---
 

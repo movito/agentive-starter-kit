@@ -391,7 +391,7 @@ PRECOMMIT
         mkdir -p "$TARGET/scripts"
         cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
 {
-  "core_version": "3.8.0",
+  "core_version": "3.9.0",
   "source_repo": "movito/agentive-starter-kit",
   "synced_at": "2026-07-27T00:00:00Z",
   "files": {
@@ -496,7 +496,7 @@ for f in pyproject.toml .gitignore .pre-commit-config.yaml .env.template .codera
         if [ "$f" = "pyproject.toml" ]; then
             # The kit's own pyproject is named agentive-starter-kit
             # (KIT-0057); a freshly seeded target must get the
-            # placeholder + TODO the onboarding agents rewrite — the
+            # placeholder + TODO the setup agents rewrite — the
             # engine-export.sh reset, applied to this copy path too
             # (BugBot, PR #90).
             NAME_PLACEHOLDER='name = "your-project-name"  # TODO: Change this to your project name'

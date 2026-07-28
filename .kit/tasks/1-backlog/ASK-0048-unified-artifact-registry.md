@@ -108,8 +108,35 @@ Write a helper script (`scripts/core/compute_content_hash.py` or similar) to com
 
 | Resource | Location |
 |----------|----------|
-| ADR (full spec) | `docs/adr/ADR-0007-unified-artifact-registry.md` |
-| Task starter (detailed) | `docs/adr/ASK-UNIFIED-REGISTRY-TASK-STARTER.md` |
+| ADR (full spec) | `.kit/adr/ADR-0007-unified-artifact-registry.md` |
+| Task starter (detailed) | `.kit/context/ASK-UNIFIED-REGISTRY-TASK-STARTER.md` (superseded banner — re-evaluate first) |
 | GitHub issue | movito/agentive-starter-kit#44 |
 | Existing agents | `.claude/agents/*.md` |
 | Existing manifest | `.core-manifest.json` |
+
+## Design findings to fold into re-evaluation (CodeRabbit on PR #98, 2026-07-28)
+
+When ADR-0007 moved to `.kit/adr/` (KIT-0067 D5), CodeRabbit reviewed
+the proposal's content and surfaced five substantive design gaps. They
+were deliberately NOT patched in that structural PR (the ADR text is
+the record of what AEL's four evaluator rounds reviewed); they are
+re-evaluation inputs for this task:
+
+1. **Command-name inconsistency** — the principles section says
+   `kit propose <artifact>` while the protocol defines
+   `kit registry propose`; pick one or define the alias.
+2. **`tier: deprecated` undefined** — deletion rules instruct setting
+   `tier: deprecated`, but the tier schema allows only
+   core/optional/local. Add it to the schema (with sync behavior) or
+   use a separate deprecation field.
+3. **Operational fields vs semver** — `last_synced` is updated on
+   every sync yet documented as a patch-level metadata change; exclude
+   operational fields (`last_synced`, `content_hash`,
+   `proposed.status`) from version-bump requirements.
+4. **Duplicate-source conflict rule contradicts itself** — "duplicate
+   (type, name) definitions must fail" vs "first declared source
+   wins"; choose one policy and define pinning/override interaction.
+5. **Hash/version type confusion in the propose flow** — it compares a
+   `content_hash` mismatch against `upstream_version` (a semver
+   string, not content); compare content against the cached upstream
+   artifact hash and versions separately.

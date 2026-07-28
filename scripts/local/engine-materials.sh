@@ -22,7 +22,7 @@
 #
 # What this does:
 #   1. Copies ASK scaffolding into your project (preserves your files)
-#   2. Runs setup-dev.sh (Python, venv, dispatch-kit, deps, tmux, dispatch init)
+#   2. Runs setup-dev.sh (Python, venv, deps, tmux; dispatch-kit only via --with-dispatch)
 #   3. Launches the bootstrap agent to read your materials and configure everything
 #
 # What it does NOT do:
@@ -78,7 +78,7 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
 # .claude/ — agent definitions, commands, skills, settings
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
-# .kit/ — builder layer (templates, workflows, launchers, docs). The
+# .kit/ — builder layer (templates, workflows, docs). The
 # kit's own planning corpus stays home: task-ID excludes are
 # prefix-AGNOSTIC ([A-Z]*-NNNN — the ASK-* literals missed every KIT-*
 # file after the prefix rename, KIT-0068 A13), and .kit/adversarial/ is

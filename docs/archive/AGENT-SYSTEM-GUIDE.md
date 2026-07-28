@@ -1,5 +1,7 @@
 # Agent System and Coordination Guide
 
+> **ARCHIVED** (KIT-0067 D2/A44): describes the pre-kit `delegation/` layout and aider-era evaluation. Kept as history; current architecture lives in `CLAUDE.md` + `.kit/adr/`.
+
 **Created**: 2025-10-16
 **Purpose**: Comprehensive guide to the agent coordination system used in this project
 **Audience**: Coordinators setting up new projects or handing off context

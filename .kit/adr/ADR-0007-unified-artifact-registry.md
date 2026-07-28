@@ -1,14 +1,15 @@
 # ADR-0007: Unified Artifact Registry for Agents, Evaluators, and Skills
 
-**Status**: Proposed
+**Status**: Proposed — owning task ASK-0048 is PARKED (needs re-evaluation; post-review findings to address are recorded in `.kit/tasks/1-backlog/ASK-0048-unified-artifact-registry.md`)
 
 **Date**: 2026-04-01
 
 **Deciders**: project maintainers, adversarial-workflow team, agentive-starter-kit team
 
-**Implementation home**: agentive-starter-kit. This ADR lives in adversarial-evaluator-library where the design analysis and adversarial review were conducted. The registry tooling (`kit registry` commands) will be implemented in agentive-starter-kit, which owns the `.kit/` directory convention and the `kit` CLI namespace.
+**Implementation home**: agentive-starter-kit. This ADR was authored and adversarially reviewed in adversarial-evaluator-library; it is now recorded here in `.kit/adr/` (moved from `docs/adr/` by KIT-0067 D5 — kit decisions live kit-side). The registry tooling (`kit registry` commands) will be implemented in agentive-starter-kit, which owns the `.kit/` directory convention and the `kit` CLI namespace.
 
 ## Glossary
+
 - **Artifact**: A reusable component or asset within the agentive ecosystem, such as agent definitions, evaluator configs, and skills.
 - **Registry**: The metadata index and tooling that tracks artifact identity, version, provenance, and distribution state across projects. Not a hosted service — implemented as YAML files in git repos.
 - **Sync Protocol**: The process by which artifacts are compared against upstream sources and updated locally, governed by the project's manifest policy.
@@ -368,7 +369,7 @@ kit registry diff planner
 
 When any `kit` command runs (or on session start via a hook), it can compare local `content_hash` + `version` against upstream `index.yml`. If updates exist, emit a one-line notice:
 
-```
+```text
 kit: 3 artifact updates available (2 agents, 1 evaluator). Run `kit registry status` to see details.
 ```
 
@@ -432,7 +433,7 @@ registry:
 
 **Contribution lifecycle:**
 
-```
+```text
 downstream modifies artifact
        ↓
 kit registry propose <name>
@@ -457,7 +458,7 @@ rejected → downstream keeps local version, propose.status = rejected
 
 When an artifact has been modified locally AND upstream has a newer version, `kit registry status` reports it as a conflict:
 
-```
+```text
 planner  1.0.0  ⚡ conflict: locally modified + upstream 1.1.0 available
 ```
 

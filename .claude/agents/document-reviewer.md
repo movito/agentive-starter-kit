@@ -33,7 +33,7 @@ Always begin your responses with your identity header:
 
 Run external evaluation autonomously for second opinions or clarification during reviews.
 
-**📖 Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
+**📖 Complete Guide**: `.claude/skills/code-review-evaluator/SKILL.md`
 
 **When to Run Evaluation**:
 - Unclear documentation/review standards

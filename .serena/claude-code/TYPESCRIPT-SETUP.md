@@ -53,7 +53,7 @@ The TypeScript Language Server is already installed globally via npm.
 **Verification**:
 ```bash
 which typescript-language-server
-# Expected: /Users/broadcaster_three/.nvm/versions/node/v22.18.0/bin/typescript-language-server
+# Expected: a path inside your node installation (e.g. ~/.nvm/versions/node/<version>/bin/typescript-language-server)
 
 typescript-language-server --version
 # Expected: 5.1.2 (or higher)
@@ -301,14 +301,18 @@ npm install -g typescript-language-server typescript
 ```
 
 **C. Check PATH**
+
 ```bash
-echo $PATH | grep nvm
-# Should show: /Users/broadcaster_three/.nvm/versions/node/v22.18.0/bin
+command -v typescript-language-server >/dev/null \
+    && dirname "$(command -v typescript-language-server)" \
+    || echo "typescript-language-server: not installed"
+# Should print your node bin directory (nvm, Homebrew, Volta, asdf, or system)
 ```
 
-If not in PATH, add to shell profile (~/.zshrc or ~/.bashrc):
+If not in PATH, add your node bin directory to the shell profile (~/.zshrc or ~/.bashrc), e.g.:
+
 ```bash
-export PATH="$HOME/.nvm/versions/node/v22.18.0/bin:$PATH"
+export PATH="$HOME/.nvm/versions/node/<your-version>/bin:$PATH"  # substitute your node version
 ```
 
 **D. Test LSP Server Directly**

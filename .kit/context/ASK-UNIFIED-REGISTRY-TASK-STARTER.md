@@ -1,7 +1,13 @@
+> **SUPERSEDED / PARKED** (KIT-0067 D5/A61): the owning feature
+> ASK-0048 was parked needs-re-evaluation (PR #45 closed unmerged,
+> 2026-07-14). Moved here from docs/adr/ — task starters are kit
+> planning artifacts, and docs/adr/ is the consumer ADR space.
+> Do NOT implement from this starter without re-evaluating ASK-0048.
+
 # Task Starter: Unified Artifact Registry
 
 **Issue**: movito/agentive-starter-kit#44
-**ADR**: `docs/adr/ADR-0007-unified-artifact-registry.md` (in this repo)
+**ADR**: `.kit/adr/ADR-0007-unified-artifact-registry.md` (in this repo)
 **Origin**: Designed and adversarially reviewed in `adversarial-evaluator-library`
 **Date**: 2026-04-01
 
@@ -13,7 +19,7 @@ The agentive ecosystem distributes agents, evaluators, and skills across project
 
 This is a multi-phase effort. Phase 1 is non-breaking and can ship independently.
 
-Your mission: Read ADR-0007 in full, then implement Phase 1 (metadata adoption) and Phase 2 (CLI tooling) as separate PRs.
+**Original mission (SUSPENDED — do not follow; see the banner above):** ~~Read ADR-0007 in full, then implement Phase 1 (metadata adoption) and Phase 2 (CLI tooling) as separate PRs.~~ Any revival starts with re-evaluating ASK-0048, not with this checklist.
 
 ## ADR Summary
 
@@ -115,7 +121,7 @@ registry:
 
 | Resource | Location |
 |----------|----------|
-| Full ADR | `docs/adr/ADR-0007-unified-artifact-registry.md` (this repo) |
+| Full ADR | `.kit/adr/ADR-0007-unified-artifact-registry.md` (this repo) |
 | GitHub issue | movito/agentive-starter-kit#44 |
 | Evaluator review logs | `adversarial-evaluator-library/.adversarial/logs/ADR-0007-*` |
 | Existing manifest | `.core-manifest.json` (what the registry eventually supersedes) |

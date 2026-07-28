@@ -234,8 +234,9 @@ Provide summary:
 **Test Task**: `.kit/tasks/2-todo/TASK-TEST-[agent-name].md` (if created)
 
 **How to launch this agent**:
-1. Run your agent launcher: `./.kit/launchers/launch` (or your launcher command)
-2. Select "[agent-name]" from the list
+1. Open a new Claude Code tab in the project root
+2. Run: `claude --agent .claude/agents/[agent-name].md` (or ask for
+   the agent by name in a session)
 3. Agent will load with all configuration and instructions
 
 **Documentation**:
@@ -330,7 +331,7 @@ Be **specific** about what the agent does.
 **Essential Reading** (reference these during agent creation):
 - **Agent Template**: `.kit/templates/AGENT-TEMPLATE.md` (base template)
 - **Creation Workflow**: `.kit/context/workflows/AGENT-CREATION-WORKFLOW.md` (comprehensive guide)
-- **Evaluator Workflow**: `.adversarial/docs/EVALUATION-WORKFLOW.md` (for Evaluator section)
+- **Evaluator Workflow**: `.claude/skills/code-review-evaluator/SKILL.md` (for Evaluator section)
 - **Existing Agents**: `.claude/agents/` (examples to learn from)
 
 **Quick Commands**:
@@ -347,8 +348,9 @@ cat .kit/context/workflows/AGENT-CREATION-WORKFLOW.md
 # Run automation script
 scripts/optional/create-agent.sh agent-name "description"
 
-# The launcher is .kit/launchers/launch — create-agent.sh registers new
-# agents with it automatically, so a manual edit is normally unnecessary.
+# Agents are invoked via `claude --agent <file>` / new tabs. If the
+# project still carries a pre-0.9.0 .kit/launchers/launch menu,
+# create-agent.sh registers new agents with it automatically.
 ```
 
 ## Allowed Operations

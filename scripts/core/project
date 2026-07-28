@@ -344,6 +344,8 @@ def _verify_identity_leaks(project_dir: Path) -> int:
         ".kit/tasks",
         "tests",
     ]
+    # onboarding.md retired in the kit (KIT-0067 D1); exclusion kept for
+    # pre-0.9.0 consumer copies that still carry the file
     exclude_files = {"onboarding.md"}
 
     leak_pattern = re.compile(r"agentive-starter-kit|Agentive Starter Kit")
@@ -418,7 +420,16 @@ def reconfigure_project(project_dir: Path, *, verify: bool = False) -> bool:
     # Check .serena/project.yml exists
     if not serena_config.exists():
         print("Error: .serena/project.yml not found")
-        print("Run '.kit/launchers/launch onboarding' first to configure your project")
+        # displayed_commands_are_contracts: complete, root-scoped,
+        # quoted (the launcher this pointed at was retired, KIT-0067
+        # D1). No decorative outer quotes: with a space-containing
+        # project path the shlex quoting would nest inside them and
+        # make the copy-paste boundary ambiguous (o3, PR 2 trio).
+        print(
+            f"Run: cd {shlex.quote(str(project_dir))} && "
+            "bash .serena/setup-serena.sh"
+            "  # configures Serena for this project"
+        )
         return False
 
     # Extract project name (supports both 'name:' and 'project_name:')

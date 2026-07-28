@@ -92,7 +92,7 @@ ls -R delegation/ 2>/dev/null | head -40
 # What's in .agent-context/?
 ls .agent-context/ | head -30
 
-# Launchers at root?
+# Legacy launchers at root? (retired in KIT-0067 — delete, don't move)
 ls agents/launch agents/onboarding agents/preflight 2>/dev/null
 
 # Templates mixed into .claude/agents/?
@@ -189,16 +189,20 @@ git mv delegation/handoffs/* .kit/context/ 2>/dev/null
 **Watch for**: `.agent-context/README.md`, `.agent-context/REVIEW-INSIGHTS.md`,
 `.agent-context/agent-handoffs.json` — these should all move to `.kit/context/`.
 
-### Step 4: Move launchers
+### Step 4: Retire launchers
+
+> **Updated (KIT-0067 D1)**: the kit retired `.kit/launchers/`
+> entirely — agents are invoked via new Claude Code tabs or
+> `claude --agent <file>`, and setup runs through the one door
+> (`scripts/local/bootstrap` + `/new-project`). Do NOT migrate old
+> launchers forward; delete them.
 
 ```bash
-# Move agents/launch, agents/onboarding, agents/preflight to .kit/launchers/
-git mv agents/launch .kit/launchers/ 2>/dev/null
-git mv agents/onboarding .kit/launchers/ 2>/dev/null
-git mv agents/preflight .kit/launchers/ 2>/dev/null
+# Retire the pre-kit launcher scripts (superseded by the setup door)
+git rm --ignore-unmatch agents/launch agents/onboarding agents/preflight
 ```
 
-**After moving**: If `agents/` is now empty, remove it with `git rm -r agents/`.
+**After removing**: If `agents/` is now empty, remove it with `git rm -r agents/`.
 If it has other files, investigate what they are.
 
 ### Step 5: Move templates out of `.claude/agents/`
@@ -279,9 +283,7 @@ verify files that need context-aware edits.
 | `docs/decisions/starter-kit-adr/` | `.kit/adr/` | Kit ADRs |
 | `docs/decisions/adr/` | `docs/adr/` | Project ADRs |
 | `docs/decisions/` | `docs/adr/` | Catch remaining (verify context) |
-| `agents/launch` | `.kit/launchers/launch` | Launcher references |
-| `agents/onboarding` | `.kit/launchers/onboarding` | Launcher references |
-| `agents/preflight` | `.kit/launchers/preflight` | Launcher references |
+| `agents/launch` etc. | *(none — retired, KIT-0067)* | Drop launcher references; agents launch via `claude --agent` |
 
 **Bulk sed command:**
 
@@ -300,11 +302,14 @@ find . -type f \( -name "*.md" -o -name "*.yml" -o -name "*.yaml" \
     -e 's|\.agent-context/|.kit/context/|g' \
     -e 's|docs/decisions/starter-kit-adr/|.kit/adr/|g' \
     -e 's|docs/decisions/adr/|docs/adr/|g' \
-    -e 's|agents/launch|.kit/launchers/launch|g' \
-    -e 's|agents/onboarding|.kit/launchers/onboarding|g' \
-    -e 's|agents/preflight|.kit/launchers/preflight|g' \
     {} +
 ```
+
+Launcher references (`agents/launch`, `agents/onboarding`,
+`agents/preflight`) have no new path — the launchers were retired
+(KIT-0067 D1). Grep for them after the bulk sed and rewrite each site
+to the current invocation (`claude --agent .claude/agents/<name>.md`,
+setup via `scripts/local/bootstrap`).
 
 **After sed — CRITICAL VERIFICATION:**
 
@@ -422,7 +427,7 @@ cat .dispatch/config.yml | grep -E 'task_dir|starter_dir'
 | `delegation/tasks/evaluations/` | Exists | Move to `.kit/tasks/evaluations/` |
 | `tasks/` at root | Stale file(s) | Investigate, likely delete |
 | `audit-results/` at root | Build artifact | Add to `.gitignore` or delete |
-| `agents/` at root | Launchers only | Move to `.kit/launchers/` |
+| `agents/` at root | Launchers only | Retired (KIT-0067) — delete |
 | `.vscode/` | IDE config | Leave alone |
 | `SETUP.md`, `QUICK_START.md`, `UPGRADE.md` | Root docs | Leave or move to `docs/` |
 | `delegation/` ref count | ~177 files | Large rewrite |
@@ -436,7 +441,7 @@ cat .dispatch/config.yml | grep -E 'task_dir|starter_dir'
 |------|-------|--------|
 | Scripts restructure | NOT done (flat scripts/) | Do DSP-0067 first or combine |
 | Manifest format | Missing | Will be created by sync |
-| `agents/` at root | Launchers only | Move to `.kit/launchers/` |
+| `agents/` at root | Launchers only | Retired (KIT-0067) — delete |
 | `.nova/` at root | Nova IDE config | Leave alone |
 | `delegation/handoffs/` | Empty dir | Remove |
 | DSP-specific agents | `bot-watcher.md`, `bus-debugger.md`, `config-validator.md`, `integration-tester.md`, `planner-chrome.md`, `feature-developer2.md`, `feature-developer-v2.md`, `feature-developer-v4.md` | Leave in `.claude/agents/` |
@@ -452,7 +457,7 @@ cat .dispatch/config.yml | grep -E 'task_dir|starter_dir'
 |------|-------|--------|
 | Scripts restructure | NOT done (flat scripts/) | Do AEL-0012 first or combine |
 | Manifest format | Missing | Will be created by sync |
-| `agents/` at root | Launchers only | Move to `.kit/launchers/` |
+| `agents/` at root | Launchers only | Retired (KIT-0067) — delete |
 | AEL-specific agents | `tycho.md` | Leave in `.claude/agents/` |
 | `delegation/` ref count | ~85 files | Moderate rewrite |
 | `.agent-context/` ref count | ~83 files | Moderate rewrite |

@@ -128,7 +128,7 @@ kit-builder scaffolding).
 | **What** | `agentive-workflow` plugin, from the `movito/agentive-skills` marketplace | `sync-core-scripts.yml` Action + `scripts/.core-manifest.json` |
 | **Carries** | Agents, commands, skills as **namespaced installs** (`agentive-workflow:feature-developer-v7`, `agentive-workflow:check-ci`) | **Vendored file copies**: `scripts/core/`, `.claude/commands/`, `.kit/` templates/skills/ADRs/workflows |
 | **Consumer update path** | `claude plugin update` / `upgrader` agent | **Push** (⚠ parked, KIT-0045 — manual `workflow_dispatch` until re-enabled): automated PR into the consumer repo. **Pull** (live): `./scripts/core/project sync` from the consumer (on-demand, KIT-ADR-0026) |
-| **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | ADR-0008, KIT-ADR-0022, KIT-ADR-0026, `docs/MANIFEST-UPGRADE-GUIDE.md` |
+| **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | ADR-0008 (`.kit/adr/`), KIT-ADR-0022, KIT-ADR-0026, `docs/MANIFEST-UPGRADE-GUIDE.md` |
 
 ### Canonical homes (KIT-ADR-0027 P6)
 

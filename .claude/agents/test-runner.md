@@ -111,7 +111,7 @@ This command:
 
 You can run evaluation autonomously when encountering unclear test requirements or validation concerns.
 
-**📖 Complete Guide**: `.adversarial/docs/EVALUATION-WORKFLOW.md`
+**📖 Complete Guide**: `.claude/skills/code-review-evaluator/SKILL.md`
 
 **When to Run Evaluation**:
 - Unclear test acceptance criteria
