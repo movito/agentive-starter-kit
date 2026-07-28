@@ -152,11 +152,11 @@ class TestManifestConsistency:
 
     def test_kit_builder_count(self, manifest):
         count = len(manifest["files"]["kit_builder"])
-        assert count == 11, f"Expected 11 kit_builder entries, got {count}"
+        assert count == 10, f"Expected 10 kit_builder entries, got {count}"
 
     def test_total_entry_count(self, manifest):
         total = sum(len(entries) for entries in manifest["files"].values())
-        assert total == 49, f"Expected 49 total entries, got {total}"
+        assert total == 48, f"Expected 48 total entries, got {total}"
 
 
 def _planning_heredoc_core_version(engine_text: str) -> str | None:

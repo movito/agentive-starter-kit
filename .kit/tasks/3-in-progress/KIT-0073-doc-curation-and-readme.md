@@ -1,6 +1,6 @@
 # KIT-0073: Doc curation — execute the approved dispositions + the 120-line README
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 1 day

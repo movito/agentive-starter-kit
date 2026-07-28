@@ -53,7 +53,6 @@
       ".kit/adr/",
       ".kit/docs/",
       ".adversarial/config.yml.template",
-      ".adversarial/docs/",
       ".adversarial/templates/",
       ".kit/context/workflows/",
       ".kit/context/templates/",
