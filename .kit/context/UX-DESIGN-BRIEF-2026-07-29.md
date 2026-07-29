@@ -97,3 +97,34 @@ implementation task set, feasibility-checks your flags, and the
 screenplays become the acceptance tests (a cold-start session must
 be able to follow them verbatim). A related task (KIT-0078) is
 deliberately ON HOLD awaiting your output.
+
+## Addendum (2026-07-29, after the live ev-queue intake test)
+
+Operator-established requirements — treat as design constraints:
+
+1. **Two flow levels, one structure**: first-ever-run vs
+   returning-user (prototype → proper project). Design the returning
+   flow first; the structure must extend to first-run by PREPENDING
+   an environment phase, not by being a different flow.
+2. **Wizard posture**: every step says what's happening, asks exactly
+   one thing, and previews what happens next. ("Maybe something a bit
+   more wizard-like" — operator.)
+3. **The handoff template instructs the exit**: its final section
+   tells the PROTOTYPING agent to tell the user: put the brief + the
+   most recent assets into ONE new folder somewhere Claude Code can
+   access (e.g. ~/Github/<name>/), then what to say next. The
+   template is the wizard's first step.
+4. **One folder is the handoff unit** — never two paths. Proven in
+   the live test ("I made a folder and said 'here it is' and things
+   worked fine").
+5. **Read before asking; ask at the informed moment**: the import
+   wizard inventories the folder, plays back what it found (brief's
+   self-identity vs folder name!), and asks the NAMING question
+   there — the live test silently resolved a Varv-Playground vs
+   ev-queue tension by derivation rule, which the operator wanted
+   asked.
+6. **Preview before execute**: show the plan (repos, visibility,
+   backlog count) and confirm, then execute via subagent — the
+   ev-queue experiment proved subagent execution works with zero
+   permission stalls, so the tab-hop is optional; interactivity is
+   the only thing the wizard must supply itself.
