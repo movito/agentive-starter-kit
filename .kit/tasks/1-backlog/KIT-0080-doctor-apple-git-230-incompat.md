@@ -13,7 +13,7 @@ symptoms surface, both traceable to one root cause: `git rev-parse
 string `--path-format=absolute` as the first output line, then the
 path on the next line:
 
-```
+```console
 $ git rev-parse --path-format=absolute --git-common-dir
 --path-format=absolute
 .git
