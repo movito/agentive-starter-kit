@@ -78,24 +78,23 @@ def key_state(lines, key):
 
 
 def key_value(lines, key):
-    """Effective value of key, normalized like key_state (comments and
-    quotes stripped, `export ` accepted, first NON-EMPTY assignment
-    wins). Returns None when no uncommented assignment exists at all.
-    Only ever called for non-secret identity keys — key_state stays the
-    reader for key material.
+    """Effective value of key for identity checks: the LAST uncommented
+    assignment wins, matching dotenv semantics (CodeRabbit, KIT-0084 —
+    key_state's first-non-empty scan serves key PRESENCE, where the
+    copy-template-then-append layout matters; a VALUE check must report
+    what a parser would actually load). Comments and quotes stripped,
+    `export ` accepted. Returns None when no uncommented assignment
+    exists at all. Only ever called for non-secret identity keys —
+    key_state stays the reader for key material.
     """
-    value_seen = None
-    for line in lines:
+    for line in reversed(lines):
         stripped = line.strip()
         if stripped.startswith("export "):
             stripped = stripped[len("export ") :].lstrip()
         if stripped.startswith(f"{key}="):
             _, _, value = stripped.partition("=")
-            value = _effective_value(value)
-            if value:
-                return value
-            value_seen = ""
-    return value_seen
+            return _effective_value(value)
+    return None
 
 
 def main():

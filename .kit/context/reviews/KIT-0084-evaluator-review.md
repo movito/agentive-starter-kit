@@ -81,7 +81,7 @@
 
 #  Code Reviewer Fast V2
 
-**Source**: /Users/broadcaster_one/Github/ask-worktrees/KIT-0084/.adversarial/inputs/KIT-0084-code-review-input.md
+**Source**: .adversarial/inputs/KIT-0084-code-review-input.md
 **Evaluator**: code-reviewer-fast-v2
 **Model**: gemini/gemini-3-flash-preview
 **Generated**: 2026-08-04 19:44 UTC
@@ -157,7 +157,7 @@ The logic for `doctor` and `bootstrap` is slightly inconsistent regarding how it
 
 #  Code Reviewer
 
-**Source**: /Users/broadcaster_one/Github/ask-worktrees/KIT-0084/.adversarial/inputs/KIT-0084-code-review-input.md
+**Source**: .adversarial/inputs/KIT-0084-code-review-input.md
 **Evaluator**: code-reviewer
 **Model**: o3
 **Generated**: 2026-08-04 19:33 UTC
@@ -250,7 +250,7 @@ Found 6 non-trivial edge-case/logic problems (2 immediate correctness bugs, 3 la
 
 #  Claude Code
 
-**Source**: /Users/broadcaster_one/Github/ask-worktrees/KIT-0084/.adversarial/inputs/KIT-0084-code-review-input.md
+**Source**: .adversarial/inputs/KIT-0084-code-review-input.md
 **Evaluator**: claude-code
 **Model**: anthropic/claude-sonnet-4-6
 **Generated**: 2026-08-04 19:35 UTC

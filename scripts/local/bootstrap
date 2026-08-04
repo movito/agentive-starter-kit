@@ -640,7 +640,7 @@ offer_env_carryover() {  # KIT-0084 F3 — operator-consented key carry-over
     fi
     if is_tty; then
         local ans
-        ans="$(prompt_yn "Copy API keys from $kit_env into the new project's .env?")"
+        ans="$(prompt_yn "Copy the kit clone's .env — the WHOLE file, all keys and settings — from $kit_env into the new project's .env?")"
         if [ "$ans" = "yes" ]; then
             copy_env_into_target "$kit_env"
             echo "Seeded .env from $kit_env (mode 0600, gitignored; contents never printed)"
@@ -685,11 +685,12 @@ PYEOF
         [ -n "$prefix" ] || prefix="$PREFIX"
     fi
     # newlines/CRs in a folder name or prefix would smuggle extra
-    # assignments into .env — strip them (o3 review, this PR; the
-    # values are operator-owned, so this is hardening, not a trust
-    # boundary)
-    name="${name//$'\n'/}"; name="${name//$'\r'/}"
-    prefix="${prefix//$'\n'/}"; prefix="${prefix//$'\r'/}"
+    # assignments into .env, and quote characters cannot be written
+    # into a dotenv line faithfully — strip them (o3 + CodeRabbit
+    # reviews, this PR; the values are operator-owned, so this is
+    # hardening, not a trust boundary)
+    name="${name//[$'\n'$'\r'\"\']/}"
+    prefix="${prefix//[$'\n'$'\r'\"\']/}"
     # planning shape: no prefix exists at door time — written EMPTY,
     # never 'TASK'; intake decides it and doctor warns meanwhile.
     # Rewrite in memory (no temp file: a leaked temp beside .env would
@@ -699,31 +700,50 @@ PYEOF
     # parsers are last-assignment-wins, so a surviving duplicate would
     # silently override the identity just written (fast-v2 evaluator,
     # this PR)
-    # indentation tolerated to stay in step with the doctor's reader,
-    # which strips lines before matching (fast-v2 round 2)
+    # indentation and an `export ` prefix tolerated to stay in step
+    # with the doctor's reader (fast-v2 round 2; CodeRabbit). Values
+    # carrying '#', spaces, or tabs are written double-quoted so a
+    # dotenv parser (and the doctor) reads them back intact — safe
+    # because quote characters were stripped above.
     local content
     content="$(ENV_NAME="$name" ENV_PREFIX="$prefix" awk '
-        /^[[:space:]]*PROJECT_NAME=/ {
-            if (!seen_name++) print "PROJECT_NAME=" ENVIRON["ENV_NAME"]
+        function emit(k, v) {
+            if (v ~ /[# \t]/) print k "=\"" v "\""
+            else print k "=" v
+        }
+        /^[[:space:]]*(export[[:space:]]+)?PROJECT_NAME=/ {
+            if (!seen_name++) emit("PROJECT_NAME", ENVIRON["ENV_NAME"])
             next
         }
-        /^[[:space:]]*TASK_PREFIX=/ {
-            if (!seen_prefix++) print "TASK_PREFIX=" ENVIRON["ENV_PREFIX"]
+        /^[[:space:]]*(export[[:space:]]+)?TASK_PREFIX=/ {
+            if (!seen_prefix++) emit("TASK_PREFIX", ENVIRON["ENV_PREFIX"])
             next
         }
         { print }
         END {
-            if (!seen_name) print "PROJECT_NAME=" ENVIRON["ENV_NAME"]
-            if (!seen_prefix) print "TASK_PREFIX=" ENVIRON["ENV_PREFIX"]
+            if (!seen_name) emit("PROJECT_NAME", ENVIRON["ENV_NAME"])
+            if (!seen_prefix) emit("TASK_PREFIX", ENVIRON["ENV_PREFIX"])
         }
     ' "$TARGET/.env")"
     # command substitution strips trailing newlines; printf restores
-    # exactly one — trailing blank lines collapse, which is fine here
-    (
-        umask 077
-        printf '%s\n' "$content" > "$TARGET/.env"
-    )
-    chmod 600 "$TARGET/.env"
+    # exactly one — trailing blank lines collapse, which is fine here.
+    # Temp-then-mv so a failed write never truncates the operator's
+    # .env (CodeRabbit); the temp lives inside .git/ when possible so
+    # an interrupted run can never leave stageable key material.
+    local tmpdir="$TARGET"
+    [ -d "$TARGET/.git" ] && tmpdir="$TARGET/.git"
+    local tmp
+    tmp="$(mktemp "$tmpdir/.env-rewrite.XXXXXX")" || {
+        echo "Error: could not create temp file for the .env rewrite" >&2
+        exit 1
+    }
+    if ! printf '%s\n' "$content" > "$tmp"; then
+        rm -f "$tmp"
+        echo "Error: .env rewrite failed — the seeded .env is untouched" >&2
+        exit 1
+    fi
+    chmod 600 "$tmp"
+    mv "$tmp" "$TARGET/.env"
     echo "Project identity written to .env: PROJECT_NAME=$name TASK_PREFIX=${prefix:-(empty — set at intake; doctor warns until then)}"
 }
 

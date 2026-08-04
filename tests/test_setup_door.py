@@ -787,9 +787,14 @@ class TestEnvSeedingE2E:
 class TestFillEnvIdentityUnits:
     """KIT-0084 F2, sourced: the .env rewrite in isolation."""
 
-    def _target_with_env(self, tmp_path: Path, content: str) -> Path:
-        target = tmp_path / "unit-target"
+    def _target_with_env(
+        self, tmp_path: Path, content: str, name: str = "unit-target"
+    ) -> Path:
+        target = tmp_path / name
         target.mkdir()
+        # a .git dir so the rewrite's temp file takes its real home
+        # (inside .git/, never stageable)
+        (target / ".git").mkdir()
         (target / ".env").write_text(content, encoding="utf-8")
         (target / ".env").chmod(0o600)
         return target
@@ -842,6 +847,36 @@ class TestFillEnvIdentityUnits:
         assert name_lines == ["PROJECT_NAME=unit-target"]
         assert prefix_lines == ["TASK_PREFIX="]
         assert "OPENAI_API_KEY=x" in lines
+
+    def test_export_prefixed_duplicates_deduplicated(self, tmp_path):
+        """CodeRabbit: the doctor accepts `export KEY=`, so an exported
+        duplicate surviving the rewrite would override the identity
+        under last-wins parsers — it must be dropped too."""
+        target = self._target_with_env(
+            tmp_path,
+            "PROJECT_NAME=old\nexport PROJECT_NAME=older\n"
+            "export TASK_PREFIX=ZZZ\nOPENAI_API_KEY=x\n",
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        assert [ln for ln in lines if "PROJECT_NAME" in ln] == [
+            "PROJECT_NAME=unit-target"
+        ]
+        assert [ln for ln in lines if "TASK_PREFIX" in ln] == ["TASK_PREFIX="]
+        assert "OPENAI_API_KEY=x" in lines
+
+    def test_special_char_name_written_quoted(self, tmp_path):
+        """CodeRabbit: a value carrying '#' or spaces is written
+        double-quoted so the doctor (and dotenv parsers) read it back
+        intact; quote characters themselves are stripped."""
+        target = self._target_with_env(
+            tmp_path, "PROJECT_NAME=\nTASK_PREFIX=\n", name="acme #1's"
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        assert 'PROJECT_NAME="acme #1s"' in lines  # quoted; "'" stripped
 
     def test_null_recorded_prefix_writes_empty_never_none(self, tmp_path):
         """fast-v2 review: a JSON null task_prefix must never become

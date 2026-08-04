@@ -282,8 +282,10 @@ Every `--new` project starts with a working `.env`: the door seeds it
 one, else from the project's own `.env.template`, and fills
 `PROJECT_NAME`/`TASK_PREFIX`. What the door cannot invent is your API
 keys. With no `env-source`, a terminal run asks you before copying the
-kit clone's `.env`; a non-interactive run prints the exact `cp`
-command for you to run.
+kit clone's `.env` — the whole file, replacing the just-seeded
+template copy (the door re-fills `PROJECT_NAME`/`TASK_PREFIX`
+afterwards); a non-interactive run prints the exact `cp` command for
+you to run.
 
 **Run that command yourself — do not ask an agent to.** Copying key
 material into a project is an operator-only act: the Claude Code

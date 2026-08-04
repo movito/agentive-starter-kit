@@ -657,6 +657,37 @@ class TestTaskPrefixWarn:
         assert "DOCTOR:env-keys:WARN:" in result.stdout
         assert "TASK_PREFIX" in result.stdout
 
+    def test_valid_then_placeholder_warns_last_wins(self, tmp_path):
+        """CodeRabbit (KIT-0084): dotenv parsers are last-assignment-
+        wins — a trailing placeholder overrides an earlier real value,
+        so the doctor must warn."""
+        (tmp_path / ".env").write_text(
+            self._without_prefix() + "TASK_PREFIX=DEMO\nTASK_PREFIX=TASK\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:WARN:" in result.stdout
+        assert "TASK_PREFIX" in result.stdout
+
+    def test_valid_then_empty_warns_last_wins(self, tmp_path):
+        (tmp_path / ".env").write_text(
+            self._without_prefix() + "TASK_PREFIX=DEMO\nTASK_PREFIX=\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:WARN:" in result.stdout
+        assert "TASK_PREFIX" in result.stdout
+
+    def test_empty_then_valid_passes_last_wins(self, tmp_path):
+        """The copy-template-then-append layout: the template's empty
+        line comes first, the operator's real value last — last wins."""
+        (tmp_path / ".env").write_text(
+            self._without_prefix() + "TASK_PREFIX=\nTASK_PREFIX=DEMO\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:PASS:" in result.stdout
+
     def test_quoted_value_with_hash_not_truncated(self, tmp_path):
         """fast-v2 review: a '#' inside quotes is data, not a comment —
         the old split-then-unquote order corrupted such values."""
