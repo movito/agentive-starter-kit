@@ -714,8 +714,9 @@ class TestEnvSeedingE2E:
         # the kit clone has a .env to carry over) or the add-keys notice
         kit_env = REPO_ROOT / ".env"
         if kit_env.is_file():
-            assert f"cp {kit_env} {target}/.env && chmod 600 {target}/.env" in (
-                result.stdout
+            assert (
+                f'cp "{kit_env}" "{target}/.env" && chmod 600 "{target}/.env"'
+                in result.stdout
             )
             assert "operator" in result.stdout
         else:
@@ -823,6 +824,39 @@ class TestFillEnvIdentityUnits:
         result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
         assert result.returncode == 0, result.stderr
         assert not (target / ".env").exists()
+
+    def test_duplicate_identity_lines_deduplicated(self, tmp_path):
+        """fast-v2/o3 review: dotenv parsers are last-assignment-wins,
+        so a surviving duplicate would silently override the identity
+        the door just wrote — later duplicates must be dropped."""
+        target = self._target_with_env(
+            tmp_path,
+            "PROJECT_NAME=old-one\nOPENAI_API_KEY=x\n"
+            "PROJECT_NAME=old-two\nTASK_PREFIX=AAA\nTASK_PREFIX=BBB\n",
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        name_lines = [ln for ln in lines if ln.startswith("PROJECT_NAME=")]
+        prefix_lines = [ln for ln in lines if ln.startswith("TASK_PREFIX=")]
+        assert name_lines == ["PROJECT_NAME=unit-target"]
+        assert prefix_lines == ["TASK_PREFIX="]
+        assert "OPENAI_API_KEY=x" in lines
+
+    def test_null_recorded_prefix_writes_empty_never_none(self, tmp_path):
+        """fast-v2 review: a JSON null task_prefix must never become
+        the literal string 'None' in .env."""
+        target = self._target_with_env(tmp_path, "TASK_PREFIX=TASK\n")
+        state_dir = target / ".kit" / "context"
+        state_dir.mkdir(parents=True)
+        (state_dir / "current-state.json").write_text(
+            '{"project": {"name": "x", "task_prefix": null}}', encoding="utf-8"
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=single; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        assert "TASK_PREFIX=" in lines
+        assert "TASK_PREFIX=None" not in lines
 
 
 SECRET = "KIT0056-FIXTURE-SECRET-NEVER-PRINT"

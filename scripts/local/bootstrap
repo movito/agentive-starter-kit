@@ -631,6 +631,13 @@ offer_env_carryover() {  # KIT-0084 F3 — operator-consented key carry-over
         echo "No API keys seeded — add them to $TARGET/.env ('project doctor' names what is missing)"
         return 0
     fi
+    # same source-mode courtesy warning as apply_env_source (claude-code
+    # review, this PR)
+    local mode
+    mode="$(stat -f '%Lp' "$kit_env" 2>/dev/null || stat -c '%a' "$kit_env" 2>/dev/null || echo unknown)"
+    if [ "$mode" != "600" ]; then
+        echo "Warning: $kit_env is mode $mode (0600 expected) — tighten it: chmod 600 $kit_env" >&2
+    fi
     if is_tty; then
         local ans
         ans="$(prompt_yn "Copy API keys from $kit_env into the new project's .env?")"
@@ -639,18 +646,20 @@ offer_env_carryover() {  # KIT-0084 F3 — operator-consented key carry-over
             echo "Seeded .env from $kit_env (mode 0600, gitignored; contents never printed)"
         else
             echo "Keys not copied — add them to $TARGET/.env yourself, or run:"
-            echo "    cp $kit_env $TARGET/.env && chmod 600 $TARGET/.env"
+            echo "    cp \"$kit_env\" \"$TARGET/.env\" && chmod 600 \"$TARGET/.env\""
             echo "  (then re-check PROJECT_NAME/TASK_PREFIX in it — 'project doctor' flags them)"
         fi
     else
         echo "API keys not seeded (non-interactive) — as the operator, run:"
-        echo "    cp $kit_env $TARGET/.env && chmod 600 $TARGET/.env"
+        echo "    cp \"$kit_env\" \"$TARGET/.env\" && chmod 600 \"$TARGET/.env\""
         echo "  (operator-only: agents must never copy key material; then re-check"
         echo "   PROJECT_NAME/TASK_PREFIX in it and re-run 'project doctor')"
     fi
 }
 
 fill_env_identity() {  # KIT-0084 F2 — PROJECT_NAME/TASK_PREFIX, --new only
+    # Callers must have seeded $TARGET/.env via copy_env_into_target
+    # (which verifies the gitignore) — this rewrite adds no new file.
     [ -f "$TARGET/.env" ] || return 0
     local name prefix=""
     name="$(basename "$TARGET")"
@@ -664,25 +673,41 @@ import sys
 
 try:
     with open(sys.argv[1], encoding="utf-8") as f:
-        print(json.load(f)["project"]["task_prefix"])
+        value = json.load(f)["project"]["task_prefix"]
 except (OSError, ValueError, KeyError):
-    pass
+    value = None
+# a JSON null must yield nothing, never the string "None" (fast-v2
+# evaluator, this PR)
+if isinstance(value, str):
+    print(value)
 PYEOF
 )" || prefix=""
         [ -n "$prefix" ] || prefix="$PREFIX"
     fi
+    # newlines/CRs in a folder name or prefix would smuggle extra
+    # assignments into .env — strip them (o3 review, this PR; the
+    # values are operator-owned, so this is hardening, not a trust
+    # boundary)
+    name="${name//$'\n'/}"; name="${name//$'\r'/}"
+    prefix="${prefix//$'\n'/}"; prefix="${prefix//$'\r'/}"
     # planning shape: no prefix exists at door time — written EMPTY,
     # never 'TASK'; intake decides it and doctor warns meanwhile.
     # Rewrite in memory (no temp file: a leaked temp beside .env would
     # not be gitignored), values passed via ENVIRON — never
     # interpolated into the awk program.
+    # first assignment rewritten, later DUPLICATES dropped — dotenv
+    # parsers are last-assignment-wins, so a surviving duplicate would
+    # silently override the identity just written (fast-v2 evaluator,
+    # this PR)
     local content
     content="$(ENV_NAME="$name" ENV_PREFIX="$prefix" awk '
-        !seen_name && /^PROJECT_NAME=/ {
-            print "PROJECT_NAME=" ENVIRON["ENV_NAME"]; seen_name = 1; next
+        /^PROJECT_NAME=/ {
+            if (!seen_name++) print "PROJECT_NAME=" ENVIRON["ENV_NAME"]
+            next
         }
-        !seen_prefix && /^TASK_PREFIX=/ {
-            print "TASK_PREFIX=" ENVIRON["ENV_PREFIX"]; seen_prefix = 1; next
+        /^TASK_PREFIX=/ {
+            if (!seen_prefix++) print "TASK_PREFIX=" ENVIRON["ENV_PREFIX"]
+            next
         }
         { print }
         END {
@@ -690,6 +715,8 @@ PYEOF
             if (!seen_prefix) print "TASK_PREFIX=" ENVIRON["ENV_PREFIX"]
         }
     ' "$TARGET/.env")"
+    # command substitution strips trailing newlines; printf restores
+    # exactly one — trailing blank lines collapse, which is fine here
     (
         umask 077
         printf '%s\n' "$content" > "$TARGET/.env"

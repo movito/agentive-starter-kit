@@ -657,6 +657,24 @@ class TestTaskPrefixWarn:
         assert "DOCTOR:env-keys:WARN:" in result.stdout
         assert "TASK_PREFIX" in result.stdout
 
+    def test_quoted_value_with_hash_not_truncated(self, tmp_path):
+        """fast-v2 review: a '#' inside quotes is data, not a comment —
+        the old split-then-unquote order corrupted such values."""
+        (tmp_path / ".env").write_text(
+            self._without_prefix() + 'TASK_PREFIX="PROJ#1"\n', encoding="utf-8"
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:PASS:" in result.stdout
+
+    def test_quoted_key_with_hash_is_present(self, tmp_path):
+        (tmp_path / ".env").write_text(
+            'ANTHROPIC_API_KEY="sk-test#part"\nOPENAI_API_KEY=x\n'
+            "GEMINI_API_KEY=y\nTASK_PREFIX=DEMO\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:PASS:" in result.stdout
+
 
 def _stub_executable(path: Path, body: str) -> None:
     path.write_text("#!/bin/bash\n" + textwrap.dedent(body), encoding="utf-8")

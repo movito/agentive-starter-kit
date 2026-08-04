@@ -470,8 +470,8 @@ class TestProfiles:
         seeded = claude_path.read_text(encoding="utf-8")
         begin = "<!-- BEGIN KIT-LOCAL: first-session -->\n"
         end = "<!-- END KIT-LOCAL: first-session -->"
-        head, rest = seeded.split(begin)
-        _, tail = rest.split(end)
+        head, rest = seeded.split(begin, 1)
+        _, tail = rest.split(end, 1)
         claude_path.write_text(
             head + begin + legacy_body + "\n" + end + tail, encoding="utf-8"
         )

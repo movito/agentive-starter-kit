@@ -35,6 +35,22 @@ RECOMMENDED_KEYS = ["OPENAI_API_KEY", "GEMINI_API_KEY"]
 PREFIX_PLACEHOLDER = "TASK"
 
 
+def _effective_value(raw):
+    """Normalize an assignment's right-hand side: a QUOTED value keeps
+    everything inside the quotes (a '#' inside quotes is data — the
+    old split-then-unquote order corrupted such values, fast-v2
+    evaluator KIT-0084); an unquoted trailing `# comment` is not a
+    value, and quoted-empty ("" / '') is empty — KEY="" or
+    KEY= # placeholder must not PASS an unusable env.
+    """
+    value = raw.strip()
+    if value and value[0] in "\"'":
+        closing = value.find(value[0], 1)
+        if closing != -1:
+            return value[1:closing].strip()
+    return value.split("#", 1)[0].strip()
+
+
 def key_state(lines, key):
     """Return 'present', 'commented', or 'missing' for key. Values unread.
 
@@ -52,13 +68,7 @@ def key_state(lines, key):
             stripped = stripped[len("export ") :].lstrip()
         if stripped.startswith(f"{key}="):
             _, _, value = stripped.partition("=")
-            # normalize before judging: an unquoted trailing `# comment`
-            # is not a value, and quoted-empty ("" / '') is empty —
-            # KEY="" or KEY= # placeholder must not PASS an unusable env
-            value = value.split("#", 1)[0].strip()
-            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-                value = value[1:-1].strip()
-            if value:
+            if _effective_value(value):
                 return "present"
             state = "commented"
             continue
@@ -81,9 +91,7 @@ def key_value(lines, key):
             stripped = stripped[len("export ") :].lstrip()
         if stripped.startswith(f"{key}="):
             _, _, value = stripped.partition("=")
-            value = value.split("#", 1)[0].strip()
-            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-                value = value[1:-1].strip()
+            value = _effective_value(value)
             if value:
                 return value
             value_seen = ""
