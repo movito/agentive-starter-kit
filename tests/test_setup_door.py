@@ -832,7 +832,7 @@ class TestFillEnvIdentityUnits:
         target = self._target_with_env(
             tmp_path,
             "PROJECT_NAME=old-one\nOPENAI_API_KEY=x\n"
-            "PROJECT_NAME=old-two\nTASK_PREFIX=AAA\nTASK_PREFIX=BBB\n",
+            "  PROJECT_NAME=old-two\nTASK_PREFIX=AAA\nTASK_PREFIX=BBB\n",
         )
         result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
         assert result.returncode == 0, result.stderr

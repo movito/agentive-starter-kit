@@ -699,13 +699,15 @@ PYEOF
     # parsers are last-assignment-wins, so a surviving duplicate would
     # silently override the identity just written (fast-v2 evaluator,
     # this PR)
+    # indentation tolerated to stay in step with the doctor's reader,
+    # which strips lines before matching (fast-v2 round 2)
     local content
     content="$(ENV_NAME="$name" ENV_PREFIX="$prefix" awk '
-        /^PROJECT_NAME=/ {
+        /^[[:space:]]*PROJECT_NAME=/ {
             if (!seen_name++) print "PROJECT_NAME=" ENVIRON["ENV_NAME"]
             next
         }
-        /^TASK_PREFIX=/ {
+        /^[[:space:]]*TASK_PREFIX=/ {
             if (!seen_prefix++) print "TASK_PREFIX=" ENVIRON["ENV_PREFIX"]
             next
         }
