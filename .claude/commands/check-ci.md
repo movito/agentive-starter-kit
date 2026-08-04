@@ -57,6 +57,20 @@ The script will output a clear verdict:
 
 Report the script output to the user. The script provides actionable next steps.
 
+## If NO Tests run exists for an open PR's head
+
+The `pull_request` event can silently fail to fire (observed on PR #105,
+2026-08-04: bots ran, zero Tests runs on the head, while same-day PRs
+triggered normally). The evidence-equivalent remedy is a manual dispatch
+against the branch — the run attaches to the same head SHA:
+
+```bash
+gh workflow run test.yml --ref <branch>
+```
+
+Then re-run the verification above. If this recurs on a second PR, treat
+it as a repo-config incident (report to the planner), not a fluke.
+
 ## Emit milestone event (optional, fire-and-forget — requires dispatch-kit)
 
 ```bash

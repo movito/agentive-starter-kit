@@ -153,6 +153,26 @@ overrides any allow, by design, and is not a gap to fix. Agents use
 sweep list of leftovers for the operator; nothing in the kit asks for
 an rm-rf allowlist.
 
+## Triage: pre-commit `pytest: command not found`
+
+**Symptom**: a bare `git commit` in a fresh worktree fails the
+pytest-fast hook with `/bin/bash: pytest: command not found`, even though
+the worktree has a provisioned `.venv` (KIT-0084 session, 2026-08-04).
+
+**Cause**: git hooks run with the invoking shell's PATH; nothing activates
+the worktree's venv for the hook environment.
+
+**Fix**: prefix the PATH for the commit:
+
+```bash
+PATH="$PWD/.venv/bin:$PATH" git commit -m "..."
+```
+
+Candidate structural fix (unfiled): make the pytest-fast hook entry prefer
+`.venv/bin/pytest` when present. Until then, this incantation is the
+supported path. Do NOT reach for `SKIP_TESTS=1` for this symptom — that
+skips your own tests too.
+
 ## Closeout
 
 When the task completes:

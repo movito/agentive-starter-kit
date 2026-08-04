@@ -38,6 +38,10 @@ time instead of being discovered by the operator in a fresh project.
     (guards the "repo looks empty" failure, KIT-0081 F8)
   - **Evaluator path**: `project install-evaluators` succeeds or the
     scaffold carries what it needs (guards KIT-0079)
+  - **Seeded-.env invariants** (added post-KIT-0084, PR #105): `.env`
+    present, mode 0600, gitignored, `PROJECT_NAME` filled, `TASK_PREFIX`
+    never `TASK`, no secret value in captured output — assertions already
+    modeled in `tests/test_setup_door.py::TestEnvSeedingE2E`; reuse them
 - **F2 — CI wiring**: runs on PRs touching `scripts/local/engine-*`,
   `scripts/local/bootstrap`, the export manifest, or `.claude/agents/`;
   runnable locally in < 1 min.

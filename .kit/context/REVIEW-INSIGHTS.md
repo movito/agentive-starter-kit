@@ -204,6 +204,13 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Stale-venv drift, second incident — this time it MUTATED files**: `.venv` carried adversarial-workflow 0.9.7 (aider-era transport, applies SEARCH/REPLACE edits to the working tree during review) while the system had the aider-free 1.0.1. Venv-context runs got the mutating engine; shell runs didn't — split-brain behavior identical in shape to the KIT-0032 stale-Black phantom. Venv upgraded to 1.0.1 (2026-07-14). Defense in depth stays: `git status` after every evaluator run (code-review-evaluator skill, Step 3). Candidate follow-up: generalize KIT-0035 F1's version-drift warning beyond Black. (KIT-0044 diagnosis)
 - **Harness cwd-reset in worktree sessions is unresolved**: the shell cwd resets to the primary clone between Bash calls even in a worktree-launched session; `cd`/`git -C` prefixes persist. One more session of data, then document as standing pattern in WORKTREE-WORKFLOW.md or escalate. (KIT-0044)
 
+- **Handoffs with VERIFIED line-number anchors arrive accurate** — every F→line mapping in the KIT-0084 handoff held on pre-implementation verification; the only surprise was additive (the export engine records the derived prefix in `current-state.json`, which became F2's read source). Verify anchors at handoff time; the implementer then spends verification only on what the planner couldn't know. (KIT-0084)
+- **Evaluator cost ≠ signal**: o3 (deep, $0.33) returned FAIL with 4/6 findings rejected as unreachable-or-by-design, while fast-v2 (~$0.01) found the two real correctness bugs. Run the cheap evaluator first and treat deep-model FAILs as claims to verify, not verdicts. Also: a rejected finding re-raised by a bot with a sharper repro can legitimately flip to accepted — the reject-with-reasoning loop works but costs a round. (KIT-0084)
+- **The `pull_request` CI event can silently not fire on a PR** (PR #105: zero Tests runs on the head while same-day PRs triggered normally). Evidence-equivalent remedy: `gh workflow run test.yml --ref <branch>` — the verdict attaches to the same head SHA. One recurrence upgrades this from fluke to repo-config incident. (KIT-0084)
+- **`agent-handoffs.json` is a global-mutable-JSON conflict generator**: `project start|move` rewrites task paths in it on feature branches (`_sync_coordination_metadata`, project:144) while the planner edits brief_notes on main — blocked PR #105's squash-merge. Structural fix tasked as KIT-0086; until it lands, the planner defers handoffs edits while a task's PR is in flight. (KIT-0084)
+- **Worktree pre-commit needs the venv on PATH**: bare `git commit` in a fresh worktree fails pytest-fast with `pytest: command not found`; `PATH="$PWD/.venv/bin:$PATH" git commit` is the incantation (now noted in WORKTREE-WORKFLOW.md). (KIT-0084)
+- **`"" in <any-string>` is True** — the empty-string-substring gotcha: guard membership tests against empty needles before `in`. Caught in seconds by a pre-existing empty-key doctor test — fixture depth from earlier incidents pays compound interest. (KIT-0084)
+
 ---
 
 ## ADR Candidates
@@ -212,4 +219,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-07-28 by planner-f5 (KIT-0077 extraction: repair-loop regressions, green-by-construction guards, retirement two-surfaces, depth_anchored_sweeps)*
+*Last updated: 2026-08-04 by planner-f5 (KIT-0084 extraction: verified anchors, evaluator cost≠signal, pull_request event fallback, handoffs conflict class, worktree PATH, empty-substring gotcha)*
