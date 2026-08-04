@@ -26,7 +26,7 @@ tests/                pytest test suite
 <!-- BEGIN KIT-LOCAL: project-rules -->
 ## Project Rules
 
-### Python (v3.10-3.12)
+### Python (v3.10+)
 
 - **Formatter**: Black (exact pin in pyproject.toml, line-length=88)
 - **Import sorting**: isort (profile=black)
