@@ -23,12 +23,21 @@ not here.
   concludes the install is incomplete. The tail should reflect what was
   actually resolved (say "verify", or omit the line when flags filled it).
 
-- **F2 — planning scaffold omits files the seeded planner references.**
-  `agent-handoffs.json` is absent from `.kit/context/` (planner reads and
-  updates it from Phase 1 on), and `.kit/tasks/9-reference/templates/
-  task-template.md` (planner Phase 2's task template) does not exist —
-  the scaffold creates task folders 1–7 only. Either ship both in the
-  planning scaffold or remove the references from the seeded agents.
+- **F2 — planning scaffold omits files the seeded agents reference.**
+  Verified by grepping every `docs/…`/`.kit/…` path out of the seeded
+  `planner.md` + `feature-developer.md` and testing existence. Missing:
+  `.kit/context/agent-handoffs.json` (planner reads it from Phase 1 on),
+  `.kit/tasks/9-reference/templates/task-template.md` (Phase 2's task
+  template — the scaffold creates task folders 1–7 only),
+  `docs/CROSS-REPO-PATTERN.md` (the doc the planner routes every git
+  operation by — a split-pair scaffold shipping without the split-pair
+  pattern doc is the worst of these), `.kit/adr/KIT-ADR-0019-…` (Phase 7
+  knowledge extraction), `.kit/context/REVIEW-INSIGHTS.md`, and
+  `docs/MANIFEST-UPGRADE-GUIDE.md` (frontmatter model-pin note). Ship
+  them in the planning scaffold or trim the references from the seeded
+  agents. (All but the last were backfilled by hand into
+  ev-fast-charging-loads-planning, commit "chore: backfill scaffold
+  gaps"; use it as the reference for what a usable planning repo needed.)
 
 - **F3 — intake doesn't guard `init.defaultBranch`.** On a machine without
   `init.defaultBranch=main`, the code repo's first push lands on `master`
@@ -56,6 +65,17 @@ not here.
   which the consumer engine nominally owns exclusively. Either bless a
   `bootstrap --retarget`/`project retarget` mechanism or document that
   hand-editing the region is the sanctioned rename procedure.
+
+- **F8 — a fresh planning repo LOOKS empty to the operator.** Everything
+  the scaffold ships lives in dot-folders (`.claude/`, `.kit/`,
+  `.adversarial/`); the only Finder-visible contents are `CLAUDE.md` and
+  `scripts/`. The operator's actual reaction (2026-08-04): "what I have
+  is barely anything — no .claude folder with agents, no .kit folder" —
+  for a repo of 219 files. Ship a README.md in the planning scaffold
+  that says what the repo is and maps the hidden folders (the backfilled
+  README in ev-fast-charging-loads-planning is a working draft). Earlier
+  single-shape ASK exports shipped a README + docs/ and did not have
+  this failure mode.
 
 - **F7 — placeholder project-context says `Topology: single-repo` in a
   planning-shape scaffold.** `kit_markers.py`'s placeholder body is

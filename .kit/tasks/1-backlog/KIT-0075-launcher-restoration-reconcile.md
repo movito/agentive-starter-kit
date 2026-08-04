@@ -62,6 +62,18 @@ the record and modernizes the tool.
 - Lesson banked in REVIEW-INSIGHTS: a deletion decision must
   enumerate the tool's FUNCTIONS, not its directory.
 
+## Added evidence (2026-08-04, ev-fast-charging-loads intake)
+
+Second operator regression report, same shape as the parent: a fresh
+planning-shape repo (door `--new --shape planning`) does not ship
+`.kit/launchers/launch`; the operator's first move in the new repo was
+`launch planner-f5`, which failed with "no .kit/launchers/launch found
+… or any parent". F4's consumer question is now answered empirically
+twice: the operator expects `launch` in every repo they work in. The
+planner hand-copied the kit's launcher into
+ev-fast-charging-loads-planning as an interim fix; F4 should make the
+export/scaffold ship it (or the door's tail must say how to get it).
+
 ## Added evidence + scope (2026-07-29, fresh-project test)
 
 Operator launched the create-project agent via `launch`: (a) the
