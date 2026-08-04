@@ -4,7 +4,7 @@
     "current_task": "KIT-0084",
     "task_started": null,
     "brief_note": "2026-08-04: ev-fast-charging-loads intake surfaced issues #103/#104 -> KIT-0083/KIT-0084 (both arch-review-fast APPROVED). KIT-0084 (working .env from day one) now in 3-in-progress with feature-developer (PR #105); KIT-0083 next in 2-todo (pin-home decision coordinates with #60/KIT-0079). KIT-0078 remains in todo, queue-jumped by operator direction. Milestone framing: 0.9.1 ships-working-scaffolds (KIT-0075/0079/0080/0081/0082/0083/0084).",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0084-working-env-from-day-one.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0084-working-env-from-day-one.md",
     "handoff_file": ".kit/context/KIT-0084-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0084",
     "task_started": null,
     "brief_note": "KIT-0084 ready: door seeds .env (extend apply_env_source fallback), fill PROJECT_NAME/TASK_PREFIX, doctor WARN on TASK default, operator-only key carry-over, first-session doctor line. Anchors in handoff. Worktree: ../ask-worktrees/KIT-0084 via plain git worktree (helper broken on this machine, KIT-0080). KIT-0078 handoff still pending in todo.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0084-working-env-from-day-one.md",
+    "details_link": ".kit/tasks/4-in-review/KIT-0084-working-env-from-day-one.md",
     "handoff_file": ".kit/context/KIT-0084-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {
