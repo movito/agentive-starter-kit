@@ -132,10 +132,11 @@ Verified against the current files:
       validates the pair, leaves the placeholder LAUNCH block intact,
       and prints the completing step; the full mode on the same input
       later finishes provisioning without re-ingesting
-- [ ] The operator's PLAY-0001 worked example (external starter written
-      under these constraints, deviations flagged inline) passes the
-      author-time checklist and adopts cleanly — use it as the
-      acceptance fixture once provided
+- [ ] The PLAY-0001 worked example (external starter written under
+      these constraints, deviations flagged inline — committed at
+      `tests/fixtures/external-starter/`) passes the author-time
+      checklist with zero deviations needing a coordinator note, and
+      adopts cleanly
 - [ ] Template references resolve: task spec format linked,
       agent-handoffs.json entry example inlined; template re-versioned
       with the change documented in its header
@@ -153,11 +154,12 @@ Verified against the current files:
 
 ## Notes
 
-- The operator has a worked example (PLAY-0001 starter + handoff,
-  written externally with deviations flagged inline) offered as a test
-  case — request the files and commit them as a fixture under
-  `.kit/tasks/9-reference/` or `tests/fixtures/` before implementation
-  starts.
+- The operator's worked example (PLAY-0001 starter + handoff, written
+  externally with deviations flagged inline) is committed at
+  `tests/fixtures/external-starter/` (Vercel IDs placeholdered; see the
+  fixture README for provenance). The project it came from is live —
+  after this task ships, re-adopting the PLAY-0001 pair through the new
+  flow is the end-to-end check that no ad-hoc deviations remain.
 - F2 interacts with the in-checkout flow too: even planner-authored
   starters should stamp from the stub rather than copy helper stdout —
   one mechanism, two entry points.
