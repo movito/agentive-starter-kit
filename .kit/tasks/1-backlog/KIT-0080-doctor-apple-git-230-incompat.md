@@ -1,7 +1,8 @@
 # KIT-0080: doctor.d checks + tests break on Apple git 2.30.1
 
 **Status**: Backlog
-**Priority**: medium (cosmetic warning + 8 red tests on macOS system git; doctor still reports correctly)
+**Priority**: high (raised from medium 2026-08-04 — see S3: the same root
+cause silently disables operator-preset resolution in the setup door)
 **Created**: 2026-08-04
 
 ## Overview
@@ -47,6 +48,24 @@ git.
   paths. These blocked the pre-commit `pytest-fast` guard during the
   KIT doc-ceiling commit (committed with `SKIP_TESTS=1`;
   Markdown-only change, unrelated).
+
+- **S3 — the setup door never finds the operator preset** (found
+  during the ev-fast-charging-loads intake, 2026-08-04; this is NOT
+  cosmetic): `scripts/local/bootstrap:161` (`config_home()`) uses the
+  same `rev-parse --path-format=absolute --git-common-dir` pattern.
+  On git 2.30.1 `$common` becomes the two-line string
+  `--path-format=absolute\n.git`, the nested `dirname` calls error
+  (the `dirname: illegal option -- -` seen at door startup), and the
+  config home resolves to the relative garbage `./agentive-config`.
+  Consequence: even a correctly-authored preset at
+  `<kit-parent>/agentive-config/preset` is silently ignored on every
+  door run — evaluators, env-source, bots and shape answers all fall
+  back to skip/default. This plausibly explains the operator's
+  repeated "planning repo not properly created" experiences. The
+  audit in F1 must therefore include `scripts/local/bootstrap`,
+  `scripts/local/new-worktree.sh:36` (its line-42 guard catches the
+  garbage and hard-exits, so worktree creation is dead on this git),
+  and `scripts/core/project:1512` — not just doctor.d.
 
 ## Requirements
 
