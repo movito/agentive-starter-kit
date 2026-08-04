@@ -1,6 +1,6 @@
 # KIT-0084: New projects start with a working .env — seeded, filled, operator-consented
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high (blocks the first evaluation in every fresh project; agents cannot self-serve the fix)
 **Type**: Infrastructure
 **Estimated Effort**: 3-5 h
