@@ -454,6 +454,32 @@ class TestProfiles:
         assert "first-session region customized — left in place" in result.stdout
         assert custom_line in claude_path.read_text(encoding="utf-8")
 
+    def test_no_kit_rebootstrap_removes_legacy_first_session_body(self, tmp_path):
+        # KIT-0084 upgrade path: a consumer seeded BEFORE the body
+        # gained the doctor/env-keys sentence carries the legacy text
+        # verbatim — that is unmodified, not customized, and --no-kit
+        # must still remove it
+        legacy_body = (
+            "First session in this repo: invoke the `planner` agent"
+            " (in a new tab) — it triages the backlog and recommends"
+            " what to start."
+        )
+        target = make_consumer_dir(tmp_path, "legacy-body")
+        assert run_bootstrap(target).returncode == 0
+        claude_path = target / "CLAUDE.md"
+        seeded = claude_path.read_text(encoding="utf-8")
+        begin = "<!-- BEGIN KIT-LOCAL: first-session -->\n"
+        end = "<!-- END KIT-LOCAL: first-session -->"
+        head, rest = seeded.split(begin, 1)
+        _, tail = rest.split(end, 1)
+        claude_path.write_text(
+            head + begin + legacy_body + "\n" + end + tail, encoding="utf-8"
+        )
+        result = run_bootstrap(target, "--no-kit")
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "first-session region removed" in result.stdout
+        assert "first-session" not in claude_path.read_text(encoding="utf-8")
+
     def test_no_kit_malformed_marker_fails_loud_without_data_loss(self, tmp_path):
         # CodeRabbit (this PR): a first-session BEGIN marker whose END
         # marker is missing must abort the --no-kit re-bootstrap loudly

@@ -888,6 +888,9 @@ fi
 # letting the awk below eat everything to EOF (fast-gate evaluator
 # round 2, KIT-0067). Only for regions an install MODE invalidates.
 remove_region_if_unmodified() {
+    # $4 (optional): a LEGACY seeded body — a consumer seeded before
+    # the kit's text changed still carries the old body verbatim, and
+    # that is "unmodified", not "customized" (KIT-0084 upgrade path).
     if ! printf '%s\n' "$REGIONS_OUT" | grep -qx "$1"; then
         return 0
     fi
@@ -896,7 +899,7 @@ remove_region_if_unmodified() {
         echo "       $REGION_BODY_NOW"
         exit 1
     fi
-    if [ "$REGION_BODY_NOW" != "$2" ]; then
+    if [ "$REGION_BODY_NOW" != "$2" ] && { [ -z "${4:-}" ] || [ "$REGION_BODY_NOW" != "$4" ]; }; then
         echo "  $1 region customized — left in place (consumer-owned)"
         return 0
     fi
@@ -916,12 +919,15 @@ remove_region_if_unmodified() {
 # closes by telling a cold-open session what to do first. Only where
 # the planner actually ships (--no-kit prunes the kit agents — and
 # removes an unmodified region left by an earlier kit-enabled install).
-FIRST_SESSION_BODY="First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start."
+# The pre-KIT-0084 body: consumers seeded with it and left unmodified
+# must still count as unmodified on a --no-kit re-bootstrap.
+FIRST_SESSION_BODY_LEGACY="First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start."
+FIRST_SESSION_BODY="First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start. Before the first evaluation, verify \`./scripts/core/project doctor\` reports env-keys green (API keys are operator-provisioned — see .env)."
 if [ "$KIT_ENABLED" -eq 1 ]; then
     seed_region first-session "$FIRST_SESSION_BODY" "planner self-direction"
 else
     remove_region_if_unmodified first-session "$FIRST_SESSION_BODY" \
-        "--no-kit: planner not shipped"
+        "--no-kit: planner not shipped" "$FIRST_SESSION_BODY_LEGACY"
 fi
 echo
 

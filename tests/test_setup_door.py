@@ -19,6 +19,7 @@ it is excluded from the consumer tests/ rsync in engine-consumer.sh
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -676,6 +677,219 @@ class TestNewE2E:
         region = _kit_install_region(target)
         assert "shape: planning" in region
         assert "profile: none" in region
+
+
+def _env_lines(target: Path) -> list[str]:
+    return (target / ".env").read_text(encoding="utf-8").splitlines()
+
+
+def _assert_env_invariants(target: Path, env: dict) -> None:
+    """KIT-0084 F1: present, mode 0600, gitignored."""
+    dotenv = target / ".env"
+    assert dotenv.is_file(), ".env must be seeded on --new"
+    assert (dotenv.stat().st_mode & 0o777) == 0o600
+    check_ignore = subprocess.run(
+        ["git", "-C", str(target), "check-ignore", "-q", ".env"],
+        env=env,
+        timeout=30,
+    )
+    assert check_ignore.returncode == 0, ".env must be gitignored"
+
+
+@pytest.mark.slow
+class TestEnvSeedingE2E:
+    """KIT-0084: every --new target ends with a working, safe .env."""
+
+    def test_new_single_seeds_env_with_identity(self, tmp_path):
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
+        target = tmp_path / "fresh-env-app"
+        result = run_door("--new", str(target), "--prefix", "FEA", env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Seeded .env from .env.template" in result.stdout
+        _assert_env_invariants(target, env)
+        lines = _env_lines(target)
+        assert "PROJECT_NAME=fresh-env-app" in lines
+        assert "TASK_PREFIX=FEA" in lines
+        # F3, non-TTY face: the operator gets the exact command (when
+        # the kit clone has a .env to carry over) or the add-keys notice
+        kit_env = REPO_ROOT / ".env"
+        if kit_env.is_file():
+            # install -m 600: the copy is born 0600, no cp+chmod window
+            assert f'install -m 600 "{kit_env}" "{target}/.env"' in result.stdout
+            assert "operator" in result.stdout
+        else:
+            assert "No API keys seeded" in result.stdout
+
+    def test_new_single_default_prefix_matches_recorded_state(self, tmp_path):
+        """Without --prefix the export engine derives one; the .env line
+        must be the RECORDED value, never re-derived and never TASK."""
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
+        target = tmp_path / "derived-app"
+        result = run_door("--new", str(target), env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        _assert_env_invariants(target, env)
+        state = json.loads(
+            (target / ".kit" / "context" / "current-state.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        recorded = state["project"]["task_prefix"]
+        assert recorded  # the export engine always derives something
+        lines = _env_lines(target)
+        assert f"TASK_PREFIX={recorded}" in lines
+        assert "TASK_PREFIX=TASK" not in lines
+
+    def test_new_planning_seeds_env_with_empty_prefix(self, tmp_path):
+        """Planning shape has no prefix at door time — written EMPTY
+        (doctor warns until intake decides it), never 'TASK'."""
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
+        target = tmp_path / "fresh-env-planning"
+        result = run_door(
+            "--new",
+            str(target),
+            "--shape",
+            "planning",
+            "--target-path",
+            "../product",
+            env=env,
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Seeded .env from .env.template" in result.stdout
+        _assert_env_invariants(target, env)
+        lines = _env_lines(target)
+        assert "PROJECT_NAME=fresh-env-planning" in lines
+        assert "TASK_PREFIX=" in lines  # the line exists, empty
+        assert "TASK_PREFIX=TASK" not in lines
+
+    def test_env_source_seeded_env_gets_identity_filled(self, tmp_path):
+        """The preset env-source path (F6) gains the identity fields
+        too — appended when the operator's template lacks them — and
+        the secret still never surfaces."""
+        _cfg, env = _demo_preset_env(tmp_path)
+        target = tmp_path / "preset-env-app"
+        result = run_door("--new", str(target), env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        _assert_env_invariants(target, env)
+        lines = _env_lines(target)
+        assert f"OPENAI_API_KEY={SECRET}" in lines  # carried over intact
+        assert "PROJECT_NAME=preset-env-app" in lines
+        # appended: single shape reads the export engine's recorded prefix
+        prefix_lines = [ln for ln in lines if ln.startswith("TASK_PREFIX=")]
+        assert prefix_lines and prefix_lines[0] not in ("TASK_PREFIX=TASK",)
+        assert SECRET not in result.stdout + result.stderr
+        # env-source present → no template seeding, no carry-over offer
+        assert "Seeded .env from .env.template" not in result.stdout
+        assert "API keys not seeded" not in result.stdout
+
+
+class TestFillEnvIdentityUnits:
+    """KIT-0084 F2, sourced: the .env rewrite in isolation."""
+
+    def _target_with_env(
+        self, tmp_path: Path, content: str, name: str = "unit-target"
+    ) -> Path:
+        target = tmp_path / name
+        target.mkdir()
+        # a .git dir so the rewrite's temp file takes its real home
+        # (inside .git/, never stageable)
+        (target / ".git").mkdir()
+        (target / ".env").write_text(content, encoding="utf-8")
+        (target / ".env").chmod(0o600)
+        return target
+
+    def test_planning_rewrites_placeholder_to_empty(self, tmp_path):
+        target = self._target_with_env(
+            tmp_path, "PROJECT_NAME=\nTASK_PREFIX=TASK\nOPENAI_API_KEY=x\n"
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        assert "PROJECT_NAME=unit-target" in lines
+        assert "TASK_PREFIX=" in lines
+        assert "TASK_PREFIX=TASK" not in lines
+        assert "OPENAI_API_KEY=x" in lines  # untouched
+        assert ((target / ".env").stat().st_mode & 0o777) == 0o600
+
+    def test_missing_lines_appended_commented_left_alone(self, tmp_path):
+        target = self._target_with_env(
+            tmp_path, "# PROJECT_NAME=commented\nOPENAI_API_KEY=x\n"
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        text = (target / ".env").read_text(encoding="utf-8")
+        assert "# PROJECT_NAME=commented" in text  # comments never rewritten
+        assert "PROJECT_NAME=unit-target" in text.splitlines()
+        assert "TASK_PREFIX=" in text.splitlines()
+
+    def test_no_env_file_is_a_quiet_noop(self, tmp_path):
+        target = tmp_path / "no-env"
+        target.mkdir()
+        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        assert not (target / ".env").exists()
+
+    def test_duplicate_identity_lines_deduplicated(self, tmp_path):
+        """fast-v2/o3 review: dotenv parsers are last-assignment-wins,
+        so a surviving duplicate would silently override the identity
+        the door just wrote — later duplicates must be dropped."""
+        target = self._target_with_env(
+            tmp_path,
+            "PROJECT_NAME=old-one\nOPENAI_API_KEY=x\n"
+            "  PROJECT_NAME=old-two\nTASK_PREFIX=AAA\nTASK_PREFIX=BBB\n",
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        name_lines = [ln for ln in lines if ln.startswith("PROJECT_NAME=")]
+        prefix_lines = [ln for ln in lines if ln.startswith("TASK_PREFIX=")]
+        assert name_lines == ["PROJECT_NAME=unit-target"]
+        assert prefix_lines == ["TASK_PREFIX="]
+        assert "OPENAI_API_KEY=x" in lines
+
+    def test_export_prefixed_duplicates_deduplicated(self, tmp_path):
+        """CodeRabbit: the doctor accepts `export KEY=`, so an exported
+        duplicate surviving the rewrite would override the identity
+        under last-wins parsers — it must be dropped too."""
+        target = self._target_with_env(
+            tmp_path,
+            "PROJECT_NAME=old\nexport PROJECT_NAME=older\n"
+            "export TASK_PREFIX=ZZZ\nOPENAI_API_KEY=x\n",
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        assert [ln for ln in lines if "PROJECT_NAME" in ln] == [
+            "PROJECT_NAME=unit-target"
+        ]
+        assert [ln for ln in lines if "TASK_PREFIX" in ln] == ["TASK_PREFIX="]
+        assert "OPENAI_API_KEY=x" in lines
+
+    def test_special_char_name_written_quoted(self, tmp_path):
+        """CodeRabbit: a value carrying '#' or spaces is written
+        double-quoted so the doctor (and dotenv parsers) read it back
+        intact; quote characters themselves are stripped."""
+        target = self._target_with_env(
+            tmp_path, "PROJECT_NAME=\nTASK_PREFIX=\n", name="acme #1's"
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        assert 'PROJECT_NAME="acme #1s"' in lines  # quoted; "'" stripped
+
+    def test_null_recorded_prefix_writes_empty_never_none(self, tmp_path):
+        """fast-v2 review: a JSON null task_prefix must never become
+        the literal string 'None' in .env."""
+        target = self._target_with_env(tmp_path, "TASK_PREFIX=TASK\n")
+        state_dir = target / ".kit" / "context"
+        state_dir.mkdir(parents=True)
+        (state_dir / "current-state.json").write_text(
+            '{"project": {"name": "x", "task_prefix": null}}', encoding="utf-8"
+        )
+        result = sourced(f'TARGET="{target}"; SHAPE=single; fill_env_identity')
+        assert result.returncode == 0, result.stderr
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        assert "TASK_PREFIX=" in lines
+        assert "TASK_PREFIX=None" not in lines
 
 
 SECRET = "KIT0056-FIXTURE-SECRET-NEVER-PRINT"

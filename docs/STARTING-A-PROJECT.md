@@ -275,6 +275,26 @@ prepares and assigns tasks, feature developers implement them in their
 own tabs, and completion gates (`/preflight`, review bots, evaluators)
 keep the work honest.
 
+## API keys: the operator moves them, never an agent
+
+Every `--new` project starts with a working `.env`: the door seeds it
+(mode 0600, gitignored) from your preset's `env-source` when you have
+one, else from the project's own `.env.template`, and fills
+`PROJECT_NAME`/`TASK_PREFIX`. What the door cannot invent is your API
+keys. With no `env-source`, a terminal run asks you before copying the
+kit clone's `.env` — the whole file, replacing the just-seeded
+template copy (the door re-fills `PROJECT_NAME`/`TASK_PREFIX`
+afterward); a non-interactive run prints the exact copy command
+(`install -m 600 …`) for you to run.
+
+**Run that command yourself — do not ask an agent to.** Copying key
+material into a project is an operator-only act: the Claude Code
+permission classifier blocks agents from doing it (correctly — secrets
+handling), so an agent session asked to "fix the missing keys" can
+only stall. The seeded `CLAUDE.md` first-session note and
+`project doctor`'s `env-keys` check both surface a skipped copy before
+it can block your first evaluation.
+
 ## Checking your environment
 
 Whenever something seems off — missing tools, keys, or config — run
