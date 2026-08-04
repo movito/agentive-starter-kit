@@ -89,6 +89,18 @@
 # folder itself). Author a preset conversationally with the
 # /setup-preset command; example file: docs/preset.example.
 #
+# Working .env from day one (KIT-0084): every --new target ends with a
+# present, mode-0600, gitignored .env — copied from the preset's
+# env-source when set, else seeded from the target's own .env.template.
+# The door then fills PROJECT_NAME (target basename) and TASK_PREFIX
+# (single shape: the export engine's derived prefix; planning shape:
+# left EMPTY until intake decides it — `project doctor` warns while it
+# is empty or the old 'TASK' placeholder). API keys move only by
+# OPERATOR action: with no env-source, a TTY run asks consent before
+# copying the kit checkout's .env, and a non-TTY run prints the exact
+# copy command and continues. Agents must never copy key material into
+# a project — the permission classifier blocks it, by design.
+#
 # Exit contract (F6):
 #   0  install succeeded — the doctor verdict is REPORTED prominently,
 #      never encoded (a fresh repo with doctor WARNs still installed)
@@ -560,11 +572,27 @@ CONFIG_README
     return 0
 }
 
+copy_env_into_target() {  # $1 source file — the ONE writer of $TARGET/.env
+    # Shared discipline for every .env seeding path (KIT-0084): the
+    # copy is refused unless .env is gitignored in the target; the file
+    # is BORN 0600 (umask-first — no window at looser permissions,
+    # claude-code review, PR #83); contents are NEVER printed, logged,
+    # or staged.
+    if ! git -C "$TARGET" check-ignore -q .env; then
+        echo "Error: .env is not gitignored in the target — refusing to seed secrets into it" >&2
+        exit 1
+    fi
+    (
+        umask 077
+        cat "$1" > "$TARGET/.env"
+    )
+    chmod 600 "$TARGET/.env"
+}
+
 apply_env_source() {  # $1 source path (from the preset) — --new only (F6)
     # Secrets by reference: the preset names an operator-owned .env
-    # template; the door copies it 0600. The contents are NEVER
-    # printed, logged, or staged — .env must be gitignored in the
-    # target or the copy is refused outright.
+    # template; the door copies it 0600 (discipline lives in
+    # copy_env_into_target).
     local src="${1/#\~/$HOME}"
     if [ ! -f "$src" ] || [ ! -r "$src" ]; then
         # defense in depth — main pre-validated both before any work
@@ -576,18 +604,98 @@ apply_env_source() {  # $1 source path (from the preset) — --new only (F6)
     if [ "$mode" != "600" ]; then
         echo "Warning: env-source $src is mode $mode (0600 expected) — tighten it: chmod 600 $src" >&2
     fi
-    if ! git -C "$TARGET" check-ignore -q .env; then
-        echo "Error: .env is not gitignored in the target — refusing to seed secrets from env-source" >&2
-        exit 1
+    copy_env_into_target "$src"
+    echo "Seeded .env from preset env-source (mode 0600, gitignored; contents never printed)"
+}
+
+seed_env_from_template() {  # KIT-0084 F1 — --new with no env-source preset
+    # Fallback seeding: the target's own .env.template. It carries no
+    # secrets, but the seeded file will — so the same discipline as
+    # the env-source path applies from birth.
+    if [ ! -f "$TARGET/.env.template" ]; then
+        echo "Warning: no .env.template in the target — .env not seeded; create it by hand (chmod 600)" >&2
+        return 0
     fi
-    # umask-first so the file is BORN 0600 — no window at looser
-    # permissions (claude-code review, this PR)
+    copy_env_into_target "$TARGET/.env.template"
+    echo "Seeded .env from .env.template (mode 0600, gitignored) — API keys still to be added"
+}
+
+offer_env_carryover() {  # KIT-0084 F3 — operator-consented key carry-over
+    # Key material moves ONLY by operator action. The door runs under
+    # the operator's own hands, so a TTY consent question is the
+    # acceptable surface; agents must never copy keys into a project
+    # (the permission classifier blocks it — correctly, so a non-TTY
+    # run prints the exact command for the operator and continues).
+    local kit_env="$PROJECT_ROOT/.env"
+    if [ ! -f "$kit_env" ] || [ ! -r "$kit_env" ]; then
+        echo "No API keys seeded — add them to $TARGET/.env ('project doctor' names what is missing)"
+        return 0
+    fi
+    if is_tty; then
+        local ans
+        ans="$(prompt_yn "Copy API keys from $kit_env into the new project's .env?")"
+        if [ "$ans" = "yes" ]; then
+            copy_env_into_target "$kit_env"
+            echo "Seeded .env from $kit_env (mode 0600, gitignored; contents never printed)"
+        else
+            echo "Keys not copied — add them to $TARGET/.env yourself, or run:"
+            echo "    cp $kit_env $TARGET/.env && chmod 600 $TARGET/.env"
+            echo "  (then re-check PROJECT_NAME/TASK_PREFIX in it — 'project doctor' flags them)"
+        fi
+    else
+        echo "API keys not seeded (non-interactive) — as the operator, run:"
+        echo "    cp $kit_env $TARGET/.env && chmod 600 $TARGET/.env"
+        echo "  (operator-only: agents must never copy key material; then re-check"
+        echo "   PROJECT_NAME/TASK_PREFIX in it and re-run 'project doctor')"
+    fi
+}
+
+fill_env_identity() {  # KIT-0084 F2 — PROJECT_NAME/TASK_PREFIX, --new only
+    [ -f "$TARGET/.env" ] || return 0
+    local name prefix=""
+    name="$(basename "$TARGET")"
+    if [ "$SHAPE" = "single" ]; then
+        # the export engine already derived and recorded the prefix
+        # (from --prefix or the name's initials) — read the recorded
+        # value rather than re-deriving it here
+        prefix="$(python3 - "$TARGET/.kit/context/current-state.json" 2>/dev/null <<'PYEOF'
+import json
+import sys
+
+try:
+    with open(sys.argv[1], encoding="utf-8") as f:
+        print(json.load(f)["project"]["task_prefix"])
+except (OSError, ValueError, KeyError):
+    pass
+PYEOF
+)" || prefix=""
+        [ -n "$prefix" ] || prefix="$PREFIX"
+    fi
+    # planning shape: no prefix exists at door time — written EMPTY,
+    # never 'TASK'; intake decides it and doctor warns meanwhile.
+    # Rewrite in memory (no temp file: a leaked temp beside .env would
+    # not be gitignored), values passed via ENVIRON — never
+    # interpolated into the awk program.
+    local content
+    content="$(ENV_NAME="$name" ENV_PREFIX="$prefix" awk '
+        !seen_name && /^PROJECT_NAME=/ {
+            print "PROJECT_NAME=" ENVIRON["ENV_NAME"]; seen_name = 1; next
+        }
+        !seen_prefix && /^TASK_PREFIX=/ {
+            print "TASK_PREFIX=" ENVIRON["ENV_PREFIX"]; seen_prefix = 1; next
+        }
+        { print }
+        END {
+            if (!seen_name) print "PROJECT_NAME=" ENVIRON["ENV_NAME"]
+            if (!seen_prefix) print "TASK_PREFIX=" ENVIRON["ENV_PREFIX"]
+        }
+    ' "$TARGET/.env")"
     (
         umask 077
-        cat "$src" > "$TARGET/.env"
+        printf '%s\n' "$content" > "$TARGET/.env"
     )
     chmod 600 "$TARGET/.env"
-    echo "Seeded .env from preset env-source (mode 0600, gitignored; contents never printed)"
+    echo "Project identity written to .env: PROJECT_NAME=$name TASK_PREFIX=${prefix:-(empty — set at intake; doctor warns until then)}"
 }
 
 run_offers() {
@@ -909,9 +1017,17 @@ main() {
             { echo "Error: consumer engine failed (exit $?)" >&2; exit 1; }
     fi
 
-    # ── Secrets by reference (F6): preset env-source, --new only ──
-    if [ -n "$ENV_SOURCE" ]; then
-        apply_env_source "$ENV_SOURCE"
+    # ── Working .env from day one (KIT-0084) — --new only: seed from
+    #    the preset env-source (F6) or the target's template, offer the
+    #    operator key carry-over, then fill the identity fields ──
+    if [ "$MODE" = "new" ]; then
+        if [ -n "$ENV_SOURCE" ]; then
+            apply_env_source "$ENV_SOURCE"
+        else
+            seed_env_from_template
+            offer_env_carryover
+        fi
+        fill_env_identity
     fi
 
     run_offers

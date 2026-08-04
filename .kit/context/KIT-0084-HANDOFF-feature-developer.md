@@ -5,7 +5,7 @@
 **Date**: 2026-08-04
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/2-todo/KIT-0084-working-env-from-day-one.md`
+**Task**: `.kit/tasks/3-in-progress/KIT-0084-working-env-from-day-one.md`
 **Status**: Ready for implementation
 **Evaluation**: arch-review-fast APPROVED (first pass) —
 `.adversarial/logs/KIT-0084-working-env-from-day-one--arch-review-fast.md`
@@ -101,6 +101,6 @@ in help/docs (F3), and don't let the template default regress.
 
 ---
 
-**Task File**: `.kit/tasks/2-todo/KIT-0084-working-env-from-day-one.md`
+**Task File**: `.kit/tasks/3-in-progress/KIT-0084-working-env-from-day-one.md`
 **Evaluation Log**: `.adversarial/logs/KIT-0084-working-env-from-day-one--arch-review-fast.md`
 **Source Issue**: movito/agentive-starter-kit#104 — comment there when the PR opens

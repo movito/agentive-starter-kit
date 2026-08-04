@@ -551,10 +551,13 @@ def run_env_check(root: Path) -> subprocess.CompletedProcess:
 class TestEnvKeysCheck:
     """F2.2: required keys present AND uncommented (KIT-0032 incident)."""
 
+    # TASK_PREFIX included: without it the identity WARN (KIT-0084)
+    # would mask the PASS these fixtures assert
     ALL_KEYS = (
         "ANTHROPIC_API_KEY=sk-test-anthropic\n"
         "OPENAI_API_KEY=sk-test-openai\n"
         "GEMINI_API_KEY=sk-test-gemini\n"
+        "TASK_PREFIX=DEMO\n"
     )
 
     def test_missing_env_file_fails(self, tmp_path):
@@ -587,7 +590,8 @@ class TestEnvKeysCheck:
 
     def test_missing_recommended_key_warns(self, tmp_path):
         (tmp_path / ".env").write_text(
-            "ANTHROPIC_API_KEY=sk-test-anthropic\nOPENAI_API_KEY=sk-test-openai\n",
+            "ANTHROPIC_API_KEY=sk-test-anthropic\nOPENAI_API_KEY=sk-test-openai\n"
+            "TASK_PREFIX=DEMO\n",
             encoding="utf-8",
         )
         result = run_env_check(tmp_path)
@@ -599,6 +603,59 @@ class TestEnvKeysCheck:
         result = run_env_check(tmp_path)
         assert "sk-test" not in result.stdout
         assert "sk-test" not in result.stderr
+
+
+class TestTaskPrefixWarn:
+    """KIT-0084 F2: TASK_PREFIX empty, missing, or the old 'TASK'
+    placeholder is silently-wrong identity — the doctor says so."""
+
+    KEYS = TestEnvKeysCheck.ALL_KEYS  # includes TASK_PREFIX=DEMO
+
+    def _without_prefix(self):
+        return self.KEYS.replace("TASK_PREFIX=DEMO\n", "")
+
+    @pytest.mark.parametrize("line", ["TASK_PREFIX=\n", "TASK_PREFIX=TASK\n", ""])
+    def test_unset_or_placeholder_warns(self, tmp_path, line):
+        (tmp_path / ".env").write_text(self._without_prefix() + line, encoding="utf-8")
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:WARN:" in result.stdout
+        assert "TASK_PREFIX" in result.stdout
+        assert "intake" in result.stdout  # the fix's decision point is named
+
+    def test_real_prefix_passes(self, tmp_path):
+        (tmp_path / ".env").write_text(self.KEYS, encoding="utf-8")
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:PASS:" in result.stdout
+
+    def test_real_prefix_value_not_printed(self, tmp_path):
+        (tmp_path / ".env").write_text(
+            self._without_prefix() + "TASK_PREFIX=XZQ9\n", encoding="utf-8"
+        )
+        result = run_env_check(tmp_path)
+        assert "XZQ9" not in result.stdout + result.stderr
+
+    def test_combined_with_evaluator_warning_one_line(self, tmp_path):
+        (tmp_path / ".env").write_text(
+            "ANTHROPIC_API_KEY=sk-test-anthropic\nOPENAI_API_KEY=sk-test-openai\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        warn_lines = [
+            ln
+            for ln in result.stdout.splitlines()
+            if ln.startswith("DOCTOR:env-keys:WARN:")
+        ]
+        assert len(warn_lines) == 1  # one check, one protocol line
+        assert "GEMINI_API_KEY" in warn_lines[0]
+        assert "TASK_PREFIX" in warn_lines[0]
+
+    def test_commented_prefix_line_warns(self, tmp_path):
+        (tmp_path / ".env").write_text(
+            self._without_prefix() + "# TASK_PREFIX=DEMO\n", encoding="utf-8"
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:WARN:" in result.stdout
+        assert "TASK_PREFIX" in result.stdout
 
 
 def _stub_executable(path: Path, body: str) -> None:
@@ -878,7 +935,7 @@ class TestEnvKeysDuplicates:
         (tmp_path / ".env").write_text(
             "# ANTHROPIC_API_KEY=template-placeholder\n"
             "ANTHROPIC_API_KEY=sk-test-real\n"
-            "OPENAI_API_KEY=x\nGEMINI_API_KEY=y\n",
+            "OPENAI_API_KEY=x\nGEMINI_API_KEY=y\nTASK_PREFIX=DEMO\n",
             encoding="utf-8",
         )
         result = run_env_check(tmp_path)
@@ -887,7 +944,8 @@ class TestEnvKeysDuplicates:
     def test_export_prefix_recognized(self, tmp_path):
         (tmp_path / ".env").write_text(
             "export ANTHROPIC_API_KEY=sk-test-real\n"
-            "export OPENAI_API_KEY=x\nexport GEMINI_API_KEY=y\n",
+            "export OPENAI_API_KEY=x\nexport GEMINI_API_KEY=y\n"
+            "export TASK_PREFIX=DEMO\n",
             encoding="utf-8",
         )
         result = run_env_check(tmp_path)
@@ -908,7 +966,8 @@ class TestEnvKeysDuplicates:
 
     def test_quoted_real_value_passes(self, tmp_path):
         (tmp_path / ".env").write_text(
-            'ANTHROPIC_API_KEY="sk-test-real"\nOPENAI_API_KEY=x\nGEMINI_API_KEY=y\n',
+            'ANTHROPIC_API_KEY="sk-test-real"\nOPENAI_API_KEY=x\nGEMINI_API_KEY=y\n'
+            "TASK_PREFIX=DEMO\n",
             encoding="utf-8",
         )
         result = run_env_check(tmp_path)

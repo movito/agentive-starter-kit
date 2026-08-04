@@ -29,6 +29,10 @@ from pathlib import Path
 REQUIRED_KEYS = ["ANTHROPIC_API_KEY"]
 # WARN-level: o3 / Gemini evaluators silently drop out without these.
 RECOMMENDED_KEYS = ["OPENAI_API_KEY", "GEMINI_API_KEY"]
+# WARN-level (KIT-0084): TASK_PREFIX left unset or at the old template
+# placeholder is silently-wrong project identity — the door writes it
+# empty on planning-shape --new precisely so this check surfaces it.
+PREFIX_PLACEHOLDER = "TASK"
 
 
 def key_state(lines, key):
@@ -63,6 +67,29 @@ def key_state(lines, key):
     return state
 
 
+def key_value(lines, key):
+    """Effective value of key, normalized like key_state (comments and
+    quotes stripped, `export ` accepted, first NON-EMPTY assignment
+    wins). Returns None when no uncommented assignment exists at all.
+    Only ever called for non-secret identity keys — key_state stays the
+    reader for key material.
+    """
+    value_seen = None
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("export "):
+            stripped = stripped[len("export ") :].lstrip()
+        if stripped.startswith(f"{key}="):
+            _, _, value = stripped.partition("=")
+            value = value.split("#", 1)[0].strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                value = value[1:-1].strip()
+            if value:
+                return value
+            value_seen = ""
+    return value_seen
+
+
 def main():
     root = Path(os.environ.get("DOCTOR_ROOT") or Path(__file__).resolve().parents[3])
     env_file = root / ".env"
@@ -90,16 +117,26 @@ def main():
         print(f"DOCTOR:env-keys:FAIL:{'; '.join(problems)} in .env")
         return 0
 
+    warn_parts = []
     warnings = []
     for key in RECOMMENDED_KEYS:
         if key_state(lines, key) != "present":
             warnings.append(key)
     if warnings:
-        print(
-            "DOCTOR:env-keys:WARN:evaluator keys not set: "
+        warn_parts.append(
+            "evaluator keys not set: "
             + ", ".join(warnings)
             + " — those evaluators will drop out of the trio"
         )
+    prefix = key_value(lines, "TASK_PREFIX")
+    if prefix is None or prefix == "" or prefix == PREFIX_PLACEHOLDER:
+        warn_parts.append(
+            "TASK_PREFIX not set (empty, missing, or the 'TASK' placeholder)"
+            " — set your project's task prefix in .env (decided at intake"
+            " Step 4a / project onboarding)"
+        )
+    if warn_parts:
+        print("DOCTOR:env-keys:WARN:" + "; ".join(warn_parts))
         return 0
 
     print(
