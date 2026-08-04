@@ -22,7 +22,7 @@ Using agents to build software works better if you add a bit of structure — An
 
 ## Quickstart
 
-You need Claude Code, git + gh (authenticated), and Python 3.10–3.12 for code projects — `./scripts/core/project doctor` inside any created project tells you what's missing.
+You need Claude Code, git + gh (authenticated), and Python 3.10+ for code projects — `./scripts/core/project doctor` inside any created project tells you what's missing.
 
 ```bash
 cd ~/Github
