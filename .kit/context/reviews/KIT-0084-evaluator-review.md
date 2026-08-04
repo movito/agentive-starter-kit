@@ -1,7 +1,7 @@
 # KIT-0084 — Evaluator Review Record
 
 **Date**: 2026-08-04
-**Task**: `.kit/tasks/3-in-progress/KIT-0084-working-env-from-day-one.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0084-working-env-from-day-one.md`
 **Diff**: `main...feature/KIT-0084-working-env-from-day-one` (full-file context input)
 **Ordering**: trio run BEFORE PR open (KIT-0035/KIT-0046 rule)
 

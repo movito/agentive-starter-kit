@@ -6,7 +6,7 @@
 **From**: planner-f5
 **To**: feature-developer
 **Task**: `.kit/tasks/4-in-review/KIT-0084-working-env-from-day-one.md`
-**Status**: Ready for implementation
+**Status**: In Review (implementation done — PR #105; this handoff is historical)
 **Evaluation**: arch-review-fast APPROVED (first pass) —
 `.adversarial/logs/KIT-0084-working-env-from-day-one--arch-review-fast.md`
 
