@@ -645,13 +645,15 @@ offer_env_carryover() {  # KIT-0084 F3 — operator-consented key carry-over
             copy_env_into_target "$kit_env"
             echo "Seeded .env from $kit_env (mode 0600, gitignored; contents never printed)"
         else
+            # install -m 600: the copy is BORN 0600 — a cp+chmod pair
+            # would open a window at the source's mode (CodeRabbit)
             echo "Keys not copied — add them to $TARGET/.env yourself, or run:"
-            echo "    cp \"$kit_env\" \"$TARGET/.env\" && chmod 600 \"$TARGET/.env\""
+            echo "    install -m 600 \"$kit_env\" \"$TARGET/.env\""
             echo "  (then re-check PROJECT_NAME/TASK_PREFIX in it — 'project doctor' flags them)"
         fi
     else
         echo "API keys not seeded (non-interactive) — as the operator, run:"
-        echo "    cp \"$kit_env\" \"$TARGET/.env\" && chmod 600 \"$TARGET/.env\""
+        echo "    install -m 600 \"$kit_env\" \"$TARGET/.env\""
         echo "  (operator-only: agents must never copy key material; then re-check"
         echo "   PROJECT_NAME/TASK_PREFIX in it and re-run 'project doctor')"
     fi

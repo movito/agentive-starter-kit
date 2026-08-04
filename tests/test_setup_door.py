@@ -714,10 +714,8 @@ class TestEnvSeedingE2E:
         # the kit clone has a .env to carry over) or the add-keys notice
         kit_env = REPO_ROOT / ".env"
         if kit_env.is_file():
-            assert (
-                f'cp "{kit_env}" "{target}/.env" && chmod 600 "{target}/.env"'
-                in result.stdout
-            )
+            # install -m 600: the copy is born 0600, no cp+chmod window
+            assert f'install -m 600 "{kit_env}" "{target}/.env"' in result.stdout
             assert "operator" in result.stdout
         else:
             assert "No API keys seeded" in result.stdout
