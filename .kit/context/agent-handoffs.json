@@ -11,7 +11,7 @@
     "status": "handoff_ready",
     "current_task": "KIT-0084",
     "task_started": null,
-    "brief_note": "KIT-0084 ready: door seeds .env (extend apply_env_source fallback), fill PROJECT_NAME/TASK_PREFIX, doctor WARN on TASK default, operator-only key carry-over, first-session doctor line. Anchors in handoff. Worktree: ../ask-worktrees/KIT-0084 via plain git worktree (helper broken on this machine, KIT-0080). KIT-0078 handoff still pending in todo.",
+    "brief_note": "KIT-0084 ready: door seeds .env (extend apply_env_source fallback), fill PROJECT_NAME/TASK_PREFIX, doctor WARN on TASK default, operator-only key carry-over, first-session doctor line. Anchors in handoff. Worktree: ../ask-worktrees/KIT-0084 via plain git worktree (helper broken on this machine, KIT-0080). QUEUED NEXT: KIT-0083 (handoff ready, .kit/context/KIT-0083-HANDOFF-feature-developer.md) — sequential after KIT-0084, same surfaces. KIT-0078 handoff still pending in todo.",
     "details_link": ".kit/tasks/2-todo/KIT-0084-working-env-from-day-one.md",
     "handoff_file": ".kit/context/KIT-0084-HANDOFF-feature-developer.md"
   },
