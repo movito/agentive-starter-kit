@@ -213,14 +213,11 @@ nothing.
   nothing about a fresh project. Test with a controlled `PATH`
   (`_restricted_bin` / `_stub_executable` in `tests/test_doctor.py:710`
   are the house helpers).
-- **KIT-0080 red herring**: 3 `test_doctor.py` failures on this machine
-  (`TestCoreBareCheck::test_bare_config_fails`,
-  `TestConfigHomeCheck::test_derivation_without_override_names_the_sibling`,
-  `TestWorktreeProvisioningCheck::test_worktree_missing_serena_config_warns`)
-  are **pre-existing** — Apple git 2.30.1, tell is `dirname: illegal
-  option -- -` in stderr. Verified against a clean HEAD on 2026-08-05.
-  CI is the gate. Do not chase them; do not let them mask a real
-  regression either — re-verify against a clean HEAD if the set changes.
+- ~~**KIT-0080 red herring**: 3 `test_doctor.py` failures on this
+  machine are pre-existing — Apple git 2.30.1.~~ **SUPERSEDED
+  2026-08-05T18:20 — see item 7 below. There is now NO expected
+  failure set: the suite is fully green. Any failure you see is
+  REAL.**
 - Pre-commit runs pytest-fast and takes **~3 minutes**. Budget for it;
   a 2-minute tool timeout kills the commit mid-hook (happened twice this
   session). Per KIT-0057: after any aborted hook run, `git log -1` +
@@ -251,6 +248,79 @@ trio applies (not the prose-sweep exception).
 
 ---
 
+## 7. ENVIRONMENT CHANGED MID-TASK — git upgraded (2026-08-05T18:20)
+
+**The operator upgraded git while you were working.** This invalidates
+item 4's failure baseline and unblocks the worktree flow. Read this
+before you interpret any test result.
+
+```
+BEFORE: git 2.30.1 (Apple Git-130)  — /usr/bin/git
+AFTER:  git 2.55.0 (Homebrew)       — /opt/homebrew/bin/git
+```
+
+`/opt/homebrew/bin` already preceded `/usr/bin` on PATH, so the new git
+took effect with no profile edit. **A new shell picks it up
+automatically; a long-lived one may have a stale hash — run `hash -r`
+(or just `git --version`) if you see 2.30.1.**
+
+### There is no expected-failure set any more
+
+| | Before upgrade | Now (verified) |
+|---|---|---|
+| `tests/test_doctor.py` | 8 failed | **152 passed, 0 failed** |
+| full fast suite | 3 failed *(truncated count — see below)* | **796 passed, 0 failed** |
+| `project doctor` | `dirname` errors on stderr | 6 pass, 1 warn, **0 fail**, exit 0 |
+
+**Treat any test failure from here as REAL.** Do not attribute anything
+to KIT-0080; do not use `SKIP_TESTS=1` to get past a red suite without
+first establishing the failure is yours.
+
+### Your F2 finding was right, and it is now moot
+
+Your session-findings doc (`b87b058` F2) correctly called out the
+addendum's "3 pre-existing failures" as wrong — the real number was 8,
+and "3" came from a truncated pre-commit tail (`-x` stops after 3,
+deselects 45). **That correction was accurate and the mechanism you
+identified was exactly right**; my item 4 was wrong to state 3. It is
+struck above. The count is now 0 regardless, so the practical guidance
+is simply: green means green.
+
+### `new-worktree.sh` is unblocked
+
+Your F1 finding — `new-worktree.sh:36` dead on 2.30.1 — was correct and
+is **resolved on this machine**, verified post-upgrade:
+
+```console
+$ git rev-parse --path-format=absolute --git-common-dir
+/Users/broadcaster_one/Github/agentive-starter-kit/.git    # one line, absolute
+```
+
+The worktree flow works now. This does **not** close KIT-0080 — the kit
+still ships scripts requiring git ≥ 2.31, every other operator on stock
+macOS git still hits it, and CI cannot catch it (Ubuntu runners have
+modern git). Your F1 portable one-liner remains the right fix. Keep the
+finding filed; it lost its local reproduction, not its validity.
+
+### Also fixed: the operator preset was silently broken
+
+KIT-0080 S3 was the real cost of the old git — `config_home()` resolved
+to the relative garbage `./agentive-config`, so **the setup door never
+found the operator preset** and silently fell back to defaults on every
+project it created. Now resolves correctly to
+`/Users/broadcaster_one/Github/agentive-config`. Context only; not your
+task.
+
+### Unchanged
+
+Everything else in this addendum still stands — the F3 pin-home
+decision (item 1), the corrected `bootstrap` anchors (item 2),
+`create-project.md` staying out of scope (item 3), the stderr-vs-exit-
+code probe rule and the ~3-minute pre-commit budget (item 4), and the
+deliverables list (item 5).
+
+---
+
 **Addendum author**: feature-developer session 2026-08-05, from the
 operator conversation that specced KIT-0087 (`37cd1dc`) and recorded the
-scope boundary (`041f75d`).
+scope boundary (`041f75d`). Item 7 added 18:20 after the git upgrade.

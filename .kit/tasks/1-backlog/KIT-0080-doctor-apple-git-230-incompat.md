@@ -2,7 +2,10 @@
 
 **Status**: Backlog
 **Priority**: high (raised from medium 2026-08-04 — see S3: the same root
-cause silently disables operator-preset resolution in the setup door)
+cause silently disables operator-preset resolution in the setup door.
+Reaffirmed 2026-08-05: **S4** makes it a hard block on the default
+worktree topology, and the operator's local git upgrade removed the
+repro without fixing the kit — see the 2026-08-05 update at the bottom)
 **Created**: 2026-08-04
 
 ## Overview
@@ -93,3 +96,80 @@ Live on this machine 2026-08-04: `git --version` = 2.30.1 (Apple
 Git-130); `project doctor` leaked `dirname: illegal option -- -`;
 `pytest tests/test_doctor.py -m "not slow"` = 8 failed / 132 passed.
 Reproduce the root cause with the `git rev-parse` command above.
+
+---
+
+## Update 2026-08-05: operator upgraded git — task STAYS OPEN
+
+**The local reproduction is gone; the bug is not.** The operator
+upgraded `2.30.1 (Apple Git-130)` → **`2.55.0` (Homebrew)**, which made
+every symptom below disappear on this machine. **Do not read this as
+resolution.** The kit still ships scripts that require git ≥ 2.31 —
+`--path-format` landed in **git 2.31 (March 2021)**, and Apple ships
+2.30.1, one minor version below the cutoff. Every operator on stock
+macOS git still hits all of it, and **CI cannot catch it** (Ubuntu
+runners have modern git). F1–F4 are all still required.
+
+### What the upgrade confirmed (each symptom causally verified)
+
+| Symptom | On 2.30.1 | On 2.55.0 |
+|---|---|---|
+| root cause: `rev-parse --path-format` | echoed the flag back as a rev, exit 0 | one absolute path, consumed correctly |
+| **S1** stray `dirname:` in doctor | leaked to stderr | gone |
+| **S2** `test_doctor.py` | 8 failed | **152 passed, 0 failed** |
+| **S3** preset home resolution | `./agentive-config` (relative garbage) | `/Users/broadcaster_one/Github/agentive-config` |
+| full fast suite | 3 failed *(truncated count, see below)* | **796 passed, 0 failed** |
+| `project doctor` | `dirname` errors on stderr | 6 pass, 1 warn, 0 fail, exit 0 |
+
+This is a clean causal proof: one variable changed, every symptom
+resolved. It confirms the S1/S2/S3 diagnosis was correct in full.
+
+### Two corrections to the record
+
+1. **The failure count is 8, not 3.** A KIT-0083 handoff addendum
+   stated 3; that came from reading a truncated pre-commit
+   `pytest-fast` tail (`-x` stops after 3 failures and deselects 45
+   tests). Corrected by the KIT-0083 agent in `b87b058` F2, and the
+   correction is right — S2's original 8 was always accurate. **A
+   truncated baseline is dangerous**: it under-reports the expected set
+   and would mask real regressions. When recording an expected-failure
+   baseline, always run the suite untruncated.
+2. **New symptom — S4: `new-worktree.sh` is a hard block, not a silent
+   wrong answer.** `scripts/local/new-worktree.sh:36` uses the same
+   pattern and **dies outright** on 2.30.1 (confirmed by the KIT-0083
+   agent, `b87b058` F1), leaving a half-provisioned worktree. This is
+   worse than S1–S3: those degrade silently, this one fails the default
+   worktree topology. **Any task told to use a worktree hard-fails on
+   stock macOS git until F1 lands.** Sequence KIT-0080 before such
+   tasks, or ship the portable one-liner with them.
+
+### Fix guidance reinforced
+
+The KIT-0083 agent live-verified F1's **first listed option** (resolve
+via plain `--git-common-dir`, absolutize in shell) as a working
+portable replacement — see `b87b058` for the one-liner. That is the
+recommended path; it needs no version gate and no flag-stripping.
+
+### Reproduction after the upgrade
+
+The local repro now requires invoking the old binary explicitly:
+
+```console
+$ /usr/bin/git rev-parse --path-format=absolute --git-common-dir
+--path-format=absolute
+.git
+```
+
+Apple's git remains at `/usr/bin/git` — the upgrade shadowed it via
+PATH (`/opt/homebrew/bin` precedes `/usr/bin`), it did not remove it.
+This is also the basis for F4: a CI matrix entry or doctor check
+exercising the oldest supported git would catch the class without
+depending on any operator's local toolchain.
+
+### Note for whoever fixes this
+
+`xcode-select --install` does **not** help — Apple's Command Line Tools
+ship 2.30.x by design; it is a constrained system binary, not a stale
+download. The only local remedies are Homebrew git (as done here) or
+the portable fix in F1. Worth stating in any operator-facing doc, since
+`xcode-select --install` is the intuitive first thing to try.
