@@ -20,6 +20,9 @@ door install the same toolchain. Both touch `create-project.md`,
 together or 0078 first, else two passes over the same files and a
 near-certain conflict. F2's "create-project agent: deprecation pointer
 or folds away" decision determines how much of KIT-0087 F3 survives.
+**Pairing decided (planner, 2026-08-05)**: combined assignment — one
+session implements 0078 then 0087 on one branch (stacked PRs if large);
+0078's F2 verdict lands first inside the session.
 
 ## Overview
 

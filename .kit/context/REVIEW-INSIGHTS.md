@@ -211,11 +211,15 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Worktree pre-commit needs the venv on PATH**: bare `git commit` in a fresh worktree fails pytest-fast with `pytest: command not found`; `PATH="$PWD/.venv/bin:$PATH" git commit` is the incantation (now noted in WORKTREE-WORKFLOW.md). (KIT-0084)
 - **`"" in <any-string>` is True** — the empty-string-substring gotcha: guard membership tests against empty needles before `in`. Caught in seconds by a pre-existing empty-key doctor test — fixture depth from earlier incidents pays compound interest. (KIT-0084)
 
+- **A truncated baseline is dangerous**: an expected-failure count recorded from a `-x`/truncated test run (3) contradicted the untruncated truth (8) and briefly entered a handoff; under-reported baselines mask real regressions. Record baselines only from untruncated runs, and say so ("full run: N failed / M passed"). (KIT-0080/KIT-0083, corrected in b87b058)
+- **Safeguards that live in optionally-read artifacts are not safeguards**: the KIT-0083 starter carried the worktree LAUNCH block, but the session launched from the handoff — which carried no topology — and the agent definition itself said `checkout -b`. Put behavioral contracts in what is ALWAYS read at execution time (the agent definition), not only in authoring-time templates. (KIT-0083 findings F3 → KIT-0088)
+- **One-variable causal proof beats accumulating correlation**: upgrading git 2.30.1→2.55.0 made every KIT-0080 symptom vanish at once — clean confirmation of a multi-symptom diagnosis. When feasible, flip the suspected single variable and re-run the whole symptom table. Corollary: fixing the operator's environment DELETES the local repro — capture fixtures pinning the old behavior before the fix disappears from every machine you control. (KIT-0080)
+
 ---
 
 ## ADR Candidates
 
-*None currently - insights above are implementation patterns rather than architectural decisions*
+- **Structured agent-behavior contracts** (from KIT-0088's evaluation, 2026-08-05): critical operational rules currently live as prose in agent markdown, manually propagated across variants (feature-developer + -f5, planner + -f5). Two independent evaluator findings suggest a validation layer (lint/test-enforced contracts, or structured config) if agent count grows. Not urgent at 4 variant files; revisit if a fifth agent variant or a second contract-drift incident appears.
 
 ---
 

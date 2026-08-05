@@ -1,9 +1,9 @@
 {
   "planner": {
     "status": "handoff_ready",
-    "current_task": "KIT-0084",
+    "current_task": "KIT-0083",
     "task_started": null,
-    "brief_note": "2026-08-04: KIT-0084 DONE (PR #105 squash-merged 27813cf; knowledge extracted to REVIEW-INSIGHTS; issue #104 closed). Retro spawned: KIT-0086 (handoffs single-writer, arch-review-fast APPROVED, in 2-todo) + direct doc fixes (check-ci dispatch fallback, WORKTREE-WORKFLOW pre-commit PATH, KIT-0082 env invariants). WATCH ITEM: pull_request event never fired on PR #105 — one recurrence on the next PR = repo-config incident. INTERIM DISCIPLINE until KIT-0086 lands: planner defers agent-handoffs.json edits while a task PR is in flight. Queue: KIT-0083 (starter delivered) -> KIT-0085 -> KIT-0086 (operator may resequence 0086 earlier). KIT-0078 still in todo.",
+    "brief_note": "2026-08-05: operator upgraded git 2.30.1->2.55.0 (KIT-0080 stays open — S4 added, local repro GONE, fixtures are the proof). Queue decisions: KIT-0080 PROMOTED to todo, next after in-flight KIT-0083 (S4 hard-blocks worktree topology on stock macOS). KIT-0087 PROMOTED, paired with KIT-0078 as ONE combined session (same four files; 0078 F2 verdict first). NEW KIT-0088 (worktree topology enforcement — from KIT-0083 findings F3; record correction: starter HAD the LAUNCH block, the handoff-only launch bypassed it). Queue: KIT-0083 (in progress) -> KIT-0080 -> KIT-0088 -> KIT-0085 -> KIT-0086 -> KIT-0075 -> [KIT-0078+KIT-0087 combined]. WATCH: pull_request event on KIT-0083's PR (2nd miss = incident). Interim disciplines hold: no planner handoffs-JSON edits while a PR is in flight; project start on main, push, then worktree.",
     "details_link": ".kit/tasks/3-in-progress/KIT-0083-ship-adversarial-cli.md",
     "handoff_file": ".kit/context/KIT-0083-HANDOFF-feature-developer.md"
   },

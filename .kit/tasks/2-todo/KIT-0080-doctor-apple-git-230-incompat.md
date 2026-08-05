@@ -1,12 +1,21 @@
 # KIT-0080: doctor.d checks + tests break on Apple git 2.30.1
 
-**Status**: Backlog
+**Status**: Todo
 **Priority**: high (raised from medium 2026-08-04 — see S3: the same root
 cause silently disables operator-preset resolution in the setup door.
 Reaffirmed 2026-08-05: **S4** makes it a hard block on the default
 worktree topology, and the operator's local git upgrade removed the
 repro without fixing the kit — see the 2026-08-05 update at the bottom)
 **Created**: 2026-08-04
+**Sequencing (planner, 2026-08-05)**: PROMOTED to todo, next assignment
+after KIT-0083 lands. S4 hard-blocks the default worktree topology for
+every operator on stock macOS git, and every queued kit task's starter
+specifies a worktree. Note for the implementer: the operator's machine
+now runs git 2.55.0, so the local repro is GONE — F3's git-version
+fixtures (pinning the 2.30.x parsing behavior) are the only proof
+mechanism available; manual verification is no longer possible here.
+The portable one-liner is live-verified in
+`.kit/context/KIT-0083-SESSION-FINDINGS.md` F1.
 
 ## Overview
 

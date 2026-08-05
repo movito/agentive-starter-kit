@@ -1,6 +1,6 @@
 # KIT-0087: One provisioning story — scrub the competing "make a new project" installs
 
-**Status**: Backlog
+**Status**: Todo
 **Priority**: high (every fresh project inherits whichever story its entry surface happens to tell)
 **Assigned To**: unassigned
 **Type**: Infrastructure / consolidation
@@ -170,6 +170,13 @@ it is not re-litigated.
    the canonical pin home and makes `install-evaluators` install
    library + CLI. Without it there is no correct path to delegate TO,
    and F2 has nothing to point at.
+> **Promotion decision (planner, 2026-08-05)**: promoted to todo as a
+> **combined assignment with KIT-0078** — one session, one branch (use
+> the stacked-PR workflow if the diff exceeds the PR-size guideline).
+> KIT-0078's F2 verdict on `create-project.md` is decided first inside
+> that session, then this task's F3 executes against whatever survives.
+> Queue position: after KIT-0080/KIT-0085/KIT-0086/KIT-0075.
+
 2. **KIT-0078 and this task should be done together, or 0078 first.**
    They are two halves of one problem and both touch
    `create-project.md`, `new-project.md`, `STARTING-A-PROJECT.md`, and
