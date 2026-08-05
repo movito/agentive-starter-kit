@@ -115,6 +115,16 @@ Verified against source (2026-08-04):
   its decision; if #60 is still open at implementation time, install
   unpinned-latest with a TODO naming #60
 - The evaluator-library pin relocation for planning shape (KIT-0079)
+- **`.claude/agents/create-project.md` — do not touch** (operator
+  decision 2026-08-05). It carries three contradictions with this
+  task's install path (`pipx` at `:180`/`:317`, per-evaluator
+  `adversarial library install` at `:214-217`, and an unearned
+  `adversarial-workflow: <version> verified` summary at `:260`).
+  Fixing them here is tempting and wrong: **KIT-0087 F3 owns that
+  file**, and KIT-0078 F2 may fold it away entirely — a deleted file
+  carries no contradictions. Patching it here would be churn on a
+  surface two other tasks are already holding. Note the contradictions
+  in the PR body and move on.
 
 ## Related
 

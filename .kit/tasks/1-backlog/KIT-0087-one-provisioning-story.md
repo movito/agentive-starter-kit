@@ -18,7 +18,10 @@ same thing. Verified 2026-08-05: KIT-0078 contains no mention of
 adversarial / install / provisioning / evaluators outside its own
 evaluation-log path — the gap is real, not a duplicate.
 **Consumes**: KIT-0083 (canonical pin home = `.adversarial/config.yml`;
-`install-evaluators` becomes the one install path for library + CLI)
+`install-evaluators` becomes the one install path for library + CLI).
+KIT-0083 deliberately leaves `create-project.md` untouched (operator
+decision 2026-08-05) — its contradictions arrive here intact, by design,
+so the fix happens once on a surface KIT-0078 may delete outright.
 **Related**: #60 (pin location, reframed below), KIT-0079 (library-pin
 relocation), KIT-0055 (which binary PATH resolves — the layer above
 this one), KIT-0066 (intake flow), KIT-0067 (front door)
@@ -104,13 +107,23 @@ it is not re-litigated.
     `.installed-version` no-op path is the model; partial failure
     leaves a re-runnable state, never a half-installed one that
     reports success
-- **F3 — kill the contradictions in `create-project.md`.** Per
-  KIT-0078 F2 this agent is already slated for deprecation-or-fold;
-  sequence with it (see below). Whichever way it goes, these three
-  must not survive: `pipx` as a competing mechanism, per-evaluator
-  `adversarial library install` as a competing provisioning path, and
-  the unearned `adversarial-workflow: <version> verified` summary
-  line.
+- **F3 — kill the contradictions in `create-project.md`.** **This task
+  is the sole owner of that file's install story** (operator decision
+  2026-08-05; KIT-0083's Out of Scope now names it explicitly, so the
+  contradictions survive KIT-0083 by design and arrive here intact).
+  Per KIT-0078 F2 the agent is already slated for deprecation-or-fold;
+  sequence with it (see below). Whichever way it goes, these three must
+  not survive:
+  - `pipx install adversarial-workflow` as a competing mechanism
+    (`:180`, `:317`)
+  - per-evaluator `adversarial library install <provider>/<name> --yes`
+    as a competing provisioning path (`:214-217`)
+  - the unearned `adversarial-workflow: <version> verified` summary
+    line (`:260`) — nothing in the agent installs the CLI, so the claim
+    cannot be true
+  If KIT-0078 folds the agent away, F3 is satisfied by the deletion and
+  this requirement closes as no-op — record that outcome rather than
+  silently dropping it.
 - **F4 — shape-independence audit.** Every retained surface is checked
   against BOTH shapes: no instruction may assume `pyproject.toml`, a
   project venv, or a Python toolchain exists. This is the root cause
