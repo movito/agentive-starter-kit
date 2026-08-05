@@ -13,6 +13,13 @@
 afternoon, none visible to per-part gates
 **Related**: KIT-0067 (front door), KIT-0066 (intake), KIT-0075
 (launcher F2 — native invocation), KIT-0073 (README)
+**Sibling (provisioning half)**: KIT-0087 — one provisioning story.
+This task decides WHICH door a user walks through; KIT-0087 makes every
+door install the same toolchain. Both touch `create-project.md`,
+`new-project.md`, `STARTING-A-PROJECT.md`, and `README.md` — land them
+together or 0078 first, else two passes over the same files and a
+near-certain conflict. F2's "create-project agent: deprecation pointer
+or folds away" decision determines how much of KIT-0087 F3 survives.
 
 ## Overview
 
