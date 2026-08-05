@@ -4,7 +4,7 @@
     "current_task": "KIT-0084",
     "task_started": null,
     "brief_note": "2026-08-04: KIT-0084 DONE (PR #105 squash-merged 27813cf; knowledge extracted to REVIEW-INSIGHTS; issue #104 closed). Retro spawned: KIT-0086 (handoffs single-writer, arch-review-fast APPROVED, in 2-todo) + direct doc fixes (check-ci dispatch fallback, WORKTREE-WORKFLOW pre-commit PATH, KIT-0082 env invariants). WATCH ITEM: pull_request event never fired on PR #105 — one recurrence on the next PR = repo-config incident. INTERIM DISCIPLINE until KIT-0086 lands: planner defers agent-handoffs.json edits while a task PR is in flight. Queue: KIT-0083 (starter delivered) -> KIT-0085 -> KIT-0086 (operator may resequence 0086 earlier). KIT-0078 still in todo.",
-    "details_link": ".kit/tasks/2-todo/KIT-0083-ship-adversarial-cli.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0083-ship-adversarial-cli.md",
     "handoff_file": ".kit/context/KIT-0083-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": "KIT-0083",
     "task_started": null,
     "brief_note": "KIT-0083 ready (starter delivered 2026-08-04): CLI install via install-evaluators + evaluator-cli doctor check + pin sequencing gate (#60/KIT-0079). Watch: if the pull_request event doesn't fire on your PR, use the dispatch fallback now documented in check-ci.md — and report it (second occurrence = incident). Do NOT edit agent-handoffs.json on the feature branch (KIT-0086 interim discipline; project start's path-rewrite of it is expected until 0086 lands — just don't hand-edit further). Worktree pre-commit PATH note now in WORKTREE-WORKFLOW.md. THEN KIT-0085 (handoff ready). KIT-0078 still in todo.",
-    "details_link": ".kit/tasks/2-todo/KIT-0083-ship-adversarial-cli.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0083-ship-adversarial-cli.md",
     "handoff_file": ".kit/context/KIT-0083-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {
