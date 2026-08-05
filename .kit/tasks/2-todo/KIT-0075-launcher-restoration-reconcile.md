@@ -1,6 +1,6 @@
 # KIT-0075: Reconcile the launcher restoration — modernize `launch`, amend the D1 record
 
-**Status**: Backlog
+**Status**: Todo
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours

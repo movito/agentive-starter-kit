@@ -1,6 +1,6 @@
 # ASK-0048: Unified Artifact Registry — Phase 1 (Metadata Adoption)
 
-**Status**: Backlog
+**Status**: Canceled
 **Priority**: low (was high — see Disposition below)
 **Assigned To**: unassigned
 **Estimated Effort**: 4-6 hours (STALE — re-estimate against current architecture)
@@ -25,6 +25,8 @@
 > `.kit/skills/` reference below is historical — that home was
 > removed at 0.9.0 (KIT-0059); skills live only in `.claude/skills/`.
 > Re-scope against current main before promoting this task.
+
+> **Archived (2026-08-04, backlog review)**: the 2026-07-14 disposition required re-arguing the registry's value against the plugin channel + `version:` frontmatter + `.core-manifest.json`; nobody has, and those mechanisms have since carried v0.9.0 and daily kit work. Revive only with a concrete need they cannot meet.
 
 ## Related Tasks
 

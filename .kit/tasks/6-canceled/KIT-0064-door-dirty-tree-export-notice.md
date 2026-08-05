@@ -1,11 +1,13 @@
 # KIT-0064: Door warns when exporting from a dirty kit tree
 
-**Status**: Backlog
+**Status**: Canceled
 **Priority**: low
 **Assigned To**: unassigned
 **Estimated Effort**: <1 hour
 **Created**: 2026-07-24
 **Linear ID**: (automatically backfilled after first sync)
+
+> **Archived (2026-08-04, backlog review)**: folded into KIT-0081 as finding F9 — same door surface, one PR. This file retained for the original incident context (KIT-0058 retro).
 
 ## Related Tasks
 

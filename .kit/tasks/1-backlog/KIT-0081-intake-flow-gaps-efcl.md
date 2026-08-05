@@ -77,6 +77,19 @@ not here.
   single-shape ASK exports shipped a README + docs/ and did not have
   this failure mode.
 
+- **F9 — door exports HEAD, silently dropping uncommitted kit changes**
+  (folded in from KIT-0064, 2026-08-04 backlog review; original evidence
+  KIT-0058 retro Surprising #1). `bootstrap --new` exports via
+  `git archive`, which ships HEAD — not the working tree. On KIT-0058
+  the exported target's `doctor.d/` silently lacked an uncommitted
+  check file (9 checks instead of 10). Fix: when the kit tree has
+  uncommitted TRACKED changes (`git status --porcelain`), print a
+  one-line notice "kit tree has uncommitted changes — the export ships
+  the last commit (HEAD)". Notice only, never a block; exit codes
+  unchanged. Test both directions in `tests/test_setup_door.py`. Not a
+  doctor.d candidate — the condition lives in the source tree at export
+  time, not the installed environment.
+
 - **F7 — placeholder project-context says `Topology: single-repo` in a
   planning-shape scaffold.** `kit_markers.py`'s placeholder body is
   shape-blind; a planning-shape install knows its topology is a split pair

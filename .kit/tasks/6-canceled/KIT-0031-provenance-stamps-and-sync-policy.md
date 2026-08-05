@@ -1,10 +1,12 @@
 # KIT-0031: Provenance Stamps for Dormant Repos + Sync Policy (Sync Phase 3)
 
-**Status**: Backlog
+**Status**: Canceled
 **Priority**: low
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours
 **Created**: 2026-06-12
+
+> **Archived (2026-08-04, backlog review)**: parked behind the downstream-sync phase, which has not started. Revive condition: when the KIT-0045/KIT-0061 downstream pass begins, re-file provenance stamping against the then-current topology.
 
 ## Related Tasks
 

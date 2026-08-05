@@ -1,12 +1,14 @@
 # ADV-0053: Make adversarial-workflow CLI directory configurable
 
-**Status**: Backlog
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours
 **Created**: 2026-03-30
 **Target Completion**: Next adversarial-workflow release
 **Linear ID**: (automatically backfilled after first sync)
+
+> **Archived (2026-08-04, backlog review)**: premise dissolved — adversarial-workflow 1.0.1 (now an external PyPI package) and the `.adversarial/` layout coexist, verified by 8 clean evaluator runs on 2026-08-04. Directory-configurability requests belong upstream in the adversarial-workflow repo.
 
 ## Related Tasks
 

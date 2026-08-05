@@ -1,6 +1,6 @@
 # KIT-0060: Refresh plugin skill copies + source map after the skills merge
 
-**Status**: Backlog
+**Status**: Canceled
 **Priority**: low
 **Assigned To**: unassigned
 **Estimated Effort**: <1 hour
@@ -11,6 +11,8 @@
 > `.kit/skills/` reference below is historical — that home was
 > removed at 0.9.0 (KIT-0059); skills live only in `.claude/skills/`.
 > Re-scope against current main before promoting this task.
+
+> **Archived (2026-08-04, backlog review)**: its subject (`.kit/skills/`) was removed at 0.9.0 (KIT-0059) per its own superseded note; a <1h task needing a full re-scope is a re-file, not a keep. Re-file against current main if plugin skill copies drift again.
 
 ## Related Tasks
 

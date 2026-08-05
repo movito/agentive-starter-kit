@@ -1,12 +1,14 @@
 # ASK-0050: Ship Evaluator Library as Default, Drop Built-in GPT-4o
 
-**Status**: Backlog
+**Status**: Canceled
 **Priority**: high
 **Assigned To**: feature-developer-v3
 **Estimated Effort**: 2-3 hours
 **Created**: 2026-04-08
 **Target Completion**: TBD (depends on ASK-0049)
 **Linear ID**:
+
+> **Archived (2026-08-04, backlog review)**: done in practice — the evaluator library is the shipped default (`project install-evaluators`, doctor `30-evaluators` check, 5 entries). The remaining CLI-side install work is KIT-0083 / issue #60 (pin coherence).
 
 ## Related Tasks
 

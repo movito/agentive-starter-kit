@@ -1,10 +1,12 @@
 # KIT-0025: PR-Based Evaluator Runner
 
-- **Status**: Backlog
+- **Status**: Canceled
 - **Priority**: High
 - **Type**: Feature
 - **Estimate**: M (half-day)
 - **Depends on**: KIT-0024 (tiered manifest, for core script sync)
+
+> **Archived (2026-08-04, backlog review)**: the empty-diff problem is solved by `scripts/core/prepare-review-input.sh` + the current review flow (proven pre-PR on KIT-0084 / PR #105). Its KIT-0024 dependency context no longer exists.
 
 ## Problem
 
