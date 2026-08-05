@@ -1971,3 +1971,88 @@ class TestWorktreeProvisioningCheck:
             if ln.startswith("DOCTOR:worktree-venv:WARN:")
         )
         assert "--no-hooks" not in line
+
+
+def run_evaluator_cli_check(root: Path, path_dir: Path | None = None):
+    """Run 31-evaluator-cli.sh; restrict PATH to control `adversarial` visibility.
+
+    PATH control is the whole point (KIT-0083): both `uv` and
+    `adversarial` are installed on the maintainer's machine, so an
+    unrestricted `command -v` passes locally and proves nothing about a
+    fresh project — the exact blind spot that let issue #103 ship.
+    """
+    env = {**os.environ, "DOCTOR_ROOT": str(root)}
+    if path_dir is not None:
+        env["PATH"] = str(path_dir)
+    check = DOCTOR_D / "31-evaluator-cli.sh"
+    return subprocess.run(
+        [BASH, str(check)],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+class TestEvaluatorCliCheck:
+    """KIT-0083 / issue #103: the library's PASS must not mask a missing CLI."""
+
+    def test_no_adversarial_dir_skips(self, tmp_path):
+        """No .adversarial/ — nothing to say (mirrors 30-evaluators.sh)."""
+        result = run_evaluator_cli_check(tmp_path, _restricted_bin(tmp_path))
+        assert "DOCTOR:evaluator-cli:SKIP:" in result.stdout
+        assert "not initialized" in result.stdout
+
+    def test_config_present_but_binary_missing_fails(self, tmp_path):
+        """THE #103 TRAP: config/library present, CLI absent → FAIL."""
+        (tmp_path / ".adversarial" / "evaluators").mkdir(parents=True)
+        result = run_evaluator_cli_check(tmp_path, _restricted_bin(tmp_path))
+        assert "DOCTOR:evaluator-cli:FAIL:" in result.stdout
+        assert "not on PATH" in result.stdout
+
+    def test_fail_message_names_the_fix_and_path(self, tmp_path):
+        """An actionable message: the fix command AND the PATH hint —
+        uv installs into ~/.local/bin, so 'installed but invisible' is a
+        real state a bare 'not found' would leave unexplained."""
+        (tmp_path / ".adversarial").mkdir()
+        result = run_evaluator_cli_check(tmp_path, _restricted_bin(tmp_path))
+        assert "install-evaluators" in result.stdout
+        assert "uv tool install adversarial-workflow" in result.stdout
+        assert "~/.local/bin" in result.stdout
+
+    def test_stub_binary_on_path_passes(self, tmp_path):
+        """A working CLI on PATH → PASS."""
+        (tmp_path / ".adversarial").mkdir()
+        bin_dir = _restricted_bin(tmp_path)
+        _stub_executable(bin_dir / "adversarial", "exit 0\n")
+        result = run_evaluator_cli_check(tmp_path, bin_dir)
+        assert "DOCTOR:evaluator-cli:PASS:" in result.stdout
+
+    def test_version_probe_uses_exit_code_not_output(self, tmp_path):
+        """A healthy CLI prints 'Unknown fields in evaluator.yml' warnings
+        to stderr (verified 2026-08-05). Exit 0 with noisy stderr must
+        still PASS — an output-parsing check would false-FAIL here."""
+        (tmp_path / ".adversarial").mkdir()
+        bin_dir = _restricted_bin(tmp_path)
+        _stub_executable(
+            bin_dir / "adversarial",
+            'echo "Unknown fields in evaluator.yml: status" >&2\nexit 0\n',
+        )
+        result = run_evaluator_cli_check(tmp_path, bin_dir)
+        assert "DOCTOR:evaluator-cli:PASS:" in result.stdout
+
+    def test_broken_binary_fails(self, tmp_path):
+        """On PATH but non-functional (exit non-zero) → FAIL, not PASS."""
+        (tmp_path / ".adversarial").mkdir()
+        bin_dir = _restricted_bin(tmp_path)
+        _stub_executable(bin_dir / "adversarial", "exit 1\n")
+        result = run_evaluator_cli_check(tmp_path, bin_dir)
+        assert "DOCTOR:evaluator-cli:FAIL:" in result.stdout
+        assert "--version" in result.stdout
+
+    def test_check_exits_zero_on_every_path(self, tmp_path):
+        """Checks report via DOCTOR: lines; the driver owns exit codes."""
+        (tmp_path / ".adversarial").mkdir()
+        assert (
+            run_evaluator_cli_check(tmp_path, _restricted_bin(tmp_path)).returncode == 0
+        )

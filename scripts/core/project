@@ -82,6 +82,124 @@ def _get_evaluator_library_version():
 
 EVALUATOR_LIBRARY_REPO = "https://github.com/movito/adversarial-evaluator-library.git"
 
+# The PyPI distribution providing the `adversarial` CLI (KIT-0083).
+ADVERSARIAL_CLI_DIST = "adversarial-workflow"
+
+
+def _get_adversarial_cli_version(project_dir):
+    """Read the CLI pin: .adversarial/config.yml first, pyproject.toml as mirror.
+
+    Canonical home is .adversarial/config.yml because it ships to BOTH
+    shapes; planning-shape repos have no pyproject.toml at all
+    (engine-consumer.sh:294), which is what made pyproject an unreadable
+    home for half of all projects (#60, KIT-0083). pyproject stays a
+    fallback mirror so the kit's own checkout keeps working.
+
+    Returns None when no pin is readable — callers install nothing and
+    print the exact command instead. Deliberately NOT a silent
+    unpinned-latest: that is the KIT-0068 A08 class, where a quiet
+    fallback installed a five-versions-old library.
+
+    Parsed with a regex rather than a YAML load: `project` runs on bare
+    Python with no third-party imports, and PyYAML is not guaranteed
+    (same reasoning as the tomllib fallback above).
+    """
+    config_yml = Path(project_dir) / ".adversarial" / "config.yml"
+    try:
+        text = config_yml.read_text(encoding="utf-8")
+    except (FileNotFoundError, OSError):
+        text = ""
+    # Anchored to line start so a commented-out example (# adversarial_
+    # cli_version: "9.9.9") can never be read as the live pin.
+    match = re.search(
+        r'^\s*adversarial_cli_version\s*:\s*["\']?([^"\'\s#]+)', text, re.MULTILINE
+    )
+    if match:
+        return match.group(1)
+
+    # Mirror: pyproject's dependency spec, e.g. "adversarial-workflow>=1.0.1"
+    pyproject = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
+    try:
+        ptext = pyproject.read_text(encoding="utf-8")
+    except (FileNotFoundError, OSError):
+        return None
+    mirror = re.search(
+        r'["\']' + re.escape(ADVERSARIAL_CLI_DIST) + r'\s*>=\s*([^"\',]+)', ptext
+    )
+    return mirror.group(1).strip() if mirror else None
+
+
+def _ensure_adversarial_cli(project_dir):
+    """Ensure the `adversarial` CLI is on PATH; instruct if it can't be.
+
+    The KIT-0083 / issue #103 trap: .adversarial/ config and the evaluator
+    library both shipped and doctor reported PASS, but nothing ever
+    installed the CLI itself — so the planner's Phase 3 evaluation GATE
+    was the first thing to discover it, with `command not found`.
+
+    Never fails the caller: the library install is the command's primary
+    job and must not be undone by an optional CLI step. Degrades to
+    printing the exact command, mirroring the git-missing block below.
+    """
+    if shutil.which("adversarial"):
+        print("✅ adversarial CLI already installed")
+        return
+
+    version = _get_adversarial_cli_version(project_dir)
+    spec = f"{ADVERSARIAL_CLI_DIST}=={version}" if version else ADVERSARIAL_CLI_DIST
+    install_cmd = f"uv tool install {spec}"
+
+    if not shutil.which("uv"):
+        print("⚠️  adversarial CLI not found, and uv is not installed")
+        print("   The evaluator library is installed, but running an")
+        print("   evaluation needs the CLI. Install uv, then run:")
+        print(f"     {install_cmd}")
+        print("   uv: https://docs.astral.sh/uv/getting-started/installation/")
+        return
+
+    if not version:
+        # No readable pin: instruct rather than install unpinned-latest
+        # (KIT-0068 A08 — silent fallbacks install the wrong thing).
+        print("⚠️  Could not read the adversarial CLI version pin")
+        print("   Source: .adversarial/config.yml → adversarial_cli_version")
+        print("   Fix that pin, or install explicitly:")
+        print(f"     {install_cmd}")
+        return
+
+    print(f"📦 Installing the adversarial CLI ({spec})...")
+    try:
+        result = subprocess.run(
+            ["uv", "tool", "install", spec],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except subprocess.TimeoutExpired:
+        print("⚠️  CLI install timed out (network issue?)")
+        print(f"   Retry manually: {install_cmd}")
+        return
+
+    if result.returncode != 0:
+        print("⚠️  CLI install failed — the evaluator library is still installed")
+        # Surface only uv's last line: its full stderr is long and the
+        # actionable part is the tail.
+        detail = (result.stderr or "").strip().splitlines()
+        if detail:
+            print(f"   {detail[-1]}")
+        print(f"   Retry manually: {install_cmd}")
+        return
+
+    if shutil.which("adversarial"):
+        print("✅ adversarial CLI installed")
+    else:
+        # uv installs into ~/.local/bin; an install can succeed while the
+        # binary stays unreachable. Say so here rather than letting the
+        # doctor check be the first to notice.
+        print("✅ adversarial CLI installed — but it is not on your PATH")
+        print("   uv installs tools into ~/.local/bin; add it to PATH:")
+        print('     export PATH="$HOME/.local/bin:$PATH"')
+
+
 # Status to folder mapping
 STATUS_FOLDER_MAP = {
     "backlog": "1-backlog",
@@ -829,7 +947,15 @@ def cmd_install_evaluators(args, project_dir):
     print("📦 Adversarial Evaluator Library Installer")
     print("=" * 50)
 
-    # 2. Check if already installed — BEFORE resolving the version pin:
+    # 2. Ensure the CLI — BEFORE the already-installed early return
+    # below. The #103 shape is precisely "library present, CLI absent":
+    # a rerun there must still fix the CLI, so this cannot sit after a
+    # `return` that the library check owns. Never fails the command
+    # (KIT-0083).
+    _ensure_adversarial_cli(project_dir)
+    print()
+
+    # 3. Check if already installed — BEFORE resolving the version pin:
     # the no-op rerun path must keep working on repos with no readable
     # pyproject pin (planning shape, or installs done only with --ref);
     # the pin is only needed to clone (BugBot round 2, KIT-0068).
@@ -846,7 +972,7 @@ def cmd_install_evaluators(args, project_dir):
     print(f"   Version: {version}")
     print()
 
-    # 3. Clone specific version
+    # 4. Clone specific version
     with tempfile.TemporaryDirectory() as tmpdir:
         print(f"📥 Cloning evaluator library @ {version}...")
         try:
@@ -2509,7 +2635,10 @@ Setup:
                          (--no-hooks: skip pre-commit hook install —
                          used by worktree provisioning; refuses if
                          .venv is a symlink, KIT-0065)
-  install-evaluators     Install evaluators from adversarial-evaluator-library
+  install-evaluators     Install the evaluator library + CLI
+                         (library from adversarial-evaluator-library;
+                         CLI via uv tool install — pinned in
+                         .adversarial/config.yml)
                          Options: --force (reinstall), --ref <tag> (version)
   doctor                 Run incident-mapped environment checks (doctor.d/)
                          Exit: 0 ok, 1 failures, 2 warnings only, 3 driver error

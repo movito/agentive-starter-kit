@@ -51,7 +51,8 @@
 #                        (adopt, single+python) run the bootstrap-agent
 #                        materials flow / silence its detection hint
 #   --with-evaluators / --without-evaluators
-#                        answer the evaluator-install offer
+#                        answer the evaluator-install offer (provisions
+#                        the evaluator library + the adversarial CLI)
 #   --with-venv / --without-venv
 #                        answer the venv offer (profile python only)
 #   --no-preset          ignore the operator preset for this run (the
@@ -752,9 +753,9 @@ PYEOF
 run_offers() {
     if [ "$WITH_EVALUATORS" = "" ]; then
         if is_tty; then
-            WITH_EVALUATORS="$(prompt_yn "Install adversarial evaluators now?")"
+            WITH_EVALUATORS="$(prompt_yn "Install adversarial evaluators now? (library + CLI)")"
         else
-            echo "Offer skipped (non-interactive): evaluators — pass --with-evaluators to install"
+            echo "Offer skipped (non-interactive): evaluators (library + CLI) — pass --with-evaluators to install"
             WITH_EVALUATORS="no"
         fi
     fi
