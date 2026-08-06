@@ -136,7 +136,14 @@ writing the starter, so the path and branch in the block are real.
 [OR if specific agent:]
 
 **Recommended agent**: `[agent-name]` ([reason - e.g., "TDD expertise required"])
+
+**Session name**: rename the session to `[TASK-ID] [short task name]`
+(e.g. via /rename) so it is findable for /resume and in session lists.
 ```
+
+The session-name line is part of every starter's footer — operator
+convention (2026-08-06): task sessions are named `TASK-ID <name>` so
+they can be found again mid-flight and after.
 
 ---
 

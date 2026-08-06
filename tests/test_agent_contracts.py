@@ -52,3 +52,7 @@ def test_planner_requires_session_topology_in_handoffs(agent):
         f"{agent}: Phase 5 must state branches are created at authoring "
         "time (KIT-0088 F5)"
     )
+    assert "Rename the session to" in text, (
+        f"{agent}: Phase 5 footer must carry the session-rename "
+        "suggestion (operator convention, 2026-08-06)"
+    )

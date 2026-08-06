@@ -279,7 +279,11 @@ Required sections:
    ```bash
    git branch --show-current   # expect: feature/<TASK-ID>-… — if not, STOP
    ```
-8. **Footer**: Recommended agent name (typically `feature-developer`)
+8. **Footer**: Recommended agent name (typically `feature-developer`),
+   plus the session-name line — every starter ends by suggesting:
+   *"Rename the session to `<TASK-ID> <short task name>`"* (operator
+   convention: named sessions are findable for /resume and in session
+   lists).
 
 Present the starter to the user with a one-line summary: *"Task starter
 ready — invoke `<agent-name>` in a new tab."*
