@@ -62,14 +62,20 @@ def find_task_file(task_id: str, project_dir: Path) -> Path | None:
     if not tasks_dir.is_dir():
         return None
 
-    # Normalize task ID (handle ASK-0001 or ASK-1)
+    # Boundary-anchored match (evaluator finding, PR 1 trio — a fix,
+    # not a carry-forward): the legacy substring test let a short ID
+    # like "KIT-1" silently select KIT-1234's file and move the wrong
+    # task. A file matches when its name IS the ID or starts with the
+    # ID followed by a non-alphanumeric separator; case-insensitive as
+    # before.
     task_id_upper = task_id.upper()
+    id_pattern = re.compile(re.escape(task_id_upper) + r"(?![0-9A-Z])")
 
     for folder in tasks_dir.iterdir():
         if not folder.is_dir():
             continue
         for file in folder.glob("*.md"):
-            if task_id_upper in file.name.upper():
+            if id_pattern.match(file.name.upper()):
                 return file
     return None
 
@@ -78,9 +84,12 @@ def update_status_in_file(file_path: Path, new_status: str) -> bool:
     """Update the Status field in a task file."""
     try:
         content = file_path.read_text(encoding="utf-8")
+        # Replacement via lambda, not a template string: a status value
+        # containing backslashes or group refs must never be
+        # re-interpreted by re.sub (claude-code review, PR 1 trio).
         new_content = re.sub(
             r"(\*\*Status\*\*:\s*)(\w+(?:\s+\w+)?)",
-            f"\\1{new_status}",
+            lambda m: m.group(1) + new_status,
             content,
             count=1,
         )
@@ -203,6 +212,10 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> TaskMove |
     target_path = target_dir / task_file.name
 
     try:
+        # A valid status whose folder is absent (lean consumer layouts
+        # often skip 6-canceled/7-blocked) is created, not crashed into
+        # (evaluator finding, PR 1 trio).
+        target_dir.mkdir(parents=True, exist_ok=True)
         shutil.move(str(task_file), str(target_path))
         print(f"📁 Moved: {current_folder} → {target_folder}")
     except (OSError, shutil.Error) as e:

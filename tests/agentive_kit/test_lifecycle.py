@@ -242,6 +242,48 @@ class TestMoveTask:
         assert "**Status**: Done" in moved.read_text(encoding="utf-8")
 
 
+class TestTaskIdBoundaryMatch:
+    """Evaluator finding, PR 1 trio (deliberate fix over the legacy
+    substring test): a short ID must never select a longer ID's file."""
+
+    def test_short_id_does_not_match_longer_id(self, tmp_path, capsys):
+        make_project(tmp_path)  # contains KIT-1234-sample-task.md
+        assert lifecycle.move_task("KIT-1", "done", tmp_path) is None
+        assert "Task not found" in capsys.readouterr().out
+        # KIT-1234's file was not touched.
+        assert (tmp_path / ".kit" / "tasks" / "2-todo" / TASK_FILE).exists()
+
+    def test_full_id_still_matches(self, tmp_path):
+        make_project(tmp_path)
+        found = lifecycle.find_task_file("KIT-1234", tmp_path)
+        assert found is not None
+        assert found.name == TASK_FILE
+
+    def test_match_is_case_insensitive(self, tmp_path):
+        make_project(tmp_path)
+        found = lifecycle.find_task_file("kit-1234", tmp_path)
+        assert found is not None
+
+    def test_bare_id_file_matches(self, tmp_path):
+        make_project(tmp_path)
+        bare = tmp_path / ".kit" / "tasks" / "2-todo" / "KIT-7777.md"
+        bare.write_text("**Status**: Todo\n", encoding="utf-8")
+        found = lifecycle.find_task_file("KIT-7777", tmp_path)
+        assert found is not None
+        assert found.name == "KIT-7777.md"
+
+
+class TestMissingTargetFolder:
+    """Evaluator finding, PR 1 trio: a valid status whose folder is
+    absent (lean layouts skip 6-canceled/7-blocked) is created."""
+
+    def test_move_creates_absent_status_folder(self, tmp_path):
+        make_project(tmp_path)  # creates only 2-todo/3-in-progress/5-done
+        result = lifecycle.move_task("KIT-1234", "blocked", tmp_path)
+        assert result
+        assert (tmp_path / ".kit" / "tasks" / "7-blocked" / TASK_FILE).exists()
+
+
 class TestMissingTasksDir:
     """Evaluator findings, PR 1 trio: a repo without .kit/tasks/ (root
     discovery only guarantees .kit/) reports cleanly instead of

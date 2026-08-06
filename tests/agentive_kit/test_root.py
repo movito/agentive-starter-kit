@@ -76,6 +76,17 @@ class TestDiscovery:
         monkeypatch.chdir(nested)
         assert find_project_root() == root
 
+    def test_symlinked_start_dir(self, tmp_path):
+        # A symlinked working directory walks its LOGICAL parents
+        # (os.path.abspath does not resolve symlinks), so the root is
+        # reported on the symlink side — matching what the user typed.
+        root = make_kit_root(tmp_path / "real")
+        link = tmp_path / "link"
+        link.symlink_to(root, target_is_directory=True)
+        sub = link / "docs"
+        (root / "docs").mkdir()
+        assert find_project_root(sub) == link
+
     def test_relative_start_path(self, tmp_path, monkeypatch):
         root = make_kit_root(tmp_path)
         nested = root / "a"
