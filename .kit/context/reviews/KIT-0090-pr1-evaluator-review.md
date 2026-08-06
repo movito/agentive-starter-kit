@@ -82,6 +82,14 @@ Loop stopped here: the reviewer is oscillating on settled coins
 - **Hardcoded statuses in script help text** (fast r2): print_help
   already hardcodes them; the script dies in phase 4.
 
+## Final gate pass
+
+Round 6 (fast, on the finished diff): CONCERNS citing only items
+already in this table — the refuted `text=True` ValueError claim and
+the declined help-text hardcoding (which the evaluator itself notes as
+"temporary by design"). No new findings; gate closed with all
+dispositions recorded.
+
 ## Known blind spot note
 
 Evaluators cannot re-verify the PyPI `agentive` entry-point check from
