@@ -1,8 +1,8 @@
 # KIT-ADR-0028: Distribute the kit as versioned packages — retire copy-based sync
 
-**Status**: Proposed (operator direction stated 2026-08-05; acceptance =
-operator sign-off on this document)
-**Date**: 2026-08-05
+**Status**: **Accepted** (operator, 2026-08-06 — "Excellent. I approve
+of the ADR.")
+**Date**: 2026-08-05 (proposed) / 2026-08-06 (accepted)
 **Deciders**: Fredrik Matheson (operator), planner-f5
 **Extends**: KIT-ADR-0025 (plugin agents project-agnostic, specifics
 read at runtime)

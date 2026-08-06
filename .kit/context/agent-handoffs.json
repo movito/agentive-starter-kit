@@ -1,9 +1,9 @@
 {
   "planner": {
-    "status": "available",
-    "current_task": null,
+    "status": "handoff_pending",
+    "current_task": "KIT-0090",
     "task_started": null,
-    "brief_note": "2026-08-06: KIT-0080 DONE (PR #107 merged 2f64ac2 — floor DROPPED to git 2.30, 7th site found, every guard falsified against pristine pre-fix code; retro extracted). Retro resolutions all landed: patterns.yml quoting rule widened to generated shell; gh pr create --head documented in WORKTREE-WORKFLOW (kit does not mutate operator git config); project-move-vs-KIT-0086 carve-out recorded in KIT-0086 spec (script writes legal on main only, branch sessions revert — prefer skip-guard over flag at implementation); planner Phase 4 gains cite-source-for-environmental-claims + verify-recipe-on-failing-input (the 'repro is GONE' inversion was the planner's own handoff). Worktree removed. QUEUE PAUSED at the ADR-0028 fork: everything remaining (KIT-0085, KIT-0086, KIT-0075, KIT-0078+KIT-0087) is machinery the packaging decision re-baselines — operator decides ADR acceptance before the next starter.",
+    "brief_note": "2026-08-06: KIT-ADR-0028 ACCEPTED by operator. Queue RE-BASELINED: KIT-0090 (phase 1 — extract scripts to PyPI package agentive-kit, name verified available; arch-review-fast APPROVED round 2) is the ONLY active work item. KIT-0086 + KIT-0079 close by reference inside KIT-0090 F6. PARKED pending phases 1-2: KIT-0085, KIT-0075, KIT-0078+KIT-0087 (their surfaces reshape under packaging). Backlog dissolution (KIT-0026/0045/0061/0063/0051/0082-shrink/0089-rides) happens at phase 4 with dispositions, not before (ADR Consequences). Phases 2-4 specced sequentially after phase 1 lands. Next planner artifact: KIT-0090 handoff + starter on operator go.",
     "details_link": ".kit/tasks/5-done/KIT-0080-doctor-apple-git-230-incompat.md",
     "handoff_file": ".kit/context/KIT-0080-HANDOFF-feature-developer.md"
   },
