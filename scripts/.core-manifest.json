@@ -11,6 +11,7 @@
       "core/doctor.d/10-gh-auth.sh",
       "core/doctor.d/20-env-keys.py",
       "core/doctor.d/30-evaluators.sh",
+      "core/doctor.d/31-evaluator-cli.sh",
       "core/doctor.d/40-version-skew.py",
       "core/doctor.d/50-plugin-source.sh",
       "core/doctor.d/55-worktree-provisioning.sh",

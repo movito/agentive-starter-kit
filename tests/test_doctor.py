@@ -13,6 +13,7 @@ covers the git-facing tests — no per-module env handling here.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -1971,3 +1972,158 @@ class TestWorktreeProvisioningCheck:
             if ln.startswith("DOCTOR:worktree-venv:WARN:")
         )
         assert "--no-hooks" not in line
+
+
+def run_evaluator_cli_check(root: Path, path_dir: Path | None = None):
+    """Run 31-evaluator-cli.sh; restrict PATH to control `adversarial` visibility.
+
+    PATH control is the whole point (KIT-0083): both `uv` and
+    `adversarial` are installed on the maintainer's machine, so an
+    unrestricted `command -v` passes locally and proves nothing about a
+    fresh project — the exact blind spot that let issue #103 ship.
+    """
+    env = {**os.environ, "DOCTOR_ROOT": str(root)}
+    if path_dir is not None:
+        env["PATH"] = str(path_dir)
+    check = DOCTOR_D / "31-evaluator-cli.sh"
+    return subprocess.run(
+        [BASH, str(check)],
+        env=env,
+        capture_output=True,
+        text=True,
+        # Comfortably above the check's own 20s probe bound, so a
+        # genuinely-blocking stub is cut off by the CHECK (producing its
+        # timeout verdict) and not by pytest (producing an error).
+        timeout=60,
+    )
+
+
+class TestEvaluatorCliCheck:
+    """KIT-0083 / issue #103: the library's PASS must not mask a missing CLI."""
+
+    def test_no_adversarial_dir_skips(self, tmp_path):
+        """No .adversarial/ — nothing to say (mirrors 30-evaluators.sh)."""
+        result = run_evaluator_cli_check(tmp_path, _restricted_bin(tmp_path))
+        assert "DOCTOR:evaluator-cli:SKIP:" in result.stdout
+        assert "not initialized" in result.stdout
+
+    def test_config_present_but_binary_missing_fails(self, tmp_path):
+        """THE #103 TRAP: config/library present, CLI absent → FAIL."""
+        (tmp_path / ".adversarial" / "evaluators").mkdir(parents=True)
+        result = run_evaluator_cli_check(tmp_path, _restricted_bin(tmp_path))
+        assert "DOCTOR:evaluator-cli:FAIL:" in result.stdout
+        assert "not on PATH" in result.stdout
+
+    def test_fail_message_names_the_fix_and_path(self, tmp_path):
+        """An actionable message: the fix command AND the PATH hint —
+        uv installs into ~/.local/bin, so 'installed but invisible' is a
+        real state a bare 'not found' would leave unexplained."""
+        (tmp_path / ".adversarial").mkdir()
+        result = run_evaluator_cli_check(tmp_path, _restricted_bin(tmp_path))
+        assert "install-evaluators" in result.stdout
+        assert "uv tool install adversarial-workflow" in result.stdout
+        assert "~/.local/bin" in result.stdout
+
+    def test_stub_binary_on_path_passes(self, tmp_path):
+        """A working CLI on PATH → PASS."""
+        (tmp_path / ".adversarial").mkdir()
+        bin_dir = _restricted_bin(tmp_path)
+        _stub_executable(bin_dir / "adversarial", "exit 0\n")
+        result = run_evaluator_cli_check(tmp_path, bin_dir)
+        assert "DOCTOR:evaluator-cli:PASS:" in result.stdout
+
+    def test_version_probe_uses_exit_code_not_output(self, tmp_path):
+        """A healthy CLI prints 'Unknown fields in evaluator.yml' warnings
+        to stderr (verified 2026-08-05). Exit 0 with noisy stderr must
+        still PASS — an output-parsing check would false-FAIL here."""
+        (tmp_path / ".adversarial").mkdir()
+        bin_dir = _restricted_bin(tmp_path)
+        _stub_executable(
+            bin_dir / "adversarial",
+            'echo "Unknown fields in evaluator.yml: status" >&2\nexit 0\n',
+        )
+        result = run_evaluator_cli_check(tmp_path, bin_dir)
+        assert "DOCTOR:evaluator-cli:PASS:" in result.stdout
+
+    def test_broken_binary_fails(self, tmp_path):
+        """On PATH but non-functional (exit non-zero) → FAIL, not PASS."""
+        (tmp_path / ".adversarial").mkdir()
+        bin_dir = _restricted_bin(tmp_path)
+        _stub_executable(bin_dir / "adversarial", "exit 1\n")
+        result = run_evaluator_cli_check(tmp_path, bin_dir)
+        assert "DOCTOR:evaluator-cli:FAIL:" in result.stdout
+        assert "--version" in result.stdout
+
+    @pytest.mark.slow
+    def test_hanging_version_probe_is_bounded(self, tmp_path):
+        """A corrupt install whose --version BLOCKS must FAIL on a bound,
+        not hang the whole doctor run (o3 review).
+
+        The stub calls sleep by ABSOLUTE path. A bare `sleep 120` exits
+        127 instantly under the restricted PATH, so the earlier version
+        of this test passed on the broken-binary branch and never
+        exercised the bound at all (CodeRabbit round 1). Asserting the
+        timeout message specifically — not merely FAIL — is what keeps
+        that confusion from returning.
+        """
+        import time
+
+        sleep_bin = next(
+            (c for c in ("/bin/sleep", "/usr/bin/sleep") if Path(c).exists()), None
+        )
+        if sleep_bin is None:
+            pytest.skip("no absolute sleep binary to build a blocking stub with")
+
+        (tmp_path / ".adversarial").mkdir()
+        bin_dir = _restricted_bin(tmp_path)
+        _stub_executable(bin_dir / "adversarial", f"exec {sleep_bin} 120\n")
+        started = time.monotonic()
+        result = run_evaluator_cli_check(tmp_path, bin_dir)
+        elapsed = time.monotonic() - started
+        assert "DOCTOR:evaluator-cli:FAIL:" in result.stdout
+        assert "did not finish" in result.stdout, (
+            "FAILed for the wrong reason — the stub did not actually block: "
+            f"{result.stdout!r}"
+        )
+        # Bound the timing from BOTH sides. An upper bound alone passes a
+        # probe whose timeout was shortened to near-zero, which is the
+        # same class of unfalsifiable assertion as the one that let this
+        # test hide behind the broken-binary branch (CodeRabbit round 2).
+        assert elapsed >= 18, (
+            f"probe terminated after {elapsed:.0f}s — it did not wait out "
+            "its configured bound"
+        )
+        assert elapsed < 60, f"probe was not bounded (took {elapsed:.0f}s)"
+
+    def test_check_exits_zero_on_every_path(self, tmp_path):
+        """Checks report via DOCTOR: lines; the driver owns exit codes."""
+        (tmp_path / ".adversarial").mkdir()
+        assert (
+            run_evaluator_cli_check(tmp_path, _restricted_bin(tmp_path)).returncode == 0
+        )
+
+
+def test_probe_bounds_match_the_installer():
+    """The doctor bound and the installer bound must stay equal.
+
+    The liveness probe's purpose is that `install-evaluators` and
+    `project doctor` never disagree about one install. A CLI answering
+    between two different bounds would be "working" to one surface and
+    FAIL to the other — the exact split this check exists to close
+    (CodeRabbit round 1). Coupling asserted here so it cannot drift
+    silently.
+    """
+    check_text = (DOCTOR_D / "31-evaluator-cli.sh").read_text(encoding="utf-8")
+    doctor_bound = re.search(r"^PROBE_TIMEOUT=(\d+)", check_text, re.MULTILINE)
+    assert doctor_bound, "doctor check no longer declares PROBE_TIMEOUT"
+
+    project_text = PROJECT_SCRIPT.read_text(encoding="utf-8")
+    installer_bound = re.search(
+        r"^CLI_PROBE_TIMEOUT\s*=\s*(\d+)", project_text, re.MULTILINE
+    )
+    assert installer_bound, "project no longer declares CLI_PROBE_TIMEOUT"
+
+    assert doctor_bound.group(1) == installer_bound.group(1), (
+        f"probe bounds drifted: doctor={doctor_bound.group(1)}s, "
+        f"installer={installer_bound.group(1)}s"
+    )

@@ -17,3 +17,44 @@ artifacts_directory: .adversarial/artifacts/
 
 # Command to run tests (for test validation phase)
 test_command: pytest tests/ -v
+
+# ── Version pins (KIT-0083; canonical home for BOTH, issue #60) ─────────
+#
+# These two pins name DIFFERENT ARTIFACTS. They were never inconsistent
+# with each other, and #60's "v0.10.0 does not exist on PyPI" reading is
+# a category error:
+#
+#   adversarial_cli_version    → the CLI: a PyPI *distribution*
+#                                (adversarial-workflow), installed with
+#                                `uv tool install`
+#   evaluator_library_version  → the evaluator library: a *git tag* on
+#                                movito/adversarial-evaluator-library,
+#                                cloned by `project install-evaluators`
+#
+# A PyPI version and a git tag are not comparable, so there is nothing
+# to reconcile. #60 is a LOCATION bug wearing a consistency costume:
+# both pins used to live in pyproject.toml (added at c851276, KIT-0035,
+# when the kit was single-shape and every project had one). The planning
+# shape arrived later (924a5bb, KIT-0053) and deliberately never ships
+# pyproject.toml — engine-consumer.sh:294 — so half of all projects
+# could not READ their own pins. The split did not create a bad
+# location; it turned a previously-fine one into an unreadable one.
+#
+# This file is the canonical home because it ships to BOTH shapes
+# (engine-consumer.sh rsyncs .adversarial/ verbatim), already owns
+# evaluator-suite config, and shares its lifetime with the thing being
+# pinned. pyproject.toml keeps a mirror of the CLI pin for Python
+# tooling, but no reader may REQUIRE pyproject.toml.
+#
+# Unknown keys are ignored by adversarial-workflow 1.0.1 (it reads this
+# file as a plain dict, `if "key" in config`) — verified 2026-08-05.
+# NOTE on evaluator_library_version: it is deliberately INERT today —
+# `_get_evaluator_library_version()` still reads the pyproject pin, and
+# moving that reader is KIT-0079's scope, not this task's. It is written
+# here now so KIT-0079 has the canonical home already populated. Until
+# that lands the two copies could drift, so a test asserts they stay
+# equal (tests/test_core_manifest.py::test_library_pin_mirrors_agree) —
+# an inert key that silently disagrees with the live one is worse than
+# no key at all (CodeRabbit round 1).
+adversarial_cli_version: "1.0.1"        # PyPI dist — uv tool install adversarial-workflow
+evaluator_library_version: "v0.10.0"    # git tag — KIT-0079 moves the reader here
