@@ -253,7 +253,12 @@ class TestMoveTask:
         assert result  # the file did move
         assert result.status_update_failed is True
         assert result.status_field_updated is False
-        assert "Status field not updated" in capsys.readouterr().out
+        out = capsys.readouterr().out
+        assert "Status field not updated" in out
+        # The summary line must not contradict the warning (BugBot,
+        # PR #108 round 2): no ✅ on a partial failure.
+        assert "✅ Task" not in out
+        assert "⚠️  Task KIT-1234 moved to 3-in-progress" in out
 
     def test_unwritable_status_is_partial_failure(self, tmp_path, monkeypatch):
         import pathlib

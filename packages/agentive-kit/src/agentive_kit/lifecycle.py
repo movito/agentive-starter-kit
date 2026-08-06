@@ -248,7 +248,15 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> TaskMove |
 
     sync_coordination_metadata(task_id, target_path.name, target_folder, project_dir)
 
-    print(f"✅ Task {task_id} is now {linear_status}")
+    if field_updated is None:
+        # No ✅ on a partial failure — the summary line must not
+        # contradict the warning above (BugBot, PR #108 round 2).
+        print(
+            f"⚠️  Task {task_id} moved to {target_folder}, "
+            "but its Status field was not updated"
+        )
+    else:
+        print(f"✅ Task {task_id} is now {linear_status}")
     return TaskMove(
         task_id=task_id,
         file_name=target_path.name,

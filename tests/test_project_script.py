@@ -1001,6 +1001,21 @@ class TestLifecycleDelegation:
         assert result.returncode == 0, result.stdout + result.stderr
         assert "matching Status and folder" in result.stdout
 
+    def test_surplus_arguments_are_usage_errors(self, kit_tree_with_package):
+        # BugBot (PR #108 round 2): the script shim must reject surplus
+        # args exactly like the package CLI does.
+        tree = kit_tree_with_package
+        for args in (
+            ("start", "KIT-1234", "extra"),
+            ("move", "KIT-1234", "done", "extra"),
+            ("validate", "extra"),
+        ):
+            result = self._run(tree, *args)
+            assert result.returncode == 1, args
+            assert "Usage:" in result.stdout, args
+        # And the task did not move.
+        assert (tree / ".kit" / "tasks" / "2-todo" / "KIT-1234-sample.md").exists()
+
     def test_missing_package_fails_loud_with_install_command(self, tmp_path):
         # A consumer that synced the delegating script before phase 3
         # (no installed CLI, no packages/ tree) must get the exact

@@ -2324,7 +2324,9 @@ except Exception as e:
         # Move task to new status folder (delegates to agentive_kit).
         # Exit is nonzero on a PARTIAL failure too (moved but Status
         # field not set) — TaskMove.status_update_failed carries it.
-        if len(sys.argv) < 4:
+        if len(sys.argv) != 4:
+            # != not <: surplus arguments are a usage error, never
+            # silently dropped (BugBot, PR #108 round 2)
             print("Usage: ./scripts/core/project move <task-id> <status>")
             print("       ./scripts/core/project move ASK-0001 done")
             print(
@@ -2339,7 +2341,7 @@ except Exception as e:
 
     elif command == "complete":
         # Shorthand for moving to done
-        if len(sys.argv) < 3:
+        if len(sys.argv) != 3:
             print("Usage: ./scripts/core/project complete <task-id>")
             sys.exit(1)
         task_id = sys.argv[2]
@@ -2348,7 +2350,7 @@ except Exception as e:
 
     elif command == "start":
         # Shorthand for moving to in-progress
-        if len(sys.argv) < 3:
+        if len(sys.argv) != 3:
             print("Usage: ./scripts/core/project start <task-id>")
             sys.exit(1)
         task_id = sys.argv[2]
@@ -2357,7 +2359,7 @@ except Exception as e:
 
     elif command == "block":
         # Shorthand for moving to blocked
-        if len(sys.argv) < 3:
+        if len(sys.argv) != 3:
             print("Usage: ./scripts/core/project block <task-id>")
             sys.exit(1)
         task_id = sys.argv[2]
@@ -2366,6 +2368,9 @@ except Exception as e:
 
     elif command == "validate":
         # Validate all task statuses match folders
+        if len(sys.argv) != 2:
+            print("Usage: ./scripts/core/project validate")
+            sys.exit(1)
         report = _kit_lifecycle().validate_all_tasks(project_dir)
         sys.exit(0 if report.ok else 1)
 
