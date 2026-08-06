@@ -2286,19 +2286,32 @@ class TestPortableGitResolutionUnderOldGit:
         assert "DOCTOR:worktree-audit:SKIP:" not in old.stdout, old.stdout
         assert old.stdout == modern.stdout, "verdict diverged between git versions"
 
-    def test_no_check_still_uses_the_unportable_flag(self):
-        """The whole class returns the moment one resolver reverts."""
+    def test_no_script_still_uses_the_unportable_flag(self):
+        """The whole class returns the moment one resolver reverts.
+
+        Scoped to ALL of scripts/, not just doctor.d: the bug's worst
+        two faces lived in scripts/local/ (the setup door's silent
+        preset miss and new-worktree.sh's hard death), so a guard that
+        only watched doctor.d would let the expensive half regress
+        silently (code-reviewer, this PR).
+        """
+        scripts_root = REPO_ROOT / "scripts"
         offenders = []
-        for path in sorted(DOCTOR_D.iterdir()):
-            if not path.is_file():
+        for path in sorted(scripts_root.rglob("*")):
+            if not path.is_file() or "__pycache__" in path.parts:
                 continue
-            for raw in path.read_text(encoding="utf-8").splitlines():
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                continue
+            for raw in text.splitlines():
                 # Comments explaining the bug are expected and wanted;
                 # only an executable use is a regression.
                 line = raw.strip()
                 if line.startswith("#") or "--path-format" not in line:
                     continue
-                offenders.append(f"{path.name}:{raw.strip()}")
+                rel = path.relative_to(REPO_ROOT)
+                offenders.append(f"{rel}:{line}")
         assert offenders == [], (
             f"--path-format=absolute needs git >= 2.31 and is silently wrong on "
             f"Apple git 2.30.1 (KIT-0080): {offenders}"
