@@ -1918,10 +1918,15 @@ def _assert_no_library_state_claim(output):
     express — any new phrasing would silently escape it. Substring/regex
     matching is justified for that reason (DK rules require the
     justification, not the avoidance).
+
+    Covers plural agreement ("have been") and NEGATED forms ("has not
+    been installed") — a negative statement about the library's state is
+    still a statement about it, and equally outside what this step can
+    know (CodeRabbit round 5).
     """
     claim = re.search(
         r"\blibrar(?:y|ies)\b[^\n]*\b(?:is|are|was|were|remains?|still|"
-        r"has been|already)\b",
+        r"already|(?:has|have)(?:\s+not)?\s+been)\b",
         output,
         re.IGNORECASE,
     )
@@ -1929,6 +1934,49 @@ def _assert_no_library_state_claim(output):
         "the CLI step claimed something about the library's state: "
         f"{claim.group(0)!r}"
     )
+
+
+class TestNoLibraryStateClaimHelper:
+    """The shared assertion's own coverage.
+
+    It is the only thing standing between a reordered install step and a
+    message that lies about state, so its blind spots matter as much as
+    the messages it guards (CodeRabbit rounds 4-5).
+    """
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "The evaluator library is installed, but running an",
+            "CLI install failed — the evaluator library is still installed",
+            "the evaluator library is already installed",
+            "the library remains installed",
+            "The Library Was Installed",
+            "evaluator libraries are installed",
+            # plural agreement + negated forms: a negative claim about the
+            # library's state is still a claim (CodeRabbit round 5)
+            "the libraries have been installed",
+            "the library has been installed",
+            "the library has not been installed",
+            "the libraries have not been installed",
+        ],
+    )
+    def test_rejects_state_claims(self, message):
+        with pytest.raises(AssertionError):
+            _assert_no_library_state_claim(message)
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Running an evaluation needs the CLI. Install uv, then run:",
+            "CLI install failed — continuing with the library install",
+            "uv tool install adversarial-workflow==1.0.1",
+            "Retry manually: uv tool install adversarial-workflow==1.0.1",
+            "   uv: https://docs.astral.sh/uv/getting-started/installation/",
+        ],
+    )
+    def test_allows_messages_that_claim_nothing(self, message):
+        _assert_no_library_state_claim(message)
 
 
 class TestCliStepMakesNoLibraryClaims:
