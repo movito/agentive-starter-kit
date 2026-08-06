@@ -149,19 +149,39 @@ Begin every response with:
 
 ## Phase 1: Start Task
 
+**Topology first — VERIFY the worktree/branch, never create it.**
+Implementation sessions run on a per-task branch prepared BEFORE the
+session (worktree by default — `WORKTREE-WORKFLOW.md`; in split mode
+the branch lives in the TARGET repo). The handoff's "Session topology"
+section and the starter's LAUNCH block name it. If a task reaches you
+with no branch prepared and no topology stated, STOP and ask — never
+`checkout -b` in place: a session that silently starts in the primary
+clone on `main` is exactly the failure this check exists to prevent
+(KIT-0083/KIT-0088). Note: "single-repo mode" describes the
+planning/code REPO split — it is not an instruction to work in the
+primary clone.
+
 ```bash
-# 1. Read task spec (always in the planning repo — kit default path;
+# 1. VERIFY the session topology before anything else
+git branch --show-current
+#    Expect: the feature/<TASK-ID>-… branch the handoff/starter names.
+#    On main, on another task's branch, or in the primary clone when a
+#    worktree was specified → STOP and ask the operator.
+
+# 2. Read task spec (always in the planning repo — kit default path;
 #    Project Context may override)
 cat .kit/tasks/*/<TASK-ID>-*.md
 
-# 2. Read handoff file if it exists (always planning repo)
+# 3. Read handoff file if it exists (always planning repo); its
+#    Session topology section is authoritative for step 1's expectation
 cat .kit/context/<TASK-ID>-HANDOFF-*.md
 
-# 3. Create feature branch — in the TARGET repo when in split mode
-GIT_TARGET checkout -b feature/<TASK-ID>-short-description
-
-# 4. Update task status (always in the planning repo, never GIT_TARGET)
-./scripts/core/project start <TASK-ID>
+# 4. Task status (always in the planning repo, never GIT_TARGET).
+#    Worktree sessions: the planner normally ran `project start` on
+#    main BEFORE creating the worktree (ordering rule in
+#    WORKTREE-WORKFLOW.md); if the task file still shows 2-todo,
+#    coordinate — do not move it from a feature branch.
+./scripts/core/project start <TASK-ID>   # split mode: runs in the planning repo
 ```
 
 After every `GIT_TARGET checkout`, run `GIT_TARGET branch --show-current`

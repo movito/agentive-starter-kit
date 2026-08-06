@@ -1,6 +1,6 @@
 # KIT-0088: Worktree topology must survive any launch path — fix the single-point safeguard
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high (the failure class recurred live on KIT-0083: a session started in the primary clone on `main` because nothing it read said otherwise)
 **Type**: Process / agent definitions
 **Estimated Effort**: 0.5 day

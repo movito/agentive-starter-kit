@@ -26,6 +26,23 @@ planner-side branch-verify habit stays as defense in depth.
 
 ## Creation
 
+**Ordering rule — task status BEFORE worktree** (KIT-0083 bookkeeping,
+KIT-0088 F3): run `./scripts/core/project start <TASK-ID>` on `main` in
+the primary clone and PUSH, *then* create the worktree. The worktree
+branches from fresh `origin/main`, so this ordering means it carries
+the `3-in-progress` task file from birth — created the other way round,
+it carries a stale `2-todo` file and fails its own
+validate-task-status hook. The same ordering keeps
+`agent-handoffs.json` churn off feature branches, which the KIT-0086
+interim discipline independently requires: one ordering satisfies both
+rules.
+
+> **KIT-0080 note**: `new-worktree.sh` hard-fails on stock macOS git
+> (2.30.1) until KIT-0080 lands. The portable equivalent is plain
+> `git worktree add ../ask-worktrees/<TASK-ID> -b feature/<TASK-ID>-<slug>`
+> plus manual provisioning (`project setup` for the venv; symlink `.env`
+> and `.adversarial/evaluators` read-only from the primary).
+
 One command, run from the repository root (the primary clone's or any
 worktree's — the helper always resolves the primary internally):
 

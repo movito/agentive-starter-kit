@@ -220,6 +220,11 @@ Create `.kit/context/<TASK-ID>-HANDOFF-<agent-type>.md` containing:
 - **Evaluation summary**: link to the evaluator log; list addressed vs.
   outstanding concerns
 - **Out of scope**: what NOT to touch — guard against scope creep
+- **Session topology (REQUIRED)**: the worktree path and branch name
+  the session runs on, plus the verify-never-create reminder. A
+  handoff-only launch must carry the same safeguard as a starter
+  launch — KIT-0083's wrong-topology start happened because the
+  handoff omitted this (KIT-0088).
 
 Update `.kit/context/agent-handoffs.json` with the new assignment:
 
@@ -250,14 +255,20 @@ Required sections:
 5. **Time Estimate**: total + phase breakdown
 6. **Notes**: evaluation status, key dependencies, repo topology
    reminder (point at planning vs. target repo paths)
-7. **FIRST ACTIONS**: explicit branch + status commands
+7. **LAUNCH + FIRST ACTIONS** — the branch is created at AUTHORING
+   time, not by the implementing agent (template `:363-364`: "the
+   worktree already exists — never `checkout -b`"). Before writing the
+   starter, run the ordering rule (WORKTREE-WORKFLOW.md):
+   `./scripts/core/project start <TASK-ID>` on `main`, push, then
    ```bash
-   git checkout -b feature/<TASK-ID>-short-description
-   ./scripts/core/project start <TASK-ID>
+   git worktree add ../<worktrees-dir>/<TASK-ID> -b feature/<TASK-ID>-short-description
    ```
-   In split mode, the `git checkout` runs in the target repo
-   (`git -C <target_path> checkout -b ...`); `project start` runs in
-   the planning repo.
+   (in split mode, `git -C <target_path> worktree add …` — the branch
+   lives in the target repo). The starter's LAUNCH block names that
+   worktree path and branch; its FIRST ACTIONS are VERIFICATION only:
+   ```bash
+   git branch --show-current   # expect: feature/<TASK-ID>-… — if not, STOP
+   ```
 8. **Footer**: Recommended agent name (typically `feature-developer`)
 
 Present the starter to the user with a one-line summary: *"Task starter
