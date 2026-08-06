@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`agentive-kit` package skeleton — KIT-ADR-0028 phase 1, PR 1**
+  (KIT-0090): `packages/agentive-kit/` with `src/agentive_kit/`
+  modules `gitio` (single home for git invocations; KIT-0080's
+  portable resolvers with failure-path tests), `lifecycle`
+  (start/move/complete/validate + coordination-metadata sync), `root`
+  (CWD-walk project discovery: nearest ancestor with `.kit/` +
+  `CLAUDE.md`, loud refusal outside a kit repo), typed boundary models,
+  and an `agentive` console entry (name verified collision-free on
+  PyPI). `./scripts/core/project` delegates its lifecycle commands to
+  the package (installed copy first, in-repo source as the dogfood
+  fallback) and keeps its remaining commands package-free until their
+  extraction PRs. Per-module tests replace the migrated monolith
+  sections (KIT-0089 F3 direction).
+
 ### Changed
+
+- **`agent-handoffs.json` becomes single-writer** (KIT-0086 F1, landed
+  inside `agentive_kit.lifecycle` per KIT-0090 F6): lifecycle moves
+  write the shared coordination JSON only when the checkout is on
+  `main`; feature-branch (and undeterminable-branch) moves now produce
+  zero diff in it, ending the KIT-0084 / PR #105 squash-merge conflict
+  class. The task's own `HANDOFF-*.md` files are still rewritten on
+  every branch. The stale-path drift WARN (KIT-0086 F2) follows as a
+  doctor check in the doctor-migration PR.
 
 - **`.kit/context/` is legible again** (KIT-0077): the 100 handoffs,
   review starters, and session records belonging to tasks in a terminal
