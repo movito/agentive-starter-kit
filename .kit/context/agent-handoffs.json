@@ -1,18 +1,18 @@
 {
   "planner": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0080",
+    "status": "available",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "2026-08-06: KIT-0083 DONE (PR #106 merged d1e938e, pull_request event fired normally — #105 anomaly closed as one-off; issue #103 closed; retro extracted to REVIEW-INSIGHTS: unfalsifiable tests, review-body findings, verify-before-writing). Retro follow-ups all routed: #1->KIT-0088, #2 done, #3 answered (handoff-only launch bypassed the starter's LAUNCH block), #4 banked, #5 -> bot-triage skill updated, #6 -> KIT-0079 consumption note, #7 no-op, #8 -> KIT-0087 F3. KIT-0080 handoff ready (Session topology section included; local repro GONE, stub-git fixtures are the proof). 2026-08-06: KIT-0088 DONE by planner directly on operator direction (83be2e1) — feature-developer Phase 1 now verifies-never-creates, planner handoffs require Session topology, ordering rule in WORKTREE-WORKFLOW, contract guarded by tests/test_agent_contracts.py (verified falsifiable). Queue: KIT-0080 (starter delivered) -> KIT-0085 -> KIT-0086 -> KIT-0075 -> [KIT-0078+KIT-0087 combined]. KIT-ADR-0028 still Proposed — 0085/0086 re-baselined on acceptance.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0080-doctor-apple-git-230-incompat.md",
+    "brief_note": "2026-08-06: KIT-0080 DONE (PR #107 merged 2f64ac2 — floor DROPPED to git 2.30, 7th site found, every guard falsified against pristine pre-fix code; retro extracted). Retro resolutions all landed: patterns.yml quoting rule widened to generated shell; gh pr create --head documented in WORKTREE-WORKFLOW (kit does not mutate operator git config); project-move-vs-KIT-0086 carve-out recorded in KIT-0086 spec (script writes legal on main only, branch sessions revert — prefer skip-guard over flag at implementation); planner Phase 4 gains cite-source-for-environmental-claims + verify-recipe-on-failing-input (the 'repro is GONE' inversion was the planner's own handoff). Worktree removed. QUEUE PAUSED at the ADR-0028 fork: everything remaining (KIT-0085, KIT-0086, KIT-0075, KIT-0078+KIT-0087) is machinery the packaging decision re-baselines — operator decides ADR acceptance before the next starter.",
+    "details_link": ".kit/tasks/5-done/KIT-0080-doctor-apple-git-230-incompat.md",
     "handoff_file": ".kit/context/KIT-0080-HANDOFF-feature-developer.md"
   },
   "feature-developer": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0080",
+    "status": "idle",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "KIT-0080 ready: make every rev-parse --path-format site portable (6 sites, fix recipe live-verified in KIT-0083-SESSION-FINDINGS F1), silence stray dirname errors, git-version-robust tests via stub-git fixtures (LOCAL REPRO IS GONE — git 2.55 here; a green local run proves nothing about 2.30.1), doctor git-floor check paired with README table. Read the handoff's Session topology section FIRST: project start on main -> push -> plain git worktree add ../ask-worktrees/KIT-0080 (do NOT use new-worktree.sh — you are fixing it). For each guard-test: break the condition once, watch it fail.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0080-doctor-apple-git-230-incompat.md",
+    "brief_note": "KIT-0080 complete (PR #107 merged). No active assignment — queue paused at the ADR-0028 acceptance fork; next starter comes after the operator's packaging decision.",
+    "details_link": ".kit/tasks/5-done/KIT-0080-doctor-apple-git-230-incompat.md",
     "handoff_file": ".kit/context/KIT-0080-HANDOFF-feature-developer.md"
   },
   "code-reviewer": {

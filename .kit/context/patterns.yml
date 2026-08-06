@@ -56,10 +56,20 @@ defensive:
       not only commands — ANY line a tool prints as fact is a
       claim (a summary asserting a file exists, a count, a status);
       verify it before printing, or print the failure instead.
+      WIDENED (KIT-0080): the quoting half applies to interpolated
+      paths in ANY emitted shell — GENERATED scripts (test fixtures,
+      heredoc-written stubs, provisioning snippets) exactly as much
+      as displayed commands. An unquoted interpolation into a
+      generated script is the same defect one execution step later
+      (PR #107: `shutil.which("git")` interpolated into an unquoted
+      `REAL=` assignment; a spaced git path makes the stub exit 127).
+      Concept name to think with: "interpolated paths in emitted
+      shell", both faces.
     examples:
       - "KIT-0071 bot rounds 2-6 were five faces of this one class, fixed instance-by-instance — four rounds were the cost of not sweeping at round 2 (a fresh fix_by_class_not_instance regression)"
       - "same family as bot-triage's committable-but-uncompilable rule (KIT-0058): displayed shell is code, verify it as code"
-    caught_by: "KIT-0071 retro (Surprising #2, Should Change #1); planner adopted 2026-07-27"
+      - "KIT-0080/PR #107: generated-script face — the rule existed, its stated scope stopped one shape short (counted as a regression for that reason)"
+    caught_by: "KIT-0071 retro (Surprising #2, Should Change #1); planner adopted 2026-07-27; generated-shell face CodeRabbit PR #107, widened 2026-08-06"
   depth_anchored_sweeps:
     rule: >
       When adding a SUBDIRECTORY under any path that copy/scrub/

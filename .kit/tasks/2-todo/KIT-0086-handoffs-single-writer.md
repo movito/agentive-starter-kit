@@ -8,6 +8,20 @@
 **Source**: KIT-0084 retro ("What Should Change" #1; incident: squash-merge conflict on PR #105)
 **Evaluation**: arch-review-fast APPROVED 2026-08-04, first pass. Log: `.adversarial/logs/KIT-0086-handoffs-single-writer--arch-review-fast.md`
 
+> **Interim carve-out (planner decision, 2026-08-06 — KIT-0080 retro
+> #5)**: until F1 lands, the script and the discipline contradict each
+> other (`project move` auto-edits `agent-handoffs.json`; the
+> discipline forbids branch-side edits). The resolved interim rule:
+> the script's own writes are legitimate **on `main` only** (the
+> ordering rule already puts planner lifecycle moves there); when a
+> session must run `project move` on a feature branch, it REVERTS the
+> JSON hunk before committing — exactly what the KIT-0080 session did;
+> that behavior is now the blessed pattern, and the planner fixes the
+> path at completion. F1's implementation (skip the JSON entirely)
+> dissolves the contradiction; prefer the skip-when-not-on-main guard
+> over a `--no-handoff-update` flag — a flag is a discipline you can
+> forget, a guard is not.
+
 ## Overview
 
 Two writers mutate `.kit/context/agent-handoffs.json` concurrently:

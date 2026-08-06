@@ -221,6 +221,20 @@ Create `.kit/context/<TASK-ID>-HANDOFF-<agent-type>.md` containing:
   handoff-only launch must carry the same safeguard as a starter
   launch — KIT-0083's wrong-topology start happened because the
   handoff omitted this (KIT-0088).
+- **Environmental claims cite their source, never restate it**: write
+  "repro status: see spec §X", not a paraphrase. On KIT-0080 the
+  handoff asserted "the local repro is GONE" while the spec's own
+  Reproduction section said `/usr/bin/git` still had 2.30.1 — each
+  summary hop was faithful and the aggregate inverted the fact; one
+  probe command turned the task's strongest stated constraint into
+  its strongest evidence. A pointer forces the reader to the primary
+  source; a summary lets an error propagate with growing confidence.
+- **Fix recipes must be verified on the FAILING input too**: when
+  handing over a "live-verified" one-liner, say what it was verified
+  ON and instruct the implementer to exercise the failure path
+  (KIT-0080: the KIT-0083 recipe was correct on the happy path and
+  confidently wrong on a non-repo — "live-verified" covered only the
+  working input).
 
 Update `.kit/context/agent-handoffs.json` with the new assignment:
 

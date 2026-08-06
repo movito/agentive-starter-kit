@@ -220,6 +220,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **CodeRabbit "outside diff range" findings live in the review BODY, invisible to thread triage**: PR #106 round 3's only finding — output claiming success immediately before a failure exit — existed only there, pasted evidence the author had read past twice. Fetch and scan `reviews[].body` after fetching threads; now in the bot-triage skill. (KIT-0083)
 - **Verify shipped behavior on main before writing completion claims**: the KIT-0083 retro was written after re-running the #103-shaped fixture against merged main, and the agent corrected its own findings tally mid-write (17 findings, not 15). Completion documents are records, not recollections. (KIT-0083)
 
+- **Summary chains invert facts even when every hop is faithful — cite sources for environmental claims**: "the local repro is GONE" propagated spec→handoff→starter with growing confidence while the spec's own Reproduction section said `/usr/bin/git` still had 2.30.1; one probe command flipped the task's strongest stated constraint into its strongest evidence. Handoffs now write "see spec §X", never a paraphrase (planner.md Phase 4). Corollary for implementers: probe environmental claims before building your plan on them. (KIT-0080)
+- **"Live-verified" covers only the input it was verified on — exercise fix recipes on the FAILING path**: KIT-0083's portable one-liner was correct on the happy path and confidently wrong on a non-repo (`cd ""` class); the implementer's own fix nearly reintroduced the same hazard and tests, not diff-reading, caught it. When handing over a recipe, state what it was verified on. (KIT-0080)
+- **Quoting rule widened to generated shell** (patterns.yml `displayed_commands_are_contracts`): interpolated paths in EMITTED scripts — test fixtures, heredoc stubs — are the displayed-command defect one execution step later. PR #107's single bot finding was the existing rule stopping one shape short of its principle. (KIT-0080)
+
 ---
 
 ## ADR Candidates

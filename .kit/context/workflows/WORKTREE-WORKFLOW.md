@@ -170,6 +170,27 @@ overrides any allow, by design, and is not a gap to fix. Agents use
 sweep list of leftovers for the operator; nothing in the kit asks for
 an rm-rf allowlist.
 
+## Triage: `gh pr create` refuses from a worktree ("you must first push the current branch")
+
+**Symptom**: from a task worktree, `git push -u origin <branch>` succeeds
+but creates no local tracking ref, and `gh pr create` then refuses with
+"you must first push the current branch" (KIT-0080 session, 2026-08-06).
+
+**Cause**: the primary clone's `remote.origin.fetch` is narrowed to
+`+refs/heads/main:refs/remotes/origin/main` — worktrees share it, so no
+`origin/<feature-branch>` remote-tracking ref can exist locally.
+
+**Fix (the supported path)**: name the head explicitly —
+
+```bash
+gh pr create --head <branch-name> ...
+```
+
+This works under ANY refspec configuration, so it is the documented
+route (planner decision, 2026-08-06: the kit does not mutate an
+operator's machine-local git config; widening the refspec is an
+operator's personal choice, not a kit instruction).
+
 ## Triage: pre-commit `pytest: command not found`
 
 **Symptom**: a bare `git commit` in a fresh worktree fails the

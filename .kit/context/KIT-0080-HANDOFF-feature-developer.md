@@ -5,7 +5,7 @@
 **Date**: 2026-08-06
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/4-in-review/KIT-0080-doctor-apple-git-230-incompat.md`
+**Task**: `.kit/tasks/5-done/KIT-0080-doctor-apple-git-230-incompat.md`
 **Status**: Ready — KIT-0083 merged (d1e938e); this is the next assignment
 **Evaluation**: skipped (planner) — bugfix with a live-verified fix
 recipe and a causally-confirmed diagnosis; decisions are in-spec.
@@ -119,6 +119,6 @@ portability rule; the `timeout` lesson).
 
 ---
 
-**Task File**: `.kit/tasks/4-in-review/KIT-0080-doctor-apple-git-230-incompat.md`
+**Task File**: `.kit/tasks/5-done/KIT-0080-doctor-apple-git-230-incompat.md`
 **Key evidence**: spec's 2026-08-05 causal table;
 `.kit/context/KIT-0083-SESSION-FINDINGS.md` F1 (working one-liner)
