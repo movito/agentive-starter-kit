@@ -304,11 +304,15 @@ def _kit_lifecycle():
     setup/doctor/sync/install-evaluators keep working package-free
     until their own extraction PRs.
     """
+    # ModuleNotFoundError only — an INSTALLED agentive-kit that fails
+    # to import for any other reason (broken install, missing symbol)
+    # must surface its real error, not a false "not installed"
+    # instruction (evaluator round 5).
     try:
         from agentive_kit import lifecycle
 
         return lifecycle
-    except ImportError:
+    except ModuleNotFoundError:
         pass
     pkg_src = (
         Path(__file__).resolve().parent.parent.parent
@@ -322,7 +326,7 @@ def _kit_lifecycle():
             from agentive_kit import lifecycle
 
             return lifecycle
-        except ImportError:
+        except ModuleNotFoundError:
             pass
     print("❌ agentive-kit is not installed")
     print("   Task lifecycle commands live in the agentive-kit package")

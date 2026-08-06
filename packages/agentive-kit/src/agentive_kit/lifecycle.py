@@ -66,11 +66,13 @@ def find_task_file(task_id: str, project_dir: Path) -> Path | None:
     # not a carry-forward): the legacy substring test let a short ID
     # like "KIT-1" silently select KIT-1234's file and move the wrong
     # task. A file matches when its name IS the ID or starts with the
-    # ID followed by a non-word separator; case-insensitive as before
-    # (matching runs on the uppercased name, so [0-9A-Z_] covers every
-    # word character).
+    # ID followed by a separator. Only alphanumeric continuation is a
+    # boundary violation — '-' AND '_' both count as separators, so
+    # trees named KIT-1234_sample.md (findable under the legacy
+    # matcher) stay findable. Case-insensitive as before; matching
+    # runs on the uppercased name, so [0-9A-Z] covers every letter.
     task_id_upper = task_id.upper()
-    id_pattern = re.compile(re.escape(task_id_upper) + r"(?![0-9A-Z_])")
+    id_pattern = re.compile(re.escape(task_id_upper) + r"(?![0-9A-Z])")
 
     for folder in tasks_dir.iterdir():
         if not folder.is_dir():
