@@ -20,9 +20,30 @@ Using agents to build software works better if you add a bit of structure — An
 
 ---
 
+## Requirements
+
+| Tool | Version | Notes |
+|------|---------|-------|
+| **git** | **≥ 2.31** | ⚠️ Stock macOS ships Apple Git 2.30.1 — one minor version too old. The kit's scripts use `git rev-parse --path-format=absolute` (added in 2.31, March 2021); on 2.30.1 the failures range from silent (operator preset ignored by the setup door) to hard (worktree helper dies). Fix: `brew install git`, then `hash -r` in existing shells. KIT-0080 tracks making the scripts portable to older git; 2.31+ stays recommended regardless. |
+| **gh** | any recent | Authenticated: `gh auth status` must pass |
+| **Python** | ≥ 3.10 | For code-project shapes (CI tests 3.10/3.12/3.14); planning-shape repos need only system `python3` |
+| **Claude Code** | current | The kit is built around it |
+| **uv** | optional | Easiest install path for the `adversarial` evaluation CLI (`uv tool install adversarial-workflow`) |
+
+`./scripts/core/project doctor` inside any created project tells you what's missing.
+
+**For contributors — the portability rule**: kit scripts must run on stock
+macOS (BSD userland, bash 3.2, no Homebrew add-ons) *and* Linux CI. Do not
+depend on Homebrew-provided tools like `timeout`/GNU coreutils — a check
+that needs them passes on a contributor's upgraded machine and fails for
+every stock-macOS user. If your machine has Homebrew git or coreutils,
+**absence of local failure proves nothing** — that is exactly the trap
+that shipped the git 2.31 dependency (KIT-0080) and the missing-CLI gap
+(#103).
+
 ## Quickstart
 
-You need Claude Code, git + gh (authenticated), and Python 3.10+ for code projects — `./scripts/core/project doctor` inside any created project tells you what's missing.
+You need Claude Code, git + gh (authenticated) — see [Requirements](#requirements) above; `./scripts/core/project doctor` inside any created project tells you what's missing.
 
 ```bash
 cd ~/Github
