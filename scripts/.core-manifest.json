@@ -9,6 +9,7 @@
       "core/check_cross_repo_config.py",
       "core/ci-check.sh",
       "core/doctor.d/10-gh-auth.sh",
+      "core/doctor.d/15-git-version.sh",
       "core/doctor.d/20-env-keys.py",
       "core/doctor.d/30-evaluators.sh",
       "core/doctor.d/31-evaluator-cli.sh",

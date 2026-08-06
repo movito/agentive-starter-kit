@@ -1748,7 +1748,6 @@ def _config_home(project_dir):
                 "-C",
                 str(project_dir),
                 "rev-parse",
-                "--path-format=absolute",
                 "--git-common-dir",
             ],
             capture_output=True,
@@ -1761,7 +1760,24 @@ def _config_home(project_dir):
     common = result.stdout.strip()
     if result.returncode != 0 or not common:
         return None
-    return Path(common).parent.parent / "agentive-config"
+    # KIT-0080: plain --git-common-dir, absolutized here. The
+    # --path-format=absolute form needs git >= 2.31; Apple's system git
+    # (2.30.1) echoes the flag back as an output line and exits 0, so
+    # `common` became "--path-format=absolute\n<path>" and the home
+    # resolved to garbage. Plain output is RELATIVE to the -C directory
+    # (both gits return a bare ".git" from a primary clone), so anchor
+    # it on project_dir — never on the process cwd. `/` already discards
+    # the left operand when `common` is absolute.
+    #
+    # No .resolve(): that would follow symlinked ancestors and report a
+    # PHYSICAL path, diverging from the bash resolvers this function is
+    # pinned equivalent to (tests/test_setup_door.py). os.path.normpath
+    # collapses the "<root>/.git" join without touching symlinks.
+    # Two levels: `joined` is <primary-clone>/.git, so .parent is the
+    # clone root and .parent.parent its PARENT, where the visible
+    # agentive-config sibling lives.
+    joined = Path(os.path.normpath(Path(project_dir) / common))
+    return joined.parent.parent / "agentive-config"
 
 
 def _print_preset_comparison(shape, profile, bots, record_errors, project_dir):

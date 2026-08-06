@@ -27,10 +27,31 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${DOCTOR_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
-COMMON_DIR="$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || {
+# KIT-0080: plain --git-common-dir, absolutized in shell. The
+# --path-format=absolute form needs git >= 2.31; Apple's system git
+# (2.30.1) echoes the flag back as an output line and still exits 0, so
+# the SKIP branch below never fired and COMMON_DIR became garbage — the
+# check then read core.bare from a nonexistent git dir and always said
+# PASS, blinding the KIT-0043 canary. Plain output may be relative to
+# the -C directory, hence the join below.
+#
+# The result is emptiness-checked BEFORE joining: on failure the
+# substitution is empty, which would otherwise resolve to $ROOT —
+# turning "not a repo" into a confident wrong answer, the very class
+# this task removes. A relative answer is joined by STRING rather than
+# `cd`+`pwd`, so a symlinked checkout keeps its logical path in the
+# verdict line (/var -> /private/var on macOS).
+COMMON_DIR=""
+COMMON_RAW="$(git -C "$ROOT" rev-parse --git-common-dir 2>/dev/null)" || COMMON_RAW=""
+case "$COMMON_RAW" in
+    '') COMMON_DIR="" ;;
+    /*) COMMON_DIR="$COMMON_RAW" ;;
+    *)  COMMON_DIR="$ROOT/$COMMON_RAW" ;;
+esac
+if [ -z "$COMMON_DIR" ]; then
     echo "DOCTOR:core-bare:SKIP:not a git repository ($ROOT)"
     exit 0
-}
+fi
 
 BARE="$(git --git-dir "$COMMON_DIR" config --get core.bare 2>/dev/null)"
 

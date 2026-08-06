@@ -33,7 +33,25 @@ set -euo pipefail
 # must always resolve to the primary clone, so derive it from the shared
 # git common dir instead of the script location.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-GIT_COMMON_DIR="$(git -C "$SCRIPT_DIR" rev-parse --path-format=absolute --git-common-dir)"
+# KIT-0080: --path-format=absolute needs git >= 2.31. Apple's system git
+# (2.30.1, stock on macOS) does not consume the flag — it echoes it back
+# as the first output line and exits 0, so PRIMARY_ROOT became garbage
+# and the guard below hard-exited: worktree creation, the kit's DEFAULT
+# session topology, was dead on stock macOS. Plain --git-common-dir is
+# portable across both; its output is relative to the -C directory, so
+# absolutize there (anchor on the repo dir, never the caller's cwd).
+GIT_COMMON_RAW="$(git -C "$SCRIPT_DIR" rev-parse --git-common-dir)"
+if [ -z "$GIT_COMMON_RAW" ]; then
+    # `cd ""` is a silent no-op, so an empty result would resolve to
+    # SCRIPT_DIR and provision against the wrong tree — refuse instead.
+    echo "Error: git could not resolve the common dir from $SCRIPT_DIR" >&2
+    exit 1
+fi
+# cd+pwd here (rather than the string join the doctor resolvers use):
+# this value is never COMPARED with another path, it is used to create
+# symlinks and worktrees, so the fully-resolved physical path is the
+# safer one.
+GIT_COMMON_DIR="$(cd "$SCRIPT_DIR" && cd "$GIT_COMMON_RAW" && pwd)"
 PRIMARY_ROOT="$(dirname "$GIT_COMMON_DIR")"
 
 # Guard: the dirname math assumes a normal clone (<root>/.git). A bare

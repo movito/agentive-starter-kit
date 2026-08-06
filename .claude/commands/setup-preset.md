@@ -62,10 +62,17 @@ language, one question at a time, then writing
 The config home is a visible sibling of the kit's primary clone:
 
 ```bash
-git rev-parse --path-format=absolute --git-common-dir
+cd "$(git rev-parse --git-common-dir)" && pwd
 ```
 
-Take the parent of the parent of that path, plus `/agentive-config`.
+Take the parent of that path, plus `/agentive-config`.
+
+(Do not use `git rev-parse --path-format=absolute` here: that flag
+needs git ≥ 2.31, and stock macOS ships Apple Git 2.30.1, which echoes
+the flag back as an output line instead of consuming it — you would
+silently compute a garbage path. The `cd`-then-`pwd` form above is
+portable across both, because plain `--git-common-dir` may print a
+path relative to the repo directory. — KIT-0080)
 If `AGENTIVE_KIT_CONFIG_DIR` is set in the environment, it overrides
 the location entirely (it is an override, never a search chain — do
 not look anywhere else). If the `git rev-parse` command fails (you
