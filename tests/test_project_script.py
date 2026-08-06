@@ -1847,6 +1847,37 @@ class TestGitGateDoesNotBlockCliInstall:
                 assert exc.value.code == 1
         assert "Git is required but not found" in capsys.readouterr().out
 
+    def test_hung_git_probe_times_out_into_the_guidance_path(
+        self, project_with_pin, capsys
+    ):
+        """A wedged git (prompting credential helper, hung filesystem)
+        must time out into the same guidance, not hang the installer
+        forever (CodeRabbit round 2)."""
+        with patch.object(_project_module, "_ensure_adversarial_cli"):
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                mock_sub.run.side_effect = subprocess.TimeoutExpired(
+                    cmd="git --version", timeout=20
+                )
+                with pytest.raises(SystemExit) as exc:
+                    _project_module.cmd_install_evaluators([], project_with_pin)
+                assert exc.value.code == 1
+        assert "Git is required but not found" in capsys.readouterr().out
+
+    def test_git_probe_is_bounded_and_stdin_closed(self, project_with_pin):
+        """The git probe carries the same bound and stdin handling as the
+        CLI probe — an unbounded one hangs install-evaluators."""
+        with patch.object(_project_module, "_ensure_adversarial_cli"):
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                mock_sub.DEVNULL = subprocess.DEVNULL
+                mock_sub.run.return_value = MagicMock(returncode=1)
+                with pytest.raises(SystemExit):
+                    _project_module.cmd_install_evaluators([], project_with_pin)
+                kwargs = mock_sub.run.call_args.kwargs
+        assert kwargs.get("timeout") == _project_module.CLI_PROBE_TIMEOUT
+        assert kwargs.get("stdin") == subprocess.DEVNULL
+
     def test_cli_install_attempted_when_git_absent_but_uv_present(
         self, project_with_pin, capsys
     ):

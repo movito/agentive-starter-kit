@@ -2085,6 +2085,14 @@ class TestEvaluatorCliCheck:
             "FAILed for the wrong reason — the stub did not actually block: "
             f"{result.stdout!r}"
         )
+        # Bound the timing from BOTH sides. An upper bound alone passes a
+        # probe whose timeout was shortened to near-zero, which is the
+        # same class of unfalsifiable assertion as the one that let this
+        # test hide behind the broken-binary branch (CodeRabbit round 2).
+        assert elapsed >= 18, (
+            f"probe terminated after {elapsed:.0f}s — it did not wait out "
+            "its configured bound"
+        )
         assert elapsed < 60, f"probe was not bounded (took {elapsed:.0f}s)"
 
     def test_check_exits_zero_on_every_path(self, tmp_path):

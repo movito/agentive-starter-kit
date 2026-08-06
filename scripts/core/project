@@ -1032,8 +1032,22 @@ def cmd_install_evaluators(args, project_dir):
     # 2. Check for git (required for CLONING the library — not for the
     # CLI step above)
     try:
-        git_check = subprocess.run(["git", "--version"], capture_output=True, text=True)
+        git_check = subprocess.run(
+            ["git", "--version"],
+            capture_output=True,
+            text=True,
+            # Bounded and stdin-closed for the same reasons as the CLI
+            # probe: a wedged git (prompting credential helper, hung
+            # filesystem) would otherwise hang install-evaluators
+            # indefinitely, and an open stdin lets it consume input the
+            # user typed for the surrounding flow (CodeRabbit round 2).
+            timeout=CLI_PROBE_TIMEOUT,
+            stdin=subprocess.DEVNULL,
+        )
         git_ok = git_check.returncode == 0
+    except subprocess.TimeoutExpired:
+        # A git that never answers is not a usable git — same guidance.
+        git_ok = False
     except (FileNotFoundError, OSError):
         # A genuinely absent git raises rather than returning non-zero;
         # without this the intended message below never prints and the

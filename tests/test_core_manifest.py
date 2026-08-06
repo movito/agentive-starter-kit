@@ -245,9 +245,18 @@ def test_library_pin_mirrors_agree():
         config_yml.read_text(encoding="utf-8"),
         re.MULTILINE,
     )
+    # Scope to [tool.adversarial] before matching: `library_version` is a
+    # generic-enough key that another section could define one, and this
+    # test would then compare against the wrong value and MISS real drift
+    # — a false green on a drift detector (CodeRabbit round 2).
+    ptext = pyproject.read_text(encoding="utf-8")
+    section = re.search(
+        r"^\[tool\.adversarial\]\s*$(.*?)(?=^\[|\Z)", ptext, re.MULTILINE | re.DOTALL
+    )
+    assert section, "pyproject.toml lost the [tool.adversarial] section"
     live = re.search(
         r'^\s*library_version\s*=\s*"([^"]+)"',
-        pyproject.read_text(encoding="utf-8"),
+        section.group(1),
         re.MULTILINE,
     )
     assert canonical, ".adversarial/config.yml lost evaluator_library_version"
