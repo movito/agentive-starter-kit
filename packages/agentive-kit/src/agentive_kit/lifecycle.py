@@ -56,6 +56,11 @@ HANDOFFS_WRITE_BRANCH = "main"
 def find_task_file(task_id: str, project_dir: Path) -> Path | None:
     """Find a task file by ID across all workflow folders."""
     tasks_dir = project_dir / ".kit" / "tasks"
+    # Root discovery guarantees .kit/ exists, but not .kit/tasks/ —
+    # a repo without it has no tasks to find, not a crash to raise
+    # (evaluator finding, PR 1 trio).
+    if not tasks_dir.is_dir():
+        return None
 
     # Normalize task ID (handle ASK-0001 or ASK-1)
     task_id_upper = task_id.upper()
@@ -232,6 +237,12 @@ def validate_all_tasks(project_dir: Path) -> ValidationReport:
     issues: list[StatusIssue] = []
     checked = 0
 
+    # Same guard as find_task_file: no tasks directory means nothing to
+    # validate — report zero checked rather than crash.
+    if not tasks_dir.is_dir():
+        print("✅ All 0 tasks have matching Status and folder")
+        return ValidationReport(checked=0, issues=[])
+
     for folder in tasks_dir.iterdir():
         if not folder.is_dir():
             continue
@@ -244,7 +255,13 @@ def validate_all_tasks(project_dir: Path) -> ValidationReport:
 
         for file in folder.glob("*.md"):
             checked += 1
-            content = file.read_text(encoding="utf-8")
+            try:
+                content = file.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError) as e:
+                # An unreadable task file is a finding, not a crash —
+                # the same tolerance sync_coordination_metadata applies.
+                issues.append(StatusIssue(file.name, f"Unreadable file ({e})"))
+                continue
             match = re.search(r"\*\*Status\*\*:\s*(\w+(?:\s+\w+)?)", content)
 
             if not match:

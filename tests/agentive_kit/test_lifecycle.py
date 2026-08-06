@@ -242,6 +242,28 @@ class TestMoveTask:
         assert "**Status**: Done" in moved.read_text(encoding="utf-8")
 
 
+class TestMissingTasksDir:
+    """Evaluator findings, PR 1 trio: a repo without .kit/tasks/ (root
+    discovery only guarantees .kit/) reports cleanly instead of
+    crashing with FileNotFoundError."""
+
+    def test_find_task_file_returns_none(self, tmp_path):
+        (tmp_path / ".kit").mkdir()
+        assert lifecycle.find_task_file("KIT-1234", tmp_path) is None
+
+    def test_move_task_reports_not_found(self, tmp_path, capsys):
+        (tmp_path / ".kit").mkdir()
+        assert lifecycle.move_task("KIT-1234", "done", tmp_path) is None
+        assert "Task not found" in capsys.readouterr().out
+
+    def test_validate_reports_zero_checked(self, tmp_path, capsys):
+        (tmp_path / ".kit").mkdir()
+        report = lifecycle.validate_all_tasks(tmp_path)
+        assert report.ok
+        assert report.checked == 0
+        assert "All 0 tasks" in capsys.readouterr().out
+
+
 class TestValidateAllTasks:
     def test_all_matching_reports_ok(self, tmp_path, capsys):
         make_project(tmp_path)
@@ -259,6 +281,17 @@ class TestValidateAllTasks:
         assert len(report.issues) == 1
         assert report.issues[0].file_name == "KIT-0003-wrong.md"
         assert "status mismatches" in capsys.readouterr().out
+
+    def test_non_utf8_task_file_is_a_finding_not_a_crash(self, tmp_path):
+        # Evaluator finding, PR 1 trio: an unreadable task file must
+        # surface as a validation issue, matching the tolerance the
+        # metadata sync already has for corrupted coordination files.
+        make_project(tmp_path)
+        bad = tmp_path / ".kit" / "tasks" / "2-todo" / "KIT-0005-binary.md"
+        bad.write_bytes(b"\xff\xfe broken")
+        report = lifecycle.validate_all_tasks(tmp_path)
+        assert not report.ok
+        assert any("Unreadable file" in i.detail for i in report.issues)
 
     def test_missing_status_field_reported(self, tmp_path):
         make_project(tmp_path)
