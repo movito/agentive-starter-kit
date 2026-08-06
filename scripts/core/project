@@ -85,6 +85,13 @@ EVALUATOR_LIBRARY_REPO = "https://github.com/movito/adversarial-evaluator-librar
 # The PyPI distribution providing the `adversarial` CLI (KIT-0083).
 ADVERSARIAL_CLI_DIST = "adversarial-workflow"
 
+# Seconds allowed for `adversarial --version`. MUST match the bound in
+# scripts/core/doctor.d/31-evaluator-cli.sh: the whole point of the
+# liveness probe is that the installer and the doctor never disagree
+# about one install, and a CLI answering in, say, 25s would otherwise be
+# "working" to one surface and FAIL to the other (CodeRabbit round 1).
+CLI_PROBE_TIMEOUT = 20
+
 
 def _is_version_like(value):
     """True for a plausible PEP 440-ish version string.
@@ -168,7 +175,12 @@ def _adversarial_cli_works():
             ["adversarial", "--version"],
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=CLI_PROBE_TIMEOUT,
+            # Closes the stdin path, exactly as the doctor check does: a
+            # corrupt CLI that blocks on stdin must not stall an
+            # interactive install, nor swallow input the user typed for
+            # the surrounding prompt flow (CodeRabbit round 1).
+            stdin=subprocess.DEVNULL,
         )
     except (subprocess.TimeoutExpired, OSError):
         # A hanging or unexecutable binary is not a working one.
@@ -223,6 +235,16 @@ def _ensure_adversarial_cli(project_dir):
         )
     except subprocess.TimeoutExpired:
         print("⚠️  CLI install timed out (network issue?)")
+        print(f"   Retry manually: {install_cmd}")
+        return
+    except OSError as exc:
+        # `shutil.which` proves the executable bit, not that uv can
+        # actually run (noexec mount, broken shim, removed between check
+        # and run). Without this the exception escapes the "never fails
+        # the caller" contract in this function's docstring — and since
+        # this step now runs BEFORE the library install, the user would
+        # get neither the CLI nor the library (CodeRabbit round 1).
+        print(f"⚠️  Could not run uv: {exc}")
         print(f"   Retry manually: {install_cmd}")
         return
 
@@ -985,17 +1007,6 @@ def cmd_install_evaluators(args, project_dir):
             version = args[i + 1]
             break
 
-    # 1. Check for git (required for cloning)
-    git_check = subprocess.run(["git", "--version"], capture_output=True, text=True)
-    if git_check.returncode != 0:
-        print("❌ Git is required but not found")
-        print()
-        print("Install git:")
-        print("  macOS:  brew install git")
-        print("  Ubuntu: sudo apt install git")
-        print("  Windows: https://git-scm.com/download/win")
-        sys.exit(1)
-
     # CLI hardcodes .adversarial/ at repo root (see e2465ae) — do not move into .kit/
     evaluators_dir = project_dir / ".adversarial" / "evaluators"
     evaluators_dir.mkdir(parents=True, exist_ok=True)
@@ -1003,13 +1014,40 @@ def cmd_install_evaluators(args, project_dir):
     print("📦 Adversarial Evaluator Library Installer")
     print("=" * 50)
 
-    # 2. Ensure the CLI — BEFORE the already-installed early return
-    # below. The #103 shape is precisely "library present, CLI absent":
-    # a rerun there must still fix the CLI, so this cannot sit after a
-    # `return` that the library check owns. Never fails the command
-    # (KIT-0083).
+    # 1. Ensure the CLI FIRST — before both gates below.
+    #
+    # It must precede the already-installed early return, because the
+    # #103 shape is precisely "library present, CLI absent" and a rerun
+    # there must still fix the CLI.
+    #
+    # It must ALSO precede the git gate: the CLI path needs only `uv`,
+    # never git, and doctor.d/31 tells users to run THIS COMMAND to fix
+    # a missing CLI. With git absent or broken, that advice would exit
+    # 1 without ever attempting the thing it was recommended for
+    # (BugBot round 1). The two installs have independent
+    # prerequisites, so neither gate may own the other's path.
     _ensure_adversarial_cli(project_dir)
     print()
+
+    # 2. Check for git (required for CLONING the library — not for the
+    # CLI step above)
+    try:
+        git_check = subprocess.run(["git", "--version"], capture_output=True, text=True)
+        git_ok = git_check.returncode == 0
+    except (FileNotFoundError, OSError):
+        # A genuinely absent git raises rather than returning non-zero;
+        # without this the intended message below never prints and the
+        # user gets a raw traceback instead (found reproducing the
+        # BugBot finding above).
+        git_ok = False
+    if not git_ok:
+        print("❌ Git is required but not found")
+        print()
+        print("Install git:")
+        print("  macOS:  brew install git")
+        print("  Ubuntu: sudo apt install git")
+        print("  Windows: https://git-scm.com/download/win")
+        sys.exit(1)
 
     # 3. Check if already installed — BEFORE resolving the version pin:
     # the no-op rerun path must keep working on repos with no readable

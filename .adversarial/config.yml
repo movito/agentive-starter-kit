@@ -48,5 +48,13 @@ test_command: pytest tests/ -v
 #
 # Unknown keys are ignored by adversarial-workflow 1.0.1 (it reads this
 # file as a plain dict, `if "key" in config`) — verified 2026-08-05.
+# NOTE on evaluator_library_version: it is deliberately INERT today —
+# `_get_evaluator_library_version()` still reads the pyproject pin, and
+# moving that reader is KIT-0079's scope, not this task's. It is written
+# here now so KIT-0079 has the canonical home already populated. Until
+# that lands the two copies could drift, so a test asserts they stay
+# equal (tests/test_core_manifest.py::test_library_pin_mirrors_agree) —
+# an inert key that silently disagrees with the live one is worse than
+# no key at all (CodeRabbit round 1).
 adversarial_cli_version: "1.0.1"        # PyPI dist — uv tool install adversarial-workflow
 evaluator_library_version: "v0.10.0"    # git tag — KIT-0079 moves the reader here

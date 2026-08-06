@@ -65,6 +65,13 @@ for candidate in /bin/sleep /usr/bin/sleep; do
     fi
 done
 
+# MUST match CLI_PROBE_TIMEOUT in scripts/core/project: the installer and
+# this check probe the same binary for the same purpose, and a CLI that
+# answers in between the two bounds would be "working" to one surface and
+# FAIL to the other — the two-surfaces-disagree state this check exists
+# to close (CodeRabbit round 1).
+PROBE_TIMEOUT=20
+
 REINSTALL="reinstall: uv tool install --force adversarial-workflow"
 
 adversarial --version >/dev/null 2>&1 </dev/null &
@@ -72,20 +79,27 @@ probe_pid=$!
 
 if [ -n "$SLEEP_BIN" ]; then
     probe_waited=0
-    while kill -0 "$probe_pid" 2>/dev/null && [ "$probe_waited" -lt 20 ]; do
+    while kill -0 "$probe_pid" 2>/dev/null && [ "$probe_waited" -lt "$PROBE_TIMEOUT" ]; do
         "$SLEEP_BIN" 1
         probe_waited=$((probe_waited + 1))
     done
     if kill -0 "$probe_pid" 2>/dev/null; then
         kill "$probe_pid" 2>/dev/null
         wait "$probe_pid" 2>/dev/null
-        echo "DOCTOR:evaluator-cli:FAIL:adversarial CLI found but '--version' did not finish within 20s — likely a corrupt install; $REINSTALL"
+        echo "DOCTOR:evaluator-cli:FAIL:adversarial CLI found but '--version' did not finish within ${PROBE_TIMEOUT}s — likely a corrupt install; $REINSTALL"
         exit 0
     fi
 fi
 # Reaped either way: the polling loop above exits only once the probe is
-# done, and with no sleep binary this `wait` IS the bound (unbounded, but
-# a slow answer beats a wrong one).
+# done. With NO sleep binary this `wait` blocks unbounded — a deliberate
+# tradeoff, not an oversight (CodeRabbit round 1 proposed a `read -t`
+# timer instead). Rejected because every bash-builtin timer needs a
+# non-EOF descriptor, which needs a long-lived helper process holding a
+# pipe open — reintroducing the very external-binary dependency this
+# branch exists to survive, in exchange for a rarer, harder-to-audit
+# construct. The branch requires neither /bin/sleep nor /usr/bin/sleep
+# to exist, i.e. effectively no POSIX system; there, answering slowly
+# beats answering wrongly.
 if ! wait "$probe_pid"; then
     echo "DOCTOR:evaluator-cli:FAIL:adversarial CLI found but '--version' failed — $REINSTALL"
     exit 0

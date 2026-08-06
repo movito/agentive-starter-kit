@@ -1504,43 +1504,86 @@ class TestEnsureAdversarialCli:
 
 
 class TestAdversarialCliPinReader:
-    """The pin's canonical home is .adversarial/config.yml (KIT-0083 F3)."""
+    """The pin's canonical home is .adversarial/config.yml (KIT-0083 F3).
 
-    def test_reads_config_yml_pin(self, tmp_path):
+    Every test here controls the mirror to a KNOWN, DISTINCT value via
+    the fixture below. Asserting against the real repo's pyproject made
+    two of these unfalsifiable: a precedence test whose two sources hold
+    the SAME value cannot detect inverted precedence, and a
+    `!= "0.0.1"` assertion is satisfied by None — so it passed even for
+    a reader that returned nothing for every input (CodeRabbit round 1).
+    """
+
+    MIRROR_VERSION = "7.7.7"
+
+    @pytest.fixture
+    def mirror_root(self, tmp_path):
+        """A fake kit root whose pyproject mirror pins MIRROR_VERSION.
+
+        The reader locates pyproject relative to its own __file__, so
+        the fixture returns a path to patch that with.
+        """
+        fake_root = tmp_path / "root"
+        (fake_root / "scripts" / "core").mkdir(parents=True)
+        fake_script = fake_root / "scripts" / "core" / "project"
+        fake_script.write_text("", encoding="utf-8")
+        (fake_root / "pyproject.toml").write_text(
+            "[project]\ndependencies = "
+            f'["adversarial-workflow=={self.MIRROR_VERSION}"]\n',
+            encoding="utf-8",
+        )
+        return fake_script
+
+    def test_reads_config_yml_pin(self, tmp_path, mirror_root):
         adv = tmp_path / ".adversarial"
         adv.mkdir()
         (adv / "config.yml").write_text(
             'adversarial_cli_version: "1.2.3"\n', encoding="utf-8"
         )
-        assert _project_module._get_adversarial_cli_version(tmp_path) == "1.2.3"
+        with patch.dict(_project_module.__dict__, {"__file__": str(mirror_root)}):
+            assert _project_module._get_adversarial_cli_version(tmp_path) == "1.2.3"
 
-    def test_config_yml_wins_over_pyproject_mirror(self, tmp_path):
-        """config.yml is canonical; pyproject is only a mirror."""
+    def test_config_yml_wins_over_pyproject_mirror(self, tmp_path, mirror_root):
+        """config.yml is canonical; pyproject is only a mirror.
+
+        The two sources hold DIFFERENT values, so inverted precedence
+        fails this test instead of silently passing it.
+        """
         adv = tmp_path / ".adversarial"
         adv.mkdir()
         (adv / "config.yml").write_text(
             'adversarial_cli_version: "9.9.9"\n', encoding="utf-8"
         )
-        assert _project_module._get_adversarial_cli_version(tmp_path) == "9.9.9"
+        with patch.dict(_project_module.__dict__, {"__file__": str(mirror_root)}):
+            got = _project_module._get_adversarial_cli_version(tmp_path)
+        assert got == "9.9.9", f"mirror won over the canonical home (got {got!r})"
 
-    def test_planning_shape_without_config_pin_falls_back_to_pyproject(self, tmp_path):
-        """No config.yml pin → the kit's own pyproject mirror still works.
-
-        (Reads the REAL repo pyproject, which is the mirror by design.)
-        """
+    def test_planning_shape_without_config_pin_falls_back_to_pyproject(
+        self, tmp_path, mirror_root
+    ):
+        """No config.yml pin → the mirror supplies the value."""
         (tmp_path / ".adversarial").mkdir()
-        assert _project_module._get_adversarial_cli_version(tmp_path) is not None
+        with patch.dict(_project_module.__dict__, {"__file__": str(mirror_root)}):
+            got = _project_module._get_adversarial_cli_version(tmp_path)
+        assert got == self.MIRROR_VERSION
 
-    def test_commented_pin_is_not_read(self, tmp_path):
-        """A commented-out example must never be mistaken for the live pin."""
+    def test_commented_pin_is_not_read(self, tmp_path, mirror_root):
+        """A commented-out example must never be read as the live pin.
+
+        Asserts the mirror's exact value: `!= "0.0.1"` would also be
+        satisfied by None, i.e. by a reader that found nothing at all.
+        """
         adv = tmp_path / ".adversarial"
         adv.mkdir()
         (adv / "config.yml").write_text(
             '# adversarial_cli_version: "0.0.1"\ntask_directory: .kit/tasks/\n',
             encoding="utf-8",
         )
-        # Falls through to the pyproject mirror rather than reading 0.0.1
-        assert _project_module._get_adversarial_cli_version(tmp_path) != "0.0.1"
+        with patch.dict(_project_module.__dict__, {"__file__": str(mirror_root)}):
+            got = _project_module._get_adversarial_cli_version(tmp_path)
+        assert (
+            got == self.MIRROR_VERSION
+        ), f"commented pin leaked, or fall-through broke (got {got!r})"
 
 
 class TestInstallEvaluatorsEnsuresCli:
@@ -1757,3 +1800,74 @@ class TestPinValidation:
         )
         with patch.dict(_project_module.__dict__, {"__file__": str(fake_script)}):
             assert _project_module._get_adversarial_cli_version(tmp_path) is None
+
+
+class TestGitGateDoesNotBlockCliInstall:
+    """BugBot round 1: the git gate must not own the CLI path.
+
+    doctor.d/31 tells users to run `install-evaluators` when the library
+    is present but the CLI is missing. The CLI path needs only `uv` —
+    never git — so a broken/absent git must not exit before the CLI step
+    has even been attempted, or the doctor's advice cannot fix the thing
+    it was recommended for.
+    """
+
+    @pytest.fixture
+    def project_with_pin(self, tmp_path):
+        adv = tmp_path / ".adversarial"
+        adv.mkdir()
+        (adv / "config.yml").write_text(
+            'adversarial_cli_version: "1.0.1"\n', encoding="utf-8"
+        )
+        return tmp_path
+
+    def test_cli_step_runs_before_git_gate(self, project_with_pin):
+        """git --version returns non-zero → CLI step still ran."""
+        with patch.object(_project_module, "_ensure_adversarial_cli") as ensure:
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                mock_sub.run.return_value = MagicMock(returncode=1)  # git missing
+                with pytest.raises(SystemExit):
+                    _project_module.cmd_install_evaluators([], project_with_pin)
+            ensure.assert_called_once()
+
+    def test_absent_git_binary_prints_message_not_traceback(
+        self, project_with_pin, capsys
+    ):
+        """A genuinely ABSENT git raises FileNotFoundError rather than
+        returning non-zero. Without catching it the friendly message
+        never prints and the user gets a raw traceback (found while
+        reproducing the BugBot finding)."""
+        with patch.object(_project_module, "_ensure_adversarial_cli"):
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                mock_sub.run.side_effect = FileNotFoundError(2, "No such file", "git")
+                with pytest.raises(SystemExit) as exc:
+                    _project_module.cmd_install_evaluators([], project_with_pin)
+                assert exc.value.code == 1
+        assert "Git is required but not found" in capsys.readouterr().out
+
+    def test_cli_install_attempted_when_git_absent_but_uv_present(
+        self, project_with_pin, capsys
+    ):
+        """The whole point of the reorder: git broken, uv fine → the CLI
+        genuinely installs instead of being skipped."""
+        which = {"adversarial": None, "uv": "/usr/bin/uv"}
+        calls = []
+
+        def fake_run(cmd, *a, **k):
+            calls.append(cmd)
+            if cmd[0] == "git":
+                raise FileNotFoundError(2, "No such file", "git")
+            return MagicMock(returncode=0, stderr="")
+
+        with patch.object(
+            _project_module.shutil, "which", side_effect=lambda n: which.get(n)
+        ):
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                mock_sub.run.side_effect = fake_run
+                with pytest.raises(SystemExit):
+                    _project_module.cmd_install_evaluators([], project_with_pin)
+
+        assert ["uv", "tool", "install", "adversarial-workflow==1.0.1"] in calls
