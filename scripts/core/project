@@ -86,6 +86,19 @@ EVALUATOR_LIBRARY_REPO = "https://github.com/movito/adversarial-evaluator-librar
 ADVERSARIAL_CLI_DIST = "adversarial-workflow"
 
 
+def _is_version_like(value):
+    """True for a plausible PEP 440-ish version string.
+
+    config.yml is hand-edited, so the pin can be anything. The value is
+    passed as a LIST element to subprocess.run (never a shell), so this
+    is not about injection — it is about failing clearly: a pin of
+    `--force` would otherwise become `adversarial-workflow==--force` and
+    surface as a baffling uv error instead of "your pin is wrong"
+    (claude-code review).
+    """
+    return bool(re.fullmatch(r"[0-9][0-9A-Za-z.\-_+!]*", value or ""))
+
+
 def _get_adversarial_cli_version(project_dir):
     """Read the CLI pin: .adversarial/config.yml first, pyproject.toml as mirror.
 
@@ -114,19 +127,53 @@ def _get_adversarial_cli_version(project_dir):
     match = re.search(
         r'^\s*adversarial_cli_version\s*:\s*["\']?([^"\'\s#]+)', text, re.MULTILINE
     )
-    if match:
+    if match and _is_version_like(match.group(1)):
         return match.group(1)
 
-    # Mirror: pyproject's dependency spec, e.g. "adversarial-workflow>=1.0.1"
+    # Mirror: pyproject's dependency spec, e.g. "adversarial-workflow>=1.0.1".
+    # Accepts >=, ==, ~= and a bare version: KIT-0079 may write an exact
+    # pin here, and matching only >= would silently read as "no pin" and
+    # send an installable project down the instruct-only path (o3 review).
     pyproject = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
     try:
         ptext = pyproject.read_text(encoding="utf-8")
     except (FileNotFoundError, OSError):
         return None
     mirror = re.search(
-        r'["\']' + re.escape(ADVERSARIAL_CLI_DIST) + r'\s*>=\s*([^"\',]+)', ptext
+        r'["\']' + re.escape(ADVERSARIAL_CLI_DIST) + r'\s*(?:>=|==|~=)?\s*([^"\',\s]+)',
+        ptext,
     )
-    return mirror.group(1).strip() if mirror else None
+    if not mirror:
+        return None
+    candidate = mirror.group(1).strip()
+    return candidate if _is_version_like(candidate) else None
+
+
+def _adversarial_cli_works():
+    """True when `adversarial` is on PATH AND actually runs.
+
+    Presence is not liveness: a corrupt or half-written install leaves a
+    binary that `shutil.which` finds but that exits non-zero on every
+    invocation. Checking only presence here while doctor.d/31 probes
+    `--version` would let the installer print ✅ for a CLI the very next
+    doctor run reports as FAIL (o3 + fast-v2 review, both rounds).
+
+    Probes the EXIT CODE, never the output: a healthy CLI prints
+    "Unknown fields in evaluator.yml" warnings to stderr.
+    """
+    if not shutil.which("adversarial"):
+        return False
+    try:
+        probe = subprocess.run(
+            ["adversarial", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        # A hanging or unexecutable binary is not a working one.
+        return False
+    return probe.returncode == 0
 
 
 def _ensure_adversarial_cli(project_dir):
@@ -141,7 +188,7 @@ def _ensure_adversarial_cli(project_dir):
     job and must not be undone by an optional CLI step. Degrades to
     printing the exact command, mirroring the git-missing block below.
     """
-    if shutil.which("adversarial"):
+    if _adversarial_cli_works():
         print("✅ adversarial CLI already installed")
         return
 
@@ -189,8 +236,17 @@ def _ensure_adversarial_cli(project_dir):
         print(f"   Retry manually: {install_cmd}")
         return
 
-    if shutil.which("adversarial"):
+    # Three post-install states, three different remedies — never one
+    # blanket ✅. uv exiting 0 does not by itself mean a usable CLI.
+    if _adversarial_cli_works():
         print("✅ adversarial CLI installed")
+    elif shutil.which("adversarial"):
+        # On PATH but not runnable: a corrupt/partial install. Reinstall
+        # is the fix, NOT a PATH change.
+        print("⚠️  adversarial CLI installed but not runnable")
+        print("   It is on PATH, yet '--version' fails — likely a partial")
+        print("   or corrupt install. Reinstall:")
+        print(f"     uv tool install --force {spec}")
     else:
         # uv installs into ~/.local/bin; an install can succeed while the
         # binary stays unreachable. Say so here rather than letting the

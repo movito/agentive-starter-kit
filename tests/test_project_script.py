@@ -1389,11 +1389,14 @@ class TestEnsureAdversarialCli:
         )
         return tmp_path
 
-    def test_present_cli_is_not_reinstalled(self, project_with_pin, capsys):
-        """Already on PATH → no install attempt at all."""
-        with patch.object(
-            _project_module.shutil, "which", return_value="/usr/bin/adversarial"
-        ):
+    def test_present_working_cli_is_not_reinstalled(self, project_with_pin, capsys):
+        """A WORKING CLI short-circuits: no install attempt at all.
+
+        Keys on _adversarial_cli_works, not shutil.which — presence alone
+        is no longer the gate (a present-but-broken binary must still
+        trigger a reinstall; see TestAdversarialCliLiveness).
+        """
+        with patch.object(_project_module, "_adversarial_cli_works", return_value=True):
             with patch.object(_project_module, "subprocess") as mock_sub:
                 _project_module._ensure_adversarial_cli(project_with_pin)
                 mock_sub.run.assert_not_called()
@@ -1559,3 +1562,198 @@ class TestInstallEvaluatorsEnsuresCli:
             ensure.assert_called_once()
 
         assert "already installed" in capsys.readouterr().out
+
+
+class TestAdversarialCliLiveness:
+    """Presence is not liveness (o3 + fast-v2, converging finding).
+
+    The install step must not print ✅ for a binary that `which` finds
+    but that fails to run — the very next `project doctor` would FAIL on
+    it, and the user would have two surfaces disagreeing about the same
+    install.
+    """
+
+    def test_present_but_broken_binary_is_not_working(self):
+        with patch.object(
+            _project_module.shutil, "which", return_value="/usr/bin/adversarial"
+        ):
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                mock_sub.run.return_value = MagicMock(returncode=1)
+                assert _project_module._adversarial_cli_works() is False
+
+    def test_noisy_stderr_with_exit_zero_is_working(self):
+        """A healthy CLI prints 'Unknown fields in evaluator.yml' to
+        stderr — exit code is the signal, not output."""
+        with patch.object(
+            _project_module.shutil, "which", return_value="/usr/bin/adversarial"
+        ):
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                mock_sub.run.return_value = MagicMock(
+                    returncode=0, stderr="Unknown fields in evaluator.yml: status"
+                )
+                assert _project_module._adversarial_cli_works() is True
+
+    def test_hanging_binary_is_not_working(self):
+        with patch.object(
+            _project_module.shutil, "which", return_value="/usr/bin/adversarial"
+        ):
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                mock_sub.run.side_effect = subprocess.TimeoutExpired(
+                    cmd="adversarial --version", timeout=30
+                )
+                assert _project_module._adversarial_cli_works() is False
+
+    def test_absent_binary_is_not_working(self):
+        with patch.object(_project_module.shutil, "which", return_value=None):
+            assert _project_module._adversarial_cli_works() is False
+
+    def test_broken_existing_cli_triggers_install_not_false_ok(self, tmp_path):
+        """The whole point: a broken CLI already on PATH must NOT
+        short-circuit the install step with a ✅."""
+        adv = tmp_path / ".adversarial"
+        adv.mkdir()
+        (adv / "config.yml").write_text(
+            'adversarial_cli_version: "1.0.1"\n', encoding="utf-8"
+        )
+        with patch.object(
+            _project_module, "_adversarial_cli_works", return_value=False
+        ):
+            with patch.object(
+                _project_module.shutil, "which", side_effect=lambda n: "/usr/bin/uv"
+            ):
+                with patch.object(_project_module, "subprocess") as mock_sub:
+                    mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                    mock_sub.run.return_value = MagicMock(returncode=0, stderr="")
+                    _project_module._ensure_adversarial_cli(tmp_path)
+                    # It attempted the install rather than returning early
+                    assert mock_sub.run.called
+
+    def test_post_install_broken_binary_advises_reinstall_not_path(
+        self, tmp_path, capsys
+    ):
+        """uv exits 0 but the binary doesn't run: the remedy is
+        --force reinstall, NOT a PATH change (three states, three
+        messages)."""
+        adv = tmp_path / ".adversarial"
+        adv.mkdir()
+        (adv / "config.yml").write_text(
+            'adversarial_cli_version: "1.0.1"\n', encoding="utf-8"
+        )
+        which = {"adversarial": "/usr/bin/adversarial", "uv": "/usr/bin/uv"}
+        with patch.object(
+            _project_module, "_adversarial_cli_works", return_value=False
+        ):
+            with patch.object(
+                _project_module.shutil, "which", side_effect=lambda n: which.get(n)
+            ):
+                with patch.object(_project_module, "subprocess") as mock_sub:
+                    mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                    mock_sub.run.return_value = MagicMock(returncode=0, stderr="")
+                    _project_module._ensure_adversarial_cli(tmp_path)
+        out = capsys.readouterr().out
+        assert "not runnable" in out
+        assert "--force" in out
+        assert "export PATH" not in out
+
+
+class TestPyprojectMirrorPinForms:
+    """The mirror must read every pin form pyproject may carry — matching
+    only '>=' would read an exact pin as 'no pin' and send an installable
+    project down the instruct-only path (o3 review). KIT-0079 may write
+    an exact pin here.
+
+    Drives the REAL reader (not a re-implemented regex): the mirror is
+    located relative to the script's own __file__, so the fixture builds
+    a throwaway tree and points __file__ at it.
+    """
+
+    @pytest.mark.parametrize(
+        "spec,expected",
+        [
+            ('"adversarial-workflow>=1.0.1",', "1.0.1"),
+            ('"adversarial-workflow==1.2.3",', "1.2.3"),
+            ('"adversarial-workflow~=1.2",', "1.2"),
+            ('"adversarial-workflow >= 2.0.0",', "2.0.0"),
+        ],
+    )
+    def test_pin_forms_are_read(self, tmp_path, spec, expected):
+        # Mirror the real layout: <root>/scripts/core/project
+        fake_root = tmp_path / "root"
+        (fake_root / "scripts" / "core").mkdir(parents=True)
+        fake_script = fake_root / "scripts" / "core" / "project"
+        fake_script.write_text("", encoding="utf-8")
+        (fake_root / "pyproject.toml").write_text(
+            f"[project]\ndependencies = [\n    {spec}\n]\n", encoding="utf-8"
+        )
+
+        # A project dir with .adversarial/ but NO config.yml pin, so the
+        # reader must fall through to the pyproject mirror.
+        project_dir = tmp_path / "proj"
+        (project_dir / ".adversarial").mkdir(parents=True)
+
+        with patch.dict(_project_module.__dict__, {"__file__": str(fake_script)}):
+            got = _project_module._get_adversarial_cli_version(project_dir)
+        assert got == expected, f"pin form {spec!r} read as {got!r}, want {expected!r}"
+
+    def test_absent_dependency_reads_as_no_pin(self, tmp_path):
+        """No adversarial-workflow line at all → None, which callers turn
+        into instruct-don't-install (never unpinned latest)."""
+        fake_root = tmp_path / "root"
+        (fake_root / "scripts" / "core").mkdir(parents=True)
+        fake_script = fake_root / "scripts" / "core" / "project"
+        fake_script.write_text("", encoding="utf-8")
+        (fake_root / "pyproject.toml").write_text(
+            '[project]\ndependencies = ["pytest>=8.0"]\n', encoding="utf-8"
+        )
+        project_dir = tmp_path / "proj"
+        (project_dir / ".adversarial").mkdir(parents=True)
+        with patch.dict(_project_module.__dict__, {"__file__": str(fake_script)}):
+            assert _project_module._get_adversarial_cli_version(project_dir) is None
+
+
+class TestPinValidation:
+    """A hand-edited config.yml can hold anything; a junk pin must fail
+    CLEARLY rather than becoming 'adversarial-workflow==--force' and
+    surfacing as a baffling uv error (claude-code review).
+
+    Not an injection concern: the pin is a list element to
+    subprocess.run, never a shell string.
+    """
+
+    @pytest.mark.parametrize(
+        "value,ok",
+        [
+            ("1.0.1", True),
+            ("1.0.1rc1", True),
+            ("2026.1.0", True),
+            ("1.0.1-beta+build2", True),
+            ("--force", False),
+            ("$(whoami)", False),
+            ("1.0.1;", False),
+            ("", False),
+            ("latest", False),
+        ],
+    )
+    def test_version_like(self, value, ok):
+        assert _project_module._is_version_like(value) is ok
+
+    def test_junk_config_pin_does_not_reach_uv(self, tmp_path, capsys):
+        """A junk pin must not be installed. It falls through to the
+        pyproject mirror; with neither readable the caller instructs."""
+        adv = tmp_path / ".adversarial"
+        adv.mkdir()
+        (adv / "config.yml").write_text(
+            'adversarial_cli_version: "--force"\n', encoding="utf-8"
+        )
+        fake_root = tmp_path / "root"
+        (fake_root / "scripts" / "core").mkdir(parents=True)
+        fake_script = fake_root / "scripts" / "core" / "project"
+        fake_script.write_text("", encoding="utf-8")
+        (fake_root / "pyproject.toml").write_text(
+            '[project]\ndependencies = ["pytest>=8.0"]\n', encoding="utf-8"
+        )
+        with patch.dict(_project_module.__dict__, {"__file__": str(fake_script)}):
+            assert _project_module._get_adversarial_cli_version(tmp_path) is None

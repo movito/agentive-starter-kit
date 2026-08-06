@@ -2050,6 +2050,23 @@ class TestEvaluatorCliCheck:
         assert "DOCTOR:evaluator-cli:FAIL:" in result.stdout
         assert "--version" in result.stdout
 
+    def test_hanging_version_probe_is_bounded(self, tmp_path):
+        """A corrupt install whose --version blocks must FAIL on a bound,
+        not hang the whole doctor run (o3 review). Deliberately not GNU
+        `timeout`: stock macOS ships neither timeout nor gtimeout, so a
+        check depending on one would work on the maintainer's brew-
+        equipped machine and hang on a plain one."""
+        import time
+
+        (tmp_path / ".adversarial").mkdir()
+        bin_dir = _restricted_bin(tmp_path)
+        _stub_executable(bin_dir / "adversarial", "sleep 120\n")
+        started = time.monotonic()
+        result = run_evaluator_cli_check(tmp_path, bin_dir)
+        elapsed = time.monotonic() - started
+        assert "DOCTOR:evaluator-cli:FAIL:" in result.stdout
+        assert elapsed < 60, f"probe was not bounded (took {elapsed:.0f}s)"
+
     def test_check_exits_zero_on_every_path(self, tmp_path):
         """Checks report via DOCTOR: lines; the driver owns exit codes."""
         (tmp_path / ".adversarial").mkdir()

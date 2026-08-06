@@ -41,8 +41,53 @@ fi
 # "Unknown fields in evaluator.yml" warnings to stderr on a healthy
 # install (verified 2026-08-05), so an output-parsing check would report
 # a false FAIL.
-if ! adversarial --version >/dev/null 2>&1; then
-    echo "DOCTOR:evaluator-cli:FAIL:adversarial CLI found but '--version' failed — reinstall: uv tool install --force adversarial-workflow"
+#
+# Bounded so a corrupt install that blocks on stdin/network cannot hang
+# the whole doctor run (o3 review). Deliberately NOT GNU `timeout`:
+# it is a homebrew add-on on macOS (absent from a stock system), so
+# depending on it would work on a brew-equipped machine and hang on a
+# plain one — the same "passes locally, proves nothing" trap that let
+# issue #103 ship. </dev/null closes the stdin path; the
+# background-and-poll below bounds everything else.
+#
+# `sleep` is resolved to an ABSOLUTE path (same idea as BASH in
+# tests/test_doctor.py): doctor checks must survive a restricted PATH,
+# and a bare `sleep` there fails, spins the loop instantly and reports a
+# false FAIL on a perfectly healthy CLI — caught by
+# test_stub_binary_on_path_passes. If no sleep exists at all, skip the
+# bound rather than invent one: an unbounded probe is still better than
+# a wrong verdict.
+SLEEP_BIN=""
+for candidate in /bin/sleep /usr/bin/sleep; do
+    if [ -x "$candidate" ]; then
+        SLEEP_BIN="$candidate"
+        break
+    fi
+done
+
+REINSTALL="reinstall: uv tool install --force adversarial-workflow"
+
+adversarial --version >/dev/null 2>&1 </dev/null &
+probe_pid=$!
+
+if [ -n "$SLEEP_BIN" ]; then
+    probe_waited=0
+    while kill -0 "$probe_pid" 2>/dev/null && [ "$probe_waited" -lt 20 ]; do
+        "$SLEEP_BIN" 1
+        probe_waited=$((probe_waited + 1))
+    done
+    if kill -0 "$probe_pid" 2>/dev/null; then
+        kill "$probe_pid" 2>/dev/null
+        wait "$probe_pid" 2>/dev/null
+        echo "DOCTOR:evaluator-cli:FAIL:adversarial CLI found but '--version' did not finish within 20s — likely a corrupt install; $REINSTALL"
+        exit 0
+    fi
+fi
+# Reaped either way: the polling loop above exits only once the probe is
+# done, and with no sleep binary this `wait` IS the bound (unbounded, but
+# a slow answer beats a wrong one).
+if ! wait "$probe_pid"; then
+    echo "DOCTOR:evaluator-cli:FAIL:adversarial CLI found but '--version' failed — $REINSTALL"
     exit 0
 fi
 
