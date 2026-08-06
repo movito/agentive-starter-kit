@@ -1902,3 +1902,51 @@ class TestGitGateDoesNotBlockCliInstall:
                     _project_module.cmd_install_evaluators([], project_with_pin)
 
         assert ["uv", "tool", "install", "adversarial-workflow==1.0.1"] in calls
+
+
+class TestCliStepMakesNoLibraryClaims:
+    """The CLI step runs BEFORE the git gate and the library clone, so it
+    cannot assert anything about the library's state.
+
+    Those messages were written when the CLI step ran last, where the
+    claim was true. The reorder (BugBot round 1) falsified them: with git
+    absent, `install-evaluators` printed 'the evaluator library is
+    installed' and then exited having installed nothing at all
+    (CodeRabbit round 3).
+    """
+
+    @pytest.fixture
+    def project_with_pin(self, tmp_path):
+        adv = tmp_path / ".adversarial"
+        adv.mkdir()
+        (adv / "config.yml").write_text(
+            'adversarial_cli_version: "1.0.1"\n', encoding="utf-8"
+        )
+        return tmp_path
+
+    def test_uv_missing_message_claims_nothing_about_the_library(
+        self, project_with_pin, capsys
+    ):
+        with patch.object(_project_module.shutil, "which", return_value=None):
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                _project_module._ensure_adversarial_cli(project_with_pin)
+        out = capsys.readouterr().out
+        assert "uv tool install adversarial-workflow==1.0.1" in out
+        assert "library is installed" not in out
+
+    def test_install_failure_message_claims_nothing_about_the_library(
+        self, project_with_pin, capsys
+    ):
+        which = {"adversarial": None, "uv": "/usr/bin/uv"}
+        with patch.object(
+            _project_module.shutil, "which", side_effect=lambda n: which.get(n)
+        ):
+            with patch.object(_project_module, "subprocess") as mock_sub:
+                mock_sub.TimeoutExpired = subprocess.TimeoutExpired
+                mock_sub.DEVNULL = subprocess.DEVNULL
+                mock_sub.run.return_value = MagicMock(returncode=1, stderr="boom")
+                _project_module._ensure_adversarial_cli(project_with_pin)
+        out = capsys.readouterr().out
+        assert "Retry manually" in out
+        assert "still installed" not in out

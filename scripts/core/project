@@ -210,8 +210,11 @@ def _ensure_adversarial_cli(project_dir):
 
     if not shutil.which("uv"):
         print("⚠️  adversarial CLI not found, and uv is not installed")
-        print("   The evaluator library is installed, but running an")
-        print("   evaluation needs the CLI. Install uv, then run:")
+        # Deliberately says nothing about the LIBRARY's state: this step
+        # now runs before the git gate and the clone, so the library may
+        # not be installed yet — and if git then fails, it never will be
+        # (CodeRabbit round 3).
+        print("   Running an evaluation needs the CLI. Install uv, then run:")
         print(f"     {install_cmd}")
         print("   uv: https://docs.astral.sh/uv/getting-started/installation/")
         return
@@ -249,7 +252,9 @@ def _ensure_adversarial_cli(project_dir):
         return
 
     if result.returncode != 0:
-        print("⚠️  CLI install failed — the evaluator library is still installed")
+        # No claim about the library here either — see the uv-missing
+        # branch above (CodeRabbit round 3).
+        print("⚠️  CLI install failed — continuing with the library install")
         # Surface only uv's last line: its full stderr is long and the
         # actionable part is the tail.
         detail = (result.stderr or "").strip().splitlines()
