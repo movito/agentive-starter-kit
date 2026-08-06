@@ -26,10 +26,10 @@ class TaskMove:
     status_field_updated: bool
     # True when the Status field could NOT be set (absent, unreadable,
     # unwritable), regardless of whether a move occurred — the
-    # already-in-place repair path sets it too. A partial failure the
-    # CLI reports with a nonzero exit (CodeRabbit, PR #108). Distinct
-    # from status_field_updated=False, which also covers "already
-    # correct, nothing to do".
+    # already-in-place repair path sets it too. The CLI reports this
+    # partial failure with a nonzero exit (CodeRabbit, PR #108). This
+    # is distinct from status_field_updated=False, which also covers
+    # "already correct, nothing to do".
     status_update_failed: bool = False
 
 

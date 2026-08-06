@@ -10,6 +10,10 @@ worktree lib, publish+dogfood) follow in this session.
 
 ## Gate status
 
+**Snapshot**: 2026-08-06. Figures below are as of the branch tip on
+that date; the CI-proof runs are named per commit, and any push after
+the last named commit needs a fresh dispatched run before merge.
+
 - **Local suite**: 970 fast / full green at every push
 - **CI**: green on head `4690c73` via **manually dispatched** runs
   (31128654133 on d0aa929, 31128839170 on 4690c73). ⚠️ The
