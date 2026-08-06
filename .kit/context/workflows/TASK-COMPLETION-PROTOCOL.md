@@ -88,7 +88,10 @@ What should the next agent do with this?
 3. **Review git status**: Ensure all changes committed
 4. **Create handoff document** in `.kit/context/`
 5. **Update `.kit/context/agent-handoffs.json`** with task completion
-6. **Stage and commit** handoff + agent-handoffs.json update
+   — **on `main` only**: the planner is the file's single writer
+   (KIT-0086); branch sessions never edit it, and `project move`
+   skips it automatically off-main since KIT-0090 PR 1
+6. **Stage and commit** the handoff (+ the JSON update when on main)
 7. **Push to remote repository**
 8. **Notify the user** (or the planner) with the PR link and status
 
@@ -101,7 +104,7 @@ What should the next agent do with this?
 - Include test metrics in handoff (before/after pass rates)
 - Document any known issues or limitations honestly
 - Provide clear next steps for the user or reviewing agent
-- Update agent-handoffs.json status to "task_complete"
+- Update agent-handoffs.json status to "task_complete" (planner, on main — KIT-0086)
 
 ### ❌ DON'T:
 - Don't mark task complete if tests are failing

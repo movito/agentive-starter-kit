@@ -33,9 +33,9 @@ branches from fresh `origin/main`, so this ordering means it carries
 the `3-in-progress` task file from birth — created the other way round,
 it carries a stale `2-todo` file and fails its own
 validate-task-status hook. The same ordering keeps
-`agent-handoffs.json` churn off feature branches, which the KIT-0086
-interim discipline independently requires: one ordering satisfies both
-rules.
+`agent-handoffs.json` churn off feature branches — and since
+KIT-0090 PR 1 the KIT-0086 single-writer guard enforces it in code:
+`project move` skips the JSON on any branch other than main.
 
 > **KIT-0080 note**: `new-worktree.sh` hard-fails on stock macOS git
 > (2.30.1) until KIT-0080 lands. The portable equivalent is plain

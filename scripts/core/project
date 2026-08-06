@@ -1540,440 +1540,43 @@ def _doctor_install(project_dir):
     return shape, profile, bots, errors
 
 
-def _check_declared(check_path, keyword):
-    """Tokens a doctor.d check declares via its `# <keyword>:` header
-    line — keyword is "shapes" (KIT-0048) or "profiles" (KIT-0050 F5);
-    the two declarations share one mechanism by design.
+# ── Doctor: extracted to the agentive-kit package (KIT-0090 PR 2) ──────────
+# The driver, per-shape/profile check inclusion, config-home resolution
+# and preset comparison live in agentive_kit.doctor. _doctor_install and
+# _normalize_bots above are KEPT here — cmd_sync's shape gate must work
+# package-free for consumers until phase 3 (recorded duplication; this
+# script retires in phase 4).
 
-    Returns a set of tokens, or None when the check declares nothing —
-    an undeclared OR empty declaration runs everywhere (never silently
-    skipped; o3 review: an empty set would skip the check in every
-    shape forever). Case-insensitive; scanned over the first 30 lines,
-    which covers long banners without picking up documentation strings
-    deep in a check body (convention: the header sits right under the
-    shebang).
-    """
+
+def _kit_doctor():
+    """Import agentive_kit.doctor with the same fallback chain as
+    _kit_lifecycle (installed copy → in-repo source → loud install
+    instruction)."""
     try:
-        text = check_path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return None
-    head = "\n".join(text.splitlines()[:30])
-    # [^\S\n] = horizontal whitespace only — \s would slurp the newline
-    # of an empty declaration and capture the NEXT line as tokens
-    match = re.search(
-        r"^#[^\S\n]*" + keyword + r":[^\S\n]*(.*)$",
-        head,
-        re.MULTILINE | re.IGNORECASE,
+        from agentive_kit import doctor
+
+        return doctor
+    except ModuleNotFoundError:
+        pass
+    pkg_src = (
+        Path(__file__).resolve().parent.parent.parent
+        / "packages"
+        / "agentive-kit"
+        / "src"
     )
-    if match:
-        # lowercase the tokens too — IGNORECASE only covers the keyword,
-        # and '# Shapes: Single' must match shape 'single' (CodeRabbit)
-        declared = {token.lower() for token in match.group(1).split()}
-        return declared or None
-    return None
-
-
-def _config_home(project_dir):
-    """Locate the operator config home (KIT-0058, ADR-0027 P7
-    amendment): the visible sibling
-    ``<primary-clone-parent>/agentive-config`` of this checkout,
-    resolved worktree-safely via ``--git-common-dir``.
-    ``AGENTIVE_KIT_CONFIG_DIR`` is the ONLY override — an override,
-    never a search chain. Mirrors the door's ``config_home()``; the
-    equivalence test in tests/test_setup_door.py pins the two so the
-    door and doctor can never disagree on the path. Returns None when
-    the checkout is not a git repository (no sibling to name).
-
-    Anchoring note (BugBot, PR #91): each resolver anchors to ITS OWN
-    checkout — the door to the kit clone, doctor to the project it
-    diagnoses. The two name the same folder exactly when kit and
-    project share a parent (the documented sibling layout); a consumer
-    checkout has no pointer to the kit clone's local path, so the
-    kit's parent is not computable from here. When the layouts
-    diverge, the override pins the real location, and every output
-    line below names the resolved path so the anchor is visible.
-    """
-    override = os.environ.get("AGENTIVE_KIT_CONFIG_DIR")
-    if override:
-        # leading-~ expansion mirrors the bash resolvers (env files can
-        # carry a literal tilde the shell never expanded)
-        return Path(override).expanduser()
-    # scrub GIT_* — a leaked GIT_DIR would resolve the WRONG primary
-    # clone (the KIT-0043 incident class; this runs in-process, so the
-    # driver's per-check scrub does not cover it)
-    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
-    try:
-        result = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(project_dir),
-                "rev-parse",
-                "--git-common-dir",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            env=env,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    common = result.stdout.strip()
-    if result.returncode != 0 or not common:
-        return None
-    # KIT-0080: plain --git-common-dir, absolutized here. The
-    # --path-format=absolute form needs git >= 2.31; Apple's system git
-    # (2.30.1) echoes the flag back as an output line and exits 0, so
-    # `common` became "--path-format=absolute\n<path>" and the home
-    # resolved to garbage. Plain output is RELATIVE to the -C directory
-    # (both gits return a bare ".git" from a primary clone), so anchor
-    # it on project_dir — never on the process cwd. `/` already discards
-    # the left operand when `common` is absolute.
-    #
-    # No .resolve(): that would follow symlinked ancestors and report a
-    # PHYSICAL path, diverging from the bash resolvers this function is
-    # pinned equivalent to (tests/test_setup_door.py). os.path.normpath
-    # collapses the "<root>/.git" join without touching symlinks.
-    # Two levels: `joined` is <primary-clone>/.git, so .parent is the
-    # clone root and .parent.parent its PARENT, where the visible
-    # agentive-config sibling lives.
-    joined = Path(os.path.normpath(Path(project_dir) / common))
-    return joined.parent.parent / "agentive-config"
-
-
-def _print_preset_comparison(shape, profile, bots, record_errors, project_dir):
-    """`doctor --against-preset` (KIT-0056 F8, ADR-0027 P7): compare
-    the project's kit-install record against the operator preset at
-    ``<kit-parent>/agentive-config/preset`` (KIT-0058;
-    ``AGENTIVE_KIT_CONFIG_DIR`` overrides the location).
-
-    INFO-only by design: divergence is reported as
-    ``PRESET:<field>:INFO:<detail>`` lines and NEVER as WARN/FAIL, and
-    the doctor exit code is never affected — a deliberately-lean
-    project is not wrong. Doctor validates the RECORD (the DOCTOR:
-    lines above); the preset is only a comparison baseline. The
-    PRESET: prefix keeps these lines out of DOCTOR: parsers entirely.
-
-    Keys other than shape/profile/bots are ignored here by design:
-    the door owns the preset-key vocabulary (unknown keys WARN there);
-    duplicating its key list in this comparator would be a second
-    source of truth that drifts. Structural faults shared with the
-    door's parser (malformed lines, duplicate keys) do get reported —
-    as INFO, with the comparison skipped whole.
-    """
-    home = _config_home(project_dir)
-    print()
-    if home is None:
-        print(
-            f"PRESET:comparison:INFO:cannot locate the config home "
-            f"({project_dir} is not a git clone) — nothing to compare"
-        )
-        return
-    preset_path = home / "preset"
-    if not preset_path.is_file():
-        print(
-            f"PRESET:comparison:INFO:no preset found at {preset_path} — "
-            "nothing to compare (the path anchors to this project's "
-            "primary-clone parent; set AGENTIVE_KIT_CONFIG_DIR if your "
-            "config home lives beside the kit clone elsewhere)"
-        )
-        return
-    try:
-        preset_lines = preset_path.read_text(encoding="utf-8").splitlines()
-    except OSError as exc:
-        print(
-            f"PRESET:comparison:INFO:preset unreadable "
-            f"({exc.__class__.__name__}) — comparison skipped"
-        )
-        return
-    preset_values = {}
-    for lineno, line in enumerate(preset_lines, 1):
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        if ":" not in stripped:
-            # loud, names the line, and skips the WHOLE comparison — a
-            # partial read could report agreement on fields it never
-            # parsed (the masking class, record-reader face)
-            print(
-                f"PRESET:comparison:INFO:preset malformed at line {lineno} "
-                f"('{stripped}') — fix {preset_path}; comparison skipped"
-            )
-            return
-        key, _, value = stripped.partition(":")
-        key = key.strip()
-        if key in preset_values:
-            # same duplicate rule as the door's load_preset — silently
-            # letting the last value win could compare against a value
-            # the door would refuse to load
-            print(
-                f"PRESET:comparison:INFO:duplicate preset key '{key}' at "
-                f"line {lineno} — fix {preset_path}; comparison skipped"
-            )
-            return
-        preset_values[key] = value.strip()
-
-    if shape is None or profile is None:
-        print(
-            "PRESET:comparison:INFO:kit-install record unreadable "
-            "(see the DOCTOR record FAIL lines) — comparison skipped"
-        )
-        return
-
-    bots_errored = any(record == "bots-record" for record, _ in record_errors)
-    record_values = {
-        "shape": shape,
-        "profile": profile,
-        # absent bots line = both expected (the pre-KIT-0056 default)
-        "bots": bots if bots is not None else "coderabbit bugbot",
-    }
-    defaulted = {"bots": bots is None}
-    # Vocabulary checks mirror the door's validate_values: a preset
-    # value the door would refuse to install must read as malformed
-    # preset data here, never as legitimate divergence (CodeRabbit).
-    valid_vocab = {
-        "shape": ("single", "planning"),
-        "profile": ("python", "none"),
-    }
-    if (
-        preset_values.get("shape") == "planning"
-        and preset_values.get("profile") == "python"
-    ):
-        print(
-            "PRESET:comparison:INFO:preset declares an illegal pair "
-            "(planning forces profile none) — fix the preset; "
-            "shape/profile comparison skipped"
-        )
-        preset_values.pop("shape", None)
-        preset_values.pop("profile", None)
-    compared = 0
-    divergences = 0
-    for key in ("shape", "profile", "bots"):
-        preset_val = preset_values.get(key, "")
-        if not preset_val:
-            continue
-        if key in valid_vocab and preset_val not in valid_vocab[key]:
-            print(
-                f"PRESET:{key}:INFO:preset {key} value invalid "
-                f"('{preset_val}') — {key} comparison skipped"
-            )
-            continue
-        if key == "bots":
-            if bots_errored:
-                print(
-                    "PRESET:bots:INFO:recorded bots declaration is invalid "
-                    "(see DOCTOR:bots-record above) — bots comparison skipped"
-                )
-                continue
-            normalized = _normalize_bots(preset_val)
-            if normalized is None:
-                print(
-                    f"PRESET:bots:INFO:preset bots value invalid "
-                    f"('{preset_val}') — bots comparison skipped"
-                )
-                continue
-            preset_val = normalized
-        compared += 1
-        if preset_val != record_values[key]:
-            suffix = (
-                " (defaulted — no line in the record)" if defaulted.get(key) else ""
-            )
-            print(
-                f"PRESET:{key}:INFO:record has '{record_values[key]}'{suffix}, "
-                f"preset says '{preset_val}' — informational only, a "
-                "deliberately-lean project is not wrong"
-            )
-            divergences += 1
-    if compared == 0:
-        print(
-            "PRESET:comparison:INFO:preset answers none of the comparable "
-            "fields (shape/profile/bots) — nothing to compare"
-        )
-    elif divergences == 0:
-        print(
-            f"PRESET:comparison:INFO:record matches the preset on all "
-            f"{compared} compared field(s)"
-        )
-
-
-def cmd_doctor(args, project_dir):
-    """`project doctor`: run all doctor.d environment checks (ADR-0027 P4).
-
-    Composable driver: every executable in scripts/core/doctor.d/ runs;
-    a failing check never short-circuits its siblings (the fail-fast-
-    masking lesson from the sync workflow). Checks emit
-    ``DOCTOR:<name>:<verdict>:<detail>`` lines — <name> and <verdict>
-    are colon-free tokens, <detail> is everything after the third colon
-    (parsers split on the first three colons only, exactly like the
-    preflight GATE: format). Verdicts: PASS, WARN, FAIL, SKIP.
-
-    Exit-code contract (F3 — driver errors never overload 0/1):
-      0  every check PASS or SKIP
-      1  at least one FAIL
-      2  warnings only (no FAIL)
-      3  driver/usage error (unknown flag, doctor.d missing or empty)
-
-    Read-only (N3): the driver and every check diagnose the environment;
-    they never mutate config, env, or the working tree.
-    """
-    doctor_dir = project_dir / "scripts" / "core" / "doctor.d"
-    against_preset = False
-    for arg in args:
-        # An empty value would resolve Path("") to the cwd and silently
-        # diagnose the wrong tree — usage error instead (BugBot round 6).
-        if arg == "--against-preset":
-            # KIT-0056 F8: compare the record against the operator
-            # preset, INFO-only (see _print_preset_comparison).
-            against_preset = True
-        elif arg.startswith("--dir="):
-            # test/advanced seam: run a different check set (resolve now —
-            # checks run with a different cwd, so relative would break)
-            value = arg.partition("=")[2]
-            if not value:
-                print("❌ --dir= requires a path")
-                return 3
-            doctor_dir = Path(value).resolve()
-        elif arg.startswith("--root="):
-            # diagnose another checkout (e.g. the primary clone from a
-            # worktree); checks receive it as DOCTOR_ROOT
-            value = arg.partition("=")[2]
-            if not value:
-                print("❌ --root= requires a path")
-                return 3
-            project_dir = Path(value).resolve()
-            if not project_dir.is_dir():
-                print(f"❌ --root is not a directory: {project_dir}")
-                return 3
-        else:
-            print(f"Unknown option: {arg}")
-            print(
-                "Usage: ./scripts/core/project doctor "
-                "[--dir=<checks-dir>] [--root=<checkout>] [--against-preset]"
-            )
-            return 3
-
-    if not doctor_dir.is_dir():
-        print(f"❌ doctor checks directory not found: {doctor_dir}")
-        return 3
-    # dotfiles (.DS_Store & friends) are never checks — everything else
-    # in doctor.d/ is held to the check contract
-    checks = sorted(
-        p for p in doctor_dir.iterdir() if p.is_file() and not p.name.startswith(".")
-    )
-    if not checks:
-        print(f"❌ no checks found in {doctor_dir}")
-        return 3
-
-    # Per-shape inclusion (KIT-0048, fills the P2 seam) and per-profile
-    # inclusion (KIT-0050 F5): checks declare their shapes/profiles in
-    # `# shapes:` / `# profiles:` headers; the driver reads the install
-    # record once and stays otherwise declaration-driven. A malformed
-    # record runs everything AND fails loud via the record lines below.
-    shape, profile, bots, record_errors = _doctor_install(project_dir)
-
-    # Scrub ambient GIT_* so a leaked GIT_DIR (the KIT-0043 incident
-    # class — e.g. doctor invoked from a pre-commit hook in a worktree)
-    # cannot redirect git-facing checks at the wrong repository.
-    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
-    env["DOCTOR_ROOT"] = str(project_dir)
-    verdicts = []
-    for record, detail in record_errors:
-        print(f"DOCTOR:{record}:FAIL:{detail}")
-        verdicts.append("FAIL")
-    for check in checks:
-        name = check.name
-        declared = _check_declared(check, "shapes")
-        if shape is not None and declared is not None and shape not in declared:
-            print(
-                f"DOCTOR:{name}:SKIP:not applicable to shape '{shape}' "
-                f"(check declares: {' '.join(sorted(declared))})"
-            )
-            verdicts.append("SKIP")
-            continue
-        declared_profiles = _check_declared(check, "profiles")
-        if (
-            profile is not None
-            and declared_profiles is not None
-            and profile not in declared_profiles
-        ):
-            print(
-                f"DOCTOR:{name}:SKIP:not applicable to profile '{profile}' "
-                f"(check declares: {' '.join(sorted(declared_profiles))})"
-            )
-            verdicts.append("SKIP")
-            continue
-        if not os.access(check, os.X_OK):
-            print(f"DOCTOR:{name}:FAIL:check file is not executable")
-            verdicts.append("FAIL")
-            continue
+    if pkg_src.is_dir() and str(pkg_src) not in sys.path:
+        sys.path.insert(0, str(pkg_src))
         try:
-            result = subprocess.run(
-                [str(check)],
-                cwd=project_dir,
-                env=env,
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-        except subprocess.TimeoutExpired:
-            print(f"DOCTOR:{name}:FAIL:check timed out after 30s")
-            verdicts.append("FAIL")
-            continue
-        except OSError as exc:
-            print(f"DOCTOR:{name}:FAIL:check failed to run ({exc.__class__.__name__})")
-            verdicts.append("FAIL")
-            continue
+            from agentive_kit import doctor
 
-        emitted = False
-        for line in result.stdout.splitlines():
-            if not line.startswith("DOCTOR:"):
-                continue
-            parts = line.split(":", 3)
-            # F1 field contract: exactly DOCTOR:<name>:<verdict>:<detail>
-            # with non-empty name and detail — an incomplete record must
-            # not be able to count as a pass (CodeRabbit round 2)
-            malformed = len(parts) < 4 or not parts[1] or not parts[3].strip()
-            verdict = parts[2] if len(parts) >= 3 else ""
-            # membership: verdict vocabulary check, not identifier equality
-            if malformed or verdict not in ("PASS", "WARN", "FAIL", "SKIP"):
-                # malformed line: surface it, count it as a failure
-                print(line)
-                verdicts.append("FAIL")
-                emitted = True
-                continue
-            print(line)
-            verdicts.append(verdict)
-            emitted = True
-        if result.stderr:
-            sys.stderr.write(result.stderr)
-        if not emitted:
-            print(
-                f"DOCTOR:{name}:FAIL:check produced no DOCTOR line "
-                f"(exit {result.returncode})"
-            )
-            verdicts.append("FAIL")
-        elif result.returncode != 0:
-            # a check that emitted lines but then crashed may have lost
-            # its remaining concerns — surface the crash, don't let an
-            # early PASS line mask it (fast-v2 review finding)
-            print(
-                f"DOCTOR:{name}:FAIL:check exited {result.returncode} "
-                "after emitting output — remaining concerns may be lost"
-            )
-            verdicts.append("FAIL")
-
-    fails = verdicts.count("FAIL")
-    warns = verdicts.count("WARN")
-    passes = verdicts.count("PASS")
-    skips = verdicts.count("SKIP")
-    print(f"\nDoctor: {passes} pass, {warns} warn, {fails} fail, {skips} skip")
-    if against_preset:
-        _print_preset_comparison(shape, profile, bots, record_errors, project_dir)
-    if fails:
-        return 1
-    if warns:
-        return 2
-    return 0
+            return doctor
+        except ModuleNotFoundError:
+            pass
+    print("❌ agentive-kit is not installed")
+    print("   The doctor now lives in the agentive-kit package")
+    print("   (KIT-ADR-0028 phase 1). Install it:")
+    print("     uv tool install agentive-kit")
+    sys.exit(1)
 
 
 def cmd_sync(args, project_dir):
@@ -2398,7 +2001,7 @@ except Exception as e:
 
     elif command == "doctor":
         # Incident-mapped environment verifier (KIT-0046, ADR-0027 P4)
-        sys.exit(cmd_doctor(sys.argv[2:], project_dir))
+        sys.exit(_kit_doctor().cmd_doctor(sys.argv[2:], project_dir))
 
     elif command == "sync-status":
         # Check Linear sync status

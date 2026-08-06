@@ -24,6 +24,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   extraction PRs. Per-module tests replace the migrated monolith
   sections (KIT-0089 F3 direction).
 
+- **Doctor migrated into `agentive-kit`** (KIT-0090 PR 2): the driver,
+  kit-install record reader, config-home resolution and preset
+  comparison now live in `agentive_kit.doctor`; `./scripts/core/project
+  doctor` delegates (same fallback chain as the lifecycle commands).
+  Per-check decision recorded: all checks remain executable files run
+  by the driver — the executable contract is the tested public seam —
+  and the check set also ships as package data for post-phase-2
+  installs (repo-local `doctor.d` wins whenever present). New check
+  `35-handoffs-paths.py` (KIT-0086 F2): WARNs on stale task paths in
+  `agent-handoffs.json` without reintroducing a second writer.
+  Workflow docs updated to the single-writer rule (KIT-0086 F3).
+
 ### Changed
 
 - **`agent-handoffs.json` becomes single-writer** (KIT-0086 F1, landed

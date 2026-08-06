@@ -1,0 +1,56 @@
+"""Tests for agentive_kit.doctor packaging seams (KIT-0090 PR 2).
+
+The driver's behavior itself is covered by tests/test_doctor.py, which
+drives the real script (now delegating here) through the --dir= seam —
+those tests are the extraction spec. This module covers only what is
+NEW in the package: check-set resolution.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+pytest.importorskip(
+    "agentive_kit", reason="agentive-kit package source present only in the kit repo"
+)
+
+from agentive_kit import doctor  # noqa: E402
+
+
+class TestDefaultChecksDir:
+    def test_repo_local_doctor_d_wins(self, tmp_path):
+        local = tmp_path / "scripts" / "core" / "doctor.d"
+        local.mkdir(parents=True)
+        assert doctor.default_checks_dir(tmp_path) == local
+
+    def test_packaged_checks_are_the_fallback(self, tmp_path):
+        resolved = doctor.default_checks_dir(tmp_path)
+        assert resolved == Path(doctor.__file__).resolve().parent / "checks"
+        assert resolved.is_dir()
+
+    def test_packaged_set_matches_repo_set(self):
+        # The packaged copy must not drift from the synced canonical
+        # set in scripts/core/doctor.d (both ship this phase).
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        repo_set = {
+            p.name
+            for p in (repo_root / "scripts/core/doctor.d").iterdir()
+            if not p.name.startswith(".")
+        }
+        pkg_dir = Path(doctor.__file__).resolve().parent / "checks"
+        pkg_set = {
+            p.name
+            for p in pkg_dir.iterdir()
+            if not p.name.startswith(".") and p.name != "__init__.py"
+        }
+        assert pkg_set == repo_set
+
+    def test_packaged_checks_keep_content_identical(self):
+        repo_root = Path(__file__).resolve().parent.parent.parent
+        pkg_dir = Path(doctor.__file__).resolve().parent / "checks"
+        for check in (repo_root / "scripts/core/doctor.d").iterdir():
+            if check.name.startswith("."):
+                continue
+            assert (pkg_dir / check.name).read_bytes() == check.read_bytes(), check.name
