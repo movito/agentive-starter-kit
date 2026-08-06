@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import re
+import shlex
 import shutil
 import stat
 import subprocess
@@ -2167,7 +2168,11 @@ def _old_git_bin(base: Path) -> Path:
     bin_dir = base / "old-git-bin"
     bin_dir.mkdir()
     stub = bin_dir / "git"
-    stub.write_text(OLD_GIT_STUB.format(real=real), encoding="utf-8")
+    # shlex.quote: an unquoted REAL= assignment breaks the stub outright
+    # if git's path contains spaces (bash would run the second word as a
+    # command). Latent on the usual /usr/bin/git, real on a path like
+    # "/Applications/Xcode 16.app/..." (CodeRabbit, this PR).
+    stub.write_text(OLD_GIT_STUB.format(real=shlex.quote(real)), encoding="utf-8")
     stub.chmod(stub.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     return bin_dir
 

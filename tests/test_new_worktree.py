@@ -19,6 +19,7 @@ pattern.
 from __future__ import annotations
 
 import os
+import shlex
 import shutil
 import stat
 import subprocess
@@ -216,7 +217,11 @@ def _old_git_path(base: Path) -> str:
     assert real, "git required for this fixture"
     bin_dir = base / "old-git-bin"
     bin_dir.mkdir()
-    _make_executable(bin_dir / "git", OLD_GIT_STUB.format(real=real))
+    # shlex.quote: an unquoted REAL= assignment breaks the stub outright
+    # if git's path contains spaces (bash would run the second word as a
+    # command) — same fix as the sibling fixture in test_doctor.py
+    # (CodeRabbit, this PR).
+    _make_executable(bin_dir / "git", OLD_GIT_STUB.format(real=shlex.quote(real)))
     return f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"
 
 
