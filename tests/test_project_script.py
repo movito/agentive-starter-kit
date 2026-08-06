@@ -7,6 +7,7 @@ Focus: install-evaluators command with mocked subprocess calls.
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -1904,6 +1905,32 @@ class TestGitGateDoesNotBlockCliInstall:
         assert ["uv", "tool", "install", "adversarial-workflow==1.0.1"] in calls
 
 
+def _assert_no_library_state_claim(output):
+    """Fail if `output` asserts anything about the LIBRARY's install state.
+
+    One shared assertion for both call sites. Rejecting a single literal
+    per test (e.g. only "library is installed" in one and only "still
+    installed" in the other) let each test pass on the OTHER's wording —
+    so swapping the two messages kept both green (CodeRabbit round 4).
+
+    A regex rather than `==` on whole lines: the guarantee here is
+    "makes no claim of this KIND", which a fixed expected string cannot
+    express — any new phrasing would silently escape it. Substring/regex
+    matching is justified for that reason (DK rules require the
+    justification, not the avoidance).
+    """
+    claim = re.search(
+        r"\blibrar(?:y|ies)\b[^\n]*\b(?:is|are|was|were|remains?|still|"
+        r"has been|already)\b",
+        output,
+        re.IGNORECASE,
+    )
+    assert not claim, (
+        "the CLI step claimed something about the library's state: "
+        f"{claim.group(0)!r}"
+    )
+
+
 class TestCliStepMakesNoLibraryClaims:
     """The CLI step runs BEFORE the git gate and the library clone, so it
     cannot assert anything about the library's state.
@@ -1933,7 +1960,7 @@ class TestCliStepMakesNoLibraryClaims:
                 _project_module._ensure_adversarial_cli(project_with_pin)
         out = capsys.readouterr().out
         assert "uv tool install adversarial-workflow==1.0.1" in out
-        assert "library is installed" not in out
+        _assert_no_library_state_claim(out)
 
     def test_install_failure_message_claims_nothing_about_the_library(
         self, project_with_pin, capsys
@@ -1949,4 +1976,4 @@ class TestCliStepMakesNoLibraryClaims:
                 _project_module._ensure_adversarial_cli(project_with_pin)
         out = capsys.readouterr().out
         assert "Retry manually" in out
-        assert "still installed" not in out
+        _assert_no_library_state_claim(out)
