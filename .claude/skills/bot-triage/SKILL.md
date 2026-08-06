@@ -76,6 +76,14 @@ Reference knowledge for triaging automated review comments. Use `/triage-threads
   on KIT-0058 PR #91 a CodeRabbit committable suggestion was a bash syntax
   error (heredoc body swallowed the `&&`-chained lines). If it fails, decline
   and paste the test result into the thread.
+- **Read the REVIEW BODIES, not only the inline threads** — CodeRabbit
+  puts "outside diff range" findings in the review body where
+  thread-based triage never sees them. On KIT-0083 PR #106, round 3's
+  ONLY finding lived there: the shipped output claimed the library was
+  installed immediately before exiting 1 having installed nothing, and
+  it would have merged unread. After fetching threads, also fetch
+  `reviews[].body` for the latest round and scan for findings; treat
+  them with the same severity triage as threads.
 - **Triage ALL threads before fixing ANY. Then batch all fixes into one commit.**
 
 ## Batch Strategy

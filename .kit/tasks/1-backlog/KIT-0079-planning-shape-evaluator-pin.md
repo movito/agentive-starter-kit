@@ -1,5 +1,16 @@
 # KIT-0079: Planning-shape targets can't resolve the evaluator pin
 
+> **Consumption note (planner, 2026-08-06)**: KIT-0083 / PR #106 landed
+> the canonical pin home this task consumes: `.adversarial/config.yml`
+> now carries `evaluator_library_version` (currently INERT — the reader
+> still uses pyproject). This task's job narrows to: move
+> `_get_evaluator_library_version()` to read config.yml (pyproject as
+> fallback mirror at most), and DELETE
+> `test_library_pin_mirrors_agree` — that drift test exists only to
+> guard the interim two-home state (KIT-0083 retro, follow-up #6).
+> Note KIT-ADR-0028 (Proposed): if accepted, this lands inside the
+> scripts package rather than the copied script.
+
 **Status**: Backlog
 **Priority**: high (blocks clean intake of every split pair)
 **Created**: 2026-07-29
