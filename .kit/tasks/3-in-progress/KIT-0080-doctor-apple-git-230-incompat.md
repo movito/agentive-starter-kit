@@ -1,6 +1,6 @@
 # KIT-0080: doctor.d checks + tests break on Apple git 2.30.1
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high (raised from medium 2026-08-04 — see S3: the same root
 cause silently disables operator-preset resolution in the setup door.
 Reaffirmed 2026-08-05: **S4** makes it a hard block on the default
