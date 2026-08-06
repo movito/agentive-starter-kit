@@ -1,6 +1,6 @@
 # KIT-0090: ADR-0028 phase 1 — extract the lifecycle scripts into a published PyPI package
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high (the accepted architecture's first work item; everything parked in the queue waits on it)
 **Type**: Infrastructure / migration
 **Estimated Effort**: 2-4 days (stacked PRs — see PR Plan)
