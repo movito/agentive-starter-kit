@@ -24,7 +24,7 @@ Using agents to build software works better if you add a bit of structure — An
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| **git** | **≥ 2.31** | ⚠️ Stock macOS ships Apple Git 2.30.1 — one minor version too old. The kit's scripts use `git rev-parse --path-format=absolute` (added in 2.31, March 2021); on 2.30.1 the failures range from silent (operator preset ignored by the setup door) to hard (worktree helper dies). Fix: `brew install git`, then `hash -r` in existing shells. KIT-0080 tracks making the scripts portable to older git; 2.31+ stays recommended regardless. |
+| **git** | **≥ 2.30** | Stock macOS (Apple Git 2.30.1) works. The kit's scripts used to require ≥ 2.31 via `git rev-parse --path-format=absolute`, which 2.30.1 echoes back instead of consuming — silently (operator preset ignored by the setup door) or hard (worktree helper died). KIT-0080 made every resolver portable, so the floor is now 2.30; `project doctor` WARNs below it. Note `xcode-select --install` does **not** raise Apple's git — its Command Line Tools ship 2.30.x by design; use `brew install git` (then `hash -r`) if you want a newer one. |
 | **gh** | any recent | Authenticated: `gh auth status` must pass |
 | **Python** | ≥ 3.10 | For code-project shapes (CI tests 3.10/3.12/3.14); planning-shape repos need only system `python3` |
 | **Claude Code** | current | The kit is built around it |

@@ -19,6 +19,8 @@ pattern.
 from __future__ import annotations
 
 import os
+import shlex
+import shutil
 import stat
 import subprocess
 from pathlib import Path
@@ -178,3 +180,140 @@ class TestProvisioning:
         wt = tmp_path / "ask-worktrees" / "KIT-1234"
         serena = (wt / ".serena" / "project.yml").read_text(encoding="utf-8")
         assert 'project_name: "kit&co-KIT-1234"' in serena
+
+
+# ─────────────────────────────────────────────────────────────────────
+# KIT-0080 / S4: the helper must resolve the primary clone on old git
+# ─────────────────────────────────────────────────────────────────────
+# `git rev-parse --path-format=absolute` needs git >= 2.31. Apple's
+# system git (2.30.1, stock on macOS) echoes the flag back as an output
+# line instead of consuming it, so PRIMARY_ROOT became garbage and the
+# line-42 guard hard-exited: worktree creation — the kit's DEFAULT
+# session topology — was dead on every stock Mac. CI runners ship modern
+# git, so this stub is the only coverage of that behavior here.
+
+OLD_GIT_STUB = """#!/bin/bash
+# Emulates git 2.30.x: --path-format=* is NOT consumed, it is echoed as
+# an output line; every other arg is answered by the real git.
+REAL={real}
+args=()
+echoes=()
+for a in "$@"; do
+    case "$a" in
+        --path-format=*) echoes+=("$a") ;;
+        *) args+=("$a") ;;
+    esac
+done
+if [ "${{#echoes[@]}}" -gt 0 ]; then
+    for e in "${{echoes[@]}}"; do printf '%s\\n' "$e"; done
+fi
+exec "$REAL" "${{args[@]}}"
+"""
+
+
+def _old_git_path(base: Path) -> str:
+    """A PATH string whose `git` mimics git 2.30.x flag handling."""
+    real = shutil.which("git")
+    assert real, "git required for this fixture"
+    bin_dir = base / "old-git-bin"
+    bin_dir.mkdir()
+    # shlex.quote: an unquoted REAL= assignment breaks the stub outright
+    # if git's path contains spaces (bash would run the second word as a
+    # command) — same fix as the sibling fixture in test_doctor.py
+    # (CodeRabbit, this PR).
+    _make_executable(bin_dir / "git", OLD_GIT_STUB.format(real=shlex.quote(real)))
+    return f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"
+
+
+class TestOldGitResolution:
+    """S4: identical, correct resolution on both git generations."""
+
+    def test_stub_reproduces_the_230_flag_echo(self, tmp_path):
+        """Pin the stub itself — a stub that stopped emulating the bug
+        would make the test below vacuously green."""
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "--quiet", str(repo)], check=True, timeout=30)
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repo),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-dir",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env={**os.environ, "PATH": _old_git_path(tmp_path)},
+        )
+        assert result.stdout.splitlines()[0] == "--path-format=absolute"
+        assert result.returncode == 0, "2.30.x exits 0 — that is what made it silent"
+
+    def test_helper_provisions_under_old_git(self, tmp_path):
+        """The whole helper runs green on 2.30.x: the resolution guard
+        never fires and the worktree lands in the primary's sibling
+        dir, exactly as on modern git."""
+        primary = _primary_fixture(tmp_path)
+        result = subprocess.run(
+            [
+                "bash",
+                str(primary / "scripts" / "local" / "new-worktree.sh"),
+                "KIT-0001",
+                "demo",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env={**os.environ, "PATH": _old_git_path(tmp_path)},
+        )
+        assert result.returncode == 0, (
+            f"S4 regressed — helper died on git 2.30.x\n"
+            f"stdout: {result.stdout}\nstderr: {result.stderr}"
+        )
+        # The exact S4 failure signature.
+        assert "could not resolve primary clone root" not in result.stderr
+        assert "dirname:" not in result.stderr
+        assert (tmp_path / "ask-worktrees" / "KIT-0001").is_dir(), result.stdout
+
+    def test_resolution_matches_modern_git(self, tmp_path):
+        """Same helper, same fixture, both gits — the worktree must land
+        in the same place. A divergence here is the silent-wrong-answer
+        half of the bug (S3) rather than the hard-death half (S4)."""
+        modern_primary = _primary_fixture(tmp_path / "modern", primary_name="kit")
+        old_primary = _primary_fixture(tmp_path / "old", primary_name="kit")
+        for base in (tmp_path / "modern", tmp_path / "old"):
+            base.mkdir(exist_ok=True)
+
+        modern = _run_helper(modern_primary, "KIT-0002", "demo")
+        old = subprocess.run(
+            [
+                "bash",
+                str(old_primary / "scripts" / "local" / "new-worktree.sh"),
+                "KIT-0002",
+                "demo",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env={**os.environ, "PATH": _old_git_path(tmp_path)},
+        )
+        assert modern.returncode == 0, modern.stderr
+        assert old.returncode == 0, old.stderr
+        modern_wt = tmp_path / "modern" / "ask-worktrees" / "KIT-0002"
+        old_wt = tmp_path / "old" / "ask-worktrees" / "KIT-0002"
+        assert modern_wt.is_dir(), modern.stdout
+        assert old_wt.is_dir(), old.stdout
+
+    def test_helper_does_not_use_the_unportable_flag(self):
+        """The guard that makes the fix stick."""
+        offenders = [
+            line.strip()
+            for line in HELPER.read_text(encoding="utf-8").splitlines()
+            if "--path-format" in line and not line.strip().startswith("#")
+        ]
+        assert offenders == [], (
+            "--path-format=absolute needs git >= 2.31 and is silently wrong "
+            f"on Apple git 2.30.1 (KIT-0080): {offenders}"
+        )

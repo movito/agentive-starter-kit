@@ -171,7 +171,30 @@ config_home() {
         return 0
     fi
     local common
-    common="$(git -C "$PROJECT_ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 1
+    # KIT-0080: --path-format=absolute needs git >= 2.31; Apple's system
+    # git (2.30.1) echoes the flag back as an output line and exits 0.
+    # That made this resolve to the relative garbage ./agentive-config,
+    # so a correctly-authored operator preset was SILENTLY ignored on
+    # every door run on stock macOS (S3 — misprovisioned planning
+    # repos). Plain --git-common-dir is portable; its output is relative
+    # to the -C directory, so absolutize there.
+    # Emptiness-checked BEFORE joining: on failure the substitution is
+    # empty, which would otherwise resolve to $PROJECT_ROOT — a
+    # confident wrong home instead of the rc 1 that tells the preset
+    # layer there is nothing to read. A relative answer is joined by
+    # STRING, not `cd`+`pwd`, so a symlinked checkout keeps its logical
+    # path (doctor's mirror of this resolver does the same, and the
+    # equivalence test pins the two together).
+    local raw
+    raw="$(git -C "$PROJECT_ROOT" rev-parse --git-common-dir 2>/dev/null)" || return 1
+    [ -n "$raw" ] || return 1
+    case "$raw" in
+        /*) common="$raw" ;;
+        *)  common="$PROJECT_ROOT/$raw" ;;
+    esac
+    # Two levels: $common is <primary-clone>/.git, so one dirname gives
+    # the clone root and the second its PARENT, the visible sibling's
+    # home.
     printf '%s\n' "$(dirname "$(dirname "$common")")/agentive-config"
 }
 

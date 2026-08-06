@@ -47,8 +47,33 @@ ROOT="${DOCTOR_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 # SHARED with the primary, so an in-worktree setup must say --no-hooks
 # or the reinstall re-points them at a venv that dies with the
 # worktree (BugBot, this PR).
-GIT_DIR_PATH="$(git -C "$ROOT" rev-parse --path-format=absolute --git-dir 2>/dev/null)" || GIT_DIR_PATH=""
-GIT_COMMON="$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || GIT_COMMON=""
+# KIT-0080: --path-format=absolute needs git >= 2.31; Apple's system git
+# (2.30.1) echoes the flag back as an output line and exits 0, so both
+# vars became two-line garbage — they compared unequal, the check claimed
+# "in a worktree", and PRIMARY_ROOT resolved through a dirname that
+# errored to stderr. Every Serena verdict below was then computed against
+# a nonexistent primary (it reported SKIP "project does not use Serena").
+# Plain flags are portable; output is relative to the -C directory, so
+# absolutize there.
+#
+# Emptiness-checked BEFORE joining: on failure the substitution is
+# empty, which would otherwise resolve to $ROOT — turning "not a repo"
+# into a confident wrong answer and defeating the not-a-checkout SKIP
+# below. A relative answer is joined by STRING rather than `cd`+`pwd`,
+# so a symlinked checkout keeps its logical path (/var -> /private/var
+# on macOS); the two vars are only ever compared with each other, so
+# both must normalize the same way.
+git_path() {  # $1 = rev-parse path flag; prints an absolute path or nothing
+    local raw
+    raw="$(git -C "$ROOT" rev-parse "$1" 2>/dev/null)" || return 0
+    case "$raw" in
+        '') return 0 ;;
+        /*) printf '%s\n' "$raw" ;;
+        *)  printf '%s\n' "$ROOT/$raw" ;;
+    esac
+}
+GIT_DIR_PATH="$(git_path --git-dir)"
+GIT_COMMON="$(git_path --git-common-dir)"
 IN_WORKTREE=""
 if [ -n "$GIT_DIR_PATH" ] && [ -n "$GIT_COMMON" ] \
     && [ "$GIT_DIR_PATH" != "$GIT_COMMON" ]; then

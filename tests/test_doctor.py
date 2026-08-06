@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import re
+import shlex
 import shutil
 import stat
 import subprocess
@@ -2127,3 +2128,321 @@ def test_probe_bounds_match_the_installer():
         f"probe bounds drifted: doctor={doctor_bound.group(1)}s, "
         f"installer={installer_bound.group(1)}s"
     )
+
+
+# ─────────────────────────────────────────────────────────────────────
+# KIT-0080: portable git path resolution + the git-version floor check
+# ─────────────────────────────────────────────────────────────────────
+# Root cause: `git rev-parse --path-format=absolute` needs git >= 2.31.
+# Apple's system git (2.30.1, stock on macOS) does NOT consume the flag —
+# it echoes it back as the first output line and still exits 0, so every
+# resolver built on it silently produced garbage. CI runners ship modern
+# git, so nothing here would regress loudly without the stub below: it
+# is the ONLY coverage of the 2.30.x behavior on a modern-git machine.
+
+OLD_GIT_STUB = """#!/bin/bash
+# Emulates git 2.30.x argument handling for `rev-parse`: the
+# --path-format=* flag is NOT consumed, it is echoed as an output line
+# and the remaining args are answered normally. Everything else
+# delegates to the real git, so repos behave for real.
+REAL={real}
+args=()
+echoes=()
+for a in "$@"; do
+    case "$a" in
+        --path-format=*) echoes+=("$a") ;;
+        *) args+=("$a") ;;
+    esac
+done
+if [ "${{#echoes[@]}}" -gt 0 ]; then
+    for e in "${{echoes[@]}}"; do printf '%s\\n' "$e"; done
+fi
+exec "$REAL" "${{args[@]}}"
+"""
+
+
+def _old_git_bin(base: Path) -> Path:
+    """A PATH dir whose `git` mimics 2.30.x --path-format handling."""
+    real = shutil.which("git")
+    assert real, "git required for this fixture"
+    bin_dir = base / "old-git-bin"
+    bin_dir.mkdir()
+    stub = bin_dir / "git"
+    # shlex.quote: an unquoted REAL= assignment breaks the stub outright
+    # if git's path contains spaces (bash would run the second word as a
+    # command). Latent on the usual /usr/bin/git, real on a path like
+    # "/Applications/Xcode 16.app/..." (CodeRabbit, this PR).
+    stub.write_text(OLD_GIT_STUB.format(real=shlex.quote(real)), encoding="utf-8")
+    stub.chmod(stub.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    return bin_dir
+
+
+def _with_old_git(path_dir: Path) -> dict[str, str]:
+    """Env putting the 2.30.x stub FIRST on PATH (real tools still found)."""
+    return {"PATH": f"{path_dir}{os.pathsep}{os.environ.get('PATH', '')}"}
+
+
+class TestOldGitStubIsFaithful:
+    """The stub is the oracle for every test below, so pin its behavior
+    first — a stub that quietly stopped emulating the bug would make the
+    whole class vacuously green."""
+
+    def test_stub_echoes_the_flag_instead_of_consuming_it(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "--quiet", str(repo)], check=True, timeout=30)
+        bin_dir = _old_git_bin(tmp_path)
+        result = subprocess.run(
+            [
+                str(bin_dir / "git"),
+                "-C",
+                str(repo),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-common-dir",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        lines = result.stdout.splitlines()
+        assert lines[0] == "--path-format=absolute", result.stdout
+        assert result.returncode == 0, "2.30.x exits 0 — that is what made it silent"
+
+    def test_stub_delegates_plain_flags_to_real_git(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "--quiet", str(repo)], check=True, timeout=30)
+        bin_dir = _old_git_bin(tmp_path)
+        result = subprocess.run(
+            [str(bin_dir / "git"), "-C", str(repo), "rev-parse", "--git-common-dir"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0
+        assert "--path-format" not in result.stdout
+        assert result.stdout.strip(), "plain flag must still answer"
+
+
+class TestPortableGitResolutionUnderOldGit:
+    """Each check must produce the SAME verdict on both gits, and must
+    never leak git/dirname noise to stderr (S1/S2/S3)."""
+
+    def test_core_bare_check_is_clean_and_identical(self, tmp_path):
+        primary, _ = _worktree_pair(tmp_path)
+        bin_dir = _old_git_bin(tmp_path)
+        modern = run_core_bare_check(primary)
+        old = subprocess.run(
+            [BASH, str(DOCTOR_D / "70-core-bare.sh")],
+            env={**os.environ, "DOCTOR_ROOT": str(primary), **_with_old_git(bin_dir)},
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert "DOCTOR:core-bare:PASS:" in old.stdout, old.stdout
+        assert old.stdout == modern.stdout, "verdict diverged between git versions"
+        assert "dirname:" not in old.stderr
+        assert old.stderr == "", f"stray stderr under old git: {old.stderr!r}"
+
+    def test_config_home_check_is_clean_and_identical(self, tmp_path):
+        parent = tmp_path / "parent"
+        kit = parent / "kit"
+        kit.mkdir(parents=True)
+        subprocess.run(["git", "init", "--quiet", str(kit)], check=True, timeout=30)
+        (parent / "agentive-config").mkdir()
+        base_env = {
+            **os.environ,
+            "DOCTOR_ROOT": str(kit),
+            "XDG_CONFIG_HOME": str(tmp_path / "no-such-xdg"),
+        }
+        base_env.pop("AGENTIVE_KIT_CONFIG_DIR", None)
+        check = DOCTOR_D / "90-config-home.sh"
+        modern = subprocess.run(
+            [BASH, str(check)], env=base_env, capture_output=True, text=True, timeout=30
+        )
+        bin_dir = _old_git_bin(tmp_path)
+        old = subprocess.run(
+            [BASH, str(check)],
+            env={**base_env, **_with_old_git(bin_dir)},
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        # The S1 symptom verbatim: `dirname: illegal option -- -`.
+        assert "dirname:" not in old.stderr, f"S1 regressed: {old.stderr!r}"
+        assert old.stderr == "", f"stray stderr under old git: {old.stderr!r}"
+        # The S3 symptom: the home resolved to relative garbage, so the
+        # operator preset was silently invisible.
+        assert "./agentive-config" not in old.stdout, "S3 regressed (relative garbage)"
+        assert str(parent / "agentive-config") in old.stdout, old.stdout
+        assert old.stdout == modern.stdout, "verdict diverged between git versions"
+
+    def test_worktree_check_is_clean_and_identical(self, tmp_path):
+        _, worktree = _worktree_pair(tmp_path)
+        bin_dir = _old_git_bin(tmp_path)
+        modern = run_worktree_check(worktree)
+        old = run_worktree_check(worktree, extra_env=_with_old_git(bin_dir))
+        assert "dirname:" not in old.stderr, f"S1 regressed: {old.stderr!r}"
+        assert old.stderr == "", f"stray stderr under old git: {old.stderr!r}"
+        # Under the bug both rev-parse answers were garbage, compared
+        # unequal, and the check wrongly believed it was in a worktree
+        # with a nonexistent primary.
+        assert "DOCTOR:worktree-audit:SKIP:" not in old.stdout, old.stdout
+        assert old.stdout == modern.stdout, "verdict diverged between git versions"
+
+    def test_no_script_still_uses_the_unportable_flag(self):
+        """The whole class returns the moment one resolver reverts.
+
+        Scoped to ALL of scripts/, not just doctor.d: the bug's worst
+        two faces lived in scripts/local/ (the setup door's silent
+        preset miss and new-worktree.sh's hard death), so a guard that
+        only watched doctor.d would let the expensive half regress
+        silently (code-reviewer, this PR).
+        """
+        scripts_root = REPO_ROOT / "scripts"
+        offenders = []
+        for path in sorted(scripts_root.rglob("*")):
+            if not path.is_file() or "__pycache__" in path.parts:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                continue
+            for raw in text.splitlines():
+                # Comments explaining the bug are expected and wanted;
+                # only an executable use is a regression.
+                line = raw.strip()
+                if line.startswith("#") or "--path-format" not in line:
+                    continue
+                rel = path.relative_to(REPO_ROOT)
+                offenders.append(f"{rel}:{line}")
+        assert offenders == [], (
+            f"--path-format=absolute needs git >= 2.31 and is silently wrong on "
+            f"Apple git 2.30.1 (KIT-0080): {offenders}"
+        )
+
+    def test_non_repo_still_skips_under_old_git(self, tmp_path):
+        """The absolutize step must not turn 'not a repo' into a wrong
+        answer: an empty rev-parse result joined onto DOCTOR_ROOT would
+        make every check confidently name the root itself."""
+        bin_dir = _old_git_bin(tmp_path)
+        plain = tmp_path / "not-a-repo"
+        plain.mkdir()
+        old = subprocess.run(
+            [BASH, str(DOCTOR_D / "70-core-bare.sh")],
+            env={**os.environ, "DOCTOR_ROOT": str(plain), **_with_old_git(bin_dir)},
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert "DOCTOR:core-bare:SKIP:" in old.stdout, old.stdout
+
+
+class TestGitVersionFloorCheck:
+    """F4: the machine-readable half of the README's git floor."""
+
+    CHECK = "15-git-version.sh"
+
+    def _run(self, path_dir: Path | None = None):
+        env = {**os.environ}
+        if path_dir is not None:
+            env["PATH"] = str(path_dir)
+        return subprocess.run(
+            [BASH, str(DOCTOR_D / self.CHECK)],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+    def _fake_git(self, base: Path, version_line: str) -> Path:
+        bin_dir = base / "fake-git-bin"
+        bin_dir.mkdir()
+        _stub_executable(
+            bin_dir / "git", f'#!/bin/bash\nprintf "%s\\n" "{version_line}"\n'
+        )
+        for tool in ("bash", "printf"):
+            real = shutil.which(tool)
+            if real:
+                (bin_dir / tool).symlink_to(real)
+        return bin_dir
+
+    def test_real_git_passes(self):
+        result = self._run()
+        assert "DOCTOR:git-version:PASS:" in result.stdout, result.stdout
+
+    def test_below_floor_warns_and_names_the_remedy(self, tmp_path):
+        bin_dir = self._fake_git(tmp_path, "git version 2.29.2")
+        result = self._run(bin_dir)
+        assert "DOCTOR:git-version:WARN:" in result.stdout, result.stdout
+        assert "2.29.2" in result.stdout
+        # The remedy must name the thing that works AND rule out the
+        # intuitive non-remedy (Apple's CLT ship 2.30.x by design).
+        assert "brew install git" in result.stdout
+        assert "xcode-select" in result.stdout
+
+    def test_apple_system_git_passes_now_that_resolvers_are_portable(self, tmp_path):
+        """KIT-0080 dropped the floor to 2.30 by making the resolvers
+        portable — 2.30.1 must NOT warn, or the check contradicts the
+        fix and cries wolf on every stock Mac."""
+        bin_dir = self._fake_git(tmp_path, "git version 2.30.1 (Apple Git-130)")
+        result = self._run(bin_dir)
+        assert "DOCTOR:git-version:PASS:" in result.stdout, result.stdout
+
+    def test_floor_boundary_exactly_at_the_floor_passes(self, tmp_path):
+        bin_dir = self._fake_git(tmp_path, "git version 2.30.0")
+        result = self._run(bin_dir)
+        assert "DOCTOR:git-version:PASS:" in result.stdout, result.stdout
+
+    def test_major_version_above_floor_passes(self, tmp_path):
+        bin_dir = self._fake_git(tmp_path, "git version 3.0.0")
+        result = self._run(bin_dir)
+        assert "DOCTOR:git-version:PASS:" in result.stdout, result.stdout
+
+    @pytest.mark.parametrize(
+        "version_line",
+        [
+            "totally not a version string",
+            "git version banana.7.1",
+            "git version 2",
+            "",
+        ],
+    )
+    def test_unparseable_version_warns_rather_than_guessing(
+        self, tmp_path, version_line
+    ):
+        """A version we cannot read must never be silently treated as
+        modern (or ancient) — that is the masking class this task is
+        about."""
+        bin_dir = self._fake_git(tmp_path, version_line)
+        result = self._run(bin_dir)
+        assert "DOCTOR:git-version:WARN:" in result.stdout, result.stdout
+        assert "cannot parse" in result.stdout
+
+    def test_git_absent_fails(self, tmp_path):
+        bin_dir = tmp_path / "no-git-bin"
+        bin_dir.mkdir()
+        for tool in ("bash", "printf"):
+            real = shutil.which(tool)
+            if real:
+                (bin_dir / tool).symlink_to(real)
+        result = self._run(bin_dir)
+        assert "DOCTOR:git-version:FAIL:" in result.stdout, result.stdout
+
+    def test_floor_agrees_with_the_readme_requirements_row(self):
+        """The human-readable and machine-readable floors must never
+        drift apart (F4's explicit requirement)."""
+        check_text = (DOCTOR_D / self.CHECK).read_text(encoding="utf-8")
+        major = re.search(r"^FLOOR_MAJOR=(\d+)", check_text, re.MULTILINE)
+        minor = re.search(r"^FLOOR_MINOR=(\d+)", check_text, re.MULTILINE)
+        assert major and minor, "check no longer declares its floor"
+        floor = f"{major.group(1)}.{minor.group(1)}"
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        row = [
+            ln for ln in readme.splitlines() if ln.startswith("|") and "**git**" in ln
+        ]
+        assert row, "README has no git Requirements row"
+        assert (
+            floor in row[0]
+        ), f"README git row does not state the doctor floor {floor}: {row[0]}"

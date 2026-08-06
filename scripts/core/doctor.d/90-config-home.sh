@@ -48,7 +48,34 @@ resolve_home() {
         return 0
     fi
     local common
-    common="$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 1
+    # KIT-0080: --path-format=absolute needs git >= 2.31; Apple's system
+    # git (2.30.1) does not consume the flag, echoes it back as the first
+    # output line and exits 0 — the nested dirname then sees an arg
+    # starting with `--` (the stray `dirname: illegal option`) and the
+    # home resolved to the relative garbage ./agentive-config, silently
+    # hiding the operator preset. Plain --git-common-dir is portable; its
+    # output is relative to the -C directory, so absolutize there.
+    #
+    # Emptiness-checked BEFORE joining: on failure the substitution is
+    # empty, which would otherwise resolve to $ROOT — a confident wrong
+    # home instead of the rc 1 that drives the SKIP branch.
+    #
+    # A RELATIVE answer (both gits print a bare ".git" from a primary
+    # clone) is joined by string, not by `cd`+`pwd`: cd-ing resolves
+    # symlinked ancestors and would return the PHYSICAL path, changing
+    # the reported home on any symlinked checkout (/var -> /private/var
+    # on macOS). String-joining preserves the caller's logical path,
+    # matching what this check reported before KIT-0080.
+    local raw
+    raw="$(git -C "$ROOT" rev-parse --git-common-dir 2>/dev/null)" || return 1
+    [ -n "$raw" ] || return 1
+    case "$raw" in
+        /*) common="$raw" ;;
+        *)  common="$ROOT/$raw" ;;
+    esac
+    # Two levels: $common is <primary-clone>/.git, so one dirname gives
+    # the clone root and the second its PARENT, which is where the
+    # visible agentive-config sibling lives.
     printf '%s\n' "$(dirname "$(dirname "$common")")/agentive-config"
 }
 
