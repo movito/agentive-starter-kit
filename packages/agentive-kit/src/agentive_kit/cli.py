@@ -64,6 +64,8 @@ def main(argv: list[str] | None = None) -> None:
 
     command = args[0].lower()
 
+    # membership: command-alias vocabulary checks, not identifier
+    # equality (same for the shorthand dict-key test below)
     if command in ("help", "-h", "--help"):
         print(_USAGE)
         sys.exit(0)
@@ -72,15 +74,18 @@ def main(argv: list[str] | None = None) -> None:
         print(f"agentive-kit v{agentive_kit.__version__}")
         sys.exit(0)
 
+    # Exact argument counts: surplus arguments are rejected, not
+    # silently ignored — a mistyped automation call must fail loudly
+    # (CodeRabbit, PR #108).
     if command == "move":
-        if len(args) < 3:
+        if len(args) != 3:
             print("Usage: agentive move <task-id> <status>")
             print("       agentive move ASK-0001 done")
             valid = ", ".join(lifecycle.STATUS_FOLDER_MAP.keys())
             print(f"       Valid statuses: {valid}")
             sys.exit(1)
         result = lifecycle.move_task(args[1], args[2], _project_root())
-        sys.exit(0 if result else 1)
+        sys.exit(0 if result and not result.status_update_failed else 1)
 
     # Shorthands for common moves
     shorthand_targets = {
@@ -89,15 +94,18 @@ def main(argv: list[str] | None = None) -> None:
         "block": "blocked",
     }
     if command in shorthand_targets:
-        if len(args) < 2:
+        if len(args) != 2:
             print(f"Usage: agentive {command} <task-id>")
             sys.exit(1)
         result = lifecycle.move_task(
             args[1], shorthand_targets[command], _project_root()
         )
-        sys.exit(0 if result else 1)
+        sys.exit(0 if result and not result.status_update_failed else 1)
 
     if command == "validate":
+        if len(args) != 1:
+            print("Usage: agentive validate")
+            sys.exit(1)
         report = lifecycle.validate_all_tasks(_project_root())
         sys.exit(0 if report.ok else 1)
 

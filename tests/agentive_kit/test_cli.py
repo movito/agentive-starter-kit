@@ -75,6 +75,16 @@ class TestDispatch:
         assert run_cli(["start"]) == 1
         assert "Usage: agentive start" in capsys.readouterr().out
 
+    def test_surplus_arguments_rejected(self, capsys):
+        # CodeRabbit (PR #108): surplus args are a usage error, never
+        # silently ignored — a mistyped automation call must fail loud.
+        assert run_cli(["start", "KIT-1234", "extra"]) == 1
+        assert "Usage: agentive start" in capsys.readouterr().out
+        assert run_cli(["move", "KIT-1234", "done", "extra"]) == 1
+        assert "Usage: agentive move" in capsys.readouterr().out
+        assert run_cli(["validate", "extra"]) == 1
+        assert "Usage: agentive validate" in capsys.readouterr().out
+
 
 class TestRootDiscoveryWiring:
     def test_start_from_subdirectory_moves_task(self, tmp_path, monkeypatch, capsys):
@@ -117,3 +127,13 @@ class TestRootDiscoveryWiring:
         monkeypatch.chdir(root)
         assert run_cli(["start", "KIT-9999"]) == 1
         assert "Task not found" in capsys.readouterr().out
+
+    def test_partial_failure_exits_one(self, tmp_path, monkeypatch, capsys):
+        # Moved but Status field unset → nonzero exit (CodeRabbit,
+        # PR #108).
+        root = make_kit_tree(tmp_path)
+        task = root / ".kit" / "tasks" / "2-todo" / TASK_FILE
+        task.write_text("# no status header\n", encoding="utf-8")
+        monkeypatch.chdir(root)
+        assert run_cli(["start", "KIT-1234"]) == 1
+        assert "Status field not updated" in capsys.readouterr().out

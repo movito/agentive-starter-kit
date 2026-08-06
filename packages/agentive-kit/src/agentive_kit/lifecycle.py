@@ -83,15 +83,23 @@ def find_task_file(task_id: str, project_dir: Path) -> Path | None:
     return None
 
 
-def update_status_in_file(file_path: Path, new_status: str) -> bool:
-    """Update the Status field in a task file."""
+def update_status_in_file(file_path: Path, new_status: str) -> bool | None:
+    """Update the Status field in a task file.
+
+    Tri-state result (CodeRabbit, PR #108 — a failed update must be
+    distinguishable from a no-op): ``True`` = field rewritten,
+    ``False`` = field present and already correct, ``None`` = the
+    field could not be set (absent, unreadable, or unwritable).
+    """
     try:
         content = file_path.read_text(encoding="utf-8")
+        pattern = re.compile(r"(\*\*Status\*\*:\s*)(\w+(?:\s+\w+)?)")
+        if not pattern.search(content):
+            return None
         # Replacement via lambda, not a template string: a status value
         # containing backslashes or group refs must never be
         # re-interpreted by re.sub (claude-code review, PR 1 trio).
-        new_content = re.sub(
-            r"(\*\*Status\*\*:\s*)(\w+(?:\s+\w+)?)",
+        new_content = pattern.sub(
             lambda m: m.group(1) + new_status,
             content,
             count=1,
@@ -102,7 +110,7 @@ def update_status_in_file(file_path: Path, new_status: str) -> bool:
         return False
     except (OSError, UnicodeDecodeError) as e:
         print(f"❌ Error updating file: {e}")
-        return False
+        return None
 
 
 def sync_coordination_metadata(
@@ -179,6 +187,7 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> TaskMove |
     # Normalize target status
     target_lower = target_status.lower().replace("_", "-").replace(" ", "-")
 
+    # membership: dict-key vocabulary check, not identifier equality
     if target_lower not in STATUS_FOLDER_MAP:
         print(f"❌ Unknown status: {target_status}")
         print(f"   Valid statuses: {', '.join(STATUS_FOLDER_MAP.keys())}")
@@ -198,6 +207,8 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> TaskMove |
         print(f"ℹ️  Task already in {target_folder}")
         # Still update status field if needed
         field_updated = update_status_in_file(task_file, linear_status)
+        if field_updated is None:
+            print(f"⚠️  Status field not updated in {task_file.name}")
         # Re-running a move doubles as a repair action for metadata that
         # drifted out of sync with the task's folder.
         sync_coordination_metadata(task_id, task_file.name, target_folder, project_dir)
@@ -208,7 +219,8 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> TaskMove |
             to_folder=target_folder,
             status=linear_status,
             moved=False,
-            status_field_updated=field_updated,
+            status_field_updated=bool(field_updated),
+            status_update_failed=field_updated is None,
         )
 
     target_dir = project_dir / ".kit" / "tasks" / target_folder
@@ -228,6 +240,11 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> TaskMove |
     field_updated = update_status_in_file(target_path, linear_status)
     if field_updated:
         print(f"✏️  Updated: **Status**: {linear_status}")
+    elif field_updated is None:
+        # The file moved but its Status field could not be set — a
+        # partial failure, surfaced here and in the returned model so
+        # the CLI exits nonzero (CodeRabbit, PR #108).
+        print(f"⚠️  Status field not updated in {target_path.name}")
 
     sync_coordination_metadata(task_id, target_path.name, target_folder, project_dir)
 
@@ -239,7 +256,8 @@ def move_task(task_id: str, target_status: str, project_dir: Path) -> TaskMove |
         to_folder=target_folder,
         status=linear_status,
         moved=True,
-        status_field_updated=field_updated,
+        status_field_updated=bool(field_updated),
+        status_update_failed=field_updated is None,
     )
 
 
@@ -257,11 +275,13 @@ def validate_all_tasks(project_dir: Path) -> ValidationReport:
     # validate — report zero checked rather than crash.
     if not tasks_dir.is_dir():
         print("✅ All 0 tasks have matching Status and folder")
-        return ValidationReport(checked=0, issues=[])
+        return ValidationReport(checked=0, issues=())
 
     for folder in tasks_dir.iterdir():
         if not folder.is_dir():
             continue
+        # membership: folder-name vocabulary checks against fixed
+        # sets, not identifier equality
         if folder.name in ["8-archive", "9-reference"]:
             continue
         if folder.name not in FOLDER_STATUS_MAP:
@@ -300,4 +320,4 @@ def validate_all_tasks(project_dir: Path) -> ValidationReport:
         print("\nTo fix, use: ./scripts/core/project move <task-id> <status>")
     else:
         print(f"✅ All {checked} tasks have matching Status and folder")
-    return ValidationReport(checked=checked, issues=issues)
+    return ValidationReport(checked=checked, issues=tuple(issues))

@@ -10,7 +10,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentive-kit"
-version = "0.1.0"
+# Single-sourced from agentive_kit.__version__ (CodeRabbit, PR #108) —
+# two hardcoded copies would drift.
+dynamic = ["version"]
 description = "Project lifecycle CLI for agentive projects — task status flow, environment doctor, evaluator provisioning"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -34,3 +36,6 @@ agentive = "agentive_kit.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "agentive_kit.__version__" }

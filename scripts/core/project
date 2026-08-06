@@ -2321,7 +2321,9 @@ except Exception as e:
         sys.exit(0)
 
     elif command == "move":
-        # Move task to new status folder (delegates to agentive_kit)
+        # Move task to new status folder (delegates to agentive_kit).
+        # Exit is nonzero on a PARTIAL failure too (moved but Status
+        # field not set) — TaskMove.status_update_failed carries it.
         if len(sys.argv) < 4:
             print("Usage: ./scripts/core/project move <task-id> <status>")
             print("       ./scripts/core/project move ASK-0001 done")
@@ -2333,7 +2335,7 @@ except Exception as e:
         task_id = sys.argv[2]
         target_status = sys.argv[3]
         success = _kit_lifecycle().move_task(task_id, target_status, project_dir)
-        sys.exit(0 if success else 1)
+        sys.exit(0 if (success and not success.status_update_failed) else 1)
 
     elif command == "complete":
         # Shorthand for moving to done
@@ -2342,7 +2344,7 @@ except Exception as e:
             sys.exit(1)
         task_id = sys.argv[2]
         success = _kit_lifecycle().move_task(task_id, "done", project_dir)
-        sys.exit(0 if success else 1)
+        sys.exit(0 if (success and not success.status_update_failed) else 1)
 
     elif command == "start":
         # Shorthand for moving to in-progress
@@ -2351,7 +2353,7 @@ except Exception as e:
             sys.exit(1)
         task_id = sys.argv[2]
         success = _kit_lifecycle().move_task(task_id, "in-progress", project_dir)
-        sys.exit(0 if success else 1)
+        sys.exit(0 if (success and not success.status_update_failed) else 1)
 
     elif command == "block":
         # Shorthand for moving to blocked
@@ -2360,7 +2362,7 @@ except Exception as e:
             sys.exit(1)
         task_id = sys.argv[2]
         success = _kit_lifecycle().move_task(task_id, "blocked", project_dir)
-        sys.exit(0 if success else 1)
+        sys.exit(0 if (success and not success.status_update_failed) else 1)
 
     elif command == "validate":
         # Validate all task statuses match folders

@@ -24,6 +24,12 @@ class TaskMove:
     status: str  # Linear-native status label, e.g. "In Progress"
     moved: bool  # False when the task was already in the target folder
     status_field_updated: bool
+    # True when the Status field could NOT be set (absent, unreadable,
+    # unwritable) even though the file move itself succeeded — a
+    # partial failure the CLI reports with a nonzero exit (CodeRabbit,
+    # PR #108). Distinct from status_field_updated=False, which also
+    # covers "already correct, nothing to do".
+    status_update_failed: bool = False
 
 
 @dataclass(frozen=True)
@@ -39,7 +45,10 @@ class ValidationReport:
     """Outcome of a full task-status validation (lifecycle → CLI)."""
 
     checked: int
-    issues: list[StatusIssue] = field(default_factory=list)
+    # A tuple, so frozen=True actually means immutable — a list field
+    # would let callers mutate .issues and flip .ok (CodeRabbit,
+    # PR #108).
+    issues: tuple[StatusIssue, ...] = field(default_factory=tuple)
 
     @property
     def ok(self) -> bool:

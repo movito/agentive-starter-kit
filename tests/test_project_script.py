@@ -972,12 +972,13 @@ class TestLifecycleDelegation:
     def kit_tree_with_package(self, tmp_path):
         """A project tree carrying the script AND the package source —
         the dogfood path (_kit_lifecycle's in-repo fallback)."""
+        pkg_src = Path(__file__).parent.parent / "packages" / "agentive-kit" / "src"
+        if not pkg_src.is_dir():
+            # Skip decided BEFORE any tree building (CodeRabbit, PR #108)
+            pytest.skip("agentive-kit package source present only in the kit repo")
         core = tmp_path / "scripts" / "core"
         core.mkdir(parents=True)
         shutil.copy(_script_path, core / "project")
-        pkg_src = Path(__file__).parent.parent / "packages" / "agentive-kit" / "src"
-        if not pkg_src.is_dir():
-            pytest.skip("agentive-kit package source present only in the kit repo")
         shutil.copytree(pkg_src, tmp_path / "packages" / "agentive-kit" / "src")
         tasks = tmp_path / ".kit" / "tasks"
         for folder in ("2-todo", "3-in-progress"):
@@ -1004,6 +1005,19 @@ class TestLifecycleDelegation:
         # A consumer that synced the delegating script before phase 3
         # (no installed CLI, no packages/ tree) must get the exact
         # install instruction, never a traceback.
+        #
+        # Guard (CodeRabbit, PR #108): once agentive-kit is pip-
+        # installed into this interpreter (the PR-4 dogfood switch),
+        # the script's FIRST import branch succeeds and this test's
+        # premise is gone — probe the subprocess view and skip then.
+        probe = subprocess.run(
+            [sys.executable, "-c", "import agentive_kit"],
+            capture_output=True,
+            timeout=60,
+            cwd=tmp_path,
+        )
+        if probe.returncode == 0:
+            pytest.skip("agentive-kit is installed in this interpreter")
         core = tmp_path / "scripts" / "core"
         core.mkdir(parents=True)
         shutil.copy(_script_path, core / "project")
@@ -1013,9 +1027,6 @@ class TestLifecycleDelegation:
             capture_output=True,
             text=True,
             timeout=60,
-            # Hide the real repo's installed/importable copy if any:
-            # an empty PYTHONPATH plus tmp cwd leaves only the script's
-            # own fallback chain.
             cwd=tmp_path,
         )
         assert result.returncode == 1

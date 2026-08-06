@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`agentive-kit` package skeleton — KIT-ADR-0028 phase 1, PR 1**
   (KIT-0090): `packages/agentive-kit/` with `src/agentive_kit/`
   modules `gitio` (single home for git invocations; KIT-0080's
-  portable resolvers with failure-path tests), `lifecycle`
-  (start/move/complete/validate + coordination-metadata sync), `root`
+  portable resolvers with failure-path tests), `lifecycle` (task
+  moves + validation + coordination-metadata sync; `start`/`complete`/
+  `block` are CLI shorthands over it), `root`
   (CWD-walk project discovery: nearest ancestor with `.kit/` +
   `CLAUDE.md`, loud refusal outside a kit repo), typed boundary models,
   and an `agentive` console entry (name verified collision-free on

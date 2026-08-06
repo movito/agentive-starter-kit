@@ -241,6 +241,56 @@ class TestMoveTask:
         moved = tmp_path / ".kit" / "tasks" / "5-done" / TASK_FILE
         assert "**Status**: Done" in moved.read_text(encoding="utf-8")
 
+    def test_missing_status_field_is_partial_failure(self, tmp_path, capsys):
+        # CodeRabbit (PR #108): a move whose Status field cannot be set
+        # must be visible as a partial failure, not a clean success.
+        make_project(tmp_path)
+        task = tmp_path / ".kit" / "tasks" / "2-todo" / TASK_FILE
+        task.write_text("# Task with no status header\n", encoding="utf-8")
+
+        result = lifecycle.move_task("KIT-1234", "in-progress", tmp_path)
+
+        assert result  # the file did move
+        assert result.status_update_failed is True
+        assert result.status_field_updated is False
+        assert "Status field not updated" in capsys.readouterr().out
+
+    def test_unwritable_status_is_partial_failure(self, tmp_path, monkeypatch):
+        import pathlib
+
+        make_project(tmp_path)
+        real_write = pathlib.Path.write_text
+
+        def failing_write(self, *args, **kwargs):
+            if self.name == TASK_FILE:
+                raise OSError(30, "Read-only file system", str(self))
+            return real_write(self, *args, **kwargs)
+
+        monkeypatch.setattr(pathlib.Path, "write_text", failing_write)
+        result = lifecycle.move_task("KIT-1234", "in-progress", tmp_path)
+        assert result
+        assert result.status_update_failed is True
+
+
+class TestUpdateStatusTriState:
+    def test_updated_returns_true(self, tmp_path):
+        f = tmp_path / "t.md"
+        f.write_text("**Status**: Todo\n", encoding="utf-8")
+        assert lifecycle.update_status_in_file(f, "Done") is True
+
+    def test_already_correct_returns_false(self, tmp_path):
+        f = tmp_path / "t.md"
+        f.write_text("**Status**: Done\n", encoding="utf-8")
+        assert lifecycle.update_status_in_file(f, "Done") is False
+
+    def test_absent_field_returns_none(self, tmp_path):
+        f = tmp_path / "t.md"
+        f.write_text("# no header\n", encoding="utf-8")
+        assert lifecycle.update_status_in_file(f, "Done") is None
+
+    def test_missing_file_returns_none(self, tmp_path):
+        assert lifecycle.update_status_in_file(tmp_path / "gone.md", "Done") is None
+
 
 class TestTaskIdBoundaryMatch:
     """Evaluator finding, PR 1 trio (deliberate fix over the legacy

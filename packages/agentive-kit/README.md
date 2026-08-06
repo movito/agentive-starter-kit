@@ -1,8 +1,9 @@
 # agentive-kit
 
-Project lifecycle CLI for [agentive projects](https://github.com/movito/agentive-starter-kit):
-task status flow (`start`/`move`/`complete`), environment doctor,
-evaluator provisioning, preflight and review helpers.
+Project lifecycle CLI for [agentive projects](https://github.com/movito/agentive-starter-kit).
+Ships today: task status flow (`start`/`move`/`complete`/`block`/
+`validate`). Migrating in over the phase-1 PR series: environment
+doctor, evaluator provisioning, preflight and review helpers.
 
 **Pre-consumer-migration release.** This package is KIT-ADR-0028
 phase 1: it replaces the copy-distributed `scripts/core/` layer of the
