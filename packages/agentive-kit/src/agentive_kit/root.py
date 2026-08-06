@@ -62,6 +62,21 @@ def find_project_root(start: Path | None = None) -> Path:
         start = Path.cwd()
     current = Path(os.path.abspath(start))
     for candidate in (current, *current.parents):
-        if (candidate / ".kit").is_dir() and (candidate / "CLAUDE.md").is_file():
+        if _is_project_root(candidate):
             return candidate
     raise RootNotFoundError(current)
+
+
+def _is_project_root(candidate: Path) -> bool:
+    """True when ``candidate`` carries both root markers.
+
+    An ancestor the process cannot stat (locked-down container, odd
+    NFS mount) reads as "not a root" and the walk continues — pathlib
+    propagates ``PermissionError`` from ``is_dir``/``is_file`` on
+    Python < 3.13, and a traceback is never the right refusal
+    (evaluator finding, PR 1 trio).
+    """
+    try:
+        return (candidate / ".kit").is_dir() and (candidate / "CLAUDE.md").is_file()
+    except OSError:
+        return False

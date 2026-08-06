@@ -103,12 +103,24 @@ class TestRunGit:
         monkeypatch.setenv("GIT_DIR", str(repo_a / ".git"))
         assert gitio.current_branch(repo_b) == "other"
 
-    def test_clean_git_env_strips_all_git_vars(self, monkeypatch):
+    def test_clean_git_env_strips_location_vars(self, monkeypatch):
         monkeypatch.setenv("GIT_DIR", "/somewhere/.git")
         monkeypatch.setenv("GIT_WORK_TREE", "/somewhere")
         monkeypatch.setenv("GIT_INDEX_FILE", "/somewhere/index")
         env = gitio.clean_git_env()
-        assert not any(k.startswith("GIT_") for k in env)
+        assert "GIT_DIR" not in env
+        assert "GIT_WORK_TREE" not in env
+        assert "GIT_INDEX_FILE" not in env
+
+    def test_clean_git_env_preserves_behavior_vars(self, monkeypatch):
+        # Only location overrides are the KIT-0043 class; a custom
+        # install's SSH/exec-path settings must survive (evaluator
+        # finding, PR 1 trio).
+        monkeypatch.setenv("GIT_SSH_COMMAND", "ssh -i /key")
+        monkeypatch.setenv("GIT_EXEC_PATH", "/opt/git/libexec")
+        env = gitio.clean_git_env()
+        assert env["GIT_SSH_COMMAND"] == "ssh -i /key"
+        assert env["GIT_EXEC_PATH"] == "/opt/git/libexec"
 
 
 class TestGitCommonDir:
@@ -166,7 +178,15 @@ class TestDeriveRepoUrl:
     def test_no_git_repo(self, tmp_path):
         assert gitio.derive_repo_url(tmp_path) is None
 
-    def test_unrecognized_url_format_returns_none(self, tmp_path):
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "git://github.com/owner/repo.git",
+            "ssh://git@github.com/owner/repo.git",
+            "/local/path/repo.git",
+        ],
+    )
+    def test_unrecognized_url_format_returns_none(self, tmp_path, url):
         repo = init_repo(tmp_path / "repo")
-        _git(repo, "remote", "add", "origin", "git://github.com/owner/repo.git")
+        _git(repo, "remote", "add", "origin", url)
         assert gitio.derive_repo_url(repo) is None

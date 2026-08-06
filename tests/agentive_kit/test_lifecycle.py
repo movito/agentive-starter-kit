@@ -264,6 +264,20 @@ class TestTaskIdBoundaryMatch:
         found = lifecycle.find_task_file("kit-1234", tmp_path)
         assert found is not None
 
+    def test_lowercase_suffix_does_not_match(self, tmp_path):
+        # Matching runs on the uppercased name, so a lowercase run-on
+        # suffix is a boundary violation like any other.
+        make_project(tmp_path)
+        runon = tmp_path / ".kit" / "tasks" / "2-todo" / "KIT-9876foo.md"
+        runon.write_text("**Status**: Todo\n", encoding="utf-8")
+        assert lifecycle.find_task_file("KIT-9876", tmp_path) is None
+
+    def test_underscore_suffix_does_not_match(self, tmp_path):
+        make_project(tmp_path)
+        runon = tmp_path / ".kit" / "tasks" / "2-todo" / "KIT-9876_x.md"
+        runon.write_text("**Status**: Todo\n", encoding="utf-8")
+        assert lifecycle.find_task_file("KIT-9876", tmp_path) is None
+
     def test_bare_id_file_matches(self, tmp_path):
         make_project(tmp_path)
         bare = tmp_path / ".kit" / "tasks" / "2-todo" / "KIT-7777.md"

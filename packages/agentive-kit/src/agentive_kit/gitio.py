@@ -41,16 +41,33 @@ from pathlib import Path
 GIT_TIMEOUT = 10
 
 
+# Location-override variables that make git ignore ``-C`` (the
+# KIT-0043 incident class). Only THESE are stripped — behavior vars a
+# custom install may need (GIT_SSH_COMMAND, GIT_EXEC_PATH,
+# GIT_CEILING_DIRECTORIES, credential settings) pass through untouched
+# (evaluator finding, PR 1 trio; the list matches the legacy script's
+# _clean_git_env).
+_LOCATION_VARS = (
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_COMMON_DIR",
+)
+
+
 def clean_git_env() -> dict[str, str]:
     """Environment with inherited GIT_* location vars stripped.
 
     Makes ``git -C`` authoritative: an ambient ``GIT_DIR`` /
     ``GIT_WORK_TREE`` (exported e.g. by pre-commit while running hooks)
     would otherwise override ``-C`` and point git at the wrong
-    repository (KIT-0043). Strips the whole ``GIT_`` prefix rather than
-    an allowlist — the same suite-wide rule tests/conftest.py applies.
+    repository (KIT-0043).
     """
-    return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env = os.environ.copy()
+    for var in _LOCATION_VARS:
+        env.pop(var, None)
+    return env
 
 
 def run_git(

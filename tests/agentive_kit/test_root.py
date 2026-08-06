@@ -128,6 +128,26 @@ class TestRefusal:
         with pytest.raises(RootNotFoundError):
             find_project_root(tmp_path)
 
+    def test_permission_error_reads_as_not_a_root(self, tmp_path, monkeypatch):
+        # pathlib propagates PermissionError from is_dir/is_file on
+        # Python < 3.13 — an unstattable ancestor must not turn the
+        # friendly refusal into a traceback, nor stop the walk before
+        # a real root above it.
+        import pathlib
+
+        root = make_kit_root(tmp_path)
+        blocked = root / "locked"
+        blocked.mkdir()
+        real_is_dir = pathlib.Path.is_dir
+
+        def guarded_is_dir(self, **kwargs):
+            if self == blocked / ".kit":
+                raise PermissionError(13, "Permission denied", str(self))
+            return real_is_dir(self, **kwargs)
+
+        monkeypatch.setattr(pathlib.Path, "is_dir", guarded_is_dir)
+        assert find_project_root(blocked) == root
+
     def test_partial_markers_do_not_stop_the_walk(self, tmp_path):
         # A child with only one marker must not shadow a real root above.
         root = make_kit_root(tmp_path)
