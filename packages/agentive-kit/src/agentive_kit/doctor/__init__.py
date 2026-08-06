@@ -43,7 +43,18 @@ def default_checks_dir(project_dir: Path) -> Path:
     local = project_dir / "scripts" / "core" / "doctor.d"
     if local.is_dir():
         return local
-    return Path(__file__).resolve().parent / "checks"
+    return PACKAGED_CHECKS_DIR
+
+
+# Single definition so the driver can recognize the packaged set.
+PACKAGED_CHECKS_DIR = Path(__file__).resolve().parent / "checks"
+
+# Interpreter fallback for packaged checks only: pip/sdist installs may
+# drop the execute bit (deep evaluator, PR 2 — a wheel usually keeps
+# it, an sdist build usually does not), and packaged checks must not
+# FAIL for a packaging artifact. Repo-local doctor.d and --dir= keep
+# the strict executability contract the tests pin.
+_CHECK_INTERPRETERS = {".py": [sys.executable], ".sh": ["bash"]}
 
 
 def _normalize_bots(raw):
@@ -575,13 +586,21 @@ def cmd_doctor(args, project_dir):
             )
             verdicts.append("SKIP")
             continue
+        argv = [str(check)]
         if not os.access(check, os.X_OK):
-            print(f"DOCTOR:{name}:FAIL:check file is not executable")
-            verdicts.append("FAIL")
-            continue
+            interp = (
+                _CHECK_INTERPRETERS.get(check.suffix)
+                if doctor_dir == PACKAGED_CHECKS_DIR
+                else None
+            )
+            if interp is None:
+                print(f"DOCTOR:{name}:FAIL:check file is not executable")
+                verdicts.append("FAIL")
+                continue
+            argv = [*interp, str(check)]
         try:
             result = subprocess.run(
-                [str(check)],
+                argv,
                 cwd=project_dir,
                 env=env,
                 capture_output=True,

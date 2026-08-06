@@ -54,3 +54,36 @@ class TestDefaultChecksDir:
             if check.name.startswith("."):
                 continue
             assert (pkg_dir / check.name).read_bytes() == check.read_bytes(), check.name
+
+
+class TestPackagedChecksExecBitFallback:
+    def test_non_executable_packaged_check_runs_via_interpreter(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        # pip/sdist installs may drop the exec bit (deep evaluator,
+        # PR 2): a packaged check must run via its interpreter, not
+        # FAIL for a packaging artifact.
+        checks = tmp_path / "checks"
+        checks.mkdir()
+        stub = checks / "10-stub.py"
+        stub.write_text(
+            "print('DOCTOR:10-stub.py:PASS:ran without exec bit')\n",
+            encoding="utf-8",
+        )  # deliberately NOT chmod +x
+        monkeypatch.setattr(doctor, "PACKAGED_CHECKS_DIR", checks)
+        (tmp_path / "root").mkdir()
+        code = doctor.cmd_doctor([], tmp_path / "root")
+        out = capsys.readouterr().out
+        assert "DOCTOR:10-stub.py:PASS:ran without exec bit" in out
+        assert code == 0
+
+    def test_repo_local_checks_keep_strict_exec_contract(self, tmp_path, capsys):
+        # The strict FAIL for non-executable files is unchanged outside
+        # the packaged dir (behavior pinned by tests/test_doctor.py).
+        local = tmp_path / "root" / "scripts" / "core" / "doctor.d"
+        local.mkdir(parents=True)
+        (local / "10-inert.py").write_text("print('nope')\n", encoding="utf-8")
+        code = doctor.cmd_doctor([], tmp_path / "root")
+        out = capsys.readouterr().out
+        assert "DOCTOR:10-inert.py:FAIL:check file is not executable" in out
+        assert code == 1
