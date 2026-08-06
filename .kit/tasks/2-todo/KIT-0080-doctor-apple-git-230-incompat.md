@@ -98,6 +98,13 @@ git.
 - **F4** (nice-to-have): consider a doctor.d check or CI matrix entry
   that exercises the oldest supported git, so this class regresses
   loudly rather than silently on contributors' machines.
+  **Added 2026-08-05**: the README now states the git ≥ 2.31 floor
+  (Requirements section, commit 1e9fc51). Whichever way F1 goes, add
+  the machine-readable half: a doctor.d line that WARNs when
+  `git --version` < the supported floor — if F1 makes the scripts
+  fully portable to 2.30.1, the floor drops and the check documents
+  the new one; if not, it enforces 2.31. Keep the check itself
+  portable (no Homebrew-only tools — README portability rule).
 
 ## Evidence
 
