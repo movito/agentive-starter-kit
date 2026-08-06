@@ -955,6 +955,74 @@ class TestVerifyIdentityLeaks:
 # the agentive-kit package, including the KIT-0086 single-writer guard.
 
 
+class TestLifecycleDelegation:
+    """KIT-0090 PR 1: the script's lifecycle commands delegate to the
+    agentive-kit package — the dispatch itself needs subprocess-level
+    coverage (evaluator finding, PR 1 trio)."""
+
+    def _run(self, tree, *args):
+        return subprocess.run(
+            [sys.executable, str(tree / "scripts" / "core" / "project"), *args],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+    @pytest.fixture
+    def kit_tree_with_package(self, tmp_path):
+        """A project tree carrying the script AND the package source —
+        the dogfood path (_kit_lifecycle's in-repo fallback)."""
+        core = tmp_path / "scripts" / "core"
+        core.mkdir(parents=True)
+        shutil.copy(_script_path, core / "project")
+        pkg_src = Path(__file__).parent.parent / "packages" / "agentive-kit" / "src"
+        if not pkg_src.is_dir():
+            pytest.skip("agentive-kit package source present only in the kit repo")
+        shutil.copytree(pkg_src, tmp_path / "packages" / "agentive-kit" / "src")
+        tasks = tmp_path / ".kit" / "tasks"
+        for folder in ("2-todo", "3-in-progress"):
+            (tasks / folder).mkdir(parents=True)
+        (tasks / "2-todo" / "KIT-1234-sample.md").write_text(
+            "**Status**: Todo\n", encoding="utf-8"
+        )
+        return tmp_path
+
+    def test_start_delegates_and_moves(self, kit_tree_with_package):
+        tree = kit_tree_with_package
+        result = self._run(tree, "start", "KIT-1234")
+        assert result.returncode == 0, result.stdout + result.stderr
+        moved = tree / ".kit" / "tasks" / "3-in-progress" / "KIT-1234-sample.md"
+        assert moved.exists()
+        assert "In Progress" in result.stdout
+
+    def test_validate_delegates(self, kit_tree_with_package):
+        result = self._run(kit_tree_with_package, "validate")
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "matching Status and folder" in result.stdout
+
+    def test_missing_package_fails_loud_with_install_command(self, tmp_path):
+        # A consumer that synced the delegating script before phase 3
+        # (no installed CLI, no packages/ tree) must get the exact
+        # install instruction, never a traceback.
+        core = tmp_path / "scripts" / "core"
+        core.mkdir(parents=True)
+        shutil.copy(_script_path, core / "project")
+        (tmp_path / ".kit" / "tasks" / "2-todo").mkdir(parents=True)
+        result = subprocess.run(
+            [sys.executable, str(core / "project"), "validate"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            # Hide the real repo's installed/importable copy if any:
+            # an empty PYTHONPATH plus tmp cwd leaves only the script's
+            # own fallback chain.
+            cwd=tmp_path,
+        )
+        assert result.returncode == 1
+        assert "uv tool install agentive-kit" in result.stdout
+        assert "Traceback" not in result.stderr
+
+
 class TestFixtureHonesty:
     """The A02 guard (KIT-0068): every path a fixture models must exist
     in the real repo tree. A fixture built on the pre-v0.4.0 layout
