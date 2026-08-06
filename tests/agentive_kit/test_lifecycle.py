@@ -380,6 +380,26 @@ class TestMissingTasksDir:
         assert report.checked == 0
         assert "All 0 tasks" in capsys.readouterr().out
 
+    def test_validate_unreadable_tasks_dir_is_a_finding(self, tmp_path, monkeypatch):
+        # is_dir() succeeding does not guarantee iterdir() can —
+        # CodeRabbit (PR #108 round 3): an unreadable directory is a
+        # finding, not a crash.
+        import pathlib
+
+        make_project(tmp_path)
+        tasks_dir = tmp_path / ".kit" / "tasks"
+        real_iterdir = pathlib.Path.iterdir
+
+        def failing_iterdir(self):
+            if self == tasks_dir:
+                raise PermissionError(13, "Permission denied", str(self))
+            return real_iterdir(self)
+
+        monkeypatch.setattr(pathlib.Path, "iterdir", failing_iterdir)
+        report = lifecycle.validate_all_tasks(tmp_path)
+        assert not report.ok
+        assert "Unreadable tasks directory" in report.issues[0].detail
+
 
 class TestValidateAllTasks:
     def test_all_matching_reports_ok(self, tmp_path, capsys):

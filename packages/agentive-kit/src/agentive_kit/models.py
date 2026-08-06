@@ -25,10 +25,11 @@ class TaskMove:
     moved: bool  # False when the task was already in the target folder
     status_field_updated: bool
     # True when the Status field could NOT be set (absent, unreadable,
-    # unwritable) even though the file move itself succeeded — a
-    # partial failure the CLI reports with a nonzero exit (CodeRabbit,
-    # PR #108). Distinct from status_field_updated=False, which also
-    # covers "already correct, nothing to do".
+    # unwritable), regardless of whether a move occurred — the
+    # already-in-place repair path sets it too. A partial failure the
+    # CLI reports with a nonzero exit (CodeRabbit, PR #108). Distinct
+    # from status_field_updated=False, which also covers "already
+    # correct, nothing to do".
     status_update_failed: bool = False
 
 

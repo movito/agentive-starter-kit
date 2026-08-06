@@ -285,7 +285,17 @@ def validate_all_tasks(project_dir: Path) -> ValidationReport:
         print("✅ All 0 tasks have matching Status and folder")
         return ValidationReport(checked=0, issues=())
 
-    for folder in tasks_dir.iterdir():
+    try:
+        folders = sorted(tasks_dir.iterdir())
+    except OSError as e:
+        # is_dir() succeeding does not guarantee iterdir() can — an
+        # unreadable directory is a finding, not a crash (CodeRabbit,
+        # PR #108 round 3).
+        issue = StatusIssue(str(tasks_dir), f"Unreadable tasks directory ({e})")
+        print(f"❌ Found 1 status mismatches:\n\n  • {issue.file_name}: {issue.detail}")
+        return ValidationReport(checked=0, issues=(issue,))
+
+    for folder in folders:
         if not folder.is_dir():
             continue
         # membership: folder-name vocabulary checks against fixed
