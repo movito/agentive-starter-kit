@@ -1,6 +1,6 @@
 # KIT-0083: Ship the adversarial CLI, not just its config — install step + doctor PATH check
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: high (the planner's Phase 3 evaluation GATE fails out of the box in every fresh consumer project)
 **Type**: Infrastructure
 **Estimated Effort**: 3-4 h

@@ -5,7 +5,7 @@
 **Date**: 2026-08-04
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/3-in-progress/KIT-0083-ship-adversarial-cli.md`
+**Task**: `.kit/tasks/5-done/KIT-0083-ship-adversarial-cli.md`
 **Status**: READY NOW — KIT-0084 merged (`27813cf`, PR #105). Unblocked.
 **Evaluation**: arch-review-fast APPROVED after 2 revision rounds —
 `.adversarial/logs/KIT-0083-ship-adversarial-cli--arch-review-fast.md`
@@ -108,7 +108,7 @@ explicit (round-2 API finding); shared uv-fallback helper, no framework
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0083-ship-adversarial-cli.md`
+**Task File**: `.kit/tasks/5-done/KIT-0083-ship-adversarial-cli.md`
 **Evaluation Log**: `.adversarial/logs/KIT-0083-ship-adversarial-cli--arch-review-fast.md`
 **Source Issue**: movito/agentive-starter-kit#103 — comment there when the PR opens
 
