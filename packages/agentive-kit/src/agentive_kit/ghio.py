@@ -65,6 +65,10 @@ def run_gh(
 
     Returns the ``CompletedProcess``, or ``None`` when gh could not be
     executed at all (binary absent, OS error, timeout).
+
+    With ``capture=False`` the returned process carries ``stdout=None``
+    — callers that read output (e.g. preflight's ``_gh_text``) must
+    keep the default ``capture=True``.
     """
     cmd = ["gh"]
     if repo:

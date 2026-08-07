@@ -39,7 +39,17 @@
 
 ### Round 2 — code-reviewer re-run after fixes (deep rounds capped at 2)
 
-See "Round 2 verdict" appended below.
+**Verdict**: FAIL (o3). Dispositioned below; per the Oscillation
+protocol this is the final deep round — remaining verdict-weight rests
+on the dispositions, the parity matrix, and CI/bots.
+
+| # | Finding | Disposition |
+|---|---------|-------------|
+| R2-1 | CRLF line endings break `## Target Repository` header matching | **FIXED — real parity bug**: bash `awk /...[[:space:]]*$/` swallowed a CR; the port's `[ \t]*$` did not. `\r?` added; CRLF + LF unit tests in tests/agentive_kit/test_preflight_pkg.py. Writing those tests ALSO exposed a second real port bug the matrix cannot see (cross-repo is not harness-modeled): the bullet-value regex let `[^`]*` cross newlines, capturing garbage between bullets — bullet parsing is now per-line, mirroring sed exactly. |
+| R2-2 | Negative `PREFLIGHT_CI_POLL_DELAY` reaches `time.sleep` → ValueError | **FIXED**: clamp extracted into `_poll_delay()` (non-numeric → default, negative → 0), unit-tested on all four edges. |
+| R2-3 | `target.path` path traversal | **DECLINED — repeat** of round-1 finding #5 (same disposition: bash parity, CLAUDE.md is the trusted agent-instruction file). |
+| R2-4 | `run_gh(capture=False)` stdout is None | **DECLINED — morph** of the round-1 refuted ValueError claim; no caller passes capture=False. run_gh docstring now states the constraint. |
+| R2-5 | No test for duplicate bot tokens | **FIXED (test only)**: matrix scenario pins duplicate-token semantics (no NOTICE, declared set unchanged) against reader drift. |
 
 **Full logs**: `.adversarial/logs/KIT-0091-code-review-input--code-reviewer-fast.md`,
 `--code-reviewer.md`, `--claude-code.md` (regenerated per run; round-1

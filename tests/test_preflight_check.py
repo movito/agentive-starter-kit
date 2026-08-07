@@ -1110,6 +1110,22 @@ class TestGate23BotsDeclaration:
         finally:
             self._remove_declaration(proj)
 
+    def test_duplicate_tokens_keep_declaration_semantics(self, proj):
+        # o3 (PR 1 round 2) test-gap: duplicates are odd but harmless —
+        # the declared SET is unchanged, so no NOTICE fires, coderabbit
+        # stays expected (FAILs without activity) and bugbot stays
+        # declared-absent (SKIP). Pinned against silent drift between
+        # the doctor and preflight readers.
+        self._install_declaration(proj, "coderabbit coderabbit")
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            assert "NOTICE" not in result.stdout
+            gates = _gates(result.stdout)
+            assert gates[2][0] == "FAIL", result.stdout
+            assert gates[3][0] == "SKIP", result.stdout
+        finally:
+            self._remove_declaration(proj)
+
     def test_none_combined_with_bot_is_invalid(self, proj):
         self._install_declaration(proj, "none coderabbit")
         try:

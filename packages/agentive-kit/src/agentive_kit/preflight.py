@@ -208,23 +208,31 @@ def _parse_target_repo(root: Path, override: str) -> _TargetRepo:
                 text = claude_md.read_text(encoding="utf-8")
             except OSError:
                 text = ""
+            # \r? before $: the bash awk header pattern ended in
+            # [[:space:]]* which swallowed a CR, so CRLF-checked-out
+            # CLAUDE.md files parsed there — they must parse here too
+            # (o3, PR 1 round 2).
             section_match = re.search(
-                r"^## Target Repository[ \t]*$(.*?)(?=^## |\Z)",
+                r"^## Target Repository[ \t]*\r?$(.*?)(?=^## |\Z)",
                 text,
                 re.MULTILINE | re.DOTALL,
             )
             if section_match:
-                section = section_match.group(1)
-                gh_match = re.search(
-                    r"^- \*\*GitHub\*\*:.*`([^`]*)`", section, re.MULTILINE
-                )
-                path_match = re.search(
-                    r"^- \*\*Path\*\*:.*`([^`]*)`", section, re.MULTILINE
-                )
-                if gh_match:
-                    target.repo = gh_match.group(1)
-                if path_match:
-                    target.path = path_match.group(1)
+                # Per-LINE matching, like the sed originals: a
+                # multiline regex here lets [^`]* cross the newline and
+                # capture garbage between two bullets (caught by
+                # test_preflight_pkg.py). Greedy .* before the backtick
+                # keeps sed's last-span-on-the-line pick; first
+                # matching line wins (head -1).
+                for line in section_match.group(1).splitlines():
+                    if not target.repo:
+                        gh_match = re.match(r"- \*\*GitHub\*\*:.*`([^`]*)`", line)
+                        if gh_match:
+                            target.repo = gh_match.group(1)
+                    if not target.path:
+                        path_match = re.match(r"- \*\*Path\*\*:.*`([^`]*)`", line)
+                        if path_match:
+                            target.path = path_match.group(1)
 
     # Layer 1 of two (both ported from bash): this is target_repo.sh's
     # looser shape check. The STRICT charset validation in main() —
@@ -330,6 +338,22 @@ def _bot_declared_absent(declared: str, bot: str) -> bool:
     return bot not in declared.split()
 
 
+def _poll_delay() -> float:
+    """CI re-poll delay in seconds, clamped to be sleep-safe.
+
+    ``PREFLIGHT_CI_POLL_DELAY`` is the test seam (the analogue of the
+    bash script's PATH-stubbable ``sleep`` binary). Gate code never
+    crashes on a bad value: non-numeric falls back to the default,
+    negative clamps to 0 (``time.sleep`` raises on negatives — o3,
+    PR 1 round 2).
+    """
+    try:
+        delay = float(os.environ.get("PREFLIGHT_CI_POLL_DELAY", CI_POLL_DELAY))
+    except ValueError:
+        delay = float(CI_POLL_DELAY)
+    return max(0.0, delay)
+
+
 def _gh_text(result: subprocess.CompletedProcess | None) -> str:
     """stdout of a successful gh call, else "" (the bash `|| true`)."""
     if result is None or result.returncode != 0:
@@ -345,10 +369,7 @@ def _gate_1_ci(latest_sha: str, repo_flag: str | None) -> GateResult:
     head SHA below (NOT in the gh --jq) so the truncation guard sees
     the RAW returned count (KIT-0043 F1).
     """
-    try:
-        poll_delay = float(os.environ.get("PREFLIGHT_CI_POLL_DELAY", CI_POLL_DELAY))
-    except ValueError:
-        poll_delay = CI_POLL_DELAY
+    poll_delay = _poll_delay()
 
     fetch_ok = False
     raw_count = 0
