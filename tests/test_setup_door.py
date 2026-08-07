@@ -1292,6 +1292,9 @@ class TestPresetNeverDistributed:
         "scripts/core/project",
         "scripts/core/doctor.d/90-config-home.sh",
         "scripts/core/preflight-check.sh",  # KIT-0091 shim → agentive_kit.preflight
+        "scripts/core/prepare-review-input.sh",  # KIT-0091 shim → review_input
+        "scripts/core/gh-review-helper.sh",  # KIT-0091 shim → review_input
+        "scripts/local/new-worktree.sh",  # KIT-0091 delegator → agentive_kit.worktree
     }
 
     def test_preset_path_referenced_only_by_allowed_readers(self):

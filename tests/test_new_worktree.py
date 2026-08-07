@@ -30,6 +30,23 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HELPER = REPO_ROOT / "scripts" / "local" / "new-worktree.sh"
 SERENA_TEMPLATE = REPO_ROOT / ".serena" / "project.yml.template"
+_PKG_SRC = REPO_ROOT / "packages" / "agentive-kit" / "src"
+
+
+def _env(extra: dict[str, str] | None = None) -> dict[str, str]:
+    """Subprocess env for helper runs. Since the KIT-0091 delegation
+    the helper imports agentive_kit — fixture primaries carry no
+    packages/ tree, so point PYTHONPATH at the in-repo source (prepend,
+    preserving anything inherited)."""
+    env = dict(os.environ)
+    if _PKG_SRC.is_dir():
+        inherited = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (
+            f"{_PKG_SRC}{os.pathsep}{inherited}" if inherited else str(_PKG_SRC)
+        )
+    env.update(extra or {})
+    return env
+
 
 if not HELPER.exists():
     pytest.skip(
@@ -116,6 +133,7 @@ def _run_helper(primary: Path, *args: str) -> subprocess.CompletedProcess:
         capture_output=True,
         text=True,
         timeout=60,
+        env=_env(),
     )
 
 
@@ -246,7 +264,7 @@ class TestOldGitResolution:
             capture_output=True,
             text=True,
             timeout=30,
-            env={**os.environ, "PATH": _old_git_path(tmp_path)},
+            env=_env({"PATH": _old_git_path(tmp_path)}),
         )
         assert result.stdout.splitlines()[0] == "--path-format=absolute"
         assert result.returncode == 0, "2.30.x exits 0 — that is what made it silent"
@@ -266,7 +284,7 @@ class TestOldGitResolution:
             capture_output=True,
             text=True,
             timeout=60,
-            env={**os.environ, "PATH": _old_git_path(tmp_path)},
+            env=_env({"PATH": _old_git_path(tmp_path)}),
         )
         assert result.returncode == 0, (
             f"S4 regressed — helper died on git 2.30.x\n"
@@ -297,7 +315,7 @@ class TestOldGitResolution:
             capture_output=True,
             text=True,
             timeout=60,
-            env={**os.environ, "PATH": _old_git_path(tmp_path)},
+            env=_env({"PATH": _old_git_path(tmp_path)}),
         )
         assert modern.returncode == 0, modern.stderr
         assert old.returncode == 0, old.stderr
