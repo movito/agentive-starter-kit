@@ -48,6 +48,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   review-input, worktree lib) are deliberately deferred to their own
   PR — raised as a sequencing decision, not silently merged.
 
+- **agentive-kit publish + dogfood** (KIT-0090 PR 4):
+  tag-triggered PyPI publish workflow (`agentive-kit-v*` → build from
+  `packages/agentive-kit/`, wheel smoke test, trusted publishing —
+  configure the PyPI trusted publisher before the first tag). README
+  Requirements gains the install/upgrade row. `project setup` now
+  dev-installs the in-repo package (kit checkout only; CI deliberately
+  keeps testing the package-less fallback path — recorded decision),
+  and the script's help carries the one-release-cycle shim deprecation
+  note (F5).
+
 ### Changed
 
 - **`agent-handoffs.json` becomes single-writer** (KIT-0086 F1, landed
