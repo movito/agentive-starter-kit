@@ -86,6 +86,17 @@ on the dispositions, the parity matrix, and CI/bots.
 
 ### PR 2 round 2 — deep re-run after fixes (cap reached)
 
-Appended below after the run.
+**Verdict**: FAIL (o3) — all five findings refuted or parity-declined;
+per the Oscillation protocol this closes the deep rounds, and the
+verdict-weight rests on the dispositions, the three parity matrices,
+and CI/bots.
+
+| # | Finding | Disposition |
+|---|---------|-------------|
+| R2-1 | Indented CLAUDE.md bullets not parsed ("legacy sed matched `[[:space:]]*-`") | **REFUTED — misquotes the source**: lib/target_repo.sh's sed patterns are column-0 anchored (`^- \*\*GitHub\*\*`), no whitespace tolerance; the port matches the real grammar exactly. |
+| R2-2 | Backtick in filename corrupts the `### Source:` header | **DECLINED — parity**: bash emitted the identical header (`echo "### Source: \`$file_path\`"`). |
+| R2-3 | `~` in target Path not expanded | **DECLINED — parity**: bash used quoted `"$TARGET_PATH"` — no tilde expansion there either; same failure mode. |
+| R2-4 | GraphQL braces unbalanced (repeat, new confabulated detail: "two repository opens") | **REFUTED — second empirical pass**: run_gh mocked at the boundary, actual sent queries captured — threads 8 opens/8 closes, summary 5/5, both exit 0. The repeat of a refuted finding with shifting details is the oscillation the protocol caps. |
+| R2-5 | Windows symlink privilege breaks provisioning | **DECLINED — parity + platform scope**: bash `ln -s` had the identical constraint; the kit targets macOS/Linux sessions (WORKTREE-WORKFLOW). |
 
 **Full logs**: `.adversarial/logs/KIT-0091-code-review-input--*` (regenerated per run; verdicts summarized above).
