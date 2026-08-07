@@ -29,7 +29,7 @@ Using agents to build software works better if you add a bit of structure — An
 | **Python** | ≥ 3.10 | For code-project shapes (CI tests 3.10/3.12/3.14); planning-shape repos need only system `python3` |
 | **Claude Code** | current | The kit is built around it |
 | **uv** | optional | Easiest install path for the `adversarial` evaluation CLI (`uv tool install adversarial-workflow`) |
-| **agentive-kit** | 0.1.x | The kit's lifecycle CLI as a PyPI package (KIT-ADR-0028 phase 1, pre-consumer-migration): `uv tool install agentive-kit`, upgrade with `uv tool upgrade agentive-kit`. Inside this repo the scripts use the in-tree `packages/agentive-kit/` source automatically; `./scripts/core/project` remains as a delegating shim for one release cycle |
+| **agentive-kit** | 0.1.x | The kit's lifecycle CLI as a PyPI package (KIT-ADR-0028 phase 1, pre-consumer-migration): `uv tool install agentive-kit` (or `pipx install agentive-kit` — any isolated-CLI installer works), upgrade with `uv tool upgrade agentive-kit`. Inside this repo the scripts use the in-tree `packages/agentive-kit/` source automatically; `./scripts/core/project` remains as a delegating shim for one release cycle |
 
 `./scripts/core/project doctor` inside any created project tells you what's missing.
 

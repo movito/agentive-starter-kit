@@ -11,11 +11,26 @@ on:
     tags:
       - "agentive-kit-v*"
 
+# One run per tag: a retried/moved tag must never race a publish for
+# the same version (PyPI accepts each version exactly once). No
+# cancellation of an in-flight publish — let it finish.
+concurrency:
+  group: publish-agentive-kit-${{ github.ref_name }}
+  cancel-in-progress: false
+
+# Least privilege: build needs repo read only; the publish job adds
+# id-token for trusted publishing.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # No later git operation in this job needs credentials.
+          persist-credentials: false
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
