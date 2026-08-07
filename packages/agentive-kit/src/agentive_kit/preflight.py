@@ -50,6 +50,7 @@ KIT-0091 PR body; everything else is matrix-pinned):
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import shutil
@@ -155,6 +156,8 @@ def _parse_args(argv: list[str]) -> _Args:
     while i < len(argv):
         arg = argv[i]
         nxt = argv[i + 1] if i + 1 < len(argv) else ""
+        # membership: flag-alias vocabulary check, not identifier
+        # equality (same for the flag names below)
         if arg in ("--help", "-h"):
             print(_HELP)
             sys.exit(0)
@@ -304,6 +307,8 @@ def _validate_bots(declared: str, present: bool) -> str:
     noticed = False
     if declared:
         tokens = [t for t in declared.split() if t]
+        # membership: declared bot-token vocabulary checks ('none' must
+        # be the sole token), not identifier equality
         valid = all(t in ("coderabbit", "bugbot", "none") for t in tokens)
         declared = " ".join(tokens)
         if valid and declared and "none" in tokens and declared != "none":
@@ -335,6 +340,8 @@ def _bot_declared_absent(declared: str, bot: str) -> bool:
         return False
     if declared == "none":
         return True
+    # membership: token presence in the declaration list, not
+    # identifier equality
     return bot not in declared.split()
 
 
@@ -350,6 +357,12 @@ def _poll_delay() -> float:
     try:
         delay = float(os.environ.get("PREFLIGHT_CI_POLL_DELAY", CI_POLL_DELAY))
     except ValueError:
+        delay = float(CI_POLL_DELAY)
+    # float() accepts "nan"/"inf" without ValueError: nan escapes the
+    # max() clamp into time.sleep (ValueError), inf hangs the run
+    # forever — both fall back like any other bad value (CodeRabbit,
+    # PR #112).
+    if not math.isfinite(delay):
         delay = float(CI_POLL_DELAY)
     return max(0.0, delay)
 
@@ -403,6 +416,8 @@ def _gate_1_ci(latest_sha: str, repo_flag: str | None) -> GateResult:
                     r
                     for r in parsed
                     if isinstance(r, dict)
+                    # membership: GitHub event vocabulary filter, not
+                    # identifier equality
                     and r.get("event") in ("push", "pull_request")
                     and r.get("headSha") == latest_sha
                 ]
@@ -442,6 +457,8 @@ def _gate_1_ci(latest_sha: str, repo_flag: str | None) -> GateResult:
         if status == "completed":
             if conclusion == "success":
                 details.append(f"{name}: pass")
+            # membership: the conclusion vocabulary GitHub treats as
+            # success for dependent checks
             elif conclusion in ("skipped", "neutral"):
                 # GitHub treats skipped/neutral as success for dependent
                 # checks — a path-filtered workflow is not a failure.
@@ -597,6 +614,8 @@ def _gate_2_coderabbit(
     fallback_ok = (
         cr_signal == "success"
         and unresolved == 0
+        # membership: accepted review-state vocabulary, not identifier
+        # equality
         and cr_latest_state in ("APPROVED", "COMMENTED")
     )
     if fallback_ok:
@@ -678,6 +697,8 @@ def _gate_3_bugbot(
     # first non-green state. Fail-closed is preserved — no non-green
     # combination can PASS.
     bb_states = [line for line in bb_check.splitlines() if line]
+    # membership: green check-run state vocabulary, not identifier
+    # equality (same for the first-non-green pick below)
     if bb_states and all(
         state in ("completed:success", "completed:neutral") for state in bb_states
     ):

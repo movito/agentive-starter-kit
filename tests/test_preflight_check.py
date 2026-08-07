@@ -207,7 +207,17 @@ class PreflightProject:
                 try:
                     preflight_mod.main(argv)
                 except SystemExit as exc:
-                    rc = int(exc.code) if isinstance(exc.code, int) else 1
+                    if exc.code is None:
+                        # bare sys.exit() means success (CodeRabbit,
+                        # PR #112) — this harness is the parity record
+                        # for exit codes, so the mapping must not
+                        # invert a verdict
+                        rc = 0
+                    elif isinstance(exc.code, int):
+                        rc = exc.code
+                    else:
+                        # a string code is a message plus status 1
+                        rc = 1
         finally:
             os.chdir(prev_cwd)
         return subprocess.CompletedProcess(
@@ -327,7 +337,10 @@ def proj(request, tmp_path_factory):
     # the subprocess needs agentive_kit importable regardless of which
     # python3 PATH resolves to — point PYTHONPATH at the in-repo source.
     if _PKG_SRC.is_dir():
-        env["PYTHONPATH"] = str(_PKG_SRC)
+        inherited = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (
+            f"{_PKG_SRC}{os.pathsep}{inherited}" if inherited else str(_PKG_SRC)
+        )
 
     return PreflightProject(root, stub_data, env, head, impl=impl)
 

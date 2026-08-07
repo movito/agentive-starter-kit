@@ -90,3 +90,11 @@ class TestPollDelay:
         # never crash on a bad seam value (o3, PR 1 round 2).
         monkeypatch.setenv("PREFLIGHT_CI_POLL_DELAY", "-5")
         assert preflight._poll_delay() == 0.0
+
+    @pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+    def test_non_finite_falls_back(self, monkeypatch, value):
+        # float() accepts these without ValueError: nan escapes max()
+        # into time.sleep (ValueError), inf hangs the run forever
+        # (CodeRabbit, PR #112).
+        monkeypatch.setenv("PREFLIGHT_CI_POLL_DELAY", value)
+        assert preflight._poll_delay() == float(preflight.CI_POLL_DELAY)

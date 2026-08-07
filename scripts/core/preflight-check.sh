@@ -24,7 +24,16 @@
 # refusal — never a silent fallback.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PKG_SRC="$SCRIPT_DIR/../../packages/agentive-kit/src"
+
+# Anchor to the script's own repo root before delegating, exactly like
+# v1.3.0's `cd "$PROJECT_ROOT"` — the module discovers the project by
+# walking up from CWD, so without this cd an absolute-path invocation
+# from a sibling worktree (or outside any kit tree) would resolve gates
+# 5-7 against the wrong .kit/ tree (BugBot, PR #112). The `agentive`
+# CLI keeps CWD discovery by design; the SHIM pins the old anchoring.
+cd "$PROJECT_ROOT" || exit 1
 
 if ! command -v python3 >/dev/null 2>&1; then
     echo "ERROR: python3 is required — preflight-check.sh is now a shim over the agentive-kit package" >&2
@@ -44,11 +53,17 @@ except ModuleNotFoundError:
     try:
         from agentive_kit import preflight
     except ModuleNotFoundError:
-        print("ERROR: agentive-kit is not installed")
-        print("   The preflight gates live in the agentive-kit package (KIT-ADR-0028).")
-        print("   Install it:")
-        print("     uv tool install agentive-kit")
-        print("   or: pip install agentive-kit")
+        # stderr, like the python3-missing refusal above: stdout is the
+        # machine-parsed GATE stream and must stay clean (CodeRabbit,
+        # PR #112).
+        print("ERROR: agentive-kit is not installed", file=sys.stderr)
+        print(
+            "   The preflight gates live in the agentive-kit package (KIT-ADR-0028).",
+            file=sys.stderr,
+        )
+        print("   Install it:", file=sys.stderr)
+        print("     uv tool install agentive-kit", file=sys.stderr)
+        print("   or: pip install agentive-kit", file=sys.stderr)
         sys.exit(1)
 
 preflight.main(sys.argv[1:])
