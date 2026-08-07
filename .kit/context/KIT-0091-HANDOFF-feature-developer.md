@@ -5,7 +5,7 @@
 **Date**: 2026-08-07
 **From**: planner-f5
 **To**: feature-developer (f5 variant recommended — rewrite with parity contracts)
-**Task**: `.kit/tasks/3-in-progress/KIT-0091-port-gate-scripts.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0091-port-gate-scripts.md`
 **Status**: Ready — phase 1b; agentive-kit 0.1.0 is live, this completes phase 1's module list
 **Evaluation**: arch-review-fast APPROVED 2026-08-07, round 2 —
 `.adversarial/logs/KIT-0091-port-gate-scripts--arch-review-fast.md`
@@ -110,6 +110,6 @@ asserted. Release as 0.2.x. Spec F1–F5 is authoritative.
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0091-port-gate-scripts.md`
+**Task File**: `.kit/tasks/4-in-review/KIT-0091-port-gate-scripts.md`
 **Evaluation Log**: `.adversarial/logs/KIT-0091-port-gate-scripts--arch-review-fast.md`
 **ADR**: `.kit/adr/KIT-ADR-0028-versioned-packages-not-file-copies.md` (Accepted; this is phase 1b)
