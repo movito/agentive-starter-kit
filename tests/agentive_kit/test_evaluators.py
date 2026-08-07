@@ -102,3 +102,19 @@ class TestLibraryPinReader:
             evaluators._get_evaluator_library_version(tmp_path)
         assert exc_info.value.code == 1
         assert "Invalid library_version" in capsys.readouterr().out
+
+    def test_regex_fallback_rejects_non_string_pin(self, tmp_path, capsys, monkeypatch):
+        # Force the bare-3.10 path: no tomllib, no tomli — the regex
+        # fallback must mirror tomllib semantics for a non-string
+        # scalar: invalid pin, not missing pin (CodeRabbit, PR #110).
+        import sys as _sys
+
+        monkeypatch.setitem(_sys.modules, "tomllib", None)
+        monkeypatch.setitem(_sys.modules, "tomli", None)
+        (tmp_path / "pyproject.toml").write_text(
+            "[tool.adversarial]\nlibrary_version = 1\n", encoding="utf-8"
+        )
+        with pytest.raises(SystemExit) as exc_info:
+            evaluators._get_evaluator_library_version(tmp_path)
+        assert exc_info.value.code == 1
+        assert "Invalid library_version" in capsys.readouterr().out

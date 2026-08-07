@@ -103,7 +103,16 @@ def _get_evaluator_library_version(project_dir):
             pmatch = re.search(
                 r'^\s*library_version\s*=\s*"([^"]+)"', ptext, re.MULTILINE
             )
-            version = pmatch.group(1) if pmatch else None
+            if pmatch:
+                version = pmatch.group(1)
+            elif re.search(r"^\s*library_version\s*=", ptext, re.MULTILINE):
+                # Key present but not a quoted string: a non-string TOML
+                # scalar (library_version = 1). Mirror tomllib semantics
+                # — invalid pin, not missing pin (CodeRabbit, PR #110;
+                # only reachable on bare 3.10 without tomli).
+                version = 1  # non-str sentinel → fails _is_tag_like cleanly
+            else:
+                version = None
     except (FileNotFoundError, OSError, ValueError, AttributeError):
         version = None
 
