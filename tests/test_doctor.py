@@ -1777,6 +1777,52 @@ class TestWorktreeProvisioningCheck:
         assert "DOCTOR:worktree-audit:SKIP:" in result.stdout
         assert "primary clone" in result.stdout
 
+    def test_narrow_refspec_warns_with_incident_and_remedy(self, tmp_path):
+        # KIT-0091 F5 (KIT-0090 incident closure #2): a fetch refspec
+        # narrowed to main never updates other remote-tracking refs, so
+        # push --force-with-lease fails with "stale info".
+        primary, _ = _worktree_pair(tmp_path)
+        subprocess.run(
+            ["git", "-C", str(primary), "remote", "add", "origin", str(tmp_path)],
+            check=True,
+            timeout=30,
+        )
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(primary),
+                "config",
+                "remote.origin.fetch",
+                "+refs/heads/main:refs/remotes/origin/main",
+            ],
+            check=True,
+            timeout=30,
+        )
+        result = run_worktree_check(primary)
+        assert "DOCTOR:worktree-refspec:WARN:" in result.stdout
+        assert "KIT-0090" in result.stdout
+        assert "STACKED-PR-WORKFLOW.md" in result.stdout
+        assert "+refs/heads/*:refs/remotes/origin/*" in result.stdout
+
+    def test_wildcard_refspec_passes(self, tmp_path):
+        primary, worktree = _worktree_pair(tmp_path)
+        subprocess.run(
+            ["git", "-C", str(primary), "remote", "add", "origin", str(tmp_path)],
+            check=True,
+            timeout=30,
+        )
+        # git remote add installs the wildcard refspec by default; the
+        # check must see it from the WORKTREE too (config is shared)
+        result = run_worktree_check(worktree)
+        assert "DOCTOR:worktree-refspec:PASS:" in result.stdout
+        assert "worktree-refspec:WARN" not in result.stdout
+
+    def test_no_origin_remote_emits_no_refspec_line(self, tmp_path):
+        primary, _ = _worktree_pair(tmp_path)
+        result = run_worktree_check(primary)
+        assert "worktree-refspec" not in result.stdout
+
     def test_worktree_without_serena_usage_skips_serena(self, tmp_path):
         _, worktree = _worktree_pair(tmp_path)
         result = run_worktree_check(worktree)

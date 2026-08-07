@@ -110,6 +110,27 @@ if [ -L "$ROOT/venv" ]; then
     echo "DOCTOR:worktree-venv:WARN:venv is a symlink -> $(readlink "$ROOT/venv") — same destruction vector as a symlinked .venv (KIT-0065); replace it with a real venv"
 fi
 
+# ── narrow refspec: remote.origin.fetch covering only main (KIT-0091 F5) ──
+# Incident (KIT-0090, closure #2): with remote.origin.fetch narrowed to
+# main, `git push --force-with-lease` on a feature branch failed with
+# "stale info" — the lease compares against the remote-tracking ref,
+# which a narrow refspec never updates. The explicit-lease push pattern
+# is documented in STACKED-PR-WORKFLOW.md. The config is SHARED via the
+# common git dir, so this fires from the primary and every worktree;
+# silent when there is no origin remote (nothing to fetch, nothing to
+# lease against).
+if [ -n "$GIT_DIR_PATH" ]; then
+    FETCH_SPECS="$(git -C "$ROOT" config --get-all remote.origin.fetch 2>/dev/null || true)"
+    if [ -n "$FETCH_SPECS" ]; then
+        if printf '%s\n' "$FETCH_SPECS" | grep -q 'refs/heads/\*'; then
+            echo "DOCTOR:worktree-refspec:PASS:remote.origin.fetch covers all branches (refs/heads/*)"
+        else
+            _RS_ONE_LINE="$(printf '%s' "$FETCH_SPECS" | tr '\n' ' ')"
+            echo "DOCTOR:worktree-refspec:WARN:remote.origin.fetch is narrowed ($_RS_ONE_LINE) — remote-tracking refs for other branches never update, so push --force-with-lease fails with 'stale info' (KIT-0090 incident; explicit-lease pattern in STACKED-PR-WORKFLOW.md); widen: git config --add remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' && git fetch origin"
+        fi
+    fi
+fi
+
 # ── the rest of the audit only applies inside a linked worktree ──
 if [ -z "$GIT_DIR_PATH" ] || [ -z "$GIT_COMMON" ]; then
     echo "DOCTOR:worktree-audit:SKIP:not a git checkout — no worktree provisioning to audit"
