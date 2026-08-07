@@ -5,6 +5,7 @@ Shared pytest fixtures and utilities for the agentive-starter-kit test suite.
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -16,6 +17,19 @@ import pytest
 
 # Project root for locating real files used by test fixtures
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# agentive-kit package source (KIT-0090): put the in-repo package on
+# sys.path so tests/agentive_kit/ runs without an installed agentive-kit
+# — the same dogfood path scripts/core/project uses. Inside the kit repo
+# this insert deliberately wins over any installed copy (kit tests must
+# test the kit's own source). No-op in consumer checkouts (dir absent);
+# the package tests also module-skip there. Lives HERE and not in a
+# tests/agentive_kit/conftest.py: a second file named conftest.py would
+# race this one for sys.modules["conftest"] and break the
+# `from conftest import ...` lines in sibling test modules.
+_PKG_SRC = PROJECT_ROOT / "packages" / "agentive-kit" / "src"
+if _PKG_SRC.is_dir() and str(_PKG_SRC) not in sys.path:
+    sys.path.insert(0, str(_PKG_SRC))
 
 
 @pytest.fixture(autouse=True, scope="session")

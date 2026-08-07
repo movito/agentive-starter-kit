@@ -1,0 +1,41 @@
+# Packaging metadata for the agentive-kit distribution (KIT-ADR-0028
+# phase 1). This pyproject is deliberately SEPARATE from the repo-root
+# pyproject.toml: the root file doubles as the consumer-project template
+# (engine-consumer.sh / engine-export.sh copy it with a name rewrite),
+# so it can never carry this dist's name or package list.
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentive-kit"
+# Single-sourced from agentive_kit.__version__ (CodeRabbit, PR #108) —
+# two hardcoded copies would drift.
+dynamic = ["version"]
+description = "Project lifecycle CLI for agentive projects — task status flow, environment doctor, evaluator provisioning"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Fredrik Matheson" }]
+# Stdlib only, by design: the legacy script ran on bare python3 with no
+# third-party imports, and the package keeps that property so `uv tool
+# install agentive-kit` works in any environment.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/movito/agentive-starter-kit"
+
+[project.scripts]
+# Console-script name `agentive` per KIT-ADR-0028. Verified 2026-08-06:
+# the existing PyPI dist `agentive` (0.0.144) ships no entry_points.txt,
+# so there is no console-script collision; import packages differ too
+# (`agentive` vs `agentive_kit`). Fallback name if a collision ever
+# appears: `akit`.
+agentive = "agentive_kit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "agentive_kit.__version__" }

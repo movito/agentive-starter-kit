@@ -5,7 +5,6 @@ Focus: install-evaluators command with mocked subprocess calls.
 """
 
 import importlib.util
-import json
 import os
 import re
 import shutil
@@ -951,123 +950,103 @@ class TestVerifyIdentityLeaks:
         assert count == 0
 
 
-class TestMoveTaskMetadataSync:
-    """KIT-0040 F2: task moves rewrite the task's path in coordination
-    metadata (agent-handoffs.json + HANDOFF files) instead of stranding
-    stale numbered-folder paths."""
+# TestMoveTaskMetadataSync migrated to tests/agentive_kit/test_lifecycle.py
+# (KIT-0090 F3): move_task and the coordination-metadata sync now live in
+# the agentive-kit package, including the KIT-0086 single-writer guard.
 
-    TASK_FILE = "KIT-1234-sample-task.md"
 
-    def _setup_project(self, tmp_path):
-        tasks = tmp_path / ".kit" / "tasks"
-        for folder in ("2-todo", "3-in-progress", "5-done"):
-            (tasks / folder).mkdir(parents=True)
-        task = tasks / "2-todo" / self.TASK_FILE
-        task.write_text("# Task\n\n**Status**: Todo\n", encoding="utf-8")
+class TestLifecycleDelegation:
+    """KIT-0090 PR 1: the script's lifecycle commands delegate to the
+    agentive-kit package — the dispatch itself needs subprocess-level
+    coverage (evaluator finding, PR 1 trio)."""
 
-        context = tmp_path / ".kit" / "context"
-        context.mkdir(parents=True)
-        handoffs = {
-            "planner": {
-                "status": "handoff_ready",
-                "current_task": "KIT-1234",
-                "details_link": f".kit/tasks/2-todo/{self.TASK_FILE}",
-                "handoff_file": ".kit/context/KIT-1234-HANDOFF-feature-developer.md",
-            },
-            "other-agent": {
-                "status": "idle",
-                "current_task": None,
-                "details_link": ".kit/tasks/2-todo/KIT-0002-unrelated-task.md",
-            },
-        }
-        (context / "agent-handoffs.json").write_text(
-            json.dumps(handoffs, indent=2) + "\n", encoding="utf-8"
-        )
-        (context / "KIT-1234-HANDOFF-feature-developer.md").write_text(
-            f"# Handoff\n\n**Task**: `.kit/tasks/2-todo/{self.TASK_FILE}`\n",
-            encoding="utf-8",
-        )
-        return context
-
-    def test_move_rewrites_handoffs_json_and_handoff_file(self, tmp_path):
-        context = self._setup_project(tmp_path)
-
-        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
-
-        data = json.loads((context / "agent-handoffs.json").read_text(encoding="utf-8"))
-        assert data["planner"]["details_link"] == (
-            f".kit/tasks/3-in-progress/{self.TASK_FILE}"
-        )
-        handoff_md = (context / "KIT-1234-HANDOFF-feature-developer.md").read_text(
-            encoding="utf-8"
-        )
-        assert f".kit/tasks/3-in-progress/{self.TASK_FILE}" in handoff_md
-        assert "2-todo" not in handoff_md
-
-    def test_move_leaves_other_tasks_untouched(self, tmp_path):
-        context = self._setup_project(tmp_path)
-
-        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
-
-        data = json.loads((context / "agent-handoffs.json").read_text(encoding="utf-8"))
-        # The unrelated task's (stale-looking) path must be preserved.
-        assert data["other-agent"]["details_link"] == (
-            ".kit/tasks/2-todo/KIT-0002-unrelated-task.md"
+    def _run(self, tree, *args):
+        return subprocess.run(
+            [sys.executable, str(tree / "scripts" / "core" / "project"), *args],
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
 
-    def test_move_without_context_dir_still_succeeds(self, tmp_path):
+    @pytest.fixture
+    def kit_tree_with_package(self, tmp_path):
+        """A project tree carrying the script AND the package source —
+        the dogfood path (_kit_lifecycle's in-repo fallback)."""
+        pkg_src = Path(__file__).parent.parent / "packages" / "agentive-kit" / "src"
+        if not pkg_src.is_dir():
+            # Skip decided BEFORE any tree building (CodeRabbit, PR #108)
+            pytest.skip("agentive-kit package source present only in the kit repo")
+        core = tmp_path / "scripts" / "core"
+        core.mkdir(parents=True)
+        shutil.copy(_script_path, core / "project")
+        shutil.copytree(pkg_src, tmp_path / "packages" / "agentive-kit" / "src")
         tasks = tmp_path / ".kit" / "tasks"
         for folder in ("2-todo", "3-in-progress"):
             (tasks / folder).mkdir(parents=True)
-        (tasks / "2-todo" / self.TASK_FILE).write_text(
+        (tasks / "2-todo" / "KIT-1234-sample.md").write_text(
             "**Status**: Todo\n", encoding="utf-8"
         )
+        return tmp_path
 
-        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
-        assert (tasks / "3-in-progress" / self.TASK_FILE).exists()
+    def test_start_delegates_and_moves(self, kit_tree_with_package):
+        tree = kit_tree_with_package
+        result = self._run(tree, "start", "KIT-1234")
+        assert result.returncode == 0, result.stdout + result.stderr
+        moved = tree / ".kit" / "tasks" / "3-in-progress" / "KIT-1234-sample.md"
+        assert moved.exists()
+        assert "In Progress" in result.stdout
 
-    def test_rerun_in_same_folder_repairs_stale_metadata(self, tmp_path):
-        # Metadata drifted while the task is already in place: re-running
-        # the move acts as a repair and rewrites the stale path.
-        context = self._setup_project(tmp_path)
-        task = tmp_path / ".kit" / "tasks" / "2-todo" / self.TASK_FILE
-        moved = tmp_path / ".kit" / "tasks" / "3-in-progress" / self.TASK_FILE
-        task.rename(moved)
+    def test_validate_delegates(self, kit_tree_with_package):
+        result = self._run(kit_tree_with_package, "validate")
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "matching Status and folder" in result.stdout
 
-        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
+    def test_surplus_arguments_are_usage_errors(self, kit_tree_with_package):
+        # BugBot (PR #108 round 2): the script shim must reject surplus
+        # args exactly like the package CLI does.
+        tree = kit_tree_with_package
+        for args in (
+            ("start", "KIT-1234", "extra"),
+            ("move", "KIT-1234", "done", "extra"),
+            ("validate", "extra"),
+        ):
+            result = self._run(tree, *args)
+            assert result.returncode == 1, args
+            assert "Usage:" in result.stdout, args
+        # And the task did not move.
+        assert (tree / ".kit" / "tasks" / "2-todo" / "KIT-1234-sample.md").exists()
 
-        data = json.loads((context / "agent-handoffs.json").read_text(encoding="utf-8"))
-        assert data["planner"]["details_link"] == (
-            f".kit/tasks/3-in-progress/{self.TASK_FILE}"
+    def test_missing_package_fails_loud_with_install_command(self, tmp_path):
+        # A consumer that synced the delegating script before phase 3
+        # (no installed CLI, no packages/ tree) must get the exact
+        # install instruction, never a traceback.
+        #
+        # Guard (CodeRabbit, PR #108): once agentive-kit is pip-
+        # installed into this interpreter (the PR-4 dogfood switch),
+        # the script's FIRST import branch succeeds and this test's
+        # premise is gone — probe the subprocess view and skip then.
+        probe = subprocess.run(
+            [sys.executable, "-c", "import agentive_kit"],
+            capture_output=True,
+            timeout=60,
+            cwd=tmp_path,
         )
-
-    def test_second_move_rewrites_again(self, tmp_path):
-        context = self._setup_project(tmp_path)
-
-        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
-        assert _project_module.move_task("KIT-1234", "done", tmp_path)
-
-        data = json.loads((context / "agent-handoffs.json").read_text(encoding="utf-8"))
-        assert data["planner"]["details_link"] == (
-            f".kit/tasks/5-done/{self.TASK_FILE}"
+        if probe.returncode == 0:
+            pytest.skip("agentive-kit is installed in this interpreter")
+        core = tmp_path / "scripts" / "core"
+        core.mkdir(parents=True)
+        shutil.copy(_script_path, core / "project")
+        (tmp_path / ".kit" / "tasks" / "2-todo").mkdir(parents=True)
+        result = subprocess.run(
+            [sys.executable, str(core / "project"), "validate"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=tmp_path,
         )
-
-    def test_non_utf8_metadata_warns_but_move_succeeds(self, tmp_path, capsys):
-        # A corrupted (non-UTF-8) coordination file must warn, never
-        # break the already completed move (UnicodeDecodeError is a
-        # ValueError, not an OSError).
-        context = self._setup_project(tmp_path)
-        (context / "agent-handoffs.json").write_bytes(b"\xff\xfe broken")
-
-        assert _project_module.move_task("KIT-1234", "in-progress", tmp_path)
-
-        out = capsys.readouterr().out
-        assert "Could not update agent-handoffs.json" in out
-        # The parseable handoff file was still rewritten.
-        handoff_md = (context / "KIT-1234-HANDOFF-feature-developer.md").read_text(
-            encoding="utf-8"
-        )
-        assert f".kit/tasks/3-in-progress/{self.TASK_FILE}" in handoff_md
+        assert result.returncode == 1
+        assert "uv tool install agentive-kit" in result.stdout
+        assert "Traceback" not in result.stderr
 
 
 class TestFixtureHonesty:
