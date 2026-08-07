@@ -67,7 +67,10 @@ def _get_evaluator_library_version(project_dir):
     try:
         import tomllib
     except ImportError:  # Python 3.10 — no stdlib tomllib
-        tomllib = None  # fall back to a regex scan (doctor.d/40 pattern)
+        try:
+            import tomli as tomllib
+        except ImportError:
+            tomllib = None  # fall back to a regex scan (doctor.d/40 pattern)
 
     version = None
     try:
