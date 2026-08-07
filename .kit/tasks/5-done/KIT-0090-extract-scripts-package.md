@@ -1,6 +1,16 @@
 # KIT-0090: ADR-0028 phase 1 — extract the lifecycle scripts into a published PyPI package
 
-**Status**: In Progress
+> **Disposition (planner, 2026-08-07)**: DELIVERED — agentive-kit 0.1.0
+> live on PyPI (tag `agentive-kit-v0.1.0` on d11075f, trusted
+> publishing, run 31209733516). Four stacked PRs #108–#111 merged in
+> order, fully gated. KIT-0086 and KIT-0079 closed by reference. The
+> F1 surfaces deferred in PR #110 (preflight / review-input / worktree
+> lib — a rewrite, not an extraction) are split to **KIT-0091** (phase
+> 1b, evaluated + in todo). Phases 2–4 of ADR-0028 are separate tasks,
+> specced sequentially. Retro owed by the implementing session; the
+> worktree stays until it lands.
+
+**Status**: Done
 **Priority**: high (the accepted architecture's first work item; everything parked in the queue waits on it)
 **Type**: Infrastructure / migration
 **Estimated Effort**: 2-4 days (stacked PRs — see PR Plan)

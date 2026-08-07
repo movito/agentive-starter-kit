@@ -1,6 +1,13 @@
 # KIT-0086: agent-handoffs.json single-writer — end the feature-branch/main conflict class
 
-**Status**: Todo
+> **CLOSED BY REFERENCE (2026-08-07)**: implemented inside KIT-0090
+> (PR #108 lifecycle guard — `project move` skips `agent-handoffs.json`
+> on any branch other than main; PR #109 drift check
+> `doctor.d/35-handoffs-paths.py` + workflow docs). The interim
+> carve-out below is retired: the guard is now code. Disposition: done
+> via KIT-0090; verification is that task's PR gates.
+
+**Status**: Done
 **Priority**: high (recurrence is guaranteed: it blocked PR #105's squash-merge and the same pattern is live for KIT-0083/KIT-0085)
 **Type**: Infrastructure
 **Estimated Effort**: 2-4 h

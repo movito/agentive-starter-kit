@@ -1,9 +1,9 @@
 {
   "planner": {
     "status": "handoff_pending",
-    "current_task": "KIT-0090",
+    "current_task": "KIT-0091",
     "task_started": null,
-    "brief_note": "2026-08-06: KIT-ADR-0028 ACCEPTED by operator. Queue RE-BASELINED: KIT-0090 (phase 1 — extract scripts to PyPI package agentive-kit, name verified available; arch-review-fast APPROVED round 2) is the ONLY active work item. KIT-0086 + KIT-0079 close by reference inside KIT-0090 F6. PARKED pending phases 1-2: KIT-0085, KIT-0075, KIT-0078+KIT-0087 (their surfaces reshape under packaging). Backlog dissolution (KIT-0026/0045/0061/0063/0051/0082-shrink/0089-rides) happens at phase 4 with dispositions, not before (ADR Consequences). Phases 2-4 specced sequentially after phase 1 lands. Next planner artifact: KIT-0090 handoff + starter on operator go.",
+    "brief_note": "2026-08-07: PHASE 1 SHIPPED — agentive-kit 0.1.0 on PyPI (tag agentive-kit-v0.1.0, trusted publishing; PRs #108-#111 merged in stack order, verified). KIT-0090 DONE (retro owed — worktree held until it lands); KIT-0086 + KIT-0079 DONE by reference with dispositions. CI anomaly DECODED: pull_request branches filter matched BASE branch, so stacked PRs never triggered — filter removed from test.yml 2026-08-07; residual flake class (#105/#108, base=main) keeps the dispatch fallback documented. NEXT: KIT-0091 (phase 1b — port preflight/review-input/worktree gate scripts, arch-review-fast APPROVED; ghio module, parity-matrix bar) awaits operator go for handoff+starter. THEN phase 2 spec (door switch). Still parked: KIT-0085, KIT-0075, KIT-0078+KIT-0087; backlog dissolution at phase 4.",
     "details_link": ".kit/tasks/5-done/KIT-0080-doctor-apple-git-230-incompat.md",
     "handoff_file": ".kit/context/KIT-0080-HANDOFF-feature-developer.md"
   },

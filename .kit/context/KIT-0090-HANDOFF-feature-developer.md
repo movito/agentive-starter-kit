@@ -5,7 +5,7 @@
 **Date**: 2026-08-06
 **From**: planner-f5
 **To**: feature-developer (f5 variant recommended — multi-PR, sustained)
-**Task**: `.kit/tasks/3-in-progress/KIT-0090-extract-scripts-package.md`
+**Task**: `.kit/tasks/5-done/KIT-0090-extract-scripts-package.md`
 **Status**: Ready — ADR-0028 Accepted; this is migration phase 1 and the only active work item
 **Evaluation**: arch-review-fast APPROVED 2026-08-06, round 2 —
 `.adversarial/logs/KIT-0090-extract-scripts-package--arch-review-fast.md`
@@ -120,6 +120,6 @@ appears mid-flight, raise it — do not silently merge phases.
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0090-extract-scripts-package.md`
+**Task File**: `.kit/tasks/5-done/KIT-0090-extract-scripts-package.md`
 **Evaluation Log**: `.adversarial/logs/KIT-0090-extract-scripts-package--arch-review-fast.md`
 **ADR**: `.kit/adr/KIT-ADR-0028-versioned-packages-not-file-copies.md` (Accepted)
