@@ -58,7 +58,7 @@ class TestLibraryPinReader:
         assert "evaluator_library_version" in out
         assert "library_version" in out
 
-    def test_kit_repo_pins_agree_and_resolve_from_config(self):
+    def test_kit_repo_pin_resolves_from_config(self):
         # The kit's own checkout: config.yml is canonical and readable.
         from pathlib import Path
 

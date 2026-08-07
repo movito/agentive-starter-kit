@@ -314,6 +314,13 @@ def cmd_install_evaluators(args, project_dir):
     for i, arg in enumerate(args):
         if arg == "--ref" and i + 1 < len(args):
             version = args[i + 1]
+            # Same tag-shape gate as the config.yml pin (CodeRabbit,
+            # PR #110): an option-shaped value must fail clearly here,
+            # never reach `git clone --branch` as a git option.
+            if not re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.\-_/+]*", version):
+                print(f"❌ Invalid --ref value: {version!r}")
+                print("   Expected a git tag or branch name (e.g. v0.10.0).")
+                sys.exit(1)
             break
 
     # CLI hardcodes .adversarial/ at repo root (see e2465ae) — do not move into .kit/
@@ -431,6 +438,10 @@ def cmd_install_evaluators(args, project_dir):
             ["git", "-C", tmpdir, "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
+            # Bounded + stdin-closed like every other git call in the
+            # package (CodeRabbit, PR #110).
+            timeout=CLI_PROBE_TIMEOUT,
+            stdin=subprocess.DEVNULL,
         )
         commit_hash = (
             hash_result.stdout.strip()[:8] if hash_result.returncode == 0 else "unknown"
