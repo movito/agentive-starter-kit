@@ -33,6 +33,11 @@ Task Management:
   block <id>           Move task to blocked (shorthand)
   validate             Validate all task statuses match folders
 
+Gates:
+  preflight [flags]    Run the 7 completion gates for the current PR
+                       (--pr N --task ID --repo owner/name; see
+                       'agentive preflight --help')
+
 Other:
   help                 Show this help message
   version              Show version information
@@ -101,6 +106,15 @@ def main(argv: list[str] | None = None) -> None:
             args[1], shorthand_targets[command], _project_root()
         )
         sys.exit(0 if result and not result.status_update_failed else 1)
+
+    if command == "preflight":
+        # Flags pass through verbatim — preflight owns its own parsing
+        # (including --help) so the shimmed script and the console
+        # entry behave identically.
+        from agentive_kit import preflight
+
+        preflight.main(args[1:])
+        return
 
     if command == "validate":
         if len(args) != 1:

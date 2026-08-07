@@ -57,6 +57,25 @@ class ValidationReport:
 
 
 @dataclass(frozen=True)
+class GateResult:
+    """One preflight gate verdict (preflight → CLI output line).
+
+    ``line()`` renders the machine-parseable contract the bash script
+    established and every caller (the /preflight command, babysit-pr,
+    the parity harness regex) matches on:
+    ``GATE:<number>:<name>:<verdict>:<detail>``.
+    """
+
+    number: int
+    name: str
+    verdict: str  # PASS | FAIL | PENDING | SKIP
+    detail: str
+
+    def line(self) -> str:
+        return f"GATE:{self.number}:{self.name}:{self.verdict}:{self.detail}"
+
+
+@dataclass(frozen=True)
 class MetadataSyncNote:
     """One coordination-metadata file touched (or skipped) by a move."""
 

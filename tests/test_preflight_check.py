@@ -317,6 +317,12 @@ def proj(request, tmp_path_factory):
     stub_data.mkdir()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["PREFLIGHT_GH_STUB_DIR"] = str(stub_data)
+    # The python implementation's poll-delay seam (the analogue of the
+    # stubbed `sleep` binary the bash side uses): PENDING re-poll
+    # scenarios must stay instant for BOTH implementations, including
+    # the post-shim state where the bash script delegates to python in
+    # a subprocess that a monkeypatch cannot reach.
+    env["PREFLIGHT_CI_POLL_DELAY"] = "0"
     # Once the bash body becomes a shim over the package (KIT-0091 F3),
     # the subprocess needs agentive_kit importable regardless of which
     # python3 PATH resolves to — point PYTHONPATH at the in-repo source.
@@ -910,15 +916,15 @@ class TestGate2MixedContexts:
         assert "signal=failure" in detail, detail
 
     def test_status_jq_reduces_mixed_contexts_to_non_success(self, proj):
-        # jq layer: extract the commit-status --jq filter from the real
-        # script (no duplication drift) and run real jq over a mixed
-        # fixture — the reduction must yield the failing state, never
-        # "success".
-        script = (proj.root / "scripts" / "core" / "preflight-check.sh").read_text(
-            encoding="utf-8"
+        # jq layer: run real jq over a mixed fixture with the LIVE
+        # commit-status filter — since the KIT-0091 shim the filter's
+        # one home is the module constant (it executes inside gh via
+        # --jq, so its semantics still need real-jq pinning here).
+        preflight_mod = pytest.importorskip(
+            "agentive_kit.preflight",
+            reason="agentive-kit package absent (consumer checkout)",
         )
-        m = re.search(r"--jq '(\[\.statuses\[\][^']*)'", script)
-        assert m, "commit-status jq filter not found in script"
+        jq_filter = preflight_mod.CR_STATUS_JQ
         mixed = json.dumps(
             {
                 "statuses": [
@@ -928,7 +934,7 @@ class TestGate2MixedContexts:
             }
         )
         out = subprocess.run(
-            ["jq", "-r", m.group(1)],
+            ["jq", "-r", jq_filter],
             input=mixed,
             capture_output=True,
             text=True,
