@@ -114,7 +114,7 @@ def main(argv: list[str] | None = None) -> None:
         from agentive_kit import preflight
 
         preflight.main(args[1:])
-        return
+        return  # unreachable — preflight.main() always sys.exit()s
 
     if command == "validate":
         if len(args) != 1:

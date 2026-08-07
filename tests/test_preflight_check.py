@@ -585,6 +585,31 @@ class TestGate3FailurePaths:
         assert "No review or check-run from BugBot" in detail
         assert result.returncode == 1
 
+    def test_multiple_all_green_check_runs_pass(self, proj):
+        # KIT-0091 documented divergence (o3 finding): matrix jobs or
+        # re-runs emit one line per check-run; the bash original
+        # false-FAILed an all-green multi-run blob (whole-string
+        # compare). The port applies Gate 2's all-green rule.
+        files = self._no_cursor_review(proj.head)
+        files["check_runs_cursor"] = "completed:success\ncompleted:success\n"
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[3]
+        assert verdict == "PASS", result.stdout
+        assert "check-run" in detail
+
+    def test_mixed_check_runs_fail_naming_first_non_green(self, proj):
+        # Fail-closed side of the divergence: any non-green run in the
+        # set still FAILs, and the detail names the offending state
+        # (single-line — the GATE format stays parseable).
+        files = self._no_cursor_review(proj.head)
+        files["check_runs_cursor"] = "completed:success\ncompleted:failure\n"
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[3]
+        assert verdict == "FAIL", result.stdout
+        assert detail == "check-run completed:failure"
+        assert "\n" not in detail
+        assert result.returncode == 1
+
 
 # ── Gate 4: fetch failure + thread-cap note (KIT-0091 matrix additions) ──
 class TestGate4Threads:

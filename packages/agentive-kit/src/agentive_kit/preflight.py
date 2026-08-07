@@ -226,6 +226,13 @@ def _parse_target_repo(root: Path, override: str) -> _TargetRepo:
                 if path_match:
                     target.path = path_match.group(1)
 
+    # Layer 1 of two (both ported from bash): this is target_repo.sh's
+    # looser shape check. The STRICT charset validation in main() —
+    # ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ — re-validates every slug,
+    # whatever its source, and MUST keep running before OWNER/NAME are
+    # interpolated into the GraphQL query (KIT-0043, o3; claude-code
+    # evaluator this PR). Never route a slug to gh without passing
+    # through main()'s check.
     if target.repo and not re.match(r"^[^/\s]+/[^/\s]+$", target.repo):
         print(
             f"ERROR: target repo must be in owner/name format, got: '{target.repo}'",
@@ -269,6 +276,9 @@ def _read_bots_declaration(root: Path) -> tuple[str, bool]:
         # leading-whitespace tolerant like the other readers' strip()
         if re.match(r"^[ \t]*bots:", line):
             present = True
+            # FIRST bots: line wins — the bash reader was
+            # `sed -n ... | head -1` (unlike flag parsing, where the
+            # last flag wins).
             if not declared:
                 declared = re.sub(r"^[ \t]*bots:[ \t]*", "", line)
     declared = declared.replace(",", " ").lower()
@@ -358,6 +368,9 @@ def _gate_1_ci(latest_sha: str, repo_flag: str | None) -> GateResult:
             repo=repo_flag,
         )
         if result is not None and result.returncode == 0:
+            # Deliberately sticky: one successful fetch proves gh/auth
+            # work, so a later transient error still reads as "no runs
+            # registered yet" (PENDING), not a connectivity FAIL.
             fetch_ok = True
             try:
                 parsed = json.loads(result.stdout or "[]")
@@ -634,15 +647,32 @@ def _gate_3_bugbot(
             )
         )
 
-    if bb_check in ("completed:success", "completed:neutral"):
+    # Documented divergence (KIT-0091, o3 finding): the jq filter emits
+    # ONE LINE PER cursor check-run, and the bash original compared the
+    # whole blob against a single "completed:success" — so matrix jobs
+    # or re-runs that were ALL green still false-FAILed the gate (and
+    # the embedded newline corrupted the one-line GATE format). The
+    # port applies the same all-green rule Gate 2's check-run fallback
+    # already uses: every run green ⇒ PASS; otherwise FAIL naming the
+    # first non-green state. Fail-closed is preserved — no non-green
+    # combination can PASS.
+    bb_states = [line for line in bb_check.splitlines() if line]
+    if bb_states and all(
+        state in ("completed:success", "completed:neutral") for state in bb_states
+    ):
         return GateResult(
             3,
             "BugBot",
             "PASS",
             f"check-run passed, no findings (on PR #{pr_number})",
         )
-    if bb_check:
-        return GateResult(3, "BugBot", "FAIL", f"check-run {bb_check}")
+    if bb_states:
+        first_bad = next(
+            state
+            for state in bb_states
+            if state not in ("completed:success", "completed:neutral")
+        )
+        return GateResult(3, "BugBot", "FAIL", f"check-run {first_bad}")
     return GateResult(
         3,
         "BugBot",
