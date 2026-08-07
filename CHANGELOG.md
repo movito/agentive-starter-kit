@@ -36,6 +36,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `agent-handoffs.json` without reintroducing a second writer.
   Workflow docs updated to the single-writer rule (KIT-0086 F3).
 
+- **Evaluator provisioning migrated into `agentive-kit`** (KIT-0090
+  PR 3): `agentive_kit.evaluators` carries the library installer, the
+  CLI ensure step and both pin readers; `install-evaluators` delegates
+  with the inline package-less fallback. KIT-0079 closes by reference:
+  the library pin now reads `.adversarial/config.yml`
+  (`evaluator_library_version`, canonical) first with pyproject as
+  fallback mirror — planning-shape repos resolve it without a
+  pyproject — and the interim `test_library_pin_mirrors_agree` drift
+  test is deleted. Scope note: the bash surfaces (preflight,
+  review-input, worktree lib) are deliberately deferred to their own
+  PR — raised as a sequencing decision, not silently merged.
+
 ### Changed
 
 - **`agent-handoffs.json` becomes single-writer** (KIT-0086 F1, landed
