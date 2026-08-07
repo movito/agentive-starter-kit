@@ -227,44 +227,7 @@ class TestBakedManifestVersion:
         )
 
 
-def test_library_pin_mirrors_agree():
-    """The library pin exists in two places until KIT-0079 lands.
-
-    `.adversarial/config.yml` is the canonical home (KIT-0083 F3), but
-    `_get_evaluator_library_version()` still reads the pyproject pin —
-    moving that reader is KIT-0079's scope. While both copies exist they
-    MUST agree: an inert key that silently disagrees with the live one
-    is worse than no key at all (CodeRabbit round 1). Delete this test
-    when KIT-0079 removes the pyproject copy.
-    """
-    config_yml = REPO_ROOT / ".adversarial" / "config.yml"
-    pyproject = REPO_ROOT / "pyproject.toml"
-    if not config_yml.exists() or not pyproject.exists():
-        pytest.skip("not a full kit checkout")
-
-    canonical = re.search(
-        r'^\s*evaluator_library_version\s*:\s*["\']?([^"\'\s#]+)',
-        config_yml.read_text(encoding="utf-8"),
-        re.MULTILINE,
-    )
-    # Scope to [tool.adversarial] before matching: `library_version` is a
-    # generic-enough key that another section could define one, and this
-    # test would then compare against the wrong value and MISS real drift
-    # — a false green on a drift detector (CodeRabbit round 2).
-    ptext = pyproject.read_text(encoding="utf-8")
-    section = re.search(
-        r"^\[tool\.adversarial\]\s*$(.*?)(?=^\[|\Z)", ptext, re.MULTILINE | re.DOTALL
-    )
-    assert section, "pyproject.toml lost the [tool.adversarial] section"
-    live = re.search(
-        r'^\s*library_version\s*=\s*"([^"]+)"',
-        section.group(1),
-        re.MULTILINE,
-    )
-    assert canonical, ".adversarial/config.yml lost evaluator_library_version"
-    assert live, "pyproject.toml lost [tool.adversarial] library_version"
-    assert canonical.group(1) == live.group(1), (
-        "library pin drifted between its canonical home and the pyproject "
-        f"copy the reader still uses: config.yml={canonical.group(1)!r}, "
-        f"pyproject={live.group(1)!r}"
-    )
+# test_library_pin_mirrors_agree deleted (KIT-0079 via KIT-0090 PR 3):
+# .adversarial/config.yml is now the canonical evaluator-library pin
+# home (agentive_kit.evaluators reads it first); the drift test only
+# guarded the interim two-home state.

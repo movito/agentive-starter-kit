@@ -1992,6 +1992,36 @@ def cmd_doctor(args, project_dir):
     return 0
 
 
+def _kit_evaluators():
+    """Import agentive_kit.evaluators (same chain as _kit_doctor);
+    None → the inline copies above serve as the package-less fallback.
+    Note one behavior difference by design (KIT-0079, F6): the package
+    reads the library pin from .adversarial/config.yml first; this
+    script's frozen fallback stays pyproject-only and retires in
+    phase 4."""
+    try:
+        from agentive_kit import evaluators
+
+        return evaluators
+    except ModuleNotFoundError:
+        pass
+    pkg_src = (
+        Path(__file__).resolve().parent.parent.parent
+        / "packages"
+        / "agentive-kit"
+        / "src"
+    )
+    if pkg_src.is_dir() and str(pkg_src) not in sys.path:
+        sys.path.insert(0, str(pkg_src))
+        try:
+            from agentive_kit import evaluators
+
+            return evaluators
+        except ModuleNotFoundError:
+            pass
+    return None
+
+
 def _kit_doctor():
     """Import agentive_kit.doctor (installed copy → in-repo source);
     returns None when neither exists — the caller falls back to the
@@ -2440,7 +2470,11 @@ except Exception as e:
 
     elif command == "install-evaluators":
         # Install evaluators from adversarial-evaluator-library
-        cmd_install_evaluators(sys.argv[2:], project_dir)
+        # (delegates to agentive_kit.evaluators; inline fallback for
+        # package-less repos — KIT-0090 PR 3)
+        _ev = _kit_evaluators()
+        _install = _ev.cmd_install_evaluators if _ev else cmd_install_evaluators
+        _install(sys.argv[2:], project_dir)
         sys.exit(0)
 
     elif command == "doctor":
