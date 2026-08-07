@@ -24,6 +24,19 @@ import tempfile
 from pathlib import Path
 
 
+def _is_tag_like(value):
+    """True for a plausible git tag/branch name (e.g. v0.10.0).
+
+    One gate for every pin source — config.yml, the pyproject mirror
+    (tomllib, tomli, and regex paths alike), and --ref — so an
+    option-shaped value (`--upload-pack=...`) can never reach
+    `git clone --branch` as a git OPTION (CodeRabbit, PR #110). List
+    args make shell injection impossible; this is about option
+    injection and failing clearly.
+    """
+    return bool(re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.\-_/+]*", value or ""))
+
+
 def _get_evaluator_library_version(project_dir):
     """Read the evaluator-library pin: config.yml first, pyproject mirror.
 
@@ -56,7 +69,7 @@ def _get_evaluator_library_version(project_dir):
         # becoming a git OPTION, and about failing clearly (deep
         # evaluator, PR 3; same reasoning as _is_version_like for the
         # CLI pin, but git tags may start with a letter, e.g. v0.10.0).
-        if re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.\-_/+]*", candidate):
+        if _is_tag_like(candidate):
             return candidate
         print(f"❌ Invalid evaluator_library_version pin: {candidate!r}")
         print(f"   Source: {config_yml} — fix the pin (a git tag like v0.10.0),")
@@ -94,6 +107,12 @@ def _get_evaluator_library_version(project_dir):
         print(f"   Source: {config_yml} → evaluator_library_version")
         print(f"   Mirror: {pyproject} → [tool.adversarial] library_version")
         print("   Fix the config.yml pin, or pass --ref <tag>.")
+        sys.exit(1)
+    if not _is_tag_like(version):
+        # The mirror is hand-edited too — same gate as config.yml
+        # (CodeRabbit, PR #110).
+        print(f"❌ Invalid library_version pin in pyproject.toml: {version!r}")
+        print("   Expected a git tag (e.g. v0.10.0); fix the pin or pass --ref.")
         sys.exit(1)
     return version
 
@@ -317,7 +336,7 @@ def cmd_install_evaluators(args, project_dir):
             # Same tag-shape gate as the config.yml pin (CodeRabbit,
             # PR #110): an option-shaped value must fail clearly here,
             # never reach `git clone --branch` as a git option.
-            if not re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.\-_/+]*", version):
+            if not _is_tag_like(version):
                 print(f"❌ Invalid --ref value: {version!r}")
                 print("   Expected a git tag or branch name (e.g. v0.10.0).")
                 sys.exit(1)
@@ -434,18 +453,25 @@ def cmd_install_evaluators(args, project_dir):
             sys.exit(1)
 
         # Get actual commit hash for reproducibility
-        hash_result = subprocess.run(
-            ["git", "-C", tmpdir, "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            # Bounded + stdin-closed like every other git call in the
-            # package (CodeRabbit, PR #110).
-            timeout=CLI_PROBE_TIMEOUT,
-            stdin=subprocess.DEVNULL,
-        )
-        commit_hash = (
-            hash_result.stdout.strip()[:8] if hash_result.returncode == 0 else "unknown"
-        )
+        # Bounded + stdin-closed like every other git call; a wedged or
+        # failing rev-parse degrades to an unknown hash — it must never
+        # abort an install whose clone already succeeded (BugBot +
+        # CodeRabbit, PR #110).
+        try:
+            hash_result = subprocess.run(
+                ["git", "-C", tmpdir, "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=CLI_PROBE_TIMEOUT,
+                stdin=subprocess.DEVNULL,
+            )
+            commit_hash = (
+                hash_result.stdout.strip()[:8]
+                if hash_result.returncode == 0
+                else "unknown"
+            )
+        except (subprocess.TimeoutExpired, OSError):
+            commit_hash = "unknown"
 
         # Copy evaluators
         src = Path(tmpdir) / "evaluators"
