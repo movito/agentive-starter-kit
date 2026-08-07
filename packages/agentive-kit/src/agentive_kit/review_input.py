@@ -532,12 +532,21 @@ def _run_helper_api(repo: str, subject: str, context: str, *gh_args: str) -> str
 def _detect_helper_repo(root: Path, override: str) -> str:
     target = target_repo.resolve(root, override)
     if target.is_set:
-        return target.repo
-    repo = ghio.default_repo_slug() or ""
-    if not repo:
-        _err("ERROR: Could not determine GitHub repository")
-        _err("Run: gh repo set-default")
-        sys.exit(2)
+        repo = target.repo
+    else:
+        repo = ghio.default_repo_slug() or ""
+        if not repo:
+            _err("ERROR: Could not determine GitHub repository")
+            _err("Run: gh repo set-default")
+            sys.exit(2)
+    # Documented divergence (claude-code evaluator, PR 2): the bash
+    # helper interpolated OWNER/NAME into GraphQL with only the loose
+    # shape check — apply preflight's strict charset validation
+    # (KIT-0043) to every slug, whatever its source, before it can
+    # reach a query string.
+    if not re.match(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", repo):
+        _err(f"ERROR: repository must look like owner/name, got: '{repo}'")
+        sys.exit(1)
     return repo
 
 

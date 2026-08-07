@@ -188,6 +188,34 @@ class TestProvisioning:
         assert not (wt / ".serena" / "project.yml").exists()
         assert "Serena config generated" not in result.stdout
 
+    def test_symlinked_primary_keeps_logical_paths(self, tmp_path):
+        # o3 (PR 2 round 1): the bash original's cd+pwd kept the
+        # LOGICAL path (plain pwd prints $PWD), so a primary reached
+        # through a symlink provisions ask-worktrees/ beside the
+        # symlinked parent — never beside the physical location.
+        real = tmp_path / "real"
+        real.mkdir()
+        _primary_fixture(real)
+        link = tmp_path / "link"
+        link.symlink_to(real)
+        result = subprocess.run(
+            [
+                "bash",
+                str(link / "kit" / "scripts" / "local" / "new-worktree.sh"),
+                "KIT-1234",
+                "demo",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=_env(),
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        # the worktree lands under the LOGICAL parent (link/), which is
+        # physically real/ — and the banner names the logical path
+        assert (link / "ask-worktrees" / "KIT-1234").is_dir()
+        assert str(link / "ask-worktrees" / "KIT-1234") in result.stdout
+
     def test_ampersand_in_primary_dirname_survives_substitution(self, tmp_path):
         # BugBot round 2: bash >= 5.2 patsub_replacement expands & in
         # the replacement — the helper disables it so the name stays

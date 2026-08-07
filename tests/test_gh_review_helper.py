@@ -240,6 +240,16 @@ class TestValidation:
         assert result.returncode == 1
         assert "PRRT_" in result.stderr
 
+    def test_loose_but_unsafe_slug_refused_before_graphql(self, proj):
+        # KIT-0091 documented divergence (claude-code evaluator): the
+        # bash helper interpolated OWNER/NAME into GraphQL with only
+        # the loose shape check — a slug like 'a"b/c' passed it. The
+        # port applies preflight's strict charset validation (KIT-0043)
+        # to every slug before it can reach a query string.
+        result = proj.run({}, "--repo", 'a"b/c', "summary", "42")
+        assert result.returncode == 1
+        assert "must look like owner/name" in result.stderr
+
 
 # ── Happy paths ──────────────────────────────────────────────────────────
 class TestSubcommands:

@@ -66,10 +66,14 @@ def resolve_primary_root(anchor: Path) -> Path:
     common = gitio.git_common_dir(anchor)
     if common is None:
         _fail(f"Error: git could not resolve the common dir from {anchor}")
-    # cd+pwd equivalent: this value creates symlinks and worktrees, so
-    # the fully-resolved physical path is the safer one (unlike the
-    # doctor resolvers, which compare paths and must NOT resolve).
-    primary_root = common.resolve().parent
+    # LOGICAL path, no .resolve(): the bash original's cd+pwd kept the
+    # caller's symlinked view (plain pwd prints $PWD), so a primary
+    # under a symlinked home (~/code -> /Volumes/...) provisioned its
+    # worktrees beside the LOGICAL parent. Collapsing to the physical
+    # path here would scatter ask-worktrees/ somewhere the operator
+    # never looks (o3, PR 2 round 1). gitio.git_common_dir already
+    # normpaths without following symlinks.
+    primary_root = common.parent
     if not (primary_root / ".git").exists():
         _fail(
             f"Error: could not resolve primary clone root (got: {primary_root})",

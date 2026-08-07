@@ -251,6 +251,18 @@ class TestArgValidation:
         assert result.returncode == 1
         assert "not found" in result.stderr
 
+    def test_empty_base_equals_refused(self, proj):
+        result = proj.run(TASK, "--base=")
+        assert result.returncode == 1
+        assert "--base= requires a branch name" in result.stderr
+
+    def test_empty_format_equals_refused(self, proj):
+        # an empty --format= falls through to the diff|full vocabulary
+        # check (the bash original had no dedicated empty-value error)
+        result = proj.run(TASK, "--format=")
+        assert result.returncode == 1
+        assert "'diff' or 'full'" in result.stderr
+
 
 # ── Content edge cases ───────────────────────────────────────────────────
 class TestContentEdges:
