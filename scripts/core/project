@@ -813,6 +813,31 @@ def cmd_setup(args):
         print(f"❌ Failed to install dependencies: {e}")
         sys.exit(1)
 
+    # Dogfood (KIT-0090 F5): dev-install the in-repo agentive-kit
+    # package when present (kit checkout only — consumer copies of
+    # this script have no packages/ tree and skip silently). CI
+    # deliberately does NOT install it, so the source-tree fallback
+    # path stays exercised there (recorded decision).
+    pkg_dir = project_dir / "packages" / "agentive-kit"
+    if (pkg_dir / "pyproject.toml").is_file():
+        print("\n📦 Dev-installing agentive-kit (dogfood)...")
+        try:
+            result = subprocess.run(
+                [str(pip), "install", "-e", str(pkg_dir)],
+                capture_output=True,
+                text=True,
+                cwd=project_dir,
+            )
+            if result.returncode == 0:
+                print("✅ agentive-kit dev-installed (CLI: agentive)")
+            else:
+                tail = (result.stderr or "").strip().splitlines()
+                print("⚠️  agentive-kit dev-install failed (non-critical)")
+                if tail:
+                    print(f"   {tail[-1]}")
+        except Exception as e:
+            print(f"⚠️  agentive-kit dev-install failed (non-critical): {e}")
+
     # 5. Install pre-commit hooks (optional - skip if pre-commit not installed)
     pre_commit = venv_dir / "bin" / "pre-commit"
     if not install_hooks:
@@ -2712,6 +2737,11 @@ Project CLI - Agentive Starter Kit
 ==================================
 
 Usage: ./scripts/core/project <command> [options]
+
+NOTE: this script is becoming a shim over the agentive-kit package
+(KIT-ADR-0028). Extracted commands already delegate; install the CLI
+with `uv tool install agentive-kit` and prefer `agentive <command>`.
+The script remains for one release cycle after the package ships.
 
 Setup:
   setup [--force] [--no-hooks]  Create venv and install dependencies

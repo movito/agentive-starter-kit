@@ -1,0 +1,56 @@
+# Publish agentive-kit to PyPI (KIT-0090 F4, KIT-ADR-0028 phase 1).
+# Shape follows the adversarial-workflow precedent: tag-triggered,
+# build + publish, nothing else. Trusted publishing (OIDC) — configure
+# the PyPI trusted publisher for this repo/workflow before the first
+# tag: project "agentive-kit", owner movito, repo agentive-starter-kit,
+# workflow publish-agentive-kit.yml, environment pypi.
+name: Publish agentive-kit
+
+on:
+  push:
+    tags:
+      - "agentive-kit-v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Verify tag matches the package version
+        run: |
+          PKG_VERSION=$(python -c "import sys; sys.path.insert(0, 'packages/agentive-kit/src'); import agentive_kit; print(agentive_kit.__version__)")
+          TAG_VERSION="${GITHUB_REF_NAME#agentive-kit-v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match agentive_kit.__version__ ($PKG_VERSION)" >&2
+            exit 1
+          fi
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build packages/agentive-kit --outdir dist/
+      - name: Smoke-test the wheel
+        run: |
+          python -m pip install dist/*.whl
+          agentive version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write  # trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
