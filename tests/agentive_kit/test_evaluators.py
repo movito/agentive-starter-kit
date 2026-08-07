@@ -88,3 +88,17 @@ class TestLibraryPinReader:
             evaluators._get_evaluator_library_version(tmp_path)
         assert exc_info.value.code == 1
         assert "Invalid library_version" in capsys.readouterr().out
+
+    def test_non_string_pyproject_pin_is_rejected_without_traceback(
+        self, tmp_path, capsys
+    ):
+        # tomllib returns an int for `library_version = 1` — the gate
+        # must reject it cleanly, not raise TypeError (CodeRabbit,
+        # PR #110).
+        (tmp_path / "pyproject.toml").write_text(
+            "[tool.adversarial]\nlibrary_version = 1\n", encoding="utf-8"
+        )
+        with pytest.raises(SystemExit) as exc_info:
+            evaluators._get_evaluator_library_version(tmp_path)
+        assert exc_info.value.code == 1
+        assert "Invalid library_version" in capsys.readouterr().out

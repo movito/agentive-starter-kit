@@ -34,7 +34,12 @@ def _is_tag_like(value):
     args make shell injection impossible; this is about option
     injection and failing clearly.
     """
-    return bool(re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.\-_/+]*", value or ""))
+    # isinstance first: tomllib can hand back an int/bool/list for the
+    # mirror pin, and re.fullmatch would raise TypeError instead of the
+    # clean invalid-pin exit (CodeRabbit, PR #110).
+    return isinstance(value, str) and bool(
+        re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.\-_/+]*", value)
+    )
 
 
 def _get_evaluator_library_version(project_dir):
