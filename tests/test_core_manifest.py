@@ -140,7 +140,8 @@ class TestManifestConsistency:
 
     def test_scripts_core_count(self, manifest):
         count = len(manifest["files"]["scripts_core"])
-        assert count == 28, f"Expected 28 scripts_core entries, got {count}"
+        # 29 = 28 + doctor.d/35-handoffs-paths.py (KIT-0086 F2, PR KIT-0090/2)
+        assert count == 29, f"Expected 29 scripts_core entries, got {count}"
 
     def test_commands_core_count(self, manifest):
         count = len(manifest["files"]["commands_core"])
@@ -156,7 +157,8 @@ class TestManifestConsistency:
 
     def test_total_entry_count(self, manifest):
         total = sum(len(entries) for entries in manifest["files"].values())
-        assert total == 49, f"Expected 49 total entries, got {total}"
+        # 50 = 49 + doctor.d/35-handoffs-paths.py (KIT-0086 F2, PR KIT-0090/2)
+        assert total == 50, f"Expected 50 total entries, got {total}"
 
 
 def _planning_heredoc_core_version(engine_text: str) -> str | None:

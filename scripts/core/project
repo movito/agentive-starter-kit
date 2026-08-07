@@ -1540,6 +1540,22 @@ def _doctor_install(project_dir):
     return shape, profile, bots, errors
 
 
+# ── Doctor: extracted to the agentive-kit package (KIT-0090 PR 2) ──────────
+# The driver, per-shape/profile check inclusion, config-home resolution
+# and preset comparison live in agentive_kit.doctor. _doctor_install and
+# _normalize_bots above are KEPT here — cmd_sync's shape gate must work
+# package-free for consumers until phase 3 (recorded duplication; this
+# script retires in phase 4).
+
+
+# ── Inline doctor FALLBACK (KIT-0090 PR 2) ─────────────────────────────────
+# agentive_kit.doctor is canonical; this inline copy exists so a repo
+# WITHOUT the package (door-made consumers before the phase-2
+# package-install door, consumers syncing main pre-publish) still has a
+# working doctor. Recorded duplication — retires with this script in
+# phase 4. Keep in sync only via the package (fixes land there first).
+
+
 def _check_declared(check_path, keyword):
     """Tokens a doctor.d check declares via its `# <keyword>:` header
     line — keyword is "shapes" (KIT-0048) or "profiles" (KIT-0050 F5);
@@ -1976,6 +1992,37 @@ def cmd_doctor(args, project_dir):
     return 0
 
 
+def _kit_doctor():
+    """Import agentive_kit.doctor (installed copy → in-repo source);
+    returns None when neither exists — the caller falls back to the
+    inline driver below (package-less consumers keep a working
+    doctor)."""
+    try:
+        from agentive_kit import doctor
+
+        return doctor
+    except ModuleNotFoundError:
+        pass
+    pkg_src = (
+        Path(__file__).resolve().parent.parent.parent
+        / "packages"
+        / "agentive-kit"
+        / "src"
+    )
+    if pkg_src.is_dir() and str(pkg_src) not in sys.path:
+        sys.path.insert(0, str(pkg_src))
+        try:
+            from agentive_kit import doctor
+
+            return doctor
+        except ModuleNotFoundError:
+            pass
+    # No package anywhere: fall back to the inline driver above so
+    # package-less repos (door-made consumers pre-phase-2) keep a
+    # working doctor.
+    return None
+
+
 def cmd_sync(args, project_dir):
     """`project sync`: pull core files from upstream via the sync engine.
 
@@ -2398,7 +2445,9 @@ except Exception as e:
 
     elif command == "doctor":
         # Incident-mapped environment verifier (KIT-0046, ADR-0027 P4)
-        sys.exit(cmd_doctor(sys.argv[2:], project_dir))
+        _doc = _kit_doctor()
+        _run_doctor = _doc.cmd_doctor if _doc else cmd_doctor
+        sys.exit(_run_doctor(sys.argv[2:], project_dir))
 
     elif command == "sync-status":
         # Check Linear sync status

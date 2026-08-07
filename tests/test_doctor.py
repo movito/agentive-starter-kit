@@ -12,6 +12,7 @@ covers the git-facing tests — no per-module env handling here.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shlex
@@ -2446,3 +2447,101 @@ class TestGitVersionFloorCheck:
         assert (
             floor in row[0]
         ), f"README git row does not state the doctor floor {floor}: {row[0]}"
+
+
+# ── 35-handoffs-paths.py: agent-handoffs.json stale-path drift (KIT-0086 F2,
+# landed via KIT-0090 PR 2) ─────────────────────────────────────────────────
+
+
+def run_handoffs_check(root: Path) -> subprocess.CompletedProcess:
+    check = DOCTOR_D / "35-handoffs-paths.py"
+    return subprocess.run(
+        [sys.executable, str(check)],
+        env={**os.environ, "DOCTOR_ROOT": str(root)},
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+def _handoffs_fixture(tmp_path: Path, details_link: str, actual_folder: str) -> Path:
+    root = tmp_path / "root"
+    context = root / ".kit" / "context"
+    context.mkdir(parents=True)
+    tasks = root / ".kit" / "tasks"
+    (tasks / actual_folder).mkdir(parents=True)
+    (tasks / actual_folder / "KIT-1234-sample.md").write_text(
+        "**Status**: In Progress\n", encoding="utf-8"
+    )
+    (context / "agent-handoffs.json").write_text(
+        json.dumps({"planner": {"details_link": details_link}}) + "\n",
+        encoding="utf-8",
+    )
+    return root
+
+
+class TestHandoffsPathsCheck:
+    def test_fresh_path_passes(self, tmp_path):
+        root = _handoffs_fixture(
+            tmp_path, ".kit/tasks/3-in-progress/KIT-1234-sample.md", "3-in-progress"
+        )
+        result = run_handoffs_check(root)
+        assert "DOCTOR:35-handoffs-paths.py:PASS:" in result.stdout
+
+    def test_stale_path_warns_and_names_both_folders(self, tmp_path):
+        # The KIT-0086 drift shape: a branch-side move left the JSON
+        # pointing at 2-todo while the file lives in 3-in-progress.
+        root = _handoffs_fixture(
+            tmp_path, ".kit/tasks/2-todo/KIT-1234-sample.md", "3-in-progress"
+        )
+        result = run_handoffs_check(root)
+        line = [
+            ln
+            for ln in result.stdout.splitlines()
+            if ln.startswith("DOCTOR:35-handoffs-paths.py:WARN:")
+        ]
+        assert line, result.stdout
+        assert "2-todo/KIT-1234-sample.md" in line[0]
+        assert "3-in-progress/KIT-1234-sample.md" in line[0]
+        assert "KIT-0086" in line[0]
+
+    def test_gone_task_is_not_drift(self, tmp_path):
+        # A recorded path whose file exists in NO folder (archived or
+        # deleted task) is the planner's bookkeeping, not stale drift.
+        root = _handoffs_fixture(
+            tmp_path, ".kit/tasks/2-todo/KIT-9999-gone.md", "3-in-progress"
+        )
+        result = run_handoffs_check(root)
+        assert "DOCTOR:35-handoffs-paths.py:PASS:" in result.stdout
+
+    def test_missing_json_skips(self, tmp_path):
+        root = tmp_path / "root"
+        (root / ".kit" / "tasks" / "2-todo").mkdir(parents=True)
+        result = run_handoffs_check(root)
+        assert "DOCTOR:35-handoffs-paths.py:SKIP:" in result.stdout
+
+    def test_corrupt_json_warns_not_crashes(self, tmp_path):
+        root = _handoffs_fixture(
+            tmp_path, ".kit/tasks/3-in-progress/KIT-1234-sample.md", "3-in-progress"
+        )
+        (root / ".kit" / "context" / "agent-handoffs.json").write_bytes(b"\xff{broken")
+        result = run_handoffs_check(root)
+        assert "DOCTOR:35-handoffs-paths.py:WARN:" in result.stdout
+        assert "Traceback" not in result.stderr
+
+    def test_driver_runs_the_check(self, tmp_path):
+        # The check rides the standard driver contract — one real-driver
+        # pass over the real doctor.d proves registration (uses --root
+        # to keep the diagnosis off the developer's checkout).
+        root = _handoffs_fixture(
+            tmp_path, ".kit/tasks/3-in-progress/KIT-1234-sample.md", "3-in-progress"
+        )
+        result = subprocess.run(
+            [sys.executable, str(PROJECT_SCRIPT), "doctor", f"--root={root}"],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        # PASS specifically — a bare prefix match would also accept the
+        # not-executable FAIL shape (CodeRabbit, PR #109).
+        assert "DOCTOR:35-handoffs-paths.py:PASS:" in result.stdout
