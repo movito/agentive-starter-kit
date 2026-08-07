@@ -67,3 +67,12 @@ class TestLibraryPinReader:
             pytest.skip("no .adversarial/config.yml in this checkout")
         version = evaluators._get_evaluator_library_version(repo)
         assert version.startswith("v")
+
+    def test_option_shaped_pin_is_rejected_loudly(self, tmp_path, capsys):
+        # Deep evaluator (PR 3): a config.yml pin must never become a
+        # git OPTION (`--upload-pack=...`) — reject before the clone.
+        _cfg(tmp_path, "evaluator_library_version: --upload-pack=/bin/evil\n")
+        with pytest.raises(SystemExit) as exc_info:
+            evaluators._get_evaluator_library_version(tmp_path)
+        assert exc_info.value.code == 1
+        assert "Invalid evaluator_library_version" in capsys.readouterr().out

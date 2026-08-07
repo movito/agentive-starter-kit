@@ -49,7 +49,19 @@ def _get_evaluator_library_version(project_dir):
         re.MULTILINE,
     )
     if match:
-        return match.group(1)
+        candidate = match.group(1)
+        # A hand-edited pin reaches `git clone --branch <pin>` as a
+        # LIST element (never a shell), so this is not about shell
+        # injection — it is about a value like `--upload-pack=...`
+        # becoming a git OPTION, and about failing clearly (deep
+        # evaluator, PR 3; same reasoning as _is_version_like for the
+        # CLI pin, but git tags may start with a letter, e.g. v0.10.0).
+        if re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z.\-_/+]*", candidate):
+            return candidate
+        print(f"❌ Invalid evaluator_library_version pin: {candidate!r}")
+        print(f"   Source: {config_yml} — fix the pin (a git tag like v0.10.0),")
+        print("   or pass an explicit version with --ref <tag>.")
+        sys.exit(1)
 
     pyproject = Path(project_dir) / "pyproject.toml"
     try:
