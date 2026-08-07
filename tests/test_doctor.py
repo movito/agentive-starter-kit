@@ -2542,4 +2542,6 @@ class TestHandoffsPathsCheck:
             text=True,
             timeout=120,
         )
-        assert "DOCTOR:35-handoffs-paths.py:" in result.stdout
+        # PASS specifically — a bare prefix match would also accept the
+        # not-executable FAIL shape (CodeRabbit, PR #109).
+        assert "DOCTOR:35-handoffs-paths.py:PASS:" in result.stdout

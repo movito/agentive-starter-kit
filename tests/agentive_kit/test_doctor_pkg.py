@@ -87,3 +87,28 @@ class TestPackagedChecksExecBitFallback:
         out = capsys.readouterr().out
         assert "DOCTOR:10-inert.py:FAIL:check file is not executable" in out
         assert code == 1
+
+    def test_sh_check_runs_via_bash_fallback(self, tmp_path, monkeypatch, capsys):
+        checks = tmp_path / "checks"
+        checks.mkdir()
+        stub = checks / "10-stub.sh"
+        stub.write_text(
+            "echo 'DOCTOR:10-stub.sh:PASS:bash fallback ran'\n", encoding="utf-8"
+        )  # no exec bit
+        monkeypatch.setattr(doctor, "PACKAGED_CHECKS_DIR", checks)
+        (tmp_path / "root").mkdir()
+        code = doctor.cmd_doctor([], tmp_path / "root")
+        assert "DOCTOR:10-stub.sh:PASS:bash fallback ran" in capsys.readouterr().out
+        assert code == 0
+
+    def test_unmapped_suffix_still_fails(self, tmp_path, monkeypatch, capsys):
+        checks = tmp_path / "checks"
+        checks.mkdir()
+        (checks / "10-stub.rb").write_text("puts 'nope'\n", encoding="utf-8")
+        monkeypatch.setattr(doctor, "PACKAGED_CHECKS_DIR", checks)
+        (tmp_path / "root").mkdir()
+        code = doctor.cmd_doctor([], tmp_path / "root")
+        assert "DOCTOR:10-stub.rb:FAIL:check file is not executable" in (
+            capsys.readouterr().out
+        )
+        assert code == 1

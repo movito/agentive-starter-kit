@@ -118,8 +118,11 @@ if [ -z "$REMOTE_URL" ]; then
     exit 0
 fi
 
+# Never print the raw URL: embedded credentials/tokens must not reach
+# doctor output or CI logs (CodeRabbit, PR #109) — redact userinfo.
+REMOTE_URL_DISPLAY="$(printf '%s' "$REMOTE_URL" | sed -E 's#(://)[^/@]*@#\1<redacted>@#')"
 if ! command -v gh >/dev/null 2>&1; then
-    echo "DOCTOR:config-home:WARN:cannot verify visibility of $REMOTE_URL (gh not installed) — if that repo is public, your operator config is exposed"
+    echo "DOCTOR:config-home:WARN:cannot verify visibility of $REMOTE_URL_DISPLAY (gh not installed) — if that repo is public, your operator config is exposed"
     exit 0
 fi
 
@@ -129,13 +132,13 @@ VISIBILITY="$(gh repo view --json visibility --jq .visibility -- "$REMOTE_URL" 2
 VISIBILITY="$(printf '%s' "$VISIBILITY" | tr '[:upper:]' '[:lower:]')"
 case "$VISIBILITY" in
     private)
-        echo "DOCTOR:config-home:PASS:config home remote is private ($REMOTE_URL)"
+        echo "DOCTOR:config-home:PASS:config home remote is private ($REMOTE_URL_DISPLAY)"
         ;;
     "")
-        echo "DOCTOR:config-home:WARN:cannot verify visibility of $REMOTE_URL (gh query failed) — if that repo is public, your operator config is exposed"
+        echo "DOCTOR:config-home:WARN:cannot verify visibility of $REMOTE_URL_DISPLAY (gh query failed) — if that repo is public, your operator config is exposed"
         ;;
     *)
-        echo "DOCTOR:config-home:WARN:config home remote is $VISIBILITY ($REMOTE_URL) — your operator config is exposed; make the repo private"
+        echo "DOCTOR:config-home:WARN:config home remote is $VISIBILITY ($REMOTE_URL_DISPLAY) — your operator config is exposed; make the repo private"
         ;;
 esac
 exit 0

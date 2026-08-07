@@ -1993,9 +1993,10 @@ def cmd_doctor(args, project_dir):
 
 
 def _kit_doctor():
-    """Import agentive_kit.doctor with the same fallback chain as
-    _kit_lifecycle (installed copy → in-repo source → loud install
-    instruction)."""
+    """Import agentive_kit.doctor (installed copy → in-repo source);
+    returns None when neither exists — the caller falls back to the
+    inline driver below (package-less consumers keep a working
+    doctor)."""
     try:
         from agentive_kit import doctor
 
