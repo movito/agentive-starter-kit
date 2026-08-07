@@ -60,7 +60,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from agentive_kit import ghio, gitio, markers
+from agentive_kit import ghio, gitio, markers, target_repo
 from agentive_kit.models import GateResult
 from agentive_kit.root import RootNotFoundError, find_project_root
 
@@ -140,14 +140,6 @@ class _Args:
     repo: str = ""
 
 
-@dataclass
-class _TargetRepo:
-    """Cross-repo routing resolved from --repo or CLAUDE.md (ID2-0014)."""
-
-    repo: str = ""  # owner/name; empty in single-repo mode
-    path: str = ""  # local working-tree path; empty unless CLAUDE.md set it
-
-
 def _parse_args(argv: list[str]) -> _Args:
     """Faithful port of the bash flag loop (last flag wins; exact
     refusal messages and streams)."""
@@ -196,70 +188,16 @@ def _parse_args(argv: list[str]) -> _Args:
     return args
 
 
-def _parse_target_repo(root: Path, override: str) -> _TargetRepo:
-    """Port of lib/target_repo.sh: --repo override wins over CLAUDE.md's
-    ``## Target Repository`` section; the section is optional."""
-    target = _TargetRepo()
-    if override:
-        target.repo = override
-        # Path stays empty on override: the caller knows the repo but
-        # not necessarily the local working tree.
-    else:
-        claude_md = root / "CLAUDE.md"
-        if claude_md.is_file():
-            try:
-                text = claude_md.read_text(encoding="utf-8")
-            except OSError:
-                text = ""
-            # \r? before $: the bash awk header pattern ended in
-            # [[:space:]]* which swallowed a CR, so CRLF-checked-out
-            # CLAUDE.md files parsed there — they must parse here too
-            # (o3, PR 1 round 2).
-            section_match = re.search(
-                r"^## Target Repository[ \t]*\r?$(.*?)(?=^## |\Z)",
-                text,
-                re.MULTILINE | re.DOTALL,
-            )
-            if section_match:
-                # Per-LINE matching, like the sed originals: a
-                # multiline regex here lets [^`]* cross the newline and
-                # capture garbage between two bullets (caught by
-                # test_preflight_pkg.py). Greedy .* before the backtick
-                # keeps sed's last-span-on-the-line pick; first
-                # matching line wins (head -1).
-                for line in section_match.group(1).splitlines():
-                    if not target.repo:
-                        gh_match = re.match(r"- \*\*GitHub\*\*:.*`([^`]*)`", line)
-                        if gh_match:
-                            target.repo = gh_match.group(1)
-                    if not target.path:
-                        path_match = re.match(r"- \*\*Path\*\*:.*`([^`]*)`", line)
-                        if path_match:
-                            target.path = path_match.group(1)
-
-    # Layer 1 of two (both ported from bash): this is target_repo.sh's
-    # looser shape check. The STRICT charset validation in main() —
-    # ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ — re-validates every slug,
-    # whatever its source, and MUST keep running before OWNER/NAME are
-    # interpolated into the GraphQL query (KIT-0043, o3; claude-code
-    # evaluator this PR). Never route a slug to gh without passing
-    # through main()'s check.
-    if target.repo and not re.match(r"^[^/\s]+/[^/\s]+$", target.repo):
-        print(
-            f"ERROR: target repo must be in owner/name format, got: '{target.repo}'",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    if target.path:
-        tree = Path(root, target.path)
-        if not (tree / ".git").is_dir() and not (tree / ".git").is_file():
-            print(
-                f"WARNING: TARGET_PATH '{target.path}' is not a git working tree "
-                "— git operations via $GIT_DIR_ARG will fail",
-                file=sys.stderr,
-            )
-    return target
+def _parse_target_repo(root: Path, override: str) -> target_repo.TargetRepo:
+    """Cross-repo routing — delegated to agentive_kit.target_repo (the
+    lib/target_repo.sh port both gate surfaces share). Layer 1 of two:
+    the module applies the lib's looser shape check; main()'s STRICT
+    charset validation — ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ — MUST keep
+    running before OWNER/NAME are interpolated into the GraphQL query
+    (KIT-0043, o3; claude-code evaluator PR 1). Never route a slug to
+    gh without passing through main()'s check.
+    """
+    return target_repo.resolve(root, override)
 
 
 def _read_bots_declaration(root: Path) -> tuple[str, bool]:

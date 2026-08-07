@@ -34,9 +34,13 @@ Task Management:
   validate             Validate all task statuses match folders
 
 Gates:
-  preflight [flags]    Run the 7 completion gates for the current PR
-                       (--pr N --task ID --repo owner/name; see
-                       'agentive preflight --help')
+  preflight [flags]         Run the 7 completion gates for the current PR
+                            (--pr N --task ID --repo owner/name; see
+                            'agentive preflight --help')
+  review-input <id> [flags] Assemble the adversarial code-review input
+                            file (--base <branch> --format diff|full)
+  review-helper <sub> ...   gh review helper (reply/resolve/threads/
+                            comments/summary; --repo owner/name)
 
 Other:
   help                 Show this help message
@@ -115,6 +119,18 @@ def main(argv: list[str] | None = None) -> None:
 
         preflight.main(args[1:])
         return  # unreachable — preflight.main() always sys.exit()s
+
+    if command == "review-input":
+        from agentive_kit import review_input
+
+        review_input.main(args[1:])
+        return  # unreachable — review_input.main() always sys.exit()s
+
+    if command == "review-helper":
+        from agentive_kit import review_input
+
+        review_input.helper_main(args[1:])
+        return  # unreachable — helper_main() always sys.exit()s
 
     if command == "validate":
         if len(args) != 1:
