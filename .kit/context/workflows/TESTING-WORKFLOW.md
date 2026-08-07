@@ -125,6 +125,18 @@ pre-merge checks), go deeper than pass/fail:
 - **Total / Passing / Failing / Xfailed / Skipped**: counts from the run
 - **Regressions**: none (any regression blocks merge)
 
+## Full-suite rule for delegation changes (KIT-0090)
+
+Any change to how `scripts/core/project` (or a shim) RESOLVES or
+DELEGATES commands — package-vs-inline fallback order, root discovery,
+command dispatch — must run the FULL suite before push, not just the
+pytest-fast hook. The fast hook deselects the slow door-E2E tests, so a
+delegation break that only manifests in door-made consumer repos passes
+every local gate and surfaces first in CI (KIT-0090 PR 2: doctor
+delegation without the inline fallback broke door-made consumers; the
+dispatched full run caught it, the fast hook could not). The fast hook
+is a commit-latency tool, not a merge gate.
+
 ## Failing Tests
 
 ### test_module.py::test_function_name

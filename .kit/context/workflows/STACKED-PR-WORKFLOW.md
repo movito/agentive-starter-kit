@@ -106,6 +106,24 @@ nudge 1 gets with a real change.
   `workflow_dispatch`). The run attaches to the head SHA but may not
   render in the PR's checks rollup — the run on the branch is the
   proof; say so when giving a merge go.
+- **ROOT CAUSE DECODED + FIXED (2026-08-07, KIT-0090)**: the
+  `branches:` filter on `pull_request` matches the PR's **base**
+  branch, so stacked PRs (feature-branch bases) can never trigger —
+  #109–#111 produced zero events while stacked, then fired normally
+  after retarget-to-main. The filter is now removed from `test.yml`;
+  stacked PRs trigger natively. WATCH: if a post-fix PR still produces
+  no run (the #105/#108 residual class — base was already main), that
+  is a genuine event-delivery flake: use the dispatch fallback and
+  report it to the planner for a reproduction task.
+- **Force-push permission fallback**: `git push --force-with-lease` is
+  deliberately operator-gated (denied for agents). The PREFERRED
+  fallback is relaying the exact command to the operator via the `!`
+  prefix (seconds of latency, KIT-0090 used it across three
+  retargets) — NOT branch replacement, which loses review history.
+  Note with a narrow fetch refspec (`main` only), bare
+  `--force-with-lease` fails with "stale info" (no remote-tracking
+  ref); use an explicit lease:
+  `git push --force-with-lease=<branch>:<sha-from-git-ls-remote> origin <branch>`.
 - **Auto-retarget only happens when the merged base BRANCH IS
   DELETED.** If PR 1's branch survives its squash-merge, PR 2 keeps
   pointing at the dead branch and presents as "ready to merge" —

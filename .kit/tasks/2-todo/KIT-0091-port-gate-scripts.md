@@ -56,6 +56,12 @@ shipped one.
 - **F4 — falsifiability discipline**: every ported gate test is broken
   once against its guarded condition (house rule). The stub-git and
   `GIT_*`-isolation fixtures apply.
+- **F5 — narrow-refspec doctor WARN** (KIT-0090 retro, incident
+  closure #2): while porting the worktree/provisioning surface, extend
+  the worktree-provisioning doctor check to WARN when
+  `remote.origin.fetch` covers only `main` — cite the KIT-0090
+  `--force-with-lease` "stale info" incident in the check header; the
+  explicit-lease push pattern is documented in STACKED-PR-WORKFLOW.md.
 
 ## Acceptance Criteria
 

@@ -300,6 +300,27 @@ cat .adversarial/logs/<TASK-ID>-code-review-input--claude-code.md
 > binding one):
 > `grep -o -E '\*\*[A-Z_]+\*\*' .adversarial/evaluators/<provider>/<name>/evaluator.yml | sort -u`
 
+## Oscillation protocol: disposition tables + the deep-round cap (KIT-0090)
+
+Deep evaluators can REVERSE their own instructions across rounds — on
+KIT-0090, o3 demanded a boundary block in round 4 and called that same
+block a regression in round 5, and forbade-then-demanded generic
+`ImportError` catching across PRs. Chasing a green verdict through
+oscillation loops forever. The named procedure:
+
+1. **Keep a per-PR disposition table** in the review record: every
+   finding → ACCEPTED (with the fix commit) or DECLINED (with the
+   repro/reason). Refuting a repeated or reversed finding then costs a
+   one-line citation of your own record, not a re-investigation.
+2. **Cap deep-evaluator rounds at ~2 per PR.** After two rounds,
+   further deep rounds show diminishing returns (both KIT-0090
+   oscillations occurred past that point). Stop, record the final
+   disposition of anything open, and cite the table in the PR body.
+   The cheap evaluator can keep running — cost≠signal (KIT-0084
+   insight): the fast tier finds real bugs without oscillating.
+3. A verdict below APPROVED with all findings dispositioned-and-cited
+   is a legitimate gate-pass; say so explicitly in the merge-go.
+
 ## Step 4: Persist Output
 
 Concatenate all evaluator outputs into a single review artifact tracked
