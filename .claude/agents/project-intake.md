@@ -151,8 +151,12 @@ and report — do not continue against the old path.
 
 All commands target the code folder explicitly (`git -C <code-path>`).
 
-1. If the folder is not already a git repo, `git -C <code-path> init`.
-   If it is one, keep its history — do not re-init. If the existing
+1. If the folder is not already a git repo, `git -C <code-path> init
+   -b main` (`-b` needs git ≥ 2.28 — on older git, init then
+   `git -C <code-path> branch -m main`). A machine without
+   `init.defaultBranch=main` would otherwise land the first push on
+   `master` (KIT-0081 F3, happened live). If it is one, keep its
+   history — do not re-init. If the existing
    repo's working tree is dirty, show `git -C <code-path> status
    --short` and ask: commit everything as the import, or stop for the
    user to review first. If it is clean and already committed, skip
@@ -184,7 +188,15 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    the split pair keeps planning artifacts out of this repo precisely
    so it CAN be published later (`docs/CROSS-REPO-PATTERN.md`) —
    starting private costs nothing and flipping later is one setting.
-5. First check for an existing remote: if the repo already has an
+5. Before any push, verify the branch:
+   `git -C <code-path> branch --show-current` must print `main`. If it
+   prints `master` (a pre-existing repo, or an init that predates
+   step 1's `-b main`), rename first: `git -C <code-path> branch -m
+   main` (KIT-0081 F3 — a `master` first push needed a remote
+   default-branch PATCH and branch deletion to undo). Any OTHER name
+   (`dev`, a feature branch): ask the user — an existing repo's branch
+   layout is theirs; never silently rename a non-default branch.
+   Then check for an existing remote: if the repo already has an
    `origin`, do NOT run `gh repo create` — derive `owner/repo` from
    it per the "already has a remote" rules in Edge cases (github.com
    origins only). Otherwise:
