@@ -104,10 +104,8 @@ From the agentive-starter-kit directory:
   --target-path ../my-project \
   --target-github acme/my-project
 
-# Or via the create-project agent (recommended for full-kit planning
-# repos): invoke it in a new tab and tell it the target directory,
-# project name, task prefix, and that it will manage an existing
-# codebase at <path>
+# Or via /new-project (the one user-facing entry, KIT-0093): it
+# interviews you in plain language and drives this same door run
 ```
 
 **Graduating a prototype?** (Cowork conversation → split pair, KIT-0066)

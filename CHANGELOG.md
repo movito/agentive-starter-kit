@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The door switches to package-install mode — KIT-ADR-0028 phase 2**
+  (KIT-0093, agentive-kit 0.3.0): `bootstrap --new` (both shapes)
+  scaffolds CONTENT — `.kit/` skeleton with workflow docs,
+  `agent-handoffs.json`, `current-state.json`, `docs/adr/`, a README
+  naming the repo's purpose, `.adversarial/config.yml` born on the
+  kit's pins, a minimal pre-commit delegating to `agentive validate`,
+  and the per-repo check hook — and copies **nothing else**: lifecycle
+  scripts come from the `agentive-kit` package (verified on PATH or
+  `uv tool install` instructed), agent/skill/command bodies from the
+  `agentive-workflow` plugin (registry-verified or install lines
+  printed). New `engine-scaffold.sh`; `engine-export.sh` retired (its
+  functions enumerated in PR #116's decision table);
+  `engine-consumer.sh --packaged` keeps the CLAUDE.md record's one
+  writer while shipping no `kit_markers.py` copy. The scaffold
+  acceptance test (KIT-0082, landed RED in PR #115) pins the contract:
+  zero copies, verify-or-instruct lines, env invariants, reference
+  closure, entry flow.
+- **`agentive` CLI gains `doctor` and `install-evaluators`**
+  (agentive-kit 0.3.0): the packaged doctor driver reads the
+  kit-install record in-process (`agentive_kit.markers`) when no
+  repo-local `kit_markers.py` exists; doctor checks 30/31/55 print
+  world-matched fix commands. `GEMINI_API_KEY` corrected in the
+  evaluator installer tail (KIT-0081 F4 — the runtime always read
+  `GEMINI_API_KEY`).
+- **Entry UX (absorbing KIT-0078/KIT-0087)**: `/new-project` is the
+  one user-facing entry; the `create-project` agent folded away (its
+  competing `pipx`/per-evaluator install stories died with it — the
+  provisioning story has exactly one home, `agentive
+  install-evaluators`); `project-intake` writes project context into
+  repo-owned CLAUDE.md sections (KIT-ADR-0025) and fills `.env`
+  `TASK_PREFIX`; README/STARTING-A-PROJECT/UPDATING-YOUR-PROJECT tell
+  the packaged story, including the sanctioned rename/retarget
+  procedure (KIT-0081 F6).
+- **Preset guard retightened** (KIT-0092 Part B, executed with phase
+  2): the never-distributed probe checks the config-home location
+  (`agentive-config`) only, not the package name; ALLOWED back to the
+  three genuine readers.
+
 ### Added
 
 - **`agentive-kit` package skeleton — KIT-ADR-0028 phase 1, PR 1**
