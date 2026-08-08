@@ -1357,8 +1357,11 @@ class TestMissingDependencyInstructions:
         assert "Install the agent plugin:" in out
         assert "claude plugin marketplace add movito/agentive-skills" in out
         assert "claude plugin install agentive-workflow@agentive-skills" in out
-        # Nothing claimed verified, and doctor honestly not run
-        assert "agentive CLI:" not in out
+        # Nothing claimed VERIFIED, and doctor honestly not run — the
+        # rejection targets the positive-verification forms only, so a
+        # future honest status line (e.g. 'agentive CLI: missing')
+        # would not trip it (CodeRabbit, PR #117)
+        assert not re.search(r"agentive CLI:.*\(verified\)", out)
         assert "agent plugin: verified" not in out
         assert "Doctor verdict:" not in out
 
