@@ -108,8 +108,39 @@ def _doctor_install(project_dir):
     """
     kit_markers = project_dir / "scripts" / "local" / "kit_markers.py"
     claude_md = project_dir / "CLAUDE.md"
-    if not kit_markers.exists() or not claude_md.exists():
+    if not claude_md.exists():
         return "single", "python", None, []
+    if not kit_markers.exists():
+        # Packaged repos (KIT-0093) ship no kit_markers.py copy — the
+        # reader travels with the package (agentive_kit.markers).
+        # Absent region keeps the single/python back-compat default;
+        # an unreadable file or unbalanced markers fail loud, exactly
+        # like the script path (BugBot, PR #116).
+        from agentive_kit import markers
+
+        try:
+            text = claude_md.read_text(encoding="utf-8")
+        except OSError as exc:
+            detail = f"shape record unreadable ({exc.__class__.__name__})"
+            return None, None, None, [("shape-record", detail)]
+        region = markers.extract_region(text, "kit-install")
+        if region is None:
+            if "BEGIN KIT-LOCAL: kit-install" in text:
+                return (
+                    None,
+                    None,
+                    None,
+                    [
+                        (
+                            "shape-record",
+                            "kit-install region malformed (unbalanced "
+                            "markers) — running the full check set",
+                        )
+                    ],
+                )
+            return "single", "python", None, []
+        region_text = region
+        return _parse_install_record(region_text)
     try:
         result = subprocess.run(
             [
@@ -147,10 +178,17 @@ def _doctor_install(project_dir):
                 )
             ],
         )
+    return _parse_install_record(result.stdout)
+
+
+def _parse_install_record(region_text):
+    """Parse a kit-install region body into (shape, profile, bots,
+    errors) — shared by the script path and the packaged in-process
+    reader (KIT-0093), so the two can never disagree on semantics."""
     raw_shape = None
     raw_profile = None
     raw_bots = None
-    for line in result.stdout.splitlines():
+    for line in region_text.splitlines():
         stripped = line.strip()
         if stripped.startswith("shape:") and raw_shape is None:
             raw_shape = stripped.partition(":")[2].strip()

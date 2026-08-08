@@ -112,3 +112,46 @@ class TestPackagedChecksExecBitFallback:
             capsys.readouterr().out
         )
         assert code == 1
+
+
+class TestPackagedInstallRecordReader:
+    """KIT-0093 (BugBot, PR #116): packaged repos ship no
+    scripts/local/kit_markers.py — the record reader travels with the
+    package, and the two paths share one parser."""
+
+    def _claude_md(self, tmp_path, body):
+        (tmp_path / "CLAUDE.md").write_text(body, encoding="utf-8")
+        return tmp_path
+
+    def test_record_read_without_kit_markers_copy(self, tmp_path):
+        root = self._claude_md(
+            tmp_path,
+            "# P\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: planning\nprofile: none\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+        )
+        assert doctor._doctor_install(root) == ("planning", "none", None, [])
+
+    def test_bots_line_read_without_kit_markers_copy(self, tmp_path):
+        root = self._claude_md(
+            tmp_path,
+            "# P\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: single\nprofile: python\nbots: coderabbit\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+        )
+        shape, profile, bots, errors = doctor._doctor_install(root)
+        assert (shape, profile, errors) == ("single", "python", [])
+        assert bots == ["coderabbit"] or bots == "coderabbit"
+
+    def test_absent_region_keeps_backcompat_default(self, tmp_path):
+        root = self._claude_md(tmp_path, "# P\nno region here\n")
+        assert doctor._doctor_install(root) == ("single", "python", None, [])
+
+    def test_unbalanced_markers_fail_loud_not_default(self, tmp_path):
+        root = self._claude_md(
+            tmp_path,
+            "# P\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: planning\n",
+        )
+        shape, profile, bots, errors = doctor._doctor_install(root)
+        assert shape is None
+        assert errors and "malformed" in errors[0][1]
