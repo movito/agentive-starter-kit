@@ -1,6 +1,9 @@
 # KIT-0070: Linear-sync script hardening — dry-run, arg strictness, visible logs
 
-**Status**: Backlog
+> **Archived (2026-08-08, backlog review — operator-approved,
+> front-running ADR-0028 phase 4 deliberately)**: hardens a feature this repo has never used — verified 2026-08-08: all 29 completed task files still carry the unfilled 'automatically backfilled after first sync' boilerplate; no Linear ID has ever been written. Revive condition: Linear sync is actually turned on (and note the script now lives in agentive-kit — re-scope to the package module then).
+
+**Status**: Canceled
 **Priority**: low
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours

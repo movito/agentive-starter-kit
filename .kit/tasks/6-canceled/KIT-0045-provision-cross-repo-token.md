@@ -1,6 +1,9 @@
 # KIT-0045: Provision CROSS_REPO_TOKEN and re-enable core-scripts push sync
 
-**Status**: Backlog
+> **Archived (2026-08-08, backlog review — operator-approved,
+> front-running ADR-0028 phase 4 deliberately)**: provisions a token for the core-scripts push-sync pipeline, which phase 4 retires; consumers now get scripts from PyPI (agentive-kit). Revive only if some future workflow needs cross-repo Actions pushes for a NON-sync purpose.
+
+**Status**: Canceled
 **Priority**: low (rises to high when the downstream phase starts)
 **Assigned To**: unassigned (step 1–2 are operator-only)
 **Estimated Effort**: 30 minutes + PR-tending commitment

@@ -1,6 +1,9 @@
 # KIT-0051: Close the kit_markers.py seeded-not-synced drift gap
 
-**Status**: Backlog
+> **Archived (2026-08-08, backlog review — operator-approved,
+> front-running ADR-0028 phase 4 deliberately)**: the seeded-not-synced drift lives in agent-file marker regions, which retire with the agent copies in KIT-0093 F1; remaining CLAUDE.md-region behavior is owned there. Revive only if marker regions survive the door switch in a form that can still drift.
+
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours

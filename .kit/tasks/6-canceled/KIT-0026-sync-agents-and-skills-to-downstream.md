@@ -1,6 +1,9 @@
 # KIT-0026: Sync Agent Definitions and Skills to Downstream Repos
 
-**Status**: Backlog
+> **Archived (2026-08-08, backlog review — operator-approved,
+> front-running ADR-0028 phase 4 deliberately)**: the plugin is the ONLY agent/skill channel by accepted decision (KIT-ADR-0028 §1); push-syncing agent copies is the mechanism being dismantled. No revive condition — the premise is retired, not deferred.
+
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-4 hours

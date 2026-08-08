@@ -1,6 +1,9 @@
 # KIT-0063: Make the consumer-boundary inventory bidirectional
 
-**Status**: Backlog
+> **Archived (2026-08-08, backlog review — operator-approved,
+> front-running ADR-0028 phase 4 deliberately)**: inventories the consumer copy boundary; the packaged world has no copy boundary to inventory. No revive condition.
+
+**Status**: Canceled
 **Priority**: low
 **Assigned To**: unassigned
 **Estimated Effort**: <1 hour

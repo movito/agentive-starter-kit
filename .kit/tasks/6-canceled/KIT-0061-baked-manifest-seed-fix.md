@@ -1,6 +1,9 @@
 # KIT-0061: Fix the 2.0.0 consumer-manifest seed + guard EVERY baked manifest
 
-**Status**: Backlog
+> **Archived (2026-08-08, backlog review — operator-approved,
+> front-running ADR-0028 phase 4 deliberately)**: the door ships no consumer manifest at all after KIT-0093, and consumers created before it are corrected by phase 3 migration; the bug's remaining exposure window is the days until the door switch lands. Operator accepted that window knowingly.
+
+**Status**: Canceled
 **Priority**: high (raised 2026-07-28 — PR #100 gate evidence: the consumer-shape heredoc at engine-consumer.sh:~513 seeds core_version 2.0.0 with a pre-doctor file list; fresh single-shape consumers get a stale manifest until first sync. Must land BEFORE the downstream pass, and re-verify against core 4.0.0.)
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours
