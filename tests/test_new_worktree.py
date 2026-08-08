@@ -30,6 +30,23 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HELPER = REPO_ROOT / "scripts" / "local" / "new-worktree.sh"
 SERENA_TEMPLATE = REPO_ROOT / ".serena" / "project.yml.template"
+_PKG_SRC = REPO_ROOT / "packages" / "agentive-kit" / "src"
+
+
+def _env(extra: dict[str, str] | None = None) -> dict[str, str]:
+    """Subprocess env for helper runs. Since the KIT-0091 delegation
+    the helper imports agentive_kit — fixture primaries carry no
+    packages/ tree, so point PYTHONPATH at the in-repo source (prepend,
+    preserving anything inherited)."""
+    env = dict(os.environ)
+    if _PKG_SRC.is_dir():
+        inherited = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (
+            f"{_PKG_SRC}{os.pathsep}{inherited}" if inherited else str(_PKG_SRC)
+        )
+    env.update(extra or {})
+    return env
+
 
 if not HELPER.exists():
     pytest.skip(
@@ -116,6 +133,7 @@ def _run_helper(primary: Path, *args: str) -> subprocess.CompletedProcess:
         capture_output=True,
         text=True,
         timeout=60,
+        env=_env(),
     )
 
 
@@ -169,6 +187,34 @@ class TestProvisioning:
         wt = tmp_path / "ask-worktrees" / "KIT-1234"
         assert not (wt / ".serena" / "project.yml").exists()
         assert "Serena config generated" not in result.stdout
+
+    def test_symlinked_primary_keeps_logical_paths(self, tmp_path):
+        # o3 (PR 2 round 1): the bash original's cd+pwd kept the
+        # LOGICAL path (plain pwd prints $PWD), so a primary reached
+        # through a symlink provisions ask-worktrees/ beside the
+        # symlinked parent — never beside the physical location.
+        real = tmp_path / "real"
+        real.mkdir()
+        _primary_fixture(real)
+        link = tmp_path / "link"
+        link.symlink_to(real)
+        result = subprocess.run(
+            [
+                "bash",
+                str(link / "kit" / "scripts" / "local" / "new-worktree.sh"),
+                "KIT-1234",
+                "demo",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=_env(),
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        # the worktree lands under the LOGICAL parent (link/), which is
+        # physically real/ — and the banner names the logical path
+        assert (link / "ask-worktrees" / "KIT-1234").is_dir()
+        assert str(link / "ask-worktrees" / "KIT-1234") in result.stdout
 
     def test_ampersand_in_primary_dirname_survives_substitution(self, tmp_path):
         # BugBot round 2: bash >= 5.2 patsub_replacement expands & in
@@ -246,7 +292,7 @@ class TestOldGitResolution:
             capture_output=True,
             text=True,
             timeout=30,
-            env={**os.environ, "PATH": _old_git_path(tmp_path)},
+            env=_env({"PATH": _old_git_path(tmp_path)}),
         )
         assert result.stdout.splitlines()[0] == "--path-format=absolute"
         assert result.returncode == 0, "2.30.x exits 0 — that is what made it silent"
@@ -266,7 +312,7 @@ class TestOldGitResolution:
             capture_output=True,
             text=True,
             timeout=60,
-            env={**os.environ, "PATH": _old_git_path(tmp_path)},
+            env=_env({"PATH": _old_git_path(tmp_path)}),
         )
         assert result.returncode == 0, (
             f"S4 regressed — helper died on git 2.30.x\n"
@@ -297,7 +343,7 @@ class TestOldGitResolution:
             capture_output=True,
             text=True,
             timeout=60,
-            env={**os.environ, "PATH": _old_git_path(tmp_path)},
+            env=_env({"PATH": _old_git_path(tmp_path)}),
         )
         assert modern.returncode == 0, modern.stderr
         assert old.returncode == 0, old.stderr

@@ -5,7 +5,7 @@
 **Date**: 2026-08-07
 **From**: planner-f5
 **To**: feature-developer (f5 variant recommended — rewrite with parity contracts)
-**Task**: `.kit/tasks/3-in-progress/KIT-0091-port-gate-scripts.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0091-port-gate-scripts.md`
 **Status**: Ready — phase 1b; agentive-kit 0.1.0 is live, this completes phase 1's module list
 **Evaluation**: arch-review-fast APPROVED 2026-08-07, round 2 —
 `.adversarial/logs/KIT-0091-port-gate-scripts--arch-review-fast.md`
@@ -19,7 +19,8 @@ behavior, not code shape)
 
 - Worktree: `~/Github/ask-worktrees/KIT-0091`, branch
   `feature/KIT-0091-port-gate-scripts` — created and provisioned by the
-  planner; task file already `3-in-progress`
+  planner; task file was `3-in-progress` at handoff (historical — now
+  `4-in-review` since the review handoff)
 - VERIFY, never create: `git branch --show-current` must show the
   branch above before your first edit; if not, STOP and ask
 - Likely 2 PRs (preflight+ghio; review-input+worktree lib) — stacked
@@ -110,6 +111,6 @@ asserted. Release as 0.2.x. Spec F1–F5 is authoritative.
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0091-port-gate-scripts.md`
+**Task File**: `.kit/tasks/4-in-review/KIT-0091-port-gate-scripts.md`
 **Evaluation Log**: `.adversarial/logs/KIT-0091-port-gate-scripts--arch-review-fast.md`
 **ADR**: `.kit/adr/KIT-ADR-0028-versioned-packages-not-file-copies.md` (Accepted; this is phase 1b)
