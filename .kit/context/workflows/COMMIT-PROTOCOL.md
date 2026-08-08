@@ -236,6 +236,7 @@ If CI is still running after timeout:
 - Don't make massive commits mixing unrelated changes
 - Don't mix planner artifacts (task specs, handoffs) with implementation code in the same PR (see `PR-SIZE-WORKFLOW.md`)
 - Don't push planner artifacts to feature branches — every push restarts bot reviews. Planner commits go to main only (see planner agent Branch Isolation Policy)
+- Don't delete or de-ship a file on a directory-shaped rationale: a PR that removes a file from the repo or from any scaffold/export path must enumerate the file's FUNCTIONS (who calls it, what breaks without it) and show the scaffold acceptance test (`tests/test_scaffold_acceptance.py`) still passes (KIT-0082 F3 — the KIT-0067 launcher deletion is the incident this rule exists to prevent)
 
 ---
 
