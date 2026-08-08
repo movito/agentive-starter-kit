@@ -1,6 +1,8 @@
 # KIT-0062: Scope bot review to product code — process artifacts stop drawing threads
 
-**Status**: Backlog
+> **Archived (2026-08-08, operator challenge — premise tested, failed)**: done in practice — `.coderabbitignore` already excludes .adversarial artifacts, review records, handoffs, starters, and all of .kit/tasks/; the one residual (.kit/context/retros/) was added in the same commit as this archive. Revive only if a NEW process-artifact class starts drawing threads (or if BugBot, which honors no ignore file, becomes the noise source).
+
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours

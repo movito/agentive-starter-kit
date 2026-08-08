@@ -1,6 +1,8 @@
 # KIT-0052: Fix the `find`-under-`set -e` silent abort in ci-check + python seed
 
-**Status**: Backlog
+> **Archived (2026-08-08, operator challenge — premise tested, failed)**: the bug is real but dormant in its only remaining habitat: `ci-check.sh:27` (set -e) + `:156` (PY_FILES=$(find scripts/ tests/ ...)) only aborts when a directory is missing — never true in the kit repo, and post-KIT-0093 consumers no longer receive the script. THE FIX, for whoever touches ci-check.sh next (0.3.x port or otherwise): append `|| true` inside the command substitution and emit a visible warning instead of dying silently. Recorded here so the one-liner survives the archive.
+
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours

@@ -13,3 +13,6 @@
 
 # Task specs (markdown, not code)
 .kit/tasks/
+
+# Session retrospectives (records, not code — KIT-0062 residual, 2026-08-08)
+.kit/context/retros/

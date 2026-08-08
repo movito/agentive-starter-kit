@@ -1,6 +1,8 @@
 # KIT-0055: Doctor — check the PATH-resolved binary's origin (the third-install blind spot)
 
-**Status**: Backlog
+> **Archived (2026-08-08, operator challenge — premise tested, failed)**: the three-installs ambiguity no longer exists — verified 2026-08-08: `which -a adversarial` returns exactly one binary (~/.local/bin, uv tool), the single documented install path since KIT-0083/0090; the doctor's evaluator-cli check verifies presence. Revive if a second install path returns or conflicting-binary symptoms recur (the KIT-0044/50/53 class).
+
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 1-2 hours
