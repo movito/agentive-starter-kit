@@ -155,3 +155,14 @@ class TestPackagedInstallRecordReader:
         shape, profile, bots, errors = doctor._doctor_install(root)
         assert shape is None
         assert errors and "malformed" in errors[0][1]
+
+    def test_prose_mention_of_marker_is_not_malformed(self, tmp_path):
+        # BugBot round 2 (PR #116): docs PROSE naming the marker must
+        # not read as an unbalanced region — only the exact comment
+        # form counts.
+        root = self._claude_md(
+            tmp_path,
+            "# P\nThe record lives between BEGIN KIT-LOCAL: kit-install "
+            "markers in this file.\n",
+        )
+        assert doctor._doctor_install(root) == ("single", "python", None, [])
