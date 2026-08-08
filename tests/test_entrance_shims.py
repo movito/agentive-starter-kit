@@ -168,6 +168,36 @@ class TestScaffoldE2E:
         assert "evaluator_library_version:" in config
 
     @pytest.mark.slow
+    def test_new_hostile_name_is_sanitized(self, tmp_path):
+        # code-reviewer-fast (this PR): the name reaches an EXPANDING
+        # heredoc in the README — backticks/$()/quotes must be stripped,
+        # never executed or README-breaking.
+        target = tmp_path / "hostile"
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
+        result = run_door(
+            "--new",
+            str(target),
+            "--name",
+            'evil `touch PWNED` $(touch PWNED2) "name"',
+            env=env,
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert not (target / "PWNED").exists()
+        assert not (target / "PWNED2").exists()
+        assert not (tmp_path / "PWNED").exists()
+        readme = (target / "README.md").read_text(encoding="utf-8")
+        assert "`touch" not in readme
+        assert "$(" not in readme
+        state = json.loads(
+            (target / ".kit" / "context" / "current-state.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert state["project"]["name"].startswith("evil")
+        assert "`" not in state["project"]["name"]
+        assert "$" not in state["project"]["name"]
+
+    @pytest.mark.slow
     def test_new_name_prefix_flags(self, tmp_path):
         target = tmp_path / "proj"
         env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))

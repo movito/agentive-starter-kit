@@ -26,3 +26,30 @@
 ### Verdict handling
 
 claude-code APPROVED. Both FAIL verdicts rest on findings triaged above: the deep FAIL's sole correctness claim is refuted with tree evidence (#9); the fast FAIL's correctness claims are pre-existing out-of-diff legacy code (#1/#2) plus the intake wording gap, which is fixed (#3). Deep rounds capped at 1 — no re-run needed: the two accepted fixes are test-scope and agent-doc wording, both re-verified locally (module green, 14 passed / 12 strict-xfail unchanged).
+
+---
+
+## PR 2: the door switch (packaged-install mode)
+
+**Date**: 2026-08-08
+**Input**: `.adversarial/inputs/KIT-0093-code-review-input.md` (full format, 12,146 lines, base = PR 1 head)
+**Trio**: code-reviewer-fast (CONCERNS) · code-reviewer (findings list) · claude-code (CHANGES_REQUESTED)
+
+### Disposition table (round 1)
+
+| # | Evaluator | Finding | Disposition |
+|---|-----------|---------|-------------|
+| 1 | deep+claude | `agentive install-evaluators` wrapper masks failures with `sys.exit(0)` | **REFUTED against the tree**: every failure path in `cmd_install_evaluators` calls `sys.exit(1)` (grep: 8 sys.exit sites; returns only on success/no-op), so SystemExit propagates through the wrapper — identical to the legacy dispatcher's pattern at `scripts/core/project:2501`. |
+| 2 | deep | sed pin extraction breaks on quoted values with trailing comments | **REFUTED empirically**: the smoke scaffold's config.yml carries `adversarial_cli_version: "1.0.1"` / `evaluator_library_version: "v0.10.0"` extracted from the kit's real quoted+commented lines. Shape-gates added anyway (see accepted #5). |
+| 3 | deep | bots duplicate line when record uses commas | REFUTED by trace: `EXISTING_BOTS` sed captures the full value regardless of commas (non-empty), `_canon_bots` normalizes both sides. Also pre-existing code, untouched here. |
+| 4 | fast+deep | README heredoc interpolates unsanitized `PROJECT_NAME` (backticks/`$()` execute in the expanding heredoc) | **ACCEPTED — fixed**: name+prefix stripped of backticks/$/quotes/newlines before heredoc use (fill_env_identity precedent); hostile-name e2e regression test added (PWNED probes + README/state assertions). |
+| 5 | claude | validate extracted pins before writing them into scaffolds | ACCEPTED — fixed: CLI pin must start with a digit, library pin must be tag-charset-only; malformed captures fail loud at scaffold time. |
+| 6 | deep | doctor checks trust `-x scripts/core/project`; exec-bit-less copies get the agentive remedy | Declined — `-x` is the standard probe; the agentive remedy still works globally (degradation, not a dead end). |
+| 7 | deep | `fill_env_identity` temp-file leak on disk-full | Pre-existing KIT-0084 code, untouched; temp lives inside `.git/` via mktemp — not a predictable path. Declined. |
+| 8 | fast | unreadable-but-present pyproject silently skips the black-pin preflight | Pre-existing warn-never-fail design of that preflight; an unreadable pyproject fails the Black step loudly one step later. Declined. |
+| 9 | fast | linear_sync task-ID edge-case tests missing | Comment-only change to that file in this PR. Declined. |
+| 10 | deep | 55-worktree remedy misleads inside packaged-repo worktrees | REFUTED by read: the remedy keys on the DIAGNOSED root's own `scripts/core/project`; a packaged worktree takes the plain-venv branch. |
+
+### Verdict handling (round 1)
+
+The two verdict-driving claims (#1, #2) are refuted with tree/empirical evidence; the two accepted hardenings (#4, #5) are fixed and covered by a new e2e test. Deep rounds capped at 2 per the handoff; round 2 not spent — the remaining findings are declines with recorded rationale.

@@ -89,6 +89,13 @@ if [ "$TARGET" = "$KIT_ROOT" ]; then
 fi
 
 PROJECT_NAME="${NAME:-$(basename "$TARGET")}"
+# The name and prefix are interpolated into EXPANDING heredocs below
+# (README needs $-expansion for its other fields) — strip characters
+# that could break or execute inside them: backticks, $, quotes,
+# newlines/CRs. Operator-owned values, so this is hardening, not a
+# trust boundary (the fill_env_identity precedent).
+PROJECT_NAME="${PROJECT_NAME//[\`\$\"\'$'\n'$'\r']/}"
+PREFIX="${PREFIX//[\`\$\"\'$'\n'$'\r']/}"
 
 # Task-prefix derivation (single shape; ported from the retired
 # engine-export.sh so --new keeps deriving identical prefixes):
@@ -242,6 +249,19 @@ if [ ! -f "$TARGET/.adversarial/config.yml" ]; then
         echo "Error: could not read the adversarial pins from the kit's .adversarial/config.yml" >&2
         exit 1
     fi
+    # Shape-gate the extracted pins before they propagate into a new
+    # project (claude-code review, this PR): a malformed capture must
+    # fail HERE, not surface later as a broken install in the scaffold.
+    case "$CLI_PIN" in
+        [0-9]*) ;;
+        *) echo "Error: adversarial_cli_version pin looks malformed: '$CLI_PIN'" >&2; exit 1 ;;
+    esac
+    case "$LIB_PIN" in
+        *[!A-Za-z0-9._-]*|'')
+            echo "Error: evaluator_library_version pin looks malformed: '$LIB_PIN'" >&2
+            exit 1
+            ;;
+    esac
     cat > "$TARGET/.adversarial/config.yml" << ADVCONFIG
 # Adversarial Workflow Configuration
 # ==================================
