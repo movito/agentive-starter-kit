@@ -170,16 +170,30 @@ class TestTaskParser:
         assert metadata["task_id"] == f"{prefix}-0001"
         assert metadata["title"] == "Sample Task"
 
-    def test_parse_rejects_five_digit_id_truncation(self, tmp_path):
+    def test_parse_rejects_five_digit_id_in_filename(self, tmp_path):
         """CodeRabbit (PR #116): A-00012 must not truncate-match as
         A-0001 — a wrong-issue Linear update, not a parse nicety."""
         from scripts.optional.linear_sync_utils import parse_task_metadata
 
         task_file = tmp_path / "A-00012-sample.md"
         task_file.write_text(
+            "# A-0001: Sample Task\n\n**Status**: Backlog\n", encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match="No valid task ID"):
+            parse_task_metadata(task_file)
+
+    def test_parse_rejects_five_digit_id_in_heading(self, tmp_path):
+        """The heading regex hits the same boundary independently: a
+        VALID filename with a five-digit heading id must fail on the
+        heading, not silently truncate (CodeRabbit, PR #116 round 3 —
+        the two rejection paths are exercised separately)."""
+        from scripts.optional.linear_sync_utils import parse_task_metadata
+
+        task_file = tmp_path / "A-0001-sample.md"
+        task_file.write_text(
             "# A-00012: Sample Task\n\n**Status**: Backlog\n", encoding="utf-8"
         )
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="No title found"):
             parse_task_metadata(task_file)
 
     def test_parse_extracts_status_field(self, tmp_task_file):
