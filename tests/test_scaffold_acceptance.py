@@ -108,7 +108,9 @@ def _scaffold(request, shape):
     return request.getfixturevalue(f"{shape}_scaffold")
 
 
-_REF_PATTERN = re.compile(r"`((?:docs|\.kit)/[A-Za-z0-9_./-]+\.(?:md|json|yml))`")
+_REF_PATTERN = re.compile(
+    r"`((?:docs|\.kit)/[A-Za-z0-9_./-]+\.(?:md|json|ya?ml|sh|py))`"
+)
 
 
 def _is_placeholder(ref: str) -> bool:

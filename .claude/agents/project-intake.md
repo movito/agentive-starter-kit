@@ -189,11 +189,13 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    so it CAN be published later (`docs/CROSS-REPO-PATTERN.md`) —
    starting private costs nothing and flipping later is one setting.
 5. Before any push, verify the branch:
-   `git -C <code-path> branch --show-current` must print `main` — if
-   it prints `master` (a pre-existing repo, or an init that predates
+   `git -C <code-path> branch --show-current` must print `main`. If it
+   prints `master` (a pre-existing repo, or an init that predates
    step 1's `-b main`), rename first: `git -C <code-path> branch -m
    main` (KIT-0081 F3 — a `master` first push needed a remote
-   default-branch PATCH and branch deletion to undo).
+   default-branch PATCH and branch deletion to undo). Any OTHER name
+   (`dev`, a feature branch): ask the user — an existing repo's branch
+   layout is theirs; never silently rename a non-default branch.
    Then check for an existing remote: if the repo already has an
    `origin`, do NOT run `gh repo create` — derive `owner/repo` from
    it per the "already has a remote" rules in Edge cases (github.com
