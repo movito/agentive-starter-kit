@@ -807,9 +807,13 @@ run_offers() {
         if [ ! -f "$TARGET/scripts/optional/setup-dev.sh" ]; then
             # Packaged scaffolds ship no setup-dev.sh — an explicit
             # venv answer is acknowledged out loud, never silently
-            # dropped (the masking class).
+            # dropped (the masking class), and the default path says
+            # so once too (BugBot, PR #116: silence here while the
+            # adopt flow prints its offer notice reads as an omission).
             if [ "$WITH_VENV" = "yes" ]; then
                 echo "venv setup skipped: this scaffold ships no setup-dev.sh — create one when your pyproject exists (python3 -m venv .venv)"
+            else
+                echo "venv: not offered — packaged scaffolds ship no setup-dev.sh; create one when your pyproject exists (python3 -m venv .venv)"
             fi
         else
             if [ "$WITH_VENV" = "" ]; then
@@ -1155,6 +1159,10 @@ main() {
         # The consumer engine stays the ONE writer of the CLAUDE.md
         # kit-install record (and seeds the per-repo check hook).
         set -- --internal-record-only --packaged --shape "$SHAPE" --profile "$PROFILE"
+        # --name reaches the record step too, or CLAUDE.md would title
+        # from the basename while README/current-state carry the name
+        # (BugBot, PR #116).
+        [ -n "$NAME" ] && set -- "$@" --project-name "$NAME"
         [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
         [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
         [ -n "$BOTS" ] && set -- "$@" --bots "$BOTS"

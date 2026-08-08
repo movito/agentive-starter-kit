@@ -252,9 +252,17 @@ if [ ! -f "$TARGET/.adversarial/config.yml" ]; then
     # Shape-gate the extracted pins before they propagate into a new
     # project (claude-code review, this PR): a malformed capture must
     # fail HERE, not surface later as a broken install in the scaffold.
+    # Full-value validation, not first-char (CodeRabbit, PR #116):
+    # must start with a digit AND contain only PyPI-version charset.
     case "$CLI_PIN" in
         [0-9]*) ;;
         *) echo "Error: adversarial_cli_version pin looks malformed: '$CLI_PIN'" >&2; exit 1 ;;
+    esac
+    case "$CLI_PIN" in
+        *[!A-Za-z0-9._]*)
+            echo "Error: adversarial_cli_version pin looks malformed: '$CLI_PIN'" >&2
+            exit 1
+            ;;
     esac
     case "$LIB_PIN" in
         *[!A-Za-z0-9._-]*|'')
@@ -317,7 +325,9 @@ Most of this repo lives in dot-folders your file browser may hide:
 | \`.adversarial/\` | Evaluation config, inputs, and logs |
 | \`docs/adr/\` | Architecture decision records |
 
-Tooling is installed, not copied (agentive-kit phase 2):
+Tooling is external, never copied (agentive-kit phase 2) — if the
+door's package-verification step printed install commands instead
+of verifying, run them before first use:
 
 - **Lifecycle CLI**: \`uv tool install agentive-kit\` → \`agentive\`
   (task moves, doctor, preflight, evaluator provisioning)
@@ -332,7 +342,7 @@ README_EOF
         cat > "$TARGET/README.md" << README_EOF
 # $PROJECT_NAME
 
-Project repository with the agentive workflow installed (task prefix:
+Project repository carrying the agentive workflow's content (task prefix:
 \`${PREFIX:-TBD}\`). Besides your project's own code, these folders
 carry the workflow — most are dot-folders your file browser may hide:
 
@@ -345,7 +355,9 @@ carry the workflow — most are dot-folders your file browser may hide:
 | \`docs/adr/\` | Architecture decision records |
 | \`scripts/local/\` | This repo's check hook (\`checks.sh\`) |
 
-Tooling is installed, not copied (agentive-kit phase 2):
+Tooling is external, never copied (agentive-kit phase 2) — if the
+door's package-verification step printed install commands instead
+of verifying, run them before first use:
 
 - **Lifecycle CLI**: \`uv tool install agentive-kit\` → \`agentive\`
   (task moves, doctor, preflight, evaluator provisioning)

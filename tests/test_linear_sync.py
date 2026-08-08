@@ -154,6 +154,22 @@ class TestTaskParser:
         # Assert
         assert metadata["title"] == "Implement Feature X"
 
+    @pytest.mark.parametrize("prefix", ["A", "A1", "KIT", "ABCDE1"])
+    def test_parse_accepts_intake_grammar_prefixes(self, tmp_path, prefix):
+        """CodeRabbit (PR #116): the parser's prefix grammar must match
+        the intake contract ^[A-Z][A-Z0-9]{0,5}$ — single-letter and
+        alphanumeric prefixes are valid ids, not parse failures."""
+        from scripts.optional.linear_sync_utils import parse_task_metadata
+
+        task_file = tmp_path / f"{prefix}-0001-sample.md"
+        task_file.write_text(
+            f"# {prefix}-0001: Sample Task\n\n**Status**: Backlog\n",
+            encoding="utf-8",
+        )
+        metadata = parse_task_metadata(task_file)
+        assert metadata["task_id"] == f"{prefix}-0001"
+        assert metadata["title"] == "Sample Task"
+
     def test_parse_extracts_status_field(self, tmp_task_file):
         """TaskParser should extract status from metadata."""
         from scripts.optional.linear_sync_utils import parse_task_metadata

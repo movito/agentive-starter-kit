@@ -218,6 +218,13 @@ class TestScaffoldE2E:
         )
         assert state["project"]["name"] == "My New Project"
         assert state["project"]["task_prefix"] == "MNP"
+        # Display identity must not split across artifacts (BugBot,
+        # PR #116): CLAUDE.md and README title from --name too, never
+        # the directory basename.
+        claude_md = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert claude_md.startswith("# My New Project")
+        readme = (target / "README.md").read_text(encoding="utf-8")
+        assert readme.startswith("# My New Project")
 
 
 class TestMaterialsE2E:

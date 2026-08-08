@@ -166,3 +166,14 @@ class TestPackagedInstallRecordReader:
             "markers in this file.\n",
         )
         assert doctor._doctor_install(root) == ("single", "python", None, [])
+
+    def test_lone_end_marker_fails_loud_not_default(self, tmp_path):
+        # CodeRabbit (PR #116): a lone END marker is just as unbalanced
+        # as a lone BEGIN — corrupted record, never the silent default.
+        root = self._claude_md(
+            tmp_path,
+            "# P\n<!-- END KIT-LOCAL: kit-install -->\nshape: planning\n",
+        )
+        shape, profile, bots, errors = doctor._doctor_install(root)
+        assert shape is None
+        assert errors and "malformed" in errors[0][1]

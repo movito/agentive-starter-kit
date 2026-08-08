@@ -94,6 +94,7 @@ TARGET_GITHUB=""
 BOTS=""
 RECORD_ONLY=0
 PACKAGED=0
+PROJECT_NAME_ARG=""
 USAGE="Usage: $0 [--no-kit] [--shape single|planning] [--profile python|none] [--target-path <p>] [--target-github <o/r>] [--bots <b>] <target-directory>"
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -147,6 +148,13 @@ while [ $# -gt 0 ]; do
             ;;
         --bots=*)
             BOTS="${1#--bots=}"
+            ;;
+        --project-name)
+            shift
+            PROJECT_NAME_ARG="${1:-}"
+            ;;
+        --project-name=*)
+            PROJECT_NAME_ARG="${1#--project-name=}"
             ;;
         --*)
             echo "Error: unknown flag: $1"
@@ -249,6 +257,13 @@ if [ "$TARGET" = "$PROJECT_ROOT" ]; then
     exit 1
 fi
 PROJECT_NAME="$(basename "$TARGET")"
+# --project-name (door --new with --name, KIT-0093): the display
+# identity must not split across artifacts — README/current-state
+# carry the given name, so CLAUDE.md's title must too. Same
+# heredoc-hostile character strip as the scaffold engine.
+if [ -n "$PROJECT_NAME_ARG" ]; then
+    PROJECT_NAME="${PROJECT_NAME_ARG//[\`\$\"\'$'\n'$'\r']/}"
+fi
 
 # --internal-record-only: everything except Steps 1.5 and 2.5 is skipped.
 # Guards (not an early exit) keep the record steps in their normal order.
