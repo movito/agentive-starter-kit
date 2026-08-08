@@ -1,11 +1,26 @@
-"""Stub-`gh` regression harness for scripts/core/preflight-check.sh (KIT-0040 F1).
+"""Stub-`gh` parity matrix for the preflight gate surface (KIT-0040 F1, KIT-0091 F2).
 
-Runs the REAL preflight script against canned `gh` payloads: a fake `gh`
-executable on PATH dispatches on argv and serves per-scenario files, while
-a throwaway git repo provides real branch/SHA state. This turns the
-KIT-0034 manual stub-`gh` verification matrix (8 states) into CI
-regression coverage. The script itself stays shell + gh (KIT-0034 N2) —
-only the harness is Python.
+Runs the REAL preflight implementation against canned `gh` payloads: a
+fake `gh` executable on PATH dispatches on argv and serves per-scenario
+files, while a throwaway git repo provides real branch/SHA state. This
+turns the KIT-0034 manual stub-`gh` verification matrix (8 states) into
+CI regression coverage.
+
+KIT-0091 F2 — this module IS the preflight parity record. The harness is
+parameterized over implementation:
+
+- ``bash``   — scripts/core/preflight-check.sh (the original surface;
+               after the KIT-0091 shim lands this parameter exercises
+               the shim end-to-end, proving the script contract —
+               GATE lines, exit 0/1/2 — survives the delegation)
+- ``python`` — agentive_kit.preflight, run in-process (enabled by the
+               commit that adds the module; skip-marked before that)
+
+Every scenario asserts identical verdicts for both implementations —
+the matrix binds BEHAVIOR, not code shape (task spec F2). Gate 1's
+at-cap semantics (raw run count at the query cap reports PENDING,
+never PASS) are pinned per REVIEW-INSIGHTS "Preflight Gate 1 at-cap
+semantics (since PR #75)" (KIT-0043).
 
 API-shape facts the canned payloads model (verified in KIT-0034):
 - CodeRabbit reports via the legacy commit-status API (Gate 2 fallback
@@ -22,6 +37,8 @@ see the GIT_DIR gotcha in .kit/context/workflows/TESTING-WORKFLOW.md.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import re
@@ -30,6 +47,7 @@ import stat
 import subprocess
 import textwrap
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -118,13 +136,27 @@ def _clean_env(extra: dict[str, str]) -> dict[str, str]:
 
 
 class PreflightProject:
-    """Temp project skeleton around the real preflight-check.sh."""
+    """Temp project skeleton around the real preflight implementation.
 
-    def __init__(self, root: Path, stub_data: Path, env: dict[str, str], head: str):
+    ``impl`` selects which implementation ``run()`` drives (KIT-0091 F2):
+    the bash script as a subprocess, or ``agentive_kit.preflight``
+    in-process (fast — the CI-poll sleep seam is patched out, and
+    coverage attributes to the module).
+    """
+
+    def __init__(
+        self,
+        root: Path,
+        stub_data: Path,
+        env: dict[str, str],
+        head: str,
+        impl: str = "bash",
+    ):
         self.root = root
         self.stub_data = stub_data
         self.env = env
         self.head = head
+        self.impl = impl
 
     def run(
         self, files: dict[str, str], extra_args: list[str] | None = None
@@ -136,18 +168,60 @@ class PreflightProject:
             stale.unlink()
         for key, content in files.items():
             (self.stub_data / f"{key}.out").write_text(content, encoding="utf-8")
+        argv = ["--pr", "42", *(extra_args or [])]
+        if self.impl == "python":
+            return self._run_python(argv)
         return subprocess.run(
             [
                 "bash",
                 str(self.root / "scripts" / "core" / "preflight-check.sh"),
-                "--pr",
-                "42",
-                *(extra_args or []),
+                *argv,
             ],
             cwd=self.root,
             env=self.env,
             capture_output=True,
             text=True,
+        )
+
+    def _run_python(self, argv: list[str]) -> subprocess.CompletedProcess:
+        """Drive agentive_kit.preflight in-process under the stub env.
+
+        Same PATH stubs, same canned payloads, same working directory —
+        only the transport differs. The module's ``_sleep`` seam is
+        patched so PENDING re-poll scenarios stay instant (the bash side
+        gets the same treatment via the stubbed ``sleep`` binary).
+        """
+        from agentive_kit import preflight as preflight_mod
+
+        out, err = io.StringIO(), io.StringIO()
+        prev_cwd = os.getcwd()
+        try:
+            os.chdir(self.root)
+            with (
+                mock.patch.dict(os.environ, self.env, clear=True),
+                mock.patch.object(preflight_mod, "_sleep", lambda _s: None),
+                contextlib.redirect_stdout(out),
+                contextlib.redirect_stderr(err),
+            ):
+                rc = 0
+                try:
+                    preflight_mod.main(argv)
+                except SystemExit as exc:
+                    if exc.code is None:
+                        # bare sys.exit() means success (CodeRabbit,
+                        # PR #112) — this harness is the parity record
+                        # for exit codes, so the mapping must not
+                        # invert a verdict
+                        rc = 0
+                    elif isinstance(exc.code, int):
+                        rc = exc.code
+                    else:
+                        # a string code is a message plus status 1
+                        rc = 1
+        finally:
+            os.chdir(prev_cwd)
+        return subprocess.CompletedProcess(
+            ["agentive-preflight", *argv], rc, out.getvalue(), err.getvalue()
         )
 
 
@@ -161,14 +235,39 @@ def _gates(output: str) -> dict[int, tuple[str, str]]:
     return parsed
 
 
-@pytest.fixture(scope="module")
-def proj(tmp_path_factory):
+# The baseline CLAUDE.md carries no `## Target Repository` section (the
+# harness models single-repo mode) and no kit-install region. It exists
+# so the python implementation's root discovery (.kit/ + CLAUDE.md, see
+# agentive_kit.root) finds the fixture root; the bash script tolerates
+# its presence identically. Declaration tests overwrite it and must
+# RESTORE it (not unlink) so later scenarios keep a discoverable root.
+BASELINE_CLAUDE_MD = "# stub project\n"
+
+_PKG_SRC = REPO_ROOT / "packages" / "agentive-kit" / "src"
+
+
+@pytest.fixture(scope="module", params=["bash", "python"])
+def proj(request, tmp_path_factory):
+    impl = request.param
+    if impl == "python":
+        pytest.importorskip(
+            "agentive_kit",
+            reason="agentive-kit package source present only in the kit repo",
+        )
+        import importlib.util
+
+        if importlib.util.find_spec("agentive_kit.preflight") is None:
+            pytest.skip(
+                "KIT-0091: agentive_kit.preflight not yet present — "
+                "the parity matrix runs bash-only until the port lands"
+            )
     tmp_path = tmp_path_factory.mktemp("preflight")
     root = tmp_path / "proj"
     core = root / "scripts" / "core"
     (core / "lib").mkdir(parents=True)
     shutil.copy(_SCRIPT, core / "preflight-check.sh")
     shutil.copy(_TARGET_REPO_LIB, core / "lib" / "target_repo.sh")
+    (root / "CLAUDE.md").write_text(BASELINE_CLAUDE_MD, encoding="utf-8")
 
     # Gate 5/6/7 artifacts — green by default so gate-1-to-4 scenarios
     # can assert overall exit codes.
@@ -196,6 +295,14 @@ def proj(tmp_path_factory):
     git("add", "-A")
     git("commit", "-qm", "seed")
     git("update-ref", "refs/remotes/origin/main", "main")
+    # A docs-only branch: origin/main..HEAD touches only markdown, so
+    # CODE_SHA comes back empty and Gates 2/3 auto-pass (KIT-0091
+    # matrix addition — the NO_CODE_CHANGES edge was untested).
+    git("checkout", "-q", "-b", "feature/KIT-9990-docs")
+    (root / "NOTES.md").write_text("docs only\n", encoding="utf-8")
+    git("add", "NOTES.md")
+    git("commit", "-qm", "docs: markdown only")
+    git("checkout", "-q", "main")
     git("checkout", "-q", "-b", f"feature/{HEAD_TASK}-stub")
     (root / "code.py").write_text("x = 1\n", encoding="utf-8")
     git("add", "code.py")
@@ -220,8 +327,22 @@ def proj(tmp_path_factory):
     stub_data.mkdir()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["PREFLIGHT_GH_STUB_DIR"] = str(stub_data)
+    # The python implementation's poll-delay seam (the analogue of the
+    # stubbed `sleep` binary the bash side uses): PENDING re-poll
+    # scenarios must stay instant for BOTH implementations, including
+    # the post-shim state where the bash script delegates to python in
+    # a subprocess that a monkeypatch cannot reach.
+    env["PREFLIGHT_CI_POLL_DELAY"] = "0"
+    # Once the bash body becomes a shim over the package (KIT-0091 F3),
+    # the subprocess needs agentive_kit importable regardless of which
+    # python3 PATH resolves to — point PYTHONPATH at the in-repo source.
+    if _PKG_SRC.is_dir():
+        inherited = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (
+            f"{_PKG_SRC}{os.pathsep}{inherited}" if inherited else str(_PKG_SRC)
+        )
 
-    return PreflightProject(root, stub_data, env, head)
+    return PreflightProject(root, stub_data, env, head, impl=impl)
 
 
 # ── Canned payload builders ──────────────────────────────────────────────
@@ -423,6 +544,193 @@ class TestGate3BugBot:
         assert verdict == "PASS", result.stdout
         assert "check-run" in detail
         assert result.returncode == 0
+
+
+# ── Gate 3: failure paths (KIT-0091 matrix additions) ───────────────────
+class TestGate3FailurePaths:
+    """The bash original's Gate 3 FAIL/edge behavior, captured before the
+    KIT-0091 port: a terminal non-success check-run FAILs with the state
+    named; neutral passes (BugBot's no-findings alternate); no signal at
+    all fails closed.
+    """
+
+    def _no_cursor_review(self, head: str) -> dict[str, str]:
+        files = _baseline(head)
+        files["graphql"] = _graphql(
+            [_review("coderabbitai[bot]", "APPROVED", head)], resolved=1
+        )
+        return files
+
+    def test_failing_check_run_fails(self, proj):
+        files = self._no_cursor_review(proj.head)
+        files["check_runs_cursor"] = "completed:failure\n"
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[3]
+        assert verdict == "FAIL", result.stdout
+        assert "completed:failure" in detail
+        assert result.returncode == 1
+
+    def test_neutral_check_run_passes(self, proj):
+        files = self._no_cursor_review(proj.head)
+        files["check_runs_cursor"] = "completed:neutral\n"
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[3]
+        assert verdict == "PASS", result.stdout
+        assert "check-run" in detail
+
+    def test_in_progress_check_run_fails(self, proj):
+        # A still-running BugBot check-run is not a completed review —
+        # the gate reports the raw state and fails (no PENDING tier for
+        # Gate 3 in the original; pinned as-is).
+        files = self._no_cursor_review(proj.head)
+        files["check_runs_cursor"] = "in_progress:\n"
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[3]
+        assert verdict == "FAIL", result.stdout
+        assert "in_progress" in detail
+
+    def test_no_signal_at_all_fails_closed(self, proj):
+        files = self._no_cursor_review(proj.head)
+        # no check_runs_cursor canned file -> stub gh exits 1
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[3]
+        assert verdict == "FAIL", result.stdout
+        assert "No review or check-run from BugBot" in detail
+        assert result.returncode == 1
+
+    def test_multiple_all_green_check_runs_pass(self, proj):
+        # KIT-0091 documented divergence (o3 finding): matrix jobs or
+        # re-runs emit one line per check-run; the bash original
+        # false-FAILed an all-green multi-run blob (whole-string
+        # compare). The port applies Gate 2's all-green rule.
+        files = self._no_cursor_review(proj.head)
+        files["check_runs_cursor"] = "completed:success\ncompleted:success\n"
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[3]
+        assert verdict == "PASS", result.stdout
+        assert "check-run" in detail
+
+    def test_mixed_check_runs_fail_naming_first_non_green(self, proj):
+        # Fail-closed side of the divergence: any non-green run in the
+        # set still FAILs, and the detail names the offending state
+        # (single-line — the GATE format stays parseable).
+        files = self._no_cursor_review(proj.head)
+        files["check_runs_cursor"] = "completed:success\ncompleted:failure\n"
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[3]
+        assert verdict == "FAIL", result.stdout
+        assert detail == "check-run completed:failure"
+        assert "\n" not in detail
+        assert result.returncode == 1
+
+
+# ── Gate 4: fetch failure + thread-cap note (KIT-0091 matrix additions) ──
+class TestGate4Threads:
+    def test_graphql_failure_fails_gate_4_closed(self, proj):
+        # PR_DATA unavailable: Gate 4 FAILs (and Gate 2's fallback fails
+        # closed off the same empty snapshot — one fetch, one truth).
+        files = _baseline(proj.head)
+        del files["graphql"]
+        result = proj.run(files)
+        gates = _gates(result.stdout)
+        assert gates[4][0] == "FAIL", result.stdout
+        assert "Could not fetch thread data" in gates[4][1]
+        assert gates[2][0] == "FAIL"
+        assert result.returncode == 1
+
+    def test_thread_count_at_graphql_cap_notes_truncation(self, proj):
+        # reviewThreads(first: 100): a total AT the page cap may hide
+        # unseen threads — the PASS carries the verify-manually note.
+        files = _baseline(proj.head)
+        files["graphql"] = _graphql(
+            [
+                _review("coderabbitai[bot]", "APPROVED", proj.head),
+                _review("cursor[bot]", "COMMENTED", proj.head),
+            ],
+            resolved=100,
+        )
+        result = proj.run(files)
+        verdict, detail = _gates(result.stdout)[4]
+        assert verdict == "PASS", result.stdout
+        assert "capped at 100" in detail
+
+
+# ── Gates 2/3: no code changes on the branch (KIT-0091 matrix addition) ──
+class TestNoCodeChanges:
+    def test_docs_only_branch_auto_passes_bot_gates(self, proj):
+        # origin/main..HEAD touches only markdown → CODE_SHA is empty →
+        # Gates 2/3 PASS without any bot activity ("pure docs PR").
+        env = proj.env
+
+        def git(*args: str) -> None:
+            subprocess.run(
+                ["git", *args],
+                cwd=proj.root,
+                env=env,
+                check=True,
+                capture_output=True,
+            )
+
+        docs_head = subprocess.run(
+            ["git", "rev-parse", "feature/KIT-9990-docs"],
+            cwd=proj.root,
+            env=env,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        files = {
+            "pr_view_head": docs_head + "\n",
+            "run_list": json.dumps([_run_entry(docs_head)]),
+            "graphql": _graphql([], resolved=0),
+        }
+        git("checkout", "-q", "feature/KIT-9990-docs")
+        try:
+            result = proj.run(files)
+        finally:
+            git("checkout", "-q", f"feature/{HEAD_TASK}-stub")
+        gates = _gates(result.stdout)
+        assert gates[1][0] == "PASS", result.stdout
+        for gate_num in (2, 3):
+            verdict, detail = gates[gate_num]
+            assert verdict == "PASS", result.stdout
+            assert "No code changes" in detail
+
+
+# ── Argument validation (KIT-0091 matrix additions) ──────────────────────
+class TestArgValidation:
+    """Input-validation refusals, pinned with exit codes and messages.
+    These guard the GraphQL interpolation sites (KIT-0043, o3 finding),
+    so the port must keep them exactly as loud.
+    """
+
+    def test_non_numeric_pr_refused(self, proj):
+        # run() passes --pr 42 first; a later --pr wins (last-flag-wins),
+        # so this pins the numeric guard, not the parser order.
+        result = proj.run(_baseline(proj.head), extra_args=["--pr", "abc"])
+        combined = result.stdout + result.stderr
+        assert "PR number must be numeric" in combined
+        assert result.returncode == 1
+        assert "GATE:" not in result.stdout
+
+    def test_unknown_option_refused(self, proj):
+        result = proj.run(_baseline(proj.head), extra_args=["--bogus"])
+        combined = result.stdout + result.stderr
+        assert "Unknown option" in combined
+        assert result.returncode == 1
+
+    def test_flag_missing_value_refused(self, proj):
+        result = proj.run(_baseline(proj.head), extra_args=["--task"])
+        combined = result.stdout + result.stderr
+        assert "requires a task ID" in combined
+        assert result.returncode == 1
+
+    def test_invalid_repo_slug_refused(self, proj):
+        result = proj.run(_baseline(proj.head), extra_args=["--repo", "notaslug"])
+        combined = result.stdout + result.stderr
+        assert "owner/name" in combined
+        assert result.returncode == 1
+        assert "GATE:" not in result.stdout
 
 
 # ── Gates 5/6: bundled-PR convention (KIT-0042) ──────────────────────────
@@ -646,15 +954,15 @@ class TestGate2MixedContexts:
         assert "signal=failure" in detail, detail
 
     def test_status_jq_reduces_mixed_contexts_to_non_success(self, proj):
-        # jq layer: extract the commit-status --jq filter from the real
-        # script (no duplication drift) and run real jq over a mixed
-        # fixture — the reduction must yield the failing state, never
-        # "success".
-        script = (proj.root / "scripts" / "core" / "preflight-check.sh").read_text(
-            encoding="utf-8"
+        # jq layer: run real jq over a mixed fixture with the LIVE
+        # commit-status filter — since the KIT-0091 shim the filter's
+        # one home is the module constant (it executes inside gh via
+        # --jq, so its semantics still need real-jq pinning here).
+        preflight_mod = pytest.importorskip(
+            "agentive_kit.preflight",
+            reason="agentive-kit package absent (consumer checkout)",
         )
-        m = re.search(r"--jq '(\[\.statuses\[\][^']*)'", script)
-        assert m, "commit-status jq filter not found in script"
+        jq_filter = preflight_mod.CR_STATUS_JQ
         mixed = json.dumps(
             {
                 "statuses": [
@@ -664,7 +972,7 @@ class TestGate2MixedContexts:
             }
         )
         out = subprocess.run(
-            ["jq", "-r", m.group(1)],
+            ["jq", "-r", jq_filter],
             input=mixed,
             capture_output=True,
             text=True,
@@ -702,7 +1010,10 @@ class TestGate23BotsDeclaration:
         )
 
     def _remove_declaration(self, proj) -> None:
-        (proj.root / "CLAUDE.md").unlink(missing_ok=True)
+        # Restore the baseline (never unlink): the python implementation
+        # discovers the project root via .kit/ + CLAUDE.md, so a missing
+        # CLAUDE.md would break every later scenario in this module.
+        (proj.root / "CLAUDE.md").write_text(BASELINE_CLAUDE_MD, encoding="utf-8")
         (proj.root / "scripts" / "local" / "kit_markers.py").unlink(missing_ok=True)
 
     def _no_bot_reviews(self, head: str) -> dict[str, str]:
@@ -809,6 +1120,22 @@ class TestGate23BotsDeclaration:
             gates = _gates(result.stdout)
             assert gates[2][0] == "FAIL", result.stdout
             assert gates[3][0] == "FAIL", result.stdout
+        finally:
+            self._remove_declaration(proj)
+
+    def test_duplicate_tokens_keep_declaration_semantics(self, proj):
+        # o3 (PR 1 round 2) test-gap: duplicates are odd but harmless —
+        # the declared SET is unchanged, so no NOTICE fires, coderabbit
+        # stays expected (FAILs without activity) and bugbot stays
+        # declared-absent (SKIP). Pinned against silent drift between
+        # the doctor and preflight readers.
+        self._install_declaration(proj, "coderabbit coderabbit")
+        try:
+            result = proj.run(self._no_bot_reviews(proj.head))
+            assert "NOTICE" not in result.stdout
+            gates = _gates(result.stdout)
+            assert gates[2][0] == "FAIL", result.stdout
+            assert gates[3][0] == "SKIP", result.stdout
         finally:
             self._remove_declaration(proj)
 

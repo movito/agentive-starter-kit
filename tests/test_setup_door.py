@@ -1282,10 +1282,16 @@ class TestPresetNeverDistributed:
     --against-preset compares against it), and the config-home doctor
     check — engines, sync, and export code must not know it exists."""
 
+    # The string probe below ("agentive-kit") also catches references
+    # to the agentive-kit PACKAGE name, not just the config-home
+    # location — scripts/core/project earned its slot that way in
+    # KIT-0090 (it bootstraps the package), and the KIT-0091 deprecation
+    # shims over package modules are the same class of reader.
     ALLOWED = {
         "scripts/local/bootstrap",
         "scripts/core/project",
         "scripts/core/doctor.d/90-config-home.sh",
+        "scripts/core/preflight-check.sh",  # KIT-0091 shim → agentive_kit.preflight
     }
 
     def test_preset_path_referenced_only_by_allowed_readers(self):
