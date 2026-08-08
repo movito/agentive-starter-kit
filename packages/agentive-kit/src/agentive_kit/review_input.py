@@ -598,15 +598,18 @@ def helper_main(argv: list[str] | None = None) -> None:
         print(exc, file=sys.stderr)
         sys.exit(2)
 
-    # Validate the subcommand BEFORE repo detection is used, matching
-    # the bash dispatcher's unknown-subcommand path (usage to stderr).
+    # Repo detection runs BEFORE subcommand dispatch, mirroring the
+    # bash flow exactly (BugBot, PR #113): an unknown subcommand with
+    # an undeterminable repo exits 2 (repo error), and only a resolved
+    # repo reaches the exit-1 unknown-subcommand refusal.
+    repo = _detect_helper_repo(root, repo_override)
+
     # membership: subcommand vocabulary check, not identifier equality
     if subcommand not in ("reply", "resolve", "threads", "comments", "summary"):
         _err(f"ERROR: Unknown subcommand: {subcommand}")
         _err(_HELPER_USAGE)
         sys.exit(1)
 
-    repo = _detect_helper_repo(root, repo_override)
     owner, name = repo.split("/", 1)
     sub_args = args[1:]
 

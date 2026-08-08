@@ -26,6 +26,11 @@ if ! command -v python3 >/dev/null 2>&1; then
     exit 1
 fi
 
+if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+    echo "ERROR: python3 >= 3.10 is required by agentive-kit (found: $(python3 --version 2>&1))" >&2
+    exit 1
+fi
+
 NEW_WORKTREE_ANCHOR="$SCRIPT_DIR" AGENTIVE_KIT_SRC="$PKG_SRC" \
     exec python3 - "$@" <<'PY'
 import os
@@ -34,13 +39,13 @@ from pathlib import Path
 
 try:
     from agentive_kit import worktree
-except ModuleNotFoundError:
+except ImportError:
     pkg_src = os.environ.get("AGENTIVE_KIT_SRC", "")
     if pkg_src and os.path.isdir(os.path.join(pkg_src, "agentive_kit")):
         sys.path.insert(0, pkg_src)
     try:
         from agentive_kit import worktree
-    except ModuleNotFoundError:
+    except ImportError as exc:
         print("Error: agentive-kit is not installed", file=sys.stderr)
         print(
             "   The worktree library lives in the agentive-kit package"
@@ -50,6 +55,7 @@ except ModuleNotFoundError:
         print("   Install it:", file=sys.stderr)
         print("     uv tool install agentive-kit", file=sys.stderr)
         print("   or: pip install agentive-kit", file=sys.stderr)
+        print(f"   (import failed: {exc})", file=sys.stderr)
         sys.exit(1)
 
 worktree.main(sys.argv[1:], anchor=Path(os.environ["NEW_WORKTREE_ANCHOR"]))

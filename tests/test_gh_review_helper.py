@@ -33,9 +33,12 @@ _SCRIPT = REPO_ROOT / "scripts" / "core" / "gh-review-helper.sh"
 _TARGET_REPO_LIB = REPO_ROOT / "scripts" / "core" / "lib" / "target_repo.sh"
 _PKG_SRC = REPO_ROOT / "packages" / "agentive-kit" / "src"
 
-if not _SCRIPT.exists():
+if not _SCRIPT.exists() or not _TARGET_REPO_LIB.exists():
+    # both are fixture inputs — a checkout missing either must skip
+    # cleanly, not error in fixture setup (CodeRabbit, PR #113)
     pytest.skip(
-        "gh-review-helper.sh not present in this checkout", allow_module_level=True
+        "gh-review-helper.sh or lib/target_repo.sh not present in this checkout",
+        allow_module_level=True,
     )
 
 if shutil.which("bash") is None:
@@ -119,6 +122,16 @@ class HelperProject:
         try:
             os.chdir(self.root)
             with pytest.MonkeyPatch.context() as mp:
+                # scrub the ambient git environment so the in-process
+                # parameter tests the same conditions the bash
+                # subprocess gets — an inherited GIT_DIR or user git
+                # config could redirect root/repo resolution
+                # (CodeRabbit, PR #113; the sibling harness pattern)
+                for key in list(os.environ):
+                    if key.startswith("GIT_"):
+                        mp.delenv(key, raising=False)
+                mp.setenv("GIT_CONFIG_GLOBAL", os.devnull)
+                mp.setenv("GIT_CONFIG_SYSTEM", os.devnull)
                 for key, value in self.env.items():
                     mp.setenv(key, value)
                 with (

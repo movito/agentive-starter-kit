@@ -1805,6 +1805,51 @@ class TestWorktreeProvisioningCheck:
         assert "STACKED-PR-WORKFLOW.md" in result.stdout
         assert "+refs/heads/*:refs/remotes/origin/*" in result.stdout
 
+    def test_multiple_narrow_refspecs_warn_on_one_line(self, tmp_path):
+        # CodeRabbit (PR #113): the check joins multi-value fetch
+        # configs with tr — the WARN must stay ONE DOCTOR: line (the
+        # driver parses per-line) and carry both specs.
+        primary, _ = _worktree_pair(tmp_path)
+        subprocess.run(
+            ["git", "-C", str(primary), "remote", "add", "origin", str(tmp_path)],
+            check=True,
+            timeout=30,
+        )
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(primary),
+                "config",
+                "remote.origin.fetch",
+                "+refs/heads/main:refs/remotes/origin/main",
+            ],
+            check=True,
+            timeout=30,
+        )
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(primary),
+                "config",
+                "--add",
+                "remote.origin.fetch",
+                "+refs/heads/develop:refs/remotes/origin/develop",
+            ],
+            check=True,
+            timeout=30,
+        )
+        result = run_worktree_check(primary)
+        warn_lines = [
+            ln
+            for ln in result.stdout.splitlines()
+            if ln.startswith("DOCTOR:worktree-refspec:WARN:")
+        ]
+        assert len(warn_lines) == 1, result.stdout
+        assert "refs/heads/main" in warn_lines[0]
+        assert "refs/heads/develop" in warn_lines[0]
+
     def test_wildcard_refspec_passes(self, tmp_path):
         primary, worktree = _worktree_pair(tmp_path)
         subprocess.run(

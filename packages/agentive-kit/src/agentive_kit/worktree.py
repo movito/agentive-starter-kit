@@ -33,6 +33,7 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
+from typing import NoReturn
 
 from agentive_kit import gitio
 
@@ -47,7 +48,7 @@ PROVISION_LINKS = (
 )
 
 
-def _fail(*lines: str) -> None:
+def _fail(*lines: str) -> NoReturn:
     for line in lines:
         print(line, file=sys.stderr)
     sys.exit(1)

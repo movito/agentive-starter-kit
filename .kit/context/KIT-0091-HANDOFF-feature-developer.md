@@ -19,7 +19,8 @@ behavior, not code shape)
 
 - Worktree: `~/Github/ask-worktrees/KIT-0091`, branch
   `feature/KIT-0091-port-gate-scripts` — created and provisioned by the
-  planner; task file already `3-in-progress`
+  planner; task file was `3-in-progress` at handoff (historical — now
+  `4-in-review` since the review handoff)
 - VERIFY, never create: `git branch --show-current` must show the
   branch above before your first edit; if not, STOP and ask
 - Likely 2 PRs (preflight+ghio; review-input+worktree lib) — stacked

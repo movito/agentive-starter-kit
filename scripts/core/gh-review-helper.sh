@@ -15,7 +15,7 @@
 # repo-mismatch HINT (exit 2), all gh calls through ghio. The parity
 # record lives in tests/test_gh_review_helper.py (KIT-0091 F2).
 #
-# Cds to its own repo root before delegating (the module discovers the
+# Changes directory to its own repo root before delegating (the module discovers the
 # project from CWD — the BugBot PR #112 anchoring lesson), and follows
 # the scripts/core/project resolution order: installed agentive-kit
 # first, then the in-repo package source, then a loud refusal.
@@ -31,19 +31,24 @@ if ! command -v python3 >/dev/null 2>&1; then
     exit 1
 fi
 
+if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+    echo "ERROR: python3 >= 3.10 is required by agentive-kit (found: $(python3 --version 2>&1))" >&2
+    exit 1
+fi
+
 AGENTIVE_KIT_SRC="$PKG_SRC" exec python3 - "$@" <<'PY'
 import os
 import sys
 
 try:
     from agentive_kit import review_input
-except ModuleNotFoundError:
+except ImportError:
     pkg_src = os.environ.get("AGENTIVE_KIT_SRC", "")
     if pkg_src and os.path.isdir(os.path.join(pkg_src, "agentive_kit")):
         sys.path.insert(0, pkg_src)
     try:
         from agentive_kit import review_input
-    except ModuleNotFoundError:
+    except ImportError as exc:
         print("ERROR: agentive-kit is not installed", file=sys.stderr)
         print(
             "   The review helper lives in the agentive-kit package"
@@ -53,6 +58,7 @@ except ModuleNotFoundError:
         print("   Install it:", file=sys.stderr)
         print("     uv tool install agentive-kit", file=sys.stderr)
         print("   or: pip install agentive-kit", file=sys.stderr)
+        print(f"   (import failed: {exc})", file=sys.stderr)
         sys.exit(1)
 
 review_input.helper_main(sys.argv[1:])

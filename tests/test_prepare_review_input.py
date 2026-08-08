@@ -31,9 +31,11 @@ _SCRIPT = REPO_ROOT / "scripts" / "core" / "prepare-review-input.sh"
 _TARGET_REPO_LIB = REPO_ROOT / "scripts" / "core" / "lib" / "target_repo.sh"
 _PKG_SRC = REPO_ROOT / "packages" / "agentive-kit" / "src"
 
-if not _SCRIPT.exists():
+if not _SCRIPT.exists() or not _TARGET_REPO_LIB.exists():
+    # both are fixture inputs — a checkout missing either must skip
+    # cleanly, not error in fixture setup (CodeRabbit, PR #113)
     pytest.skip(
-        "prepare-review-input.sh not present in this checkout",
+        "prepare-review-input.sh or lib/target_repo.sh not present in this checkout",
         allow_module_level=True,
     )
 
