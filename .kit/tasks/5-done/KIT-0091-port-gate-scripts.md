@@ -1,6 +1,6 @@
 # KIT-0091: Port the bash gate surfaces into agentive-kit (phase 1b)
 
-**Status**: In Review
+**Status**: Done
 **Priority**: medium-high (completes phase 1's module list; blocks nothing in phase 2, but every day unported is a day the package and the shims tell different stories)
 **Type**: Infrastructure / migration
 **Estimated Effort**: 1-2 days (own PR series, likely 2 PRs)
