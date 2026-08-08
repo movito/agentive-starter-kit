@@ -125,6 +125,8 @@ RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --ex
     --exclude='test_bots_conformance.py' \
     --exclude='test_check_hook_seeds.py' \
     --exclude='test_entrance_shims.py' \
+    --exclude='test_new_worktree.py' \
+    --exclude='test_scaffold_acceptance.py' \
     --exclude='test_setup_door.py' \
     --exclude='test_engine_materials.py' \
     "$PROJECT_ROOT/tests/" "$TARGET/tests/"

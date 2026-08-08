@@ -1048,7 +1048,7 @@ def cmd_install_evaluators(args, project_dir):
     print()
     print("API keys needed (add to .env):")
     print("  OPENAI_API_KEY   - OpenAI evaluators")
-    print("  GOOGLE_API_KEY   - Gemini evaluators")
+    print("  GEMINI_API_KEY   - Gemini evaluators")
     print("  MISTRAL_API_KEY  - Mistral evaluators")
 
 

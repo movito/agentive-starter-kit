@@ -151,8 +151,12 @@ and report — do not continue against the old path.
 
 All commands target the code folder explicitly (`git -C <code-path>`).
 
-1. If the folder is not already a git repo, `git -C <code-path> init`.
-   If it is one, keep its history — do not re-init. If the existing
+1. If the folder is not already a git repo, `git -C <code-path> init
+   -b main` (`-b` needs git ≥ 2.28 — on older git, init then
+   `git -C <code-path> branch -m main`). A machine without
+   `init.defaultBranch=main` would otherwise land the first push on
+   `master` (KIT-0081 F3, happened live). If it is one, keep its
+   history — do not re-init. If the existing
    repo's working tree is dirty, show `git -C <code-path> status
    --short` and ask: commit everything as the import, or stop for the
    user to review first. If it is clean and already committed, skip
@@ -184,7 +188,40 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    the split pair keeps planning artifacts out of this repo precisely
    so it CAN be published later (`docs/CROSS-REPO-PATTERN.md`) —
    starting private costs nothing and flipping later is one setting.
-5. First check for an existing remote: if the repo already has an
+5. Before any push, verify the branch:
+   `git -C <code-path> branch --show-current` must print `main`. If it
+   prints `master` (a pre-existing repo, or an init that predates
+   step 1's `-b main`), rename first: `git -C <code-path> branch -m
+   main` (KIT-0081 F3 — a `master` first push needed a remote
+   default-branch PATCH and branch deletion to undo). Three guards on
+   that rename:
+   - a `main` branch ALREADY existing alongside `master` makes the
+     rename fail — stop and ask which branch to keep
+   - a remote-backed `master` (an `origin` already exists): renaming
+     locally neither renames `origin/master` nor changes the remote
+     default — first check `git -C <code-path> ls-remote --heads
+     origin main`; if `origin/main` ALREADY exists, stop and ask how
+     to reconcile before any push. The probe itself must SUCCEED — a
+     failing `ls-remote` (auth, network) means unknown, not absent:
+     stop and ask the user to resolve remote access. Otherwise (probe
+     succeeded, no `origin/main`), after the rename,
+     `git -C <code-path> push -u origin main`, then
+     `gh repo edit <owner>/<repo> --default-branch main` — where
+     `<owner>/<repo>` is DERIVED from the existing `origin` URL (the
+     "already has a remote" rules in Edge cases), never assumed from
+     the project name: a repo whose GitHub name differs from the
+     folder must not have some OTHER repository's default flipped.
+     Delete
+     `origin/master` only after BOTH of those commands succeeded AND
+     with the user's consent — if either fails, stop and preserve
+     `origin/master` (GitHub refuses to delete the current default
+     branch, so a failed `gh repo edit` must end the cleanup, not
+     precede a deletion attempt)
+   - EMPTY output means detached HEAD — stop and ask, never rename
+   Any OTHER name (`dev`, a feature branch): ask the user — an
+   existing repo's branch layout is theirs; never silently rename a
+   non-default branch.
+   Then check for an existing remote: if the repo already has an
    `origin`, do NOT run `gh repo create` — derive `owner/repo` from
    it per the "already has a remote" rules in Edge cases (github.com
    origins only). Otherwise:
