@@ -125,7 +125,10 @@ def _doctor_install(project_dir):
             return None, None, None, [("shape-record", detail)]
         region = markers.extract_region(text, "kit-install")
         if region is None:
-            if "BEGIN KIT-LOCAL: kit-install" in text:
+            # The EXACT marker comment, not the bare phrase — prose
+            # documenting the marker must not read as a malformed
+            # region (BugBot, PR #116, round 2).
+            if "<!-- BEGIN KIT-LOCAL: kit-install -->" in text:
                 return (
                     None,
                     None,
