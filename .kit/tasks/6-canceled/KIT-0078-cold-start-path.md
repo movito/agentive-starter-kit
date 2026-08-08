@@ -1,6 +1,8 @@
 # KIT-0078: The cold-start path — instruct, don't interrogate
 
-**Status**: Todo
+> **Absorbed into KIT-0093 (2026-08-08, operator-approved)**: this task's requirements are carried explicitly by the ADR-0028 phase 2 spec (`KIT-0093-door-package-install-mode.md`, F2 entry-UX: instruct-don't-interrogate, one entry, create-project verdict, journey-shaped acceptance). This file is retained verbatim as the source record; implementation and acceptance happen in KIT-0093.
+
+**Status**: Canceled
 **Priority**: high
 **Assigned To**: unassigned
 **Estimated Effort**: 1 day

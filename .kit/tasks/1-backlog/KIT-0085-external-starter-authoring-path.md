@@ -1,6 +1,8 @@
 # KIT-0085: Task starters need a valid external-authoring path — split the checklist, stamp the LAUNCH block, add ingestion
 
-**Status**: Todo
+> **Demoted to backlog (2026-08-08, tidy)**: still valid (the EFKT external-authoring pain was real; templates remain per-repo content) but not assignable now, and its tooling half (ingest/stub scripts) belongs in agentive-kit post-ADR-0028. Re-scope the tooling to package modules at promotion.
+
+**Status**: Backlog
 **Priority**: high (every externally-authored starter is born non-compliant; the template forces the improvisation it exists to prevent)
 **Type**: Process / Template + tooling
 **Estimated Effort**: 4-6 h

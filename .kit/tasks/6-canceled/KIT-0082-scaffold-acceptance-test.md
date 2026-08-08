@@ -1,6 +1,8 @@
 # KIT-0082: Scaffold acceptance test — the door's output must demonstrably work
 
-**Status**: Backlog
+> **Absorbed into KIT-0093 (2026-08-08, operator-approved)**: this task's requirements are carried explicitly by the ADR-0028 phase 2 spec (`KIT-0093-door-package-install-mode.md`, F5 scaffold acceptance test: red-first against today's door, then green by the switch; removal rule recorded in workflow docs). This file is retained verbatim as the source record; implementation and acceptance happen in KIT-0093.
+
+**Status**: Canceled
 **Priority**: high
 **Created**: 2026-08-04
 

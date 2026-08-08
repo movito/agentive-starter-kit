@@ -1,6 +1,6 @@
 # KIT-0078 Handoff — feature-developer
 
-**Task**: `.kit/tasks/2-todo/KIT-0078-cold-start-path.md`
+**Task**: `.kit/tasks/6-canceled/KIT-0078-cold-start-path.md`
 **Target Codebase**: This repo — NOT a target repo (single-repo mode)
 **Prepared**: 2026-07-29 (planner-f5)
 **Estimated effort**: 1 day

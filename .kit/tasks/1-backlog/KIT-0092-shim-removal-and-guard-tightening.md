@@ -37,6 +37,17 @@ ALLOWED back to the three genuine config-home readers; the guard's
 original meaning is restored and shim entries become unnecessary
 regardless of Part A's timing.
 
+## Part C — monolith test shrinkage (folded from KIT-0089, 2026-08-08)
+
+The legacy test monoliths grew during the extraction because they carry
+the shim-contract tests (`test_project_script.py` 2,006 lines,
+`test_doctor.py` 2,638 as of 2026-08-08). When Part A removes the shim
+bodies, their contract tests and the legacy-path coverage they exercise
+die too — the monoliths must SHRINK in the same PR, with the remaining
+(genuinely still-relevant) cases either deleted with the shims or moved
+beside the package modules they actually test. Record before/after line
+counts in the PR body.
+
 ## Acceptance Criteria
 
 - [ ] Part B: probe distinguishes location from package name; ALLOWED

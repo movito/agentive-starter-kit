@@ -1,6 +1,8 @@
 # KIT-0041: Generalize the stub-gh harness to the remaining shell+gh scripts
 
-**Status**: Backlog
+> **Archived (2026-08-08, tidy)**: overtaken in better form — KIT-0091's implementation-parameterized parity matrices + the `ghio` stub-`gh` fixtures ARE the generalized harness this task wanted; `preflight-check.sh` itself is now a shim over the package. Remaining shell+`gh` scripts (wait-for-bots, check-bots, verify-ci) gain ghio-stub coverage when ported (phase 2+). Nothing left to build here.
+
+**Status**: Canceled
 **Priority**: low
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours

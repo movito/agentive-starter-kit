@@ -1,6 +1,8 @@
 # KIT-0075: Reconcile the launcher restoration — modernize `launch`, amend the D1 record
 
-**Status**: Todo
+> **Demoted to backlog (2026-08-08, tidy)**: F2 (modernize `launch` to native agent invocation) stays valid. F4 (consumer story) is DECIDED BY the phase 2 spec (KIT-0093) — the door switch determines what ships to consumers; check its verdict before promoting this.
+
+**Status**: Backlog
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours

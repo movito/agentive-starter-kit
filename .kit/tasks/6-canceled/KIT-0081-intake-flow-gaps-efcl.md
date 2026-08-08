@@ -1,6 +1,8 @@
 # KIT-0081: Intake/door gaps surfaced by the ev-fast-charging-loads intake
 
-**Status**: Backlog
+> **Absorbed into KIT-0093 (2026-08-08, operator-approved)**: this task's requirements are carried explicitly by the ADR-0028 phase 2 spec (`KIT-0093-door-package-install-mode.md`, F4 door/intake polish: every finding F1-F9 fixed or proven moot with a table in the PR body). This file is retained verbatim as the source record; implementation and acceptance happen in KIT-0093.
+
+**Status**: Canceled
 **Priority**: medium
 **Created**: 2026-08-04
 

@@ -1,6 +1,8 @@
 # KIT-0089: Test-suite modularity — stop the monolith test files from growing, split them once during packaging
 
-**Status**: Backlog
+> **Archived (2026-08-08, tidy)**: folded into KIT-0092. The extraction delivered per-module tests for package code (F3 by reference), but the monolith test files GREW during it (test_project_script 1,334→2,006; test_doctor 1,973→2,638 — they now carry the shim-contract tests). They shrink when the shims die, which is KIT-0092's job; the shrinkage expectation is recorded there as Part C. The size-lint guardrail (F1) remains an unfiled option, deliberately.
+
+**Status**: Canceled
 **Priority**: medium (guardrail half is cheap and immediate; split half is deliberately deferred to the ADR-0028 migration so the reorganization happens once)
 **Type**: Testing / infrastructure
 **Estimated Effort**: guardrail 0.5 day; split rides the packaging extraction

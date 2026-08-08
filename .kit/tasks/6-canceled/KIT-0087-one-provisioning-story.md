@@ -1,6 +1,8 @@
 # KIT-0087: One provisioning story — scrub the competing "make a new project" installs
 
-**Status**: Todo
+> **Absorbed into KIT-0093 (2026-08-08, operator-approved)**: this task's requirements are carried explicitly by the ADR-0028 phase 2 spec (`KIT-0093-door-package-install-mode.md`, F3 provisioning scrub: inventory-with-verdict table, single delegated install path, shape-independence audit; note its F2 single-path prerequisite was already delivered by KIT-0083/0090/0091). This file is retained verbatim as the source record; implementation and acceptance happen in KIT-0093.
+
+**Status**: Canceled
 **Priority**: high (every fresh project inherits whichever story its entry surface happens to tell)
 **Assigned To**: unassigned
 **Type**: Infrastructure / consolidation
