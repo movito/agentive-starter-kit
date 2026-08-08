@@ -1290,6 +1290,82 @@ class TestBotsDeclarationE2E:
         assert "bots:" not in _kit_install_region(target)
 
 
+@pytest.mark.slow
+class TestMissingDependencyInstructions:
+    """KIT-0093 (CodeRabbit, PR #117): every other assertion accepts
+    verified-OR-instructed, so on a machine that HAS the tools the
+    instruction strings are never exercised. This test forces the
+    missing-CLI and missing-plugin branches hermetically — a restricted
+    PATH carrying only the tools the door itself needs — and pins the
+    exact contract lines plus the degradation guarantee (exit 0)."""
+
+    _NEEDED_TOOLS = (
+        "bash",
+        "sh",
+        "env",
+        "git",
+        "python3",
+        "sed",
+        "awk",
+        "grep",
+        "tr",
+        "cut",
+        "sort",
+        "uniq",
+        "head",
+        "tail",
+        "basename",
+        "dirname",
+        "cat",
+        "cp",
+        "mv",
+        "rm",
+        "mkdir",
+        "touch",
+        "chmod",
+        "ls",
+        "wc",
+        "mktemp",
+        "install",
+        "stat",
+        "uname",
+    )
+
+    def _restricted_path(self, tmp_path: Path) -> Path:
+        bindir = tmp_path / "restricted-bin"
+        bindir.mkdir()
+        for tool in self._NEEDED_TOOLS:
+            real = shutil.which(tool)
+            if real:  # builtins/absent tools simply aren't linked
+                (bindir / tool).symlink_to(real)
+        assert not (bindir / "agentive").exists()
+        assert not (bindir / "claude").exists()
+        return bindir
+
+    def test_new_without_cli_or_plugin_instructs_and_succeeds(self, tmp_path):
+        bindir = self._restricted_path(tmp_path)
+        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
+        env["PATH"] = str(bindir)
+        target = tmp_path / "no-deps-app"
+        result = run_door("--new", str(target), env=env)
+        out = result.stdout
+        # Degradation, never a hard fail (the KIT-0083 pattern)
+        assert result.returncode == 0, result.stderr + out
+        assert "Install complete:" in out
+        # The exact contract lines (test_scaffold_acceptance docstring)
+        assert "Install the lifecycle CLI: uv tool install agentive-kit" in out
+        assert "Install the agent plugin:" in out
+        assert "claude plugin marketplace add movito/agentive-skills" in out
+        assert "claude plugin install agentive-workflow@agentive-skills" in out
+        # Nothing claimed VERIFIED, and doctor honestly not run — the
+        # rejection targets the positive-verification forms only, so a
+        # future honest status line (e.g. 'agentive CLI: missing')
+        # would not trip it (CodeRabbit, PR #117)
+        assert not re.search(r"agentive CLI:.*\(verified\)", out)
+        assert "agent plugin: verified" not in out
+        assert "Doctor verdict:" not in out
+
+
 class TestPresetNeverDistributed:
     """F7: nothing in the config home (<kit-parent>/agentive-config/,
     KIT-0058) rides any sync tier, rsync, or export path. Structural

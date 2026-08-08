@@ -28,10 +28,11 @@ Using agents to build software works better if you add a bit of structure — An
 | **gh** | any recent | Authenticated: `gh auth status` must pass |
 | **Python** | ≥ 3.10 | For code-project shapes (CI tests 3.10/3.12/3.14); planning-shape repos need only system `python3` |
 | **Claude Code** | current | The kit is built around it |
-| **uv** | optional | Easiest install path for the `adversarial` evaluation CLI (`uv tool install adversarial-workflow`) |
-| **agentive-kit** | 0.1.x | The kit's lifecycle CLI as a PyPI package (KIT-ADR-0028 phase 1, pre-consumer-migration): `uv tool install agentive-kit` (or `pipx install agentive-kit` — any isolated-CLI installer works), upgrade with `uv tool upgrade agentive-kit`. Inside this repo the scripts use the in-tree `packages/agentive-kit/` source automatically; `./scripts/core/project` remains as a delegating shim for one release cycle |
+| **uv** | recommended | Installs both CLIs every project uses (any isolated-CLI installer works) |
+| **agentive-kit** | 0.3.x | The kit's lifecycle CLI (task moves, doctor, preflight, evaluator provisioning): `uv tool install agentive-kit`, upgrade with `uv tool upgrade agentive-kit`. New projects are born packaged (KIT-ADR-0028 phase 2) — they carry no script copies; the door verifies this install or prints the command. Inside this repo the scripts use the in-tree `packages/agentive-kit/` source automatically |
+| **agentive-workflow plugin** | current | Agents, skills, and slash commands for created projects: `claude plugin marketplace add movito/agentive-skills`, then `claude plugin install agentive-workflow@agentive-skills` |
 
-`./scripts/core/project doctor` inside any created project tells you what's missing.
+`agentive doctor` inside any packaged project tells you what's missing (projects created before the packaged era run `./scripts/core/project doctor` instead).
 
 **For contributors — the portability rule**: kit scripts must run on stock
 macOS (BSD userland, bash 3.2, no Homebrew add-ons) *and* Linux CI. Do not
@@ -44,7 +45,7 @@ that shipped the git 2.31 dependency (KIT-0080) and the missing-CLI gap
 
 ## Quickstart
 
-You need Claude Code, git + gh (authenticated) — see [Requirements](#requirements) above; `./scripts/core/project doctor` inside any created project tells you what's missing.
+You need Claude Code, git + gh (authenticated) — see [Requirements](#requirements) above; `agentive doctor` inside any packaged project tells you what's missing.
 
 ```bash
 cd ~/Github
@@ -52,7 +53,7 @@ git clone https://github.com/movito/agentive-starter-kit.git
 cd agentive-starter-kit && claude
 ```
 
-Then run `/new-project` in the session. It interviews you in plain language and drives the setup door; when it finishes, open the tab its LAUNCH line names and start with the `planner` agent.
+Then run `/new-project` in the session — **the one starting action for every situation** (blank project, prototype graduation, adopting a repo). It interviews you in plain language and drives the setup door; anything not yet installed (the `agentive` CLI, the agent plugin) comes back as a printed install command, never a dead end. When it finishes, open the tab its LAUNCH line names and start with the `planner` agent.
 
 Full guide — factory model, prototype graduation, adopting an existing repo, operator presets: [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md). Authoritative option matrix: `./scripts/local/bootstrap --help`.
 
@@ -66,14 +67,13 @@ Full guide — factory model, prototype graduation, adopting an existing repo, o
 | `feature-developer` | Implementation tasks with gated workflow |
 | `test-runner` | TDD and testing |
 | `code-reviewer` | Reviews implementations for quality |
-| `create-project` | Spin up a new project from this kit |
-| `project-intake` | Graduate a prototype into the split pair |
+| `project-intake` | Graduate a prototype into the split pair (via `/new-project`) |
 
 The full set lives in `.claude/agents/` — `ls .claude/agents/` is the authoritative inventory.
 
 ## Evaluation
 
-Independent AI review of your plans, code, and documentation, via the `adversarial-workflow` package. Discover what's available with `adversarial list-evaluators`; install the evaluator library with `./scripts/core/project install-evaluators`. Guidance lives in the `code-review-evaluator` skill (`.claude/skills/code-review-evaluator/SKILL.md`).
+Independent AI review of your plans, code, and documentation, via the `adversarial-workflow` package. Discover what's available with `adversarial list-evaluators`; install the evaluator library (and the CLI) with `agentive install-evaluators`. Guidance lives in the `code-review-evaluator` skill (`.claude/skills/code-review-evaluator/SKILL.md`).
 
 ---
 

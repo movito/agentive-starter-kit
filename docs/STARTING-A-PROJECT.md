@@ -15,17 +15,22 @@ do in your first session.
 - **Claude Code** installed (`claude --version`) and a Claude account
 - **git** configured, plus **gh** (the GitHub CLI), authenticated —
   check with `gh auth status`
-- For code projects: **Python 3.10–3.12** and **uvx or pipx** (for
-  `adversarial-workflow`); docs-only and planning repos skip the
-  toolchain
+- **uv** (or any isolated-CLI installer) for the two tool installs
+  every project uses: `uv tool install agentive-kit` (the `agentive`
+  lifecycle CLI) and `uv tool install adversarial-workflow` (the
+  evaluation CLI — `agentive install-evaluators` handles this one for
+  you)
 - Optional: a model-provider API key for adversarial evaluation, and
   Linear if you want task sync (see `docs/LINEAR-INTEGRATION.md`)
 
-Don't audit this by hand. The door validates what it needs as it runs,
-and every created project carries the health surface:
+Don't audit this by hand. The door validates what it needs as it runs
+— anything missing becomes a printed install instruction, never a
+failure — and every created project has the health surface:
 
 ```bash
-./scripts/core/project doctor  # run inside any created project
+agentive doctor   # packaged (--new) projects
+# copied-scripts (adopted / pre-packaged) projects instead run:
+# ./scripts/core/project doctor
 ```
 
 ---
@@ -69,9 +74,16 @@ Three things follow from this model:
   `agentive-starter-kit/` (as above) to create projects — the
   `/new-project` command, the `project-intake` agent, the setup door
   itself. You do everything else in the created project's own folder.
-- **Projects never contain the factory.** A created project gets the
-  agents, scripts, and workflow it needs — not the kit's git history,
-  its internal tasks, or the door.
+- **Projects never contain the factory — and `--new` projects carry
+  no copies of its machinery either.** A project created with the
+  packaged `--new` flow is born *packaged* (KIT-ADR-0028): it contains
+  content (task folders, templates, workflow docs, config, records)
+  while the tooling is **installed** — lifecycle scripts via the
+  `agentive-kit` PyPI package, agents/skills/commands via the
+  `agentive-workflow` Claude Code plugin. The door verifies both
+  installs or prints the exact install commands. (The `--adopt` route
+  is the transition-era exception: it still installs script copies
+  until ADR-0028 phase 3 — see route 4 below.)
 - **Navigation is by tabs, not `cd`.** When a tool finishes creating
   something, it prints where to go next; you open a new tab there
   (see [Tab handoffs](#tab-handoffs-the-launch-convention) below).
@@ -128,7 +140,7 @@ A few rules keep the preset safe:
   contents are never printed and never staged.
 - **Records beat presets.** On `--adopt` of a project that already
   carries a kit-install record, the record wins; compare with
-  `./scripts/core/project doctor --against-preset`.
+  `agentive doctor --against-preset`.
 - **Malformed fails loud.** A bad line aborts naming the line; unknown
   keys warn and are skipped.
 
@@ -187,7 +199,9 @@ shape — again, `bootstrap --help` is the reference.
 
 Bootstrap an existing repo with the implementation tools — agents,
 scripts, commands, and the minimal `.kit/` workflow skeleton — without
-the full builder layer:
+the full builder layer. (Adopt still installs script copies today;
+its packaged-install switch is ADR-0028 phase 3, coming with the
+consumer migration.)
 
 ```bash
 cd ~/Github/agentive-starter-kit && ./scripts/local/bootstrap --adopt ~/Github/my-app
@@ -207,33 +221,22 @@ automates, and single-key evaluation mode is documented in the
 
 ---
 
-## Other ways through the door
+## Starting from zero (no kit clone yet)
 
-Both of these end at the same door — they exist for when you're not
-sitting in a permanent kit clone yet.
+One route even here — everything funnels into `/new-project`:
 
-- **From a URL (zero setup).** Open Claude Code anywhere and paste:
+```bash
+cd ~/Github  # or wherever your projects live
+git clone https://github.com/movito/agentive-starter-kit.git
+cd agentive-starter-kit && claude
+```
 
-  ```text
-  https://github.com/movito/agentive-starter-kit
-
-  Please set up a new project from this kit.
-  ```
-
-  Claude clones the kit and follows the `create-project` agent's
-  recipe — same questions, same door. Honest caveat: this relies on
-  Claude reading and following the recipe in the main session, so it
-  is not a deterministic script and behavior may vary slightly between
-  sessions. For a predictable run, clone the kit and use the agent
-  directly.
-
-- **The `create-project` agent (deterministic).** From a kit clone,
-  open Claude Code and ask: *"Use the create-project agent to set up a
-  new project for me."* The agent asks for the target directory, name,
-  task prefix, and GitHub visibility, then runs the door, sets your
-  project identity, installs evaluators, and creates the GitHub repo.
-  The agent file (`.claude/agents/create-project.md`) is the
-  authoritative recipe.
+then type `/new-project` at Claude's prompt. That command IS the one
+user-facing entry for every situation — prototype, blank pair, single
+repo — and it routes to the right flow itself. (The retired
+`create-project` agent's job folded into `/new-project` + the door in
+KIT-0093; if you find a live user-facing reference to it, it's stale —
+historical records and changelogs mention it accurately.)
 
 ---
 
@@ -261,10 +264,11 @@ make this work:
 
 ## Your first session in a new planning repo
 
-Open the tab the LAUNCH line named **as a planner session** — start it
-with `claude --agent .claude/agents/planner.md`, or open the tab and
-ask for the planner agent by name. (That tab *is* the agent's tab; no
-further hop needed.) The planner triages the backlog — in a graduated prototype it has the seeded tasks from
+Open the tab the LAUNCH line named and invoke the **`planner` agent
+by name** — it is provided by the `agentive-workflow` plugin (the
+door's tail printed the install lines if the plugin is missing).
+(That tab *is* the agent's tab; no further hop needed.) The planner
+triages the backlog — in a graduated prototype it has the seeded tasks from
 your brief; in a blank pair it helps you write the first tasks — and
 recommends what to start. The seeded `CLAUDE.md` in every new project
 carries this same first-session instruction, so an agent opening the
@@ -292,8 +296,8 @@ material into a project is an operator-only act: the Claude Code
 permission classifier blocks agents from doing it (correctly — secrets
 handling), so an agent session asked to "fix the missing keys" can
 only stall. The seeded `CLAUDE.md` first-session note and
-`project doctor`'s `env-keys` check both surface a skipped copy before
-it can block your first evaluation.
+`agentive doctor`'s `env-keys` check both surface a skipped copy
+before it can block your first evaluation.
 
 ## Checking your environment
 
@@ -301,8 +305,13 @@ Whenever something seems off — missing tools, keys, or config — run
 the health surface from inside any created project:
 
 ```bash
-./scripts/core/project doctor  # incident-mapped environment checks
+agentive doctor   # incident-mapped environment checks
 ```
+
+(Which world is your project in? Check for a `scripts/core/`
+directory: absent → packaged, run `agentive doctor`; present → a
+pre-packaged project that runs `./scripts/core/project doctor`
+instead — see `docs/UPDATING-YOUR-PROJECT.md`.)
 
 ---
 
@@ -315,6 +324,6 @@ the health surface from inside any created project:
 | Your preset, authored conversationally | `/setup-preset` (in the kit clone) |
 | The split-pair pattern explained | `docs/CROSS-REPO-PATTERN.md` |
 | The prototype handoff template | `.kit/templates/PROTOTYPE-HANDOFF-TEMPLATE.md` |
-| Health checks in a created project | `./scripts/core/project doctor` |
+| Health checks in a created project | `agentive doctor` |
 | Linear task sync | `docs/LINEAR-INTEGRATION.md` |
-| Keeping a created project updated | `docs/UPDATING-YOUR-PROJECT.md` |
+| Keeping a created project updated (and the rename procedure) | `docs/UPDATING-YOUR-PROJECT.md` |
