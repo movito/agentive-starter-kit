@@ -93,8 +93,15 @@ PROJECT_NAME="${NAME:-$(basename "$TARGET")}"
 # (README needs $-expansion for its other fields) — strip characters
 # that could break or execute inside them: backticks, $, quotes,
 # newlines/CRs. Operator-owned values, so this is hardening, not a
-# trust boundary (the fill_env_identity precedent).
+# trust boundary (the fill_env_identity precedent). A name that
+# sanitizes to NOTHING falls back to the basename, out loud
+# (CodeRabbit, PR #116).
 PROJECT_NAME="${PROJECT_NAME//[\`\$\"\'$'\n'$'\r']/}"
+if [ -z "$PROJECT_NAME" ]; then
+    PROJECT_NAME="$(basename "$TARGET")"
+    PROJECT_NAME="${PROJECT_NAME//[\`\$\"\'$'\n'$'\r']/}"
+    echo "Warning: --name sanitized to empty — using the directory name '$PROJECT_NAME'"
+fi
 PREFIX="${PREFIX//[\`\$\"\'$'\n'$'\r']/}"
 
 # Task-prefix derivation (single shape; ported from the retired

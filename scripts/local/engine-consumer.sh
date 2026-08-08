@@ -260,9 +260,16 @@ PROJECT_NAME="$(basename "$TARGET")"
 # --project-name (door --new with --name, KIT-0093): the display
 # identity must not split across artifacts — README/current-state
 # carry the given name, so CLAUDE.md's title must too. Same
-# heredoc-hostile character strip as the scaffold engine.
+# heredoc-hostile character strip as the scaffold engine; a name
+# that sanitizes to NOTHING falls back to the basename, out loud
+# (CodeRabbit, PR #116 — an empty title helps nobody).
 if [ -n "$PROJECT_NAME_ARG" ]; then
-    PROJECT_NAME="${PROJECT_NAME_ARG//[\`\$\"\'$'\n'$'\r']/}"
+    _SANITIZED_NAME="${PROJECT_NAME_ARG//[\`\$\"\'$'\n'$'\r']/}"
+    if [ -n "$_SANITIZED_NAME" ]; then
+        PROJECT_NAME="$_SANITIZED_NAME"
+    else
+        echo "Warning: --project-name sanitized to empty — using the directory name '$PROJECT_NAME'"
+    fi
 fi
 
 # --internal-record-only: everything except Steps 1.5 and 2.5 is skipped.
