@@ -201,7 +201,10 @@ All commands target the code folder explicitly (`git -C <code-path>`).
      locally neither renames `origin/master` nor changes the remote
      default — first check `git -C <code-path> ls-remote --heads
      origin main`; if `origin/main` ALREADY exists, stop and ask how
-     to reconcile before any push. Otherwise, after the rename,
+     to reconcile before any push. The probe itself must SUCCEED — a
+     failing `ls-remote` (auth, network) means unknown, not absent:
+     stop and ask the user to resolve remote access. Otherwise (probe
+     succeeded, no `origin/main`), after the rename,
      `git -C <code-path> push -u origin main`, then
      `gh repo edit <owner>/<name> --default-branch main`, and only
      delete `origin/master` with the user's consent
