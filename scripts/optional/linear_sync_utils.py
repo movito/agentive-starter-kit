@@ -285,12 +285,18 @@ def parse_task_metadata(task_file: Path) -> Dict[str, Any]:
 
     # Extract task ID from filename. Any PREFIX-NNNN id is valid — the
     # kit mints arbitrary prefixes (KIT-, ASK-, consumer prefixes from
-    # engine-export --prefix); hardcoding TASK-|ASK- rejected every live
+    # the door's --prefix flag); hardcoding TASK-|ASK- rejected every live
     # task (KIT-0068 A14). Anchored at the start: task files are named
     # PREFIX-NNNN-description.md, and an embedded id elsewhere in the
     # name (notes-KIT-0068.md) must not be mistaken for the task's own.
+    # Prefix grammar matches the intake contract ^[A-Z][A-Z0-9]{0,5}$
+    # (CodeRabbit, PR #116): alphanumeric prefixes like A1- are valid
+    # everywhere else, so the parser must not reject them.
     filename = task_file.name
-    task_id_match = re.match(r"([A-Z]{2,6}-\d{4})", filename)
+    # (?!\d): a fifth digit means a DIFFERENT id (A-00012 must not
+    # truncate-match as A-0001 and update the wrong Linear issue —
+    # CodeRabbit, PR #116).
+    task_id_match = re.match(r"([A-Z][A-Z0-9]{0,5}-\d{4})(?!\d)", filename)
     if not task_id_match:
         raise ValueError(f"No valid task ID found in filename: {filename}")
 
@@ -298,8 +304,10 @@ def parse_task_metadata(task_file: Path) -> Dict[str, Any]:
 
     # Extract title from first heading
     # Pattern: # KIT-0001: Title or # KIT-0001-slug: Title
+    # Heading slugs must START with -/_ so a trailing digit can never
+    # extend the id (same truncate-match class as the filename regex).
     title_match = re.search(
-        r"^#\s+([A-Z]{2,6}-\d{4})(?:[-_a-zA-Z0-9]*):\s*(.+)$",
+        r"^#\s+([A-Z][A-Z0-9]{0,5}-\d{4})(?:[-_][-_a-zA-Z0-9]*)?:\s*(.+)$",
         content,
         re.MULTILINE,
     )

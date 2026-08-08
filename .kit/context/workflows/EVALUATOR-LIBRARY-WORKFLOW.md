@@ -2,6 +2,13 @@
 
 Procedures for managing adversarial evaluators from the upstream library.
 
+> **Provisioning is not this doc's job.** A project gets the toolchain
+> (CLI + full library at the pinned tag) through exactly one home:
+> `agentive install-evaluators` (legacy copied-scripts repos:
+> `./scripts/core/project install-evaluators`). Everything below is
+> post-provisioning maintenance — selective installs, upgrades, and
+> conflict handling on an already-provisioned setup.
+
 ## Upstream Repository
 
 - **Repo**: `movito/adversarial-evaluator-library`

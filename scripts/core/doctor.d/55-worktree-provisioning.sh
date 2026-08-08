@@ -88,11 +88,18 @@ fi
 # remedy tail whole stays executable (rounds 2-3).
 ROOT_Q="$(printf '%q' "$ROOT")"
 VENV_Q="$(printf '%q' "$ROOT/.venv")"
-SETUP_CMD="(cd $ROOT_Q && ./scripts/core/project setup)"
-SETUP_NOTE=""
-if [ -n "$IN_WORKTREE" ]; then
-    SETUP_CMD="(cd $ROOT_Q && ./scripts/core/project setup --no-hooks)"
-    SETUP_NOTE="  # hooks stay shared with the primary, hence --no-hooks"
+# Setup command matches the repo's world (KIT-0093): packaged repos
+# carry no scripts/core — a plain venv command is the honest hint.
+if [ -x "$ROOT/scripts/core/project" ]; then
+    SETUP_CMD="(cd $ROOT_Q && ./scripts/core/project setup)"
+    SETUP_NOTE=""
+    if [ -n "$IN_WORKTREE" ]; then
+        SETUP_CMD="(cd $ROOT_Q && ./scripts/core/project setup --no-hooks)"
+        SETUP_NOTE="  # hooks stay shared with the primary, hence --no-hooks"
+    fi
+else
+    SETUP_CMD="(cd $ROOT_Q && python3 -m venv .venv)"
+    SETUP_NOTE=""
 fi
 
 # ── .venv: must never be a symlink, worktree or not ──

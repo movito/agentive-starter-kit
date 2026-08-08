@@ -132,6 +132,7 @@ Open a new tab with working directory <absolute-path-to-created-project>
 ```
 
 Then state the first-session instruction in one line: open that tab
-as a planner session (`claude --agent .claude/agents/planner.md`) —
-the planner triages the backlog and recommends what to start (the
-project's seeded `CLAUDE.md` says the same thing).
+and invoke the `planner` agent (provided by the `agentive-workflow`
+plugin — the door's tail printed the install lines if it is missing)
+— the planner triages the backlog and recommends what to start (the
+project's seeded `CLAUDE.md` and README say the same thing).

@@ -54,6 +54,16 @@ def make_scratch(tmp_path: Path) -> tuple[Path, Path]:
     (root / "tests").mkdir()
     shutil.copy(CI_CHECK, root / "scripts" / "core" / "ci-check.sh")
     (root / "scripts" / "dummy.py").touch()
+    # A real Python project in a copied-scripts repo: the python
+    # seed's packaged-world guards (KIT-0093) key on these files —
+    # pyproject.toml (loud no-op when absent) and the scripts/core
+    # helpers (steps skip when absent) — and these contract tests
+    # exercise the full gauntlet, so the scratch repo carries them.
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "scratch"\n', encoding="utf-8"
+    )
+    (root / "scripts" / "core" / "pattern_lint.py").touch()
+    (root / "scripts" / "core" / "check_cross_repo_config.py").touch()
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     _stub(
@@ -143,6 +153,18 @@ class TestContractConformance:
         )
         assert result.returncode == 1
         assert "❌ Black: Formatting issues found" in result.stdout
+
+    @pytest.mark.parametrize("mode", ["ci", "local"])
+    def test_python_seed_noops_loudly_without_pyproject(self, tmp_path, mode):
+        # KIT-0093: a packaged scaffold is born python-profile but
+        # project-less — the hook must say so and pass, never fail
+        # about tooling the repo does not have yet.
+        root, bin_dir = make_scratch(tmp_path)
+        (root / "pyproject.toml").unlink()
+        hook = seed_hook(root, PYTHON_SEED)
+        result = run_in_scratch(["bash", str(hook), "--mode", mode], root, bin_dir)
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "no pyproject.toml yet" in result.stdout
 
 
 class TestPythonSeedEquivalence:

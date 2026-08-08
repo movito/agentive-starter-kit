@@ -31,6 +31,17 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CORE_DIR="$PROJECT_ROOT/scripts/core"
 cd "$PROJECT_ROOT"
 
+# Packaged scaffolds (KIT-0093) are born without a Python project: the
+# profile records the INTENT, and this hook becomes the gauntlet once
+# the project exists. Until then, a loud no-op — never a confusing
+# failure about tooling the repo does not have yet.
+if [ ! -f "pyproject.toml" ]; then
+    echo "⚠️  Python profile, but no pyproject.toml yet — nothing to check."
+    echo "   Set up your Python project, then edit this hook to run its gauntlet"
+    echo "   (the contract is in the header — the kit never overwrites this file)."
+    exit 0
+fi
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔍 Running local CI checks"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -136,7 +147,9 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "5/7 🔍 Running pattern lint (DK rules)..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 PY_FILES=$(find scripts/ tests/ -name '*.py' 2>/dev/null)
-if [ -n "$PY_FILES" ]; then
+if [ ! -f "$CORE_DIR/pattern_lint.py" ]; then
+    echo "⚠️  pattern_lint.py not present (packaged repo) — step skipped"
+elif [ -n "$PY_FILES" ]; then
     if python3 "$CORE_DIR/pattern_lint.py" $PY_FILES 2>&1; then
         echo "✅ Pattern lint: No DK violations"
     else
@@ -167,7 +180,9 @@ echo "7/7 🧭 Validating cross-repo config..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 # Exits 1 on FAIL (declared cross-repo but no parseable ## Target Repository
 # section); 0 on PASS or WARN (warning printed for a missing local target).
-if python3 "$CORE_DIR/check_cross_repo_config.py" "$PROJECT_ROOT"; then
+if [ ! -f "$CORE_DIR/check_cross_repo_config.py" ]; then
+    echo "⚠️  check_cross_repo_config.py not present (packaged repo) — step skipped"
+elif python3 "$CORE_DIR/check_cross_repo_config.py" "$PROJECT_ROOT"; then
     :
 else
     echo "   Fix CLAUDE.md's ## Target Repository section."

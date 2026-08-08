@@ -112,3 +112,68 @@ class TestPackagedChecksExecBitFallback:
             capsys.readouterr().out
         )
         assert code == 1
+
+
+class TestPackagedInstallRecordReader:
+    """KIT-0093 (BugBot, PR #116): packaged repos ship no
+    scripts/local/kit_markers.py — the record reader travels with the
+    package, and the two paths share one parser."""
+
+    def _claude_md(self, tmp_path, body):
+        (tmp_path / "CLAUDE.md").write_text(body, encoding="utf-8")
+        return tmp_path
+
+    def test_record_read_without_kit_markers_copy(self, tmp_path):
+        root = self._claude_md(
+            tmp_path,
+            "# P\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: planning\nprofile: none\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+        )
+        assert doctor._doctor_install(root) == ("planning", "none", None, [])
+
+    def test_bots_line_read_without_kit_markers_copy(self, tmp_path):
+        root = self._claude_md(
+            tmp_path,
+            "# P\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: single\nprofile: python\nbots: coderabbit\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+        )
+        shape, profile, bots, errors = doctor._doctor_install(root)
+        assert (shape, profile, errors) == ("single", "python", [])
+        assert bots == ["coderabbit"] or bots == "coderabbit"
+
+    def test_absent_region_keeps_backcompat_default(self, tmp_path):
+        root = self._claude_md(tmp_path, "# P\nno region here\n")
+        assert doctor._doctor_install(root) == ("single", "python", None, [])
+
+    def test_unbalanced_markers_fail_loud_not_default(self, tmp_path):
+        root = self._claude_md(
+            tmp_path,
+            "# P\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: planning\n",
+        )
+        shape, profile, bots, errors = doctor._doctor_install(root)
+        assert shape is None
+        assert errors and "malformed" in errors[0][1]
+
+    def test_prose_mention_of_marker_is_not_malformed(self, tmp_path):
+        # BugBot round 2 (PR #116): docs PROSE naming the marker must
+        # not read as an unbalanced region — only the exact comment
+        # form counts.
+        root = self._claude_md(
+            tmp_path,
+            "# P\nThe record lives between BEGIN KIT-LOCAL: kit-install "
+            "markers in this file.\n",
+        )
+        assert doctor._doctor_install(root) == ("single", "python", None, [])
+
+    def test_lone_end_marker_fails_loud_not_default(self, tmp_path):
+        # CodeRabbit (PR #116): a lone END marker is just as unbalanced
+        # as a lone BEGIN — corrupted record, never the silent default.
+        root = self._claude_md(
+            tmp_path,
+            "# P\n<!-- END KIT-LOCAL: kit-install -->\nshape: planning\n",
+        )
+        shape, profile, bots, errors = doctor._doctor_install(root)
+        assert shape is None
+        assert errors and "malformed" in errors[0][1]

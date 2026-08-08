@@ -21,7 +21,13 @@ fi
 
 EVAL_DIR="$ROOT/.adversarial/evaluators"
 if [ ! -d "$EVAL_DIR" ] || [ -z "$(ls -A "$EVAL_DIR" 2>/dev/null)" ]; then
-    echo "DOCTOR:evaluators:FAIL:.adversarial/evaluators/ missing or empty — run: ./scripts/core/project install-evaluators"
+    # Fix command matches the repo's world (KIT-0093): packaged repos
+    # carry no scripts/core — the installer lives in the agentive CLI.
+    if [ -x "$ROOT/scripts/core/project" ]; then
+        echo "DOCTOR:evaluators:FAIL:.adversarial/evaluators/ missing or empty — run: ./scripts/core/project install-evaluators"
+    else
+        echo "DOCTOR:evaluators:FAIL:.adversarial/evaluators/ missing or empty — run: agentive install-evaluators"
+    fi
     exit 0
 fi
 

@@ -93,6 +93,8 @@ TARGET_PATH=""
 TARGET_GITHUB=""
 BOTS=""
 RECORD_ONLY=0
+PACKAGED=0
+PROJECT_NAME_ARG=""
 USAGE="Usage: $0 [--no-kit] [--shape single|planning] [--profile python|none] [--target-path <p>] [--target-github <o/r>] [--bots <b>] <target-directory>"
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -101,6 +103,16 @@ while [ $# -gt 0 ]; do
             ;;
         --internal-record-only)
             RECORD_ONLY=1
+            ;;
+        --packaged)
+            # KIT-0093 (ADR-0028 phase 2): the target is a packaged
+            # scaffold — lifecycle scripts come from agentive-kit and
+            # agents from the plugin, so the record step ships NO
+            # kit_markers.py copy and seeds region bodies that
+            # reference `agentive`, never ./scripts/core/. Only
+            # meaningful together with --internal-record-only (the
+            # door's --new path).
+            PACKAGED=1
             ;;
         --shape)
             shift
@@ -136,6 +148,13 @@ while [ $# -gt 0 ]; do
             ;;
         --bots=*)
             BOTS="${1#--bots=}"
+            ;;
+        --project-name)
+            shift
+            PROJECT_NAME_ARG="${1:-}"
+            ;;
+        --project-name=*)
+            PROJECT_NAME_ARG="${1#--project-name=}"
             ;;
         --*)
             echo "Error: unknown flag: $1"
@@ -238,6 +257,20 @@ if [ "$TARGET" = "$PROJECT_ROOT" ]; then
     exit 1
 fi
 PROJECT_NAME="$(basename "$TARGET")"
+# --project-name (door --new with --name, KIT-0093): the display
+# identity must not split across artifacts — README/current-state
+# carry the given name, so CLAUDE.md's title must too. Same
+# heredoc-hostile character strip as the scaffold engine; a name
+# that sanitizes to NOTHING falls back to the basename, out loud
+# (CodeRabbit, PR #116 — an empty title helps nobody).
+if [ -n "$PROJECT_NAME_ARG" ]; then
+    _SANITIZED_NAME="${PROJECT_NAME_ARG//[\`\$\"\'$'\n'$'\r']/}"
+    if [ -n "$_SANITIZED_NAME" ]; then
+        PROJECT_NAME="$_SANITIZED_NAME"
+    else
+        echo "Warning: --project-name sanitized to empty — using the directory name '$PROJECT_NAME'"
+    fi
+fi
 
 # --internal-record-only: everything except Steps 1.5 and 2.5 is skipped.
 # Guards (not an early exit) keep the record steps in their normal order.
@@ -579,8 +612,10 @@ fi
 # PLANNING_LOCAL above; single shapes need it too, or the profile
 # recorded in Step 2.5 would be silently ignored (the reader-absent
 # path falls back to defaults — exactly the masking this record exists
-# to prevent).
-if [ ! -e "$TARGET/scripts/local/kit_markers.py" ]; then
+# to prevent). PACKAGED scaffolds ship no copy: the agentive-kit
+# package reads the record itself (agentive_kit.doctor / .markers), so
+# the reader travels with the CLI, not the repo (KIT-0093).
+if [ "$PACKAGED" -eq 0 ] && [ ! -e "$TARGET/scripts/local/kit_markers.py" ]; then
     cp "$PROJECT_ROOT/scripts/local/kit_markers.py" \
        "$TARGET/scripts/local/kit_markers.py"
 fi
@@ -859,7 +894,38 @@ fi
 if [ "$RECORD_ONLY" -eq 0 ] && printf '%s\n' "$REGIONS_OUT" | grep -qx 'project-rules'; then
     echo "  project-rules region already present (preserved)"
 else
-    if [ "$PROFILE" = "python" ]; then
+    if [ "$PACKAGED" -eq 1 ]; then
+        # Packaged scaffolds (KIT-0093): the rules reference the
+        # installed `agentive` CLI, never ./scripts/core/ — that
+        # directory does not exist in a packaged repo.
+        if [ "$PROFILE" = "python" ]; then
+            RULES_BODY="$(cat << 'RULES'
+## Project Rules
+
+- Python project (profile: python). The check hook
+  `scripts/local/checks.sh` is the gauntlet for this repo — edit it
+  as the project grows (the contract is in its header).
+- Task workflow: task files live in `.kit/tasks/<status-folder>/`;
+  use `agentive start|move|complete <TASK-ID>`.
+- Feature branches: `feature/<TASK-ID>-short-description`.
+- Environment checks: `agentive doctor`.
+RULES
+)"
+        else
+            RULES_BODY="$(cat << 'RULES'
+## Project Rules
+
+- No project toolchain is configured (profile: none). The check hook
+  `scripts/local/checks.sh` is a loud no-op — edit it to add checks
+  (the contract is in its header).
+- Task workflow: task files live in `.kit/tasks/<status-folder>/`;
+  use `agentive start|move|complete <TASK-ID>`.
+- Feature branches: `feature/<TASK-ID>-short-description`.
+- Environment checks: `agentive doctor`.
+RULES
+)"
+        fi
+    elif [ "$PROFILE" = "python" ]; then
         if ! RULES_BODY="$(python3 "$KIT_MARKERS" extract "$PROJECT_ROOT/CLAUDE.md" project-rules 2>&1)"; then
             echo "Error: kit_markers extract project-rules failed on the kit's CLAUDE.md:"
             echo "       $RULES_BODY"
@@ -925,6 +991,10 @@ remove_region_if_unmodified() {
 # must still count as unmodified on a --no-kit re-bootstrap.
 FIRST_SESSION_BODY_LEGACY="First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start."
 FIRST_SESSION_BODY="First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start. Before the first evaluation, verify \`./scripts/core/project doctor\` reports env-keys green (API keys are operator-provisioned — see .env)."
+# Packaged scaffolds (KIT-0093): the doctor lives in the installed CLI.
+if [ "$PACKAGED" -eq 1 ]; then
+    FIRST_SESSION_BODY="First session in this repo: invoke the \`planner\` agent (in a new tab) — it triages the backlog and recommends what to start. Before the first evaluation, verify \`agentive doctor\` reports env-keys green (API keys are operator-provisioned — see .env)."
+fi
 if [ "$KIT_ENABLED" -eq 1 ]; then
     seed_region first-session "$FIRST_SESSION_BODY" "planner self-direction"
 else
@@ -970,8 +1040,18 @@ if [ "$SHAPE" = "planning" ]; then
     echo "No venv, pyproject, or Python toolchain is needed — the lifecycle"
     echo "runs on system python3 (>= 3.11) + git + gh."
     echo
-    echo "Fill in the target-repo pointer (path + github) in CLAUDE.md:"
-    echo "  ## Target Repository section AND the kit-install region"
+    # KIT-0081 F1: the tail reflects what was actually resolved — an
+    # operator whose flags/preset filled the pointer must not be told
+    # to fill it in (they'd conclude the install is incomplete).
+    case "$TP$TG" in
+        *TODO*|*'<owner>'*|*'<target-repo>'*)
+            echo "Fill in the target-repo pointer (path + github) in CLAUDE.md:"
+            echo "  ## Target Repository section AND the kit-install region"
+            ;;
+        *)
+            echo "Target-repo pointer recorded in CLAUDE.md: $TP ($TG) — verify it."
+            ;;
+    esac
     echo
     echo "Fill in the KIT-LOCAL regions (Project Context / Stack Notes) in:"
     echo "  .claude/agents/planner.md"

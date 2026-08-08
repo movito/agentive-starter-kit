@@ -9,20 +9,12 @@ merely that the install steps ran. Two assertion tiers:
   switch). These run plain.
 - ``TestPackagedWorld``: the ADR-0028 phase 2 contract — no copied
   scripts/agents, verify-or-instruct lines for the two package
-  installs. RED against today's door by design (the red-first
-  falsifiability rule: a test born green against the old world proves
-  nothing). Marked ``xfail(strict=True)`` so CI stays green while the
-  door still copies, and the suite FAILS the moment the door changes
-  without these markers being consciously removed — PR 2 removes them.
+  installs. Landed RED against the copying door (strict xfail, PR 1
+  of KIT-0093 — the red-first falsifiability rule); the PR 2 door
+  switch turned it green and removed the markers.
 
-Shape-divergent findings (KIT-0081 F2/F8: the planning scaffold ships
-no agent-handoffs.json and no README) carry the xfail marker only on
-the shape where they are red today; the dangling-reference check is
-red on both shapes (the single export's agent copies reference kit
-ADRs the export deletes).
-
-Contract strings the PR 2 door must print (defined HERE first, the
-test being the contract's origin):
+Contract strings the door must print (defined HERE first, the test
+being the contract's origin):
 - lifecycle CLI verified:    a line starting ``agentive CLI:``
 - lifecycle CLI absent:      ``Install the lifecycle CLI: uv tool install agentive-kit``
 - agent plugin verified:     ``agent plugin: verified``
@@ -60,33 +52,7 @@ from test_setup_door import (  # noqa: E402
     run_door,
 )
 
-# The one marker PR 2 removes: strict, so an accidentally-flipped door
-# (or a green-by-construction assertion) fails the suite instead of
-# silently draining the test of meaning.
-RED_UNTIL_DOOR_SWITCH = pytest.mark.xfail(
-    reason="RED until KIT-0093 PR 2 switches the door to package-install mode",
-    strict=True,
-)
-
-BOTH_SHAPES_RED = pytest.mark.parametrize(
-    "shape",
-    [
-        pytest.param("single", marks=RED_UNTIL_DOOR_SWITCH),
-        pytest.param("planning", marks=RED_UNTIL_DOOR_SWITCH),
-    ],
-)
-
 BOTH_SHAPES = pytest.mark.parametrize("shape", ["single", "planning"])
-
-# KIT-0081 findings red on the planning shape only (single's git-archive
-# export happens to ship the referenced files / README today).
-PLANNING_RED = pytest.mark.parametrize(
-    "shape",
-    [
-        pytest.param("single"),
-        pytest.param("planning", marks=RED_UNTIL_DOOR_SWITCH),
-    ],
-)
 
 
 @pytest.fixture(scope="module")
@@ -208,7 +174,8 @@ class TestScaffoldInvariants:
         assert (
             "Doctor verdict:" in out
             or "Install the lifecycle CLI: uv tool install agentive-kit" in out
-        ), "door must run doctor or instruct installing the CLI"
+            or "uv tool upgrade agentive-kit" in out
+        ), "door must run doctor or instruct installing/upgrading the CLI"
 
     @BOTH_SHAPES
     def test_evaluator_path_pass_or_instructive(self, request, shape):
@@ -223,7 +190,7 @@ class TestScaffoldInvariants:
             "pass" in ln.lower() or "install" in ln.lower() for ln in lines
         ), f"no evaluator line passes or instructs: {lines}"
 
-    @PLANNING_RED
+    @BOTH_SHAPES
     def test_readme_names_the_repo_purpose(self, request, shape):
         """KIT-0081 F8: a scaffold whose only Finder-visible contents
         are dot-folders reads as empty — a README must say what the
@@ -233,14 +200,14 @@ class TestScaffoldInvariants:
         assert readme.is_file(), "scaffold must ship a README.md"
         assert readme.read_text(encoding="utf-8").strip(), "README must not be empty"
 
-    @PLANNING_RED
+    @BOTH_SHAPES
     def test_agent_handoffs_exists_for_planner_triage(self, request, shape):
         """KIT-0081 F2: the planner reads agent-handoffs.json from
         Phase 1 on; a scaffold without it dead-ends the first session."""
         target, result, env = _scaffold(request, shape)
         assert (target / ".kit" / "context" / "agent-handoffs.json").is_file()
 
-    @BOTH_SHAPES_RED
+    @BOTH_SHAPES
     def test_zero_dangling_references(self, request, shape):
         """KIT-0081 F2: every docs/… and .kit/… file a seeded guidance
         surface references must exist in the scaffold. Red on BOTH
@@ -256,7 +223,7 @@ class TestScaffoldInvariants:
 class TestPackagedWorld:
     """The ADR-0028 phase 2 contract — RED until the door switch."""
 
-    @BOTH_SHAPES_RED
+    @BOTH_SHAPES
     def test_no_copied_core_scripts(self, request, shape):
         """agentive-kit provides the lifecycle scripts; the scaffold
         carries none."""
@@ -266,7 +233,7 @@ class TestPackagedWorld:
             "provides the lifecycle surface"
         )
 
-    @BOTH_SHAPES_RED
+    @BOTH_SHAPES
     def test_no_copied_agent_bodies(self, request, shape):
         """The plugin provides agents/skills/commands; the scaffold
         carries no copies (project specifics live in repo-owned files
@@ -280,7 +247,7 @@ class TestPackagedWorld:
         ]
         assert not copied, f"agent/skill/command copies shipped: {copied}"
 
-    @BOTH_SHAPES_RED
+    @BOTH_SHAPES
     def test_lifecycle_cli_verified_or_instructed(self, request, shape):
         """The door verifies `agentive` on PATH or prints the install
         line — the degradation pattern, never a hard fail."""
@@ -291,7 +258,7 @@ class TestPackagedWorld:
             or "Install the lifecycle CLI: uv tool install agentive-kit" in out
         ), "door must verify the agentive CLI or instruct installing it"
 
-    @BOTH_SHAPES_RED
+    @BOTH_SHAPES
     def test_agent_plugin_verified_or_instructed(self, request, shape):
         """The door verifies the agentive-workflow plugin (the
         50-plugin-source.sh detection approach) or prints the install
