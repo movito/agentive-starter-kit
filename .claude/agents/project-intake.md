@@ -199,9 +199,12 @@ All commands target the code folder explicitly (`git -C <code-path>`).
      rename fail — stop and ask which branch to keep
    - a remote-backed `master` (an `origin` already exists): renaming
      locally neither renames `origin/master` nor changes the remote
-     default — after the rename, `git -C <code-path> push -u origin
-     main`, then `gh repo edit <owner>/<name> --default-branch main`,
-     and only delete `origin/master` with the user's consent
+     default — first check `git -C <code-path> ls-remote --heads
+     origin main`; if `origin/main` ALREADY exists, stop and ask how
+     to reconcile before any push. Otherwise, after the rename,
+     `git -C <code-path> push -u origin main`, then
+     `gh repo edit <owner>/<name> --default-branch main`, and only
+     delete `origin/master` with the user's consent
    - EMPTY output means detached HEAD — stop and ask, never rename
    Any OTHER name (`dev`, a feature branch): ask the user — an
    existing repo's branch layout is theirs; never silently rename a
