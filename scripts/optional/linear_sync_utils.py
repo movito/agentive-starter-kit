@@ -289,8 +289,11 @@ def parse_task_metadata(task_file: Path) -> Dict[str, Any]:
     # task (KIT-0068 A14). Anchored at the start: task files are named
     # PREFIX-NNNN-description.md, and an embedded id elsewhere in the
     # name (notes-KIT-0068.md) must not be mistaken for the task's own.
+    # Prefix grammar matches the intake contract ^[A-Z][A-Z0-9]{0,5}$
+    # (CodeRabbit, PR #116): alphanumeric prefixes like A1- are valid
+    # everywhere else, so the parser must not reject them.
     filename = task_file.name
-    task_id_match = re.match(r"([A-Z]{2,6}-\d{4})", filename)
+    task_id_match = re.match(r"([A-Z][A-Z0-9]{0,5}-\d{4})", filename)
     if not task_id_match:
         raise ValueError(f"No valid task ID found in filename: {filename}")
 
@@ -299,7 +302,7 @@ def parse_task_metadata(task_file: Path) -> Dict[str, Any]:
     # Extract title from first heading
     # Pattern: # KIT-0001: Title or # KIT-0001-slug: Title
     title_match = re.search(
-        r"^#\s+([A-Z]{2,6}-\d{4})(?:[-_a-zA-Z0-9]*):\s*(.+)$",
+        r"^#\s+([A-Z][A-Z0-9]{0,5}-\d{4})(?:[-_a-zA-Z0-9]*):\s*(.+)$",
         content,
         re.MULTILINE,
     )

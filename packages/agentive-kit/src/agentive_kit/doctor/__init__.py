@@ -125,10 +125,15 @@ def _doctor_install(project_dir):
             return None, None, None, [("shape-record", detail)]
         region = markers.extract_region(text, "kit-install")
         if region is None:
-            # The EXACT marker comment, not the bare phrase — prose
-            # documenting the marker must not read as a malformed
-            # region (BugBot, PR #116, round 2).
-            if "<!-- BEGIN KIT-LOCAL: kit-install -->" in text:
+            # EITHER exact marker comment alone means a corrupted
+            # record, not absence (CodeRabbit: a lone END is just as
+            # unbalanced as a lone BEGIN). The exact comment form, not
+            # the bare phrase — prose documenting the marker must not
+            # read as malformed (BugBot, PR #116, round 2).
+            if (
+                "<!-- BEGIN KIT-LOCAL: kit-install -->" in text
+                or "<!-- END KIT-LOCAL: kit-install -->" in text
+            ):
                 return (
                     None,
                     None,
