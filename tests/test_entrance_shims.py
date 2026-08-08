@@ -31,12 +31,15 @@ DOOR = REPO_ROOT / "scripts" / "local" / "bootstrap"
 ENGINES = (
     REPO_ROOT / "scripts" / "local" / "engine-consumer.sh",
     REPO_ROOT / "scripts" / "local" / "engine-materials.sh",
-    REPO_ROOT / "scripts" / "local" / "engine-export.sh",
+    REPO_ROOT / "scripts" / "local" / "engine-scaffold.sh",
 )
 REMOVED_ENTRANCES = (
     REPO_ROOT / "scripts" / "local" / "bootstrap-consumer.sh",
     REPO_ROOT / "scripts" / "local" / "bootstrap.sh",
     REPO_ROOT / "scripts" / "optional" / "create-project.sh",
+    # KIT-0093 (ADR-0028 phase 2): the git-archive export engine died
+    # with the door switch — --new scaffolds content, never copies.
+    REPO_ROOT / "scripts" / "local" / "engine-export.sh",
 )
 
 if not DOOR.exists():
@@ -105,9 +108,9 @@ class TestOldEntrancesRemoved:
         )
 
 
-class TestExportE2E:
-    """Export-engine behavior through the door's --new path (formerly
-    the create-project.sh e2e coverage)."""
+class TestScaffoldE2E:
+    """Scaffold-engine behavior through the door's --new path
+    (KIT-0093: content + pins + record — nothing copied)."""
 
     @pytest.mark.slow
     def test_new_defaults(self, tmp_path):
@@ -115,10 +118,9 @@ class TestExportE2E:
         env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
         result = run_door("--new", str(target), env=env)
         assert result.returncode == 0, result.stderr + result.stdout
-        assert "Project Created Successfully" in result.stdout
+        assert "Scaffold committed (branch: main)." in result.stdout
 
-        # fresh git history: the export commit plus the door's
-        # install-record commit, branch main
+        # fresh git history: one scaffold commit, branch main
         log = subprocess.run(
             ["git", "-C", str(target), "log", "--oneline"],
             capture_output=True,
@@ -126,18 +128,20 @@ class TestExportE2E:
             timeout=30,
             env=env,
         )
-        assert len(log.stdout.strip().splitlines()) == 2
-
-        # identity reset — the target keeps the placeholder + TODO the
-        # onboarding/bootstrap agents rewrite, never the kit's own name
-        # (KIT-0057: the kit's pyproject is agentive-starter-kit now)
-        pyproject = (target / "pyproject.toml").read_text(encoding="utf-8")
-        assert 'version = "0.1.0"' in pyproject
-        assert (
-            'name = "your-project-name"  # TODO: Change this to your project name'
-            in pyproject
+        assert len(log.stdout.strip().splitlines()) == 1
+        branch = subprocess.run(
+            ["git", "-C", str(target), "branch", "--show-current"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
         )
-        assert 'name = "agentive-starter-kit"' not in pyproject
+        assert branch.stdout.strip() == "main"
+
+        # born packaged: no kit identity files, no copied machinery
+        assert not (target / "pyproject.toml").exists()
+        assert not (target / "tests").exists()
+        assert not (target / "scripts" / "core").exists()
         state = json.loads(
             (target / ".kit" / "context" / "current-state.json").read_text(
                 encoding="utf-8"
@@ -146,22 +150,22 @@ class TestExportE2E:
         assert state["project"]["name"] == "widget"
         assert state["project"]["task_prefix"] == "WIDG"
 
-        # project-specific content stripped
+        # no task specs, no planning corpus
         task_specs = [
             p
             for p in (target / ".kit" / "tasks").rglob("*.md")
-            if p.name != "README.md" and "9-reference" not in p.parts
+            if p.name != "README.md"
         ]
         assert task_specs == []
-        assert sorted(p.name for p in (target / "tests").iterdir()) == ["__init__.py"]
-        # scripts/local holds only the door's record-step seeds
+        # scripts/local holds only the check hook — kit_markers.py
+        # travels with the agentive-kit package now
         assert sorted(p.name for p in (target / "scripts" / "local").iterdir()) == [
             "checks.sh",
-            "kit_markers.py",
         ]
-        assert "bootstrapped from agentive-starter-kit" in (
-            target / "CHANGELOG.md"
-        ).read_text(encoding="utf-8")
+        # the adversarial config carries both pins (born on the kit's)
+        config = (target / ".adversarial" / "config.yml").read_text(encoding="utf-8")
+        assert "adversarial_cli_version:" in config
+        assert "evaluator_library_version:" in config
 
     @pytest.mark.slow
     def test_new_name_prefix_flags(self, tmp_path):

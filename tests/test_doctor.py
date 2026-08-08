@@ -2005,6 +2005,13 @@ class TestWorktreeProvisioningCheck:
         target = tmp_path / "elsewhere-venv"
         target.mkdir()
         (worktree / ".venv").symlink_to(target)
+        # A copied-scripts repo (KIT-0093: the check keys its remedy on
+        # this file; packaged repos get a plain venv command instead)
+        core = worktree / "scripts" / "core"
+        core.mkdir(parents=True)
+        stub = core / "project"
+        stub.write_text("#!/bin/sh\n", encoding="utf-8")
+        stub.chmod(0o755)
         result = run_worktree_check(worktree)
         line = next(
             ln

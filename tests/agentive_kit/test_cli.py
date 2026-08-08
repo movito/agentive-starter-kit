@@ -137,3 +137,37 @@ class TestRootDiscoveryWiring:
         monkeypatch.chdir(root)
         assert run_cli(["start", "KIT-1234"]) == 1
         assert "Status field not updated" in capsys.readouterr().out
+
+
+class TestEnvironmentCommands:
+    """KIT-0093 PR 2: doctor + install-evaluators join the console
+    entry (the phase-2 door tail depends on them)."""
+
+    def test_doctor_dispatches_to_driver(self, tmp_path, monkeypatch, capsys):
+        root = make_kit_tree(tmp_path)
+        checks = tmp_path / "stub-checks"
+        checks.mkdir()
+        check = checks / "10-ok.sh"
+        check.write_text(
+            "#!/bin/sh\necho 'DOCTOR:ok:PASS:stub check'\n", encoding="utf-8"
+        )
+        check.chmod(0o755)
+        monkeypatch.chdir(root)
+        assert run_cli(["doctor", f"--dir={checks}"]) == 0
+        assert "ok" in capsys.readouterr().out
+
+    def test_doctor_usage_error_exits_three(self, tmp_path, monkeypatch, capsys):
+        root = make_kit_tree(tmp_path)
+        monkeypatch.chdir(root)
+        assert run_cli(["doctor", "--dir="]) == 3
+        assert "--dir=" in capsys.readouterr().out
+
+    def test_install_evaluators_rejects_option_shaped_ref(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        # Reaches agentive_kit.evaluators and fails on the --ref gate
+        # BEFORE any network/git work — dispatch verified hermetically.
+        root = make_kit_tree(tmp_path)
+        monkeypatch.chdir(root)
+        assert run_cli(["install-evaluators", "--ref", "--force"]) == 1
+        assert "Invalid --ref value" in capsys.readouterr().out

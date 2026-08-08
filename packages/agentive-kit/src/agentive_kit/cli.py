@@ -42,6 +42,15 @@ Gates:
   review-helper <sub> ...   gh review helper (reply/resolve/threads/
                             comments/summary; --repo owner/name)
 
+Environment:
+  doctor [flags]            Run the environment checks (repo-local
+                            doctor.d wins when present, else the
+                            packaged check set; --against-preset,
+                            --dir=<path>, --root=<path>)
+  install-evaluators [...]  Install the evaluator library (pin from
+                            .adversarial/config.yml) + the adversarial
+                            CLI (--force, --ref <tag>)
+
 Other:
   help                 Show this help message
   version              Show version information
@@ -138,6 +147,20 @@ def main(argv: list[str] | None = None) -> None:
             sys.exit(1)
         report = lifecycle.validate_all_tasks(_project_root())
         sys.exit(0 if report.ok else 1)
+
+    if command == "doctor":
+        # Flags pass through verbatim — the driver owns its parsing
+        # (--against-preset, --dir=, --root=), and its exit contract
+        # (0/1/2/3) is the caller's interface.
+        from agentive_kit import doctor
+
+        sys.exit(doctor.cmd_doctor(args[1:], _project_root()))
+
+    if command == "install-evaluators":
+        from agentive_kit import evaluators
+
+        evaluators.cmd_install_evaluators(args[1:], _project_root())
+        sys.exit(0)
 
     print(f"❌ Unknown command: {command}")
     print("Run 'agentive help' for available commands.")

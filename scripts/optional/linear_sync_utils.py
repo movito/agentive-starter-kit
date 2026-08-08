@@ -285,7 +285,7 @@ def parse_task_metadata(task_file: Path) -> Dict[str, Any]:
 
     # Extract task ID from filename. Any PREFIX-NNNN id is valid — the
     # kit mints arbitrary prefixes (KIT-, ASK-, consumer prefixes from
-    # engine-export --prefix); hardcoding TASK-|ASK- rejected every live
+    # the door's --prefix flag); hardcoding TASK-|ASK- rejected every live
     # task (KIT-0068 A14). Anchored at the start: task files are named
     # PREFIX-NNNN-description.md, and an embedded id elsewhere in the
     # name (notes-KIT-0068.md) must not be mistaken for the task's own.

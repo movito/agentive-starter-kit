@@ -31,8 +31,10 @@
 #   | planning | ✘           | ✔ (forced)   |
 #
 # Flags (every interactive question has one — non-TTY runs never hang):
-#   --new <dir>          create <dir> (must not exist): clean kit export
-#                        (single) or planning scaffold (planning)
+#   --new <dir>          create <dir> (must not exist): packaged content
+#                        scaffold — .kit/ skeleton + records + pins;
+#                        scripts come from agentive-kit, agents from
+#                        the plugin (verified or instructed, KIT-0093)
 #   --adopt <dir>        install into an existing directory
 #   --shape <s>          single (default) | planning
 #   --profile <p>        python | none (default: by shape, see matrix)
@@ -126,7 +128,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ENGINE_CONSUMER="$SCRIPT_DIR/engine-consumer.sh"
 ENGINE_MATERIALS="$SCRIPT_DIR/engine-materials.sh"
-ENGINE_EXPORT="$SCRIPT_DIR/engine-export.sh"
+ENGINE_SCAFFOLD="$SCRIPT_DIR/engine-scaffold.sh"
 
 # ─────────────────────────────────────────
 # F2 — the matrix, door-owned data
@@ -783,8 +785,18 @@ run_offers() {
         fi
     fi
     if [ "$WITH_EVALUATORS" = "yes" ]; then
-        (cd "$TARGET" && ./scripts/core/project install-evaluators) ||
-            echo "Warning: evaluator install failed — doctor will flag it; re-run './scripts/core/project install-evaluators' in the target"
+        # Copied-scripts targets (adopt/legacy) keep their own
+        # installer; packaged scaffolds use the installed CLI; a
+        # missing CLI degrades to an instruction (KIT-0083 pattern).
+        if [ -x "$TARGET/scripts/core/project" ]; then
+            (cd "$TARGET" && ./scripts/core/project install-evaluators) ||
+                echo "Warning: evaluator install failed — doctor will flag it; re-run './scripts/core/project install-evaluators' in the target"
+        elif command -v agentive >/dev/null 2>&1; then
+            (cd "$TARGET" && agentive install-evaluators) ||
+                echo "Warning: evaluator install failed — doctor will flag it; re-run 'agentive install-evaluators' in the target"
+        else
+            echo "Evaluators not installed — install the lifecycle CLI first (see above), then run 'agentive install-evaluators' in the target"
+        fi
     fi
 
     # EFFECTIVE_PROFILE, not PROFILE: a profile:none-recorded adopt
@@ -792,17 +804,66 @@ run_offers() {
     # prompt AND the non-TTY --with-venv hint) would be wrong — the
     # record has no Python toolchain (BugBot round 3, PR #83)
     if [ "$EFFECTIVE_PROFILE" = "python" ]; then
-        if [ "$WITH_VENV" = "" ]; then
-            if is_tty; then
-                WITH_VENV="$(prompt_yn "Set up the Python venv now (setup-dev.sh)?")"
-            else
-                echo "Offer skipped (non-interactive): venv — pass --with-venv to set up"
-                WITH_VENV="no"
+        if [ ! -f "$TARGET/scripts/optional/setup-dev.sh" ]; then
+            # Packaged scaffolds ship no setup-dev.sh — an explicit
+            # venv answer is acknowledged out loud, never silently
+            # dropped (the masking class).
+            if [ "$WITH_VENV" = "yes" ]; then
+                echo "venv setup skipped: this scaffold ships no setup-dev.sh — create one when your pyproject exists (python3 -m venv .venv)"
+            fi
+        else
+            if [ "$WITH_VENV" = "" ]; then
+                if is_tty; then
+                    WITH_VENV="$(prompt_yn "Set up the Python venv now (setup-dev.sh)?")"
+                else
+                    echo "Offer skipped (non-interactive): venv — pass --with-venv to set up"
+                    WITH_VENV="no"
+                fi
+            fi
+            if [ "$WITH_VENV" = "yes" ]; then
+                (cd "$TARGET" && bash scripts/optional/setup-dev.sh) ||
+                    echo "Warning: venv setup failed — run 'bash scripts/optional/setup-dev.sh' in the target"
             fi
         fi
-        if [ "$WITH_VENV" = "yes" ]; then
-            (cd "$TARGET" && bash scripts/optional/setup-dev.sh) ||
-                echo "Warning: venv setup failed — run 'bash scripts/optional/setup-dev.sh' in the target"
+    fi
+}
+
+verify_packages() {
+    # KIT-0093 (ADR-0028 phase 2): the two package installs are
+    # VERIFIED or INSTRUCTED, never assumed and never a hard failure
+    # (the KIT-0083 degradation pattern). The exact strings below are
+    # a contract — tests/test_scaffold_acceptance.py defines them.
+    echo
+    echo "━━━ package verification ━━━"
+    if command -v agentive >/dev/null 2>&1; then
+        local ver
+        ver="$(agentive --version 2>/dev/null | head -1)" || ver=""
+        echo "agentive CLI: ${ver:-found on PATH} (verified)"
+    else
+        echo "Install the lifecycle CLI: uv tool install agentive-kit"
+        echo "  (task lifecycle, doctor, preflight, evaluator provisioning)"
+    fi
+    # Plugin detection reuses the doctor 50-plugin-source.sh approach:
+    # the local plugin registry, marketplace source anchored to GitHub
+    # (a Directory source silently defeats version pins — KIT-0030).
+    local plugin_ok=0 mkt plugins
+    if command -v claude >/dev/null 2>&1; then
+        if mkt="$(claude plugin marketplace list 2>/dev/null)" &&
+           printf '%s\n' "$mkt" | grep -qiE '^[[:space:]]*source: *(github \(|https://github\.com/)movito/agentive-skills([[:space:]]*\)|$)'; then
+            if plugins="$(claude plugin list 2>/dev/null)" &&
+               printf '%s\n' "$plugins" | grep -qiE 'agentive-workflow([@ (]|$)'; then
+                plugin_ok=1
+            fi
+        fi
+    fi
+    if [ "$plugin_ok" -eq 1 ]; then
+        echo "agent plugin: verified (agentive-workflow via the agentive-skills marketplace)"
+    else
+        echo "Install the agent plugin:"
+        echo "    claude plugin marketplace add movito/agentive-skills"
+        echo "    claude plugin install agentive-workflow@agentive-skills"
+        if ! command -v claude >/dev/null 2>&1; then
+            echo "  (needs the Claude Code CLI on PATH first)"
         fi
     fi
 }
@@ -811,10 +872,36 @@ run_doctor_tail() {
     echo
     echo "━━━ project doctor (${TARGET}) ━━━"
     local doctor_exit=0
-    set +e
-    (cd "$TARGET" && ./scripts/core/project doctor)
-    doctor_exit=$?
-    set -e
+    # Copied-scripts targets (adopt/legacy) run their own doctor;
+    # packaged scaffolds run the installed CLI's; a missing CLI
+    # degrades to the instruction (already printed by verify_packages).
+    if [ -x "$TARGET/scripts/core/project" ]; then
+        set +e
+        (cd "$TARGET" && ./scripts/core/project doctor)
+        doctor_exit=$?
+        set -e
+    elif command -v agentive >/dev/null 2>&1 &&
+         agentive help 2>/dev/null | grep -q '^  doctor'; then
+        set +e
+        (cd "$TARGET" && agentive doctor)
+        doctor_exit=$?
+        set -e
+    elif command -v agentive >/dev/null 2>&1; then
+        # An installed pre-0.3 CLI has no doctor subcommand yet — an
+        # upgrade instruction beats a misleading "FAILURES" verdict.
+        echo "Doctor not run — the installed agentive CLI predates 'agentive doctor'."
+        echo "    uv tool upgrade agentive-kit"
+        echo "    cd $TARGET && agentive doctor"
+        echo
+        echo "Install complete: shape=$SHAPE profile=$PROFILE → $TARGET"
+        return 0
+    else
+        echo "Doctor not run — install the lifecycle CLI (see above), then:"
+        echo "    cd $TARGET && agentive doctor"
+        echo
+        echo "Install complete: shape=$SHAPE profile=$PROFILE → $TARGET"
+        return 0
+    fi
     local verdict
     # doctor's exit contract (KIT-0046 F3): 1 = at least one FAIL,
     # 2 = warnings only. (The two were swapped here until KIT-0056 —
@@ -1052,35 +1139,36 @@ main() {
     fi
 
     if [ "$MODE" = "new" ]; then
-        if [ "$SHAPE" = "single" ]; then
-            set -- "$TARGET"
-            [ -n "$NAME" ] && set -- "$@" --name "$NAME"
-            [ -n "$PREFIX" ] && set -- "$@" --prefix "$PREFIX"
-            "$ENGINE_EXPORT" "$@" ||
-                { echo "Error: export engine failed (exit $?)" >&2; exit 1; }
-            TARGET="$(cd "$TARGET" && pwd)"
-            set -- --internal-record-only --shape single --profile "$PROFILE"
-            [ -n "$BOTS" ] && set -- "$@" --bots "$BOTS"
-            "$ENGINE_CONSUMER" "$@" "$TARGET" ||
-                { echo "Error: install record step failed (exit $?)" >&2; exit 1; }
-            if git -C "$TARGET" add CLAUDE.md scripts/local/checks.sh scripts/local/kit_markers.py &&
-               git -C "$TARGET" commit --quiet -m "chore: record kit install (shape: single, profile: $PROFILE)"; then
-                echo "Install record committed."
-            else
-                # F6: a failed record step is an install failure — the
-                # record is written to CLAUDE.md but sits uncommitted
-                echo "Error: install record commit failed — commit CLAUDE.md + scripts/local/ in the target, then re-run doctor" >&2
-                exit 1
-            fi
+        # ── Packaged-install mode (KIT-0093, ADR-0028 phase 2) ──
+        # Content + pins + record; the lifecycle scripts come from
+        # agentive-kit and the agent bodies from the plugin — nothing
+        # is copied. Same flow for BOTH shapes.
+        mkdir -p "$TARGET"
+        TARGET="$(cd "$TARGET" && pwd)"
+        set -- "$TARGET" --shape "$SHAPE" --profile "$PROFILE"
+        [ -n "$NAME" ] && set -- "$@" --name "$NAME"
+        [ -n "$PREFIX" ] && set -- "$@" --prefix "$PREFIX"
+        [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
+        [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
+        "$ENGINE_SCAFFOLD" "$@" ||
+            { echo "Error: scaffold engine failed (exit $?)" >&2; exit 1; }
+        # The consumer engine stays the ONE writer of the CLAUDE.md
+        # kit-install record (and seeds the per-repo check hook).
+        set -- --internal-record-only --packaged --shape "$SHAPE" --profile "$PROFILE"
+        [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
+        [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
+        [ -n "$BOTS" ] && set -- "$@" --bots "$BOTS"
+        "$ENGINE_CONSUMER" "$@" "$TARGET" ||
+            { echo "Error: install record step failed (exit $?)" >&2; exit 1; }
+        if git -C "$TARGET" init --quiet -b main &&
+           git -C "$TARGET" add -A &&
+           git -C "$TARGET" commit --quiet -m "Initial commit: agentive project scaffold (shape: $SHAPE, profile: $PROFILE)"; then
+            echo "Scaffold committed (branch: main)."
         else
-            mkdir -p "$TARGET"
-            TARGET="$(cd "$TARGET" && pwd)"
-            set -- --shape planning
-            [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
-            [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
-            [ -n "$BOTS" ] && set -- "$@" --bots "$BOTS"
-            "$ENGINE_CONSUMER" "$@" "$TARGET" ||
-                { echo "Error: consumer engine failed (exit $?)" >&2; exit 1; }
+            # F6: a failed record step is an install failure — the
+            # scaffold is on disk but sits uncommitted
+            echo "Error: initial commit failed — commit the scaffold in the target yourself, then re-run doctor" >&2
+            exit 1
         fi
     else
         set -- --shape "$SHAPE" --profile "$PROFILE"
@@ -1105,6 +1193,7 @@ main() {
         fill_env_identity
     fi
 
+    verify_packages
     run_offers
     run_doctor_tail
     exit 0

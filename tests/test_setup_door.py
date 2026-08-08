@@ -477,6 +477,19 @@ def _assert_doctor_tail(stdout: str) -> None:
     assert "Install complete:" in stdout
 
 
+def _assert_packaged_tail(stdout: str) -> None:
+    """--new (KIT-0093 packaged mode): the two installs are verified or
+    instructed, and doctor runs via the installed CLI when present —
+    green-or-actionably-instructive, never silent."""
+    assert "package verification" in stdout
+    assert (
+        "Doctor verdict:" in stdout
+        or "Install the lifecycle CLI: uv tool install agentive-kit" in stdout
+        or "uv tool upgrade agentive-kit" in stdout
+    )
+    assert "Install complete:" in stdout
+
+
 @pytest.mark.slow
 class TestAdoptE2E:
     def test_adopt_single_defaults(self, tmp_path):
@@ -586,15 +599,16 @@ class TestNewE2E:
         target = tmp_path / "fresh-app"
         result = run_door("--new", str(target), env=env)
         assert result.returncode == 0, result.stderr + result.stdout
-        assert "Project Created Successfully" in result.stdout  # export engine
-        assert "Install record committed." in result.stdout
-        _assert_doctor_tail(result.stdout)
+        assert "Content scaffold ready" in result.stdout  # scaffold engine
+        assert "Scaffold committed (branch: main)." in result.stdout
+        _assert_packaged_tail(result.stdout)
         region = _kit_install_region(target)
         assert "shape: single" in region
         assert "profile: python" in region
         assert (target / "scripts" / "local" / "checks.sh").is_file()
-        assert (target / "scripts" / "local" / "kit_markers.py").is_file()
-        # export commit + record commit, nothing dangling
+        # kit_markers.py travels with the agentive-kit package (KIT-0093)
+        assert not (target / "scripts" / "local" / "kit_markers.py").exists()
+        # one scaffold commit, nothing dangling
         log = subprocess.run(
             ["git", "-C", str(target), "log", "--oneline"],
             capture_output=True,
@@ -602,7 +616,7 @@ class TestNewE2E:
             timeout=30,
             env=env,
         )
-        assert len(log.stdout.strip().splitlines()) == 2
+        assert len(log.stdout.strip().splitlines()) == 1
         status = subprocess.run(
             ["git", "-C", str(target), "status", "--porcelain"],
             capture_output=True,
@@ -671,8 +685,10 @@ class TestNewE2E:
             env=env,
         )
         assert result.returncode == 0, result.stderr + result.stdout
-        _assert_doctor_tail(result.stdout)
-        assert (target / "scripts" / "core" / "project").is_file()
+        _assert_packaged_tail(result.stdout)
+        # born packaged (KIT-0093): the lifecycle comes from the
+        # installed CLI, never a script copy
+        assert not (target / "scripts" / "core").exists()
         assert not (target / "pyproject.toml").exists()  # never-ship contract
         region = _kit_install_region(target)
         assert "shape: planning" in region
@@ -938,7 +954,7 @@ class TestPresetE2E:
         # zero prompts is structural (stdin closed); zero NOTICES is the
         # preset's work — nothing was skipped-with-notice
         assert "Offer skipped" not in result.stdout
-        _assert_doctor_tail(result.stdout)
+        _assert_packaged_tail(result.stdout)
         region = _kit_install_region(target)
         assert "shape: single" in region
         assert "profile: python" in region
@@ -1282,19 +1298,17 @@ class TestPresetNeverDistributed:
     --against-preset compares against it), and the config-home doctor
     check — engines, sync, and export code must not know it exists."""
 
-    # The string probe below ("agentive-kit") also catches references
-    # to the agentive-kit PACKAGE name, not just the config-home
-    # location — scripts/core/project earned its slot that way in
-    # KIT-0090 (it bootstraps the package), and the KIT-0091 deprecation
-    # shims over package modules are the same class of reader.
+    # KIT-0092 Part B (executed with KIT-0093 PR 2, where the old probe
+    # became blocking): the probe checks the config-home LOCATION
+    # ("agentive-config") only. The old probe also matched the literal
+    # "agentive-kit" — the PACKAGE name — so every package shim tripped
+    # it and ALLOWED grew to 7 entries for the wrong reason. Package
+    # references are legitimate everywhere; the config home has exactly
+    # three readers.
     ALLOWED = {
         "scripts/local/bootstrap",
         "scripts/core/project",
         "scripts/core/doctor.d/90-config-home.sh",
-        "scripts/core/preflight-check.sh",  # KIT-0091 shim → agentive_kit.preflight
-        "scripts/core/prepare-review-input.sh",  # KIT-0091 shim → review_input
-        "scripts/core/gh-review-helper.sh",  # KIT-0091 shim → review_input
-        "scripts/local/new-worktree.sh",  # KIT-0091 delegator → agentive_kit.worktree
     }
 
     def test_preset_path_referenced_only_by_allowed_readers(self):
@@ -1306,7 +1320,7 @@ class TestPresetNeverDistributed:
                 text = path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):
                 continue
-            if "agentive-kit" in text or "agentive-config" in text:
+            if "agentive-config" in text:
                 rel = str(path.relative_to(REPO_ROOT))
                 if rel not in self.ALLOWED:
                     offenders.append(rel)

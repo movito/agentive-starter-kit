@@ -29,7 +29,13 @@ if [ ! -d "$ROOT/.adversarial" ]; then
     exit 0
 fi
 
-FIX="run: ./scripts/core/project install-evaluators (or: uv tool install adversarial-workflow)"
+# Fix command matches the repo's world (KIT-0093): packaged repos
+# carry no scripts/core — the installer lives in the agentive CLI.
+if [ -x "$ROOT/scripts/core/project" ]; then
+    FIX="run: ./scripts/core/project install-evaluators (or: uv tool install adversarial-workflow)"
+else
+    FIX="run: agentive install-evaluators (or: uv tool install adversarial-workflow)"
+fi
 PATH_HINT="if you just installed it, uv puts binaries in ~/.local/bin — add it to PATH"
 
 if ! command -v adversarial >/dev/null 2>&1; then
