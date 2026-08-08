@@ -53,3 +53,29 @@ claude-code APPROVED. Both FAIL verdicts rest on findings triaged above: the dee
 ### Verdict handling (round 1)
 
 The two verdict-driving claims (#1, #2) are refuted with tree/empirical evidence; the two accepted hardenings (#4, #5) are fixed and covered by a new e2e test. Deep rounds capped at 2 per the handoff; round 2 not spent — the remaining findings are declines with recorded rationale.
+
+### PR 2 bot round (BugBot, post-open)
+
+Packaged doctor could not read the kit-install record without the retired `kit_markers.py` copy — CONFIRMED and fixed (in-package fallback via `agentive_kit.markers`, shared parser, unbalanced-markers fail loud; 4 new unit tests; verified against the planning smoke scaffold).
+
+---
+
+## PR 3: docs + release 0.3.0
+
+**Date**: 2026-08-08
+**Input**: full format, 2,930 lines, base = PR 2 head
+**Gate**: code-reviewer-fast ONLY (CONCERNS) — prose-dominated sweep, the KIT-0069 standing rule (planner decision 2026-07-28): the deep trio is unreliable on diff-reconstructed prose; **tree-grounded verification before merge is the real gate for this PR shape.**
+
+### Dispositions
+
+| # | Finding | Disposition |
+|---|---------|-------------|
+| 1 | TESTING-WORKFLOW "working tree" scaffolding ambiguity | Declined tree-grounded: the scaffold engine copies an ENUMERATED file set, not a tree sweep — no gitignore-leak surface exists. |
+| 2 | README says 0.3.x not 0.3.0 | Declined: the Requirements column uses ranges by design (git ≥2.30, Python ≥3.10). |
+| 3 | README's `agentive doctor` wrong for pre-packaged projects | Declined: the Quickstart's subject is NEW projects (always packaged); the world-split lives in STARTING/UPDATING, now with the identification heuristic. |
+| 4 | Residual `create-project` block in CROSS-REPO-PATTERN | **REFUTED tree-grounded**: `grep create-project docs/CROSS-REPO-PATTERN.md` → no matches; the evaluator reconstructed the PRE-fix state (the exact KIT-0069 0-for-7 pattern). |
+| 5 | STARTING's doctor caveat lacks the which-world heuristic | ACCEPTED — the scripts/core presence check added inline. |
+| 6 | scripts/core heuristic fragile | Declined: the two real worlds are exactly separated by it; hand-mangled hybrids are out of doc scope. |
+| 7 | `uv tool upgrade` assumes uv | Declined: README names "any isolated-CLI installer works". |
+
+**Planner note (KIT-0069 rule): this PR needs tree-grounded verification before merge** — sectioned verifiers against the branch, not evaluator re-runs.

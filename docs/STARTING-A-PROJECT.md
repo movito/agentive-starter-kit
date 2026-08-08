@@ -302,9 +302,10 @@ the health surface from inside any created project:
 agentive doctor   # incident-mapped environment checks
 ```
 
-(Projects created before the packaged era carry script copies and run
-`./scripts/core/project doctor` instead — see
-`docs/UPDATING-YOUR-PROJECT.md` for which world your project is in.)
+(Which world is your project in? Check for a `scripts/core/`
+directory: absent → packaged, run `agentive doctor`; present → a
+pre-packaged project that runs `./scripts/core/project doctor`
+instead — see `docs/UPDATING-YOUR-PROJECT.md`.)
 
 ---
 
