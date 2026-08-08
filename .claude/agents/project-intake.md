@@ -206,8 +206,12 @@ All commands target the code folder explicitly (`git -C <code-path>`).
      stop and ask the user to resolve remote access. Otherwise (probe
      succeeded, no `origin/main`), after the rename,
      `git -C <code-path> push -u origin main`, then
-     `gh repo edit <owner>/<name> --default-branch main`, and only
-     delete `origin/master` with the user's consent
+     `gh repo edit <owner>/<name> --default-branch main`. Delete
+     `origin/master` only after BOTH of those commands succeeded AND
+     with the user's consent — if either fails, stop and preserve
+     `origin/master` (GitHub refuses to delete the current default
+     branch, so a failed `gh repo edit` must end the cleanup, not
+     precede a deletion attempt)
    - EMPTY output means detached HEAD — stop and ask, never rename
    Any OTHER name (`dev`, a feature branch): ask the user — an
    existing repo's branch layout is theirs; never silently rename a
