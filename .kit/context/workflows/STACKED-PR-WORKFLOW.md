@@ -29,6 +29,11 @@ isn't merged yet** and waiting would serialize work that can proceed now
   *no* CodeRabbit review until it is retargeted to `main` — and the review
   that then lands may surface a batch of fresh findings late (4 on KIT-0036
   PR #64). Budget a fix round after retargeting.
+  **The skip is DECEPTIVE in the checks rollup** (KIT-0091 #113): it renders
+  as `CodeRabbit pass — Review skipped`, which reads as a green gate. A
+  "pass" on a feature-branch base means NOT REVIEWED, not approved — the
+  real bot round lands post-retarget; plan it into the reconciliation, and
+  never count a skipped review toward the merge gates.
 
 ---
 

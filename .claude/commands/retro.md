@@ -171,6 +171,10 @@ Use this exact structure for the file content:
 **Agent**: [agent name, e.g. feature-developer]
 **Mode**: [single-repo | cross-repo (target: <target_github>)]
 **Scorecard**: [N] threads, [N] regressions, [N] fix rounds, [N] commits
+<!-- Multi-PR tasks (stacked series): report per-PR counts in parentheses
+     plus the aggregate, e.g. "18 threads (6 + 12), 17 commits (7 + 10)",
+     and name the released artifact/version if the series shipped one.
+     (KIT-0091 retro action item — the template previously assumed one PR.) -->
 
 ### What Worked
 

@@ -229,6 +229,11 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **CI's "Python 3.10" job cannot represent bare 3.10**: pytest transitively installs `tomli`, so the tomllib-less path only exists under `uv tool install` — a real bot finding lived exactly where CI couldn't see. Closure shape: force the absent-module path in-suite via `sys.modules` blocking, making the invisible environment permanently visible. Generalizes: test-harness dependencies can mask the deployment environment. (KIT-0090)
 - **Programmatic extraction beats retyping**: slicing function blocks out of the monolith with scripts + byte-parity tests = zero transcription drift across ~1,100 lines. When moving code, move it mechanically and prove the bytes. (KIT-0090)
 
+- **Implementation-parameterized parity harnesses are the porting pattern**: parameterize one test suite over `["bash", "python"]` with identical stubs so the matrix runs BOTH implementations — written before the port, the matrices did the design work and all three KIT-0091 ports passed on the first full run. Corollary: bots still caught two real breaks the stubs structurally couldn't produce (stub gh always resolves a repo) — layered review stays. (KIT-0091)
+- **Source comments are claims to verify, not facts**: the bash originals lied about their own behavior twice (`cd+pwd` claimed "physical path" — plain `pwd` is logical; a compare branch corrupted its own output format). Parity binds OBSERVED behavior under test; never transcribe a comment's claim into the port or the matrix. (KIT-0091)
+- **Write the evaluator-demanded regression test even when the finding looks narrow** — o3's real-but-small CRLF finding produced a test that exposed a second, worse bug no evaluator had named (multiline pattern crossing bullet boundaries). The test is the probe; the finding is just where to point it. (KIT-0091)
+- **Never compound a policy-gated command with ungated ones** — a `gh pr edit && git push --force-with-lease` chain is denied WHOLE; split, and the ungated half runs immediately while the gated half goes through the operator relay. (KIT-0091)
+
 ---
 
 ## ADR Candidates
