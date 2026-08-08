@@ -98,9 +98,20 @@ PROJECT_NAME="${NAME:-$(basename "$TARGET")}"
 # (CodeRabbit, PR #116).
 PROJECT_NAME="${PROJECT_NAME//[\`\$\"\'$'\n'$'\r']/}"
 if [ -z "$PROJECT_NAME" ]; then
+    # The warning names --name only when --name was the cause
+    # (BugBot, PR #116: the basename-only path misstated it).
+    if [ -n "$NAME" ]; then
+        echo "Warning: --name sanitized to empty — falling back to the directory name"
+    fi
     PROJECT_NAME="$(basename "$TARGET")"
     PROJECT_NAME="${PROJECT_NAME//[\`\$\"\'$'\n'$'\r']/}"
-    echo "Warning: --name sanitized to empty — using the directory name '$PROJECT_NAME'"
+    if [ -z "$PROJECT_NAME" ]; then
+        # A directory literally named '$' or similar: no honest name
+        # exists — fail clearly, never write an empty identity
+        # (CodeRabbit, PR #116).
+        echo "Error: project name is empty after sanitization (both --name and the directory basename reduce to nothing) — rename the target directory or pass a plain --name" >&2
+        exit 1
+    fi
 fi
 PREFIX="${PREFIX//[\`\$\"\'$'\n'$'\r']/}"
 
