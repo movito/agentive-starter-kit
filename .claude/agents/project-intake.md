@@ -206,7 +206,12 @@ All commands target the code folder explicitly (`git -C <code-path>`).
      stop and ask the user to resolve remote access. Otherwise (probe
      succeeded, no `origin/main`), after the rename,
      `git -C <code-path> push -u origin main`, then
-     `gh repo edit <owner>/<name> --default-branch main`. Delete
+     `gh repo edit <owner>/<repo> --default-branch main` — where
+     `<owner>/<repo>` is DERIVED from the existing `origin` URL (the
+     "already has a remote" rules in Edge cases), never assumed from
+     the project name: a repo whose GitHub name differs from the
+     folder must not have some OTHER repository's default flipped.
+     Delete
      `origin/master` only after BOTH of those commands succeeded AND
      with the user's consent — if either fails, stop and preserve
      `origin/master` (GitHub refuses to delete the current default
