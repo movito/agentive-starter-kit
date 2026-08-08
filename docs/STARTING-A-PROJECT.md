@@ -28,7 +28,9 @@ Don't audit this by hand. The door validates what it needs as it runs
 failure — and every created project has the health surface:
 
 ```bash
-agentive doctor   # run inside any created project
+agentive doctor   # packaged (--new) projects
+# copied-scripts (adopted / pre-packaged) projects instead run:
+# ./scripts/core/project doctor
 ```
 
 ---
@@ -72,13 +74,16 @@ Three things follow from this model:
   `agentive-starter-kit/` (as above) to create projects — the
   `/new-project` command, the `project-intake` agent, the setup door
   itself. You do everything else in the created project's own folder.
-- **Projects never contain the factory — or copies of its machinery.**
-  A new project is born *packaged* (KIT-ADR-0028): it contains content
-  (task folders, templates, workflow docs, config, records) while the
-  tooling is **installed** — lifecycle scripts via the `agentive-kit`
-  PyPI package, agents/skills/commands via the `agentive-workflow`
-  Claude Code plugin. The door verifies both installs or prints the
-  exact install commands.
+- **Projects never contain the factory — and `--new` projects carry
+  no copies of its machinery either.** A project created with the
+  packaged `--new` flow is born *packaged* (KIT-ADR-0028): it contains
+  content (task folders, templates, workflow docs, config, records)
+  while the tooling is **installed** — lifecycle scripts via the
+  `agentive-kit` PyPI package, agents/skills/commands via the
+  `agentive-workflow` Claude Code plugin. The door verifies both
+  installs or prints the exact install commands. (The `--adopt` route
+  is the transition-era exception: it still installs script copies
+  until ADR-0028 phase 3 — see route 4 below.)
 - **Navigation is by tabs, not `cd`.** When a tool finishes creating
   something, it prints where to go next; you open a new tab there
   (see [Tab handoffs](#tab-handoffs-the-launch-convention) below).
@@ -230,7 +235,8 @@ then type `/new-project` at Claude's prompt. That command IS the one
 user-facing entry for every situation — prototype, blank pair, single
 repo — and it routes to the right flow itself. (The retired
 `create-project` agent's job folded into `/new-project` + the door in
-KIT-0093; if you find a reference to it, it's stale.)
+KIT-0093; if you find a live user-facing reference to it, it's stale —
+historical records and changelogs mention it accurately.)
 
 ---
 

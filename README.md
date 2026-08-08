@@ -32,7 +32,7 @@ Using agents to build software works better if you add a bit of structure — An
 | **agentive-kit** | 0.3.x | The kit's lifecycle CLI (task moves, doctor, preflight, evaluator provisioning): `uv tool install agentive-kit`, upgrade with `uv tool upgrade agentive-kit`. New projects are born packaged (KIT-ADR-0028 phase 2) — they carry no script copies; the door verifies this install or prints the command. Inside this repo the scripts use the in-tree `packages/agentive-kit/` source automatically |
 | **agentive-workflow plugin** | current | Agents, skills, and slash commands for created projects: `claude plugin marketplace add movito/agentive-skills`, then `claude plugin install agentive-workflow@agentive-skills` |
 
-`agentive doctor` inside any created project tells you what's missing.
+`agentive doctor` inside any packaged project tells you what's missing (projects created before the packaged era run `./scripts/core/project doctor` instead).
 
 **For contributors — the portability rule**: kit scripts must run on stock
 macOS (BSD userland, bash 3.2, no Homebrew add-ons) *and* Linux CI. Do not
@@ -45,7 +45,7 @@ that shipped the git 2.31 dependency (KIT-0080) and the missing-CLI gap
 
 ## Quickstart
 
-You need Claude Code, git + gh (authenticated) — see [Requirements](#requirements) above; `agentive doctor` inside any created project tells you what's missing.
+You need Claude Code, git + gh (authenticated) — see [Requirements](#requirements) above; `agentive doctor` inside any packaged project tells you what's missing.
 
 ```bash
 cd ~/Github
