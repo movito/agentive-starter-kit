@@ -41,7 +41,18 @@ import re
 from pathlib import Path
 
 import pytest
-from test_setup_door import (  # noqa: E402  (module-skips when door absent)
+
+# Explicit door check BEFORE the test_setup_door import (BugBot, this
+# PR): the docstring's module-skip promise must not depend on the
+# imported module's own guard surviving a partial scaffold.
+_DOOR = Path(__file__).resolve().parent.parent / "scripts" / "local" / "bootstrap"
+if not _DOOR.exists():
+    pytest.skip(
+        "setup door present only in the kit repo",
+        allow_module_level=True,
+    )
+
+from test_setup_door import (  # noqa: E402
     _assert_env_invariants,
     _env_lines,
     _git_identity,

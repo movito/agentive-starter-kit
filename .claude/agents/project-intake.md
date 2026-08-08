@@ -193,9 +193,19 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    prints `master` (a pre-existing repo, or an init that predates
    step 1's `-b main`), rename first: `git -C <code-path> branch -m
    main` (KIT-0081 F3 — a `master` first push needed a remote
-   default-branch PATCH and branch deletion to undo). Any OTHER name
-   (`dev`, a feature branch): ask the user — an existing repo's branch
-   layout is theirs; never silently rename a non-default branch.
+   default-branch PATCH and branch deletion to undo). Three guards on
+   that rename:
+   - a `main` branch ALREADY existing alongside `master` makes the
+     rename fail — stop and ask which branch to keep
+   - a remote-backed `master` (an `origin` already exists): renaming
+     locally neither renames `origin/master` nor changes the remote
+     default — after the rename, `git -C <code-path> push -u origin
+     main`, then `gh repo edit <owner>/<name> --default-branch main`,
+     and only delete `origin/master` with the user's consent
+   - EMPTY output means detached HEAD — stop and ask, never rename
+   Any OTHER name (`dev`, a feature branch): ask the user — an
+   existing repo's branch layout is theirs; never silently rename a
+   non-default branch.
    Then check for an existing remote: if the repo already has an
    `origin`, do NOT run `gh repo create` — derive `owner/repo` from
    it per the "already has a remote" rules in Edge cases (github.com
