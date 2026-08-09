@@ -1,6 +1,6 @@
 # KIT-0096: Plugin release — refresh agentive-workflow from current kit content (2.0.0)
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high (blocks a meaningful new-project test — the plugin currently ships v6/v7-era agents and NO planner; in the packaged world the plugin is THE agent channel)
 **Type**: Infrastructure / release
 **Estimated Effort**: 0.5-1 day
