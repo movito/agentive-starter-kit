@@ -147,6 +147,40 @@ class TestDrift:
         assert _run(kit, roster, tmp_path) == cpd.EXIT_DRIFT
         assert "unrostered component" in capsys.readouterr().out
 
+    def test_source_escaping_kit_root_fails(self, kit, tmp_path, capsys):
+        """Roster is remote input — a traversal source must be refused,
+        never hashed (evaluator round 1, accepted)."""
+        outside = tmp_path / "outside.md"
+        outside.write_text("secret\n", encoding="utf-8")
+        roster = _roster_for(kit) + f"""\
+  - name: sneaky
+    kind: agent
+    ships: true
+    source: ../outside.md
+    kit_sha256: {_sha(outside)}
+    why: escape attempt
+"""
+        assert _run(kit, roster, tmp_path) == cpd.EXIT_DRIFT
+        assert "escapes the kit root" in capsys.readouterr().out
+
+    def test_absolute_source_fails(self, kit, tmp_path, capsys):
+        roster = _roster_for(kit) + """\
+  - name: absolute
+    kind: agent
+    ships: true
+    source: /etc/hosts
+    kit_sha256: deadbeef
+    why: escape attempt
+"""
+        assert _run(kit, roster, tmp_path) == cpd.EXIT_DRIFT
+        assert "escapes the kit root" in capsys.readouterr().out
+
+    def test_duplicate_source_fails(self, kit, tmp_path, capsys):
+        roster = _roster_for(kit)
+        dup = roster[roster.index("  - name: preflight") :]
+        assert _run(kit, roster + dup, tmp_path) == cpd.EXIT_DRIFT
+        assert "duplicate roster entry" in capsys.readouterr().out
+
     def test_shipped_entry_without_hash_fails(self, kit, tmp_path, capsys):
         roster = _roster_for(kit).replace(
             f"    kit_sha256: {_sha(kit / '.claude' / 'commands' / 'preflight.md')}\n",

@@ -41,7 +41,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install PyYAML
-        run: pip install pyyaml
+        run: pip install "pyyaml>=6.0"
 
       - name: Run drift guard
         run: python scripts/local/check_plugin_drift.py

@@ -86,11 +86,28 @@ def parse_roster(text: str) -> list[dict]:
         data = yaml.safe_load(text)
     except yaml.YAMLError as exc:
         print(f"ERROR: roster is not valid YAML: {exc}")
-        raise SystemExit(EXIT_ROSTER_IO)
+        raise SystemExit(EXIT_ROSTER_IO) from exc
     if not isinstance(data, dict) or not isinstance(data.get("components"), list):
         print("ERROR: roster has no 'components' list.")
         raise SystemExit(EXIT_ROSTER_IO)
     return data["components"]
+
+
+def _contained_source(kit_root: Path, source: str) -> Path | None:
+    """Resolve a roster source path, refusing escapes outside kit_root.
+
+    The roster is fetched over the network; a source like ``../secrets`` or
+    an absolute path must never be hashed. Returns None when the path
+    escapes the kit root.
+    """
+    if Path(source).is_absolute():
+        return None
+    resolved = (kit_root / source).resolve()
+    try:
+        resolved.relative_to(kit_root.resolve())
+    except ValueError:
+        return None
+    return resolved
 
 
 def check_drift(kit_root: Path, components: list[dict]) -> list[str]:
@@ -102,13 +119,25 @@ def check_drift(kit_root: Path, components: list[dict]) -> list[str]:
         name = comp.get("name", "<unnamed>")
         source = comp.get("source")
         if source is not None:
+            if source in rostered_sources:
+                findings.append(
+                    f"{name}: duplicate roster entry for source {source} — "
+                    "roster is malformed; fix it and re-release"
+                )
+                continue
             rostered_sources.add(source)
         if not comp.get("ships", False):
             continue
         if source is None:
             findings.append(f"{name}: ships=true but no source path in roster")
             continue
-        path = kit_root / source
+        path = _contained_source(kit_root, source)
+        if path is None:
+            findings.append(
+                f"{name}: rostered source {source} escapes the kit root — "
+                "refusing to hash it; fix the roster"
+            )
+            continue
         if not path.is_file():
             findings.append(
                 f"{name}: rostered source {source} is missing from the kit "
@@ -119,7 +148,11 @@ def check_drift(kit_root: Path, components: list[dict]) -> list[str]:
         if recorded is None:
             findings.append(f"{name}: ships=true but no kit_sha256 in roster")
             continue
-        actual = sha256_of(path)
+        try:
+            actual = sha256_of(path)
+        except OSError as exc:
+            findings.append(f"{name}: cannot read {source} for hashing: {exc}")
+            continue
         if actual != recorded:
             findings.append(
                 f"{name}: kit content is newer than the published release "
