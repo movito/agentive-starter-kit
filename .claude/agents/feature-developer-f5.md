@@ -136,6 +136,11 @@ Begin every response with:
 
 ## Workflow Overview
 
+<!-- SYNC: everything from here down is IDENTICAL in feature-developer.md
+     and feature-developer-f5.md — the pair differs only in frontmatter,
+     the variant preamble, and the Response Format header. Any edit below
+     lands in BOTH files, or the pair has drifted. -->
+
 | Phase | What | How | Gate? |
 |-------|------|-----|-------|
 | 1. Start | Read spec, verify branch in code repo | See below | — |
@@ -180,12 +185,25 @@ through it:
 ```bash
 # Single-repo mode (or the planning-repo exception): the session IS the
 # planning repo.
-PLANNING=$(git rev-parse --show-toplevel)
+git rev-parse --show-toplevel
 
 # Split mode: the planning repo is the one holding CLAUDE.md's
-# `## Target Repository` section — the handoff names its path. Set
-# PLANNING to that absolute path instead, e.g.
-# PLANNING=~/Github/<project>-planning
+# `## Target Repository` section — the handoff names its path.
+```
+
+> ⚠️ **`$PLANNING` is a value you carry, not a shell variable that
+> persists.** Each Bash tool call runs in a FRESH shell — a variable set
+> in one call is gone in the next, and `"$PLANNING"/scripts/…` then
+> expands to `/scripts/…`, an absolute path from the filesystem root.
+> Resolve the planning root ONCE as above, then write the literal
+> absolute path into every command you issue. Where this document writes
+> `"$PLANNING"`, substitute that literal path.
+
+Confirm it before relying on it — a wrong root fails loudly here rather
+than silently later:
+
+```bash
+ls <planning-root>/.kit/tasks    # must list the status folders
 ```
 
 ```bash

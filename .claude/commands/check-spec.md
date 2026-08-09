@@ -56,7 +56,12 @@ You MUST have in front of you:
    merge base, in the repo the code lives in:
 
    ```bash
-   # Split mode: prefix every git call with -C "$TARGET".
+   # Split mode: prefix BOTH calls with -C "$TARGET" — fetching in the
+   # planning repo updates the wrong origin and leaves the target's
+   # origin/main stale, which is the failure this step exists to avoid.
+   #   git -C "$TARGET" fetch origin main
+   #   git -C "$TARGET" diff --name-only origin/main...HEAD
+   #
    # Three dots, not two: `main...HEAD` diffs against the merge base, so
    # commits landed on main since you branched are not misreported as
    # your changes. `origin/main` (not local `main`) is the honest base —
@@ -64,6 +69,10 @@ You MUST have in front of you:
    git fetch origin main
    git diff --name-only origin/main...HEAD
    ```
+
+   If the project's default branch is not `main`, substitute it
+   throughout (`git remote show origin | sed -n 's/.*HEAD branch: //p'`
+   reports it).
 
    Then read each file completely.
 3. **Full test file content** — for every test file that was modified

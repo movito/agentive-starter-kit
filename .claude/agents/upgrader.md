@@ -170,10 +170,14 @@ on marketplaces that tag without one. Determine the working ref now, by
 probing rather than assuming:
 
 ```bash
-# TARGET is the bare X.Y.Z resolved above.
+# TARGET is the bare X.Y.Z resolved above. Escape the dots before using it
+# in a regex — unescaped, `.` matches any character, so a probe for 1.2.3
+# would also accept a plugin.json reporting "1X2X3".
+TARGET_RE="${TARGET//./\\.}"
 for ref in "v$TARGET" "$TARGET" main; do
   if gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-plugin/plugin.json?ref=$ref" \
-       --jq '.content' 2>/dev/null | base64 -d | grep -q "\"version\": *\"$TARGET\""; then
+       --jq '.content' 2>/dev/null | base64 -d \
+       | grep -qE "\"version\"[[:space:]]*:[[:space:]]*\"$TARGET_RE\""; then
     TARGET_REF="$ref"; break
   fi
 done
@@ -492,7 +496,21 @@ To revert an upgrade:
    The supported local path is the retained plugin cache: it keeps prior
    version directories for a short window (~7 days at time of writing —
    **verify; this may change**), so an immediate rollback is local and fast.
-   Restore `<previous>` from that cache.
+
+   **There is no kit-owned command for this restore, and you must not
+   invent one.** The cache layout and any pinned-install syntax belong to
+   the plugin runtime, and the hard rule above forbids hand-editing
+   `~/.claude/plugins/cache/…`. Check what the installed CLI actually
+   offers before doing anything:
+
+   ```bash
+   claude plugin --help
+   claude plugin install --help 2>/dev/null || true   # a version-pinning install form may exist
+   ```
+
+   If a supported pinned-install or restore path exists, use it. If none
+   does, this is the operator-intervention case in step 2 — say so
+   plainly rather than improvising a filesystem edit.
 
 2. **Verify the restore before touching `CLAUDE.md`:**
 
