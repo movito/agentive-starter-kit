@@ -6,7 +6,7 @@
 > model flake; rerun succeeded.) Log:
 > `.adversarial/logs/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review--arch-review-fast.md`
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high — operator requested asap follow-up (2026-08-09); every
 finding below is live in the kit's canonical agents/commands/skills, and the
 2.0.0 plugin ships them verbatim (behavior-parity rule, KIT-0096)
