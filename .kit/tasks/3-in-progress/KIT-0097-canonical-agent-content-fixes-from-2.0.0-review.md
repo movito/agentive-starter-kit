@@ -266,7 +266,7 @@ decision at triage was: fix the docs now, write this up separately.
 - **Path**: `../some-target`
 ```
 
-```
+```console
 $ target_repo_init; echo $?
 0
 TARGET_REPO=[]  TARGET_PATH=[../some-target]
