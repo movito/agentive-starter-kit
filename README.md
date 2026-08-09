@@ -34,6 +34,21 @@ Using agents to build software works better if you add a bit of structure — An
 
 `agentive doctor` inside any packaged project tells you what's missing (projects created before the packaged era run `./scripts/core/project doctor` instead).
 
+**Updating the toolchain** — install once, update forever; two commands per channel:
+
+```bash
+# The CLI (PyPI):
+uv tool upgrade agentive-kit
+
+# The agent plugin (marketplace):
+claude plugin marketplace update agentive-skills
+claude plugin update agentive-workflow@agentive-skills
+```
+
+The plugin update requires the full `name@marketplace` form — the bare
+`agentive-workflow` errors (verified on the 2.0.0 upgrade, KIT-0096).
+Check what you're running with `claude plugin list` and `agentive --version`.
+
 **For contributors — the portability rule**: kit scripts must run on stock
 macOS (BSD userland, bash 3.2, no Homebrew add-ons) *and* Linux CI. Do not
 depend on Homebrew-provided tools like `timeout`/GNU coreutils — a check
