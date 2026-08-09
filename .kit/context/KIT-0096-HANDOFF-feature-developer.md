@@ -5,7 +5,7 @@
 **Date**: 2026-08-09
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/3-in-progress/KIT-0096-plugin-release-refresh.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0096-plugin-release-refresh.md`
 **Status**: Ready — blocks the operator's new-project test; top of queue
 **Evaluation**: arch-review-fast, 2 rounds, closed under the Oscillation
 protocol with all findings dispositioned — the record is IN the spec
@@ -122,7 +122,7 @@ Homebrew-only tools (README rule).
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0096-plugin-release-refresh.md`
+**Task File**: `.kit/tasks/4-in-review/KIT-0096-plugin-release-refresh.md`
 **Evaluation record**: in the spec (§Evaluation record); log at
 `.adversarial/logs/KIT-0096-plugin-release-refresh--arch-review-fast.md`
 **ADRs**: KIT-ADR-0025 (generalization discipline), KIT-ADR-0028 (the plugin is THE agent channel)

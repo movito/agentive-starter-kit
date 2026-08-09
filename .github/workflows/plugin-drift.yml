@@ -1,0 +1,55 @@
+# Plugin drift guard (KIT-0096 F4): fails when the kit's canonical
+# .claude/ content is newer than the last published agentive-workflow
+# plugin release (roster.yaml in movito/agentive-skills). CI-only by
+# design — the check fetches the published roster over the network, so
+# it is never wired into pre-commit.
+#
+# Expected-red window: between merging a kit .claude/ change and cutting
+# the corresponding plugin release, this check is legitimately FAILING —
+# that is the guard doing its job. Cut the release to go green.
+name: Plugin Drift Guard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.claude/**'
+      - 'scripts/local/check_plugin_drift.py'
+      - '.github/workflows/plugin-drift.yml'
+  pull_request:
+    paths:
+      - '.claude/**'
+      - 'scripts/local/check_plugin_drift.py'
+      - '.github/workflows/plugin-drift.yml'
+  schedule:
+    # Weekly sweep: catches drift that lands outside .claude-touching
+    # PRs (e.g. a plugin release being forgotten after a merge window).
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+# The job only reads the repo and fetches a public roster — no write
+# access needed, and PR-supplied code runs in this job, so keep the
+# token read-only and out of .git/config (CodeRabbit, PR #119).
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Compare kit .claude/ against published plugin roster
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install PyYAML
+        run: pip install "pyyaml>=6.0"
+
+      - name: Run drift guard
+        run: python scripts/local/check_plugin_drift.py
