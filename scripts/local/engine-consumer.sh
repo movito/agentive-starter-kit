@@ -497,6 +497,7 @@ mkdir -p "$TARGET/scripts/optional"
 # removes stale copies from a pre-fix bootstrap — --ignore-existing
 # would otherwise leave the orphaned tests behind in existing consumers.
 rm -f "$TARGET/tests/test_kit_markers.py" \
+      "$TARGET/tests/test_plugin_drift.py" \
       "$TARGET/tests/test_bootstrap_consumer.py" \
       "$TARGET/tests/test_bootstrap_shapes.py" \
       "$TARGET/tests/test_bots_conformance.py" \
@@ -507,6 +508,7 @@ rm -f "$TARGET/tests/test_kit_markers.py" \
       "$TARGET/tests/test_scaffold_acceptance.py" \
       "$TARGET/tests/test_setup_door.py"
 "${RSYNC_BASE[@]}" --exclude='test_kit_markers.py' \
+    --exclude='test_plugin_drift.py' \
     --exclude='test_bootstrap_consumer.py' \
     --exclude='test_bootstrap_shapes.py' \
     --exclude='test_bots_conformance.py' \

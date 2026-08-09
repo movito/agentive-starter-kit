@@ -38,6 +38,7 @@ dev = [
     "isort>=5.13.0",
     "flake8>=6.0.0",           # CI lint step (test.yml) invokes bare flake8
     "pre-commit>=4.6.0",
+    "pyyaml>=6.0",             # Plugin drift guard roster parsing (KIT-0096)
     # Adversarial evaluation (AI reviews task specs)
     "adversarial-workflow>=1.0.1",  # Floor excludes 0.9.x aider-era builds that mutate the working tree during review
 ]
