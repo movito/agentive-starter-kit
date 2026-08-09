@@ -43,6 +43,19 @@ This folder contains ADRs inherited from the **agentive-starter-kit** template. 
 | KIT-ADR-0016 | Validation Architecture | Accepted |
 | KIT-ADR-0017 | API Testing Infrastructure | Accepted |
 | KIT-ADR-0018 | Workflow Observation | Accepted |
+| KIT-ADR-0019 | Review Knowledge Extraction | Proposed |
+| KIT-ADR-0020 | Research Quality Coupling Strategy | Accepted |
+| KIT-ADR-0021 | Real-Time Agent Communication | Proposed (superseded by 0021-B) |
+| KIT-ADR-0021-B | Real-Time Agent Communication (Revised) | Proposed |
+| KIT-ADR-0022 | Manifest-Based Sync Ownership | Accepted |
+| KIT-ADR-0023 | Builder/Project Separation — the `.kit/` boundary | Proposed |
+| KIT-ADR-0024 | Cross-Repo Topology and Drift Control | Proposed |
+| KIT-ADR-0025 | Agent Localization vs Plugin Upgrades | Accepted |
+| KIT-ADR-0026 | Pull-Based Consumer Sync | Accepted (superseded by 0028 on migration) |
+| KIT-ADR-0027 | A Leaner, Language-Agnostic Kit | Accepted |
+| KIT-ADR-0028 | Versioned Packages, Not File Copies | Accepted |
+| KIT-ADR-0029 | Task-as-Folder | Proposed — deliberately deferred |
+| KIT-ADR-0030 | The Door Is a Tool, Not a Place | Proposed |
 
 ## Legacy-prefix ADRs in this directory
 
