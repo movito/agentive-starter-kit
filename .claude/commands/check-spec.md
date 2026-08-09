@@ -1,6 +1,6 @@
 ---
 description: Check Spec Compliance
-version: 1.3.0
+version: 1.4.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -17,18 +17,32 @@ Verify that all task requirements are implemented before committing.
 
 In cross-repo mode the spec lives in the planning repo while the code
 lives in the target repo, so a bare `git` command answers about the
-wrong one. Detect the topology and fix both roots before Step 1:
+wrong one. Resolve both roots before Step 1.
+
+**Use the canonical parser; do not hand-roll a `grep`.**
+`scripts/core/lib/target_repo.sh` is the runtime source of truth for what
+counts as split mode: it requires BOTH `- **Path**:` and `- **GitHub**:`
+under the `## Target Repository` heading, validates the GitHub value as
+`owner/name`, and fails loudly otherwise. Accepting a `Path` alone can
+enter split mode on a malformed section and read the wrong repo.
 
 ```bash
-grep -A 5 "## Target Repository" CLAUDE.md 2>/dev/null || echo "SINGLE_REPO_MODE"
+. scripts/core/lib/target_repo.sh
+target_repo_init || exit 1     # non-zero = malformed config; report and stop
+TARGET="${TARGET_PATH:-$(git rev-parse --show-toplevel)}"
+echo "TARGET=$TARGET"
 ```
 
-- **SINGLE_REPO_MODE** → set `TARGET` to the current repo:
-  `TARGET=$(git rev-parse --show-toplevel)`.
-- **Split mode** → set `TARGET` to the `- **Path**:` value from that
-  section. A section that exists but carries no usable `Path` is a
-  malformed config, not split mode — say so and stop rather than
-  guessing which repo to read.
+- **`TARGET_PATH` non-empty** → split mode; `TARGET` is the target repo.
+- **`TARGET_PATH` empty** → single-repo mode; `TARGET` falls back to the
+  current repo, so the commands below are unchanged.
+- **Non-zero exit** → the section exists but is malformed (missing field,
+  or a GitHub value that isn't `owner/name`). Report what the parser said
+  and stop; do not guess which repo to read.
+
+If the helper is unavailable (a consumer project that didn't install
+`scripts/core/lib/`), require both fields and an `owner/name`-shaped
+GitHub value yourself before treating it as split mode.
 
 Every code-side command below is written `git -C "$TARGET"`, which is
 correct in BOTH modes — that is why `TARGET` is set in single-repo mode

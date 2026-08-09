@@ -1,7 +1,7 @@
 ---
 description: How to run the adversarial code-review evaluator once local tests pass, before the PR opens
 user-invocable: false
-version: 1.5.0
+version: 1.6.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -79,8 +79,15 @@ You may skip the evaluator when ALL of these conditions are true:
 
 ```bash
 echo "# Evaluator skipped: <N lines logic, no new functions, no external integrations" \
-  > .kit/context/reviews/<TASK-ID>-evaluator-review.md
+  > "$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md
 ```
+
+> **The record goes in the PLANNING repo.** Gate 5 reads it there. In
+> split mode the session runs in the TARGET worktree, so a relative
+> `.kit/…` path writes to the wrong repo — the record is never found and
+> preflight fails a gate the work actually satisfied. Resolve the
+> planning root once and substitute the literal path (it does not
+> survive between tool calls).
 
 **When in doubt, run it.** The fast variant costs ~$0.004 and takes 30 seconds.
 
@@ -232,7 +239,8 @@ removes the gate for every future task that copies the pattern.
 Required sequence:
 
 1. **Write the failed record** at
-   `.kit/context/reviews/<TASK-ID>-evaluator-review.md`, first line
+   `"$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md`
+   (the PLANNING repo — see above), first line
    naming the mode explicitly:
 
    ```text
@@ -409,7 +417,7 @@ fi
         cat "$log"
         echo
     done
-} > .kit/context/reviews/<TASK-ID>-evaluator-review.md
+} > "$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md
 ```
 
 Include this file in your next commit. The same recipe appears in
