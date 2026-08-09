@@ -331,8 +331,10 @@ or use the `/code-review-evaluator` skill.
 > of source, no new functions, no external integrations) does not need
 > the trio. A skip is a decision that gets **persisted**, not a silent
 > omission: write the skip and its reason to
-> `.kit/context/reviews/<TASK-ID>-evaluator-review.md`, which is what
-> Gate 5 checks for. See the skill's "When to Skip".
+> `"$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md` —
+> the PLANNING repo, always. Gate 5 reads it there, so a record
+> written to a relative path from a target-repo worktree is invisible
+> to preflight and the gate fails despite the work being done. See the skill's "When to Skip".
 
 > **Prose-sweep exception (KIT-0069)**: on a PROSE-DOMINATED sweep
 > (many small text fixes across many files), the trio is unreliable —
@@ -405,8 +407,10 @@ provides them; v1 names are deprecated.
 ### Step 3 — Triage and persist
 
 Address FAIL/CONCERNS findings. Persist evaluator output to
-`.kit/context/reviews/<TASK-ID>-evaluator-review.md` so the review
-trail is tracked in git.
+`"$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md` so
+the review trail is tracked in git. Same rule as the skip record: the
+artifact lives in the PLANNING repo, which is where Gate 5 looks —
+never a relative path from a target-repo worktree.
 
 #### Verify-before-believing reflex
 
@@ -631,14 +635,16 @@ Run `/retro` to finalize the session. Retro files are saved to
 ## Quick Reference
 
 Kit-default locations — Project Context overrides these for projects on
-older layouts:
+older layouts. **Every `.kit/` path is relative to the PLANNING repo**
+(`"$PLANNING"/…`), which in split mode is not the worktree you are
+sitting in:
 
-| Resource | Location |
-|----------|----------|
-| Task specs | `.kit/tasks/` |
-| Handoff files | `.kit/context/<TASK-ID>-HANDOFF-*.md` |
-| Evaluator inputs | `.adversarial/inputs/` |
-| Review artifacts | `.kit/context/reviews/` |
+| Resource | Location | Repo |
+|----------|----------|------|
+| Task specs | `.kit/tasks/` | planning |
+| Handoff files | `.kit/context/<TASK-ID>-HANDOFF-*.md` | planning |
+| Review artifacts | `.kit/context/reviews/` | planning |
+| Evaluator inputs | `.adversarial/inputs/` | wherever you run the trio |
 
 ### Recurring Footguns
 
