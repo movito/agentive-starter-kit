@@ -57,11 +57,11 @@ gh pr view --json number,url,headRefOid --jq '"PR #\(.number) | HEAD: \(.headRef
 ```
 
 ```bash
-./scripts/core/gh-review-helper.sh threads PR_NUMBER
+agentive review-helper threads PR_NUMBER
 ```
 
 ```bash
-./scripts/core/gh-review-helper.sh summary PR_NUMBER
+agentive review-helper summary PR_NUMBER
 ```
 
 Present the triage table for **unresolved** threads:
@@ -98,13 +98,13 @@ Use the severity triage from the `bot-triage` skill:
 5. Reply to each fixed thread:
 
 ```bash
-./scripts/core/gh-review-helper.sh reply PR_NUMBER COMMENT_ID 'Fixed in COMMIT_SHA: description.'
+agentive review-helper reply PR_NUMBER COMMENT_ID 'Fixed in COMMIT_SHA: description.'
 ```
 
 6. Resolve all addressed threads:
 
 ```bash
-./scripts/core/gh-review-helper.sh resolve PRRT_node_id
+agentive review-helper resolve PRRT_node_id
 ```
 
 7. **Go back to Cycle Start** (increment cycle counter).

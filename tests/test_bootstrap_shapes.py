@@ -143,9 +143,6 @@ class TestCharacterization:
 PLANNING_MUST_SHIP = (
     "scripts/local/checks.sh",
     "scripts/core/project",
-    "scripts/core/preflight-check.sh",
-    "scripts/core/gh-review-helper.sh",
-    "scripts/core/prepare-review-input.sh",
     "scripts/core/validate_task_status.py",
     "scripts/core/doctor.d/10-gh-auth.sh",
     "scripts/core/doctor.d/70-core-bare.sh",
@@ -173,6 +170,13 @@ PLANNING_MUST_NOT_SHIP = (
     "scripts/optional",
     ".github",
     ".serena",
+    # The three one-release deprecation shims, removed at 0.3.1
+    # (KIT-0092). They shipped through 0.3.0; a planning repo
+    # bootstrapped now gets the `agentive` CLI instead, so their
+    # ABSENCE is the contract.
+    "scripts/core/preflight-check.sh",
+    "scripts/core/gh-review-helper.sh",
+    "scripts/core/prepare-review-input.sh",
 )
 
 
@@ -231,9 +235,14 @@ class TestPlanningShape:
         )
         entries = manifest["files"]["scripts_core"]
         assert "core/project" in entries
-        assert "core/preflight-check.sh" in entries
         assert "core/ci-check.sh" not in entries
         assert "core/pattern_lint.py" not in entries
+        # removed at 0.3.1 (KIT-0092) — the seeded manifest must not
+        # list files the shipset no longer contains, or `project sync`
+        # would chase them
+        assert "core/preflight-check.sh" not in entries
+        assert "core/prepare-review-input.sh" not in entries
+        assert "core/gh-review-helper.sh" not in entries
 
     def test_kit_agents_still_marker_merged(self, planning):
         text = (planning / ".claude" / "agents" / "planner.md").read_text(

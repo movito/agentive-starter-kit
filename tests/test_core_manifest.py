@@ -140,8 +140,11 @@ class TestManifestConsistency:
 
     def test_scripts_core_count(self, manifest):
         count = len(manifest["files"]["scripts_core"])
-        # 29 = 28 + doctor.d/35-handoffs-paths.py (KIT-0086 F2, PR KIT-0090/2)
-        assert count == 29, f"Expected 29 scripts_core entries, got {count}"
+        # 26 = 29 - the three deprecation shims removed at 0.3.1
+        # (KIT-0092: preflight-check.sh, prepare-review-input.sh,
+        # gh-review-helper.sh — now `agentive preflight` /
+        # `review-input` / `review-helper`)
+        assert count == 26, f"Expected 26 scripts_core entries, got {count}"
 
     def test_commands_core_count(self, manifest):
         count = len(manifest["files"]["commands_core"])
@@ -157,8 +160,8 @@ class TestManifestConsistency:
 
     def test_total_entry_count(self, manifest):
         total = sum(len(entries) for entries in manifest["files"].values())
-        # 50 = 49 + doctor.d/35-handoffs-paths.py (KIT-0086 F2, PR KIT-0090/2)
-        assert total == 50, f"Expected 50 total entries, got {total}"
+        # 47 = 50 - the three deprecation shims removed at 0.3.1 (KIT-0092)
+        assert total == 47, f"Expected 47 total entries, got {total}"
 
 
 def _planning_heredoc_core_version(engine_text: str) -> str | None:

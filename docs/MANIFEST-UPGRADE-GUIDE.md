@@ -142,7 +142,7 @@ pull command, so they can't drift.
 ./scripts/core/project sync --dry-run          # what would change (read-only)
 ./scripts/core/project sync                     # pull everything you're entitled to
 ./scripts/core/project sync --tier commands_core   # just one tier
-./scripts/core/project sync --only core/preflight-check.sh   # just one file
+./scripts/core/project sync --only core/verify-ci.sh   # just one file
 ./scripts/core/project sync --ref v0.7.0        # pin to a tag instead of main
 ./scripts/core/project sync --source ~/agentive-starter-kit   # local checkout, no network
 ```
