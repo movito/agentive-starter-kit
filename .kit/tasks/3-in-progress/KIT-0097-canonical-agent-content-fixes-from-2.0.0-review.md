@@ -166,6 +166,72 @@ roster.yaml hash update + version bump 2.0.1).
       updated, drift guard back to green — thread replies on PR #4
       reference this task as the closure path
 
+## Second checklist — found in review on PR #120 (the pre-filed path)
+
+Per the handoff: new findings on the fixed text append HERE as a second
+checklist, not a new task. All in scope (each is a defect in a fix this
+task made). Evaluator trio + 2 bot rounds; 30 findings total, 23
+accepted, 7 declined. Full disposition:
+`.kit/context/reviews/KIT-0097-evaluator-review.md`.
+
+**Evaluator round (pre-PR, `--format diff`)**
+
+- [x] **E1** — upgrader `TARGET_REF` probe left the version's dots
+      unescaped, so a probe for `1.2.3` also accepted `"1X2X3"` (o3).
+      Verified by hand before and after the fix.
+- [x] **E2** — `$PLANNING` written as a shell variable, but each Bash
+      tool call is a fresh shell: `"$PLANNING"/scripts/…` would silently
+      become `/scripts/…` (claude-code HIGH).
+- [x] **E3–E5** — ordering-pin hardening: at-most-one-match per phase
+      prefix, whitespace-tolerant heading regex, cell-scoped table row.
+- [x] **E16** — check-spec's new `git fetch` not routed through
+      `-C "$TARGET"`, leaving the target's `origin/main` stale.
+- [x] **E17** — upgrader rollback said "restore from that cache" with no
+      command an agent could run, while its own rules forbid editing the
+      cache. Now probes for a supported form, else operator intervention.
+- [x] **E18** — pair duplication was a drift hazard enforced only by
+      prose → new `test_agent_pair_bodies_stay_identical` contract test.
+
+**Bot round 1 — the runnable-vs-prose class (BugBot ×2 + CodeRabbit)**
+
+Both bots independently found that the *prose* said route through the
+target repo while the *runnable snippet beside it* was bare — so the
+F14/F15 fixes reproduced the bug they were fixing.
+
+- [x] **B1** — check-spec: all code-side commands now `git -C "$TARGET"`;
+      `TARGET` set in single-repo mode too, so one form is correct in
+      both topologies. Default branch resolved, not assumed.
+- [x] **B2** — upgrader `$CURRENT_REF` used but never set (F12 left the
+      CURRENT side as prose). One `resolve_ref()` helper, called twice.
+- [x] **B3** — upgrader ref probe ran BEFORE the idempotence gate, so a
+      no-op re-run could halt on a network error.
+- [x] **B4** — check-ci: explicit single-repo and cross-repo variants for
+      `gh workflow list` and `gh workflow run`.
+- [x] **B5** — ci-checker classified split mode from heading presence
+      alone; now requires Path + GitHub, and stops on a malformed section.
+- [x] **B6** — **F7 was half-applied**: both read-only reviewers still
+      told the agent to run `adversarial` (needs Bash) and author handoff
+      files + `agent-handoffs.json` (needs Write). Reworked to
+      request-don't-run and supply-content-don't-author.
+- [x] **B7** — `source .env` → worktree-safe POSIX-dot form (KIT-0091).
+- [x] **B8** — Phase 5's "ALL tasks" contradicted the skill's skip
+      policy. Ordering governs *when*, skip governs *whether*, and a skip
+      needs its persisted record.
+- [x] **B9** — retro said "one of three ways" while offering four.
+- [x] **B10** — MD029 (retro, via the restructure) + MD040 fence.
+- [x] **B11 — DECLINED ×2**: both wrap-up comments carried a severity
+      header and analysis scripts but no finding body. Nothing stated to
+      act on; recorded rather than guessing.
+
+**Bot round 2 — BugBot on round 1's own fix**
+
+- [x] **B12** — the new skip-record guidance used a relative
+      `.kit/context/reviews/…` path, but Gate 5 reads the PLANNING repo:
+      in split mode the record lands in the target worktree, is never
+      found, and fails a gate the work satisfied. Same F4 class. Skip
+      record AND Step 3 evaluator record routed through `"$PLANNING"`;
+      Quick Reference now names the owning repo per artifact.
+
 ## Riders (KIT-0096 retro, added at promotion 2026-08-09)
 
 - **R1 — Phase 9 move+stage recipe**: while fixing the workflow docs

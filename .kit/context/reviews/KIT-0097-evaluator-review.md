@@ -46,3 +46,39 @@ invited findings about text the diff never touched.
 unexecutable step, 4 test hardenings incl. a new pair-identity pin, 1
 release note), 11 declined with reasons. All accepted items are in the
 follow-up commit; the review round is closed at one deep round (cap ~2).
+
+---
+
+## Bot rounds (PR #120)
+
+### Round 1 — BugBot 2, CodeRabbit 13
+
+Both bots independently found the **same class**, and it was mine: the
+prose said route the command through the target repo, while the
+*runnable snippet beside it* was bare. An agent copies the runnable line.
+This is the failure mode the F15/F14 fixes were supposed to prevent, so
+the fixes had reproduced the bug they were fixing.
+
+| Finding | Source | Disposition |
+|---|---|---|
+| check-spec `git fetch`/`git diff` bare while `-C "$TARGET"` sat in comments | BugBot Medium + CR Major | **ACCEPTED** — all code-side commands routed; `TARGET` now set in single-repo mode too, so one form is correct in both topologies and there is no bare variant to copy. Default branch resolved instead of assumed. |
+| upgrader `$CURRENT_REF` used but never set (Phase 1 only described it in prose) | BugBot Medium | **ACCEPTED** — real: my F12 fix left the CURRENT side as prose. One `resolve_ref()` helper called twice; TARGET unresolved halts, CURRENT unresolved only disables the name-diff. |
+| upgrader ref probe ran before the idempotence gate | CR Major | **ACCEPTED** — a no-op re-run could halt on a network error, contradicting the agent's own zero-changes rule. Gate moved first. |
+| check-ci `gh workflow list`/`run` omit `--repo` in the runnable snippets | CR Major | **ACCEPTED** — explicit single-repo and cross-repo variants for both. |
+| ci-checker classifies split mode from heading presence alone | CR Major | **ACCEPTED** — now requires Path + GitHub; malformed section stops rather than falling back to single-repo and pointing `gh` at the wrong repo. |
+| document-reviewer/security-reviewer still require ungranted tools | CR Major | **ACCEPTED** — F7 was half-applied. Both still told a read-only agent to run `adversarial` (Bash) and author handoff files + `agent-handoffs.json` (Write). Reworked to request-don't-run and supply-content-don't-author. |
+| `source .env` should use the worktree-safe POSIX-dot form | CR Major | **ACCEPTED** — KIT-0091 documented exactly this permission-hook refusal. |
+| Phase 5 "ALL tasks" conflicts with the skill's skip policy | CR Minor | **ACCEPTED** — separated the questions: ordering governs *when*, skip governs *whether*, and a skip needs its persisted record (which is what Gate 5 reads). |
+| retro says "one of three ways" while offering four | CR Major | **ACCEPTED** — a contradiction I introduced; all four are one list now. |
+| retro MD029 marker | CR Minor | **ACCEPTED** — resolved by the restructure. (Distinct from F19's MD029, which stays declined: that list is genuinely sequential.) |
+| MD040 bare fence | CR Minor | **ACCEPTED** — `text`. |
+| 2× wrap-up comments | CR | **DECLINED** — severity header and analysis scripts only, no finding body. Nothing stated to act on; said so rather than changing working text on speculation. |
+
+### Round 2 — BugBot 1 (on round 1's own fix)
+
+| Finding | Source | Disposition |
+|---|---|---|
+| The new skip-record guidance used a relative `.kit/context/reviews/…` path, but Gate 5 reads the PLANNING repo | BugBot Medium | **ACCEPTED** — correct, and the same F4 class again. In split mode the record would land in the target worktree, never be found, and fail a gate the work satisfied. Routed the skip record AND the Step 3 evaluator record through `"$PLANNING"`; Quick Reference table now names the owning repo per artifact. |
+
+**Bot totals**: 16 findings, 14 accepted, 2 declined. All 15 threads
+replied to and resolved. BugBot green on round 2.
