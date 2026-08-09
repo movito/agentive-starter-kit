@@ -2,7 +2,7 @@
 name: feature-developer
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring
 model: claude-opus-5
-version: 2.2.0
+version: 2.3.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito (canonicalized from feature-developer-v6 v1.2.0 + v7 v2.1.1 local config)"
@@ -178,13 +178,24 @@ worktree. Derive the planning root once and route every planning command
 through it:
 
 ```bash
-# Single-repo mode (or the planning-repo exception): the session IS the
-# planning repo.
-git rev-parse --show-toplevel
+# The planning repo is the one whose CLAUDE.md carries the
+# `## Target Repository` section. Start from the session's own root and
+# check there first — in single-repo mode (and under the planning-repo
+# exception) that IS the planning repo, and this resolves immediately.
+PLANNING=$(git rev-parse --show-toplevel)
 
-# Split mode: the planning repo is the one holding CLAUDE.md's
-# `## Target Repository` section — the handoff names its path.
+# Split mode: the session sits in the TARGET worktree, whose CLAUDE.md
+# has no such section. The handoff's Session topology names the planning
+# path — substitute it here rather than guessing:
+#   PLANNING=/absolute/path/from/the/handoff
+
+# VALIDATE before relying on it. A wrong root fails loudly now instead
+# of silently writing artifacts into the wrong repo later:
+ls "$PLANNING/.kit/tasks" && ls "$PLANNING/CLAUDE.md"
 ```
+
+If that `ls` fails, STOP — do not proceed with a guessed root. Ask the
+operator for the planning-repo path.
 
 > ⚠️ **`$PLANNING` is a value you carry, not a shell variable that
 > persists.** Each Bash tool call runs in a FRESH shell — a variable set
@@ -220,12 +231,24 @@ cat "$PLANNING"/.kit/tasks/*/<TASK-ID>-*.md
 cat "$PLANNING"/.kit/context/<TASK-ID>-HANDOFF-*.md
 
 # 4. Task status (always in the planning repo, never GIT_TARGET).
-#    Worktree sessions: the planner normally ran `project start` on
-#    main BEFORE creating the worktree (ordering rule in
-#    WORKTREE-WORKFLOW.md); if the task file still shows 2-todo,
-#    coordinate — do not move it from a feature branch.
-"$PLANNING"/scripts/core/project start <TASK-ID>
+#    CONDITIONAL — check the folder first; do not run this reflexively.
+ls "$PLANNING"/.kit/tasks/*/<TASK-ID>-*.md
 ```
+
+- **Already in `3-in-progress/`** → nothing to do. The planner normally
+  ran `project start` on main BEFORE creating the worktree (the
+  ordering rule in `WORKTREE-WORKFLOW.md`), so this is the usual case.
+- **Still in `2-todo/`, and you are on `main` in the planning repo** →
+  start it:
+
+  ```bash
+  "$PLANNING"/scripts/core/project start <TASK-ID>
+  ```
+
+- **Still in `2-todo/`, but you are on a feature branch or in a
+  worktree** → do NOT move it from here. The move belongs on `main`; a
+  status change made on a feature branch is invisible until it merges.
+  Coordinate with the planner instead.
 
 After every `GIT_TARGET checkout`, run `GIT_TARGET branch --show-current`
 to confirm — in split mode, a bare `git branch` from the planning repo
@@ -352,10 +375,20 @@ repo (auto-detecting `## Target Repository` in `CLAUDE.md`, so it works in
 both single-repo and split mode), extracts the diff, and appends the full
 post-change contents of every changed file:
 
+**Run it from the PLANNING repo.** It auto-detects the target by reading
+`## Target Repository` from the CLAUDE.md in its working directory — and
+the TARGET worktree's CLAUDE.md has no such section, so running it there
+silently resolves to the wrong repo instead of erroring:
+
 ```bash
+cd "$PLANNING"
 agentive review-input <TASK-ID>
 # Optional flags: --base <branch> (default main), --format diff|full (default full)
 ```
+
+It writes `.adversarial/inputs/<TASK-ID>-code-review-input.md` **relative
+to where it ran** — i.e. under `$PLANNING`. Use that same path for the
+evaluator commands in Step 2 and when reading the logs.
 
 **Commit the tree first.** The helper (and any manual `git diff
 main...HEAD`) reads committed state — uncommitted work is invisible to it
@@ -660,9 +693,10 @@ the name implies. Verify with the vendor's docs-search tool first.
 - Never modify `.env` files
 - Never change core architecture without coordinator approval
 - Always preserve backward compatibility
-- Never call a task done, or push a follow-up fix on top of a red run,
-  without verifying CI. (The initial Phase 6 push is exempt by
-  definition — CI runs *on* that push; there is nothing to verify
-  beforehand.)
+- Never call a task **done** without verifying CI is green on GitHub.
+  Pushing itself is never the restricted act: the initial Phase 6 push
+  is what CI runs ON, and a corrective push after `CI_FAILED` is how
+  Phase 7's loop recovers — both are required, not exceptions. What is
+  forbidden is *declaring completion* on an unverified or red run.
 - Never mark complete without CI green on GitHub
 - Never commit debug code, console.log statements, or commented-out code

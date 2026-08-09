@@ -2,7 +2,7 @@
 name: upgrader
 description: Raises a project from one agentive-workflow plugin version to a newer one, and refreshes local agent model: pins on a model rollout. Automates docs/PLUGIN-UPGRADE-GUIDE.md. Ongoing upgrades only — refuses initial migration, script/manifest upgrades, and CLAUDE.md identity edits.
 model: claude-sonnet-5
-version: 1.3.0
+version: 1.4.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -228,8 +228,17 @@ Fetch the new version's CHANGELOG to learn what was **added**, **removed**, or
 your own judgment):
 
 ```bash
-gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/CHANGELOG.md?ref=$TARGET_REF" \
-  --jq '.content' | base64 -d
+# Capture the API result FIRST — in a pipeline the exit status is the
+# LAST command's, so `gh api ... | base64 -d` reports success even when
+# gh failed, and an auth/network error becomes an "empty CHANGELOG".
+if ! raw=$(gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/CHANGELOG.md?ref=$TARGET_REF" --jq '.content' 2>&1); then
+    case "$raw" in
+        *"Not Found"*|*404*) echo "NO_CHANGELOG" ;;   # genuine 404 → use the fallback below
+        *) echo "HALT: gh api failed — $raw" >&2; exit 1 ;;
+    esac
+else
+    printf '%s' "$raw" | base64 -d
+fi
 ```
 
 `$TARGET_REF` is the ref resolved in Phase 1 — the one whose `plugin.json`
@@ -244,19 +253,31 @@ diff. Missing reference updates is the failure mode this agent exists to prevent
 back to listing the artifact directories at each ref and diffing the names:
 
 `CURRENT_REF` was resolved alongside `TARGET_REF` in Phase 1. Diff ref
-against ref, never a hand-built `v`-prefixed string. **If `CURRENT_REF` came
-back unresolved, skip this fallback** and report that the name-diff is
-unavailable — do not substitute `main`, which would diff against the wrong
-version:
+against ref, never a hand-built `v`-prefixed string. **If `CURRENT_REF`
+came back unresolved, skip this fallback** — do not substitute `main`,
+which would diff against the wrong version.
+
+> **No CHANGELOG *and* no `CURRENT_REF` → HALT, do not proceed to ACK.**
+> Reconcile detection is the reason this agent exists: without either
+> source you cannot know which artifacts were renamed or removed, so an
+> upgrade would leave stale namespaced references behind — silently, and
+> exactly where the operator trusts you to have looked. Halt in one
+> line: "no reconciliation source (no CHANGELOG at `<TARGET_REF>`, and
+> `<CURRENT>` is not a resolvable ref) — name the reconcile scope
+> explicitly or publish the missing tag." Proceed to Phase 3 only with
+> an operator-supplied scope.
 
 ```bash
+# Same pipeline trap as above: capture, check, THEN sort. A failed
+# listing must not read as "this directory is empty" — that would look
+# like every artifact was removed.
 for dir in commands agents skills; do
-  gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=$TARGET_REF" \
-    --jq '.[].name' | sort > "/tmp/$dir-target.txt"
-  gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=$CURRENT_REF" \
-    --jq '.[].name' | sort > "/tmp/$dir-current.txt"
+  tgt=$(gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=$TARGET_REF" --jq '.[].name') \
+    || { echo "HALT: could not list $dir at $TARGET_REF" >&2; exit 1; }
+  cur=$(gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=$CURRENT_REF" --jq '.[].name') \
+    || { echo "HALT: could not list $dir at $CURRENT_REF" >&2; exit 1; }
   echo "--- $dir ---"
-  diff "/tmp/$dir-current.txt" "/tmp/$dir-target.txt"
+  diff <(printf '%s\n' "$cur" | sort) <(printf '%s\n' "$tgt" | sort)
 done
 ```
 

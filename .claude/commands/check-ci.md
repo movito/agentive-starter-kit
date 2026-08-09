@@ -1,6 +1,6 @@
 ---
 description: Verify GitHub Actions CI/CD status for a branch
-version: 1.3.0
+version: 1.4.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -94,10 +94,25 @@ gh workflow run <workflow-file-or-name> --ref <branch> --repo <target_github>
 ```
 
 Dispatch only works if the workflow declares `workflow_dispatch:` in its
-`on:` triggers. If it does not, `gh workflow run` errors — in that case
-push an empty commit to the branch (`git commit --allow-empty`) to
-re-trigger the `push`/`pull_request` events instead, or ask the operator
-to add the trigger.
+`on:` triggers. If it does not, `gh workflow run` errors. In that case
+re-trigger the `push`/`pull_request` events with an empty commit — **in
+the TARGET repo's worktree**, since in split mode this command may be
+running from the planning repo and a bare `git commit` there would
+create the commit in the wrong repository and retrigger nothing:
+
+```bash
+# Single-repo mode:
+git commit --allow-empty -m "chore: retrigger CI"
+git push
+```
+
+```bash
+# Split mode — route both, using the `- **Path**:` value from CLAUDE.md:
+git -C <target_path> commit --allow-empty -m "chore: retrigger CI"
+git -C <target_path> push
+```
+
+Or ask the operator to add the `workflow_dispatch:` trigger.
 
 Then re-run the verification above. If this recurs on a second PR, treat
 it as a repo-config incident (report to the planner), not a fluke.

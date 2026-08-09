@@ -1,6 +1,6 @@
 # Review Starter — KIT-0097: Canonical `.claude/` content fixes from the 2.0.0 review
 
-**Task**: `.kit/tasks/3-in-progress/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review.md`
 **PR**: https://github.com/movito/agentive-starter-kit/pull/120
 **Evaluator record**: `.kit/context/reviews/KIT-0097-evaluator-review.md`
 (raw logs: `…-evaluator-review-logs.md`)
@@ -14,9 +14,20 @@ the fixes in the canonical tree, and plugin 2.0.1 (this task's release
 step) syncs the channel afterward. **It cannot go green on this PR** —
 the fix ships in a different repo.
 
-Merge-go is: **green except the by-design drift check.** Everything else
-is genuinely green (Tests ×3, Lint, CodeRabbit *approved*, BugBot clean,
-23/23 threads resolved).
+Merge-go is: **green except the by-design drift check** — Tests ×3 and
+Lint pass, BugBot clean, all bot threads replied to and resolved.
+
+⚠️ **Verify CodeRabbit's state yourself before merging.** It auto-paused
+mid-PR ("influx of new commits") and reported a green check while two
+commits sat unreviewed; a forced full review then found 11 more
+findings. Check that its most recent review's `commit_id` matches head
+rather than trusting the check mark:
+
+```bash
+gh api repos/movito/agentive-starter-kit/pulls/120/reviews \
+  --jq '[.[] | select(.user.login=="coderabbitai[bot]")] | last | .commit_id'
+git rev-parse HEAD
+```
 
 Note: `planner` and `planner-f5` appear in the guard's list but were
 **not touched by this PR** — that is KIT-0096 completion drift already
@@ -77,9 +88,20 @@ caught (see "Defects I introduced" below).
 
 ## Defects I introduced and the bots caught — read this before merging
 
-I want this visible rather than buried in the disposition table. Across
-one evaluator round and five bot rounds, **30 findings; 23 accepted, 7
-declined.** A meaningful share were defects in my *own* fixes:
+I want this visible rather than buried in the disposition table.
+
+**Counting unit** (stated because two artifacts disagreed until now):
+a *finding* is one posted bot thread or one distinct evaluator finding.
+CodeRabbit consolidates several file sites into one thread, so a thread
+can carry more than one edit — the disposition table in
+`.kit/context/reviews/KIT-0097-evaluator-review.md` counts those sites
+individually and therefore runs higher. Both are correct at their own
+grain; the table is authoritative for per-site detail, this file for
+thread-level totals.
+
+At review-starter time: **1 evaluator round + 7 bot rounds**, 34 bot
+threads plus 20 evaluator findings. A meaningful share were defects in
+my *own* fixes:
 
 1. **My F14/F15 fixes reproduced the bug they were fixing.** The prose
    said "route through the target repo in split mode" while the runnable
@@ -105,7 +127,16 @@ declined.** A meaningful share were defects in my *own* fixes:
 All are fixed and verified. The pattern is why this diff deserves a real
 read rather than a rubber stamp on green checks.
 
-## Declined findings (7) — the ones with judgment in them
+6. **A "green" bot check twice meant "not looking".** "23/23 threads
+   resolved" hid two Major findings that lived in a review BODY under
+   *Outside diff range comments* (never threads). Then CodeRabbit
+   **auto-paused** after too many pushes — its check stayed green while
+   two commits went unreviewed. A `@coderabbitai full review` produced
+   11 further findings. Both are counted above; both are also a
+   `bot-triage` gap worth a follow-up (a passing bot check should be
+   compared against head's SHA before it counts as coverage).
+
+## Declined findings — the ones with judgment in them
 
 - **F19 (MD029 on babysit-pr)** — the list is genuinely sequential 1–7;
   CodeRabbit was linting numbering that only looked wrong inside the

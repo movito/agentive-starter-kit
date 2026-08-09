@@ -18,7 +18,8 @@ record in the spec header
 
 - Worktree: `~/Github/ask-worktrees/KIT-0097`, branch
   `feature/KIT-0097-canonical-content-fixes` — created and provisioned
-  by the planner; task file already `3-in-progress`
+  by the planner; task file started in `3-in-progress`, moved to
+  `4-in-review` at handoff
 - VERIFY, never create: `git branch --show-current` must show the
   branch above before your first edit; if not, STOP and ask
 - Likely ONE PR (content fixes) + the 2.0.1 release step afterward

@@ -2,7 +2,7 @@
 name: ci-checker
 description: CI/CD pipeline status verification specialist
 model: claude-sonnet-5
-version: 1.5.0
+version: 1.6.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -131,6 +131,7 @@ current repo as-is.
 ## Verification Protocol
 
 ### 1. Get Recent Workflow Runs
+
 ```bash
 # Get the latest workflow runs for the branch (include headSha and event).
 # $GH_REPO_ARG is UNQUOTED on purpose: it expands to `--repo owner/name`
