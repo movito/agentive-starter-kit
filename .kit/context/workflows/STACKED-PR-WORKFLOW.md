@@ -120,6 +120,14 @@ nudge 1 gets with a real change.
   no run (the #105/#108 residual class — base was already main), that
   is a genuine event-delivery flake: use the dispatch fallback and
   report it to the planner for a reproduction task.
+- **Verify the branch before EVERY fix commit** — the stack's
+  branch-switching cadence (merge-forward, retarget, reconcile) makes
+  wrong-branch commits a live hazard: on KIT-0093 a #116 fix landed on
+  the pr3 branch mid-stack (recovered by cherry-pick). Codified rule:
+  `git branch --show-current` immediately before each commit in the
+  babysit loop; if it isn't the branch the fix belongs to, STOP and
+  switch first. (The planner has carried this rule for main-side work
+  since f7a6c90; stacks need it doubly.)
 - **Force-push permission fallback**: `git push --force-with-lease` is
   deliberately operator-gated (denied for agents). The PREFERRED
   fallback is relaying the exact command to the operator via the `!`

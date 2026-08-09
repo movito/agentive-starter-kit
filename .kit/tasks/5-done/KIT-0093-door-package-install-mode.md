@@ -1,6 +1,6 @@
 # KIT-0093: ADR-0028 phase 2 — the door switches to package-install mode
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: high (the phase where new projects stop inheriting the copy-machinery era; absorbs four parked tasks)
 **Type**: Infrastructure / migration
 **Estimated Effort**: 2-4 days (PR plan required)

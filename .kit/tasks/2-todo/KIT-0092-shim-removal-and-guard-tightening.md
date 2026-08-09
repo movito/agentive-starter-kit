@@ -1,7 +1,12 @@
 # KIT-0092: 0.3.x shim removal + preset-guard retightening
 
-**Status**: Backlog
-**Priority**: medium (promote alongside the phase 2 spec — 0.3.x is its natural release vehicle; part B is unblocked earlier if convenient)
+**Status**: Todo
+**Priority**: high (PROMOTED 2026-08-08, KIT-0093 retro #2: the "one release" promise window is open — schedule as agentive-kit **0.3.1** promptly)
+
+> **Scope update (2026-08-08)**: **Part B is DONE** — shipped inside
+> KIT-0093 PR #116, where the old probe became blocking (break-once
+> proof in that PR body). Remaining scope: **Part A** (shim removal)
+> + **Part C** (monolith test shrinkage), released together as 0.3.1.
 **Type**: Infrastructure / cleanup
 **Estimated Effort**: 0.5 day
 **Created**: 2026-08-08

@@ -234,6 +234,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Write the evaluator-demanded regression test even when the finding looks narrow** — o3's real-but-small CRLF finding produced a test that exposed a second, worse bug no evaluator had named (multiline pattern crossing bullet boundaries). The test is the probe; the finding is just where to point it. (KIT-0091)
 - **Never compound a policy-gated command with ungated ones** — a `gh pr edit && git push --force-with-lease` chain is denied WHOLE; split, and the ungated half runs immediately while the gated half goes through the operator relay. (KIT-0091)
 
+- **`xfail(strict=True)` is the zero-cost red-first mechanism**: land the future-world contract as strict xfail — it proves RED against today's behavior while CI stays green, and the flip PR structurally CANNOT land without consciously removing the markers (an xpass fails the suite). Falsifiability with no dispatch rituals, no skipped CI. (KIT-0093)
+- **Author printed contract strings in the TEST first**: the door's verify-or-instruct lines were written in the acceptance test (PR 1), implemented to spec (PR 2), then pinned hermetically under a restricted PATH (PR 3) — zero drift at any point. When a tool's output IS the contract, the test is where the words get authored. (KIT-0093)
+- **Bot rounds on instruction PROSE converge serially, not in batches**: five rounds on one rename block, each finding existing only after the previous fix (rename → collision → probe-failure → gating → derivation). This is not a batching failure to correct — it is the shape of reviewing prose whose meaning changes with each edit; budget rounds accordingly. (KIT-0093)
+
 ---
 
 ## ADR Candidates

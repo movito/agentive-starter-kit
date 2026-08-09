@@ -17,6 +17,17 @@ patterns:
       NEVER use str.replace(".ext", "") to remove file extensions.
       Use removesuffix(".ext") which only strips the trailing suffix.
       Available in Python 3.9+.
+  bash32_heredoc_apostrophes:
+    rule: >
+      No apostrophes inside heredoc bodies within command substitution
+      $( ... <<EOF ... EOF ) — stock-macOS bash 3.2 quote-tracks the
+      heredoc body and dies with "unexpected EOF looking for matching
+      quote". The kit's engines are full of this construct and target
+      bash 3.2 (README portability rule). Rephrase the prose ("repo's"
+      -> "repo") or move the text out of the heredoc. Cost when
+      violated: ~20 min of bisection for a one-word fix (KIT-0093,
+      engine-consumer.sh).
+    caught_by: "KIT-0093 retro (Surprising #1); live failure on stock macOS bash during PR #116"
 
 # Defensive coding patterns — learned from automated bot findings
 defensive:

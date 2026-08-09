@@ -504,6 +504,13 @@ Verify all gates before requesting human review:
 ## Phase 9: Handoff
 
 1. Move task: `./scripts/core/project move <TASK-ID> in-review`
+   — in worktree sessions this runs IN the worktree and rides the PR:
+   the task-file move is branch-safe, and the single-writer guard
+   skips `agent-handoffs.json` on any non-main branch (the planner
+   reconciles the JSON at completion). This does not conflict with the
+   creation-time ordering rule ("`project start` on main, THEN
+   worktree") — that rule governs task START, not later status moves
+   (KIT-0093 retro reconciliation).
 2. Create review starter: `.kit/context/<TASK-ID>-REVIEW-STARTER.md`
 3. Notify user with PR link and thread count
 

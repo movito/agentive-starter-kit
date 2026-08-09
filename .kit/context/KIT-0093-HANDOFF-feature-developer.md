@@ -5,7 +5,7 @@
 **Date**: 2026-08-08
 **From**: planner-f5
 **To**: feature-developer (f5 variant recommended — multi-PR, judgment-heavy removal decisions)
-**Task**: `.kit/tasks/3-in-progress/KIT-0093-door-package-install-mode.md`
+**Task**: `.kit/tasks/5-done/KIT-0093-door-package-install-mode.md`
 **Status**: Ready — ADR-0028 phase 2; the only active work item
 **Evaluation**: arch-review-fast APPROVED 2026-08-08, first pass —
 `.adversarial/logs/KIT-0093-door-package-install-mode--arch-review-fast.md`
@@ -114,7 +114,7 @@ decide, it must keep working or improve).
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0093-door-package-install-mode.md`
+**Task File**: `.kit/tasks/5-done/KIT-0093-door-package-install-mode.md`
 **Absorbed source records**: `6-canceled/KIT-0078-*`, `KIT-0087-*`, `KIT-0081-*`, `KIT-0082-*`
 **Evaluation Log**: `.adversarial/logs/KIT-0093-door-package-install-mode--arch-review-fast.md`
 **ADR**: `.kit/adr/KIT-ADR-0028-versioned-packages-not-file-copies.md` (Accepted; this is phase 2)
