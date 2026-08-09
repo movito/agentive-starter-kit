@@ -320,7 +320,7 @@ skip the git-state guardrail.
 # 1. From the planning repo, generate the input file.
 #    The helper reads the target repo from CLAUDE.md ## Target Repository
 #    and runs `git diff main...HEAD` there.
-./scripts/core/prepare-review-input.sh <TASK-ID>
+agentive review-input <TASK-ID>
 # → .adversarial/inputs/<TASK-ID>-code-review-input.md
 
 # 2. Load API keys and run the evaluators.
@@ -367,10 +367,11 @@ the diff hunks — ID2-0002 retro documented Claude Sonnet flagging
 `homeSponsorsQuery` as a non-existent export when it was defined just
 outside the reviewed range.
 
-> **Helper availability**: `prepare-review-input.sh` and its
-> `lib/target_repo.sh` dependency ship in this kit's `scripts/core/` as of
-> 0.7.0 (2026-06-13) and sync to every downstream via the `scripts_core`
-> tier — no per-project bootstrapping needed.
+> **Helper availability**: `agentive review-input` ships in the
+> `agentive-kit` package (`uv tool install agentive-kit`). It was
+> `scripts/core/prepare-review-input.sh` from 0.7.0 (2026-06-13)
+> through agentive-kit 0.3.0; the deprecation shim was removed at
+> 0.3.1 (KIT-0092, KIT-ADR-0028).
 
 ### Recommended evaluator trio
 
@@ -391,7 +392,7 @@ instead of floating tags. The v1 names are deprecated upstream.
 
 ### Single-repo fallback
 
-`prepare-review-input.sh` also works in single-repo projects: if
+`agentive review-input` also works in single-repo projects: if
 `CLAUDE.md` has no `## Target Repository` section, it reads the diff
 from the current working-directory repo. No flag change required.
 

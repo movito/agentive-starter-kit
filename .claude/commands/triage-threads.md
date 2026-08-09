@@ -19,7 +19,7 @@ Triage all unresolved review threads on the current PR (or PR `$ARGUMENTS` if sp
 
 ## Cross-repo mode (automatic)
 
-`gh-review-helper.sh` auto-detects cross-repo mode from the
+`agentive review-helper` auto-detects cross-repo mode from the
 `## Target Repository` section of `CLAUDE.md`. When configured, all
 `gh api` calls target that repo. No `cd ../target-repo` needed.
 
@@ -31,10 +31,10 @@ gh --repo owner/name pr view --json number,url,headRefOid ...
 ```
 
 Override either auto-detected repo by passing `--repo owner/name` to
-`gh-review-helper.sh` before the subcommand:
+`agentive review-helper` before the subcommand:
 
 ```bash
-./scripts/core/gh-review-helper.sh --repo owner/name threads PR_NUMBER
+agentive review-helper --repo owner/name threads PR_NUMBER
 ```
 
 ## Step 1: Gather thread data
@@ -49,17 +49,17 @@ gh pr view --json number,url,headRefOid --jq '"PR #\(.number) | URL: \(.url) | H
 
 ```bash
 # All review comments — use the PR number from above
-./scripts/core/gh-review-helper.sh comments PR_NUMBER
+agentive review-helper comments PR_NUMBER
 ```
 
 ```bash
 # Thread resolution status (resolved, comment-ID, author, GraphQL-ID, body excerpt)
-./scripts/core/gh-review-helper.sh threads PR_NUMBER
+agentive review-helper threads PR_NUMBER
 ```
 
 ```bash
 # Thread summary
-./scripts/core/gh-review-helper.sh summary PR_NUMBER
+agentive review-helper summary PR_NUMBER
 ```
 
 Replace `PR_NUMBER` with the actual number from the first command.
@@ -94,7 +94,7 @@ Ask for confirmation before proceeding with fixes.
 ### Reply to threads
 
 ```bash
-./scripts/core/gh-review-helper.sh reply PR_NUMBER COMMENT_ID 'Fixed in {sha}: {description}.'
+agentive review-helper reply PR_NUMBER COMMENT_ID 'Fixed in {sha}: {description}.'
 ```
 
 - `COMMENT_ID` is the numeric ID from the `threads` or `comments` output (e.g., `2861292837`)
@@ -103,7 +103,7 @@ Ask for confirmation before proceeding with fixes.
 ### Resolve threads
 
 ```bash
-./scripts/core/gh-review-helper.sh resolve PRRT_node_id
+agentive review-helper resolve PRRT_node_id
 ```
 
 After push: Run `/check-bots` to wait for re-scan, then re-run `/triage-threads` if new findings appear.

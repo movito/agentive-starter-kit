@@ -1,18 +1,18 @@
-"""Parity matrix for the gh review helper surface (KIT-0091 F2).
+"""Behavior matrix for the gh review helper surface (KIT-0091 F2).
 
 Runs the REAL helper against a stub ``gh`` on PATH serving canned
 POST-jq payloads (gh applies ``--jq`` internally, so the stub emits
-what gh would after filtering). Committed against the bash original
-BEFORE the Python port; the port must reproduce it — subcommand
-surface, validation refusals (exit 1), API-error reporting with the
-repo-mismatch HINT (exit 2), and output shapes.
+what gh would after filtering) — subcommand surface, validation
+refusals (exit 1), API-error reporting with the repo-mismatch HINT
+(exit 2), and output shapes.
 
-Implementation parameter (the test_preflight_check.py pattern):
-
-- ``bash``   — scripts/core/gh-review-helper.sh (post-shim: end-to-end
-               through the shim)
-- ``python`` — the agentive_kit review-helper entry, in-process
-               (skip-marked until the port commit enables it)
+Originally a bash/python PARITY matrix: these scenarios were committed
+against ``scripts/core/gh-review-helper.sh`` before the port, and the
+``python`` parameter had to reproduce them. KIT-0092 removed the bash
+shim at 0.3.1, so the parity half is gone and the surviving scenarios
+pin the PACKAGE (``agentive_kit.review_input.helper_main``) directly —
+the behavior they assert is unchanged, only the second implementation
+they were compared against is.
 """
 
 from __future__ import annotations
@@ -29,18 +29,19 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-_SCRIPT = REPO_ROOT / "scripts" / "core" / "gh-review-helper.sh"
 _TARGET_REPO_LIB = REPO_ROOT / "scripts" / "core" / "lib" / "target_repo.sh"
 _PKG_SRC = REPO_ROOT / "packages" / "agentive-kit" / "src"
 
-if not _SCRIPT.exists() or not _TARGET_REPO_LIB.exists():
-    # both are fixture inputs — a checkout missing either must skip
-    # cleanly, not error in fixture setup (CodeRabbit, PR #113)
+if not _TARGET_REPO_LIB.exists():
+    # a fixture input — a checkout missing it must skip cleanly, not
+    # error in fixture setup (CodeRabbit, PR #113)
     pytest.skip(
-        "gh-review-helper.sh or lib/target_repo.sh not present in this checkout",
+        "lib/target_repo.sh not present in this checkout",
         allow_module_level=True,
     )
 
+# the canned-payload `gh` stub below is itself a bash script, so bash
+# stays a real dependency of this harness after the shim's removal
 if shutil.which("bash") is None:
     pytest.skip("bash not available on PATH", allow_module_level=True)
 
@@ -84,37 +85,27 @@ STUB_GH = textwrap.dedent("""\
 
 
 class HelperProject:
-    def __init__(self, root: Path, stub_data: Path, env: dict[str, str], impl: str):
+    def __init__(self, root: Path, stub_data: Path, env: dict[str, str]):
         self.root = root
         self.stub_data = stub_data
         self.env = env
-        self.impl = impl
 
     def run(
         self, files: dict[str, str], *args: str, errs: dict[str, str] | None = None
     ) -> subprocess.CompletedProcess:
+        """Drive ``review_input.helper_main`` in-process.
+
+        Returns a CompletedProcess so the scenarios below keep the
+        assertion shape they were written with against the bash
+        original (returncode / stdout / stderr).
+        """
         for stale in self.stub_data.iterdir():
             stale.unlink()
         for key, content in files.items():
             (self.stub_data / f"{key}.out").write_text(content, encoding="utf-8")
         for key, content in (errs or {}).items():
             (self.stub_data / f"{key}.err").write_text(content, encoding="utf-8")
-        if self.impl == "python":
-            return self._run_python(list(args))
-        return subprocess.run(
-            [
-                "bash",
-                str(self.root / "scripts" / "core" / "gh-review-helper.sh"),
-                *args,
-            ],
-            cwd=self.root,
-            env=self.env,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-
-    def _run_python(self, argv: list[str]) -> subprocess.CompletedProcess:
+        argv = list(args)
         from agentive_kit import review_input as mod
 
         out, err = io.StringIO(), io.StringIO()
@@ -122,11 +113,10 @@ class HelperProject:
         try:
             os.chdir(self.root)
             with pytest.MonkeyPatch.context() as mp:
-                # scrub the ambient git environment so the in-process
-                # parameter tests the same conditions the bash
-                # subprocess gets — an inherited GIT_DIR or user git
-                # config could redirect root/repo resolution
-                # (CodeRabbit, PR #113; the sibling harness pattern)
+                # scrub the ambient git environment — an inherited
+                # GIT_DIR or user git config could redirect root/repo
+                # resolution (CodeRabbit, PR #113; the sibling harness
+                # pattern)
                 for key in list(os.environ):
                     if key.startswith("GIT_"):
                         mp.delenv(key, raising=False)
@@ -155,25 +145,15 @@ class HelperProject:
         )
 
 
-@pytest.fixture(params=["bash", "python"])
-def proj(request, tmp_path):
-    impl = request.param
-    if impl == "python":
-        pytest.importorskip(
-            "agentive_kit",
-            reason="agentive-kit package source present only in the kit repo",
-        )
-        import importlib.util
-
-        if importlib.util.find_spec("agentive_kit.review_input") is None:
-            pytest.skip(
-                "KIT-0091: the review-helper port is not yet present — "
-                "the parity matrix runs bash-only until the port lands"
-            )
+@pytest.fixture
+def proj(tmp_path):
+    pytest.importorskip(
+        "agentive_kit",
+        reason="agentive-kit package source present only in the kit repo",
+    )
     root = tmp_path / "proj"
     core = root / "scripts" / "core"
     (core / "lib").mkdir(parents=True)
-    shutil.copy(_SCRIPT, core / "gh-review-helper.sh")
     shutil.copy(_TARGET_REPO_LIB, core / "lib" / "target_repo.sh")
     (root / ".kit").mkdir()
     (root / "CLAUDE.md").write_text("# stub project\n", encoding="utf-8")
@@ -194,7 +174,7 @@ def proj(request, tmp_path):
         env["PYTHONPATH"] = (
             f"{_PKG_SRC}{os.pathsep}{inherited}" if inherited else str(_PKG_SRC)
         )
-    return HelperProject(root, stub_data, env, impl)
+    return HelperProject(root, stub_data, env)
 
 
 # ── Help and dispatch ────────────────────────────────────────────────────

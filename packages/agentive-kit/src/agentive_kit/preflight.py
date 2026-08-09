@@ -1,11 +1,12 @@
 """The 7-gate preflight completion check (KIT-0091 F1/F2).
 
-Port of ``scripts/core/preflight-check.sh`` v1.3.0. This is GATE code:
-it decides when a task may request human review, and a parity bug here
-weakens the workflow's trust silently — so the port is bound to the
-committed behavior matrix in ``tests/test_preflight_check.py``, which
-drives the bash original and this module through identical stub-``gh``
-scenarios. Behavior is the contract; the code shape below is free
+Port of ``scripts/core/preflight-check.sh`` v1.3.0 (that shim was
+removed at 0.3.1 — KIT-0092). This is GATE code: it decides when a task
+may request human review, and a bug here weakens the workflow's trust
+silently — so the module is bound to the committed behavior matrix in
+``tests/test_preflight_check.py``, which drove the bash original and
+this module through identical stub-``gh`` scenarios and now pins this
+module alone. Behavior is the contract; the code shape below is free
 (task spec F2).
 
 Output contract (machine-parsed by /preflight, babysit-pr, and the
@@ -40,7 +41,7 @@ KIT-0091 PR body; everything else is matrix-pinned):
   ``find | head -1`` was filesystem-order arbitrary; Gate 7 already
   sorted and keeps doing so.
 - The CI poll delay honors ``PREFLIGHT_CI_POLL_DELAY`` (seconds) — the
-  test seam analogous to the bash version's PATH-stubbable ``sleep``
+  test seam that replaced the bash version's PATH-stubbable ``sleep``
   binary.
 - The local ``jq`` binary dependency is gone: run-list filtering and
   thread counts parse natively. The ``--jq`` filters passed TO ``gh``
@@ -64,7 +65,7 @@ from agentive_kit import ghio, gitio, markers, target_repo
 from agentive_kit.models import GateResult
 from agentive_kit.root import RootNotFoundError, find_project_root
 
-# Seam for the parity harness (mirrors the bash script's stubbable
+# Seam for the test harness (it replaced the bash script's stubbable
 # `sleep` binary): tests patch this to keep PENDING re-poll scenarios
 # instant.
 _sleep = time.sleep
@@ -94,11 +95,12 @@ BB_CHECK_RUNS_JQ = (
     '.check_runs[] | select(.app.slug == "cursor") | "\\(.status):\\(.conclusion)"'
 )
 
-# Help text byte-identical to the bash original's --help output (the
-# adjacent-literal splits below only dodge the line-length lint).
+# Help text inherited from the bash original's --help output, with the
+# invocation line retargeted to the CLI now that the shim is gone
+# (KIT-0092). The adjacent-literal splits further below only dodge the
+# line-length lint.
 _USAGE_HEAD = (
-    "Usage: ./scripts/core/preflight-check.sh [--pr PR_NUMBER] "
-    "[--task TASK_ID] [--repo owner/name]"
+    "Usage: agentive preflight [--pr PR_NUMBER] [--task TASK_ID] [--repo owner/name]"
 )
 
 _HELP = (
@@ -179,11 +181,11 @@ def _parse_args(argv: list[str]) -> _Args:
             i += 1
         elif arg.startswith("-"):
             print(f"Unknown option: {arg}")
-            print("Run: ./scripts/core/preflight-check.sh --help")
+            print("Run: agentive preflight --help")
             sys.exit(1)
         else:
             print(f"Unknown argument: {arg}")
-            print("Run: ./scripts/core/preflight-check.sh --help")
+            print("Run: agentive preflight --help")
             sys.exit(1)
     return args
 

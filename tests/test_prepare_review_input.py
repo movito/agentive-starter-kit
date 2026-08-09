@@ -1,18 +1,17 @@
-"""Parity matrix for the review-input assembly surface (KIT-0091 F2).
+"""Behavior matrix for the review-input assembly surface (KIT-0091 F2).
 
 Runs the REAL implementation against throwaway git repos: scenarios per
 gate — argument validation, diff/full formats, the ID2-0047 lockfile
 skip, binary/empty/deleted file handling, fence integrity, and the
-ID2-0014 cross-repo routing. Committed against the bash original
-BEFORE the Python port exists; the port must reproduce it (parity
-binds behavior, not code shape).
+ID2-0014 cross-repo routing.
 
-Implementation parameter (the test_preflight_check.py pattern):
-
-- ``bash``   — scripts/core/prepare-review-input.sh (after the KIT-0091
-               shim lands, this drives the shim end-to-end)
-- ``python`` — agentive_kit.review_input in-process (skip-marked until
-               the port commit enables it)
+Originally a bash/python PARITY matrix: these scenarios were committed
+against ``scripts/core/prepare-review-input.sh`` before the port, and
+the ``python`` parameter had to reproduce them. KIT-0092 removed the
+bash shim at 0.3.1, so the parity half is gone and the surviving
+scenarios pin the PACKAGE (``agentive_kit.review_input``) directly —
+the behavior they assert is unchanged, only the second implementation
+they were compared against is.
 """
 
 from __future__ import annotations
@@ -27,21 +26,19 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-_SCRIPT = REPO_ROOT / "scripts" / "core" / "prepare-review-input.sh"
 _TARGET_REPO_LIB = REPO_ROOT / "scripts" / "core" / "lib" / "target_repo.sh"
 _PKG_SRC = REPO_ROOT / "packages" / "agentive-kit" / "src"
 
-if not _SCRIPT.exists() or not _TARGET_REPO_LIB.exists():
-    # both are fixture inputs — a checkout missing either must skip
-    # cleanly, not error in fixture setup (CodeRabbit, PR #113)
+if not _TARGET_REPO_LIB.exists():
+    # a fixture input — a checkout missing it must skip cleanly, not
+    # error in fixture setup (CodeRabbit, PR #113)
     pytest.skip(
-        "prepare-review-input.sh or lib/target_repo.sh not present in this checkout",
+        "lib/target_repo.sh not present in this checkout",
         allow_module_level=True,
     )
 
-for tool in ("bash", "git"):
-    if shutil.which(tool) is None:
-        pytest.skip(f"{tool} not available on PATH", allow_module_level=True)
+if shutil.which("git") is None:
+    pytest.skip("git not available on PATH", allow_module_level=True)
 
 TASK = "KIT-7777"
 BASELINE_CLAUDE_MD = "# stub project\n"
@@ -60,12 +57,11 @@ def _clean_env() -> dict[str, str]:
 
 
 class ReviewInputProject:
-    """Temp project skeleton around the real prepare-review-input.sh."""
+    """Temp project skeleton around ``agentive_kit.review_input``."""
 
-    def __init__(self, root: Path, env: dict[str, str], impl: str):
+    def __init__(self, root: Path, env: dict[str, str]):
         self.root = root
         self.env = env
-        self.impl = impl
 
     def git(self, *args: str, cwd: Path | None = None) -> None:
         subprocess.run(
@@ -82,22 +78,13 @@ class ReviewInputProject:
         return self.root / ".adversarial" / "inputs" / f"{TASK}-code-review-input.md"
 
     def run(self, *args: str) -> subprocess.CompletedProcess:
-        if self.impl == "python":
-            return self._run_python(list(args))
-        return subprocess.run(
-            [
-                "bash",
-                str(self.root / "scripts" / "core" / "prepare-review-input.sh"),
-                *args,
-            ],
-            cwd=self.root,
-            env=self.env,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
+        """Drive ``agentive_kit.review_input`` in-process.
 
-    def _run_python(self, argv: list[str]) -> subprocess.CompletedProcess:
+        Returns a CompletedProcess so the scenarios below keep the
+        assertion shape they were written with against the bash
+        original (returncode / stdout / stderr).
+        """
+        argv = list(args)
         from agentive_kit import review_input as mod
 
         out, err = io.StringIO(), io.StringIO()
@@ -135,31 +122,21 @@ class ReviewInputProject:
         )
 
 
-@pytest.fixture(params=["bash", "python"])
-def proj(request, tmp_path):
-    impl = request.param
-    if impl == "python":
-        pytest.importorskip(
-            "agentive_kit",
-            reason="agentive-kit package source present only in the kit repo",
-        )
-        import importlib.util
-
-        if importlib.util.find_spec("agentive_kit.review_input") is None:
-            pytest.skip(
-                "KIT-0091: agentive_kit.review_input not yet present — "
-                "the parity matrix runs bash-only until the port lands"
-            )
+@pytest.fixture
+def proj(tmp_path):
+    pytest.importorskip(
+        "agentive_kit",
+        reason="agentive-kit package source present only in the kit repo",
+    )
     root = tmp_path / "proj"
     core = root / "scripts" / "core"
     (core / "lib").mkdir(parents=True)
-    shutil.copy(_SCRIPT, core / "prepare-review-input.sh")
     shutil.copy(_TARGET_REPO_LIB, core / "lib" / "target_repo.sh")
     (root / ".kit").mkdir()
     (root / "CLAUDE.md").write_text(BASELINE_CLAUDE_MD, encoding="utf-8")
 
     env = _clean_env()
-    p = ReviewInputProject(root, env, impl)
+    p = ReviewInputProject(root, env)
     p.git("init", "-q", "-b", "main")
     p.git("config", "user.email", "t@t")
     p.git("config", "user.name", "t")

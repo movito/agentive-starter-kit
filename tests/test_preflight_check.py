@@ -6,21 +6,18 @@ files, while a throwaway git repo provides real branch/SHA state. This
 turns the KIT-0034 manual stub-`gh` verification matrix (8 states) into
 CI regression coverage.
 
-KIT-0091 F2 — this module IS the preflight parity record. The harness is
-parameterized over implementation:
+KIT-0091 F2 — this module was the preflight PARITY record: the harness
+ran every scenario twice, once against ``scripts/core/preflight-check.sh``
+and once against ``agentive_kit.preflight``, asserting identical
+verdicts so the port was bound to the bash original's behavior.
+KIT-0092 removed that shim at 0.3.1, so the bash half is gone and the
+surviving scenarios pin the PACKAGE directly — the verdicts they
+assert are unchanged, only the second implementation they were
+compared against is.
 
-- ``bash``   — scripts/core/preflight-check.sh (the original surface;
-               after the KIT-0091 shim lands this parameter exercises
-               the shim end-to-end, proving the script contract —
-               GATE lines, exit 0/1/2 — survives the delegation)
-- ``python`` — agentive_kit.preflight, run in-process (enabled by the
-               commit that adds the module; skip-marked before that)
-
-Every scenario asserts identical verdicts for both implementations —
-the matrix binds BEHAVIOR, not code shape (task spec F2). Gate 1's
-at-cap semantics (raw run count at the query cap reports PENDING,
-never PASS) are pinned per REVIEW-INSIGHTS "Preflight Gate 1 at-cap
-semantics (since PR #75)" (KIT-0043).
+Gate 1's at-cap semantics (raw run count at the query cap reports
+PENDING, never PASS) are pinned per REVIEW-INSIGHTS "Preflight Gate 1
+at-cap semantics (since PR #75)" (KIT-0043).
 
 API-shape facts the canned payloads model (verified in KIT-0034):
 - CodeRabbit reports via the legacy commit-status API (Gate 2 fallback
@@ -52,21 +49,22 @@ from unittest import mock
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-_SCRIPT = REPO_ROOT / "scripts" / "core" / "preflight-check.sh"
 _TARGET_REPO_LIB = REPO_ROOT / "scripts" / "core" / "lib" / "target_repo.sh"
 # kit_markers ships to consumers via bootstrap Step 1.5, but an older
 # consumer checkout may lack it — the declaration tests skip then
 # (the test_doctor.py precedent).
 _KIT_MARKERS_SRC = REPO_ROOT / "scripts" / "local" / "kit_markers.py"
 
-if not _SCRIPT.exists() or not _TARGET_REPO_LIB.exists():
-    # both are fixture inputs — a checkout missing either must skip
-    # cleanly, not error in fixture setup (CodeRabbit, PR #113)
+if not _TARGET_REPO_LIB.exists():
+    # a fixture input — a checkout missing it must skip cleanly, not
+    # error in fixture setup (CodeRabbit, PR #113)
     pytest.skip(
-        "preflight-check.sh or lib/target_repo.sh not present in this checkout",
+        "lib/target_repo.sh not present in this checkout",
         allow_module_level=True,
     )
 
+# the canned-payload `gh` stub below is itself a bash script, so bash
+# stays a real dependency of this harness after the shim's removal
 for tool in ("bash", "git", "jq"):
     if shutil.which(tool) is None:
         pytest.skip(f"{tool} not available on PATH", allow_module_level=True)
@@ -118,9 +116,11 @@ STUB_GH = textwrap.dedent("""\
     exit 1
     """)
 
-# `sleep` is stubbed so the CI poll loop's retry delays are instant;
-# `dispatch` is stubbed so the fire-and-forget progress event can never
-# reach a real event log from a test run (N1).
+# `dispatch` is stubbed so the fire-and-forget progress event
+# (preflight._emit_dispatch_event, which does shutil.which("dispatch")
+# and shells out) can never reach a real event log from a test run
+# (N1) — the module runs in-process here, so a `dispatch` binary on the
+# developer's own PATH would otherwise be found and invoked for real.
 STUB_NOOP = "#!/bin/bash\nexit 0\n"
 
 
@@ -139,12 +139,10 @@ def _clean_env(extra: dict[str, str]) -> dict[str, str]:
 
 
 class PreflightProject:
-    """Temp project skeleton around the real preflight implementation.
+    """Temp project skeleton around ``agentive_kit.preflight``.
 
-    ``impl`` selects which implementation ``run()`` drives (KIT-0091 F2):
-    the bash script as a subprocess, or ``agentive_kit.preflight``
-    in-process (fast — the CI-poll sleep seam is patched out, and
-    coverage attributes to the module).
+    ``run()`` drives the module in-process (fast — the CI-poll sleep
+    seam is patched out, and coverage attributes to the module).
     """
 
     def __init__(
@@ -153,17 +151,22 @@ class PreflightProject:
         stub_data: Path,
         env: dict[str, str],
         head: str,
-        impl: str = "bash",
     ):
         self.root = root
         self.stub_data = stub_data
         self.env = env
         self.head = head
-        self.impl = impl
 
     def run(
         self, files: dict[str, str], extra_args: list[str] | None = None
     ) -> subprocess.CompletedProcess:
+        """Drive ``agentive_kit.preflight`` in-process under the stub env.
+
+        The module's ``_sleep`` seam is patched so PENDING re-poll
+        scenarios stay instant. Returns a CompletedProcess so the
+        scenarios below keep the assertion shape they were written with
+        against the bash original (returncode / stdout / stderr).
+        """
         # The project fixture is module-scoped (the git repo and .kit
         # artifacts are read-only during a run); the canned payloads are
         # per-scenario, so wipe leftovers from the previous test first.
@@ -172,28 +175,6 @@ class PreflightProject:
         for key, content in files.items():
             (self.stub_data / f"{key}.out").write_text(content, encoding="utf-8")
         argv = ["--pr", "42", *(extra_args or [])]
-        if self.impl == "python":
-            return self._run_python(argv)
-        return subprocess.run(
-            [
-                "bash",
-                str(self.root / "scripts" / "core" / "preflight-check.sh"),
-                *argv,
-            ],
-            cwd=self.root,
-            env=self.env,
-            capture_output=True,
-            text=True,
-        )
-
-    def _run_python(self, argv: list[str]) -> subprocess.CompletedProcess:
-        """Drive agentive_kit.preflight in-process under the stub env.
-
-        Same PATH stubs, same canned payloads, same working directory —
-        only the transport differs. The module's ``_sleep`` seam is
-        patched so PENDING re-poll scenarios stay instant (the bash side
-        gets the same treatment via the stubbed ``sleep`` binary).
-        """
         from agentive_kit import preflight as preflight_mod
 
         out, err = io.StringIO(), io.StringIO()
@@ -246,29 +227,17 @@ def _gates(output: str) -> dict[int, tuple[str, str]]:
 # RESTORE it (not unlink) so later scenarios keep a discoverable root.
 BASELINE_CLAUDE_MD = "# stub project\n"
 
-_PKG_SRC = REPO_ROOT / "packages" / "agentive-kit" / "src"
 
-
-@pytest.fixture(scope="module", params=["bash", "python"])
-def proj(request, tmp_path_factory):
-    impl = request.param
-    if impl == "python":
-        pytest.importorskip(
-            "agentive_kit",
-            reason="agentive-kit package source present only in the kit repo",
-        )
-        import importlib.util
-
-        if importlib.util.find_spec("agentive_kit.preflight") is None:
-            pytest.skip(
-                "KIT-0091: agentive_kit.preflight not yet present — "
-                "the parity matrix runs bash-only until the port lands"
-            )
+@pytest.fixture(scope="module")
+def proj(tmp_path_factory):
+    pytest.importorskip(
+        "agentive_kit",
+        reason="agentive-kit package source present only in the kit repo",
+    )
     tmp_path = tmp_path_factory.mktemp("preflight")
     root = tmp_path / "proj"
     core = root / "scripts" / "core"
     (core / "lib").mkdir(parents=True)
-    shutil.copy(_SCRIPT, core / "preflight-check.sh")
     shutil.copy(_TARGET_REPO_LIB, core / "lib" / "target_repo.sh")
     (root / "CLAUDE.md").write_text(BASELINE_CLAUDE_MD, encoding="utf-8")
 
@@ -321,7 +290,7 @@ def proj(request, tmp_path_factory):
 
     bin_dir = tmp_path / "stub-bin"
     bin_dir.mkdir()
-    for name, body in (("gh", STUB_GH), ("sleep", STUB_NOOP), ("dispatch", STUB_NOOP)):
+    for name, body in (("gh", STUB_GH), ("dispatch", STUB_NOOP)):
         stub = bin_dir / name
         stub.write_text(body, encoding="utf-8")
         stub.chmod(stub.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
@@ -330,22 +299,12 @@ def proj(request, tmp_path_factory):
     stub_data.mkdir()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["PREFLIGHT_GH_STUB_DIR"] = str(stub_data)
-    # The python implementation's poll-delay seam (the analogue of the
-    # stubbed `sleep` binary the bash side uses): PENDING re-poll
-    # scenarios must stay instant for BOTH implementations, including
-    # the post-shim state where the bash script delegates to python in
-    # a subprocess that a monkeypatch cannot reach.
+    # The module's env-var poll-delay seam. Redundant with the _sleep
+    # monkeypatch in run(), kept because it pins the documented seam
+    # (preflight.py: "PREFLIGHT_CI_POLL_DELAY is the test seam").
     env["PREFLIGHT_CI_POLL_DELAY"] = "0"
-    # Once the bash body becomes a shim over the package (KIT-0091 F3),
-    # the subprocess needs agentive_kit importable regardless of which
-    # python3 PATH resolves to — point PYTHONPATH at the in-repo source.
-    if _PKG_SRC.is_dir():
-        inherited = env.get("PYTHONPATH", "")
-        env["PYTHONPATH"] = (
-            f"{_PKG_SRC}{os.pathsep}{inherited}" if inherited else str(_PKG_SRC)
-        )
 
-    return PreflightProject(root, stub_data, env, head, impl=impl)
+    return PreflightProject(root, stub_data, env, head)
 
 
 # ── Canned payload builders ──────────────────────────────────────────────

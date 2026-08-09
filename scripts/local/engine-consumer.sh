@@ -307,11 +307,8 @@ PLANNING_CORE=(
     __init__.py
     check-bots.sh
     check_cross_repo_config.py
-    gh-review-helper.sh
     lib/target_repo.sh
     logging_config.py
-    preflight-check.sh
-    prepare-review-input.sh
     project
     sync_from_manifest.py
     validate_task_status.py
@@ -442,11 +439,8 @@ PRECOMMIT
       "core/doctor.d/70-core-bare.sh",
       "core/doctor.d/80-bot-presence.sh",
       "core/doctor.d/90-config-home.sh",
-      "core/gh-review-helper.sh",
       "core/lib/target_repo.sh",
       "core/logging_config.py",
-      "core/preflight-check.sh",
-      "core/prepare-review-input.sh",
       "core/project",
       "core/sync_from_manifest.py",
       "core/validate_task_status.py",
@@ -553,10 +547,8 @@ if [ ! -f "$TARGET/scripts/.core-manifest.json" ]; then
       "core/__init__.py",
       "core/check-bots.sh",
       "core/ci-check.sh",
-      "core/gh-review-helper.sh",
       "core/logging_config.py",
       "core/pattern_lint.py",
-      "core/preflight-check.sh",
       "core/project",
       "core/sync_from_manifest.py",
       "core/validate_task_status.py",

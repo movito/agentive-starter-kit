@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **The three one-release deprecation shims — KIT-ADR-0028 phase 1b**
+  (KIT-0092, agentive-kit 0.3.1). Their bodies became thin delegators
+  over the package at 0.2.0 with a one-release promise; that release
+  has shipped, so the files are gone:
+
+  | Removed | Replacement |
+  |---|---|
+  | `scripts/core/preflight-check.sh` | `agentive preflight` |
+  | `scripts/core/prepare-review-input.sh` | `agentive review-input` |
+  | `scripts/core/gh-review-helper.sh` | `agentive review-helper` |
+
+  Same flags, same output contracts, same exit codes — the shims only
+  forwarded. Every kit-shipped caller (`.claude/` commands and skills,
+  `docs/CROSS-REPO-PATTERN.md`) now invokes the CLI, and the package's
+  own `--help` text no longer points at the deleted paths. The three
+  entries are dropped from `scripts/.core-manifest.json` and from both
+  ship lists in `engine-consumer.sh`, so a repo bootstrapped or synced
+  at 0.3.1 neither receives nor chases them. **Downstream projects
+  still calling the `.sh` paths must switch to the CLI**
+  (`uv tool install agentive-kit`).
+
+  `scripts/core/project` and `scripts/local/new-worktree.sh` are
+  untouched — their own deprecation clocks started later and belong to
+  phase 3. The parity test matrices that ran every scenario twice
+  (bash + python) lose their bash half and now pin the package
+  directly: 188 → 94 cases across
+  `tests/test_preflight_check.py`, `tests/test_prepare_review_input.py`
+  and `tests/test_gh_review_helper.py`, with no scenario coverage lost.
+
 ### Changed
 
 - **The door switches to package-install mode — KIT-ADR-0028 phase 2**

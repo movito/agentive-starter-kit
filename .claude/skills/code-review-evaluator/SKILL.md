@@ -87,7 +87,7 @@ instead. They accept an input file and skip the guardrail.
 To produce the input, run the helper from the planning repo:
 
 ```bash
-./scripts/core/prepare-review-input.sh <TASK-ID>
+agentive review-input <TASK-ID>
 ```
 
 It auto-detects the target repo from `CLAUDE.md` (`## Target Repository`
@@ -107,7 +107,7 @@ cross-repo evaluator recipe.
 ### Cross-repo / automated path (preferred)
 
 ```bash
-./scripts/core/prepare-review-input.sh <TASK-ID>
+agentive review-input <TASK-ID>
 # Optional flags: --base <branch> (default main), --format diff|full (default full)
 ```
 

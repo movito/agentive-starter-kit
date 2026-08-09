@@ -144,14 +144,14 @@ Each round follows the same loop:
 
 ## Reply Format
 
-Use `./scripts/core/gh-review-helper.sh` for all reply and resolve operations.
+Use `agentive review-helper` for all reply and resolve operations.
 The wrapper validates inputs and bypasses Claude Code's permission heuristic
 on complex `gh api` arguments.
 
 ### Reply to a thread
 
 ```bash
-./scripts/core/gh-review-helper.sh reply {pr_number} {comment_id} \
+agentive review-helper reply {pr_number} {comment_id} \
   'Fixed in {commit_sha}: {1-2 sentence description of what changed and where}.'
 ```
 
@@ -163,7 +163,7 @@ on complex `gh api` arguments.
 Same command, different body:
 
 ```bash
-./scripts/core/gh-review-helper.sh reply {pr_number} {comment_id} \
+agentive review-helper reply {pr_number} {comment_id} \
   'Acknowledged, but won'\''t fix: {clear technical justification}.'
 ```
 
@@ -179,23 +179,23 @@ Same command, different body:
 After posting a reply, resolve the thread using its GraphQL node ID:
 
 ```bash
-./scripts/core/gh-review-helper.sh resolve PRRT_abc123
+agentive review-helper resolve PRRT_abc123
 ```
 
 To resolve multiple threads, issue separate calls:
 
 ```bash
-./scripts/core/gh-review-helper.sh resolve PRRT_abc123
+agentive review-helper resolve PRRT_abc123
 ```
 
 ```bash
-./scripts/core/gh-review-helper.sh resolve PRRT_def456
+agentive review-helper resolve PRRT_def456
 ```
 
 ## Verifying Zero Unresolved
 
 ```bash
-./scripts/core/gh-review-helper.sh summary {pr_number}
+agentive review-helper summary {pr_number}
 ```
 
 Output: `Total:N Resolved:N Unresolved:N`
@@ -205,7 +205,7 @@ Target: `Unresolved:0` before proceeding.
 ## Fetching Thread Status
 
 ```bash
-./scripts/core/gh-review-helper.sh threads {pr_number}
+agentive review-helper threads {pr_number}
 ```
 
 Tab-separated output: `isResolved\tdatabaseId\tauthor\tthreadNodeId\tbody_excerpt`
