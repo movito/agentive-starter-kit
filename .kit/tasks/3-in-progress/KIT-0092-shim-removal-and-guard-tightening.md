@@ -1,6 +1,6 @@
 # KIT-0092: 0.3.x shim removal + preset-guard retightening
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high (PROMOTED 2026-08-08, KIT-0093 retro #2: the "one release" promise window is open — schedule as agentive-kit **0.3.1** promptly)
 
 > **Scope update (2026-08-08)**: **Part B is DONE** — shipped inside

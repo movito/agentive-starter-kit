@@ -4,7 +4,7 @@
     "current_task": "KIT-0092",
     "task_started": null,
     "brief_note": "2026-08-08: PHASE 2 COMPLETE \u2014 KIT-0093 done (PRs #115/#116/#117 merged, agentive-kit 0.3.0 on PyPI; new projects born packaged; scaffold ~8x faster as side effect; 26 threads, 0 regressions). Retro processed: patterns.yml bash-3.2 heredoc-apostrophe rule; feature-developer Phase 9 reconciled with worktree ordering rule (both variants); branch-verify-before-every-fix-commit codified in STACKED-PR-WORKFLOW; insights extracted (strict-xfail red-first, contract-strings-in-tests, serial prose rounds). Worktree + 3 branches removed. QUEUE: KIT-0092 PROMOTED to todo (Part B done in #116; Parts A+C ship as 0.3.1 \u2014 promise window open, next assignment) -> then PHASE 3 spec (consumer migration; anchors from retro #3: engine-consumer.sh --packaged seam, packaged region bodies, agentive_kit.doctor._parse_install_record; first real migration target = ev-fast-charging-loads-planning). Backlog = 4: 0074 (candidate 0.3.1 passenger), 0072, 0075 (check KIT-0093's launcher verdict in its decision table before promoting), 0085. KIT-ADR-0029 (task-as-folder) parked with named trigger.",
-    "details_link": ".kit/tasks/2-todo/KIT-0092-shim-removal-and-guard-tightening.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0092-shim-removal-and-guard-tightening.md",
     "handoff_file": null
   },
   "feature-developer": {
@@ -12,7 +12,7 @@
     "current_task": null,
     "task_started": null,
     "brief_note": "No active assignment. Next: KIT-0092 (0.3.1 \u2014 shim removal Parts A+C; Part B already shipped in #116) awaits operator go for handoff + starter.",
-    "details_link": ".kit/tasks/2-todo/KIT-0092-shim-removal-and-guard-tightening.md",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0092-shim-removal-and-guard-tightening.md",
     "handoff_file": null
   },
   "code-reviewer": {
