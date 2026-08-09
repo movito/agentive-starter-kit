@@ -117,6 +117,8 @@ def _validate_components(components: list) -> None:
         if source is not None:
             if not isinstance(source, str):
                 problems.append(f"{label}: non-string source")
+            # `in` on the parts tuple: membership check for a `..` path
+            # segment, not substring matching (DK rule exception).
             elif (
                 PurePosixPath(source).is_absolute()
                 or ".." in PurePosixPath(source).parts

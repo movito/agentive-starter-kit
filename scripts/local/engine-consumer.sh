@@ -484,7 +484,11 @@ mkdir -p "$TARGET/scripts/core"
 mkdir -p "$TARGET/scripts/optional"
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/scripts/optional/" "$TARGET/scripts/optional/"
 
-# .github/ — CI workflows
+# .github/ — CI workflows. plugin-drift.yml is kit-internal (its script
+# lives in the unsynced scripts/local/); the rm -f also sweeps stale
+# copies from a pre-exclusion bootstrap — --ignore-existing would
+# otherwise leave them behind in existing consumers.
+rm -f "$TARGET/.github/workflows/plugin-drift.yml"
 "${RSYNC_BASE[@]}" \
     --exclude='sync-core-scripts.yml' --exclude='sync-to-linear.yml' \
     --exclude='plugin-drift.yml' \
