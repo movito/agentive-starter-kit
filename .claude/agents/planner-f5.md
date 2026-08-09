@@ -239,6 +239,13 @@ Create `.kit/context/<TASK-ID>-HANDOFF-<agent-type>.md` containing:
   (KIT-0080: the KIT-0083 recipe was correct on the happy path and
   confidently wrong on a non-repo — "live-verified" covered only the
   working input).
+- **Handoff tables: every row is VERIFIED (cite the grep/command
+  behind it) or labeled PREDICTED** — a table's specificity reads as
+  surveyed fact even when it is a forecast. KIT-0092's Part C table
+  was wrong on 2 of 4 rows (~4,650 lines never in scope) because the
+  planner tabulated predictions in the same voice as measurements.
+  Same family as the environmental-claims rule; tables are the
+  higher-risk surface because formatting itself asserts confidence.
 
 Update `.kit/context/agent-handoffs.json` with the new assignment:
 

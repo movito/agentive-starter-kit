@@ -27,6 +27,11 @@ from review.
   (MD029 ordered-list style, MD040 fenced-code language, etc.);
   deliberately disable rules we don't want (line-length is almost
   certainly off — this repo's prose uses long tables and links).
+  **MD029 decision (KIT-0092 retro #6)**: configure `ol-prefix` to a
+  style permitting sequential numbering, or document MD029-on-
+  adjacent-hunk-context-lines as a known false-positive class — the
+  #118 thread was CodeRabbit linting numbering that only looked wrong
+  inside the diff hunk. Decide once here, not per-thread.
   Scope: live markdown only — exclude `.kit/tasks/6-canceled/`,
   `docs/archive/`, `.kit/context/retros/`, `reviews/` (historical
   records stay as written; the .coderabbitignore exclusions are the

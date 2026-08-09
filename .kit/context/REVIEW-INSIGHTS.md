@@ -238,6 +238,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Author printed contract strings in the TEST first**: the door's verify-or-instruct lines were written in the acceptance test (PR 1), implemented to spec (PR 2), then pinned hermetically under a restricted PATH (PR 3) — zero drift at any point. When a tool's output IS the contract, the test is where the words get authored. (KIT-0093)
 - **Bot rounds on instruction PROSE converge serially, not in batches**: five rounds on one rename block, each finding existing only after the previous fix (rename → collision → probe-failure → gating → derivation). This is not a batching failure to correct — it is the shape of reviewing prose whose meaning changes with each edit; budget rounds accordingly. (KIT-0093)
 
+- **A table's formatting asserts confidence its rows may not have**: the KIT-0092 handoff tabulated Part C predictions in the same voice as measurements — 2 of 4 rows wrong, ~4,650 lines never in scope. Handoff tables now carry the grep behind each row or a PREDICTED label (planner Phase 4). The reader-side corollary: re-grep past any list a handoff gives you — the KIT-0092 session's sweep beyond the 8-file list caught the defect that mattered (the package's own --help printing paths it was about to delete). (KIT-0092)
+- **Evaluator input shape must match change shape** — third recorded case: `--format full` on a strings-only diff made two of three evaluators review whole modules and return findings about untouched code. Logic → full; strings/docs → diff. If a round is mostly about code the diff never touched, the input format was wrong — re-run before disposing. Now in the evaluator skill. (KIT-0092, after KIT-0069/KIT-0073)
+- **Before deleting "language-X-only" harness plumbing, check who else consumes it**: the dispatch stub looked bash-only next to the sleep stub; deleting it would have let a developer's REAL dispatch binary fire live events from in-process test runs. A stub's purpose is isolation, not language parity — its removal test is "what fires without it", not "what language remains". (KIT-0092)
+
 ---
 
 ## ADR Candidates

@@ -115,6 +115,22 @@ This is the canonical path. It handles the diff extraction, the header
 block, and the full-file appendix in one step, and it works in both
 cross-repo and single-repo modes.
 
+**Choose `--format` by the SHAPE of the change, not by default**
+(KIT-0092 — third recorded case of input format distorting evaluator
+output, after the KIT-0069/KIT-0073 prose-sweep shutouts):
+
+- **Logic changes** (behavior, control flow, new code) → `full`: the
+  evaluators need surrounding context to judge correctness.
+- **Strings/docs-only changes** (renames, printed text, doc sweeps,
+  deletions) → `diff`: with `full`, evaluators review the WHOLE module
+  and return findings about unchanged code — noise that costs a
+  disposition round each. On KIT-0092, `--format full` made two of
+  three evaluators review entire modules for a strings-only diff.
+
+The pattern: trio value depends on input shape matching change shape.
+If a round returns mostly findings about code the diff never touched,
+the input format was wrong — re-run with `diff` before disposing.
+
 ### Manual path (special cases only)
 
 If the helper can't infer the right diff (e.g. reviewing a stacked PR or

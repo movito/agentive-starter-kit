@@ -82,7 +82,7 @@ repos:
     hooks:
       - id: pytest-fast
         name: Run fast tests (pre-commit guard)
-        entry: bash -c 'if [ "$SKIP_TESTS" = "1" ]; then echo "Skipping tests (SKIP_TESTS=1)"; exit 0; fi; if [ -d "tests" ] && [ -n "$(find tests -name "test_*.py" 2>/dev/null)" ]; then pytest tests/ -v --tb=short -x -m "not slow" --maxfail=3 || (echo ""; echo "Fast tests failed! Fix before committing or use:"; echo "  SKIP_TESTS=1 git commit -m \"WIP\""; exit 1); else echo "No tests found, skipping"; fi'
+        entry: bash -c 'if [ "$SKIP_TESTS" = "1" ]; then echo "Skipping tests (SKIP_TESTS=1)"; exit 0; fi; PYTEST=pytest; [ -x ".venv/bin/pytest" ] && PYTEST=".venv/bin/pytest"; if ! command -v "$PYTEST" >/dev/null 2>&1; then echo "pytest NOT FOUND (no .venv/bin/pytest, none on PATH) — this is an ENVIRONMENT problem, not a test failure."; echo "Fix the environment, never SKIP_TESTS for this — run ./scripts/core/project setup (or prefix PATH=\"$PWD/.venv/bin:$PATH\" on the commit)"; exit 1; fi; if [ -d "tests" ] && [ -n "$(find tests -name "test_*.py" 2>/dev/null)" ]; then "$PYTEST" tests/ -v --tb=short -x -m "not slow" --maxfail=3 || (echo ""; echo "Fast tests failed! Fix before committing or use:"; echo "  SKIP_TESTS=1 git commit -m \"WIP\""; exit 1); else echo "No tests found, skipping"; fi'
         language: system
         pass_filenames: false
         always_run: true
