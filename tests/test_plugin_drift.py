@@ -147,9 +147,10 @@ class TestDrift:
         assert _run(kit, roster, tmp_path) == cpd.EXIT_DRIFT
         assert "unrostered component" in capsys.readouterr().out
 
-    def test_source_escaping_kit_root_fails(self, kit, tmp_path, capsys):
-        """Roster is remote input — a traversal source must be refused,
-        never hashed (evaluator round 1, accepted)."""
+    def test_source_escaping_kit_root_rejected(self, kit, tmp_path, capsys):
+        """Roster is remote input — a traversal source is a malformed
+        roster (exit 4), refused before any hashing (evaluator round 1 +
+        CodeRabbit round: validation covers ships:true and false alike)."""
         outside = tmp_path / "outside.md"
         outside.write_text("secret\n", encoding="utf-8")
         roster = _roster_for(kit) + f"""\
@@ -160,10 +161,12 @@ class TestDrift:
     kit_sha256: {_sha(outside)}
     why: escape attempt
 """
-        assert _run(kit, roster, tmp_path) == cpd.EXIT_DRIFT
+        with pytest.raises(SystemExit) as exc:
+            _run(kit, roster, tmp_path)
+        assert exc.value.code == cpd.EXIT_ROSTER_IO
         assert "escapes the kit root" in capsys.readouterr().out
 
-    def test_absolute_source_fails(self, kit, tmp_path, capsys):
+    def test_absolute_source_rejected(self, kit, tmp_path, capsys):
         roster = _roster_for(kit) + """\
   - name: absolute
     kind: agent
@@ -172,8 +175,48 @@ class TestDrift:
     kit_sha256: deadbeef
     why: escape attempt
 """
-        assert _run(kit, roster, tmp_path) == cpd.EXIT_DRIFT
+        with pytest.raises(SystemExit) as exc:
+            _run(kit, roster, tmp_path)
+        assert exc.value.code == cpd.EXIT_ROSTER_IO
         assert "escapes the kit root" in capsys.readouterr().out
+
+    def test_kit_side_traversal_source_rejected(self, kit, tmp_path, capsys):
+        """ships:false entries get the same lexical source validation."""
+        roster = _roster_for(kit) + """\
+  - name: sneaky-kit-side
+    kind: agent
+    ships: false
+    source: ../outside.md
+    why: escape attempt
+"""
+        with pytest.raises(SystemExit) as exc:
+            _run(kit, roster, tmp_path)
+        assert exc.value.code == cpd.EXIT_ROSTER_IO
+        assert "escapes the kit root" in capsys.readouterr().out
+
+    def test_null_record_rejected(self, kit, tmp_path, capsys):
+        """components: [null] must take the invalid-roster exit, not
+        crash with AttributeError (CodeRabbit round)."""
+        roster = _roster_for(kit) + "  -\n"
+        with pytest.raises(SystemExit) as exc:
+            _run(kit, roster, tmp_path)
+        assert exc.value.code == cpd.EXIT_ROSTER_IO
+        assert "not a mapping" in capsys.readouterr().out
+
+    def test_non_string_source_rejected(self, kit, tmp_path, capsys):
+        """A list-valued source must not reach set lookup (TypeError)."""
+        roster = _roster_for(kit) + """\
+  - name: listy
+    kind: agent
+    ships: true
+    source: []
+    kit_sha256: deadbeef
+    why: malformed
+"""
+        with pytest.raises(SystemExit) as exc:
+            _run(kit, roster, tmp_path)
+        assert exc.value.code == cpd.EXIT_ROSTER_IO
+        assert "non-string source" in capsys.readouterr().out
 
     def test_duplicate_source_fails(self, kit, tmp_path, capsys):
         roster = _roster_for(kit)

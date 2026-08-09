@@ -27,6 +27,12 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
+# The job only reads the repo and fetches a public roster — no write
+# access needed, and PR-supplied code runs in this job, so keep the
+# token read-only and out of .git/config (CodeRabbit, PR #119).
+permissions:
+  contents: read
+
 jobs:
   drift:
     name: Compare kit .claude/ against published plugin roster
@@ -34,6 +40,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v7

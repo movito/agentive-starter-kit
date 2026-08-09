@@ -33,7 +33,7 @@ import hashlib
 import sys
 import urllib.error
 import urllib.request
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 DEFAULT_ROSTER_URL = (
     "https://raw.githubusercontent.com/movito/agentive-skills/main/"
@@ -90,7 +90,48 @@ def parse_roster(text: str) -> list[dict]:
     if not isinstance(data, dict) or not isinstance(data.get("components"), list):
         print("ERROR: roster has no 'components' list.")
         raise SystemExit(EXIT_ROSTER_IO)
-    return data["components"]
+    components = data["components"]
+    _validate_components(components)
+    return components
+
+
+def _validate_components(components: list) -> None:
+    """Reject malformed roster records before any field access.
+
+    The roster is network-fetched input: a record that is not a mapping
+    (``components: [null]``) or carries wrong-typed fields would otherwise
+    crash mid-check instead of taking the documented invalid-roster exit.
+    Lexical source validation runs here for EVERY entry (including
+    ships:false) so a traversal path never enters any later logic.
+    """
+    problems: list[str] = []
+    for i, comp in enumerate(components):
+        if not isinstance(comp, dict):
+            problems.append(f"components[{i}]: record is not a mapping")
+            continue
+        name = comp.get("name")
+        label = name if isinstance(name, str) and name else f"components[{i}]"
+        if not isinstance(name, str) or not name:
+            problems.append(f"{label}: missing or non-string name")
+        source = comp.get("source")
+        if source is not None:
+            if not isinstance(source, str):
+                problems.append(f"{label}: non-string source")
+            elif (
+                PurePosixPath(source).is_absolute()
+                or ".." in PurePosixPath(source).parts
+            ):
+                problems.append(f"{label}: source escapes the kit root")
+        sha = comp.get("kit_sha256")
+        if sha is not None and not isinstance(sha, str):
+            problems.append(f"{label}: non-string kit_sha256")
+        if not isinstance(comp.get("ships", False), bool):
+            problems.append(f"{label}: non-boolean ships")
+    if problems:
+        print("ERROR: roster records are malformed:")
+        for p in problems:
+            print(f"  - {p}")
+        raise SystemExit(EXIT_ROSTER_IO)
 
 
 def _contained_source(kit_root: Path, source: str) -> Path | None:
@@ -119,6 +160,8 @@ def check_drift(kit_root: Path, components: list[dict]) -> list[str]:
         name = comp.get("name", "<unnamed>")
         source = comp.get("source")
         if source is not None:
+            # `in` on a set: membership check for duplicate roster source
+            # identifiers, not substring matching (DK rule exception).
             if source in rostered_sources:
                 findings.append(
                     f"{name}: duplicate roster entry for source {source} — "
@@ -162,6 +205,8 @@ def check_drift(kit_root: Path, components: list[dict]) -> list[str]:
     for pattern in COMPONENT_GLOBS:
         for path in sorted(kit_root.glob(pattern)):
             rel = path.relative_to(kit_root).as_posix()
+            # `in` on a set: membership check that this discovered component
+            # has a roster entry, not substring matching (DK rule exception).
             if rel not in rostered_sources:
                 findings.append(
                     f"unrostered component: {rel} has no roster entry — "

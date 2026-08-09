@@ -487,6 +487,7 @@ mkdir -p "$TARGET/scripts/optional"
 # .github/ — CI workflows
 "${RSYNC_BASE[@]}" \
     --exclude='sync-core-scripts.yml' --exclude='sync-to-linear.yml' \
+    --exclude='plugin-drift.yml' \
     "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
 # tests/ — test infrastructure. Exclude tests that import or read
