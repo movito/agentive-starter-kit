@@ -2,7 +2,7 @@
 name: ci-checker
 description: CI/CD pipeline status verification specialist
 model: claude-sonnet-5
-version: 1.1.0
+version: 1.2.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -37,13 +37,23 @@ single-repo mode:
 grep -A 5 "## Target Repository" CLAUDE.md 2>/dev/null || echo "SINGLE_REPO_MODE"
 ```
 
-**If a `## Target Repository` section exists → SKIP the origin check
-entirely** and go to Cross-Repo Mode. In a planning/target split the
-planning repo's `origin` legitimately differs from the repo CI runs on,
-so the comparison below reports a "mismatch" that is the correct
-configuration — telling the user to run `gh repo set-default` there
-would point `gh` at the wrong repo. (`/check-ci` documents the same
-skip.)
+Split mode requires a **usable** section, not just the heading — read the
+`- **Path**:` and `- **GitHub**:` values out of it:
+
+- **Both values present → split mode.** SKIP the origin check entirely
+  and go to Cross-Repo Mode. In a planning/target split the planning
+  repo's `origin` legitimately differs from the repo CI runs on, so the
+  comparison below reports a "mismatch" that is the correct
+  configuration — telling the user to run `gh repo set-default` there
+  would point `gh` at the wrong repo. (`/check-ci` documents the same
+  skip.)
+- **Heading present but a value missing or empty → STOP.** That is a
+  malformed config, not a topology. Report which field is missing and
+  ask the operator to fix `CLAUDE.md`. Do not silently fall back to
+  single-repo mode: that would run the origin check against a repo the
+  project has declared is not where CI lives, and every `gh` call after
+  it would target the wrong repo.
+- **No heading at all → single-repo mode**, below.
 
 **Single-repo mode only** — verify `gh` is configured for the right repo:
 

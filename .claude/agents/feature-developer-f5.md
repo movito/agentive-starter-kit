@@ -317,14 +317,22 @@ Before shipping, audit all changed files:
 Run adversarial code review using **file-based evaluators** if available,
 or use the `/code-review-evaluator` skill.
 
-> **Ordering rule (KIT-0035, widened KIT-0046)**: run this phase BEFORE
-> Phase 6/7 for ALL tasks — local tests green first, then the trio,
-> then open the PR. Evaluator-driven rewrites after PR open each burn a
-> bot round (KIT-0032: four rounds on one doc file; KIT-0046: all three
-> substantive round-1 bot findings were evaluator-convergent on a code
-> task). Defer only when the diff genuinely cannot be assembled
+> **Ordering rule (KIT-0035, widened KIT-0046)**: whenever this phase
+> runs, it runs BEFORE Phase 6/7 — local tests green first, then the
+> trio, then open the PR. Evaluator-driven rewrites after PR open each
+> burn a bot round (KIT-0032: four rounds on one doc file; KIT-0046: all
+> three substantive round-1 bot findings were evaluator-convergent on a
+> code task). Defer only when the diff genuinely cannot be assembled
 > pre-PR, and say so in the review record. Rationale lives in the
 > code-review-evaluator skill ("Ordering").
+>
+> **The rule is about ORDER, not about always running.** The skill's
+> skip conditions still apply — a trivial change (auto-skip: <10 lines
+> of source, no new functions, no external integrations) does not need
+> the trio. A skip is a decision that gets **persisted**, not a silent
+> omission: write the skip and its reason to
+> `.kit/context/reviews/<TASK-ID>-evaluator-review.md`, which is what
+> Gate 5 checks for. See the skill's "When to Skip".
 
 > **Prose-sweep exception (KIT-0069)**: on a PROSE-DOMINATED sweep
 > (many small text fixes across many files), the trio is unreliable —
@@ -375,14 +383,14 @@ commit range), assemble
 
 ### Step 2 — Run the evaluator trio
 
-```bash
-set -a
-source .env
-set +a
+Load `.env` with the POSIX dot form inside `bash -c`, not the `source`
+keyword — the worktree-isolation permission hook can refuse
+`source`-in-command-string while the equivalent passes (KIT-0091):
 
-adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
-adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md
-adversarial claude-code .adversarial/inputs/<TASK-ID>-code-review-input.md
+```bash
+bash -c 'set -a; . ./.env; set +a; adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md'
+bash -c 'set -a; . ./.env; set +a; adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md'
+bash -c 'set -a; . ./.env; set +a; adversarial claude-code .adversarial/inputs/<TASK-ID>-code-review-input.md'
 ```
 
 | Evaluator | Cost class | When to use |

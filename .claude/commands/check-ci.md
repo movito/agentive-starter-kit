@@ -1,6 +1,6 @@
 ---
 description: Verify GitHub Actions CI/CD status for a branch
-version: 1.2.0
+version: 1.3.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -68,17 +68,29 @@ against the branch — the run attaches to the same head SHA.
 is project-owned, and in cross-repo mode the workflow lives in the
 target repo, not the planning-repo origin. List what actually exists:
 
+**Single-repo mode:**
+
 ```bash
-# Cross-repo mode: add --repo <target_github> (the value from CLAUDE.md's
-# `## Target Repository`) to BOTH commands below. Single-repo: omit it.
 gh workflow list
 ```
 
+**Cross-repo mode** — `REPO` is the `- **GitHub**:` value from
+`CLAUDE.md`'s `## Target Repository`. Both commands need it; a bare `gh`
+here queries and dispatches the PLANNING repo's workflows:
+
+```bash
+gh workflow list --repo <target_github>
+```
+
 Pick the workflow that runs the tests, then dispatch it by the name or
-filename that listing reported:
+filename that listing reported — single-repo first, cross-repo second:
 
 ```bash
 gh workflow run <workflow-file-or-name> --ref <branch>
+```
+
+```bash
+gh workflow run <workflow-file-or-name> --ref <branch> --repo <target_github>
 ```
 
 Dispatch only works if the workflow declares `workflow_dispatch:` in its

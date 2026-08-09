@@ -1,7 +1,7 @@
 ---
 description: How to run the adversarial code-review evaluator once local tests pass, before the PR opens
 user-invocable: false
-version: 1.4.0
+version: 1.5.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -16,9 +16,16 @@ model family (o1/Gemini) to find edge-case bugs that bots and Claude miss.
 ## When to Run
 
 - **Local tests green** — evaluate working code, not a draft
-- **Before opening the PR**, for ALL task types (see "Ordering" below)
+- **Before opening the PR**, for all task types that do not meet the
+  skip conditions in "When to Skip" below (see "Ordering" for why the
+  pre-open position applies regardless of task type)
 - Do NOT wait for CI or for bot threads: the signals are independent, and
   every evaluator-driven rewrite made after PR open burns a bot round
+
+The ordering rule and the skip policy answer different questions: skip
+decides *whether* the trio runs, ordering decides *when*. A skipped
+evaluation still needs its persisted record (see "Always document the
+skip") — that record is what Gate 5 checks.
 
 ## Ordering: Run the Evaluator Trio Before PR Open (all tasks)
 
@@ -228,7 +235,7 @@ Required sequence:
    `.kit/context/reviews/<TASK-ID>-evaluator-review.md`, first line
    naming the mode explicitly:
 
-   ```
+   ```text
    Mode: FAILED — no provider API keys present (GEMINI_API_KEY,
    OPENAI_API_KEY, ANTHROPIC_API_KEY all unset); trio not run.
    ```

@@ -1,6 +1,6 @@
 ---
 description: Check Spec Compliance
-version: 1.2.0
+version: 1.3.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -23,17 +23,28 @@ wrong one. Detect the topology and fix both roots before Step 1:
 grep -A 5 "## Target Repository" CLAUDE.md 2>/dev/null || echo "SINGLE_REPO_MODE"
 ```
 
-- **SINGLE_REPO_MODE** → `TARGET` is the current repo; `git` commands
-  below need no routing.
-- **Split mode** → `TARGET` is the `- **Path**:` value from that
-  section. Route every code-side command as `git -C "$TARGET" …`.
-  Task specs stay in the planning repo (the current directory).
+- **SINGLE_REPO_MODE** → set `TARGET` to the current repo:
+  `TARGET=$(git rev-parse --show-toplevel)`.
+- **Split mode** → set `TARGET` to the `- **Path**:` value from that
+  section. A section that exists but carries no usable `Path` is a
+  malformed config, not split mode — say so and stop rather than
+  guessing which repo to read.
+
+Every code-side command below is written `git -C "$TARGET"`, which is
+correct in BOTH modes — that is why `TARGET` is set in single-repo mode
+too. Task specs are always read from the planning repo (the current
+directory), never through `$TARGET`.
+
+> `$TARGET` does not survive between tool calls — each runs a fresh
+> shell. Resolve it once and substitute the literal path into the
+> commands you issue.
 
 ## Step 1: Identify the task
 
 ```bash
-# Get task ID from the code branch (split mode: git -C "$TARGET")
-git branch --show-current
+# The task ID comes from the CODE branch — in split mode that is the
+# target's branch, not the planning repo's (which sits on main).
+git -C "$TARGET" branch --show-current
 ```
 
 ```bash
@@ -56,23 +67,17 @@ You MUST have in front of you:
    merge base, in the repo the code lives in:
 
    ```bash
-   # Split mode: prefix BOTH calls with -C "$TARGET" — fetching in the
-   # planning repo updates the wrong origin and leaves the target's
-   # origin/main stale, which is the failure this step exists to avoid.
-   #   git -C "$TARGET" fetch origin main
-   #   git -C "$TARGET" diff --name-only origin/main...HEAD
-   #
-   # Three dots, not two: `main...HEAD` diffs against the merge base, so
-   # commits landed on main since you branched are not misreported as
-   # your changes. `origin/main` (not local `main`) is the honest base —
-   # a stale local main silently widens or narrows the set.
-   git fetch origin main
-   git diff --name-only origin/main...HEAD
-   ```
+   # Resolve the default branch instead of assuming `main`.
+   BASE=$(git -C "$TARGET" remote show origin | sed -n 's/.*HEAD branch: //p')
 
-   If the project's default branch is not `main`, substitute it
-   throughout (`git remote show origin | sed -n 's/.*HEAD branch: //p'`
-   reports it).
+   # Three dots, not two: `origin/$BASE...HEAD` diffs against the merge
+   # base, so commits landed on the base since you branched are not
+   # misreported as your changes. `origin/$BASE` (not the local branch)
+   # is the honest base — a stale local copy silently widens or narrows
+   # the set.
+   git -C "$TARGET" fetch origin "$BASE"
+   git -C "$TARGET" diff --name-only "origin/$BASE...HEAD"
+   ```
 
    Then read each file completely.
 3. **Full test file content** — for every test file that was modified

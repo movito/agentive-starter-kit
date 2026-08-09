@@ -1,6 +1,6 @@
 ---
 description: Run a structured session retrospective after completing a task
-version: 1.2.0
+version: 1.3.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -135,35 +135,34 @@ List action items as unchecked checkboxes. The planner will check them off as th
 
 Every incident surfaced in this retro (a failed environment assumption, a
 tool that behaved differently than documented, a silent drift) must close
-one of three ways — name the choice per incident:
+one of four ways — name the choice per incident:
 
 1. **Doctor check** — a new or extended check in `scripts/core/doctor.d/`
    (cite the incident in the check's header comment), or
-2. **Not-checkable note** — an explicit comment in the nearest related
+1. **Not-checkable note** — an explicit comment in the nearest related
    check explaining why this cannot be cheaply verified (see the
    CodeRabbit-quota note in `80-bot-presence.sh` for the pattern), or
-3. **Triage-guide entry** — when the incident is diagnosable only at
+1. **Triage-guide entry** — when the incident is diagnosable only at
    failure time, document the symptom→cause mapping where the failing
-   step's docs live.
+   step's docs live, or
+1. **Escalated — awaiting planner classification** — for an incident that
+   genuinely fits none of the first three. Write it into the retro under
+   this heading with (a) what happened, (b) why each of the other three
+   does not fit, and (c) the specific question the planner must answer to
+   classify it. The retro file IS the persistence; the planner's answer
+   converts it to one of the first three at processing time.
 
 This rule is what keeps `project doctor` an incident map instead of a
 2026-07-14 snapshot. **"None of the above" is not an option, and neither
 is "let the planner decide" as a resting state** — an incident parked on
-someone else's judgment is an unclassified incident, which is exactly
-what this rule exists to prevent.
-
-When an incident genuinely fits none of the three, close it as a fourth,
-*persisted* state:
-
-4. **Escalated — awaiting planner classification**: write the incident
-   into the retro under this heading with (a) what happened, (b) why
-   each of options 1–3 does not fit, and (c) the specific question the
-   planner must answer to classify it. The retro file is the persistence;
-   the planner's answer converts it to 1, 2, or 3 at processing time.
+someone else's judgment with no record is an unclassified incident, which
+is exactly what this rule exists to prevent. State 4 is the *recorded*
+form of handing it to the planner, which is why it counts as a closure
+and a bare "the planner should decide" does not.
 
 An escalation without (a), (b), and (c) is not a closure — it is the
 incident going unrecorded with extra words. Every incident leaves this
-retro in state 1, 2, 3, or 4, named explicitly.
+retro in one of the four states, named explicitly.
 
 ## Step 4: Save the retro
 

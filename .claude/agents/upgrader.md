@@ -2,7 +2,7 @@
 name: upgrader
 description: Raises a project from one agentive-workflow plugin version to a newer one, and refreshes local agent model: pins on a model rollout. Automates docs/PLUGIN-UPGRADE-GUIDE.md. Ongoing upgrades only — refuses initial migration, script/manifest upgrades, and CLAUDE.md identity edits.
 model: claude-sonnet-5
-version: 1.2.0
+version: 1.3.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -162,40 +162,57 @@ gh api 'repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-
   never interpolate it into a destructive command — the update in Phase 3 is a
   fixed string — but this keeps the Provenance stamp and comparison honest.)
 
-**Resolve `TARGET_REF` once, here, and reuse it everywhere below.** Phase 2a
-fetches per-version content and needs a ref that actually names the target —
-`ref=main` only happens to equal the target when the operator is upgrading to
-the latest published version, and the fallback path's blind `v` prefix breaks
-on marketplaces that tag without one. Determine the working ref now, by
-probing rather than assuming:
-
-```bash
-# TARGET is the bare X.Y.Z resolved above. Escape the dots before using it
-# in a regex — unescaped, `.` matches any character, so a probe for 1.2.3
-# would also accept a plugin.json reporting "1X2X3".
-TARGET_RE="${TARGET//./\\.}"
-for ref in "v$TARGET" "$TARGET" main; do
-  if gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-plugin/plugin.json?ref=$ref" \
-       --jq '.content' 2>/dev/null | base64 -d \
-       | grep -qE "\"version\"[[:space:]]*:[[:space:]]*\"$TARGET_RE\""; then
-    TARGET_REF="$ref"; break
-  fi
-done
-echo "TARGET_REF=${TARGET_REF:?could not resolve a ref whose plugin.json reports $TARGET}"
-```
-
-- The loop accepts a ref only when the plugin.json **at that ref** reports the
-  target version — so `main` is used only when main genuinely IS the target.
-- If none of the three match → **HALT** one line: "could not resolve a ref
-  publishing `<TARGET>` — the version may not be published yet, or the tag
-  scheme changed." Do not fall back to `main` anyway; that silently reconciles
-  against the wrong version, which is the failure this agent exists to prevent.
-
-**Idempotence check (deterministic, not a judgment):** compare the bare
+**Idempotence check FIRST (deterministic, not a judgment):** compare the bare
 `X.Y.Z` token from each source (extract it — e.g. `grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
 — so quoting/whitespace differences between the CLI and the API don't cause a
 false mismatch). If current == target → print "nothing to do" and **stop here.**
 No further phases run, no changes made.
+
+This gate comes **before** the ref probe below on purpose: the probe calls
+GitHub, so running it first would make a no-op re-run fail on a network
+error, a missing tag, or a rate limit — turning "nothing to do" into a halt.
+
+### Resolve the refs (only reached when there IS an upgrade to do)
+
+**Resolve `TARGET_REF` once, here, and reuse it everywhere below.** Phase 2a
+fetches per-version content and needs a ref that actually names the target —
+`ref=main` only happens to equal the target when the operator is upgrading to
+the latest published version, and a blind `v` prefix breaks on marketplaces
+that tag without one. Determine the working refs by probing rather than
+assuming:
+
+```bash
+# Probe a version's ref: try the v-prefixed tag, the bare tag, then main,
+# and accept a ref only when the plugin.json AT THAT REF reports the version.
+# Escape the dots first — unescaped, `.` matches any character, so a probe
+# for 1.2.3 would also accept a plugin.json reporting "1X2X3".
+resolve_ref() {
+  local want="$1" want_re ref
+  want_re="${want//./\\.}"
+  for ref in "v$want" "$want" main; do
+    if gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-plugin/plugin.json?ref=$ref" \
+         --jq '.content' 2>/dev/null | base64 -d \
+         | grep -qE "\"version\"[[:space:]]*:[[:space:]]*\"$want_re\""; then
+      printf '%s\n' "$ref"; return 0
+    fi
+  done
+  return 1
+}
+
+TARGET_REF=$(resolve_ref "$TARGET") || TARGET_REF=""
+CURRENT_REF=$(resolve_ref "$CURRENT") || CURRENT_REF=""
+echo "TARGET_REF=${TARGET_REF:?could not resolve a ref whose plugin.json reports $TARGET}"
+echo "CURRENT_REF=${CURRENT_REF:-<unresolved>}"
+```
+
+- `main` is used only when main genuinely IS that version.
+- **`TARGET_REF` unresolved → HALT** one line: "could not resolve a ref
+  publishing `<TARGET>` — the version may not be published yet, or the tag
+  scheme changed." Do not fall back to `main` anyway; that silently reconciles
+  against the wrong version, which is the failure this agent exists to prevent.
+- **`CURRENT_REF` unresolved is NOT fatal** — an installed version can predate
+  the marketplace's tagging. It only disables the name-diff fallback in Phase
+  2a; say so plainly there rather than substituting `main`.
 
 ---
 
@@ -226,9 +243,11 @@ diff. Missing reference updates is the failure mode this agent exists to prevent
 **If the call returns HTTP 404** (no CHANGELOG published for this version), fall
 back to listing the artifact directories at each ref and diffing the names:
 
-Resolve the CURRENT-side ref the same way first (the same probe loop from
-Phase 1, with `CURRENT` substituted for `TARGET`, yielding `CURRENT_REF`) —
-then diff ref against ref, never a hand-built `v`-prefixed string:
+`CURRENT_REF` was resolved alongside `TARGET_REF` in Phase 1. Diff ref
+against ref, never a hand-built `v`-prefixed string. **If `CURRENT_REF` came
+back unresolved, skip this fallback** and report that the name-diff is
+unavailable — do not substitute `main`, which would diff against the wrong
+version:
 
 ```bash
 for dir in commands agents skills; do
@@ -240,11 +259,6 @@ for dir in commands agents skills; do
   diff "/tmp/$dir-current.txt" "/tmp/$dir-target.txt"
 done
 ```
-
-If `CURRENT_REF` cannot be resolved (the currently-installed version predates
-the marketplace's tagging, say), report that plainly and diff only what you
-can — an unresolvable current ref makes the name-diff unavailable, not
-optional to fake.
 
 Lines prefixed `<` are removed/renamed; `>` are added. Pair like-named entries
 to spot renames; if a rename isn't obvious from the filename, content-diff via
