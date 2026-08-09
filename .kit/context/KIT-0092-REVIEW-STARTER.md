@@ -1,6 +1,6 @@
 # KIT-0092 — Review Starter
 
-**PR**: (filled at push)
+**PR**: https://github.com/movito/agentive-starter-kit/pull/118
 **Branch**: `feature/KIT-0092-shim-removal` (worktree
 `~/Github/ask-worktrees/KIT-0092`)
 **Scope**: spec Parts A + C, released as **agentive-kit 0.3.1**. Part B
