@@ -2,7 +2,7 @@
 name: ci-checker
 description: CI/CD pipeline status verification specialist
 model: claude-sonnet-5
-version: 1.4.0
+version: 1.5.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -108,6 +108,11 @@ list` below would otherwise query the wrong repo. Before verifying:
 - Prefer `./scripts/core/verify-ci.sh [branch] --wait` — it auto-detects the
   `## Target Repository` section in `CLAUDE.md` and routes `gh` to the target
   repo (falling back to single-repo mode when no such section exists).
+- **Without Bash permission, use `/check-ci [branch]` instead.** The
+  script above is a shell command, so a caller that cannot run Bash
+  (a background sub-agent — see the Interactive-use-only note at the top
+  of this file) cannot invoke it. The slash command does the same
+  cross-repo detection and is the delegation path for those callers.
 - If invoking `gh` directly, use the `$GH_REPO_ARG` the Pre-flight Check
   already populated — **unquoted**, so it expands to the flag pair in
   split mode and to nothing in single-repo mode, letting one command

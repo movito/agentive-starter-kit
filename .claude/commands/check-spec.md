@@ -1,6 +1,6 @@
 ---
 description: Check Spec Compliance
-version: 1.5.0
+version: 1.6.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -90,16 +90,30 @@ You MUST have in front of you:
 2. **Full source of every changed file** — discover them against the real
    merge base, in the repo the code lives in:
 
+   **Fail closed at each step.** Every command here can fail in a way
+   that still produces a plausible-looking file list, and a wrong list
+   means tracing the spec against the wrong changes — silently.
+
    ```bash
    # Resolve the default branch instead of assuming `main`.
    BASE=$(git -C "$TARGET" remote show origin | sed -n 's/.*HEAD branch: //p')
+
+   # `remote show` prints `(unknown)` when the remote has no HEAD, and
+   # nothing at all when it is unreachable — either way BASE is unusable.
+   if [ -z "$BASE" ] || [ "$BASE" = "(unknown)" ]; then
+       echo "ERROR: could not determine the default branch for origin" >&2
+       exit 1
+   fi
+
+   # A failed fetch leaves the OLD origin/$BASE in place, so the diff
+   # below would still 'work' and report a stale changed-file set. Stop.
+   git -C "$TARGET" fetch origin "$BASE" || exit 1
 
    # Three dots, not two: `origin/$BASE...HEAD` diffs against the merge
    # base, so commits landed on the base since you branched are not
    # misreported as your changes. `origin/$BASE` (not the local branch)
    # is the honest base — a stale local copy silently widens or narrows
    # the set.
-   git -C "$TARGET" fetch origin "$BASE"
    git -C "$TARGET" diff --name-only "origin/$BASE...HEAD"
    ```
 
