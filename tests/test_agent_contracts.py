@@ -41,6 +41,57 @@ def test_feature_developer_phase1_verifies_never_creates(agent):
     )
 
 
+@pytest.mark.parametrize("agent", FEATURE_DEVELOPERS)
+def test_feature_developer_runs_evaluator_before_pr_open(agent):
+    """The evaluator phase must precede the Ship phase (KIT-0097 F1).
+
+    The pre-open trio rule has been the documented order since KIT-0035
+    (widened KIT-0046), but the Workflow Overview table kept listing
+    Evaluator *after* CI+Bots — so an agent following the table opened the
+    PR first and burned a bot round on every evaluator-driven rewrite.
+    BugBot rated it High on the 2.0.0 release review. Pin the ordering so
+    a future rewrite cannot silently reintroduce it.
+    """
+    text = (REPO / agent).read_text(encoding="utf-8")
+
+    # (declared phase number, document order) per heading.
+    headings = [
+        (int(num), position, title)
+        for position, (num, title) in enumerate(
+            re.findall(r"^## Phase (\d+): (.+)$", text, re.MULTILINE)
+        )
+    ]
+
+    def find(prefix):
+        return next((h for h in headings if h[2].startswith(prefix)), None)
+
+    evaluator, ship, bots = find("Evaluator"), find("Ship"), find("CI + Bot")
+
+    assert evaluator is not None, f"{agent}: no '## Phase N: Evaluator' heading"
+    assert ship is not None, f"{agent}: no '## Phase N: Ship' heading"
+    assert bots is not None, f"{agent}: no '## Phase N: CI + Bot Review' heading"
+
+    # Both the declared numbers and the document order must agree that the
+    # trio comes first — an agent follows the numbers, a reader follows the
+    # order, and a rewrite that breaks either reintroduces the defect.
+    for axis, idx in (("declared phase number", 0), ("document order", 1)):
+        assert evaluator[idx] < ship[idx] < bots[idx], (
+            f"{agent}: by {axis} the phases run "
+            f"Evaluator={evaluator[idx]}, Ship={ship[idx]}, CI+Bots={bots[idx]} "
+            "— the trio must run BEFORE the PR opens "
+            "(KIT-0035, widened KIT-0046; KIT-0097 F1)"
+        )
+
+    # The overview table drove the original defect — pin it too, not just
+    # the section order.
+    assert re.search(
+        r"^\|\s*\d+\.\s*Evaluator\s*\|.*before PR open", text, re.MULTILINE | re.I
+    ), (
+        f"{agent}: the Workflow Overview table's Evaluator row must state "
+        "that it runs before PR open (KIT-0097 F1)"
+    )
+
+
 @pytest.mark.parametrize("agent", PLANNERS)
 def test_planner_requires_session_topology_in_handoffs(agent):
     text = (REPO / agent).read_text(encoding="utf-8")

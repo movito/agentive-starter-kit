@@ -1,9 +1,9 @@
 ---
 description: Check Spec Compliance
-version: 1.1.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-07-27
+last-updated: 2026-08-09
 created-by: "@movito with planner2"
 ---
 
@@ -13,15 +13,31 @@ Verify that all task requirements are implemented before committing.
 
 **When**: After tests pass + self-review, BEFORE `/commit-push-pr`.
 
+## Step 0: Resolve the repos
+
+In cross-repo mode the spec lives in the planning repo while the code
+lives in the target repo, so a bare `git` command answers about the
+wrong one. Detect the topology and fix both roots before Step 1:
+
+```bash
+grep -A 5 "## Target Repository" CLAUDE.md 2>/dev/null || echo "SINGLE_REPO_MODE"
+```
+
+- **SINGLE_REPO_MODE** → `TARGET` is the current repo; `git` commands
+  below need no routing.
+- **Split mode** → `TARGET` is the `- **Path**:` value from that
+  section. Route every code-side command as `git -C "$TARGET" …`.
+  Task specs stay in the planning repo (the current directory).
+
 ## Step 1: Identify the task
 
 ```bash
-# Get task ID from branch name
+# Get task ID from the code branch (split mode: git -C "$TARGET")
 git branch --show-current
 ```
 
 ```bash
-# Find the task spec
+# Find the task spec — always in the planning repo
 ls .kit/tasks/3-in-progress/
 ```
 
@@ -36,7 +52,20 @@ durable record (KIT-0072 will feed this same file to the evaluator).
 You MUST have in front of you:
 
 1. **Full task spec** — the entire task file content
-2. **Full source of every changed file** — use `git diff --name-only main` to find them, then read each file completely
+2. **Full source of every changed file** — discover them against the real
+   merge base, in the repo the code lives in:
+
+   ```bash
+   # Split mode: prefix every git call with -C "$TARGET".
+   # Three dots, not two: `main...HEAD` diffs against the merge base, so
+   # commits landed on main since you branched are not misreported as
+   # your changes. `origin/main` (not local `main`) is the honest base —
+   # a stale local main silently widens or narrows the set.
+   git fetch origin main
+   git diff --name-only origin/main...HEAD
+   ```
+
+   Then read each file completely.
 3. **Full test file content** — for every test file that was modified
 
 Do NOT summarize or truncate — tracing requirements to code needs complete

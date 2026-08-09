@@ -2,9 +2,9 @@
 name: ci-checker
 description: CI/CD pipeline status verification specialist
 model: claude-sonnet-5
-version: 1.0.0
+version: 1.1.0
 origin: agentive-starter-kit
-last-updated: 2026-07-03
+last-updated: 2026-08-09
 created-by: "@movito"
 tools:
   - Bash
@@ -30,7 +30,22 @@ Always begin your responses with your identity header:
 
 ## Pre-flight Check (IMPORTANT)
 
-Before checking CI status, verify `gh` is configured for the correct repo:
+**Detect the topology FIRST** — the origin check below is only valid in
+single-repo mode:
+
+```bash
+grep -A 5 "## Target Repository" CLAUDE.md 2>/dev/null || echo "SINGLE_REPO_MODE"
+```
+
+**If a `## Target Repository` section exists → SKIP the origin check
+entirely** and go to Cross-Repo Mode. In a planning/target split the
+planning repo's `origin` legitimately differs from the repo CI runs on,
+so the comparison below reports a "mismatch" that is the correct
+configuration — telling the user to run `gh repo set-default` there
+would point `gh` at the wrong repo. (`/check-ci` documents the same
+skip.)
+
+**Single-repo mode only** — verify `gh` is configured for the right repo:
 
 ```bash
 # Check if gh defaults to the right repo
@@ -47,6 +62,22 @@ fi
 
 **If repos don't match**, tell the user to run `gh repo set-default` before proceeding.
 This is a common issue after cloning from the starter kit.
+
+## Cross-Repo Mode
+
+In a planning/target split, **CI runs on the target repo, not the planning
+repo's `origin`**. The origin/default-repo check above and the bare `gh run
+list` below would otherwise query the wrong repo. Before verifying:
+
+- Prefer `./scripts/core/verify-ci.sh [branch] --wait` — it auto-detects the
+  `## Target Repository` section in `CLAUDE.md` and routes `gh` to the target
+  repo (falling back to single-repo mode when no such section exists).
+- If invoking `gh` directly, pass `--repo <target_github>` (the value from
+  `CLAUDE.md`'s `## Target Repository`) on every `gh run` call, and read the
+  branch from the target-repo working tree.
+
+Single-repo projects are unaffected — everything below runs against the
+current repo as-is.
 
 ## Verification Protocol
 

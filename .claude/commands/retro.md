@@ -1,9 +1,9 @@
 ---
 description: Run a structured session retrospective after completing a task
-version: 1.1.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-04-17
+last-updated: 2026-08-09
 created-by: "@movito with planner2"
 ---
 
@@ -147,8 +147,23 @@ one of three ways — name the choice per incident:
    step's docs live.
 
 This rule is what keeps `project doctor` an incident map instead of a
-2026-07-14 snapshot. "None of the above" is not an option; if an incident
-genuinely fits nowhere, say so explicitly and let the planner decide.
+2026-07-14 snapshot. **"None of the above" is not an option, and neither
+is "let the planner decide" as a resting state** — an incident parked on
+someone else's judgment is an unclassified incident, which is exactly
+what this rule exists to prevent.
+
+When an incident genuinely fits none of the three, close it as a fourth,
+*persisted* state:
+
+4. **Escalated — awaiting planner classification**: write the incident
+   into the retro under this heading with (a) what happened, (b) why
+   each of options 1–3 does not fit, and (c) the specific question the
+   planner must answer to classify it. The retro file is the persistence;
+   the planner's answer converts it to 1, 2, or 3 at processing time.
+
+An escalation without (a), (b), and (c) is not a closure — it is the
+incident going unrecorded with extra words. Every incident leaves this
+retro in state 1, 2, 3, or 4, named explicitly.
 
 ## Step 4: Save the retro
 
@@ -198,7 +213,10 @@ Use this exact structure for the file content:
 
 ### Incident Closure
 
-[Per incident: doctor check added/extended | not-checkable note (where) | triage-guide entry (where) — or "No environment incidents this session."]
+[Per incident, one of the four states: doctor check added/extended (where) |
+not-checkable note (where) | triage-guide entry (where) | ESCALATED —
+awaiting planner classification (what happened / why 1-3 don't fit / the
+question the planner must answer) — or "No environment incidents this session."]
 ```
 
 After saving, confirm the file path so the planner can find and review it.

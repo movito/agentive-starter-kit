@@ -1,23 +1,24 @@
 ---
-description: How to run the adversarial code-review evaluator after bot rounds and before human review
+description: How to run the adversarial code-review evaluator once local tests pass, before the PR opens
 user-invocable: false
-version: 1.3.0
+version: 1.4.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-07-05
+last-updated: 2026-08-09
 created-by: "@movito with planner2"
 ---
 
 # Code-Review Evaluator
 
-Run after bot triage rounds are complete, before human review. Uses a different model family (o1/Gemini) to find edge-case bugs that bots and Claude miss.
+Run **after local tests pass and before the PR opens**. Uses a different
+model family (o1/Gemini) to find edge-case bugs that bots and Claude miss.
 
 ## When to Run
 
-- After all bot threads are resolved (0 unresolved)
-- Before requesting human code review
-- **Exception — doc-heavy tasks run the evaluator BEFORE PR open** (see
-  "Ordering for Doc-Heavy Tasks" below)
+- **Local tests green** — evaluate working code, not a draft
+- **Before opening the PR**, for ALL task types (see "Ordering" below)
+- Do NOT wait for CI or for bot threads: the signals are independent, and
+  every evaluator-driven rewrite made after PR open burns a bot round
 
 ## Ordering: Run the Evaluator Trio Before PR Open (all tasks)
 
@@ -211,7 +212,39 @@ until the operator uncommented the key). Verify before running the trio:
 the secret off the transcript. Never add or commit a key — surface the
 gap to the operator instead.
 
-If the required API key is missing, fall back to another evaluator. If none of the keys are set, document the failure and proceed to human review.
+If the required API key is missing, fall back to another evaluator.
+
+### No keys at all — the gate does NOT auto-open
+
+If **none** of the provider keys are set, the trio cannot run and Gate 5
+has no evidence. This is a blocked gate, not a passed one. Do not
+"document the failure and proceed" on your own authority — a documented
+failure is still a failure, and a session that self-certifies past it
+removes the gate for every future task that copies the pattern.
+
+Required sequence:
+
+1. **Write the failed record** at
+   `.kit/context/reviews/<TASK-ID>-evaluator-review.md`, first line
+   naming the mode explicitly:
+
+   ```
+   Mode: FAILED — no provider API keys present (GEMINI_API_KEY,
+   OPENAI_API_KEY, ANTHROPIC_API_KEY all unset); trio not run.
+   ```
+
+2. **Run the self-review checklist** (`.claude/skills/self-review/SKILL.md`)
+   in full and record its output in the same file. It is a partial
+   substitute, and the record must say so — never present it as a trio.
+3. **Surface the gap to the coordinator/operator and STOP.** State that
+   Gate 5 is unsatisfied, that the cause is missing keys (an environment
+   problem they can fix in a minute), and ask whether to wait for a key
+   or proceed without the gate.
+4. **Proceed to human review only on explicit approval**, and record
+   that approval — who approved, when — in the review record.
+
+The one thing that must never happen is a review record that reads like
+a gate was satisfied when no evaluator ran.
 
 **Loading `.env` in unattended/worktree runs**: use the POSIX dot form
 inside `bash -c`, not the `source` keyword — the worktree-isolation
