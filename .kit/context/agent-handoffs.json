@@ -1,18 +1,18 @@
 {
   "planner": {
-    "status": "handoff_pending",
-    "current_task": "KIT-0092",
+    "status": "available",
+    "current_task": null,
     "task_started": null,
-    "brief_note": "2026-08-08: PHASE 2 COMPLETE \u2014 KIT-0093 done (PRs #115/#116/#117 merged, agentive-kit 0.3.0 on PyPI; new projects born packaged; scaffold ~8x faster as side effect; 26 threads, 0 regressions). Retro processed: patterns.yml bash-3.2 heredoc-apostrophe rule; feature-developer Phase 9 reconciled with worktree ordering rule (both variants); branch-verify-before-every-fix-commit codified in STACKED-PR-WORKFLOW; insights extracted (strict-xfail red-first, contract-strings-in-tests, serial prose rounds). Worktree + 3 branches removed. QUEUE: KIT-0092 PROMOTED to todo (Part B done in #116; Parts A+C ship as 0.3.1 \u2014 promise window open, next assignment) -> then PHASE 3 spec (consumer migration; anchors from retro #3: engine-consumer.sh --packaged seam, packaged region bodies, agentive_kit.doctor._parse_install_record; first real migration target = ev-fast-charging-loads-planning). Backlog = 4: 0074 (candidate 0.3.1 passenger), 0072, 0075 (check KIT-0093's launcher verdict in its decision table before promoting), 0085. KIT-ADR-0029 (task-as-folder) parked with named trigger.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0092-shim-removal-and-guard-tightening.md",
+    "brief_note": "2026-08-08: KIT-0092 DONE (PR #118 merged 12a979a; cleanest scorecard of the arc: 1 thread / 0 fix rounds / 0 regressions; deprecation promise KEPT \u2014 three shims removed, callers swept, monolith tests shrunk). agentive-kit 0.3.1 tagged by planner post-merge (publish verified \u2014 see completion note). Retro processed pre-merge: pytest-fast hook fix (missing-binary vs failure, both branches falsified), handoff-table PREDICTED/VERIFIED convention (planner-owned defect), evaluator format-by-change-shape, uv-install grep triage note, KIT-0094 MD029 decision, KIT-0095 riders. Worktree + branch removed. BOARD: todo empty; backlog 6 (0072, 0074, 0075, 0085, 0094, 0095). NEXT planning artifact: PHASE 3 spec \u2014 consumer migration via the --packaged seam (engine-consumer.sh --packaged, packaged region bodies, agentive_kit.doctor._parse_install_record); first real migration = ev-fast-charging-loads-planning. After phase 3-4: KIT-ADR-0029 (task-as-folder) trigger fires.",
+    "details_link": ".kit/tasks/5-done/KIT-0092-shim-removal-and-guard-tightening.md",
     "handoff_file": null
   },
   "feature-developer": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "No active assignment. Next: KIT-0092 (0.3.1 \u2014 shim removal Parts A+C; Part B already shipped in #116) awaits operator go for handoff + starter.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0092-shim-removal-and-guard-tightening.md",
+    "brief_note": "No active assignment. Next: phase 3 (consumer migration) after the planner specs it on operator go.",
+    "details_link": null,
     "handoff_file": null
   },
   "code-reviewer": {
