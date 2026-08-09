@@ -2,7 +2,7 @@
 name: ci-checker
 description: CI/CD pipeline status verification specialist
 model: claude-sonnet-5
-version: 1.3.0
+version: 1.4.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -33,39 +33,53 @@ Always begin your responses with your identity header:
 **Detect the topology FIRST** — the origin check below is only valid in
 single-repo mode.
 
-**Use the canonical parser; do not hand-roll a `grep`.**
-`scripts/core/lib/target_repo.sh` is the runtime source of truth for what
-counts as split mode: it requires BOTH `- **Path**:` and `- **GitHub**:`
-under the `## Target Repository` heading, validates the GitHub value as
-`owner/name`, and fails loudly otherwise. A local grep that accepts less
-than that can enter split mode on a malformed section and route every
-subsequent `gh` call to the wrong repo.
+**Use the canonical parser rather than hand-rolling a `grep`** — it
+resolves `CLAUDE.md`, extracts the fields, validates the GitHub value as
+`owner/name`, and builds the argument macros for you:
 
 ```bash
-. scripts/core/lib/target_repo.sh
-target_repo_init || exit 1     # non-zero = malformed config; report and stop
+if ! . scripts/core/lib/target_repo.sh 2>/dev/null; then
+    echo "target_repo.sh unavailable — using the manual fallback below" >&2
+else
+    target_repo_init || exit 1   # bad owner/name format: report and stop
+
+    # The helper does NOT reject a half-filled section (verified
+    # 2026-08-09): with `Path` but no `GitHub` it returns 0, sets
+    # GIT_DIR_ARG and leaves GH_REPO_ARG EMPTY — so `git` would target
+    # the other repo while `gh` silently queries the planning repo.
+    # Split mode needs BOTH. Check it here:
+    if { [ -n "$TARGET_PATH" ] && [ -z "$TARGET_REPO" ]; } || \
+       { [ -n "$TARGET_REPO" ] && [ -z "$TARGET_PATH" ]; }; then
+        echo "ERROR: '## Target Repository' has only one of Path/GitHub — split mode needs both" >&2
+        exit 1
+    fi
+fi
 echo "TARGET_REPO=${TARGET_REPO:-<single-repo mode>}"
 ```
 
 After it returns:
 
-- **`TARGET_REPO` non-empty → split mode.** SKIP the origin check
-  entirely and go to Cross-Repo Mode. In a planning/target split the
-  planning repo's `origin` legitimately differs from the repo CI runs
-  on, so the comparison below reports a "mismatch" that is the correct
-  configuration — telling the user to run `gh repo set-default` there
-  would point `gh` at the wrong repo. (`/check-ci` documents the same
-  skip.) Use `$GH_REPO_ARG` unquoted on every `gh` call.
-- **`TARGET_REPO` empty → single-repo mode**, below.
-- **Non-zero exit → STOP.** The section exists but is malformed
-  (missing field, or a GitHub value that isn't `owner/name`). Report what
-  the parser said and ask the operator to fix `CLAUDE.md`. Do not fall
-  back to single-repo mode: that would run the origin check against a
-  repo the project has declared is not where CI lives.
+- **Both `TARGET_REPO` and `TARGET_PATH` set → split mode.** SKIP the
+  origin check entirely and go to Cross-Repo Mode. In a planning/target
+  split the planning repo's `origin` legitimately differs from the repo
+  CI runs on, so the comparison below reports a "mismatch" that is the
+  correct configuration — telling the user to run `gh repo set-default`
+  there would point `gh` at the wrong repo. (`/check-ci` documents the
+  same skip.) Use `$GH_REPO_ARG` unquoted on every `gh` call.
+- **Both empty → single-repo mode**, below.
+- **Exactly one set, or a bad `owner/name` → STOP.** The section is
+  malformed, not a topology. Report which field is missing and ask the
+  operator to fix `CLAUDE.md`. Do not fall back to single-repo mode:
+  that would run the origin check against a repo the project has
+  declared is not where CI lives.
 
-If the helper is unavailable (a consumer project that didn't install
-`scripts/core/lib/`), require both fields and an `owner/name`-shaped
-GitHub value yourself, and apply the same three outcomes.
+**Manual fallback** (consumer projects without `scripts/core/lib/` — the
+`if !` above routes here instead of exiting): read the `- **Path**:` and
+`- **GitHub**:` values from the `## Target Repository` section yourself,
+require BOTH plus an `owner/name`-shaped GitHub value, and apply the same
+three outcomes. Set `GH_REPO_ARG="--repo <owner/name>"` and
+`GIT_DIR_ARG="-C <path>"` (or leave both empty in single-repo mode) so
+the commands below work unchanged.
 
 **Single-repo mode only** — verify `gh` is configured for the right repo:
 

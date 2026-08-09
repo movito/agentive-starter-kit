@@ -251,6 +251,53 @@ F14/F15 fixes reproduced the bug they were fixing.
 - (The planner bot-presence convention example was applied directly at
   KIT-0096 completion — no action here.)
 
+## ⚠️ FOR THE PLANNER — parser gap found in review, NOT fixed here
+
+**`scripts/core/lib/target_repo.sh` accepts a half-filled
+`## Target Repository` section.** Found by BugBot on PR #120 (High),
+reproduced and confirmed 2026-08-09. Needs its own task — operator
+decision at triage was: fix the docs now, write this up separately.
+
+**Repro** (verified, not theoretical) — a `CLAUDE.md` with only `Path`:
+
+```markdown
+## Target Repository
+
+- **Path**: `../some-target`
+```
+
+```
+$ target_repo_init; echo $?
+0
+TARGET_REPO=[]  TARGET_PATH=[../some-target]
+GH_REPO_ARG=[]  GIT_DIR_ARG=[-C ../some-target]
+```
+
+**Why it matters**: exit 0 with `GIT_DIR_ARG` set but `GH_REPO_ARG`
+EMPTY is a split-brain topology — every `git $GIT_DIR_ARG` call targets
+the other repo while every `gh $GH_REPO_ARG` call silently hits the
+PLANNING repo. CI verification, thread triage, and preflight would all
+read the wrong repo while appearing to work. The mirror case (`GitHub`
+without `Path`) has the same shape.
+
+**Cause**: `_target_repo_validate()` returns 0 early when `TARGET_REPO`
+is empty (`target_repo.sh:131-137`), so the `owner/name` check never
+runs and nothing enforces both-or-neither. The file's own header comment
+(line 23) says "Both `Path` and `GitHub` must be bullet list items" —
+the contract is documented but not implemented.
+
+**Suggested fix**: add the both-or-neither check to
+`_target_repo_validate()` so every caller benefits (`verify-ci.sh`,
+`agentive preflight`, `review-input`, `review-helper`), with tests
+covering all four field combinations. Kept out of KIT-0097 because that
+task is scoped to `.claude/` content and this is `scripts/core/`.
+
+**Mitigated meanwhile**: `ci-checker` and `check-spec` now perform the
+both-or-neither check themselves after calling the helper (verified
+against all six cases: Path-only, GitHub-only, both, neither, bad
+`owner/name`, and lib-absent). Those local checks become redundant once
+the parser enforces it, and should be simplified back then.
+
 ## Out of Scope
 
 - Editing plugin copies in movito/agentive-skills directly (release-only)

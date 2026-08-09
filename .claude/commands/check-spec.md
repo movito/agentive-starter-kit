@@ -1,6 +1,6 @@
 ---
 description: Check Spec Compliance
-version: 1.4.0
+version: 1.5.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -19,30 +19,40 @@ In cross-repo mode the spec lives in the planning repo while the code
 lives in the target repo, so a bare `git` command answers about the
 wrong one. Resolve both roots before Step 1.
 
-**Use the canonical parser; do not hand-roll a `grep`.**
-`scripts/core/lib/target_repo.sh` is the runtime source of truth for what
-counts as split mode: it requires BOTH `- **Path**:` and `- **GitHub**:`
-under the `## Target Repository` heading, validates the GitHub value as
-`owner/name`, and fails loudly otherwise. Accepting a `Path` alone can
-enter split mode on a malformed section and read the wrong repo.
+**Use the canonical parser rather than hand-rolling a `grep`** — it
+resolves `CLAUDE.md`, extracts the fields, and validates the GitHub value
+as `owner/name`:
 
 ```bash
-. scripts/core/lib/target_repo.sh
-target_repo_init || exit 1     # non-zero = malformed config; report and stop
+if ! . scripts/core/lib/target_repo.sh 2>/dev/null; then
+    echo "target_repo.sh unavailable — using the manual fallback below" >&2
+else
+    target_repo_init || exit 1   # bad owner/name format: report and stop
+
+    # The helper does NOT reject a half-filled section (verified
+    # 2026-08-09): with `Path` but no `GitHub` it returns 0 and sets
+    # GIT_DIR_ARG while leaving GH_REPO_ARG empty. Split mode needs BOTH.
+    if { [ -n "$TARGET_PATH" ] && [ -z "$TARGET_REPO" ]; } || \
+       { [ -n "$TARGET_REPO" ] && [ -z "$TARGET_PATH" ]; }; then
+        echo "ERROR: '## Target Repository' has only one of Path/GitHub — split mode needs both" >&2
+        exit 1
+    fi
+fi
 TARGET="${TARGET_PATH:-$(git rev-parse --show-toplevel)}"
 echo "TARGET=$TARGET"
 ```
 
-- **`TARGET_PATH` non-empty** → split mode; `TARGET` is the target repo.
-- **`TARGET_PATH` empty** → single-repo mode; `TARGET` falls back to the
-  current repo, so the commands below are unchanged.
-- **Non-zero exit** → the section exists but is malformed (missing field,
-  or a GitHub value that isn't `owner/name`). Report what the parser said
-  and stop; do not guess which repo to read.
+- **Both `Path` and `GitHub` set** → split mode; `TARGET` is the target repo.
+- **Both absent** → single-repo mode; `TARGET` falls back to the current
+  repo, so the commands below are unchanged.
+- **Exactly one set, or a bad `owner/name`** → the section is malformed.
+  Report which field is missing and stop; do not guess which repo to read.
 
-If the helper is unavailable (a consumer project that didn't install
-`scripts/core/lib/`), require both fields and an `owner/name`-shaped
-GitHub value yourself before treating it as split mode.
+**Manual fallback** (consumer projects without `scripts/core/lib/` — the
+`if !` above routes here rather than exiting): read both values from the
+`## Target Repository` section yourself, require BOTH plus an
+`owner/name`-shaped GitHub value, and set `TARGET` to the `Path` value
+(or the current repo when the section is absent).
 
 Every code-side command below is written `git -C "$TARGET"`, which is
 correct in BOTH modes — that is why `TARGET` is set in single-repo mode
