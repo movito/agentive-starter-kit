@@ -5,7 +5,7 @@
 **Date**: 2026-08-08
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/3-in-progress/KIT-0092-shim-removal-and-guard-tightening.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0092-shim-removal-and-guard-tightening.md`
 **Status**: Ready — the 0.3.x "one release" promise window; likely a single PR
 **Evaluation**: skipped (planner) — enumerated cleanup, decisions in-spec;
 the file list IS the requirement
@@ -115,6 +115,6 @@ is in `1-backlog/`; otherwise ignore this note.
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0092-shim-removal-and-guard-tightening.md`
+**Task File**: `.kit/tasks/4-in-review/KIT-0092-shim-removal-and-guard-tightening.md`
 **Folded content**: Part C carries archived KIT-0089's intent (see its disposition)
 **ADR**: `.kit/adr/KIT-ADR-0028-versioned-packages-not-file-copies.md` (phase 1's deprecation promise, kept)
