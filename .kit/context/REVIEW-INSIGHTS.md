@@ -242,6 +242,10 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Evaluator input shape must match change shape** — third recorded case: `--format full` on a strings-only diff made two of three evaluators review whole modules and return findings about untouched code. Logic → full; strings/docs → diff. If a round is mostly about code the diff never touched, the input format was wrong — re-run before disposing. Now in the evaluator skill. (KIT-0092, after KIT-0069/KIT-0073)
 - **Before deleting "language-X-only" harness plumbing, check who else consumes it**: the dispatch stub looked bash-only next to the sleep stub; deleting it would have let a developer's REAL dispatch binary fire live events from in-process test runs. A stub's purpose is isolation, not language parity — its removal test is "what fires without it", not "what language remains". (KIT-0092)
 
+- **Before refreshing a stale copy, diff BOTH directions**: the KIT-0096 pre-transform diff of fresh kit content against the 1.1.0 plugin copies exposed that drift ran both ways — the kit CANONICAL had regressed behind the old plugin in two places. "Source of truth" is a role, not a guarantee; verify it before overwriting the copy that might remember something the source forgot. (KIT-0096)
+- **Release PRs get reviewed as freshly-authored content**: all 42 findings (evaluators + bots) on the 2.0.0 refresh targeted kit-canonical text, zero the transforms — a content release re-opens review on everything it ships. Plan for it: pre-file the found-in-review task before the PR opens, and route every finding to the canonical source (fix-here-then-release), never to the copies. (KIT-0096 → KIT-0097's contract)
+- **Bot presence/absence is an environmental claim — cite the query or write UNVERIFIED**: the planner's handoff said "no bots on that repo" from assumption; 23 threads arrived on a PR planned around having none. Now in the planner Phase 4 conventions with the query to cite. (KIT-0096, planner-owned)
+
 ---
 
 ## ADR Candidates

@@ -222,7 +222,12 @@ Create `.kit/context/<TASK-ID>-HANDOFF-<agent-type>.md` containing:
   launch — KIT-0083's wrong-topology start happened because the
   handoff omitted this (KIT-0088).
 - **Environmental claims cite their source, never restate it**: write
-  "repro status: see spec §X", not a paraphrase. On KIT-0080 the
+  "repro status: see spec §X", not a paraphrase. This includes
+  **bot presence/absence on a repo**: "no bots are configured there"
+  is an environmental claim — cite the query (`gh api` app
+  installations, or a prior PR's thread history) or write UNVERIFIED.
+  The KIT-0096 handoff asserted no-bots on the marketplace repo
+  unverified; 23 threads arrived on a PR planned around having none. On KIT-0080 the
   handoff asserted "the local repro is GONE" while the spec's own
   Reproduction section said `/usr/bin/git` still had 2.30.1 — each
   summary hop was faithful and the aggregate inverted the fact; one

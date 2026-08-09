@@ -1,6 +1,12 @@
 # KIT-0097: Canonical .claude/ content fixes from the 2.0.0 plugin-release review
 
-**Status**: Backlog
+> **Evaluation**: arch-review-fast REVISION_SUGGESTED 2026-08-09 with a
+> single minor finding (PII-rider placement), accepted via rationale in
+> R2 — gate passed with disposition. (First run was an empty-response
+> model flake; rerun succeeded.) Log:
+> `.adversarial/logs/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review--arch-review-fast.md`
+
+**Status**: Todo
 **Priority**: high — operator requested asap follow-up (2026-08-09); every
 finding below is live in the kit's canonical agents/commands/skills, and the
 2.0.0 plugin ships them verbatim (behavior-parity rule, KIT-0096)
@@ -153,6 +159,25 @@ roster.yaml hash update + version bump 2.0.1).
       files refreshed into movito/agentive-skills, roster.yaml hashes
       updated, drift guard back to green — thread replies on PR #4
       reference this task as the closure path
+
+## Riders (KIT-0096 retro, added at promotion 2026-08-09)
+
+- **R1 — Phase 9 move+stage recipe**: while fixing the workflow docs
+  (F1's family), add the concrete recipe to feature-developer Phase 9:
+  `project move <ID> in-review` relocates the task file, so the
+  follow-up `git add` must name the NEW path — verify the staged set
+  with `git status --short` before committing (the planner footgun,
+  now needed implementer-side since moves ride PRs).
+- **R2 — PII decision at the 2.0.1 release step**: `plugin.json` /
+  `marketplace.json` carry the operator's personal email in `author`.
+  Surface the choice in the release PR (keep, or switch to a
+  noreply/org address) — operator decides, don't choose silently.
+  Kept HERE rather than in a governance task because 2.0.1 IS this
+  task's release step — the decision has exactly one natural moment,
+  and a separate task for one field would be ceremony (evaluation
+  finding, accepted via this rationale).
+- (The planner bot-presence convention example was applied directly at
+  KIT-0096 completion — no action here.)
 
 ## Out of Scope
 

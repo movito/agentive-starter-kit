@@ -1,17 +1,17 @@
 {
   "planner": {
-    "status": "available",
-    "current_task": null,
+    "status": "handoff_pending",
+    "current_task": "KIT-0097",
     "task_started": null,
-    "brief_note": "2026-08-08: KIT-0092 DONE (PR #118 merged 12a979a; cleanest scorecard of the arc: 1 thread / 0 fix rounds / 0 regressions; deprecation promise KEPT \u2014 three shims removed, callers swept, monolith tests shrunk). agentive-kit 0.3.1 tagged by planner post-merge (publish verified \u2014 see completion note). Retro processed pre-merge: pytest-fast hook fix (missing-binary vs failure, both branches falsified), handoff-table PREDICTED/VERIFIED convention (planner-owned defect), evaluator format-by-change-shape, uv-install grep triage note, KIT-0094 MD029 decision, KIT-0095 riders. Worktree + branch removed. BOARD: todo empty; backlog 6 (0072, 0074, 0075, 0085, 0094, 0095). NEXT planning artifact: PHASE 3 spec \u2014 consumer migration via the --packaged seam (engine-consumer.sh --packaged, packaged region bodies, agentive_kit.doctor._parse_install_record); first real migration = ev-fast-charging-loads-planning. After phase 3-4: KIT-ADR-0029 (task-as-folder) trigger fires.",
-    "details_link": ".kit/tasks/5-done/KIT-0092-shim-removal-and-guard-tightening.md",
+    "brief_note": "2026-08-09: KIT-0096 DONE \u2014 agentive-workflow 2.0.0 LIVE and verified end-to-end (both PRs merged; 10 agents incl. planner, sentinel present, drift guard proven red->green same day; fresh --new project is pure packaged shape, zero .claude/). Retro processed: bot-presence-is-an-environmental-claim added to planner conventions (planner-owned miss \u2014 23 threads arrived on a 'no-bots' repo); TESTING-WORKFLOW duration corrected (~213s real, >=360s Bash timeout for kit commits); .env chmod 600 done; insights x3 (both-directions drift, release-PRs-as-fresh-content + pre-file rule, bot-presence). QUEUE: KIT-0097 PROMOTED (operator asap; evaluated, riders added: Phase-9 move+stage recipe, PII decision at 2.0.1) \u2014 awaiting operator go for handoff+starter; its release step is plugin 2.0.1 (first merged fix flips the drift guard red BY DESIGN \u2014 do not treat as incident). OPERATOR CHECKLIST: plugin updated to 2.0.0 done; next /setup-preset then /new-project; KIT-0075 F4 evidence = first real session in the test project. Backlog 6: 0072, 0074, 0075, 0085, 0094, 0095.",
+    "details_link": ".kit/tasks/2-todo/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review.md",
     "handoff_file": null
   },
   "feature-developer": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "No active assignment. Next: phase 3 (consumer migration) after the planner specs it on operator go.",
+    "brief_note": "No active assignment. Next: KIT-0097 (canonical content fixes + 2.0.1) on operator go.",
     "details_link": null,
     "handoff_file": null
   },

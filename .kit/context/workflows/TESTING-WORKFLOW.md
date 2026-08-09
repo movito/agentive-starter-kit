@@ -163,6 +163,12 @@ Tests now run automatically before every commit via pre-commit hooks:
 ### Fast Test Subset
 - **What runs**: All tests except those marked with `@pytest.mark.slow`
   (`pytest tests/ -x -m "not slow" --maxfail=3`)
+- **Real duration in THIS repo: ~3.5–4 minutes** (measured ~213 s /
+  ~238 s across KIT-0092/KIT-0096 commits — "fast" is relative to the
+  full suite, not to seconds). Agent sessions: set the Bash tool
+  timeout to **≥ 360 000 ms for kit commits**, or the hook is killed
+  mid-run and the commit "fails" with no error — a tool-timeout, not a
+  test failure (KIT-0096 hit exactly this).
 - **Coverage**: Catches 80%+ of test failures before commit
 - **Tests excluded**: everything marked `@pytest.mark.slow` (runs in CI only)
 
