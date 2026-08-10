@@ -189,6 +189,20 @@ The pattern: trio value depends on input shape matching change shape.
 If a round returns mostly findings about code the diff never touched,
 the input format was wrong — re-run with `diff` before disposing.
 
+**Prose-shaped diffs: run the FAST tier only — skip the deep evaluator
+(planner decision 2026-08-10, three consecutive data points).** On
+instruction-prose changes (agent definitions, skills, workflow docs),
+the deep evaluator's findings were dominated by reconstructions of the
+pre-fix state and hallucinated removed safeguards, while tree-reading
+bots went essentially 1-for-1 on real defects: KIT-0092 (whole-module
+noise on a strings diff), KIT-0097 (o3 oscillations across the 2.0.0
+review), KIT-0098 (trio: 14 findings, 3 accepted, 1 real miss the bot
+then caught; bots: 1-for-1). Deep evaluators reason about CODE
+semantics; prose coherence is not their instrument. Rule: prose-shaped
+diff → `code-reviewer-fast` (or `-v2`) only, `--format diff`; the deep
+tier stays for logic diffs. Note the skip in the review record with
+this section as the citation.
+
 ### Manual path (special cases only)
 
 If the helper can't infer the right diff (e.g. reviewing a stacked PR or
