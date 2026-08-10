@@ -1,6 +1,6 @@
 # KIT-0099: Release plugin 2.0.1 — sync the KIT-0097+KIT-0098 canon, drift guard to green
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: high (blocked by KIT-0098; until it ships, the drift
 guard is red and consumer projects run 2.0.0 content)
 **Type**: Release (mechanical)
