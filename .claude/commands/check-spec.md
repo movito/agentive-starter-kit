@@ -38,20 +38,24 @@ else
         exit 1
     fi
 fi
-TARGET="${TARGET_PATH:-$(git rev-parse --show-toplevel)}"
-echo "TARGET=$TARGET"
+echo "TARGET_PATH=${TARGET_PATH:-<single-repo mode>}"
 ```
 
-- **Both `Path` and `GitHub` set** → split mode; `TARGET` is the target repo.
-- **Both absent** → single-repo mode; `TARGET` falls back to the current
+In single-repo mode `TARGET_PATH` is empty; the repo root is what
+`git rev-parse --show-toplevel` prints — run it and read the path out of
+the output.
+
+- **Both `Path` and `GitHub` set** → split mode; the target root is the
+  `Path` value.
+- **Both absent** → single-repo mode; the target root is the current
   repo, so the commands below are unchanged.
 - **Exactly one set, or a bad `owner/name`** → the section is malformed.
   Report which field is missing and stop; do not guess which repo to read.
 
 **Manual fallback** (consumer projects without `scripts/core/lib/` — the
 `if !` above routes here rather than exiting). Reading the values is not
-enough: `TARGET` must actually be set, or every `git -C "$TARGET"` below
-resolves against the wrong repo.
+enough: you must know which literal path to type into every
+`git -C "$TARGET"` below, or they resolve against the wrong repo.
 
 ```bash
 sed -n '/^## Target Repository/,/^## /p' CLAUDE.md | grep -E '^\- \*\*(Path|GitHub)\*\*:'
@@ -59,24 +63,22 @@ sed -n '/^## Target Repository/,/^## /p' CLAUDE.md | grep -E '^\- \*\*(Path|GitH
 
 From what that printed:
 
-- **Both present, GitHub matches `owner/name`** → `TARGET` is the `Path`
-  value.
-- **Neither present** → single-repo mode; `TARGET` is the current repo
-  (`git rev-parse --show-toplevel`, read from the output).
+- **Both present, GitHub matches `owner/name`** → the target root is the
+  `Path` value.
+- **Neither present** → single-repo mode; the target root is the current
+  repo (`git rev-parse --show-toplevel`, read from the output).
 - **Exactly one present, or a malformed GitHub value** → STOP rather
   than guessing which repo to read.
 
-Substitute the literal path into each command below — the assignment
-does not survive to the next Bash call.
-
 Every code-side command below is written `git -C "$TARGET"`, which is
-correct in BOTH modes — that is why `TARGET` is set in single-repo mode
-too. Task specs are always read from the planning repo (the current
-directory), never through `$TARGET`.
+correct in BOTH modes — that is why the target root is resolved in
+single-repo mode too. Task specs are always read from the planning repo
+(the current directory), never through `$TARGET`.
 
-> `$TARGET` does not survive between tool calls — each runs a fresh
-> shell. Resolve it once and substitute the literal path into the
-> commands you issue.
+> **`$TARGET` is a placeholder, not a shell variable** — each Bash call
+> runs a fresh shell, so an assignment would not survive to the next
+> call. Resolve the root once above, then type the literal path into
+> every command you issue.
 
 ## Step 1: Identify the task
 

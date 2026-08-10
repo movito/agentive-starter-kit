@@ -220,13 +220,6 @@ operator for the planning-repo path.
 > command you issue. Wherever this document shows `"$PLANNING"`,
 > substitute that path.
 
-Confirm it before relying on it — a wrong root fails loudly here rather
-than silently later:
-
-```bash
-ls <planning-root>/.kit/tasks    # must list the status folders
-```
-
 ```bash
 # 1. VERIFY the session topology before anything else. A bare `git` is
 #    correct here: this checks the branch of the worktree the session is

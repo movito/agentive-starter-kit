@@ -75,7 +75,7 @@ After it returns:
 
 **Manual fallback** (consumer projects without `scripts/core/lib/` — the
 `if !` above routes here instead of exiting). Reading the values is not
-enough: you must SET the routing variables the rest of this document
+enough: you must determine the routing text the rest of this document
 uses, or every command below silently falls back to the planning repo.
 
 ```bash
@@ -85,22 +85,21 @@ sed -n '/^## Target Repository/,/^## /p' CLAUDE.md | grep -E '^\- \*\*(Path|GitH
 
 Then, from what that printed:
 
-- **Both present, GitHub matches `owner/name`** → set both macros:
-
-  ```bash
-  GH_REPO_ARG="--repo <owner/name>"
-  GIT_DIR_ARG="-C <path>"
-  ```
-
-- **Neither present** → single-repo mode: leave BOTH empty
-  (`GH_REPO_ARG=""`, `GIT_DIR_ARG=""`), so the unquoted expansions below
-  vanish and the commands run against the current repo.
+- **Both present, GitHub matches `owner/name`** → split mode. The
+  routing text is `--repo <owner/name>` for `gh` and `-C <path>` for
+  `git`.
+- **Neither present** → single-repo mode: the routing text is EMPTY for
+  both, so the commands below run bare against the current repo.
 - **Exactly one present, or a malformed GitHub value** → STOP. Do not
   continue with partial routing.
 
-Because these are set in a fallback the same shell-freshness rule
-applies: substitute the literal values into each command rather than
-relying on the assignment surviving to the next Bash call.
+**`$GH_REPO_ARG` and `$GIT_DIR_ARG` below are placeholders, not live
+shell variables** — each Bash tool call runs a fresh shell, so neither
+the `. target_repo.sh` above nor these fallback assignments survive to
+the next call. Resolve them once here, then substitute the literal text
+into every command you issue: `--repo owner/name` / `-C <path>` in split
+mode, and **nothing at all** in single-repo mode (so `gh run list …`
+runs bare against the current repo).
 
 **Single-repo mode only** — verify `gh` is configured for the right repo:
 
@@ -192,7 +191,7 @@ gh $GH_REPO_ARG run watch <run-id> --exit-status
 - Default timeout: 10 minutes
 - If any workflow shows "failure" or "cancelled", report immediately
 
-### 3. Report Results
+### 4. Report Results
 
 **On Success** (all workflows passed):
 ```
