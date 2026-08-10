@@ -5,7 +5,7 @@
 **Date**: 2026-08-10
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/3-in-progress/KIT-0098-churned-sections-repair.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0098-churned-sections-repair.md`
 **Status**: Ready — you are the FRESH SESSION the circuit breaker
 prescribes; that framing is the whole point of this task
 **Evaluation**: gate passed with disposition (release split to
@@ -89,6 +89,6 @@ prose coherence — only reading does.
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0098-churned-sections-repair.md`
+**Task File**: `.kit/tasks/4-in-review/KIT-0098-churned-sections-repair.md`
 **Predecessor record**: PR #120 (55 threads) + its round-9 report; process
 codification at 1cee2fb (PR-SIZE budget, bot-triage circuit breaker)
