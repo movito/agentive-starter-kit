@@ -70,6 +70,43 @@ The breaker asks whether a round's findings are majority
 Round 1 is **not** majority-self-inflicted. The breaker does not fire.
 Round count stands at 1 of the permitted 3.
 
+## Bot round 1 (PR #121) — CodeRabbit
+
+| Bot | Verdict | Threads |
+|---|---|---|
+| Cursor Bugbot | PASS | 0 |
+| CodeRabbit | CHANGES_REQUESTED | 1 |
+
+| # | Finding | Disposition |
+|---|---|---|
+| B1 | `ci-checker.md`: the placeholder contract at :96-103 contradicts the "use `$GH_REPO_ARG` unquoted / it expands to nothing" framing still standing at :68, :137-147, :158, :264, :314 | **ACCEPTED** — correct and tree-grounded. This is **self-inflicted**: my round-1 edit declared the contract but swept only the fallback section, leaving the older framing elsewhere in the file. Fixed as a class in one commit (all 5 prose sites), verified by `grep -n "unquoted\|expands to\|populated\|vanish"` returning empty. |
+
+Bot round 1 is **1 of 1 self-inflicted** — technically majority. Noted
+against the circuit breaker below.
+
+## Circuit-breaker re-assessment after bot round 1
+
+The breaker's purpose is to stop a session that is adding defect surface
+faster than it removes it. Round-by-round:
+
+- **Evaluator round 1**: 14 findings, 1 self-inflicted (7%).
+- **Bot round 1**: 1 finding, 1 self-inflicted (100% of a single-item
+  round).
+
+Taken literally, bot round 1 is "majority self-inflicted" and the
+breaker fires. Taken as the rule intends — is the repair converging? —
+the picture is the opposite of KIT-0097's round 8: the finding is a
+*single incomplete sweep of one class in one file*, caught by a bot on
+the first pass, fixed as a class rather than instance-by-instance, and
+leaving a mechanically verifiable end state (the grep returns empty).
+Total self-inflicted across both rounds: 2 of 15.
+
+**Decision**: fix and push once, then STOP the loop regardless of what
+round 2 returns — no third round without operator direction. This
+respects the breaker's intent while not abandoning a one-line-class fix
+that is already verified. Flagged explicitly for the operator in the PR
+and the handoff.
+
 ## Review-surface budget
 
 Committed repair: **-13 net lines** (36 insertions / 49 deletions).

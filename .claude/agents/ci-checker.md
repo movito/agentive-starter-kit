@@ -65,7 +65,7 @@ After it returns:
   CI runs on, so the comparison below reports a "mismatch" that is the
   correct configuration — telling the user to run `gh repo set-default`
   there would point `gh` at the wrong repo. (`/check-ci` documents the
-  same skip.) Use `$GH_REPO_ARG` unquoted on every `gh` call.
+  same skip.) Substitute the `$GH_REPO_ARG` text into every `gh` call.
 - **Both empty → single-repo mode**, below.
 - **Exactly one set, or a bad `owner/name` → STOP.** The section is
   malformed, not a topology. Report which field is missing and ask the
@@ -134,17 +134,16 @@ list` below would otherwise query the wrong repo. Before verifying:
   (a background sub-agent — see the Interactive-use-only note at the top
   of this file) cannot invoke it. The slash command does the same
   cross-repo detection and is the delegation path for those callers.
-- If invoking `gh` directly, use the `$GH_REPO_ARG` the Pre-flight Check
-  already populated — **unquoted**, so it expands to the flag pair in
-  split mode and to nothing in single-repo mode, letting one command
-  serve both:
+- If invoking `gh` directly, substitute the routing text the Pre-flight
+  Check resolved — `--repo owner/name` in split mode, nothing at all in
+  single-repo mode, letting one shape serve both:
 
   ```bash
   gh $GH_REPO_ARG run list --branch <branch> --limit 5
   ```
 
   Read the branch from the target-repo working tree
-  (`git $GIT_DIR_ARG branch --show-current`, same unquoted rule).
+  (`git $GIT_DIR_ARG branch --show-current`, substituted the same way).
 
 Single-repo projects are unaffected — everything below runs against the
 current repo as-is.
@@ -155,9 +154,9 @@ current repo as-is.
 
 ```bash
 # Get the latest workflow runs for the branch (include headSha and event).
-# $GH_REPO_ARG is UNQUOTED on purpose: it expands to `--repo owner/name`
-# in split mode and to nothing in single-repo mode, so this one line is
-# correct in both. A bare `gh run list` here would query the planning repo.
+# $GH_REPO_ARG is placeholder text: substitute `--repo owner/name` in
+# split mode, and delete it entirely in single-repo mode. In split mode a
+# bare `gh run list` here would query the planning repo.
 gh $GH_REPO_ARG run list --branch <branch-name> --limit 5 --json status,conclusion,workflowName,createdAt,headSha,event,databaseId
 ```
 
@@ -261,7 +260,8 @@ Always provide:
 ## GitHub CLI Commands Reference
 
 ```bash
-# Every command takes $GH_REPO_ARG unquoted — correct in both topologies.
+# Substitute the $GH_REPO_ARG text into every command — `--repo
+# owner/name` in split mode, deleted entirely in single-repo mode.
 
 # List recent runs
 gh $GH_REPO_ARG run list --branch <branch> --limit 10
@@ -311,7 +311,7 @@ Please verify CI status for branch "feature/add-ci-checker" after my recent push
 ```
 
 Your response workflow:
-1. **ACTUALLY CALL the Bash tool** to run `gh $GH_REPO_ARG run list --branch feature/add-ci-checker --limit 5 --json status,conclusion,workflowName,createdAt,headSha,event,databaseId` (after the Pre-flight Check populated `$GH_REPO_ARG`)
+1. **ACTUALLY CALL the Bash tool** to run `gh $GH_REPO_ARG run list --branch feature/add-ci-checker --limit 5 --json status,conclusion,workflowName,createdAt,headSha,event,databaseId` (substituting the routing text the Pre-flight Check resolved)
 2. Parse the JSON results - filter to `event: "push"` only
 3. Check status of filtered workflows:
    - If all `status: "completed"` → Report conclusions immediately (PASS/FAIL)
