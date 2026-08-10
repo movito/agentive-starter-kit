@@ -107,6 +107,30 @@ respects the breaker's intent while not abandoning a one-line-class fix
 that is already verified. Flagged explicitly for the operator in the PR
 and the handoff.
 
+## Bot round 2 — clean on the repair; 2 open findings on bookkeeping
+
+Round 2 (push `2720bae`, the placeholder-contract class sweep):
+**CodeRabbit and Cursor Bugbot both re-reviewed with zero findings.**
+The repair converged.
+
+A third bot pass then ran against the handoff commit `cb6c700` (task
+move + review starter — planning artifacts only) and raised two
+findings. **Both are RECORDED, NOT FIXED**, per the closed-loop decision
+taken after bot round 1. Neither touches the four repaired files, the S1
+verdicts, or any S2 item.
+
+| # | Finding | Assessment | Status |
+|---|---|---|---|
+| B2 | `KIT-0098-HANDOFF-feature-developer.md:8,92` — the task-path pointer now reads `4-in-review` while the Session-topology prose at :19-21 still says the file is in `3-in-progress` | **Valid, cosmetic.** Artifact of `project move` rewriting the path pointer automatically while handoff-time prose stayed as written. The handoff is a historical record of session start, so the `3-in-progress` statement was true when written — it wants an explicit "at handoff time" label rather than a rewrite. | **OPEN — operator call** |
+| B3 | `KIT-0098-REVIEW-STARTER.md:17-18` — "No behavior, no code, no tests changed" is loose: agent instruction files *are* agent behavior | **Valid, wording.** Intent was "no application code or tests". Suggested replacement: "No application code or tests changed; agent workflow guidance changed." | **OPEN — operator call** |
+
+Both are one-line edits to planning artifacts. They are left open
+deliberately: the breaker decision was to stop the fix loop after the
+round-1 push regardless of what later rounds returned, and honouring
+that is worth more than closing two cosmetic threads on documents that
+are not the deliverable. **Recommend the operator either wave them
+through at merge or fold them into KIT-0099's housekeeping.**
+
 ## Review-surface budget
 
 Committed repair: **-13 net lines** (36 insertions / 49 deletions).
