@@ -5,7 +5,7 @@
 **Date**: 2026-08-10
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/4-in-review/KIT-0098-churned-sections-repair.md`
+**Task**: `.kit/tasks/5-done/KIT-0098-churned-sections-repair.md`
 **Status**: Ready — you are the FRESH SESSION the circuit breaker
 prescribes; that framing is the whole point of this task
 **Evaluation**: gate passed with disposition (release split to
@@ -18,7 +18,9 @@ KIT-0099) — record in the spec header
 
 - Worktree: `~/Github/ask-worktrees/KIT-0098`, branch
   `feature/KIT-0098-churned-sections-repair` — created and provisioned
-  by the planner; task file already `3-in-progress`
+  by the planner; the task file was `3-in-progress` at handoff time
+  (the Task pointers in this file auto-update as the task moves — the
+  prose here describes launch state, not current state)
 - VERIFY, never create: `git branch --show-current` must show the
   branch above before your first edit; if not, STOP and ask
 - ONE PR. The Plugin Drift Guard will be RED on it — by design (kit
@@ -89,6 +91,6 @@ prose coherence — only reading does.
 
 ---
 
-**Task File**: `.kit/tasks/4-in-review/KIT-0098-churned-sections-repair.md`
+**Task File**: `.kit/tasks/5-done/KIT-0098-churned-sections-repair.md`
 **Predecessor record**: PR #120 (55 threads) + its round-9 report; process
 codification at 1cee2fb (PR-SIZE budget, bot-triage circuit breaker)

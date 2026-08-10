@@ -15,7 +15,9 @@ defects introduced by earlier fixes. Coherence-reads of whole files
 rather than diff-reads of patches.
 
 **Net effect: 51 lines of prose change across 4 files** — a
-de-duplication repair. No behavior, no code, no tests changed.
+de-duplication repair. No application code or tests changed —
+agent-instruction files only (instruction files ARE agent behavior;
+the no-change claim is scoped to runtime code).
 
 ## ⚠️ Plugin Drift Guard is RED by design
 

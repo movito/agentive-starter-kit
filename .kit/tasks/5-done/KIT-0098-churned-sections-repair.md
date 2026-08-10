@@ -5,7 +5,7 @@
 > ACCEPTED (S4 → KIT-0099). Gate passed with disposition. Log:
 > `.adversarial/logs/KIT-0098-churned-sections-repair--arch-review-fast.md`
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high (gates plugin 2.0.1; the drift guard stays red until this lands)
 **Type**: Content repair / verification
 **Estimated Effort**: 0.5 day — and the review-surface budget applies:
