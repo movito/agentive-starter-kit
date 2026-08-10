@@ -17,15 +17,27 @@ green on kit main is a RESULT you verify, not a change you make.
 
 ## Session topology (read before anything else)
 
-- Working directory: `~/Github/agentive-skills` — the existing clone,
-  synced by the planner. Branch `release/agentive-workflow-2.0.1` —
-  **created by the planner from fresh origin/main**; VERIFY
-  (`git branch --show-current`), never create; if it's not there, STOP
-  and ask. No kit worktree exists for this task — that is deliberate.
-- One PR on movito/agentive-skills. CodeRabbit reviews there
-  (verified: 23 threads on #4); operator review is the merge gate.
-- The kit repo at `~/Github/agentive-starter-kit` is READ-ONLY source
-  material (current main = the post-KIT-0097/0098 canon).
+**Cross-repo session — the operator's standard practice**: the tab
+opens in the KIT primary clone (`~/Github/agentive-starter-kit`, on
+`main`); ALL writes go to the marketplace clone via
+`git -C ~/Github/agentive-skills …`. This satisfies your Phase 1
+check in cross-repo form: your own CWD stays on kit `main` and you
+commit NOTHING there — the kit is read-only source material (current
+main = the post-KIT-0097/0098 canon).
+
+- Target branch: `release/agentive-workflow-2.0.1` in
+  `~/Github/agentive-skills` — **created by the planner from fresh
+  origin/main**; VERIFY
+  (`git -C ~/Github/agentive-skills branch --show-current`), never
+  create; if it's not there, STOP and ask. No kit worktree exists for
+  this task — deliberate: there is nothing kit-side to edit.
+- One PR on movito/agentive-skills (`gh pr create --repo
+  movito/agentive-skills --head release/agentive-workflow-2.0.1 …`).
+  CodeRabbit reviews there (verified: 23 threads on #4); operator
+  review is the merge gate.
+- Never a bare `git commit`/`git push` — every git write carries
+  `-C ~/Github/agentive-skills` (a bare command would hit the kit
+  primary on main).
 
 ## Scope — the spec's 5 steps, with anchors
 
