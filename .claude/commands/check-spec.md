@@ -1,6 +1,6 @@
 ---
 description: Check Spec Compliance
-version: 1.6.0
+version: 1.7.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -49,10 +49,25 @@ echo "TARGET=$TARGET"
   Report which field is missing and stop; do not guess which repo to read.
 
 **Manual fallback** (consumer projects without `scripts/core/lib/` — the
-`if !` above routes here rather than exiting): read both values from the
-`## Target Repository` section yourself, require BOTH plus an
-`owner/name`-shaped GitHub value, and set `TARGET` to the `Path` value
-(or the current repo when the section is absent).
+`if !` above routes here rather than exiting). Reading the values is not
+enough: `TARGET` must actually be set, or every `git -C "$TARGET"` below
+resolves against the wrong repo.
+
+```bash
+sed -n '/^## Target Repository/,/^## /p' CLAUDE.md | grep -E '^\- \*\*(Path|GitHub)\*\*:'
+```
+
+From what that printed:
+
+- **Both present, GitHub matches `owner/name`** → `TARGET` is the `Path`
+  value.
+- **Neither present** → single-repo mode; `TARGET` is the current repo
+  (`git rev-parse --show-toplevel`, read from the output).
+- **Exactly one present, or a malformed GitHub value** → STOP rather
+  than guessing which repo to read.
+
+Substitute the literal path into each command below — the assignment
+does not survive to the next Bash call.
 
 Every code-side command below is written `git -C "$TARGET"`, which is
 correct in BOTH modes — that is why `TARGET` is set in single-repo mode

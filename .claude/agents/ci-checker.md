@@ -2,7 +2,7 @@
 name: ci-checker
 description: CI/CD pipeline status verification specialist
 model: claude-sonnet-5
-version: 1.6.0
+version: 1.7.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -74,12 +74,33 @@ After it returns:
   declared is not where CI lives.
 
 **Manual fallback** (consumer projects without `scripts/core/lib/` — the
-`if !` above routes here instead of exiting): read the `- **Path**:` and
-`- **GitHub**:` values from the `## Target Repository` section yourself,
-require BOTH plus an `owner/name`-shaped GitHub value, and apply the same
-three outcomes. Set `GH_REPO_ARG="--repo <owner/name>"` and
-`GIT_DIR_ARG="-C <path>"` (or leave both empty in single-repo mode) so
-the commands below work unchanged.
+`if !` above routes here instead of exiting). Reading the values is not
+enough: you must SET the routing variables the rest of this document
+uses, or every command below silently falls back to the planning repo.
+
+```bash
+# Read both fields; require BOTH plus an owner/name-shaped GitHub value.
+sed -n '/^## Target Repository/,/^## /p' CLAUDE.md | grep -E '^\- \*\*(Path|GitHub)\*\*:'
+```
+
+Then, from what that printed:
+
+- **Both present, GitHub matches `owner/name`** → set both macros:
+
+  ```bash
+  GH_REPO_ARG="--repo <owner/name>"
+  GIT_DIR_ARG="-C <path>"
+  ```
+
+- **Neither present** → single-repo mode: leave BOTH empty
+  (`GH_REPO_ARG=""`, `GIT_DIR_ARG=""`), so the unquoted expansions below
+  vanish and the commands run against the current repo.
+- **Exactly one present, or a malformed GitHub value** → STOP. Do not
+  continue with partial routing.
+
+Because these are set in a fallback the same shell-freshness rule
+applies: substitute the literal values into each command rather than
+relying on the assignment surviving to the next Bash call.
 
 **Single-repo mode only** — verify `gh` is configured for the right repo:
 
