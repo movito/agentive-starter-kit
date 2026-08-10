@@ -1,7 +1,7 @@
 ---
 description: How to run the adversarial code-review evaluator once local tests pass, before the PR opens
 user-invocable: false
-version: 1.7.0
+version: 1.8.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -34,11 +34,18 @@ git rev-parse --show-toplevel
   topology instead — the target worktree's CLAUDE.md has no
   `## Target Repository` section.
 
-Confirm it before relying on it:
+Confirm it by checking the two markers that always exist in a planning
+repo, then ensure the review directory is present — a fresh planning repo
+can legitimately lack that empty directory, and both the skip record and
+the Step 4 aggregation write into it:
 
 ```bash
-ls /literal/planning/path/.kit/context/reviews
+ls /literal/planning/path/.kit/tasks /literal/planning/path/CLAUDE.md
+mkdir -p /literal/planning/path/.kit/context/reviews
 ```
+
+If the first `ls` fails, the root is wrong — stop and ask rather than
+creating directories in the wrong repo.
 
 **`"$PLANNING"` below is a placeholder for that literal path, not a shell
 variable** — each Bash call is a fresh shell, so an assignment would not

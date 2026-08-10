@@ -151,6 +151,9 @@ def test_agent_pair_bodies_stay_identical(canonical, variant):
     texts = {}
     for path in (canonical, variant):
         text = (REPO / path).read_text(encoding="utf-8")
+        # `in` is deliberate here (DK rules): this is a substring search for
+        # a Markdown section anchor before `split()`, not an identifier
+        # comparison — the heading may carry trailing text on its line.
         assert marker in text, f"{path}: no {marker!r} section to anchor the diff"
         body = text.split(marker, 1)[1]
         # The identity header carries the variant suffix by design.

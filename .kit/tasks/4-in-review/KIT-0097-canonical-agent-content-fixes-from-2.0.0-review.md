@@ -170,9 +170,20 @@ roster.yaml hash update + version bump 2.0.1).
 
 Per the handoff: new findings on the fixed text append HERE as a second
 checklist, not a new task. All in scope (each is a defect in a fix this
-task made). Evaluator trio + 2 bot rounds; 30 findings total, 23
-accepted, 7 declined. Full disposition:
-`.kit/context/reviews/KIT-0097-evaluator-review.md`.
+task made).
+
+> **This checklist is a HISTORICAL record of rounds 1–2, not a running
+> total.** Review continued past it (rounds 3–9 at time of writing), so
+> the numbered items below are the findings from those first two rounds
+> only — do not use them for a completion decision.
+>
+> **Counting unit**: one entry here = one posted bot thread or one
+> distinct evaluator finding. The disposition table in
+> `.kit/context/reviews/KIT-0097-evaluator-review.md` counts per *file
+> site* instead (CodeRabbit consolidates several sites into one thread),
+> so its totals are legitimately higher. **The review record is the
+> authoritative source for current totals**; `.kit/context/KIT-0097-REVIEW-STARTER.md`
+> carries the thread-level snapshot for a human reviewer.
 
 **Evaluator round (pre-PR, `--format diff`)**
 

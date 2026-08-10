@@ -2,7 +2,7 @@
 name: feature-developer-f5
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring (Fable 5 variant)
 model: claude-fable-5
-version: 1.4.0
+version: 1.5.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito (Fable-5 fork of feature-developer v2.0.0)"
@@ -196,12 +196,15 @@ git rev-parse --show-toplevel
   topology names the planning path — take it from there, not from this
   command.
 
-Now **validate it**, substituting the literal path you just read. A
-wrong root fails loudly here instead of silently writing artifacts into
-the wrong repo later:
+Now **validate whichever path the bullet above told you to use** — the
+`git rev-parse` output in single-repo mode, the handoff's path in split
+mode. Do NOT validate the `rev-parse` output in split mode: that is the
+target worktree, it has no `.kit/tasks`, and the check would fail on a
+perfectly correct handoff path. A wrong root fails loudly here instead
+of silently writing artifacts into the wrong repo later:
 
 ```bash
-ls /literal/planning/path/.kit/tasks /literal/planning/path/CLAUDE.md
+ls /the/planning/path/.kit/tasks /the/planning/path/CLAUDE.md
 ```
 
 If that `ls` fails, STOP — do not proceed with a guessed root. Ask the
@@ -250,8 +253,16 @@ ls "$PLANNING"/.kit/tasks/*/<TASK-ID>-*.md
 - **Already in `3-in-progress/`** → nothing to do. The planner normally
   ran `project start` on main BEFORE creating the worktree (the
   ordering rule in `WORKTREE-WORKFLOW.md`), so this is the usual case.
-- **Still in `2-todo/`, and you are on `main` in the planning repo** →
-  start it:
+- **Still in `2-todo/`** → the condition is that the **PLANNING repo**
+  is on `main`, which step 1's bare `git branch --show-current` does not
+  answer: in split mode that reported the TARGET branch. Ask the
+  planning repo directly:
+
+  ```bash
+  git -C "$PLANNING" branch --show-current
+  ```
+
+  Only when that prints `main` (the project's default branch), start it:
 
   ```bash
   "$PLANNING"/scripts/core/project start <TASK-ID>
@@ -392,15 +403,19 @@ post-change contents of every changed file:
 the TARGET worktree's CLAUDE.md has no such section, so running it there
 silently resolves to the wrong repo instead of erroring:
 
+`cd` does NOT persist between Bash tool calls — each runs a fresh shell.
+Put the `cd` and the command in the SAME call:
+
 ```bash
-cd "$PLANNING"
-agentive review-input <TASK-ID>
+cd "$PLANNING" && agentive review-input <TASK-ID>
 # Optional flags: --base <branch> (default main), --format diff|full (default full)
 ```
 
 It writes `.adversarial/inputs/<TASK-ID>-code-review-input.md` **relative
-to where it ran** — i.e. under `$PLANNING`. Use that same path for the
-evaluator commands in Step 2 and when reading the logs.
+to where it ran** — i.e. under `$PLANNING`. Every later command that
+touches that file (the evaluators in Step 2, the log reads in Step 3, the
+aggregation in the skill) must resolve it the same way: either `cd` in
+the same call, or an absolute path.
 
 **Commit the tree first.** The helper (and any manual `git diff
 main...HEAD`) reads committed state — uncommitted work is invisible to it
@@ -429,10 +444,13 @@ Load `.env` with the POSIX dot form inside `bash -c`, not the `source`
 keyword — the worktree-isolation permission hook can refuse
 `source`-in-command-string while the equivalent passes (KIT-0091):
 
+Each call also `cd`s to the planning repo first — the `.env` and the
+input file both live there, and the previous call's directory is gone:
+
 ```bash
-bash -c 'set -a; . ./.env; set +a; adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md'
-bash -c 'set -a; . ./.env; set +a; adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md'
-bash -c 'set -a; . ./.env; set +a; adversarial claude-code .adversarial/inputs/<TASK-ID>-code-review-input.md'
+bash -c 'cd "$PLANNING" && set -a && . ./.env && set +a && adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md'
+bash -c 'cd "$PLANNING" && set -a && . ./.env && set +a && adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md'
+bash -c 'cd "$PLANNING" && set -a && . ./.env && set +a && adversarial claude-code .adversarial/inputs/<TASK-ID>-code-review-input.md'
 ```
 
 | Evaluator | Cost class | When to use |
@@ -684,7 +702,7 @@ sitting in:
 | Task specs | `.kit/tasks/` | planning |
 | Handoff files | `.kit/context/<TASK-ID>-HANDOFF-*.md` | planning |
 | Review artifacts | `.kit/context/reviews/` | planning |
-| Evaluator inputs | `.adversarial/inputs/` | wherever you run the trio |
+| Evaluator inputs | `.adversarial/inputs/` | planning |
 
 ### Recurring Footguns
 

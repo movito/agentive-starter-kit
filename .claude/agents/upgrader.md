@@ -2,7 +2,7 @@
 name: upgrader
 description: Raises a project from one agentive-workflow plugin version to a newer one, and refreshes local agent model: pins on a model rollout. Automates docs/PLUGIN-UPGRADE-GUIDE.md. Ongoing upgrades only — refuses initial migration, script/manifest upgrades, and CLAUDE.md identity edits.
 model: claude-sonnet-5
-version: 1.4.0
+version: 1.5.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -187,20 +187,36 @@ assuming:
 # Escape the dots first — unescaped, `.` matches any character, so a probe
 # for 1.2.3 would also accept a plugin.json reporting "1X2X3".
 resolve_ref() {
-  local want="$1" want_re ref
+  local want="$1" want_re ref body err
   want_re="${want//./\\.}"
   for ref in "v$want" "$want" main; do
-    if gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-plugin/plugin.json?ref=$ref" \
-         --jq '.content' 2>/dev/null | base64 -d \
-         | grep -qE "\"version\"[[:space:]]*:[[:space:]]*\"$want_re\""; then
-      printf '%s\n' "$ref"; return 0
+    # Capture the API result and its status BEFORE decoding. In a pipeline
+    # the exit status is grep's, so an auth/network/rate-limit failure would
+    # look identical to "this ref does not publish that version" — and for
+    # CURRENT_REF that silently disables reconciliation.
+    if body=$(gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-plugin/plugin.json?ref=$ref" --jq '.content' 2>&1); then
+      if printf '%s' "$body" | base64 -d \
+           | grep -qE "\"version\"[[:space:]]*:[[:space:]]*\"$want_re\""; then
+        printf '%s\n' "$ref"; return 0
+      fi
+      continue                      # reachable, but a different version
     fi
+    case "$body" in
+      *"Not Found"*|*404*) continue ;;   # genuine missing ref → try the next
+      *) echo "HALT: gh api failed for ref '$ref' — $body" >&2; return 2 ;;
+    esac
   done
-  return 1
+  return 1                          # every ref reachable, none matched
 }
 
-TARGET_REF=$(resolve_ref "$TARGET") || TARGET_REF=""
-CURRENT_REF=$(resolve_ref "$CURRENT") || CURRENT_REF=""
+# Exit 2 = an API failure, NOT "unresolvable" — halt rather than treating
+# it as a missing ref.
+TARGET_REF=$(resolve_ref "$TARGET"); rc=$?
+[ "$rc" -eq 2 ] && exit 1
+[ "$rc" -ne 0 ] && TARGET_REF=""
+CURRENT_REF=$(resolve_ref "$CURRENT"); rc=$?
+[ "$rc" -eq 2 ] && exit 1
+[ "$rc" -ne 0 ] && CURRENT_REF=""
 echo "TARGET_REF=${TARGET_REF:?could not resolve a ref whose plugin.json reports $TARGET}"
 echo "CURRENT_REF=${CURRENT_REF:-<unresolved>}"
 ```
@@ -550,11 +566,19 @@ To revert an upgrade:
 2. **Verify the restore before touching `CLAUDE.md`:**
 
    ```bash
-   claude plugin list | grep -A3 -E 'agentive-workflow([@ (]|$)'
+   # Capture first: in a pipeline the status is grep's, so a failed
+   # `claude plugin list` that still emits output would read as success.
+   listing=$(claude plugin list) || {
+       echo "HALT: could not read 'claude plugin list' — rollback unverified" >&2
+       exit 1
+   }
+   printf '%s\n' "$listing" | grep -A3 -E 'agentive-workflow([@ (]|$)'
    ```
 
-   Extract the bare `X.Y.Z` token (same normalization as Phase 1) and compare
-   it to `<previous>`.
+   Extract the bare `X.Y.Z` token (same normalization as Phase 1). Require
+   **exactly one** such token and require it to equal `<previous>`; zero
+   matches, several matches, or any other value all mean the rollback is
+   unverified. Leave Provenance untouched in every one of those cases.
 
    - **Matches `<previous>`** → proceed to step 3.
    - **Still shows the new version, or the cache window has expired** → the

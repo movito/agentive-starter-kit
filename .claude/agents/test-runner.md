@@ -2,7 +2,7 @@
 name: test-runner
 description: Testing and quality assurance specialist
 model: claude-sonnet-5
-version: 1.2.0
+version: 1.3.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -80,8 +80,15 @@ Then:
 
 - **Task already in `3-in-progress/`** → do NOT run `project start`. It
   is started; go straight to testing.
-- **Task in `2-todo/` AND you are on `main` in the planning repo** →
-  start it:
+- **Task in `2-todo/`** → the condition is that the **PLANNING repo** is
+  on `main`, which the bare check above does not answer (in split mode
+  it reported the TARGET branch). Ask the planning repo directly:
+
+  ```bash
+  git -C "$PLANNING" branch --show-current
+  ```
+
+  Only when that prints `main`, start it:
 
   ```bash
   "$PLANNING"/scripts/core/project start <TASK-ID>
