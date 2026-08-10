@@ -2,7 +2,7 @@
 name: test-runner
 description: Testing and quality assurance specialist
 model: claude-sonnet-5
-version: 1.1.0
+version: 1.2.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -53,11 +53,26 @@ When you pick up a testing task, you **MUST** move it to the correct folder and 
 `project start` is **conditional, not automatic**. Run these checks first;
 most sessions land on a task someone already started.
 
+**Resolve the planning root first.** `.kit/tasks/` lives in the PLANNING
+repo; in split mode this session runs in the TARGET worktree, so a bare
+`.kit/…` path finds nothing there — or, worse, starts the task in the
+wrong repo. Run this and read the path out of the output (no assignment):
+
+```bash
+git rev-parse --show-toplevel
+```
+
+Single-repo mode: that IS the planning repo. Split mode: take the
+planning path from the handoff instead. Substitute the literal path
+below — `"$PLANNING"` here is a placeholder, not a shell variable.
+
 ```bash
 # 1. Where is the task file? (its folder IS its status)
-ls .kit/tasks/*/<TASK-ID>-*.md
+ls "$PLANNING"/.kit/tasks/*/<TASK-ID>-*.md
 
-# 2. What branch is this session on?
+# 2. What branch is this session on? Bare `git` is CORRECT here — this
+#    asks about the worktree the session sits in, which in split mode is
+#    the target repo, and that is exactly the branch being checked.
 git branch --show-current
 ```
 
@@ -69,7 +84,7 @@ Then:
   start it:
 
   ```bash
-  ./scripts/core/project start <TASK-ID>
+  "$PLANNING"/scripts/core/project start <TASK-ID>
   ```
 
 - **Task in `2-todo/` but you are on a feature branch or in a worktree**
@@ -93,9 +108,10 @@ and syncs to Linear (if the task monitor daemon is running).
 ### Other Status Commands
 
 ```bash
-./scripts/core/project move <TASK-ID> in-review   # After testing complete, before review
-./scripts/core/project complete <TASK-ID>          # After review approved
-./scripts/core/project move <TASK-ID> blocked      # If blocked by dependencies
+# All three run in the PLANNING repo — substitute the literal path.
+"$PLANNING"/scripts/core/project move <TASK-ID> in-review   # After testing, before review
+"$PLANNING"/scripts/core/project complete <TASK-ID>         # After review approved
+"$PLANNING"/scripts/core/project move <TASK-ID> blocked     # If blocked by dependencies
 ```
 
 ### Why This Matters

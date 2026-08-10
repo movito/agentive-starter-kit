@@ -71,20 +71,29 @@ def test_feature_developer_runs_evaluator_before_pr_open(agent):
         )
     ]
 
-    def find(prefix):
-        matches = [h for h in headings if h[2].startswith(prefix)]
-        assert len(matches) <= 1, (
-            f"{agent}: {len(matches)} phase headings start with {prefix!r} "
-            f"({[h[2] for h in matches]}) — the order check would silently "
-            "test whichever came first; give the phases distinct titles"
+    def find(label, pattern):
+        """Match the phase title exactly (modulo a trailing parenthetical).
+
+        `startswith` would accept an unrelated future heading — 'Evaluator
+        Notes' would satisfy a check meant for the Evaluator phase — so the
+        selector is anchored instead.
+        """
+        rx = re.compile(pattern, re.I)
+        matches = [h for h in headings if rx.fullmatch(h[2])]
+        assert len(matches) == 1, (
+            f"{agent}: expected exactly 1 phase heading matching {label!r}, "
+            f"found {len(matches)} ({[h[2] for h in headings]}) — an order "
+            "check against 0 or 2 matches proves nothing"
         )
-        return matches[0] if matches else None
+        return matches[0]
 
-    evaluator, ship, bots = find("Evaluator"), find("Ship"), find("CI + Bot")
-
-    assert evaluator is not None, f"{agent}: no '## Phase N: Evaluator' heading"
-    assert ship is not None, f"{agent}: no '## Phase N: Ship' heading"
-    assert bots is not None, f"{agent}: no '## Phase N: CI + Bot Review' heading"
+    # The phase NAME is pinned exactly. Only a "(GATE)" marker and/or an
+    # em-dash annotation may follow it — so "Evaluator Notes" does NOT
+    # match, while "Evaluator (GATE) — before the PR opens" does.
+    suffix = r"(?: \(GATE\))?(?: —.*)?"
+    evaluator = find("Evaluator", rf"Evaluator{suffix}")
+    ship = find("Ship", rf"Ship{suffix}")
+    bots = find("CI + Bot Review", rf"CI \+ Bot Review{suffix}")
 
     # Both the declared numbers and the document order must agree that the
     # trio comes first — an agent follows the numbers, a reader follows the
@@ -98,16 +107,27 @@ def test_feature_developer_runs_evaluator_before_pr_open(agent):
         )
 
     # The overview table drove the original defect — pin it too, not just
-    # the section order.
-    # Tolerant of indentation, bold markers and smart quotes around the
-    # phrase — what must not change is that the row says it runs pre-PR.
-    assert re.search(
-        r"^\s*\|\s*\d+\.\s*Evaluator\s*\|[^|]*before PR open",
-        text,
-        re.MULTILINE | re.I,
-    ), (
+    # the section order. Scope to THE Workflow Overview table: a
+    # document-wide search would be satisfied by a stale duplicate table
+    # elsewhere while the real one had regressed.
+    sections = text.split("## Workflow Overview")
+    assert len(sections) == 2, (
+        f"{agent}: expected exactly 1 '## Workflow Overview' heading, "
+        f"found {len(sections) - 1} — the table assertion below needs an "
+        "unambiguous target"
+    )
+    overview = sections[1].split("\n## ", 1)[0]
+
+    rows = re.findall(
+        r"^\s*\|\s*\d+\.\s*Evaluator\s*\|([^|]*)\|", overview, re.MULTILINE | re.I
+    )
+    assert len(rows) == 1, (
+        f"{agent}: expected exactly 1 Evaluator row in the Workflow "
+        f"Overview table, found {len(rows)}"
+    )
+    assert re.search(r"before PR open", rows[0], re.I), (
         f"{agent}: the Workflow Overview table's Evaluator row must state "
-        "that it runs before PR open (KIT-0097 F1)"
+        f"that it runs before PR open (KIT-0097 F1) — got: {rows[0].strip()!r}"
     )
 
 

@@ -2,7 +2,7 @@
 name: feature-developer
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring
 model: claude-opus-5
-version: 2.3.0
+version: 2.4.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito (canonicalized from feature-developer-v6 v1.2.0 + v7 v2.1.1 local config)"
@@ -177,33 +177,40 @@ resolves against whatever repo the session sits in — which is the TARGET
 worktree. Derive the planning root once and route every planning command
 through it:
 
+Run this and **read the path out of the output** — no assignment, no
+`$()` (see Shell Rules):
+
 ```bash
-# The planning repo is the one whose CLAUDE.md carries the
-# `## Target Repository` section. Start from the session's own root and
-# check there first — in single-repo mode (and under the planning-repo
-# exception) that IS the planning repo, and this resolves immediately.
-PLANNING=$(git rev-parse --show-toplevel)
+git rev-parse --show-toplevel
+```
 
-# Split mode: the session sits in the TARGET worktree, whose CLAUDE.md
-# has no such section. The handoff's Session topology names the planning
-# path — substitute it here rather than guessing:
-#   PLANNING=/absolute/path/from/the/handoff
+- **Single-repo mode** (and the planning-repo exception): that path IS
+  the planning repo. Done.
+- **Split mode**: the session sits in the TARGET worktree, whose
+  CLAUDE.md has no `## Target Repository` section. The handoff's Session
+  topology names the planning path — take it from there, not from this
+  command.
 
-# VALIDATE before relying on it. A wrong root fails loudly now instead
-# of silently writing artifacts into the wrong repo later:
-ls "$PLANNING/.kit/tasks" && ls "$PLANNING/CLAUDE.md"
+Now **validate it**, substituting the literal path you just read. A
+wrong root fails loudly here instead of silently writing artifacts into
+the wrong repo later:
+
+```bash
+ls /literal/planning/path/.kit/tasks /literal/planning/path/CLAUDE.md
 ```
 
 If that `ls` fails, STOP — do not proceed with a guessed root. Ask the
 operator for the planning-repo path.
 
-> ⚠️ **`$PLANNING` is a value you carry, not a shell variable that
-> persists.** Each Bash tool call runs in a FRESH shell — a variable set
-> in one call is gone in the next, and `"$PLANNING"/scripts/…` then
-> expands to `/scripts/…`, an absolute path from the filesystem root.
-> Resolve the planning root ONCE as above, then write the literal
-> absolute path into every command you issue. Where this document writes
-> `"$PLANNING"`, substitute that literal path.
+> ⚠️ **`"$PLANNING"` in this document is a PLACEHOLDER, not a shell
+> variable.** Never assign or expand it. Two reasons, both fatal in
+> practice: each Bash tool call runs in a FRESH shell, so a variable set
+> in one call is gone in the next and `"$PLANNING"/scripts/…` expands to
+> `/scripts/…` — an absolute path from the filesystem root; and Shell
+> Rules forbid `$()`, which any assignment form would need. Resolve the
+> root ONCE as above, then **type the literal absolute path** into every
+> command you issue. Wherever this document shows `"$PLANNING"`,
+> substitute that path.
 
 Confirm it before relying on it — a wrong root fails loudly here rather
 than silently later:

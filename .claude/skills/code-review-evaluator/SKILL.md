@@ -1,7 +1,7 @@
 ---
 description: How to run the adversarial code-review evaluator once local tests pass, before the PR opens
 user-invocable: false
-version: 1.6.0
+version: 1.7.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-09
@@ -12,6 +12,42 @@ created-by: "@movito with planner2"
 
 Run **after local tests pass and before the PR opens**. Uses a different
 model family (o1/Gemini) to find edge-case bugs that bots and Claude miss.
+
+## Where the artifacts live — resolve this FIRST
+
+Every artifact below (inputs, logs, the Gate 5 record) belongs to the
+**planning repo**, because that is where Gate 5 and `agentive preflight`
+look for them. In split mode the session runs in the TARGET worktree, so
+a relative `.kit/…` or `.adversarial/…` path lands in the wrong repo —
+the record is written, the gate still fails, and nothing says why.
+
+Resolve the planning root once, before running anything. Read the path
+out of the output; do not assign it (`$()` is forbidden by the agents'
+Shell Rules):
+
+```bash
+git rev-parse --show-toplevel
+```
+
+- **Single-repo mode**: that path IS the planning repo.
+- **Split mode**: take the planning path from the handoff's Session
+  topology instead — the target worktree's CLAUDE.md has no
+  `## Target Repository` section.
+
+Confirm it before relying on it:
+
+```bash
+ls /literal/planning/path/.kit/context/reviews
+```
+
+**`"$PLANNING"` below is a placeholder for that literal path, not a shell
+variable** — each Bash call is a fresh shell, so an assignment would not
+survive to the next call. Type the path.
+
+**Run the evaluators from the planning repo** (`cd` there first, or pass
+absolute paths). `agentive review-input` writes
+`.adversarial/inputs/…` relative to its working directory, so running it
+elsewhere splits inputs and logs across two repos.
 
 ## When to Run
 
@@ -402,9 +438,13 @@ an empty review file can't silently mask evaluator failures. **The
 snippet is bash-only** (`shopt`): harness shells may be zsh — run it
 via `bash -c '…'` (KIT-0056 retro):
 
+Both sides of this recipe are planning-repo paths — the glob reads the
+logs the trio wrote there, and the redirect writes the Gate 5 record
+beside them. Substitute the literal planning path for `"$PLANNING"`.
+
 ```bash
 shopt -s nullglob
-logs=(.adversarial/logs/<TASK-ID>-code-review-input--*.md)
+logs=("$PLANNING"/.adversarial/logs/<TASK-ID>-code-review-input--*.md)
 shopt -u nullglob
 if [ "${#logs[@]}" -eq 0 ]; then
     echo "ERROR: no evaluator logs found for <TASK-ID>" >&2

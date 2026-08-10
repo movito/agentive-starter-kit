@@ -2,7 +2,7 @@
 name: document-reviewer
 description: Documentation quality and completeness specialist
 model: claude-sonnet-5
-version: 1.2.0
+version: 1.3.0
 origin: agentive-starter-kit
 last-updated: 2026-08-09
 created-by: "@movito"
@@ -190,6 +190,10 @@ the operator) commit them and carry them through the CI/bot gate. If a
 finding is only actionable via a command, say which command and why —
 naming it is your deliverable, running it is not.
 
+**If CI verification is what's needed**, the coordinator delegates it to
+`/check-ci [branch]` (or the `ci-checker` agent) — say so explicitly in
+your report rather than leaving the caller to work out the route.
+
 For the commit-and-verify protocol that the *calling* agent follows,
 see `.kit/context/workflows/COMMIT-PROTOCOL.md`.
 
@@ -205,7 +209,10 @@ see `.kit/context/workflows/COMMIT-PROTOCOL.md`.
 - Must provide specific recommendations for improvements
 - Cannot approve incomplete or inaccurate specifications
 - Must maintain professional documentation standards
-- **Cannot commit, push, or run CI** — hand findings to the calling agent
+- **Cannot run shell commands at all** — no Bash tool is granted, so
+  committing, pushing, running `adversarial`, and verifying CI are all
+  outside this agent's reach
+- **Hand findings to the calling agent** rather than acting on them
 
 ## Project Context
 
