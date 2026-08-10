@@ -2,6 +2,20 @@
 
 > **Demoted to backlog (2026-08-08, tidy)**: F2 (modernize `launch` to native agent invocation) stays valid. F4 (consumer story) is DECIDED BY the phase 2 spec (KIT-0093) — the door switch determines what ships to consumers; check its verdict before promoting this.
 
+> **F2/F4 evidence (2026-08-10, live)**: the operator's `launch
+> feature-developer` habit failed in `~/Github/agentive-skills` (a
+> plugin-only, non-kit repo) — third occurrence of the launch-habit
+> gap. F2's open question is now ANSWERED: the current CLI supports
+> `claude --agent <agent>` natively ("Agent for the current session",
+> verified in `claude --help` 2026-08-10). The modernization path is
+> real: `launch` can exec `claude --agent <name>` instead of the
+> `--append-system-prompt` reconstruction, and the consumer story can
+> be "the command is `claude --agent <name>`; the menu is optional
+> sugar". Remaining before promoting: the operator's verdict on
+> whether the native form is ergonomic enough to retire the menu, or
+> whether a thin menu wrapper should ship (package CLI verb or plugin
+> command).
+
 **Status**: Backlog
 **Priority**: medium
 **Assigned To**: unassigned
