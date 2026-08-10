@@ -41,9 +41,11 @@ fi
 echo "TARGET_PATH=${TARGET_PATH:-<single-repo mode>}"
 ```
 
-In single-repo mode `TARGET_PATH` is empty; the repo root is what
-`git rev-parse --show-toplevel` prints — run it and read the path out of
-the output.
+That printed value IS the target root the rest of this document calls
+`$TARGET` — read it out of the output. When it prints
+`<single-repo mode>` the section is absent, and the target root is
+instead what `git rev-parse --show-toplevel` prints; run that and read
+its output the same way.
 
 - **Both `Path` and `GitHub` set** → split mode; the target root is the
   `Path` value.
@@ -77,7 +79,8 @@ single-repo mode too. Task specs are always read from the planning repo
 
 > **`$TARGET` is a placeholder, not a shell variable** — each Bash call
 > runs a fresh shell, so an assignment would not survive to the next
-> call. Resolve the root once above, then type the literal path into
+> call. Resolve the root once above, then type the literal path (quoted,
+> if it contains spaces) into
 > every command you issue.
 
 ## Step 1: Identify the task

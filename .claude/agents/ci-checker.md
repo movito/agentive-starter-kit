@@ -97,9 +97,10 @@ Then, from what that printed:
 shell variables** — each Bash tool call runs a fresh shell, so neither
 the `. target_repo.sh` above nor these fallback assignments survive to
 the next call. Resolve them once here, then substitute the literal text
-into every command you issue: `--repo owner/name` / `-C <path>` in split
-mode, and **nothing at all** in single-repo mode (so `gh run list …`
-runs bare against the current repo).
+into every command you issue: `--repo owner/name` / `-C <path>` (quote
+the path if it contains spaces) in split mode, and **nothing at all** in
+single-repo mode — delete the placeholder rather than leaving it empty,
+so `gh run list …` and `git branch …` run bare against the current repo.
 
 **Single-repo mode only** — verify `gh` is configured for the right repo:
 
