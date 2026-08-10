@@ -74,12 +74,28 @@ findings **rejected as non-reproducible** against the tree:
 Record: `.kit/context/reviews/KIT-0099-evaluator-review.md` (includes the
 input-scoping deviation and its rationale).
 
-## Bot status at handoff
+## Bot status at handoff — Gate 3 is PENDING, not passed
 
-Cursor Bugbot registered on the PR; CodeRabbit expected (23 threads landed
-on #4 — bots definitely run on this repo, contra the 2.0.0 handoff's
-unverified "no bots" claim, a lesson codified in this very release's
-`planner` change). Threads triaged before merge.
+- **Cursor Bugbot**: reviewed `68072c0`. **1 Low finding — real, and mine.**
+  Two consecutive `## Cross-Repo Mode` headings in `ci-checker`: the kit
+  backported that section in KIT-0097 F8 while the plugin already carried
+  the 2.0.0 restoration, and my three-way merge kept both. Fixed in
+  `5d9f01c` by dropping the older plugin-side block and keeping the kit's
+  (a strict superset — adds the no-Bash delegation path and uses the
+  file's `$GH_REPO_ARG` convention instead of a hardcoded `--repo`).
+  Thread replied. Swept all 27 shipped components for duplicate headings;
+  this was the only one. Guard re-verified green after the fix.
+- **CodeRabbit**: **no review submitted.** Its own reply states the
+  account has reached the Fair Usage review limit, next included review
+  ~49 min out (as of 20:53 UTC). The earlier "review in progress" note
+  never resolved for the same reason. **This is a rate limit, not a clean
+  review** — do not read the absence of findings as approval.
+
+Operator's call before merge: either wait out the window and re-trigger
+with `@coderabbitai full review`, or merge on Bugbot + the mechanical
+verification (this being a mechanical sync whose content was already
+reviewed upstream on #120/#121, with a machine-verified acceptance
+criterion). Posted as a comment on the PR too.
 
 ## Remaining after merge (KIT-0099 step 5)
 
