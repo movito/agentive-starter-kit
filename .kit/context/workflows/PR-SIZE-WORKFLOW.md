@@ -11,6 +11,26 @@
 **< 500 additions per PR.** PRs under this threshold consistently receive fewer
 bot findings, require zero fix-commit rounds, and merge on first human review.
 
+**PROSE IS STRICTER — the review-surface budget (added 2026-08-10).**
+For instruction prose (agent definitions, skills, workflow docs),
+review cost grows SUPERLINEARLY with fresh surface — measured on the
+2026-08 arc: 294 / 378 / 1,116 / 2,157 prose-diff lines drew 5 / 8 /
+13 / 42 threads, and prose findings converge serially (each round's
+findings only exist after the previous fix). Two consequences:
+
+1. **Split the TASK, not just the PR**: predicted diff over ~500
+   prose lines or ~6 instruction files → sequential SMALL tasks, each
+   its own PR. Stacking a prose omnibus reviews the same prose plus
+   per-PR fixed costs — stacked PRs are for independently-reviewable
+   CODE layers, not for partitioning prose.
+2. Remember the pair tax: agent-body fixes land in BOTH variant files
+   (feature-developer/-f5, planner/-f5) — every prose fix doubles.
+   Budget for the doubled figure.
+
+Evidence: PR #118 (enumerated-mechanical, 27 files) drew 1 thread;
+PR #120 (prose omnibus, +2,157) drew 42 threads and a nine-round
+self-churn loop (see bot-triage SKILL §Circuit breaker).
+
 ---
 
 ## Planner Responsibilities

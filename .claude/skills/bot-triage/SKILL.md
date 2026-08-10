@@ -136,6 +136,22 @@ Each round follows the same loop:
 
 **Never resolve a finding just because it's "too many rounds."** If the finding is legitimate and improves the code, fix it. The retro tracks total rounds and threads — that's where cascade patterns surface and get addressed at the root cause (e.g., better spec templates, new pattern registry entries).
 
+**CIRCUIT BREAKER — self-inflicted churn (added 2026-08-10, KIT-0097
+PR #120: nine rounds, later rounds dominated by defects introduced by
+earlier fixes).** The no-round-cap policy assumes rounds CONVERGE. When
+they stop converging, stop the loop:
+
+- After each round, classify the new findings: original-defect vs
+  **in text this review already changed** (self-inflicted).
+- When a round's findings are MAJORITY self-inflicted — or from round
+  4 onward regardless — STOP. Do not run another fix round. Resolve or
+  disposition what's open, report honestly, and escalate to the
+  operator: the remaining repair belongs to a FRESH session with a
+  tight enumerated scope (context contamination is real; nine rounds
+  of patch-on-patch degrades the very edits being reviewed).
+- This does not license leaving legitimate findings unfixed — it moves
+  the fixing to a session that can still see straight.
+
 ### Batching discipline (prevents cascade amplification)
 
 - **Triage ALL threads before fixing ANY** — don't fix one and push, then discover three more
