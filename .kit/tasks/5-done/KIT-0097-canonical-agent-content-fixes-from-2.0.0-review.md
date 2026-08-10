@@ -1,12 +1,23 @@
 # KIT-0097: Canonical .claude/ content fixes from the 2.0.0 plugin-release review
 
+> **Disposition (planner, 2026-08-10)**: MERGED via PR #120 (9258f8d)
+> after a nine-round review that triggered the circuit breaker this
+> incident then created (bot-triage SKILL). All 55 threads resolved;
+> the F1 ordering fix and pair-identity are now pinned by contract
+> tests. Remaining confidence work on the round-churned sections is
+> **KIT-0098** (fresh-eyes repair); the 2.0.1 release is **KIT-0099**.
+> Retro: waived by planner — the session's round-9 report plus the
+> process codification (1cee2fb: review-surface budget, self-churn
+> circuit breaker) ARE the record; a conventional retro from a
+> context-contaminated session would add noise, not signal.
+
 > **Evaluation**: arch-review-fast REVISION_SUGGESTED 2026-08-09 with a
 > single minor finding (PII-rider placement), accepted via rationale in
 > R2 — gate passed with disposition. (First run was an empty-response
 > model flake; rerun succeeded.) Log:
 > `.adversarial/logs/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review--arch-review-fast.md`
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high — operator requested asap follow-up (2026-08-09); every
 finding below is live in the kit's canonical agents/commands/skills, and the
 2.0.0 plugin ships them verbatim (behavior-parity rule, KIT-0096)
