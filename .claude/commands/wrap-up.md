@@ -1,7 +1,7 @@
 ---
 description: Finalize session — run retro, move the task to done, and confirm completion
-version: 2.0.0
-last-updated: 2026-07-28
+version: 2.1.0
+last-updated: 2026-08-09
 distribution: builder-only
 ---
 
@@ -109,17 +109,39 @@ If the PR is not yet merged, skip this step — the task stays in `4-in-review`.
 
 ## Step 4: Confirm completion
 
-Print a summary for the user:
+Print a summary for the user. **The header line depends on what Step 3
+actually did** — pick the variant that matches, never print COMPLETE by
+default.
+
+**Variant A — PR merged, Step 3 ran `project complete`:**
 
 ```text
 🔬 <AGENT-NAME> | Task: <TASK-ID> — COMPLETE
 
-PR: <PR-URL>
+PR: <PR-URL> (merged)
+Task: 5-done
+Review starter: .kit/context/<TASK-ID>-REVIEW-STARTER.md
+Retro: .kit/context/retros/<TASK-ID>-retro.md
+```
+
+**Variant B — PR not merged, Step 3 skipped:**
+
+```text
+🔬 <AGENT-NAME> | Task: <TASK-ID> — IN REVIEW (not complete)
+
+PR: <PR-URL> (<open|closed|draft>) — not merged
+Task: stays in 4-in-review until the PR merges
 Review starter: .kit/context/<TASK-ID>-REVIEW-STARTER.md
 Retro: .kit/context/retros/<TASK-ID>-retro.md
 
 Ready for human review.
 ```
+
+Variant B is the common case at the end of an implementation session —
+the session ends when the PR is *ready*, not when it is merged. Printing
+COMPLETE there tells the operator work is finished when it is still
+awaiting their review, and the task file itself says `4-in-review`,
+so the summary would contradict the tree.
 
 Every line is a claim — verify before printing it. If Step 2's `/retro`
 failed, replace the retro line with the failure, e.g.:
@@ -127,8 +149,5 @@ failed, replace the retro line with the failure, e.g.:
 ```text
 Retro: NOT WRITTEN — /retro failed (<one-line reason>)
 ```
-
-Same for the task move: if Step 3 skipped because the PR is unmerged,
-say the task stays in `4-in-review` rather than implying completion.
 
 Remind the user to `/rename` the session with the task ID for easy `/resume` later.

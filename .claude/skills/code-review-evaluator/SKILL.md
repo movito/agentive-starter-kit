@@ -1,23 +1,74 @@
 ---
-description: How to run the adversarial code-review evaluator after bot rounds and before human review
+description: How to run the adversarial code-review evaluator once local tests pass, before the PR opens
 user-invocable: false
-version: 1.3.0
+version: 1.8.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-07-05
+last-updated: 2026-08-09
 created-by: "@movito with planner2"
 ---
 
 # Code-Review Evaluator
 
-Run after bot triage rounds are complete, before human review. Uses a different model family (o1/Gemini) to find edge-case bugs that bots and Claude miss.
+Run **after local tests pass and before the PR opens**. Uses a different
+model family (o1/Gemini) to find edge-case bugs that bots and Claude miss.
+
+## Where the artifacts live — resolve this FIRST
+
+Every artifact below (inputs, logs, the Gate 5 record) belongs to the
+**planning repo**, because that is where Gate 5 and `agentive preflight`
+look for them. In split mode the session runs in the TARGET worktree, so
+a relative `.kit/…` or `.adversarial/…` path lands in the wrong repo —
+the record is written, the gate still fails, and nothing says why.
+
+Resolve the planning root once, before running anything. Read the path
+out of the output; do not assign it (`$()` is forbidden by the agents'
+Shell Rules):
+
+```bash
+git rev-parse --show-toplevel
+```
+
+- **Single-repo mode**: that path IS the planning repo.
+- **Split mode**: take the planning path from the handoff's Session
+  topology instead — the target worktree's CLAUDE.md has no
+  `## Target Repository` section.
+
+Confirm it by checking the two markers that always exist in a planning
+repo, then ensure the review directory is present — a fresh planning repo
+can legitimately lack that empty directory, and both the skip record and
+the Step 4 aggregation write into it:
+
+```bash
+ls /literal/planning/path/.kit/tasks /literal/planning/path/CLAUDE.md
+mkdir -p /literal/planning/path/.kit/context/reviews
+```
+
+If the first `ls` fails, the root is wrong — stop and ask rather than
+creating directories in the wrong repo.
+
+**`"$PLANNING"` below is a placeholder for that literal path, not a shell
+variable** — each Bash call is a fresh shell, so an assignment would not
+survive to the next call. Type the path.
+
+**Run the evaluators from the planning repo** (`cd` there first, or pass
+absolute paths). `agentive review-input` writes
+`.adversarial/inputs/…` relative to its working directory, so running it
+elsewhere splits inputs and logs across two repos.
 
 ## When to Run
 
-- After all bot threads are resolved (0 unresolved)
-- Before requesting human code review
-- **Exception — doc-heavy tasks run the evaluator BEFORE PR open** (see
-  "Ordering for Doc-Heavy Tasks" below)
+- **Local tests green** — evaluate working code, not a draft
+- **Before opening the PR**, for all task types that do not meet the
+  skip conditions in "When to Skip" below (see "Ordering" for why the
+  pre-open position applies regardless of task type)
+- Do NOT wait for CI or for bot threads: the signals are independent, and
+  every evaluator-driven rewrite made after PR open burns a bot round
+
+The ordering rule and the skip policy answer different questions: skip
+decides *whether* the trio runs, ordering decides *when*. A skipped
+evaluation still needs its persisted record (see "Always document the
+skip") — that record is what Gate 5 checks.
 
 ## Ordering: Run the Evaluator Trio Before PR Open (all tasks)
 
@@ -71,8 +122,15 @@ You may skip the evaluator when ALL of these conditions are true:
 
 ```bash
 echo "# Evaluator skipped: <N lines logic, no new functions, no external integrations" \
-  > .kit/context/reviews/<TASK-ID>-evaluator-review.md
+  > "$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md
 ```
+
+> **The record goes in the PLANNING repo.** Gate 5 reads it there. In
+> split mode the session runs in the TARGET worktree, so a relative
+> `.kit/…` path writes to the wrong repo — the record is never found and
+> preflight fails a gate the work actually satisfied. Resolve the
+> planning root once and substitute the literal path (it does not
+> survive between tool calls).
 
 **When in doubt, run it.** The fast variant costs ~$0.004 and takes 30 seconds.
 
@@ -211,7 +269,40 @@ until the operator uncommented the key). Verify before running the trio:
 the secret off the transcript. Never add or commit a key — surface the
 gap to the operator instead.
 
-If the required API key is missing, fall back to another evaluator. If none of the keys are set, document the failure and proceed to human review.
+If the required API key is missing, fall back to another evaluator.
+
+### No keys at all — the gate does NOT auto-open
+
+If **none** of the provider keys are set, the trio cannot run and Gate 5
+has no evidence. This is a blocked gate, not a passed one. Do not
+"document the failure and proceed" on your own authority — a documented
+failure is still a failure, and a session that self-certifies past it
+removes the gate for every future task that copies the pattern.
+
+Required sequence:
+
+1. **Write the failed record** at
+   `"$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md`
+   (the PLANNING repo — see above), first line
+   naming the mode explicitly:
+
+   ```text
+   Mode: FAILED — no provider API keys present (GEMINI_API_KEY,
+   OPENAI_API_KEY, ANTHROPIC_API_KEY all unset); trio not run.
+   ```
+
+2. **Run the self-review checklist** (`.claude/skills/self-review/SKILL.md`)
+   in full and record its output in the same file. It is a partial
+   substitute, and the record must say so — never present it as a trio.
+3. **Surface the gap to the coordinator/operator and STOP.** State that
+   Gate 5 is unsatisfied, that the cause is missing keys (an environment
+   problem they can fix in a minute), and ask whether to wait for a key
+   or proceed without the gate.
+4. **Proceed to human review only on explicit approval**, and record
+   that approval — who approved, when — in the review record.
+
+The one thing that must never happen is a review record that reads like
+a gate was satisfied when no evaluator ran.
 
 **Loading `.env` in unattended/worktree runs**: use the POSIX dot form
 inside `bash -c`, not the `source` keyword — the worktree-isolation
@@ -354,9 +445,13 @@ an empty review file can't silently mask evaluator failures. **The
 snippet is bash-only** (`shopt`): harness shells may be zsh — run it
 via `bash -c '…'` (KIT-0056 retro):
 
+Both sides of this recipe are planning-repo paths — the glob reads the
+logs the trio wrote there, and the redirect writes the Gate 5 record
+beside them. Substitute the literal planning path for `"$PLANNING"`.
+
 ```bash
 shopt -s nullglob
-logs=(.adversarial/logs/<TASK-ID>-code-review-input--*.md)
+logs=("$PLANNING"/.adversarial/logs/<TASK-ID>-code-review-input--*.md)
 shopt -u nullglob
 if [ "${#logs[@]}" -eq 0 ]; then
     echo "ERROR: no evaluator logs found for <TASK-ID>" >&2
@@ -369,7 +464,7 @@ fi
         cat "$log"
         echo
     done
-} > .kit/context/reviews/<TASK-ID>-evaluator-review.md
+} > "$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md
 ```
 
 Include this file in your next commit. The same recipe appears in

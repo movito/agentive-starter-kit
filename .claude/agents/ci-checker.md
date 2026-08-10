@@ -2,9 +2,9 @@
 name: ci-checker
 description: CI/CD pipeline status verification specialist
 model: claude-sonnet-5
-version: 1.0.0
+version: 1.7.0
 origin: agentive-starter-kit
-last-updated: 2026-07-03
+last-updated: 2026-08-09
 created-by: "@movito"
 tools:
   - Bash
@@ -30,7 +30,79 @@ Always begin your responses with your identity header:
 
 ## Pre-flight Check (IMPORTANT)
 
-Before checking CI status, verify `gh` is configured for the correct repo:
+**Detect the topology FIRST** — the origin check below is only valid in
+single-repo mode.
+
+**Use the canonical parser rather than hand-rolling a `grep`** — it
+resolves `CLAUDE.md`, extracts the fields, validates the GitHub value as
+`owner/name`, and builds the argument macros for you:
+
+```bash
+if ! . scripts/core/lib/target_repo.sh 2>/dev/null; then
+    echo "target_repo.sh unavailable — using the manual fallback below" >&2
+else
+    target_repo_init || exit 1   # bad owner/name format: report and stop
+
+    # The helper does NOT reject a half-filled section (verified
+    # 2026-08-09): with `Path` but no `GitHub` it returns 0, sets
+    # GIT_DIR_ARG and leaves GH_REPO_ARG EMPTY — so `git` would target
+    # the other repo while `gh` silently queries the planning repo.
+    # Split mode needs BOTH. Check it here:
+    if { [ -n "$TARGET_PATH" ] && [ -z "$TARGET_REPO" ]; } || \
+       { [ -n "$TARGET_REPO" ] && [ -z "$TARGET_PATH" ]; }; then
+        echo "ERROR: '## Target Repository' has only one of Path/GitHub — split mode needs both" >&2
+        exit 1
+    fi
+fi
+echo "TARGET_REPO=${TARGET_REPO:-<single-repo mode>}"
+```
+
+After it returns:
+
+- **Both `TARGET_REPO` and `TARGET_PATH` set → split mode.** SKIP the
+  origin check entirely and go to Cross-Repo Mode. In a planning/target
+  split the planning repo's `origin` legitimately differs from the repo
+  CI runs on, so the comparison below reports a "mismatch" that is the
+  correct configuration — telling the user to run `gh repo set-default`
+  there would point `gh` at the wrong repo. (`/check-ci` documents the
+  same skip.) Use `$GH_REPO_ARG` unquoted on every `gh` call.
+- **Both empty → single-repo mode**, below.
+- **Exactly one set, or a bad `owner/name` → STOP.** The section is
+  malformed, not a topology. Report which field is missing and ask the
+  operator to fix `CLAUDE.md`. Do not fall back to single-repo mode:
+  that would run the origin check against a repo the project has
+  declared is not where CI lives.
+
+**Manual fallback** (consumer projects without `scripts/core/lib/` — the
+`if !` above routes here instead of exiting). Reading the values is not
+enough: you must SET the routing variables the rest of this document
+uses, or every command below silently falls back to the planning repo.
+
+```bash
+# Read both fields; require BOTH plus an owner/name-shaped GitHub value.
+sed -n '/^## Target Repository/,/^## /p' CLAUDE.md | grep -E '^\- \*\*(Path|GitHub)\*\*:'
+```
+
+Then, from what that printed:
+
+- **Both present, GitHub matches `owner/name`** → set both macros:
+
+  ```bash
+  GH_REPO_ARG="--repo <owner/name>"
+  GIT_DIR_ARG="-C <path>"
+  ```
+
+- **Neither present** → single-repo mode: leave BOTH empty
+  (`GH_REPO_ARG=""`, `GIT_DIR_ARG=""`), so the unquoted expansions below
+  vanish and the commands run against the current repo.
+- **Exactly one present, or a malformed GitHub value** → STOP. Do not
+  continue with partial routing.
+
+Because these are set in a fallback the same shell-freshness rule
+applies: substitute the literal values into each command rather than
+relying on the assignment surviving to the next Bash call.
+
+**Single-repo mode only** — verify `gh` is configured for the right repo:
 
 ```bash
 # Check if gh defaults to the right repo
@@ -48,12 +120,45 @@ fi
 **If repos don't match**, tell the user to run `gh repo set-default` before proceeding.
 This is a common issue after cloning from the starter kit.
 
+## Cross-Repo Mode
+
+In a planning/target split, **CI runs on the target repo, not the planning
+repo's `origin`**. The origin/default-repo check above and the bare `gh run
+list` below would otherwise query the wrong repo. Before verifying:
+
+- Prefer `./scripts/core/verify-ci.sh [branch] --wait` — it auto-detects the
+  `## Target Repository` section in `CLAUDE.md` and routes `gh` to the target
+  repo (falling back to single-repo mode when no such section exists).
+- **Without Bash permission, use `/check-ci [branch]` instead.** The
+  script above is a shell command, so a caller that cannot run Bash
+  (a background sub-agent — see the Interactive-use-only note at the top
+  of this file) cannot invoke it. The slash command does the same
+  cross-repo detection and is the delegation path for those callers.
+- If invoking `gh` directly, use the `$GH_REPO_ARG` the Pre-flight Check
+  already populated — **unquoted**, so it expands to the flag pair in
+  split mode and to nothing in single-repo mode, letting one command
+  serve both:
+
+  ```bash
+  gh $GH_REPO_ARG run list --branch <branch> --limit 5
+  ```
+
+  Read the branch from the target-repo working tree
+  (`git $GIT_DIR_ARG branch --show-current`, same unquoted rule).
+
+Single-repo projects are unaffected — everything below runs against the
+current repo as-is.
+
 ## Verification Protocol
 
 ### 1. Get Recent Workflow Runs
+
 ```bash
-# Get the latest workflow runs for the branch (include headSha and event)
-gh run list --branch <branch-name> --limit 5 --json status,conclusion,workflowName,createdAt,headSha,event,databaseId
+# Get the latest workflow runs for the branch (include headSha and event).
+# $GH_REPO_ARG is UNQUOTED on purpose: it expands to `--repo owner/name`
+# in split mode and to nothing in single-repo mode, so this one line is
+# correct in both. A bare `gh run list` here would query the planning repo.
+gh $GH_REPO_ARG run list --branch <branch-name> --limit 5 --json status,conclusion,workflowName,createdAt,headSha,event,databaseId
 ```
 
 **Parse the results**:
@@ -79,7 +184,7 @@ If all workflows are `status: "completed"`, report results immediately:
 If workflows are still running (`status: "in_progress"` or `status: "queued"`):
 ```bash
 # Watch a specific workflow run (with timeout)
-gh run watch <run-id> --exit-status
+gh $GH_REPO_ARG run watch <run-id> --exit-status
 ```
 
 **Polling Strategy**:
@@ -156,17 +261,19 @@ Always provide:
 ## GitHub CLI Commands Reference
 
 ```bash
+# Every command takes $GH_REPO_ARG unquoted — correct in both topologies.
+
 # List recent runs
-gh run list --branch <branch> --limit 10
+gh $GH_REPO_ARG run list --branch <branch> --limit 10
 
 # Watch a specific run (blocks until complete or timeout)
-gh run watch <run-id> --exit-status
+gh $GH_REPO_ARG run watch <run-id> --exit-status
 
 # Get detailed run info
-gh run view <run-id> --json status,conclusion,jobs
+gh $GH_REPO_ARG run view <run-id> --json status,conclusion,jobs
 
 # Check workflow status
-gh run view <run-id> --json conclusion
+gh $GH_REPO_ARG run view <run-id> --json conclusion
 ```
 
 ## Timeout Handling
@@ -204,7 +311,7 @@ Please verify CI status for branch "feature/add-ci-checker" after my recent push
 ```
 
 Your response workflow:
-1. **ACTUALLY CALL the Bash tool** to run `gh run list --branch feature/add-ci-checker --limit 5 --json status,conclusion,workflowName,createdAt,headSha,event,databaseId`
+1. **ACTUALLY CALL the Bash tool** to run `gh $GH_REPO_ARG run list --branch feature/add-ci-checker --limit 5 --json status,conclusion,workflowName,createdAt,headSha,event,databaseId` (after the Pre-flight Check populated `$GH_REPO_ARG`)
 2. Parse the JSON results - filter to `event: "push"` only
 3. Check status of filtered workflows:
    - If all `status: "completed"` → Report conclusions immediately (PASS/FAIL)

@@ -5,7 +5,7 @@
 **Date**: 2026-08-09
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/3-in-progress/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review.md`
 **Status**: Ready — operator wants it asap; the spec IS the finding list
 (21 findings by file with thread links + 2 backports + 2 riders)
 **Evaluation**: gate passed with one dispositioned minor finding —
@@ -18,7 +18,8 @@ record in the spec header
 
 - Worktree: `~/Github/ask-worktrees/KIT-0097`, branch
   `feature/KIT-0097-canonical-content-fixes` — created and provisioned
-  by the planner; task file already `3-in-progress`
+  by the planner; task file started in `3-in-progress`, moved to
+  `4-in-review` at handoff
 - VERIFY, never create: `git branch --show-current` must show the
   branch above before your first edit; if not, STOP and ask
 - Likely ONE PR (content fixes) + the 2.0.1 release step afterward
@@ -110,6 +111,6 @@ Reply on agentive-skills#4's summary thread that the closure shipped.
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review.md`
+**Task File**: `.kit/tasks/4-in-review/KIT-0097-canonical-agent-content-fixes-from-2.0.0-review.md`
 **Finding provenance**: movito/agentive-skills#4 threads (linked per finding in the spec)
 **ADR**: KIT-ADR-0025 (generalization), KIT-ADR-0028 (fix-here-then-release)

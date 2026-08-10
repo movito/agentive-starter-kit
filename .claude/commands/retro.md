@@ -1,9 +1,9 @@
 ---
 description: Run a structured session retrospective after completing a task
-version: 1.1.0
+version: 1.3.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-04-17
+last-updated: 2026-08-09
 created-by: "@movito with planner2"
 ---
 
@@ -135,20 +135,34 @@ List action items as unchecked checkboxes. The planner will check them off as th
 
 Every incident surfaced in this retro (a failed environment assumption, a
 tool that behaved differently than documented, a silent drift) must close
-one of three ways — name the choice per incident:
+one of four ways — name the choice per incident:
 
 1. **Doctor check** — a new or extended check in `scripts/core/doctor.d/`
    (cite the incident in the check's header comment), or
-2. **Not-checkable note** — an explicit comment in the nearest related
+1. **Not-checkable note** — an explicit comment in the nearest related
    check explaining why this cannot be cheaply verified (see the
    CodeRabbit-quota note in `80-bot-presence.sh` for the pattern), or
-3. **Triage-guide entry** — when the incident is diagnosable only at
+1. **Triage-guide entry** — when the incident is diagnosable only at
    failure time, document the symptom→cause mapping where the failing
-   step's docs live.
+   step's docs live, or
+1. **Escalated — awaiting planner classification** — for an incident that
+   genuinely fits none of the first three. Write it into the retro under
+   this heading with (a) what happened, (b) why each of the other three
+   does not fit, and (c) the specific question the planner must answer to
+   classify it. The retro file IS the persistence; the planner's answer
+   converts it to one of the first three at processing time.
 
 This rule is what keeps `project doctor` an incident map instead of a
-2026-07-14 snapshot. "None of the above" is not an option; if an incident
-genuinely fits nowhere, say so explicitly and let the planner decide.
+2026-07-14 snapshot. **"None of the above" is not an option, and neither
+is "let the planner decide" as a resting state** — an incident parked on
+someone else's judgment with no record is an unclassified incident, which
+is exactly what this rule exists to prevent. State 4 is the *recorded*
+form of handing it to the planner, which is why it counts as a closure
+and a bare "the planner should decide" does not.
+
+An escalation without (a), (b), and (c) is not a closure — it is the
+incident going unrecorded with extra words. Every incident leaves this
+retro in one of the four states, named explicitly.
 
 ## Step 4: Save the retro
 
@@ -198,7 +212,10 @@ Use this exact structure for the file content:
 
 ### Incident Closure
 
-[Per incident: doctor check added/extended | not-checkable note (where) | triage-guide entry (where) — or "No environment incidents this session."]
+[Per incident, one of the four states: doctor check added/extended (where) |
+not-checkable note (where) | triage-guide entry (where) | ESCALATED —
+awaiting planner classification (what happened / why 1-3 don't fit / the
+question the planner must answer) — or "No environment incidents this session."]
 ```
 
 After saving, confirm the file path so the planner can find and review it.

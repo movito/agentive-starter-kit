@@ -2,9 +2,9 @@
 name: upgrader
 description: Raises a project from one agentive-workflow plugin version to a newer one, and refreshes local agent model: pins on a model rollout. Automates docs/PLUGIN-UPGRADE-GUIDE.md. Ongoing upgrades only — refuses initial migration, script/manifest upgrades, and CLAUDE.md identity edits.
 model: claude-sonnet-5
-version: 1.1.0
+version: 1.5.0
 origin: agentive-starter-kit
-last-updated: 2026-07-06
+last-updated: 2026-08-09
 created-by: "@movito"
 tools:
   - Bash
@@ -162,11 +162,73 @@ gh api 'repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-
   never interpolate it into a destructive command — the update in Phase 3 is a
   fixed string — but this keeps the Provenance stamp and comparison honest.)
 
-**Idempotence check (deterministic, not a judgment):** compare the bare
+**Idempotence check FIRST (deterministic, not a judgment):** compare the bare
 `X.Y.Z` token from each source (extract it — e.g. `grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
 — so quoting/whitespace differences between the CLI and the API don't cause a
 false mismatch). If current == target → print "nothing to do" and **stop here.**
 No further phases run, no changes made.
+
+This gate comes **before** the ref probe below on purpose: the probe calls
+GitHub, so running it first would make a no-op re-run fail on a network
+error, a missing tag, or a rate limit — turning "nothing to do" into a halt.
+
+### Resolve the refs (only reached when there IS an upgrade to do)
+
+**Resolve `TARGET_REF` once, here, and reuse it everywhere below.** Phase 2a
+fetches per-version content and needs a ref that actually names the target —
+`ref=main` only happens to equal the target when the operator is upgrading to
+the latest published version, and a blind `v` prefix breaks on marketplaces
+that tag without one. Determine the working refs by probing rather than
+assuming:
+
+```bash
+# Probe a version's ref: try the v-prefixed tag, the bare tag, then main,
+# and accept a ref only when the plugin.json AT THAT REF reports the version.
+# Escape the dots first — unescaped, `.` matches any character, so a probe
+# for 1.2.3 would also accept a plugin.json reporting "1X2X3".
+resolve_ref() {
+  local want="$1" want_re ref body err
+  want_re="${want//./\\.}"
+  for ref in "v$want" "$want" main; do
+    # Capture the API result and its status BEFORE decoding. In a pipeline
+    # the exit status is grep's, so an auth/network/rate-limit failure would
+    # look identical to "this ref does not publish that version" — and for
+    # CURRENT_REF that silently disables reconciliation.
+    if body=$(gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/.claude-plugin/plugin.json?ref=$ref" --jq '.content' 2>&1); then
+      if printf '%s' "$body" | base64 -d \
+           | grep -qE "\"version\"[[:space:]]*:[[:space:]]*\"$want_re\""; then
+        printf '%s\n' "$ref"; return 0
+      fi
+      continue                      # reachable, but a different version
+    fi
+    case "$body" in
+      *"Not Found"*|*404*) continue ;;   # genuine missing ref → try the next
+      *) echo "HALT: gh api failed for ref '$ref' — $body" >&2; return 2 ;;
+    esac
+  done
+  return 1                          # every ref reachable, none matched
+}
+
+# Exit 2 = an API failure, NOT "unresolvable" — halt rather than treating
+# it as a missing ref.
+TARGET_REF=$(resolve_ref "$TARGET"); rc=$?
+[ "$rc" -eq 2 ] && exit 1
+[ "$rc" -ne 0 ] && TARGET_REF=""
+CURRENT_REF=$(resolve_ref "$CURRENT"); rc=$?
+[ "$rc" -eq 2 ] && exit 1
+[ "$rc" -ne 0 ] && CURRENT_REF=""
+echo "TARGET_REF=${TARGET_REF:?could not resolve a ref whose plugin.json reports $TARGET}"
+echo "CURRENT_REF=${CURRENT_REF:-<unresolved>}"
+```
+
+- `main` is used only when main genuinely IS that version.
+- **`TARGET_REF` unresolved → HALT** one line: "could not resolve a ref
+  publishing `<TARGET>` — the version may not be published yet, or the tag
+  scheme changed." Do not fall back to `main` anyway; that silently reconciles
+  against the wrong version, which is the failure this agent exists to prevent.
+- **`CURRENT_REF` unresolved is NOT fatal** — an installed version can predate
+  the marketplace's tagging. It only disables the name-diff fallback in Phase
+  2a; say so plainly there rather than substituting `main`.
 
 ---
 
@@ -182,9 +244,21 @@ Fetch the new version's CHANGELOG to learn what was **added**, **removed**, or
 your own judgment):
 
 ```bash
-gh api 'repos/movito/agentive-skills/contents/plugins/agentive-workflow/CHANGELOG.md?ref=main' \
-  --jq '.content' | base64 -d
+# Capture the API result FIRST — in a pipeline the exit status is the
+# LAST command's, so `gh api ... | base64 -d` reports success even when
+# gh failed, and an auth/network error becomes an "empty CHANGELOG".
+if ! raw=$(gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/CHANGELOG.md?ref=$TARGET_REF" --jq '.content' 2>&1); then
+    case "$raw" in
+        *"Not Found"*|*404*) echo "NO_CHANGELOG" ;;   # genuine 404 → use the fallback below
+        *) echo "HALT: gh api failed — $raw" >&2; exit 1 ;;
+    esac
+else
+    printf '%s' "$raw" | base64 -d
+fi
 ```
+
+`$TARGET_REF` is the ref resolved in Phase 1 — the one whose `plugin.json`
+actually reports the target version. Do not substitute `main` here.
 
 **If the `gh api` call fails** (network, auth, rate limit, HTTP 5xx) → **HALT**
 one line: "could not fetch the target CHANGELOG — fix the network or name the
@@ -194,14 +268,32 @@ diff. Missing reference updates is the failure mode this agent exists to prevent
 **If the call returns HTTP 404** (no CHANGELOG published for this version), fall
 back to listing the artifact directories at each ref and diffing the names:
 
+`CURRENT_REF` was resolved alongside `TARGET_REF` in Phase 1. Diff ref
+against ref, never a hand-built `v`-prefixed string. **If `CURRENT_REF`
+came back unresolved, skip this fallback** — do not substitute `main`,
+which would diff against the wrong version.
+
+> **No CHANGELOG *and* no `CURRENT_REF` → HALT, do not proceed to ACK.**
+> Reconcile detection is the reason this agent exists: without either
+> source you cannot know which artifacts were renamed or removed, so an
+> upgrade would leave stale namespaced references behind — silently, and
+> exactly where the operator trusts you to have looked. Halt in one
+> line: "no reconciliation source (no CHANGELOG at `<TARGET_REF>`, and
+> `<CURRENT>` is not a resolvable ref) — name the reconcile scope
+> explicitly or publish the missing tag." Proceed to Phase 3 only with
+> an operator-supplied scope.
+
 ```bash
+# Same pipeline trap as above: capture, check, THEN sort. A failed
+# listing must not read as "this directory is empty" — that would look
+# like every artifact was removed.
 for dir in commands agents skills; do
-  gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=v<TARGET>" \
-    --jq '.[].name' | sort > "/tmp/$dir-target.txt"
-  gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=v<CURRENT>" \
-    --jq '.[].name' | sort > "/tmp/$dir-current.txt"
+  tgt=$(gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=$TARGET_REF" --jq '.[].name') \
+    || { echo "HALT: could not list $dir at $TARGET_REF" >&2; exit 1; }
+  cur=$(gh api "repos/movito/agentive-skills/contents/plugins/agentive-workflow/$dir?ref=$CURRENT_REF" --jq '.[].name') \
+    || { echo "HALT: could not list $dir at $CURRENT_REF" >&2; exit 1; }
   echo "--- $dir ---"
-  diff "/tmp/$dir-current.txt" "/tmp/$dir-target.txt"
+  diff <(printf '%s\n' "$cur" | sort) <(printf '%s\n' "$tgt" | sort)
 done
 ```
 
@@ -445,16 +537,63 @@ To revert an upgrade:
      Do **not** sweep unrelated changes into the stash/discard — confirm each
      file belongs to the reconcile before acting.
 
-1. Set `agentive-workflow@<previous>` in `CLAUDE.md` Provenance.
-2. Re-resolve to the pinned version:
+1. **Restore the previous version FIRST — do not restamp Provenance yet.**
+
+   > ⚠️ `claude plugin update agentive-workflow@agentive-skills` resolves
+   > **marketplace-latest**, not `<previous>`. It is the same unpinned command
+   > that performed the upgrade — running it here re-installs the version you
+   > are trying to leave. It is not a rollback mechanism.
+
+   The supported local path is the retained plugin cache: it keeps prior
+   version directories for a short window (~7 days at time of writing —
+   **verify; this may change**), so an immediate rollback is local and fast.
+
+   **There is no kit-owned command for this restore, and you must not
+   invent one.** The cache layout and any pinned-install syntax belong to
+   the plugin runtime, and the hard rule above forbids hand-editing
+   `~/.claude/plugins/cache/…`. Check what the installed CLI actually
+   offers before doing anything:
 
    ```bash
-   claude plugin update agentive-workflow@agentive-skills
+   claude plugin --help
+   claude plugin install --help 2>/dev/null || true   # a version-pinning install form may exist
    ```
 
-The plugin cache retains prior version directories for a short window
-(~7 days at time of writing — **verify; this may change**), so an immediate
-rollback is local and fast.
+   If a supported pinned-install or restore path exists, use it. If none
+   does, this is the operator-intervention case in step 2 — say so
+   plainly rather than improvising a filesystem edit.
+
+2. **Verify the restore before touching `CLAUDE.md`:**
+
+   ```bash
+   # Capture first: in a pipeline the status is grep's, so a failed
+   # `claude plugin list` that still emits output would read as success.
+   listing=$(claude plugin list) || {
+       echo "HALT: could not read 'claude plugin list' — rollback unverified" >&2
+       exit 1
+   }
+   printf '%s\n' "$listing" | grep -A3 -E 'agentive-workflow([@ (]|$)'
+   ```
+
+   Extract the bare `X.Y.Z` token (same normalization as Phase 1). Require
+   **exactly one** such token and require it to equal `<previous>`; zero
+   matches, several matches, or any other value all mean the rollback is
+   unverified. Leave Provenance untouched in every one of those cases.
+
+   - **Matches `<previous>`** → proceed to step 3.
+   - **Still shows the new version, or the cache window has expired** → the
+     rollback did **not** happen. **HALT and tell the operator plainly**: the
+     plugin is still on `<new>`, local rollback is unavailable (cache
+     evicted / no pinned-install path), and restoring `<previous>` requires
+     operator intervention — republishing `<previous>` as marketplace-latest,
+     or restoring the cache directory from a backup. Leave Provenance alone.
+
+3. **Only now** set `agentive-workflow@<previous>` in `CLAUDE.md` Provenance.
+
+The ordering is the point: Provenance is a claim about what is installed.
+Restamping it before the version is verified produces a `CLAUDE.md` that
+confidently states the wrong version — precisely the drift this agent exists
+to prevent.
 
 ---
 
