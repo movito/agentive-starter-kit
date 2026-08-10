@@ -74,28 +74,38 @@ findings **rejected as non-reproducible** against the tree:
 Record: `.kit/context/reviews/KIT-0099-evaluator-review.md` (includes the
 input-scoping deviation and its rationale).
 
-## Bot status at handoff — Gate 3 is PENDING, not passed
+## Bot status — both bots reviewed, all 12 threads resolved
 
-- **Cursor Bugbot**: reviewed `68072c0`. **1 Low finding — real, and mine.**
-  Two consecutive `## Cross-Repo Mode` headings in `ci-checker`: the kit
-  backported that section in KIT-0097 F8 while the plugin already carried
-  the 2.0.0 restoration, and my three-way merge kept both. Fixed in
-  `5d9f01c` by dropping the older plugin-side block and keeping the kit's
-  (a strict superset — adds the no-Bash delegation path and uses the
-  file's `$GH_REPO_ARG` convention instead of a hardcoded `--repo`).
-  Thread replied. Swept all 27 shipped components for duplicate headings;
-  this was the only one. Guard re-verified green after the fix.
-- **CodeRabbit**: **no review submitted.** Its own reply states the
-  account has reached the Fair Usage review limit, next included review
-  ~49 min out (as of 20:53 UTC). The earlier "review in progress" note
-  never resolved for the same reason. **This is a rate limit, not a clean
-  review** — do not read the absence of findings as approval.
+**Correcting my earlier interim note**: CodeRabbit *did* review. The Fair
+Usage rate-limit reply was real but transient — after the explicit
+`@coderabbitai full review` nudge it submitted **CHANGES_REQUESTED** at
+20:55 UTC. Gate 3 is passed, not pending.
 
-Operator's call before merge: either wait out the window and re-trigger
-with `@coderabbitai full review`, or merge on Bugbot + the mechanical
-verification (this being a mechanical sync whose content was already
-reviewed upstream on #120/#121, with a machine-verified acceptance
-criterion). Posted as a comment on the PR too.
+- **Cursor Bugbot** (`68072c0`): 1 Low finding — **real, and introduced by
+  this sync.** Two consecutive `## Cross-Repo Mode` headings in
+  `ci-checker`: the kit backported that section in KIT-0097 F8 while the
+  plugin already carried the 2.0.0 restoration, and my three-way merge
+  kept both. Fixed in `5d9f01c` (kept the kit's, a strict superset —
+  no-Bash delegation path + `$GH_REPO_ARG` convention vs a hardcoded
+  `--repo`). Swept all 27 shipped components; this was the only one.
+- **CodeRabbit**, 2 rounds, 11 threads. Of the substantive findings:
+  - **1 fixed here** — CHANGELOG lacked explicit `Added`/`Removed`/
+    `Renamed` categories. Valid and in scope: the upgrader agent *fetches*
+    this file to compute the reconcile diff, so an empty category must be
+    machine-readable, not inferred from prose. Fixed in `1a188ec`.
+  - **6 filed as kit follow-ups** — all verified kit-canonical before
+    filing; see `KIT-0099-KIT-FOLLOWUPS.md`. CodeRabbit itself twice
+    wrote "Apply the fix in agentive-starter-kit first, then resync this
+    plugin copy", which is KIT-ADR-0028 exactly.
+  - Remainder auto-resolved as already-addressed.
+
+Every thread carries a reply with its disposition and reasoning, including
+the declines. 12/12 resolved.
+
+**Worth knowing**: CodeRabbit independently found the same stale "Phase 6"
+reference I had already flagged in the PR body — the two audits converged.
+It also caught one thing I had not: the evaluator SKILL's "fall back to
+another evaluator" can silently escalate past the prose tier.
 
 ## Remaining after merge (KIT-0099 step 5)
 
@@ -107,7 +117,21 @@ criterion). Posted as a comment on the PR too.
 
 ## Follow-ups for the kit (not this PR)
 
-- Two "Phase 6" → "Phase 7" cross-refs in both `feature-developer` variants
-- `README.md` in agentive-skills claims the repo is private; it is public
-- `ci-checker`'s Cross-Repo Mode section still lives only in the plugin —
-  the standing backport candidate from #4
+Six kit-canonical defects, written up with verification and suggested
+fixes in **`.kit/context/KIT-0099-KIT-FOLLOWUPS.md`**:
+
+1. Stale "Phase 6" → "Phase 7" cross-refs (`feature-developer` pair)
+2. `gh run watch` has no duration timeout, but `ci-checker` documents a
+   10-minute limit
+3. `git commit --allow-empty` in `check-ci` can ship a dirty index
+4. `code-review-evaluator`'s key-missing fallback can escalate past the
+   prose tier
+5. Phase 5 Step 2's evaluator snippet reads as unconditional
+   (`feature-developer` pair)
+6. `wrap-up` prints an unverified review-starter path
+
+Plus, in the marketplace repo rather than the kit: `README.md` claims the
+repo is private; the API says public. Material to the PII decision.
+
+Note items 1 and 5 are **pair-rule** changes — both `feature-developer`
+variants must move together.
