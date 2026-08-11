@@ -1,6 +1,15 @@
 # KIT-0100: Canon fixes round 2 — the 2.0.1 follow-ups + plugin 2.0.2
 
-**Status**: Backlog
+> **SCOPE SPLIT (planner, 2026-08-11, at promotion — the
+> review-surface budget applied to this task's own growth)**: THIS
+> task = **F1–F6 + F8 + the 2.0.2 release** (enumerated mechanical
+> fixes, one PR). **F7, F9, F10 are NOT in scope here** — they are a
+> UX design pass across many surfaces and moved to **KIT-0101** (their
+> full text below stays as the source record; KIT-0101 references it).
+> Implementer: do not touch F7/F9/F10 surfaces beyond what F1–F6/F8
+> themselves require.
+
+**Status**: In Progress
 **Priority**: medium-high (six verified advisory defects, two
 pair-rule-bound; promote as the next canon cycle — after the
 operator's new-project test, or sooner if a defect bites)

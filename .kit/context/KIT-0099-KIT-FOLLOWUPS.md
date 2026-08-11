@@ -92,10 +92,28 @@ The file already legislates against exactly this — "Every line is a claim
 (`Retro: NOT WRITTEN — ...`) but not this one. Fix: same treatment,
 `NOT FOUND` when absent.
 
-## Also noted, outside the kit
+## Also noted, outside the kit — ✅ RESOLVED 2026-08-11
 
-`movito/agentive-skills` `README.md:7` claims "This repo is private";
+`movito/agentive-skills` `README.md:7` claimed "This repo is private";
 `gh api repos/movito/agentive-skills` reports `"private": false`. Material
 to the R2 PII decision (it is the sentence most likely to make the
 personal email in `plugin.json` / `marketplace.json` feel lower-stakes
-than it is). Fix belongs in the marketplace repo, not the kit.
+than it is).
+
+**Fixed in agentive-skills#6, merged `7b10dad`.** The README now states the
+repo is public, why (a plugin marketplace needs a reachable GitHub source),
+and that anything committed — including release metadata — is visible to
+anyone. Two residual claims found by sweeping the class repo-wide rather
+than stopping at the prompting line:
+
+- the install snippet's `# add this private marketplace (uses your GitHub
+  credentials)` — wrong twice over, since a public marketplace needs no
+  credentials; and
+- `CONSOLIDATION.md`, a dated 2026-05-21 rollout runbook from when the
+  marketplace was planned as private. Text kept intact as provenance with
+  a "historical record — not current state" note added, rather than
+  rewriting a dated document to be consistent with the present.
+
+CodeRabbit independently flagged the README/CONSOLIDATION inconsistency on
+that PR, converging on the same defect from the opposite direction, and
+approved the result.
