@@ -1,6 +1,6 @@
 ---
 description: Show active tasks, recent events, and project progress
-version: 1.1.0
+version: 1.1.1
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-11
@@ -14,7 +14,8 @@ other output or tool call:**
 
 > 🧭 `/status` — shows a read-only dashboard of active tasks, recent
 > commits, and project progress.
-> Reads: `.kit/tasks/` status folders, `git log` · Writes: nothing
+> Reads: `.kit/tasks/` status folders, `git log`, and the dispatch
+> event bus when installed (optional) · Writes: nothing
 > Source: [status.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/status.md) · Docs: [task folders](https://github.com/movito/agentive-starter-kit/blob/main/.kit/tasks/README.md)
 
 Show the current state of the project.

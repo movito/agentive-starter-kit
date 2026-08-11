@@ -1,7 +1,7 @@
 ---
 description: Create feature branch and start a task (move from todo to in-progress)
 argument-hint: "<TASK-ID>"
-version: 1.1.0
+version: 1.1.1
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-11
@@ -15,9 +15,11 @@ other output or tool call:**
 
 > 🧭 `/start-task` — creates the feature branch and moves the task
 > from todo to in-progress.
-> Reads: `.kit/tasks/2-todo/`, git state · Writes: a new
-> `feature/<TASK-ID>-…` branch, the task file's move to
-> `.kit/tasks/3-in-progress/`
+> Reads: `.kit/tasks/2-todo/`, git state · Writes: syncs local
+> `main` from origin (`git fetch`; `checkout main` + `pull` if not
+> already there), then a new `feature/<TASK-ID>-…` branch, the task
+> file's move to `.kit/tasks/3-in-progress/`, and an optional
+> fire-and-forget dispatch event
 > Source: [start-task.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/start-task.md) · Docs: [task folders](https://github.com/movito/agentive-starter-kit/blob/main/.kit/tasks/README.md)
 
 Start working on task `$ARGUMENTS`.
