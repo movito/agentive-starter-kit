@@ -1354,6 +1354,9 @@ class TestMissingDependencyInstructions:
         assert "Install complete:" in out
         # The exact contract lines (test_scaffold_acceptance docstring)
         assert "Install the lifecycle CLI: uv tool install agentive-kit" in out
+        # KIT-0101 R3: the missing CLI is the one gap that cascades —
+        # the tail must elevate it to the headline next step
+        assert "NEXT STEP (required): install the lifecycle CLI" in out
         assert "Install the agent plugin:" in out
         assert "claude plugin marketplace add movito/agentive-skills" in out
         assert "claude plugin install agentive-workflow@agentive-skills" in out

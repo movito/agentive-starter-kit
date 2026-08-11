@@ -900,10 +900,21 @@ run_doctor_tail() {
         echo "Install complete: shape=$SHAPE profile=$PROFILE → $TARGET"
         return 0
     else
-        echo "Doctor not run — install the lifecycle CLI (see above), then:"
-        echo "    cd $TARGET && agentive doctor"
+        echo "Doctor not run — the lifecycle CLI is not installed."
         echo
         echo "Install complete: shape=$SHAPE profile=$PROFILE → $TARGET"
+        echo
+        # KIT-0101 R3 (KIT-0100 F10b): a missing CLI is the ONE gap
+        # that cascades (no doctor, no evaluator provisioning, no
+        # preflight), so it is the HEADLINE next step, not an inline
+        # notice. The install line must stay byte-identical to the
+        # verify_packages one — tests/test_scaffold_acceptance.py
+        # pins both, and pins move with wording in the same commit.
+        echo "━━━ NEXT STEP (required): install the lifecycle CLI ━━━"
+        echo "Nothing below works until this is done — doctor, evaluator"
+        echo "provisioning, and preflight all run through it:"
+        echo "    Install the lifecycle CLI: uv tool install agentive-kit"
+        echo "    cd $TARGET && agentive doctor"
         return 0
     fi
     local verdict

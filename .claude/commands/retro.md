@@ -1,13 +1,22 @@
 ---
 description: Run a structured session retrospective after completing a task
-version: 1.3.0
+version: 1.4.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-08-09
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Session Retrospective
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/retro` — runs a structured session retrospective: scorecard
+> metrics, reflections, incident closure.
+> Reads: PR metrics via `gh`, this session's history · Writes:
+> `.kit/context/retros/<TASK-ID>-retro.md` in the planning repo
+> Source: [retro.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/retro.md) · Docs: [task completion protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md)
 
 Run a structured retro for the current task session. Collects metrics from the PR and produces formatted output for the planner to archive.
 

@@ -1,14 +1,23 @@
 ---
 description: Check if BugBot and CodeRabbit have posted reviews on the current PR
 argument-hint: "[optional PR number] [--repo owner/name]"
-version: 1.1.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-04-20
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Check Bot Review Status
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/check-bots` — reports whether BugBot and CodeRabbit have
+> reviewed the current PR's HEAD commit.
+> Reads: PR reviews/checks via `gh` (`scripts/core/check-bots.sh`),
+> `CLAUDE.md` target-repo pointer · Writes: nothing
+> Source: [check-bots.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/check-bots.md) · Docs: [review-fix workflow](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/REVIEW-FIX-WORKFLOW.md)
 
 Check bot review status for the current PR (or PR `$ARGUMENTS` if specified).
 

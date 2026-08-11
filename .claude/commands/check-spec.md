@@ -1,13 +1,22 @@
 ---
 description: Check Spec Compliance
-version: 1.7.0
+version: 1.8.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-08-09
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Check Spec Compliance
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/check-spec` — traces every task requirement to code and tests
+> before you commit; reports PASS/PARTIAL/FAIL.
+> Reads: the task spec in `.kit/tasks/`, the full diff and changed
+> files · Writes: optionally `.adversarial/inputs/<TASK-ID>-spec-compliance-input.md`
+> Source: [check-spec.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/check-spec.md) · Docs: [task completion protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md)
 
 Verify that all task requirements are implemented before committing.
 

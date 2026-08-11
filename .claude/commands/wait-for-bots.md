@@ -1,14 +1,23 @@
 ---
 description: Wait for BugBot and CodeRabbit to post reviews (polling with backoff)
 argument-hint: "[optional PR number]"
-version: 1.0.0
+version: 1.1.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Wait for Bot Reviews
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/wait-for-bots` — polls until BugBot and CodeRabbit have both
+> reviewed the PR's HEAD (30 s interval, 15 min timeout).
+> Reads: PR reviews via `scripts/core/wait-for-bots.sh` polling ·
+> Writes: nothing
+> Source: [wait-for-bots.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/wait-for-bots.md) · Docs: [review-fix workflow](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/REVIEW-FIX-WORKFLOW.md)
 
 Wait for both bots to review the current PR. Polls every 30 seconds for up
 to 15 minutes.

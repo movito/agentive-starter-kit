@@ -1,11 +1,20 @@
 ---
 description: Finalize session — run retro, move the task to done, and confirm completion
-version: 2.2.0
+version: 2.3.0
 last-updated: 2026-08-11
 distribution: builder-only
 ---
 
 # /wrap-up — Finalize Session
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/wrap-up` — finalizes the session: runs `/retro`, moves the
+> task to done if the PR merged, and prints a verified summary.
+> Reads: PR state via `gh`, task/starter files in `.kit/` · Writes:
+> the retro file, a task-file move (merged PRs only)
+> Source: [wrap-up.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/wrap-up.md) · Docs: [task completion protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md)
 
 > **Builder-side command**: operates the kit factory; not distributed
 > via `scripts/.core-manifest.json` (intended — see KIT-0077).
