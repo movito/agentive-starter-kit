@@ -113,7 +113,7 @@ KIT-0082 (acceptance surface collapses to install + doctor).
    script-carrying repo remaining is its retired `_old` archive, kept
    deliberately by the operator — an artifact, not a migration target.
    No upgrader migration was ever needed.
-4. Retire the sync machinery — **DONE**: KIT-0102 (PR #PENDING,
+4. Retire the sync machinery — **DONE**: KIT-0102 (PR #127,
    2026-08-11). Deleted the push Action (`sync-core-scripts.yml`), the
    pull engine (`sync_from_manifest.py`), the manifest
    (`.core-manifest.json`), the `project sync` subcommand, the
