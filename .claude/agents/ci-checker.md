@@ -321,14 +321,14 @@ that is the signal; a non-zero exit from `--exit-status` on a completed
 run is a real failure and must not be confused with it):
 1. Report current status of all workflows
 2. Note which are still running
-3. Suggest manual check with `$TIMEOUT gh run watch <run-id>`
+3. Suggest manual check with `$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status`
 4. Do NOT mark as failure - mark as TIMEOUT
 
 ## Edge Cases
 
 - **No workflows found**: Report "No CI workflows found for this branch" (empty results from gh run list)
 - **Workflow queued**: Report as "in progress", optionally wait with timeout
-- **Workflow still running**: Monitor with `$TIMEOUT gh run watch` or report current status
+- **Workflow still running**: Monitor with `$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status` or report current status
 - **Multiple workflow runs**: Report on the most recent ones (limit 5 is sufficient)
 - **workflow_run events**: Ignore these (they're triggered by other workflows completing, not pushes)
 - **Branch doesn't exist**: gh CLI will error, report error and exit
@@ -355,7 +355,7 @@ Your response workflow:
 2. Parse the JSON results - filter to `event: "push"` only
 3. Check status of filtered workflows:
    - If all `status: "completed"` → Report conclusions immediately (PASS/FAIL)
-   - If any `status: "in_progress"` → Monitor with `$TIMEOUT gh run watch` (optional, or report current state)
+   - If any `status: "in_progress"` → Monitor with `$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status` (optional, or report current state)
    - If no results → Report "No workflows found"
 4. Report with clear ✅ PASS / ❌ FAIL / ⏱️ TIMEOUT verdict
 
