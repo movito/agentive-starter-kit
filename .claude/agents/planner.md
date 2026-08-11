@@ -280,9 +280,11 @@ Two rules bind at authoring time, before the starter is written:
 1. **The branch is created at AUTHORING time**, not by the
    implementing agent. Run the ordering rule (WORKTREE-WORKFLOW.md):
    `./scripts/core/project start <TASK-ID>` on `main`, push, then
+
    ```bash
    git worktree add ../<worktrees-dir>/<TASK-ID> -b feature/<TASK-ID>-short-description
    ```
+
    (in split mode, `git -C <target_path> worktree add …` — the branch
    lives in the target repo). The starter's LAUNCH block names that
    worktree path and branch; its FIRST ACTIONS are verification only —

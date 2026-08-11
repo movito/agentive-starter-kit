@@ -2,9 +2,10 @@
 
 **Task**: `.kit/tasks/4-in-review/KIT-0101-cold-start-ux-contract.md`
 **PRs**: [#125](https://github.com/movito/agentive-starter-kit/pull/125)
-(R1–R4) + [#126](https://github.com/movito/agentive-starter-kit/pull/126)
-(R5, **stacked on #125** — merge #125 first; #126 retargets to main
-when the base branch is deleted)
+(R1–R4, **merged** `84e9286` after operator verdict 2026-08-11) +
+[#126](https://github.com/movito/agentive-starter-kit/pull/126)
+(R5, retargeted to `main` after the #125 merge — awaiting operator
+verdict)
 **Agent**: feature-developer-f5 · **Date**: 2026-08-11
 
 ## What shipped
@@ -42,8 +43,9 @@ when the base branch is deleted)
 - CI green both PRs (3.10/3.12/3.14 + lint); **drift guard
   red-by-design** until 2.0.3 ships post-merge.
 - CodeRabbit: #125 approved after round 1 (5/5 threads fixed in
-  `f4f8cd0`, all resolved); #126 skipped (non-main base) — may
-  re-review after retarget.
+  `f4f8cd0`, all resolved); #126 reviewed after the retarget to main
+  — round-1 threads (4) fixed and resolved in the bookkeeping-fix
+  commit this line ships in.
 - BugBot: pass on both.
 - Evaluator: fast-tier per policy, both PRs; all findings
   dispositioned — `.kit/context/reviews/KIT-0101-evaluator-review.md`.

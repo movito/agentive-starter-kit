@@ -12,7 +12,10 @@ prose-shaped diffs; KIT-0069/KIT-0073 precedent — the deep tier's
 spend buys nothing on prose sweeps). This record IS the Gate 5
 artifact; tree-grounded verification before merge is the real gate
 for this PR shape (bots + the R4 journey replay in the PR body).
-**Log**: `.adversarial/logs/KIT-0101-code-review-input--code-reviewer-fast.md`
+**Log**: raw log OVERWRITTEN by the PR 2 rerun (the evaluator input
+name is canonical, so `.adversarial/logs/KIT-0101-code-review-input--code-reviewer-fast.md`
+is mutable) — the PR 1 findings are transcribed in full below, which
+is the preserved evidence (CodeRabbit, PR #126).
 **Verdict**: CONCERNS — 3 findings, all dispositioned below.
 Per the prose-sweep rule, each was reproduced against the tree
 before disposition; none survived.
@@ -63,8 +66,9 @@ before disposition; none survived.
 **Input**: `--format diff --base feature/KIT-0101-cold-start-ux-contract`
 (R5-only diff, 3 files — prose)
 **Tier**: `code-reviewer-fast` only, same policy as PR 1.
-**Log**: `.adversarial/logs/KIT-0101-code-review-input--code-reviewer-fast.md`
-(overwritten per input name; verdict quoted here)
+**Log**: raw output archived (tracked, trailing-ws stripped) at
+`.kit/context/reviews/KIT-0101-pr2-code-reviewer-fast-raw.md` — the
+canonical `.adversarial/logs/` path is mutable per input name
 **Verdict**: CONCERNS — 3 findings, all reproduced against the tree,
 none survived:
 
