@@ -5,7 +5,7 @@
 **Date**: 2026-08-10
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/4-in-review/KIT-0099-release-plugin-201.md`
+**Task**: `.kit/tasks/5-done/KIT-0099-release-plugin-201.md`
 **Status**: Ready — KIT-0098 merged (c330c34); the canon is trusted;
 this is the mechanical sync that turns the drift guard green
 **Evaluation**: skipped (planner) — mechanical release; the spec's
@@ -78,6 +78,6 @@ main = the post-KIT-0097/0098 canon).
 
 ---
 
-**Task File**: `.kit/tasks/4-in-review/KIT-0099-release-plugin-201.md`
+**Task File**: `.kit/tasks/5-done/KIT-0099-release-plugin-201.md`
 **Recipe precedent**: KIT-0097 handoff §"The 2.0.1 release step"; the
 KIT-0096 transforms + agentive-skills#4 decision record
