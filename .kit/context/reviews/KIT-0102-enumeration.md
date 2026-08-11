@@ -65,11 +65,29 @@ reason from a name or a directory:
 2. **`scripts/core/VERSION`** has a second reader (`project version`)
    with its own test pin. It survives the manifest that also read it.
 
-### Re-home required (not a deletion)
+### The two guards inside `test_core_manifest.py` — resolved
 
-`tests/test_core_manifest.py` carries `test_library_pin_mirrors_agree`
-(referenced by `.adversarial/config.yml:56`) and the KIT-0057/KIT-0061
-guard that the `core_version` baked into `engine-consumer.sh`'s
-planning-shape heredoc matches `scripts/core/VERSION`. The manifest
-half dies; the **evaluator-pin mirror guard must survive** — re-home it
-rather than lose coverage.
+Both needed a decision before the file could be deleted. Neither was
+re-homed in the end, and both for evidenced reasons:
+
+1. **`test_library_pin_mirrors_agree`** (referenced by
+   `.adversarial/config.yml:56`) — **already deleted** in KIT-0079 via
+   KIT-0090 PR 3; line 233 of the file was its tombstone. The config
+   comment was pointing at a test that had not existed for two tasks.
+   No coverage to preserve; the comment was rewritten into an explicit
+   ⚠️ UNGUARDED note naming the manual invariant (the pins agree at
+   `v0.10.0`; moving the reader is KIT-0079's scope).
+2. **`TestBakedManifestVersion`** (KIT-0056/KIT-0061 — the baked
+   `core_version` in `engine-consumer.sh` must match
+   `scripts/core/VERSION`) — its **seam was removed by this task**.
+   Deleting both manifest heredocs took out every `core_version` in the
+   engine (lines 424 and 549 were the only two), so the desync it
+   guarded against is now structurally impossible rather than merely
+   untested. Operator confirmed letting it die after this interaction
+   was surfaced.
+
+**Preserved instead**: the door's ship-list contract, inverted. The
+manifest and engine moved from `PLANNING_MUST_SHIP` to
+`PLANNING_MUST_NOT_SHIP` (the KIT-0092 "absence is the contract"
+precedent), plus a new re-bootstrap sweep test — so a future edit
+cannot quietly reintroduce the copy-era seed.

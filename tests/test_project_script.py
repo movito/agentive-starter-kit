@@ -1113,6 +1113,26 @@ class TestCallerPathsRealTree:
         assert result.returncode == 1
         assert "scripts/optional/create-agent.sh not found" in result.stdout
 
+    def test_sync_reports_retirement_not_unknown_command(self, bare_tree):
+        """KIT-0102 (ADR-0028 phase 4): `sync` was retired, but it meant
+        two different things historically (Linear task sync, then core
+        sync). It must name its own retirement and point at both
+        replacements — never fall through to "Unknown command"."""
+        result = self._run(bare_tree, "sync")
+        assert result.returncode == 2
+        assert "Unknown command" not in result.stdout
+        assert "retired" in result.stdout.lower()
+        # both muscle memories get a destination
+        assert "plugin" in result.stdout.lower()
+        assert "linearsync" in result.stdout
+
+    def test_sync_retirement_ignores_extra_args(self, bare_tree):
+        """The old subcommand took flags (--dry-run, --tier, ...). They
+        must not change the retirement outcome."""
+        result = self._run(bare_tree, "sync", "--dry-run", "--tier", "scripts_core")
+        assert result.returncode == 2
+        assert "retired" in result.stdout.lower()
+
     def test_version_reads_core_version_file(self, bare_tree):
         (bare_tree / "scripts" / "core" / "VERSION").write_text(
             "9.9.9\n", encoding="utf-8"

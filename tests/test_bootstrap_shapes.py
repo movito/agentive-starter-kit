@@ -544,3 +544,38 @@ class TestProfiles:
         assert "### Python (consumer-tuned)" in text
         assert text.count("BEGIN KIT-LOCAL: kit-install") == 1
         assert text.count("BEGIN KIT-LOCAL: project-rules") == 1
+
+    def test_rebootstrap_sweeps_retired_sync_machinery(self, tmp_path):
+        """KIT-0102 (ADR-0028 phase 4): a consumer bootstrapped before the
+        retirement still carries the copy-sync machinery. RSYNC_BASE uses
+        --ignore-existing and the planning cp loop is [ ! -e ]-guarded, so
+        nothing removes those files on its own — the door sweeps them
+        explicitly. Without the sweep a re-bootstrapped repo keeps a dead
+        engine and a manifest pointing at it (code-reviewer-fast, KIT-0102).
+        """
+        target = make_consumer_dir(tmp_path, "app")
+        assert run_bootstrap(target).returncode == 0
+
+        # plant the retired machinery exactly as a pre-KIT-0102 consumer
+        # would carry it
+        stale = {
+            target / "scripts" / "core" / "sync_from_manifest.py": "stale engine\n",
+            target / "scripts" / ".core-manifest.json": '{"core_version": "2.1.0"}\n',
+            target
+            / "scripts"
+            / "core"
+            / "doctor.d"
+            / "60-push-sync-token.sh": "stale check\n",
+            target
+            / ".github"
+            / "workflows"
+            / "sync-core-scripts.yml": "stale workflow\n",
+        }
+        for path, body in stale.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(body, encoding="utf-8")
+
+        result = run_bootstrap(target)
+        assert result.returncode == 0, result.stderr
+        for path in stale:
+            assert not path.exists(), f"re-bootstrap left retired file: {path}"

@@ -357,6 +357,13 @@ rm -f "$TARGET/.claude/agents/planner2.md" \
     "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
 if [ "$SHAPE" = "planning" ]; then
+    # Sweep the retired copy-sync machinery (KIT-0102, ADR-0028 phase 4)
+    # out of consumers bootstrapped before it: the cp loop below is
+    # guarded by [ ! -e ] and doctor.d/ rsyncs with --ignore-existing, so
+    # neither would ever remove a stale file on its own.
+    rm -f "$TARGET/scripts/core/sync_from_manifest.py" \
+          "$TARGET/scripts/.core-manifest.json" \
+          "$TARGET/scripts/core/doctor.d/60-push-sync-token.sh"
     # lifecycle + gate machinery (enumerated)
     for rel in "${PLANNING_CORE[@]}"; do
         mkdir -p "$TARGET/scripts/core/$(dirname "$rel")"
@@ -421,7 +428,13 @@ else
 "${RSYNC_BASE[@]}" --exclude='cache/' --exclude='memories/' --exclude='claude-code/' \
     "$PROJECT_ROOT/.serena/" "$TARGET/.serena/"
 
-# scripts/core/ — shared scripts
+# scripts/core/ — shared scripts. The copy-sync machinery was retired in
+# KIT-0102 (ADR-0028 phase 4); RSYNC_BASE uses --ignore-existing, so a
+# consumer bootstrapped earlier would keep the dead engine and a manifest
+# pointing at it forever. Sweep both, same as the retired workflow above.
+rm -f "$TARGET/scripts/core/sync_from_manifest.py" \
+      "$TARGET/scripts/.core-manifest.json" \
+      "$TARGET/scripts/core/doctor.d/60-push-sync-token.sh"
 mkdir -p "$TARGET/scripts/core"
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/scripts/core/" "$TARGET/scripts/core/"
 
