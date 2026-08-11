@@ -2,9 +2,9 @@
 name: feature-developer
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring
 model: claude-opus-5
-version: 2.5.0
+version: 2.6.0
 origin: agentive-starter-kit
-last-updated: 2026-08-09
+last-updated: 2026-08-11
 created-by: "@movito (canonicalized from feature-developer-v6 v1.2.0 + v7 v2.1.1 local config)"
 ---
 

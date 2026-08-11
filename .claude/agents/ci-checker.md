@@ -2,9 +2,9 @@
 name: ci-checker
 description: CI/CD pipeline status verification specialist
 model: claude-sonnet-5
-version: 1.7.0
+version: 1.8.0
 origin: agentive-starter-kit
-last-updated: 2026-08-09
+last-updated: 2026-08-11
 created-by: "@movito"
 tools:
   - Bash

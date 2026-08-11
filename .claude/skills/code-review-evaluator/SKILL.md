@@ -1,10 +1,10 @@
 ---
 description: How to run the adversarial code-review evaluator once local tests pass, before the PR opens
 user-invocable: false
-version: 1.8.0
+version: 1.9.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-08-09
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 

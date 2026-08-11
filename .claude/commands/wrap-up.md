@@ -1,7 +1,7 @@
 ---
 description: Finalize session — run retro, move the task to done, and confirm completion
-version: 2.1.0
-last-updated: 2026-08-09
+version: 2.2.0
+last-updated: 2026-08-11
 distribution: builder-only
 ---
 

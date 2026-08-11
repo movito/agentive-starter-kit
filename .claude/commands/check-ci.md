@@ -1,9 +1,9 @@
 ---
 description: Verify GitHub Actions CI/CD status for a branch
-version: 1.4.0
+version: 1.5.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-08-09
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
