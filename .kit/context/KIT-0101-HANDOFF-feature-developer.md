@@ -6,7 +6,7 @@
 **From**: planner-f5
 **To**: feature-developer (f5 variant recommended — design judgment
 across many surfaces, journey-shaped acceptance)
-**Task**: `.kit/tasks/3-in-progress/KIT-0101-cold-start-ux-contract.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0101-cold-start-ux-contract.md`
 **Status**: Ready — every requirement operator-reported from live use
 this week; ships as plugin 2.0.3
 **Evaluation**: gate passed with three DECLINED-as-designed
@@ -112,7 +112,7 @@ agentive-workflow@agentive-skills` lands 2.0.3, both cited.
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0101-cold-start-ux-contract.md`
+**Task File**: `.kit/tasks/4-in-review/KIT-0101-cold-start-ux-contract.md`
 **Source texts**: KIT-0100 spec §F7/F9/F10 (operator-authored; the
 F10 format block is the design — implement verbatim)
 **Release recipe**: agentive-skills README §Maintenance
