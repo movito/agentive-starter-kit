@@ -35,6 +35,31 @@ anchors and suggested shapes; the KIT-0092/0099 precedent class
   door-adjacent commands). Pattern definition + sweep across the
   user-invocable set; internal skills (user-invocable: false) are out
   of scope. KIT-0078-family finding (cold-start transparency).
+- **F8 — interview-first agent launches carry the opening prompt
+  (operator hit live, 2026-08-11, native /new-project test)**: a
+  session cannot speak first, so every instruction that sends the
+  operator to an interview-first agent (project-intake, any
+  FIRST-TURN-CONTRACT agent) must include the initial message in the
+  launch command — `claude --agent project-intake "Begin the
+  intake."` — or state "the agent waits for your first message; type
+  begin". Sweep: new-project.md's session-handoff instructions, any
+  starter/handoff text that says "open a session with <agent>", and a
+  note in the FIRST-TURN CONTRACT blocks themselves acknowledging the
+  contract fires on the first USER message (the launch instruction
+  owns the gap). This is the KIT-0075 2026-07-29 silent-start
+  incident reproduced under native launch — the launch-instruction
+  fix shape is now confirmed; cross-reference it there.
+- **F9 — justify or collapse the new-session hop (operator, same
+  test)**: "it isn't clear why I can't just keep working in the
+  session that I ran /new-project in." The hard reason (launcher-era
+  persona fragility) died with native --agent; what remains is
+  fixed-at-launch agent identity + role isolation. Decide per hop:
+  where the current session CAN do the next step, the flow does it
+  inline; where a fresh session is genuinely required, the
+  instruction says WHY in one sentence (identity is per-session;
+  fresh context for a different contract). new-project.md is the
+  primary surface. KIT-0078-family (cold-start journey); the journey
+  replays must be re-run against the fix.
 - **Release 2.0.2**: the mechanical resync per the KIT-0099 recipe
   (drift guard red-by-design between kit merge and tag — the
   established rhythm). The follow-ups' "also noted" README item is
