@@ -82,9 +82,18 @@ abort, KIT-0057 class), 4 bot rounds (1 + 1 + 2), 12 commits
 
 - [x] STACKED-PR-WORKFLOW.md triage entry for the base-deletion
       closure (this commit)
-- [ ] Stack Notes line: commit calls need timeout ≥ 600 s (planner)
-- [ ] Operator ruling on `planner` vs `planner-f5` in the intake's
-      F10 closing command (planner)
+- [x] Stack Notes line: commit calls need timeout ≥ 600 s (planner —
+      landed in TESTING-WORKFLOW's duration note, the canonical home
+      for the figure; raised from 360 s with the measured-drift
+      rationale)
+- [x] Ruling on `planner` vs `planner-f5` in the intake's F10 closing
+      command (planner, 2026-08-11): **the shipped bare `planner`
+      STANDS.** The canonical planner is the documented default for
+      routine coordination — the -f5 variants' own headers say
+      "prefer the canonical planner"; the F10 mock's `planner-f5`
+      reflected this operator's personal habit, not the contract.
+      Consumers get the correct default; any operator may type the
+      -f5 form. No canon change.
 
 ## Incident Closure
 
