@@ -1,6 +1,6 @@
 # KIT-0101: The cold-start UX contract — transparency headers, session-hop audit, completion checklist
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high (every finding operator-reported from live use,
 2026-08-11; runs immediately after KIT-0100's mechanical cycle)
 **Type**: UX design pass (canon prose + door tail + intake contract)
