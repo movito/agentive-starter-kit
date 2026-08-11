@@ -48,6 +48,24 @@ binding rules)
   and its contract strings are pinned by
   `tests/test_scaffold_acceptance.py` — changed strings update the
   pins in the same commit (the test header's own rule).
+- **R5 — one authority for task starters (operator comparison,
+  2026-08-11: the kit planner's starters vs a consumer planner's —
+  "how can we standardize?")**: TASK-STARTER-TEMPLATE.md becomes the
+  SINGLE starter contract; the planner bodies' Phase 5 inline section
+  lists are replaced by a pointer to it (two authorities drift — the
+  consumer starter followed one, the kit planner's house style was a
+  third, uncodified). The template gains: (a) a REQUIRED CORE that no
+  starter may omit — task+handoff links, mission, acceptance-criteria
+  checkboxes (the observed gap: a mission without ACs has no
+  definition of done), planner-pre-created LAUNCH + verification-only
+  FIRST ACTIONS, recommended agent, session-rename footer; (b) the
+  codified house improvements (budget/gate citations where the task
+  warrants, out-of-scope, "the spec is authoritative" pointers);
+  (c) TWO worked examples — compact (small enumerated task) and full
+  (multi-PR) — with the proportionality rule: depth scales with the
+  task, the core never does. Ships to consumers via the plugin
+  release like everything else. If R1–R5 exceed the prose budget,
+  R5 is the designated split-out.
 - **R4 — journey replay as acceptance** (the KIT-0078/0093
   tradition): re-run the cold-start journey — /setup-preset →
   /new-project → intake → first planner session — against the fixed
