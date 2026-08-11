@@ -188,9 +188,22 @@ Two properties make this work, and both already hold:
   `planning`+`none` cell plus an untouched target. Nothing new in the
   shape × profile matrix.
 
-`--no-kit` is currently `adopt, single only`. **Rung 0 must become a
-first-class `--new` outcome** — under this rule it is not a
-convenience flag, it is the only acceptable shape for a new code repo.
+**Which door verb reaches rung 0** *(corrected 2026-08-11 after
+checking the door against `origin/main`)*: `--no-kit` is
+`adopt, single only`, enforced by explicit guards (`bootstrap:406-434`
+rejects it with `--shape planning` and with `--design-materials`). That
+is not a gap for the graduation path — **a Cowork prototype is always
+an existing folder, so it is adopted, never created.** `agentive adopt
+<folder> --no-kit` is already the legal rung-0 cell today; what it
+lacks is addressability (D1), not legality.
+
+The `--new` side is the smaller half: rung 0 for a *blank* project has
+no `--no-kit` equivalent, and should get one so "plain repo" is
+reachable from both verbs. Sized accordingly — a flag, not new
+machinery.
+
+Under this rule `--no-kit` is not a convenience flag; it is the only
+acceptable shape for a code repo that has no planning twin.
 
 **Rung 0 is a legitimate terminal state.** Most one-offs should stay
 there, and that reads as success, not as an unfinished install. Nothing
@@ -214,7 +227,14 @@ Supporting mechanics:
   unopposed.
 - **A WIP cap**: at most two open kit tasks not traceable to a live
   project. This ADR follows its own rule — it files tasks for D1 and D2
-  only; D3/D4/D6 are sequenced here and filed when D1 lands.
+  only (KIT-0101, KIT-0102); D3/D4/D6 are sequenced here and filed when
+  D1 lands.
+- **Demand-reduction mechanisms count as supporting this rule**, not as
+  exceptions to it. The review-surface budget (PR-SIZE-WORKFLOW) and the
+  self-churn circuit breaker (bot-triage SKILL), both added 2026-08-10
+  after PR #120's nine-round loop, are the same move at a smaller scale:
+  they cap work the kit generates *against itself*. KIT-0098 — the
+  fresh-eyes repair the breaker prescribed — is the pattern working.
 - **Automation replaces sweeps.** `doctor.d/`, `plugin-drift.yml`, and
   the retro-closure lifecycle rule (KIT-ADR-0027 P4b) are the standing
   substitute for periodic audits, not a complement to them. Every check
