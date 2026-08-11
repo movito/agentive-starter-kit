@@ -2,7 +2,7 @@
 name: ci-checker
 description: CI/CD pipeline status verification specialist
 model: claude-sonnet-5
-version: 1.8.0
+version: 1.9.0
 origin: agentive-starter-kit
 last-updated: 2026-08-11
 created-by: "@movito"
@@ -213,19 +213,29 @@ name was `gtimeout` exits 127 and watches nothing, which is the failure
 this resolution step exists to prevent.
 
 If neither resolves, do not fall back to a bare `gh run watch` — an
-unbounded watch is the hang this fix exists to prevent. Poll on an
-interval instead, routing the repo the same way as every other call:
+unbounded watch is the hang this fix exists to prevent. Poll in a bounded
+**loop** instead, routing the repo the same way as every other call. One
+`gh run view` is a snapshot, not a wait: stopping after it would report a
+still-running workflow as if that were the final verdict.
 
 ```bash
-gh $GH_REPO_ARG run view <run-id> --json status,conclusion
+# Same budget as the supervisor: 30 checks x 20s = 10 minutes.
+for i in $(seq 1 30); do
+    gh $GH_REPO_ARG run view <run-id> --json status,conclusion
+    # stop as soon as status is "completed"; otherwise keep waiting
+    sleep 20
+done
 ```
 
-Stop at your own deadline and state in the report that the watch was
-polled rather than supervised.
+If the loop runs out before the run completes, that is a **TIMEOUT**, the
+same verdict the supervisor's exit 124 produces — not a failure, and not
+a pass. Either way, state in the report that the watch was polled rather
+than supervised.
 
 **Polling Strategy**:
 - Check status every 20 seconds
-- Timeout: 10 minutes, enforced by the `timeout 600` wrapper above
+- Timeout: 10 minutes, enforced by the `$TIMEOUT` supervisor above (or
+  by the bounded poll loop when no supervisor is available)
 - If any workflow shows "failure" or "cancelled", report immediately
 
 ### 4. Report Results
