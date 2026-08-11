@@ -101,13 +101,21 @@ agent file — a contract is edited once, propagation ceases to exist);
 KIT-0087 F2 (the single install path becomes the package's job);
 KIT-0082 (acceptance surface collapses to install + doctor).
 
-**Migration is staged, not big-bang**:
-1. Publish the packages (plugin already exists; scripts package is new)
-2. Switch the door to package-install mode; new projects are born
-   packaged
-3. Move existing consumers via the upgrader agent
-4. Retire the sync machinery and close the dissolved tasks with
-   dispositions pointing here
+**Migration is staged, not big-bang** (status annotated 2026-08-11):
+1. Publish the packages — **DONE**: agentive-kit 0.1.0→0.3.1
+   (KIT-0090/0091/0092); plugin 2.0.0→2.0.3 (KIT-0096–0101)
+2. Switch the door to package-install mode — **DONE**: KIT-0093
+   (agentive-kit 0.3.0); new projects born packaged, acceptance-tested
+3. Move existing consumers via the upgrader agent — **CLOSED AS NO-OP**
+   (2026-08-11, evidence-based): the only live consumer
+   (ev-fast-charging-loads-planning) was re-intaken fresh through the
+   packaged door and verified (doctor 10/0/0, zero copies); the sole
+   script-carrying repo remaining is its retired `_old` archive, kept
+   deliberately by the operator — an artifact, not a migration target.
+   No upgrader migration was ever needed.
+4. Retire the sync machinery — **KIT-0102** (the dissolved-task
+   dispositions were already written at the 2026-08-08 backlog review,
+   ahead of schedule at operator direction)
 
 **Costs and risks, stated honestly**:
 - PyPI release discipline becomes real work (versioning, changelogs,
