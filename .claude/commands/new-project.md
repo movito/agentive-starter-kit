@@ -99,9 +99,21 @@ Open a new tab in this kit checkout and paste:
 
 Substitute real absolute paths into that message before printing it —
 never leave the placeholders for the operator to fill. You validated both
-paths a moment ago, so you have them. If either contains a double quote,
-switch the outer quoting to single quotes rather than emitting a line
-that breaks when pasted.
+paths a moment ago, so you have them.
+
+**Then shell-escape the finished message before you print it.** The
+operator pastes this line into a shell, so it is a command, not display
+text: inside double quotes `$(…)`, backticks and `\` still evaluate, and
+swapping to single quotes breaks on an apostrophe. Escape the whole
+argument properly — `printf '%q'` or your language's equivalent — rather
+than reasoning about which quote character to use:
+
+```bash
+printf 'claude --agent project-intake %q\n' "Begin the intake. Brief: $BRIEF  Code: $CODE"
+```
+
+Most paths need none of this; the ones that do would otherwise emit a
+line that breaks — or silently executes something — when pasted.
 
 **The opening message is part of the command, not decoration.** A session
 cannot speak first: `project-intake` runs a FIRST-TURN CONTRACT that

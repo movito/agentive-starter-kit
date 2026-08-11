@@ -121,11 +121,11 @@ fi
 
 ```bash
 # Split mode — route every call, using the `- **Path**:` value from CLAUDE.md:
-if git -C <target_path> diff --cached --quiet; then
-    git -C <target_path> commit --allow-empty -m "chore: retrigger CI" && git -C <target_path> push
+if git -C "<target_path>" diff --cached --quiet; then
+    git -C "<target_path>" commit --allow-empty -m "chore: retrigger CI" && git -C "<target_path>" push
 else
     echo "staged changes present — not retriggering; commit or stash these first:"
-    git -C <target_path> diff --cached --name-only
+    git -C "<target_path>" diff --cached --name-only
 fi
 ```
 

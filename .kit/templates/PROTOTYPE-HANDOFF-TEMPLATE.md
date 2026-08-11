@@ -27,8 +27,9 @@ preset-configured planning repo (`docs/CROSS-REPO-PATTERN.md`).
    claude --agent project-intake "Begin the intake. Brief: <path-to-brief.md>  Code: <path-to-code-folder>"
    ```
 
-   Add the project name to that message if you want to override the
-   default. It does the rest.
+   Replace both placeholders with your real paths, keeping them inside
+   the quotes. Add the project name to that message if you want to
+   override the default. It does the rest.
 
 The section list below mirrors what the kit's bootstrap agent extracts
 from design materials (`.claude/agents/bootstrap.md`, Step 1), plus the

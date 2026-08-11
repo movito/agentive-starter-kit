@@ -187,7 +187,7 @@ If workflows are still running (`status: "in_progress"` or `status: "queued"`):
 # the limit has to come from a supervisor — otherwise "default timeout:
 # 10 minutes" below is a claim nothing enforces and the call can block
 # indefinitely on a hung run.
-timeout 600 gh $GH_REPO_ARG run watch <run-id> --exit-status
+$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status
 ```
 
 Exit codes matter here, and three outcomes must not be conflated:
@@ -199,18 +199,29 @@ Exit codes matter here, and three outcomes must not be conflated:
 - any other non-zero — `--exit-status` saw a genuinely failed run. That
   IS a failure.
 
-Resolve the supervisor before using it, since it is absent by default on
-macOS (coreutils ships it as `gtimeout`):
+Resolve the supervisor ONCE, before any watch command, since it is absent
+by default on macOS (coreutils ships it as `gtimeout`):
 
 ```bash
 command -v timeout || command -v gtimeout || echo "no supervisor"
 ```
 
-Use whichever name resolves. If neither does, do not fall back to a bare
-`gh run watch` — an unbounded watch is the hang this fix exists to
-prevent. Poll `gh run view <run-id> --json status,conclusion` on an
-interval instead, stop at your own deadline, and state in the report that
-the watch was polled rather than supervised.
+**`$TIMEOUT` below is placeholder text, like `$GH_REPO_ARG`** — substitute
+whichever name resolved (`timeout 600` or `gtimeout 600`) into *every*
+watch command in this file. Writing a literal `timeout` where the resolved
+name was `gtimeout` exits 127 and watches nothing, which is the failure
+this resolution step exists to prevent.
+
+If neither resolves, do not fall back to a bare `gh run watch` — an
+unbounded watch is the hang this fix exists to prevent. Poll on an
+interval instead, routing the repo the same way as every other call:
+
+```bash
+gh $GH_REPO_ARG run view <run-id> --json status,conclusion
+```
+
+Stop at your own deadline and state in the report that the watch was
+polled rather than supervised.
 
 **Polling Strategy**:
 - Check status every 20 seconds
@@ -294,7 +305,7 @@ gh $GH_REPO_ARG run list --branch <branch> --limit 10
 
 # Watch a specific run (blocks until complete, or until the supervisor
 # fires — `gh run watch` has no duration flag; exit 124 means TIMEOUT)
-timeout 600 gh $GH_REPO_ARG run watch <run-id> --exit-status
+$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status
 
 # Get detailed run info
 gh $GH_REPO_ARG run view <run-id> --json status,conclusion,jobs
@@ -310,14 +321,14 @@ that is the signal; a non-zero exit from `--exit-status` on a completed
 run is a real failure and must not be confused with it):
 1. Report current status of all workflows
 2. Note which are still running
-3. Suggest manual check with `timeout 600 gh run watch <run-id>`
+3. Suggest manual check with `$TIMEOUT gh run watch <run-id>`
 4. Do NOT mark as failure - mark as TIMEOUT
 
 ## Edge Cases
 
 - **No workflows found**: Report "No CI workflows found for this branch" (empty results from gh run list)
 - **Workflow queued**: Report as "in progress", optionally wait with timeout
-- **Workflow still running**: Monitor with `timeout 600 gh run watch` or report current status
+- **Workflow still running**: Monitor with `$TIMEOUT gh run watch` or report current status
 - **Multiple workflow runs**: Report on the most recent ones (limit 5 is sufficient)
 - **workflow_run events**: Ignore these (they're triggered by other workflows completing, not pushes)
 - **Branch doesn't exist**: gh CLI will error, report error and exit
@@ -344,7 +355,7 @@ Your response workflow:
 2. Parse the JSON results - filter to `event: "push"` only
 3. Check status of filtered workflows:
    - If all `status: "completed"` → Report conclusions immediately (PASS/FAIL)
-   - If any `status: "in_progress"` → Monitor with `timeout 600 gh run watch` (optional, or report current state)
+   - If any `status: "in_progress"` → Monitor with `$TIMEOUT gh run watch` (optional, or report current state)
    - If no results → Report "No workflows found"
 4. Report with clear ✅ PASS / ❌ FAIL / ⏱️ TIMEOUT verdict
 
