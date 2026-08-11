@@ -1,17 +1,17 @@
 {
   "planner": {
-    "status": "available",
-    "current_task": null,
+    "status": "handoff_pending",
+    "current_task": "KIT-0101",
     "task_started": null,
-    "brief_note": "2026-08-11: KIT-0099 DONE \u2014 plugin 2.0.1 live (verified installed), drift guard GREEN on kit main (run 31464384207 cited), PII decision KEEP recorded + memorized (stop re-raising). Follow-ups routed: six canon defects -> KIT-0100 (backlog, next canon cycle -> 2.0.2; finding file .kit/context/KIT-0099-KIT-FOLLOWUPS.md IS the spec); marketplace README visibility fix -> agentive-skills#6 (planner-authored one-liner, awaiting operator merge). CHANNEL FULLY CURRENT: every gate before the operator's new-project test is cleared \u2014 checklist is /setup-preset then /new-project. KIT-0075 verdict pending operator experience (claude --agent verified native, bare name resolves, persona+pin honored, tools frontmatter enforced). Board: todo empty; backlog 6 (0072, 0074, 0085, 0094, 0095, 0100). Ahead: phase 3 spec (consumer migration), phase 4, ADR-0029 trigger.",
-    "details_link": ".kit/tasks/5-done/KIT-0099-release-plugin-201.md",
+    "brief_note": "2026-08-11: KIT-0100 DONE \u2014 plugin 2.0.2 live (verified installed), drift guard green (cited), all six 2.0.1 follow-ups + F8 opening-prompt sweep closed; bots improved two fixes (--only structural guard adopted after empirical verification; bounded poll loop). Retro waived \u2014 completion report is the record; insights extracted (structural-impossibility-over-check-then-act; version-bumps-with-content + roster guard; incomplete-sweep 3rd occurrence). Cleanup done. QUEUE: KIT-0101 next (cold-start UX contract, R1-R5 incl. operator-specified completion checklist + starter standardization; evaluated, dispositions in spec) \u2014 awaiting operator go for handoff+starter; ships as 2.0.3. Backlog 4: 0072, 0074, 0085, 0094+0095. Ahead: phase 3 spec (consumer migration \u2014 NOTE the EV project was re-intaken fresh 2026-08-11 and is already packaged-shape, doctor 10/0/0, so phase 3's first-migration target may now be moot; re-scope phase 3 to any remaining pre-packaged consumers or close as no-op), phase 4 (sync retirement), ADR-0029 trigger.",
+    "details_link": ".kit/tasks/2-todo/KIT-0101-cold-start-ux-contract.md",
     "handoff_file": null
   },
   "feature-developer": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "No active assignment. Next likely: phase 3 spec on operator go, or KIT-0100 canon cycle.",
+    "brief_note": "No active assignment. Next: KIT-0101 (cold-start UX contract) on operator go.",
     "details_link": null,
     "handoff_file": null
   },
