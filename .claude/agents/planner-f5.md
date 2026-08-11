@@ -2,9 +2,9 @@
 name: planner-f5
 description: Planning and coordination agent — task lifecycle, evaluation, handoff, cross-repo aware (Fable 5 variant)
 model: claude-fable-5
-version: 1.0.0
+version: 1.1.0
 origin: agentive-starter-kit
-last-updated: 2026-07-04
+last-updated: 2026-08-11
 created-by: "@movito (Fable-5 fork of planner v2.0.0)"
 ---
 
@@ -269,37 +269,32 @@ Update `.kit/context/agent-handoffs.json` with the new assignment:
 ## Phase 5: Assignment
 
 Produce a task starter message for the user to hand to the
-implementation agent in a new tab. Use
-`.kit/templates/TASK-STARTER-TEMPLATE.md`.
+implementation agent in a new tab.
 
-Required sections:
+**`.kit/templates/TASK-STARTER-TEMPLATE.md` is the SINGLE starter
+authority** — its required core (header links, mission, acceptance
+criteria as checkboxes, time estimate, LAUNCH block, verification-only
+FIRST ACTIONS, recommended agent, session-rename footer), its house
+improvements, its proportionality rule, and a compact and a full
+worked example all live there. This section deliberately repeats none
+of that list — two authorities drift (KIT-0101 R5).
 
-1. **Header**: Task ID, title, links to task file + handoff file
-2. **Overview**: 2–3 sentences + mission statement
-3. **Acceptance Criteria**: 5–8 checkboxes (Must Have)
-4. **Success Metrics**: quantitative + qualitative
-5. **Time Estimate**: total + phase breakdown
-6. **Notes**: evaluation status, key dependencies, repo topology
-   reminder (point at planning vs. target repo paths)
-7. **LAUNCH + FIRST ACTIONS** — the branch is created at AUTHORING
-   time, not by the implementing agent (template `:363-364`: "the
-   worktree already exists — never `checkout -b`"). Before writing the
-   starter, run the ordering rule (WORKTREE-WORKFLOW.md):
+Two rules bind at authoring time, before the starter is written:
+
+1. **The branch is created at AUTHORING time**, not by the
+   implementing agent. Run the ordering rule (WORKTREE-WORKFLOW.md):
    `./scripts/core/project start <TASK-ID>` on `main`, push, then
    ```bash
    git worktree add ../<worktrees-dir>/<TASK-ID> -b feature/<TASK-ID>-short-description
    ```
    (in split mode, `git -C <target_path> worktree add …` — the branch
    lives in the target repo). The starter's LAUNCH block names that
-   worktree path and branch; its FIRST ACTIONS are VERIFICATION only:
-   ```bash
-   git branch --show-current   # expect: feature/<TASK-ID>-… — if not, STOP
-   ```
-8. **Footer**: Recommended agent name (typically `feature-developer`),
-   plus the session-name line — every starter ends by suggesting:
-   *"Rename the session to `<TASK-ID> <short task name>`"* (operator
-   convention: named sessions are findable for /resume and in session
-   lists).
+   worktree path and branch; its FIRST ACTIONS are verification only —
+   the template's contract: never `checkout -b` in a session.
+2. **The footer convention is unconditional** — every starter ends by
+   suggesting: *"Rename the session to `<TASK-ID> <short task name>`"*
+   (operator convention: named sessions are findable for /resume and
+   in session lists).
 
 Present the starter to the user with a one-line summary: *"Task starter
 ready — invoke `<agent-name>` in a new tab."*
