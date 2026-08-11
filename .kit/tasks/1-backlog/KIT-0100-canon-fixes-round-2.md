@@ -60,7 +60,24 @@ anchors and suggested shapes; the KIT-0092/0099 precedent class
   fresh context for a different contract). new-project.md is the
   primary surface. KIT-0078-family (cold-start journey); the journey
   replays must be re-run against the fix.
-- **Release 2.0.2**: the mechanical resync per the KIT-0099 recipe
+- **F10 — the intake must not end "ready" while the door left
+  outstanding instructions (operator hit live, 2026-08-11, first real
+  packaged intake)**: the door correctly printed "install the
+  lifecycle CLI" (agentive-kit was never globally installed — the kit
+  repo's in-tree source masked the gap), but the intake's completion
+  summary said "Next action: open a planner tab … start from the
+  backlog" with no mention of it — two true statements reading as a
+  contradiction, and the missing CLI silently cascaded (evaluator
+  install couldn't run; TASK_PREFIX unset). Fixes: (a) the intake's
+  Step 5 summary must RELAY the door's doctor tail + any printed
+  install commands verbatim (the kit-side spec already says this —
+  verify the plugin body kept it) and must not print a
+  ready-to-plan next action while the doctor has FAILs — instead:
+  "resolve these, re-run `agentive doctor`, THEN open the planner";
+  (b) the door's final tail should elevate a missing `agentive` CLI
+  from an inline notice to the headline next step (it is the one gap
+  that cascades). Resolved live: CLI installed, evaluators
+  provisioned, prefix set, doctor 10/0/0.
   (drift guard red-by-design between kit merge and tag — the
   established rhythm). The follow-ups' "also noted" README item is
   ALREADY handled (agentive-skills#6, 2026-08-11).
