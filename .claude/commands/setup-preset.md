@@ -19,7 +19,8 @@ other output or tool call:**
 > your setup-door preset, so future project creation runs on your
 > answers.
 > Reads: `./scripts/local/bootstrap --help`, any existing preset ·
-> Writes: `<kit-parent>/agentive-config/preset` (secrets by path
+> Writes: `preset` under `$AGENTIVE_KIT_CONFIG_DIR` when set;
+> otherwise `<kit-parent>/agentive-config/preset` (secrets by path
 > reference only — never values)
 > Source: [setup-preset.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/setup-preset.md) · Docs: [starting a project](https://github.com/movito/agentive-starter-kit/blob/main/docs/STARTING-A-PROJECT.md)
 

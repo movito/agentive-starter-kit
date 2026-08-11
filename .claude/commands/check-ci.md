@@ -13,7 +13,7 @@ created-by: "@movito with planner2"
 other output or tool call:**
 
 > 🧭 `/check-ci` — verifies GitHub Actions status for a branch and
-> reports a PASS/FAIL/IN-PROGRESS verdict.
+> reports PASS, FAIL, IN PROGRESS, or MIXED.
 > Reads: workflow runs via `gh` (`scripts/core/verify-ci.sh`),
 > `CLAUDE.md` target-repo pointer · Writes: nothing (unless you ask
 > it to retrigger CI, which it announces first)

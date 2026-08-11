@@ -16,8 +16,9 @@ other output or tool call:**
 > 🧭 `/triage-threads` — fetches all review threads on the PR,
 > presents a fix/resolve triage table, and (after your confirmation)
 > applies the verdicts.
-> Reads: PR threads via `gh` / `agentive review-helper` · Writes:
-> after confirmation only — commits, thread replies/resolutions
+> Reads: PR threads via `gh` / `agentive review-helper`, `CLAUDE.md`
+> target-repo pointer · Writes: after confirmation only — commits
+> pushed to the PR branch, thread replies/resolutions on GitHub
 > Source: [triage-threads.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/triage-threads.md) · Docs: [review-fix workflow](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/REVIEW-FIX-WORKFLOW.md)
 
 Triage all unresolved review threads on the current PR (or PR `$ARGUMENTS` if specified).

@@ -12,8 +12,9 @@ other output or tool call:**
 
 > 🧭 `/wrap-up` — finalizes the session: runs `/retro`, moves the
 > task to done if the PR merged, and prints a verified summary.
-> Reads: PR state via `gh`, task/starter files in `.kit/` · Writes:
-> the retro file, a task-file move (merged PRs only)
+> Reads: PR state via `gh`, `CLAUDE.md` target-repo pointer, the
+> current branch, task/starter files in `.kit/` · Writes: the retro
+> file, a task-file move (merged PRs only)
 > Source: [wrap-up.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/wrap-up.md) · Docs: [task completion protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md)
 
 > **Builder-side command**: operates the kit factory; not distributed

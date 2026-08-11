@@ -17,9 +17,11 @@ other output or tool call:**
 
 > 🧭 `/new-project` — interviews you in plain language and creates
 > your new project, via the setup door or the intake agent.
-> Reads: `./scripts/local/bootstrap --help`, your operator preset ·
-> Writes: the new project's directory (door route) — nothing in this
-> repo
+> Reads: `./scripts/local/bootstrap --help`, your operator preset;
+> on the prototype route, your brief file and code folder (to
+> validate them) · Writes: the new project's directory (door route);
+> the intake route only prints a handoff — nothing in this repo
+> either way
 > Source: [new-project.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/new-project.md) · Docs: [starting a project](https://github.com/movito/agentive-starter-kit/blob/main/docs/STARTING-A-PROJECT.md)
 
 Create a new project from this kit — the front door to the factory
