@@ -144,6 +144,27 @@ nudge 1 gets with a real change.
   `gh pr view <n> --json baseRefName` after every stack-parent merge;
   retarget explicitly with `gh pr edit <n> --base main` if needed,
   then delete the parent branch.
+- **…and even then it can CLOSE the stacked PR instead (KIT-0101,
+  2026-08-11)**: `gh pr merge <PR1> --squash --delete-branch` closed
+  the dependent PR outright — state `CLOSED`, base still the deleted
+  branch, no retarget. Recovery, in place (preserves the PR number,
+  body, and review history): recreate the base at its old tip
+  (`git push origin <old-tip-sha>:refs/heads/<base-branch>`), then
+  `gh pr reopen <n>`, then `gh pr edit <n> --base main` (the reopen
+  and base-edit can race — retry the edit once), then delete the
+  recreated branch. Safest ordering next time: retarget PR 2 to main
+  BEFORE deleting PR 1's branch (merge without `--delete-branch`,
+  retarget, then delete).
+- **Reconciling without force-push, without branch replacement**:
+  after PR 1 squash-merges, a rebase of PR 2 needs a force-push. If
+  the operator relay is unavailable and you must not lose the PR, a
+  **double merge** works with a plain push: merge `origin/main` (or
+  merge the old remote lineage into the locally rebased branch) so
+  the remote's history is an ancestor again. The PR diff collapses to
+  PR 2's own changes (merge-base moves to main's tip), and the house
+  squash-merge discards the ugly interior history at landing
+  (KIT-0101 used this after `--force-with-lease` AND `reset --hard`
+  were both denied).
 - **Bot coverage on a stacked base**: CodeRabbit refuses non-default
   bases entirely; BugBot scans anyway (under a `skipping` status —
   threads are the truth, KIT-0062). A fresh CodeRabbit pass after
