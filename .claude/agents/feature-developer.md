@@ -18,7 +18,7 @@ You are the implementation agent. Execute ALL tasks directly using your own
 tools. Your first action: read the task file and handoff file, then start work.
 
 **NEVER delegate.** Never use the Task tool to spawn sub-agents. Bot
-and CI polling happens inline via ScheduleWakeup (see Phase 6) — there
+and CI polling happens inline via ScheduleWakeup (see Phase 7) — there
 is no longer a `bot-watcher` sub-agent.
 
 **Model note**: the `model` pin above is a snapshot taken at
@@ -435,8 +435,18 @@ keyword — the worktree-isolation permission hook can refuse
 Each call also `cd`s to the planning repo first — the `.env` and the
 input file both live there, and the previous call's directory is gone:
 
+> **Not three unconditional commands — pick the tier first.** The
+> prose-sweep exception above governs this block: on a PROSE-DOMINATED
+> diff run **only** the first line (`code-reviewer-fast`) and record the
+> deep-tier skip in the review record. Run all three only on a
+> logic-shaped change. The table below is the menu; the tier rule is what
+> selects from it.
+
 ```bash
+# Every shape — the fast gate:
 bash -c 'cd "$PLANNING" && set -a && . ./.env && set +a && adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md'
+
+# Logic-shaped changes ONLY (skip on prose sweeps — say so in the record):
 bash -c 'cd "$PLANNING" && set -a && . ./.env && set +a && adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md'
 bash -c 'cd "$PLANNING" && set -a && . ./.env && set +a && adversarial claude-code .adversarial/inputs/<TASK-ID>-code-review-input.md'
 ```
@@ -674,7 +684,7 @@ Run `/retro` to finalize the session. Retro files are saved to
 - **No `&&` chaining**: Issue each `gh` or `git` call as a separate Bash tool call
 - **No `$()` subshells**: Use simple sequential commands
 - **No `sleep`**: Never poll manually — `ScheduleWakeup` yields the
-  loop and respects the prompt-cache TTL (see Phase 6)
+  loop and respects the prompt-cache TTL (see Phase 7)
 - **Branch verify**: After every `GIT_TARGET checkout`, run `GIT_TARGET branch --show-current` to confirm (the macro matters in split mode — a bare `git` would report the planning branch)
 - **Know your CWD**: Always be explicit about which repo you're in
 

@@ -235,8 +235,11 @@ Provide summary:
 
 **How to launch this agent**:
 1. Open a new Claude Code tab in the project root
-2. Run: `claude --agent .claude/agents/[agent-name].md` (or ask for
-   the agent by name in a session)
+2. Run: `claude --agent [agent-name] "<your opening request>"` (or ask
+   for the agent by name in a session). Include the opening message — a
+   session cannot speak first, so a bare launch opens an idle prompt. If
+   the agent you just created has a FIRST-TURN CONTRACT, its launch
+   instruction must carry a message or tell the operator to type `begin`.
 3. Agent will load with all configuration and instructions
 
 **Documentation**:

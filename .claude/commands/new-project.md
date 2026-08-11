@@ -92,11 +92,18 @@ Print the invocation for the user:
 
 ```text
 ⚠️ LAUNCH
-Open a new tab in this kit checkout and invoke the project-intake
-agent with:
-  Brief: <path-to-brief.md>
-  Code:  <path-to-code-folder>
+Open a new tab in this kit checkout and paste:
+
+  claude --agent project-intake "Begin the intake. Brief: <path-to-brief.md>  Code: <path-to-code-folder>"
 ```
+
+**The opening message is part of the command, not decoration.** A session
+cannot speak first: `project-intake` runs a FIRST-TURN CONTRACT that
+fires on the first USER message, so a launch without one leaves the
+operator at an idle prompt wondering whether anything loaded (KIT-0075,
+reproduced live under native `--agent` on 2026-08-11). If you ever print
+a launch line without the message, print with it: "the agent waits for
+your first message — type `begin`".
 
 The intake agent runs the door itself and prints the final LAUNCH
 line for the planning repo when it finishes. Your job ends at this
@@ -128,11 +135,14 @@ the created project; on a planning shape, that's the planning repo):
 
 ```text
 ⚠️ LAUNCH
-Open a new tab with working directory <absolute-path-to-created-project>
+Open a new tab in <absolute-path-to-created-project> and paste:
+
+  claude --agent planner "Triage the backlog and recommend what to start."
 ```
 
-Then state the first-session instruction in one line: open that tab
-and invoke the `planner` agent (provided by the `agentive-workflow`
-plugin — the door's tail printed the install lines if it is missing)
-— the planner triages the backlog and recommends what to start (the
-project's seeded `CLAUDE.md` and README say the same thing).
+The launch line carries its opening message for the same reason as the
+intake handoff above — a session cannot speak first, so a bare `claude
+--agent planner` just idles. The `planner` agent ships with the
+`agentive-workflow` plugin (the door's tail printed the install lines if
+it is missing); it triages the backlog and recommends what to start, and
+the project's seeded `CLAUDE.md` and README say the same thing.

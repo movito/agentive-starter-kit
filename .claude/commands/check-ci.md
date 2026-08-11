@@ -100,17 +100,29 @@ the TARGET repo's worktree**, since in split mode this command may be
 running from the planning repo and a bare `git commit` there would
 create the commit in the wrong repository and retrigger nothing:
 
+**Check the index first.** `--allow-empty` *permits* an empty commit; it
+does not *make* the commit empty. Anything already staged rides along, so
+running this against a dirty index silently ships unrelated work inside a
+commit labelled "retrigger CI". Guard both forms — if the check fails,
+stop and tell the operator what is staged rather than committing it:
+
 ```bash
 # Single-repo mode:
-git commit --allow-empty -m "chore: retrigger CI"
+git diff --cached --quiet || { echo "staged changes present — not retriggering"; git diff --cached --name-only; }
+git diff --cached --quiet && git commit --allow-empty -m "chore: retrigger CI"
 git push
 ```
 
 ```bash
 # Split mode — route both, using the `- **Path**:` value from CLAUDE.md:
-git -C <target_path> commit --allow-empty -m "chore: retrigger CI"
+git -C <target_path> diff --cached --quiet || { echo "staged changes present — not retriggering"; git -C <target_path> diff --cached --name-only; }
+git -C <target_path> diff --cached --quiet && git -C <target_path> commit --allow-empty -m "chore: retrigger CI"
 git -C <target_path> push
 ```
+
+This is the `self-review` skill's **scoped staging in commit helpers**
+rule (item 9) applied to a hand-run command: an automated commit must
+carry only what it means to carry.
 
 Or ask the operator to add the `workflow_dispatch:` trigger.
 

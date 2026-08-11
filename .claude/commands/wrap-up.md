@@ -81,8 +81,14 @@ GH_TARGET pr view --json number,title --jq '{pr: .number, title: .title}' 2>/dev
 ```
 
 ```bash
-ls .kit/context/*-REVIEW-STARTER.md 2>/dev/null || echo "No review starter found"
+# Task-SPECIFIC, not a repo-wide glob: `*-REVIEW-STARTER.md` succeeds on
+# ANOTHER task's starter, after which Step 4 prints a path for THIS task
+# that does not exist. Substitute the real ID.
+ls .kit/context/<TASK-ID>-REVIEW-STARTER.md 2>/dev/null || echo "No review starter found for <TASK-ID>"
 ```
+
+Remember the result — Step 4 prints this path as a claim, and prints it
+only if this check found the file.
 
 If you can't determine the task ID from the branch name, ask the user.
 
@@ -149,5 +155,18 @@ failed, replace the retro line with the failure, e.g.:
 ```text
 Retro: NOT WRITTEN — /retro failed (<one-line reason>)
 ```
+
+The **review-starter line is the same kind of claim**, and both variants
+above print it unconditionally. Print the path only when Step 1's
+task-specific check actually found the file; otherwise say so:
+
+```text
+Review starter: NOT FOUND — no .kit/context/<TASK-ID>-REVIEW-STARTER.md
+```
+
+A path printed because the template contains it, rather than because the
+file is there, is exactly the trap this section exists to prevent — and a
+repo-wide glob that matched some *other* task's starter is not evidence
+about this one.
 
 Remind the user to `/rename` the session with the task ID for easy `/resume` later.

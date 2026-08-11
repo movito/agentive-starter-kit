@@ -19,9 +19,16 @@ preset-configured planning repo (`docs/CROSS-REPO-PATTERN.md`).
 2. Save the brief it returns as `PROTOTYPE-BRIEF.md` — inside the
    prototype code folder is the convention the intake agent looks for
    first, but any saved location works.
-3. Open a new tab from your agentive-starter-kit checkout, invoke the
-   `project-intake` agent, and give it the brief path, the code folder
-   path, and (optionally) the project name. It does the rest.
+3. Open a new tab from your agentive-starter-kit checkout and paste —
+   the message belongs in the command, since a session cannot speak
+   first and a bare launch just idles:
+
+   ```sh
+   claude --agent project-intake "Begin the intake. Brief: <path-to-brief.md>  Code: <path-to-code-folder>"
+   ```
+
+   Add the project name to that message if you want to override the
+   default. It does the rest.
 
 The section list below mirrors what the kit's bootstrap agent extracts
 from design materials (`.claude/agents/bootstrap.md`, Step 1), plus the
