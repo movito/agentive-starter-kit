@@ -9,7 +9,7 @@
 > Implementer: do not touch F7/F9/F10 surfaces beyond what F1–F6/F8
 > themselves require.
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: medium-high (six verified advisory defects, two
 pair-rule-bound; promote as the next canon cycle — after the
 operator's new-project test, or sooner if a defect bites)
@@ -127,8 +127,48 @@ grep-verified (the sweep-completeness class).
 
 ## Acceptance Criteria
 
-- [ ] Six fixes landed in canon (or declined with rationale), pair
-      test green, anchors re-verified in the PR body
-- [ ] 2.0.2 live; drift guard green; `claude plugin list` shows 2.0.2
-- [ ] Follow-ups file marked closed with pointers (it stays as the
-      record)
+- [x] Six fixes landed in canon, pair test green, anchors re-verified —
+      PR [#124](https://github.com/movito/agentive-starter-kit/pull/124),
+      merged `7565278`. All six anchors re-checked against canon before
+      editing (KIT-0098's repair had touched neighboring text; all six
+      were still exactly as filed). F8's sweep was grep-derived: 7 sites.
+      Contract tests (pair-identity + evaluator-ordering) green
+      throughout; 1206 passed on 3.10/3.12/3.14.
+- [x] 2.0.2 live; drift guard green; `claude plugin list` shows 2.0.2 —
+      [agentive-skills#7](https://github.com/movito/agentive-skills/pull/7)
+      merged `558e1e9`; guard run
+      [31496627532](https://github.com/movito/agentive-starter-kit/actions/runs/31496627532)
+      `success` (`in sync: 27 shipped components`); `claude plugin list`
+      → `Version: 2.0.2`, `✔ enabled`.
+- [x] Follow-ups file marked closed with pointers —
+      `.kit/context/KIT-0099-KIT-FOLLOWUPS.md` header now records all
+      six CLOSED with the PR/release/verification links; body kept as
+      the record.
+
+## Outcome
+
+Eight bot findings across four rounds (three on #124, one on #7), **all
+correct, all against text this task introduced**. Two improved on my own
+fixes rather than merely completing them:
+
+- **`--allow-empty --only`** (CodeRabbit) — my guard was check-then-act,
+  leaving a window for a hook or parallel process to stage something
+  between the check and the commit. `--only` makes the retrigger commit
+  *structurally* unable to carry staged work. Verified empirically on
+  git 2.55 before adopting, not taken on faith.
+- **Bounded poll loop** (Bugbot, on the release PR) — my no-supervisor
+  fallback said "poll on an interval" while showing a single
+  `gh run view`. A snapshot, not a wait: an agent following it literally
+  could report a still-running workflow as final.
+
+The recurring class was **incompleteness of a fix, not a fresh defect** —
+routing left off sibling lines, a supervisor-resolution step whose result
+the commands then ignored. Re-reading my own diff would not have surfaced
+any of them; the bots read the tree.
+
+Also caught while cutting the release: the six components' `version:`
+frontmatter had not been bumped with their content (`89aea3a`). The
+roster's `kit_version` column is what surfaced it — KIT-0097 had set the
+precedent for the same class of change.
+
+Scope held: F7/F9/F10 untouched (KIT-0101).

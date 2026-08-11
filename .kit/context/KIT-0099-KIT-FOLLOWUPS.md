@@ -3,7 +3,25 @@
 **Source**: bot review on movito/agentive-skills#5 (Cursor Bugbot +
 CodeRabbit, 2 rounds) plus my own pre-PR audit
 **Date**: 2026-08-10
-**Status**: filed, NOT fixed — all six are kit-canonical content
+**Status**: ✅ **ALL SIX CLOSED** — fixed in KIT-0100
+([#124](https://github.com/movito/agentive-starter-kit/pull/124), merged
+`7565278`) and shipped in plugin **2.0.2**
+([agentive-skills#7](https://github.com/movito/agentive-skills/pull/7),
+merged `558e1e9`), 2026-08-11. This file stays as the record.
+
+Verification of the release that closed them: drift guard GREEN on kit
+main ([run
+31496627532](https://github.com/movito/agentive-starter-kit/actions/runs/31496627532),
+`in sync: 27 shipped components`), and `claude plugin list` reports
+2.0.2 enabled.
+
+The fixes did not survive review unchanged — seven further findings
+across three bot rounds on #124 and one on #7, every one correct and
+every one against text the fixes themselves introduced. Two were
+genuinely better than what I wrote: `--allow-empty --only` (makes the
+retrigger commit structurally unable to carry staged work, rather than
+checking first) and the bounded poll loop (a single `gh run view` is a
+snapshot, not a wait). Detail: `.kit/context/reviews/KIT-0100-evaluator-review.md`.
 
 ## Why none of these were fixed in the release PR
 

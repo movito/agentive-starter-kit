@@ -5,7 +5,7 @@
 **Date**: 2026-08-11
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/3-in-progress/KIT-0100-canon-fixes-round-2.md`
+**Task**: `.kit/tasks/5-done/KIT-0100-canon-fixes-round-2.md`
 **Status**: Ready — SCOPE-SPLIT at promotion: this task is **F1–F6 +
 F8 + the 2.0.2 release ONLY**; F7/F9/F10 belong to KIT-0101 (their
 text in your spec is source-record — do NOT implement them)
@@ -84,6 +84,6 @@ and F8's launch instructions BOTH get a class grep, quoted in the PR).
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0100-canon-fixes-round-2.md`
+**Task File**: `.kit/tasks/5-done/KIT-0100-canon-fixes-round-2.md`
 **Finding detail**: `.kit/context/KIT-0099-KIT-FOLLOWUPS.md` (F1–F6); the spec's F8 block
 **Release recipe**: KIT-0099 spec + agentive-skills README §Maintenance
