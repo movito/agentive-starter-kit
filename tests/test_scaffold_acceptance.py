@@ -17,6 +17,9 @@ Contract strings the door must print (defined HERE first, the test
 being the contract's origin):
 - lifecycle CLI verified:    a line starting ``agentive CLI:``
 - lifecycle CLI absent:      ``Install the lifecycle CLI: uv tool install agentive-kit``
+- CLI-absent headline:       ``NEXT STEP (required): install the lifecycle CLI``
+  (KIT-0101 R3: the missing CLI is the one gap that cascades, so the
+  tail elevates it to the headline next step, after "Install complete:")
 - agent plugin verified:     ``agent plugin: verified``
 - agent plugin absent:       a line starting ``Install the agent plugin:``
 Absence of a package is always an instruction, never a hard failure
@@ -176,6 +179,13 @@ class TestScaffoldInvariants:
             or "Install the lifecycle CLI: uv tool install agentive-kit" in out
             or "uv tool upgrade agentive-kit" in out
         ), "door must run doctor or instruct installing/upgrading the CLI"
+        # KIT-0101 R3: when the CLI is absent (the install line fired),
+        # the tail must ALSO elevate it to the headline next step —
+        # an inline notice alone reproduced the 2026-08-11 cascade.
+        if "Install the lifecycle CLI: uv tool install agentive-kit" in out:
+            assert (
+                "NEXT STEP (required): install the lifecycle CLI" in out
+            ), "missing CLI must be the headline next step, not an inline notice"
 
     @BOTH_SHAPES
     def test_evaluator_path_pass_or_instructive(self, request, shape):

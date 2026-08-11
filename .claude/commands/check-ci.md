@@ -1,6 +1,6 @@
 ---
 description: Verify GitHub Actions CI/CD status for a branch
-version: 1.5.0
+version: 1.6.0
 origin: dispatch-kit
 origin-version: 0.3.2
 last-updated: 2026-08-11
@@ -8,6 +8,16 @@ created-by: "@movito with planner2"
 ---
 
 # Check CI/CD Status
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/check-ci` — verifies GitHub Actions status for a branch and
+> reports PASS, FAIL, IN PROGRESS, or MIXED.
+> Reads: workflow runs via `gh` (`scripts/core/verify-ci.sh`),
+> `CLAUDE.md` target-repo pointer · Writes: nothing (unless you ask
+> it to retrigger CI, which it announces first)
+> Source: [check-ci.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/check-ci.md)
 
 Verify that GitHub Actions workflows have passed for a specific branch.
 

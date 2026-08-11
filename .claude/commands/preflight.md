@@ -1,14 +1,23 @@
 ---
 description: Check all 7 completion gates before requesting human review
 argument-hint: "[optional --pr PR_NUMBER --task TASK_ID --repo owner/name]"
-version: 1.4.0
+version: 1.5.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-08-09
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Preflight Check
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/preflight` — runs all 7 completion gates and presents a
+> PASS/FAIL table with a READY / NOT READY verdict.
+> Reads: CI, bot reviews, and threads via `gh`; `.kit/` review
+> artifacts in the planning repo · Writes: nothing
+> Source: [preflight.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/preflight.md) · Docs: [task completion protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md)
 
 Run all 7 completion gates and present a PASS/FAIL table.
 

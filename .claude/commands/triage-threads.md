@@ -1,14 +1,25 @@
 ---
 description: Fetch and triage all review threads on the current PR
 argument-hint: "[optional PR number] [--repo owner/name]"
-version: 1.1.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-04-20
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Triage Review Threads
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/triage-threads` — fetches all review threads on the PR,
+> presents a fix/resolve triage table, and (after your confirmation)
+> applies the verdicts.
+> Reads: PR threads via `gh` / `agentive review-helper`, `CLAUDE.md`
+> target-repo pointer · Writes: after confirmation only — commits
+> pushed to the PR branch, thread replies/resolutions on GitHub
+> Source: [triage-threads.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/triage-threads.md) · Docs: [review-fix workflow](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/REVIEW-FIX-WORKFLOW.md)
 
 Triage all unresolved review threads on the current PR (or PR `$ARGUMENTS` if specified).
 
