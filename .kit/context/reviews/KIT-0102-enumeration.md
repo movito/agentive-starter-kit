@@ -17,8 +17,22 @@ disk.
 - Consumers scanned: 7 sibling checkouts; exactly one carries
   `scripts/.core-manifest.json` → `varv-planning` (`core_version=2.1.0`
   vs canon `4.0.0`).
-- Files compared: 47 manifest entries (dir entries expanded) →
-  11 identical, 36 differing, 5 only-in-consumer, 38 absent-in-consumer.
+- Comparison set: the **consumer's** manifest (42 raw entries, directory
+  entries expanded to files) → **93 path slots**, classified once, each
+  slot in exactly one bucket:
+
+  | Bucket | Count | Meaning |
+  |---|---|---|
+  | identical | 11 | byte-identical on both sides |
+  | differing | 36 | present both sides, content differs |
+  | only-in-consumer | 8 | on consumer disk, gone from canon (retired upstream) |
+  | absent-in-consumer | 38 | named in the consumer manifest, not on consumer disk |
+  | **total** | **93** | |
+
+  **47 = 11 + 36** is the set actually diffed on both sides — the number
+  the direction check below runs over. (Canon's own manifest also held 47
+  entries; the coincidence is why an earlier draft of this note conflated
+  the two denominators — CodeRabbit, PR #127.)
 - Direction, by `version:` metadata: **0 consumer-newer**, 11
   consumer-older (canon ahead, as expected).
 - The 3 same-version-but-differing files were inspected by hand —
@@ -28,11 +42,14 @@ disk.
     `./scripts/core/…`.
   - `.kit/context/patterns.yml` — canon carries ~145 lines of
     additional patterns the consumer predates.
-- The 5 only-in-consumer files (`check-sync.sh`, `verify-setup.sh`,
-  `gh-review-helper.sh`, `preflight-check.sh`,
-  `prepare-review-input.sh`) are scripts already retired upstream; a
-  v2.1.0 consumer that never pulled the retirements still holds them.
-  Not drift — expected lag.
+- The 8 only-in-consumer entries are all homes retired upstream, which a
+  v2.1.0 consumer that never pulled the retirements still holds. Not
+  drift — expected lag:
+  - scripts (5): `core/check-sync.sh`, `core/verify-setup.sh`,
+    `core/gh-review-helper.sh`, `core/preflight-check.sh`,
+    `core/prepare-review-input.sh`
+  - kit_builder dirs (3): `.kit/skills/` (moved to `.claude/skills/`,
+    KIT-0057/KIT-0059), `.adversarial/scripts/`, `.adversarial/docs/`
 
 Conclusion: no copy is newer than its kit source, so nothing in canon
 regressed and the manifest can be deleted without a preceding fix.
@@ -45,7 +62,7 @@ regressed and the manifest can be deleted without a preceding fix.
 | `scripts/core/sync_from_manifest.py` | pull engine: manifest read/validate, tier+allowlist selection, copy/prune, `core_version` bump, exit-code contract | obsolete — consumers born packaged (phase 2); only live consumer is packaged-shape (phase 3 no-op) | imported only by `project` `cmd_sync`, its own tests, `test_project_sync.py`, and the deleted workflow | **delete** |
 | `scripts/.core-manifest.json` | the file inventory + `core_version` for the copy channel | obsolete with its engine | read by `project` sync helpers, both sync test files, `engine-consumer.sh` heredocs, `test_bootstrap_shapes.py` | **delete** |
 | `tests/test_sync_from_manifest.py` | tests the pull engine | dies with subject (KIT-0092 Part C) | — | **delete** |
-| `tests/test_core_manifest.py` | tests manifest structure + the engine-consumer heredoc/VERSION parity guard | dies with subject; **parity guard re-homed** (see note) | — | **delete (with re-home)** |
+| `tests/test_core_manifest.py` | tests manifest structure + the engine-consumer heredoc/VERSION parity guard | dies with subject; both guards resolved without re-homing — see "The two guards" below | — | **delete** |
 | `tests/test_project_sync.py` | 709 lines testing `project sync` end-to-end — **not named in the spec inventory** | dies with `cmd_sync` | — | **delete (spec addition)** |
 | `scripts/core/doctor.d/60-push-sync-token.sh` | one check: is `CROSS_REPO_TOKEN` present while the push trigger is active | obsolete — guards a deleted workflow | `tests/test_doctor.py::TestPushSyncTokenCheck` (1043–1140) only | **delete (both homes)** |
 | `packages/…/doctor/checks/60-push-sync-token.sh` | mirror of the above in the package | same | roster mirrors in-tree `doctor.d/` | **delete (mirror)** |
