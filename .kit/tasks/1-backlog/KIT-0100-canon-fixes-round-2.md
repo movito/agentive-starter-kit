@@ -78,6 +78,33 @@ anchors and suggested shapes; the KIT-0092/0099 precedent class
   from an inline notice to the headline next step (it is the one gap
   that cascades). Resolved live: CLI installed, evaluators
   provisioned, prefix set, doctor 10/0/0.
+
+  **Output format (operator-specified, 2026-08-11)** — the completion
+  summary is ONE checklist ending in ONE command:
+
+  ```
+  ✓ Read the handoff brief
+  ✓ Created the repo (+ GitHub: movito/<name>)
+  ✓ Seeded .env from your preset
+  ✓ Installed the evaluator library
+  ✓ Verified the agentive CLI
+  ✓ Verified the agentive-workflow plugin
+  ✗ <anything outstanding> — run: <exact remedy command>
+
+  You can now start working on <PROJECT NAME>. Open a new terminal
+  tab in <path> and paste:
+
+  claude --agent planner-f5 "Triage the backlog and recommend what to start."
+  ```
+
+  Binding rules for the format: every ✓ line is a VERIFIED claim
+  (checked at print time, never assumed — the
+  displayed_commands_are_contracts widening applies: any printed fact
+  is a claim); failed/outstanding items appear IN the same list as ✗
+  with the exact remedy, so "done" and "still needed" can never
+  contradict across two messages; the closing command includes the
+  opening prompt (F8) and appears ONLY when the doctor has no FAILs —
+  otherwise the last line is the re-run instruction instead.
   (drift guard red-by-design between kit merge and tag — the
   established rhythm). The follow-ups' "also noted" README item is
   ALREADY handled (agentive-skills#6, 2026-08-11).
