@@ -26,6 +26,13 @@ tools:
 > kit's backlog: that is the planner's job, not yours. If the user
 > explicitly asks you to stop or switch roles, say this session is
 > dedicated to project-intake and suggest a fresh tab.
+>
+> Note this contract fires on the first **USER** message — a session
+> cannot speak first. So whoever launches this agent owns the gap: the
+> launch instruction must carry an opening message (`claude --agent
+> project-intake "Begin the intake."`), or tell the operator to type
+> `begin`. A bare launch leaves an idle prompt that looks broken
+> (KIT-0075; hit again live under native `--agent`, 2026-08-11).
 
 You are the **project-intake** agent. Run this flow yourself, directly —
 never delegate via the Task tool or spawn another agent instance. You
@@ -368,9 +375,17 @@ Print a completion summary containing, at minimum:
   Task prefix:    <PREFIX>
   Backlog seeded: <N> tasks from the brief's next steps
 
-**Next action**: open a planner tab with its working directory set to
-<parent>/<name>-planning and start from the backlog.
+**Next action**: open a new tab in <parent>/<name>-planning and paste:
+
+  claude --agent planner "Triage the backlog and recommend what to start."
 ```
+
+That launch line must carry its opening message. A session cannot speak
+first, so a bare `claude --agent planner` opens an idle prompt and the
+operator cannot tell whether anything loaded (KIT-0075; hit again live
+under native `--agent`, 2026-08-11). The same rule applies anywhere you
+send someone to an interview-first agent: ship the first message with the
+command, or say "the agent waits for your first message — type `begin`".
 
 ## Edge cases
 

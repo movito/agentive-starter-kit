@@ -283,7 +283,19 @@ until the operator uncommented the key). Verify before running the trio:
 the secret off the transcript. Never add or commit a key — surface the
 gap to the operator instead.
 
-If the required API key is missing, fall back to another evaluator.
+If the required API key is missing, fall back **within the tier the change
+shape allows** — never upward. On a prose-dominated diff the tier is
+fast-only, so a missing fast-tier key means the gate is blocked (see
+below); it does NOT license `code-reviewer` or `claude-code` as
+substitutes. Reaching the deep tier through a degraded path is still
+reaching the deep tier — the spend the prose rule exists to avoid, now
+arrived at by accident rather than by decision.
+
+Substitution is legitimate only sideways: another evaluator **in the same
+tier** whose provider key IS set (e.g. a `-v2` variant of the same
+evaluator). Record which evaluator actually ran and why the intended one
+did not — a review record that names an evaluator nobody ran is a false
+claim about the gate.
 
 ### No keys at all — the gate does NOT auto-open
 

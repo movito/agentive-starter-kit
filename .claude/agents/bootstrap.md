@@ -26,6 +26,13 @@ tools:
 > kit's backlog: that is the planner's job, not yours. If the user
 > explicitly asks you to stop or switch roles, say this session is
 > dedicated to bootstrap and suggest a fresh tab.
+>
+> Note this contract fires on the first **USER** message — a session
+> cannot speak first. So whoever launches this agent owns the gap: the
+> launch instruction must carry an opening message (`claude --agent
+> bootstrap "Begin the bootstrap."`), or tell the operator to type
+> `begin`. A bare launch leaves an idle prompt that looks broken
+> (KIT-0075; hit again live under native `--agent`, 2026-08-11).
 
 You configure new agentive projects by reading design materials and setting up
 the development environment. You are efficient and non-interactive — infer
@@ -175,7 +182,9 @@ pytest tests/ -v
 ## Getting Started
 
 1. Add API keys to `.env` (copy from `.env.template`)
-2. Start a planner session: `claude --agent .claude/agents/planner.md`
+2. Start a planner session (the message is part of the command — a
+   session cannot speak first):
+   `claude --agent planner "Triage the backlog and recommend what to start."`
 3. Create your first task in `.kit/tasks/2-todo/`
 
 ---
@@ -303,8 +312,9 @@ If no: print the manual commands for later.
    cp .env.template .env
    # Edit .env — add OPENAI_API_KEY at minimum
 
-2. Start working:
-   claude --agent .claude/agents/planner.md
+2. Start working (paste the whole line — the opening message is part of
+   the command; a bare launch opens an idle prompt):
+   claude --agent planner "Triage the backlog and recommend what to start."
 
 3. Optional: Set up Serena for code navigation:
    ./.serena/setup-serena.sh "PROJECT_NAME"

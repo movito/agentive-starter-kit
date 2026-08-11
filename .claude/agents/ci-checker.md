@@ -182,13 +182,50 @@ If all workflows are `status: "completed"`, report results immediately:
 
 If workflows are still running (`status: "in_progress"` or `status: "queued"`):
 ```bash
-# Watch a specific workflow run (with timeout)
-gh $GH_REPO_ARG run watch <run-id> --exit-status
+# Watch a specific workflow run, bounded by a real timeout.
+# `gh run watch` has NO duration flag of its own (only --interval), so
+# the limit has to come from a supervisor — otherwise "default timeout:
+# 10 minutes" below is a claim nothing enforces and the call can block
+# indefinitely on a hung run.
+$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status
 ```
+
+Exit codes matter here, and three outcomes must not be conflated:
+
+- **124** — the supervisor fired: this is a TIMEOUT, not a CI failure
+  (see Timeout Handling).
+- **127** — `timeout` itself is not installed: nothing was watched. Do
+  NOT report this as a CI result of any kind.
+- any other non-zero — `--exit-status` saw a genuinely failed run. That
+  IS a failure.
+
+Resolve the supervisor ONCE, before any watch command, since it is absent
+by default on macOS (coreutils ships it as `gtimeout`):
+
+```bash
+command -v timeout || command -v gtimeout || echo "no supervisor"
+```
+
+**`$TIMEOUT` below is placeholder text, like `$GH_REPO_ARG`** — substitute
+whichever name resolved (`timeout 600` or `gtimeout 600`) into *every*
+watch command in this file. Writing a literal `timeout` where the resolved
+name was `gtimeout` exits 127 and watches nothing, which is the failure
+this resolution step exists to prevent.
+
+If neither resolves, do not fall back to a bare `gh run watch` — an
+unbounded watch is the hang this fix exists to prevent. Poll on an
+interval instead, routing the repo the same way as every other call:
+
+```bash
+gh $GH_REPO_ARG run view <run-id> --json status,conclusion
+```
+
+Stop at your own deadline and state in the report that the watch was
+polled rather than supervised.
 
 **Polling Strategy**:
 - Check status every 20 seconds
-- Default timeout: 10 minutes
+- Timeout: 10 minutes, enforced by the `timeout 600` wrapper above
 - If any workflow shows "failure" or "cancelled", report immediately
 
 ### 4. Report Results
@@ -266,8 +303,9 @@ Always provide:
 # List recent runs
 gh $GH_REPO_ARG run list --branch <branch> --limit 10
 
-# Watch a specific run (blocks until complete or timeout)
-gh $GH_REPO_ARG run watch <run-id> --exit-status
+# Watch a specific run (blocks until complete, or until the supervisor
+# fires — `gh run watch` has no duration flag; exit 124 means TIMEOUT)
+$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status
 
 # Get detailed run info
 gh $GH_REPO_ARG run view <run-id> --json status,conclusion,jobs
@@ -278,17 +316,19 @@ gh $GH_REPO_ARG run view <run-id> --json conclusion
 
 ## Timeout Handling
 
-If workflows exceed timeout:
+If workflows exceed timeout (the `timeout 600` wrapper exits **124** —
+that is the signal; a non-zero exit from `--exit-status` on a completed
+run is a real failure and must not be confused with it):
 1. Report current status of all workflows
 2. Note which are still running
-3. Suggest manual check with `gh run watch <run-id>`
+3. Suggest manual check with `$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status`
 4. Do NOT mark as failure - mark as TIMEOUT
 
 ## Edge Cases
 
 - **No workflows found**: Report "No CI workflows found for this branch" (empty results from gh run list)
 - **Workflow queued**: Report as "in progress", optionally wait with timeout
-- **Workflow still running**: Monitor with `gh run watch` or report current status
+- **Workflow still running**: Monitor with `$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status` or report current status
 - **Multiple workflow runs**: Report on the most recent ones (limit 5 is sufficient)
 - **workflow_run events**: Ignore these (they're triggered by other workflows completing, not pushes)
 - **Branch doesn't exist**: gh CLI will error, report error and exit
@@ -315,7 +355,7 @@ Your response workflow:
 2. Parse the JSON results - filter to `event: "push"` only
 3. Check status of filtered workflows:
    - If all `status: "completed"` → Report conclusions immediately (PASS/FAIL)
-   - If any `status: "in_progress"` → Monitor with `gh run watch` (optional, or report current state)
+   - If any `status: "in_progress"` → Monitor with `$TIMEOUT gh $GH_REPO_ARG run watch <run-id> --exit-status` (optional, or report current state)
    - If no results → Report "No workflows found"
 4. Report with clear ✅ PASS / ❌ FAIL / ⏱️ TIMEOUT verdict
 
