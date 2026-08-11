@@ -1,4 +1,6 @@
-# KIT-0101 — Evaluator Review Record (PR 1: R1–R4)
+# KIT-0101 — Evaluator Review Record
+
+## PR 1: R1–R4
 
 **Date**: 2026-08-11
 **Input**: `.adversarial/inputs/KIT-0101-code-review-input.md`
@@ -46,7 +48,7 @@ before disposition; none survived.
    (`test_scaffold_acceptance.py` headline assertion,
    `test_setup_door.py` forced-missing-CLI test).
 
-## Notes
+### Notes
 
 - One deliberate deviation from the F10 mock, flagged (not silent):
   the closing launch command uses `claude --agent planner` (the
@@ -54,3 +56,30 @@ before disposition; none survived.
   `STARTING-A-PROJECT.md`, and scaffold seeds) where the operator's
   mock showed `planner-f5`. Same opening prompt, same format rules.
   Planner may override.
+
+## PR 2: R5 (starter authority)
+
+**Date**: 2026-08-11
+**Input**: `--format diff --base feature/KIT-0101-cold-start-ux-contract`
+(R5-only diff, 3 files — prose)
+**Tier**: `code-reviewer-fast` only, same policy as PR 1.
+**Log**: `.adversarial/logs/KIT-0101-code-review-input--code-reviewer-fast.md`
+(overwritten per input name; verdict quoted here)
+**Verdict**: CONCERNS — 3 findings, all reproduced against the tree,
+none survived:
+
+1. **"Template file could be missing at runtime"** — DECLINED
+   (hypothetical environment corruption). The template is a tracked
+   repo file like every workflow doc the agents read; the scaffold
+   dangling-reference test covers seeded surfaces. No text change
+   would harden prose against a deleted file.
+2. **"Worktree/branch mismatch between creation and starter"** —
+   DECLINED (the flagged behavior IS the contract). The template
+   mandates real values quoted from what the helper actually created,
+   and STOP-and-ask on mismatch is the KIT-0088 safety net working as
+   designed, not a failure mode.
+3. **"A planner might violate the proportionality rule"** — DECLINED
+   (prose cannot mechanically enforce prose). The rule states the
+   prohibition explicitly, the compact worked example demonstrates
+   all eight core elements, and the sentinel pins in
+   test_agent_contracts.py guard the mechanical half.
