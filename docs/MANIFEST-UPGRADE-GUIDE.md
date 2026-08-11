@@ -1,208 +1,38 @@
-# Manifest Upgrade Guide: v1.x to v2.0.0
+# Manifest Upgrade Guide (retired)
 
-**For**: Downstream repos upgrading from flat manifest to tiered manifest
-**Source**: agentive-starter-kit (ADR-0008)
-**Created**: 2026-04-13
+**Status**: RETIRED — KIT-ADR-0028 phase 4 (KIT-0102, 2026-08-11)
+**Source**: agentive-starter-kit
 
 ---
 
-## What Changed
+## The manifest sync channel is gone
 
-The `.core-manifest.json` format changed from a flat file list to tiered categories
-with opt-in support.
+This guide documented `.core-manifest.json` and the `project sync`
+pull engine: the copy-era channel that shipped `scripts/core/`, slash
+commands and `.kit/` content from the kit into downstream repos.
 
-**Before (v1.x)** — flat array, scripts only:
+That channel was retired in KIT-ADR-0028 phase 4. The manifest, the
+sync engine, the push Action and the `project sync` subcommand were all
+deleted — there is nothing left to upgrade a manifest *to*, so the
+step-by-step v1.x→v2.0.0 procedure has been removed rather than left
+to mislead.
 
-```json
-{
-  "core_version": "1.2.0",
-  "source": "agentive-starter-kit",
-  "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-03-08T00:00:00Z",
-  "files": [
-    "core/__init__.py",
-    "core/ci-check.sh",
-    "core/project",
-    "core/verify-ci.sh"
-  ]
-}
-```
+**What replaced it**
 
-**After (v2.0.0)** — tiered categories with opt-in:
+| Artifact | Now ships via |
+|---|---|
+| agents, skills, slash commands | the `agentive-workflow` plugin — `docs/PLUGIN-UPGRADE-GUIDE.md` |
+| `scripts/core/` tooling, the `agentive` CLI | the `agentive-kit` package |
+| everything else | whole-repo upstream merge — `docs/UPDATING-YOUR-PROJECT.md` |
 
-```json
-{
-  "core_version": "2.0.0",
-  "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-04-13T00:00:00Z",
-  "files": {
-    "scripts_core": [ ... ],
-    "commands_core": [ ... ],
-    "commands_optional": [ ... ],
-    "kit_builder": [ ... ]
-  },
-  "opted_in": ["commands_optional"]
-}
-```
+Projects created before phase 2 still carry `scripts/core/` copies.
+Those copies are now simply yours: nothing upstream overwrites them.
+See `docs/UPDATING-YOUR-PROJECT.md` § "Copied-scripts projects".
 
-## Why Upgrade
+The retired procedure remains in git history (and in the ADRs below)
+for anyone reconstructing what the copy era did.
 
-On v1.x:
-- Slash commands are **not synced** — they drift immediately after initial setup
-- Missing commands like `/babysit-pr` must be copied manually
-- New commands added upstream never arrive downstream
-- Builder infrastructure (templates, workflows, skills) is not tracked
-
-On v2.0.0:
-- Commands sync automatically alongside scripts
-- Optional tiers let you choose what you want
-- New upstream commands arrive on next sync (if you've opted in)
-
-## Prerequisites
-
-- Your repo already has `scripts/core/` with a `.core-manifest.json` at v1.x
-- You have the upstream starter kit available (or the sync GitHub Action configured)
-
-## Step-by-Step Upgrade
-
-### Step 1: Check your current state
-
-```bash
-# What version are you on?
-cat scripts/.core-manifest.json | python3 -c "import json,sys; print(json.load(sys.stdin).get('core_version'))"
-
-# What commands do you have?
-ls .claude/commands/
-
-# What commands does upstream have?
-# (check agentive-starter-kit or the manifest below)
-```
-
-### Step 2: Replace the manifest
-
-Replace `scripts/.core-manifest.json` with the tiered format. **Use the
-live upstream manifest as your starting point** — `scripts/.core-manifest.json`
-in the agentive-starter-kit checkout is always current (this guide
-deliberately does not inline a copy: an inlined example drifts the
-moment upstream changes). Copy it, then set `opted_in` to what you
-want — the snippets below show **only that one field**, not a
-complete manifest.
-
-**Minimal upgrade** (scripts + core commands + optional commands):
-
-```json
-{
-  "opted_in": ["commands_optional"]
-}
-```
-
-**Full upgrade** (everything including builder layer):
-
-```json
-{
-  "opted_in": ["commands_optional", "kit_builder"]
-}
-```
-
-### Step 3: Decide what to opt into
-
-| Tier | What you get | Who needs it |
-|------|-------------|--------------|
-| `scripts_core` | Core scripts (always synced) | Everyone |
-| `commands_core` | `/check-ci`, `/check-bots`, `/start-task`, `/commit-push-pr`, `/preflight`, `/wait-for-bots` | Everyone |
-| `commands_optional` | `/babysit-pr`, `/retro`, `/triage-threads`, `/status`, `/check-spec` | Repos with PR review workflows |
-| `kit_builder` | Templates, skills, launchers, workflows, patterns | Repos using the full builder layer |
-
-Add the tier names you want to the `opted_in` array. Core tiers (`scripts_core`,
-`commands_core`) are always synced regardless of `opted_in`.
-
-### Step 4: Sync and clean up
-
-Once the manifest is upgraded, a sync run delivers any missing commands
-and newer scripts — see **Pull-based sync** below (or wait for the push
-Action). One bit of manual cleanup: v1.x had both `source` and
-`source_repo`; v2.0.0 only uses `source_repo`, so drop the redundant
-`source` field.
-
-### Step 5: Commit
-
-```bash
-git add scripts/.core-manifest.json .claude/commands/
-git commit -m "chore: Upgrade core manifest to v2.0.0 tiered format"
-```
-
-## Pull-based sync (core v3.0.0+)
-
-From core scripts **3.0.0** on, you don't have to wait for a push PR — pull
-updates on demand from your own checkout (KIT-ADR-0026). The same tested engine
-(`scripts/core/sync_from_manifest.py`) drives both the push Action and the
-pull command, so they can't drift.
-
-```bash
-./scripts/core/project sync --dry-run          # what would change (read-only)
-./scripts/core/project sync                     # pull everything you're entitled to
-./scripts/core/project sync --tier commands_core   # just one tier
-./scripts/core/project sync --only core/verify-ci.sh   # just one file
-./scripts/core/project sync --ref v0.7.0        # pin to a tag instead of main
-./scripts/core/project sync --source ~/agentive-starter-kit   # local checkout, no network
-```
-
-By default the command applies to a `chore/core-sync-<version>` branch and
-prints a `git diff --stat`; nothing is pushed or merged — you review with plain
-`git diff` and merge on your own schedule. `--no-branch` applies to the working
-tree instead (and refuses to run if the paths it would touch have uncommitted
-changes).
-
-**Partial vs complete, and the `partial_sync` marker.** The engine decides
-completeness itself by comparing what it synced against everything your repo is
-entitled to. A **complete** pull updates `core_version` + `synced_at` and clears
-any partial marker. A **partial** pull (`--tier`/`--only`) leaves `core_version`
-untouched and writes `"partial_sync": true` into your manifest so the mixed
-state is explicit — the next complete pull (or a push PR) clears it. Run
-`./scripts/core/project sync --dry-run` any time to see the mixed state.
-
-> **`check-sync.sh` was retired in 3.0.0.** It only diagnosed drift (against a
-> local checkout) and couldn't fix it. `project sync --dry-run` replaces the
-> diagnosis and `project sync` treats it — both from the manifest.
-
-## Verifying the Upgrade
-
-After upgrading, check that:
-
-```bash
-# Manifest parses correctly
-python3 -c "
-import json
-with open('scripts/.core-manifest.json') as f:
-    m = json.load(f)
-assert isinstance(m['files'], dict), 'files should be a dict (tiered), not a list (flat)'
-assert 'scripts_core' in m['files'], 'missing scripts_core tier'
-assert 'commands_core' in m['files'], 'missing commands_core tier'
-print(f'v{m[\"core_version\"]} — {sum(len(v) for v in m[\"files\"].values())} files across {len(m[\"files\"])} tiers')
-print(f'Opted in: {m.get(\"opted_in\", [])}')
-"
-
-# Commands exist
-ls .claude/commands/check-ci.md .claude/commands/preflight.md
-
-# Optional commands exist (if opted in)
-ls .claude/commands/babysit-pr.md .claude/commands/triage-threads.md
-```
-
-## Troubleshooting
-
-**Q: I upgraded the manifest but sync didn't deliver new commands.**
-A: The sync GitHub Action needs to understand the tiered format. If you're using the
-`sync-core-scripts` Action from agentive-starter-kit, make sure it's on a version
-that supports tiered manifests (v2.0.0+).
-
-**Q: A local command I created got overwritten by sync.**
-A: Your command's filename matches one in a synced tier. Either rename your local
-command or remove it from the tier's file list in the manifest.
-
-**Q: I don't want kit_builder stuff — just scripts and commands.**
-A: Only add the tiers you want to `opted_in`. Omit `kit_builder` and you'll only get
-scripts + commands.
+---
 
 ## Agent Model Pins
 

@@ -61,23 +61,21 @@ rename a project or move its code repo:
 
 ## Copied-scripts projects (created before phase 2)
 
-Projects whose scaffold carries `scripts/core/` copies still use the
-copy-era mechanisms. A guided migration to the packaged layout
-(ADR-0028 phase 3, via the `upgrader` agent) is coming; until then:
+Projects whose scaffold carries `scripts/core/` copies predate the
+packaged layout.
 
-### 1. Kit-managed files: `project sync`
+### 1. Kit-managed files: the copy-sync channel is retired
 
-Core scripts, slash commands, and opted-in tiers are tracked by
-`scripts/.core-manifest.json`:
+`project sync` and `scripts/.core-manifest.json` were removed in
+KIT-ADR-0028 phase 4 (KIT-0102). The copy channel no longer exists in
+any direction — upstream ships nothing to pull, and running `project
+sync` now prints a pointer to this section.
 
-```bash
-./scripts/core/project sync --dry-run   # what would change (read-only)
-./scripts/core/project sync             # pull everything you're entitled to
-```
-
-By default this applies to a `chore/core-sync-<version>` branch and
-prints a diffstat — nothing is pushed or merged. Partial pulls and
-version pinning: `docs/MANIFEST-UPGRADE-GUIDE.md` → "Pull-based sync".
+Kit artifacts reach your project through the **agentive-workflow
+plugin** (agents, skills, commands — see §2) and the **agentive-kit
+package** (the `agentive` CLI). For the `scripts/core/` copies your
+repo already carries, use the whole-repo merge in §3; they are yours
+now, and nothing upstream will overwrite them.
 
 ### 2. The agentive-workflow plugin: the upgrader agent
 
@@ -86,7 +84,7 @@ are upgraded by the `upgrader` agent per `docs/PLUGIN-UPGRADE-GUIDE.md`.
 
 ### 3. Everything else: whole-repo upstream merge (manual)
 
-For files no sync tier covers:
+For anything the plugin and package don't carry:
 
 ```bash
 git remote add upstream https://github.com/movito/agentive-starter-kit.git
@@ -99,8 +97,8 @@ git merge --allow-unrelated-histories upstream/main
 - Files **only upstream changed** → you get the updates
 - Files **both changed** → merge conflict (you decide what to keep)
 
-Prefer `project sync` for anything the manifest covers; keep
-customizations in new files where possible.
+Keep customizations in new files where possible — it keeps the merge
+in §3 conflict-free.
 
 ---
 

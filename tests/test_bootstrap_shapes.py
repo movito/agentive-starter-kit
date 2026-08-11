@@ -158,7 +158,6 @@ PLANNING_MUST_SHIP = (
     ".env.template",
     ".gitignore",
     "CLAUDE.md",
-    "scripts/.core-manifest.json",
 )
 
 PLANNING_MUST_NOT_SHIP = (
@@ -177,6 +176,11 @@ PLANNING_MUST_NOT_SHIP = (
     "scripts/core/preflight-check.sh",
     "scripts/core/gh-review-helper.sh",
     "scripts/core/prepare-review-input.sh",
+    # The copy-sync channel, retired at KIT-0102 (KIT-ADR-0028 phase 4).
+    # A new planning repo must NOT be born with a manifest pointing at a
+    # sync engine that no longer exists — their absence is the contract.
+    "scripts/.core-manifest.json",
+    "scripts/core/sync_from_manifest.py",
 )
 
 
@@ -226,23 +230,6 @@ class TestPlanningShape:
         assert "black" not in text
         assert "pytest" not in text
         assert "flake8" not in text
-
-    def test_manifest_matches_planning_shipset(self, planning):
-        import json
-
-        manifest = json.loads(
-            (planning / "scripts" / ".core-manifest.json").read_text(encoding="utf-8")
-        )
-        entries = manifest["files"]["scripts_core"]
-        assert "core/project" in entries
-        assert "core/ci-check.sh" not in entries
-        assert "core/pattern_lint.py" not in entries
-        # removed at 0.3.1 (KIT-0092) — the seeded manifest must not
-        # list files the shipset no longer contains, or `project sync`
-        # would chase them
-        assert "core/preflight-check.sh" not in entries
-        assert "core/prepare-review-input.sh" not in entries
-        assert "core/gh-review-helper.sh" not in entries
 
     def test_kit_agents_still_marker_merged(self, planning):
         text = (planning / ".claude" / "agents" / "planner.md").read_text(

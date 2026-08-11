@@ -113,9 +113,19 @@ KIT-0082 (acceptance surface collapses to install + doctor).
    script-carrying repo remaining is its retired `_old` archive, kept
    deliberately by the operator — an artifact, not a migration target.
    No upgrader migration was ever needed.
-4. Retire the sync machinery — **KIT-0102** (the dissolved-task
-   dispositions were already written at the 2026-08-08 backlog review,
-   ahead of schedule at operator direction)
+4. Retire the sync machinery — **DONE**: KIT-0102 (PR #PENDING,
+   2026-08-11). Deleted the push Action (`sync-core-scripts.yml`), the
+   pull engine (`sync_from_manifest.py`), the manifest
+   (`.core-manifest.json`), the `project sync` subcommand, the
+   `60-push-sync-token.sh` doctor check (both homes) and their tests;
+   the setup door no longer seeds a manifest or ships the engine.
+   KIT-ADR-0026 marked Superseded. Enumeration corrected two spec
+   guesses — `40-version-skew.py` (venv/black skew, not manifest skew)
+   and `scripts/core/VERSION` (still read by `project version`) both
+   PRESERVED. Both-directions drift check clean: 0 consumer copies
+   newer than canon. (The dissolved-task dispositions were already
+   written at the 2026-08-08 backlog review, ahead of schedule at
+   operator direction.)
 
 **Costs and risks, stated honestly**:
 - PyPI release discipline becomes real work (versioning, changelogs,
