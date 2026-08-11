@@ -97,6 +97,12 @@ Open a new tab in this kit checkout and paste:
   claude --agent project-intake "Begin the intake. Brief: <path-to-brief.md>  Code: <path-to-code-folder>"
 ```
 
+Substitute real absolute paths into that message before printing it —
+never leave the placeholders for the operator to fill. You validated both
+paths a moment ago, so you have them. If either contains a double quote,
+switch the outer quoting to single quotes rather than emitting a line
+that breaks when pasted.
+
 **The opening message is part of the command, not decoration.** A session
 cannot speak first: `project-intake` runs a FIRST-TURN CONTRACT that
 fires on the first USER message, so a launch without one leaves the

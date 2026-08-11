@@ -190,13 +190,27 @@ If workflows are still running (`status: "in_progress"` or `status: "queued"`):
 timeout 600 gh $GH_REPO_ARG run watch <run-id> --exit-status
 ```
 
-Exit codes matter here: `timeout` returns **124** when it fires, which is
-a TIMEOUT, not a CI failure — report it as such (see Timeout Handling).
-`--exit-status` makes a genuinely failed run exit non-zero, and that IS a
-failure. On macOS `timeout` needs coreutils (`brew install coreutils`
-provides `gtimeout`); if no supervisor is available, drop `--exit-status`,
-poll `gh run view` on an interval instead, and say in your report that the
-watch was unbounded.
+Exit codes matter here, and three outcomes must not be conflated:
+
+- **124** — the supervisor fired: this is a TIMEOUT, not a CI failure
+  (see Timeout Handling).
+- **127** — `timeout` itself is not installed: nothing was watched. Do
+  NOT report this as a CI result of any kind.
+- any other non-zero — `--exit-status` saw a genuinely failed run. That
+  IS a failure.
+
+Resolve the supervisor before using it, since it is absent by default on
+macOS (coreutils ships it as `gtimeout`):
+
+```bash
+command -v timeout || command -v gtimeout || echo "no supervisor"
+```
+
+Use whichever name resolves. If neither does, do not fall back to a bare
+`gh run watch` — an unbounded watch is the hang this fix exists to
+prevent. Poll `gh run view <run-id> --json status,conclusion` on an
+interval instead, stop at your own deadline, and state in the report that
+the watch was polled rather than supervised.
 
 **Polling Strategy**:
 - Check status every 20 seconds

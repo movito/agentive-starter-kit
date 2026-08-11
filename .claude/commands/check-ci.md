@@ -104,20 +104,29 @@ create the commit in the wrong repository and retrigger nothing:
 does not *make* the commit empty. Anything already staged rides along, so
 running this against a dirty index silently ships unrelated work inside a
 commit labelled "retrigger CI". Guard both forms — if the check fails,
-stop and tell the operator what is staged rather than committing it:
+stop and tell the operator what is staged rather than committing it. The
+push sits inside the guard as well: a blocked commit that still pushed
+would re-send the previous state and report "retriggered" having done
+nothing of the sort.
 
 ```bash
 # Single-repo mode:
-git diff --cached --quiet || { echo "staged changes present — not retriggering"; git diff --cached --name-only; }
-git diff --cached --quiet && git commit --allow-empty -m "chore: retrigger CI"
-git push
+if git diff --cached --quiet; then
+    git commit --allow-empty -m "chore: retrigger CI" && git push
+else
+    echo "staged changes present — not retriggering; commit or stash these first:"
+    git diff --cached --name-only
+fi
 ```
 
 ```bash
-# Split mode — route both, using the `- **Path**:` value from CLAUDE.md:
-git -C <target_path> diff --cached --quiet || { echo "staged changes present — not retriggering"; git -C <target_path> diff --cached --name-only; }
-git -C <target_path> diff --cached --quiet && git -C <target_path> commit --allow-empty -m "chore: retrigger CI"
-git -C <target_path> push
+# Split mode — route every call, using the `- **Path**:` value from CLAUDE.md:
+if git -C <target_path> diff --cached --quiet; then
+    git -C <target_path> commit --allow-empty -m "chore: retrigger CI" && git -C <target_path> push
+else
+    echo "staged changes present — not retriggering; commit or stash these first:"
+    git -C <target_path> diff --cached --name-only
+fi
 ```
 
 This is the `self-review` skill's **scoped staging in commit helpers**

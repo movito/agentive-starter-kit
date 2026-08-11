@@ -446,6 +446,12 @@ input file both live there, and the previous call's directory is gone:
 > deep-tier skip in the review record. Run all three only on a
 > logic-shaped change. The table below is the menu; the tier rule is what
 > selects from it.
+>
+> **Mixed diff → treat it as logic-shaped.** If any hunk changes
+> behavior, the cheap tier is the wrong gate for that hunk, and the cost
+> of a needless deep run is money while the cost of a missed logic bug is
+> a defect in main. "Prose-dominated" means the diff is prose *and*
+> nothing in it changes what the code does.
 
 ```bash
 # Every shape — the fast gate:
