@@ -23,6 +23,18 @@ anchors and suggested shapes; the KIT-0092/0099 precedent class
   pointing at the tier rule (pair rule), wrap-up's unverified
   review-starter path. Re-verify each anchor before fixing (files
   have moved before).
+- **F7 — commands self-explain before acting (operator feedback,
+  2026-08-11, live during /setup-preset)**: "I'm just typing a command
+  and seeing stuff happen … the interaction requires me to be fully
+  aware of what the command contains." Every USER-INVOCABLE command
+  (setup-preset, new-project, start-task, status, preflight, retro,
+  wrap-up, …) opens its first response with a standard transparency
+  header: one line of what-this-does, what it will read/write and
+  where, and a link to the explainer — the command's own source on
+  GitHub plus the relevant docs page (e.g. STARTING-A-PROJECT for
+  door-adjacent commands). Pattern definition + sweep across the
+  user-invocable set; internal skills (user-invocable: false) are out
+  of scope. KIT-0078-family finding (cold-start transparency).
 - **Release 2.0.2**: the mechanical resync per the KIT-0099 recipe
   (drift guard red-by-design between kit merge and tag — the
   established rhythm). The follow-ups' "also noted" README item is
