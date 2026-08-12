@@ -1,23 +1,74 @@
 ---
-description: How to run the adversarial code-review evaluator after bot rounds and before human review
+description: How to run the adversarial code-review evaluator once local tests pass, before the PR opens
 user-invocable: false
-version: 1.3.0
+version: 1.9.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-07-05
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Code-Review Evaluator
 
-Run after bot triage rounds are complete, before human review. Uses a different model family (o1/Gemini) to find edge-case bugs that bots and Claude miss.
+Run **after local tests pass and before the PR opens**. Uses a different
+model family (o1/Gemini) to find edge-case bugs that bots and Claude miss.
+
+## Where the artifacts live — resolve this FIRST
+
+Every artifact below (inputs, logs, the Gate 5 record) belongs to the
+**planning repo**, because that is where Gate 5 and `agentive preflight`
+look for them. In split mode the session runs in the TARGET worktree, so
+a relative `.kit/…` or `.adversarial/…` path lands in the wrong repo —
+the record is written, the gate still fails, and nothing says why.
+
+Resolve the planning root once, before running anything. Read the path
+out of the output; do not assign it (`$()` is forbidden by the agents'
+Shell Rules):
+
+```bash
+git rev-parse --show-toplevel
+```
+
+- **Single-repo mode**: that path IS the planning repo.
+- **Split mode**: take the planning path from the handoff's Session
+  topology instead — the target worktree's CLAUDE.md has no
+  `## Target Repository` section.
+
+Confirm it by checking the two markers that always exist in a planning
+repo, then ensure the review directory is present — a fresh planning repo
+can legitimately lack that empty directory, and both the skip record and
+the Step 4 aggregation write into it:
+
+```bash
+ls /literal/planning/path/.kit/tasks /literal/planning/path/CLAUDE.md
+mkdir -p /literal/planning/path/.kit/context/reviews
+```
+
+If the first `ls` fails, the root is wrong — stop and ask rather than
+creating directories in the wrong repo.
+
+**`"$PLANNING"` below is a placeholder for that literal path, not a shell
+variable** — each Bash call is a fresh shell, so an assignment would not
+survive to the next call. Type the path.
+
+**Run the evaluators from the planning repo** (`cd` there first, or pass
+absolute paths). `agentive review-input` writes
+`.adversarial/inputs/…` relative to its working directory, so running it
+elsewhere splits inputs and logs across two repos.
 
 ## When to Run
 
-- After all bot threads are resolved (0 unresolved)
-- Before requesting human code review
-- **Exception — doc-heavy tasks run the evaluator BEFORE PR open** (see
-  "Ordering for Doc-Heavy Tasks" below)
+- **Local tests green** — evaluate working code, not a draft
+- **Before opening the PR**, for all task types that do not meet the
+  skip conditions in "When to Skip" below (see "Ordering" for why the
+  pre-open position applies regardless of task type)
+- Do NOT wait for CI or for bot threads: the signals are independent, and
+  every evaluator-driven rewrite made after PR open burns a bot round
+
+The ordering rule and the skip policy answer different questions: skip
+decides *whether* the trio runs, ordering decides *when*. A skipped
+evaluation still needs its persisted record (see "Always document the
+skip") — that record is what Gate 5 checks.
 
 ## Ordering: Run the Evaluator Trio Before PR Open (all tasks)
 
@@ -67,12 +118,30 @@ You may skip the evaluator when ALL of these conditions are true:
 - **No external integrations** (no subprocess, API calls, or new dependencies)
 - **Established patterns only** (all code follows existing patterns in the codebase)
 
+### Mixed-shape tasks never skip (added 2026-08-12)
+
+The skip rules above are for trivially small LOGIC changes. A task that
+mixes deletions with authored records, messages, or sweeps (retirement
+tasks, release tasks, canon fixes) always runs at least the fast tier
+pre-open — first-draft authored content is where self-introduced
+defects concentrate, and skipping the trio makes the BOTS the first
+reviewers, which converts catchable defects into post-open fix rounds
+(KIT-0102 PR #127: skip granted for "pure deletion", ten bot threads
+followed, the two substantive ones self-introduced authored content).
+
 ### Always document the skip
 
 ```bash
 echo "# Evaluator skipped: <N lines logic, no new functions, no external integrations" \
-  > .kit/context/reviews/<TASK-ID>-evaluator-review.md
+  > "$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md
 ```
+
+> **The record goes in the PLANNING repo.** Gate 5 reads it there. In
+> split mode the session runs in the TARGET worktree, so a relative
+> `.kit/…` path writes to the wrong repo — the record is never found and
+> preflight fails a gate the work actually satisfied. Resolve the
+> planning root once and substitute the literal path (it does not
+> survive between tool calls).
 
 **When in doubt, run it.** The fast variant costs ~$0.004 and takes 30 seconds.
 
@@ -130,6 +199,20 @@ output, after the KIT-0069/KIT-0073 prose-sweep shutouts):
 The pattern: trio value depends on input shape matching change shape.
 If a round returns mostly findings about code the diff never touched,
 the input format was wrong — re-run with `diff` before disposing.
+
+**Prose-shaped diffs: run the FAST tier only — skip the deep evaluator
+(planner decision 2026-08-10, three consecutive data points).** On
+instruction-prose changes (agent definitions, skills, workflow docs),
+the deep evaluator's findings were dominated by reconstructions of the
+pre-fix state and hallucinated removed safeguards, while tree-reading
+bots went essentially 1-for-1 on real defects: KIT-0092 (whole-module
+noise on a strings diff), KIT-0097 (o3 oscillations across the 2.0.0
+review), KIT-0098 (trio: 14 findings, 3 accepted, 1 real miss the bot
+then caught; bots: 1-for-1). Deep evaluators reason about CODE
+semantics; prose coherence is not their instrument. Rule: prose-shaped
+diff → `code-reviewer-fast` (or `-v2`) only, `--format diff`; the deep
+tier stays for logic diffs. Note the skip in the review record with
+this section as the citation.
 
 ### Manual path (special cases only)
 
@@ -211,7 +294,52 @@ until the operator uncommented the key). Verify before running the trio:
 the secret off the transcript. Never add or commit a key — surface the
 gap to the operator instead.
 
-If the required API key is missing, fall back to another evaluator. If none of the keys are set, document the failure and proceed to human review.
+If the required API key is missing, fall back **within the tier the change
+shape allows** — never upward. On a prose-dominated diff the tier is
+fast-only, so a missing fast-tier key means the gate is blocked (see
+below); it does NOT license `code-reviewer` or `claude-code` as
+substitutes. Reaching the deep tier through a degraded path is still
+reaching the deep tier — the spend the prose rule exists to avoid, now
+arrived at by accident rather than by decision.
+
+Substitution is legitimate only sideways: another evaluator **in the same
+tier** whose provider key IS set (e.g. a `-v2` variant of the same
+evaluator). Record which evaluator actually ran and why the intended one
+did not — a review record that names an evaluator nobody ran is a false
+claim about the gate.
+
+### No keys at all — the gate does NOT auto-open
+
+If **none** of the provider keys are set, the trio cannot run and Gate 5
+has no evidence. This is a blocked gate, not a passed one. Do not
+"document the failure and proceed" on your own authority — a documented
+failure is still a failure, and a session that self-certifies past it
+removes the gate for every future task that copies the pattern.
+
+Required sequence:
+
+1. **Write the failed record** at
+   `"$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md`
+   (the PLANNING repo — see above), first line
+   naming the mode explicitly:
+
+   ```text
+   Mode: FAILED — no provider API keys present (GEMINI_API_KEY,
+   OPENAI_API_KEY, ANTHROPIC_API_KEY all unset); trio not run.
+   ```
+
+2. **Run the self-review checklist** (`.claude/skills/self-review/SKILL.md`)
+   in full and record its output in the same file. It is a partial
+   substitute, and the record must say so — never present it as a trio.
+3. **Surface the gap to the coordinator/operator and STOP.** State that
+   Gate 5 is unsatisfied, that the cause is missing keys (an environment
+   problem they can fix in a minute), and ask whether to wait for a key
+   or proceed without the gate.
+4. **Proceed to human review only on explicit approval**, and record
+   that approval — who approved, when — in the review record.
+
+The one thing that must never happen is a review record that reads like
+a gate was satisfied when no evaluator ran.
 
 **Loading `.env` in unattended/worktree runs**: use the POSIX dot form
 inside `bash -c`, not the `source` keyword — the worktree-isolation
@@ -354,9 +482,13 @@ an empty review file can't silently mask evaluator failures. **The
 snippet is bash-only** (`shopt`): harness shells may be zsh — run it
 via `bash -c '…'` (KIT-0056 retro):
 
+Both sides of this recipe are planning-repo paths — the glob reads the
+logs the trio wrote there, and the redirect writes the Gate 5 record
+beside them. Substitute the literal planning path for `"$PLANNING"`.
+
 ```bash
 shopt -s nullglob
-logs=(.adversarial/logs/<TASK-ID>-code-review-input--*.md)
+logs=("$PLANNING"/.adversarial/logs/<TASK-ID>-code-review-input--*.md)
 shopt -u nullglob
 if [ "${#logs[@]}" -eq 0 ]; then
     echo "ERROR: no evaluator logs found for <TASK-ID>" >&2
@@ -369,7 +501,7 @@ fi
         cat "$log"
         echo
     done
-} > .kit/context/reviews/<TASK-ID>-evaluator-review.md
+} > "$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md
 ```
 
 Include this file in your next commit. The same recipe appears in

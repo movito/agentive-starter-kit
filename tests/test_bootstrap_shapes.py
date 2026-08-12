@@ -158,7 +158,6 @@ PLANNING_MUST_SHIP = (
     ".env.template",
     ".gitignore",
     "CLAUDE.md",
-    "scripts/.core-manifest.json",
 )
 
 PLANNING_MUST_NOT_SHIP = (
@@ -177,6 +176,11 @@ PLANNING_MUST_NOT_SHIP = (
     "scripts/core/preflight-check.sh",
     "scripts/core/gh-review-helper.sh",
     "scripts/core/prepare-review-input.sh",
+    # The copy-sync channel, retired at KIT-0102 (KIT-ADR-0028 phase 4).
+    # A new planning repo must NOT be born with a manifest pointing at a
+    # sync engine that no longer exists — their absence is the contract.
+    "scripts/.core-manifest.json",
+    "scripts/core/sync_from_manifest.py",
 )
 
 
@@ -226,23 +230,6 @@ class TestPlanningShape:
         assert "black" not in text
         assert "pytest" not in text
         assert "flake8" not in text
-
-    def test_manifest_matches_planning_shipset(self, planning):
-        import json
-
-        manifest = json.loads(
-            (planning / "scripts" / ".core-manifest.json").read_text(encoding="utf-8")
-        )
-        entries = manifest["files"]["scripts_core"]
-        assert "core/project" in entries
-        assert "core/ci-check.sh" not in entries
-        assert "core/pattern_lint.py" not in entries
-        # removed at 0.3.1 (KIT-0092) — the seeded manifest must not
-        # list files the shipset no longer contains, or `project sync`
-        # would chase them
-        assert "core/preflight-check.sh" not in entries
-        assert "core/prepare-review-input.sh" not in entries
-        assert "core/gh-review-helper.sh" not in entries
 
     def test_kit_agents_still_marker_merged(self, planning):
         text = (planning / ".claude" / "agents" / "planner.md").read_text(
@@ -557,3 +544,61 @@ class TestProfiles:
         assert "### Python (consumer-tuned)" in text
         assert text.count("BEGIN KIT-LOCAL: kit-install") == 1
         assert text.count("BEGIN KIT-LOCAL: project-rules") == 1
+
+    @pytest.mark.parametrize(
+        "shape_args",
+        [
+            pytest.param((), id="single"),
+            pytest.param(
+                (
+                    "--shape",
+                    "planning",
+                    "--target-path",
+                    "../my-product",
+                    "--target-github",
+                    "acme/my-product",
+                ),
+                id="planning",
+            ),
+        ],
+    )
+    def test_rebootstrap_sweeps_retired_sync_machinery(self, tmp_path, shape_args):
+        """KIT-0102 (ADR-0028 phase 4): a consumer bootstrapped before the
+        retirement still carries the copy-sync machinery. RSYNC_BASE uses
+        --ignore-existing and the planning cp loop is [ ! -e ]-guarded, so
+        nothing removes those files on its own — the door sweeps them
+        explicitly. Without the sweep a re-bootstrapped repo keeps a dead
+        engine and a manifest pointing at it (code-reviewer-fast, KIT-0102).
+
+        Parametrized over BOTH shapes: the door calls sweep_retired_sync
+        from two places, and a single-shape-only test stays green if the
+        planning call is deleted or drifts (CodeRabbit, PR #127).
+        """
+        target = make_consumer_dir(tmp_path, "app")
+        assert run_bootstrap(target, *shape_args).returncode == 0
+
+        # plant the retired machinery exactly as a pre-KIT-0102 consumer
+        # would carry it
+        stale = {
+            target / "scripts" / "core" / "sync_from_manifest.py": "stale engine\n",
+            target / "scripts" / ".core-manifest.json": '{"core_version": "2.1.0"}\n',
+            target
+            / "scripts"
+            / "core"
+            / "doctor.d"
+            / "60-push-sync-token.sh": "stale check\n",
+        }
+        # the planning shape does not ship .github/, so the workflow sweep
+        # is only meaningful for the single shape
+        if not shape_args:
+            stale[target / ".github" / "workflows" / "sync-core-scripts.yml"] = (
+                "stale workflow\n"
+            )
+        for path, body in stale.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(body, encoding="utf-8")
+
+        result = run_bootstrap(target, *shape_args)
+        assert result.returncode == 0, result.stderr
+        for path in stale:
+            assert not path.exists(), f"re-bootstrap left retired file: {path}"

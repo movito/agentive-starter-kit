@@ -297,6 +297,26 @@ echo
 # ─────────────────────────────────────────
 RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --exclude='__pycache__/' --exclude='.DS_Store')
 
+# The copy-sync machinery retired in KIT-0102 (ADR-0028 phase 4), as
+# paths relative to $TARGET. Defined ONCE and swept in both shapes:
+# RSYNC_BASE uses --ignore-existing and the planning cp loop is
+# [ ! -e ]-guarded, so neither can ever remove a stale file on its own.
+# Adding a newly-retired path here must reach both shapes (CodeRabbit,
+# PR #127).
+RETIRED_SYNC_PATHS=(
+    "scripts/core/sync_from_manifest.py"
+    "scripts/.core-manifest.json"
+    "scripts/core/doctor.d/60-push-sync-token.sh"
+)
+
+# Remove the retired copy-sync files from $TARGET (no-op when absent).
+sweep_retired_sync() {
+    local rel
+    for rel in "${RETIRED_SYNC_PATHS[@]}"; do
+        rm -f "$TARGET/$rel"
+    done
+}
+
 # The planning-shape ship list (KIT-0048 F1) — enumerated, never a glob
 # (the KIT-0044 provisioning lesson). Two shapes only; if a third shape
 # appears, a declarative set belongs to P3's door, not here.
@@ -310,7 +330,6 @@ PLANNING_CORE=(
     lib/target_repo.sh
     logging_config.py
     project
-    sync_from_manifest.py
     validate_task_status.py
     verify-ci.sh
     wait-for-bots.sh
@@ -358,6 +377,9 @@ rm -f "$TARGET/.claude/agents/planner2.md" \
     "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
 if [ "$SHAPE" = "planning" ]; then
+    # Sweep the retired copy-sync machinery out of consumers bootstrapped
+    # before KIT-0102 (see RETIRED_SYNC_PATHS).
+    sweep_retired_sync
     # lifecycle + gate machinery (enumerated)
     for rel in "${PLANNING_CORE[@]}"; do
         mkdir -p "$TARGET/scripts/core/$(dirname "$rel")"
@@ -415,60 +437,6 @@ repos:
 PRECOMMIT
     fi
 
-    # planning-shape manifest: exactly the shipped core set, so
-    # `project sync` keeps working for future updates
-    if [ ! -f "$TARGET/scripts/.core-manifest.json" ]; then
-        mkdir -p "$TARGET/scripts"
-        cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
-{
-  "core_version": "4.0.0",
-  "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-07-28T00:00:00Z",
-  "files": {
-    "scripts_core": [
-      "core/__init__.py",
-      "core/check-bots.sh",
-      "core/check_cross_repo_config.py",
-      "core/doctor.d/10-gh-auth.sh",
-      "core/doctor.d/20-env-keys.py",
-      "core/doctor.d/30-evaluators.sh",
-      "core/doctor.d/40-version-skew.py",
-      "core/doctor.d/50-plugin-source.sh",
-      "core/doctor.d/55-worktree-provisioning.sh",
-      "core/doctor.d/60-push-sync-token.sh",
-      "core/doctor.d/70-core-bare.sh",
-      "core/doctor.d/80-bot-presence.sh",
-      "core/doctor.d/90-config-home.sh",
-      "core/lib/target_repo.sh",
-      "core/logging_config.py",
-      "core/project",
-      "core/sync_from_manifest.py",
-      "core/validate_task_status.py",
-      "core/verify-ci.sh",
-      "core/wait-for-bots.sh",
-      "core/VERSION"
-    ],
-    "commands_core": [
-      "check-ci.md",
-      "check-bots.md",
-      "wait-for-bots.md",
-      "start-task.md",
-      "commit-push-pr.md",
-      "preflight.md"
-    ],
-    "commands_optional": [
-      "babysit-pr.md",
-      "retro.md",
-      "triage-threads.md",
-      "status.md",
-      "check-spec.md"
-    ]
-  },
-  "opted_in": ["commands_optional"]
-}
-MANIFEST
-    fi
-
     echo "Done"
     echo
 else
@@ -476,7 +444,9 @@ else
 "${RSYNC_BASE[@]}" --exclude='cache/' --exclude='memories/' --exclude='claude-code/' \
     "$PROJECT_ROOT/.serena/" "$TARGET/.serena/"
 
-# scripts/core/ — shared scripts
+# scripts/core/ — shared scripts. Sweep the retired copy-sync machinery
+# out of consumers bootstrapped before KIT-0102 (see RETIRED_SYNC_PATHS).
+sweep_retired_sync
 mkdir -p "$TARGET/scripts/core"
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/scripts/core/" "$TARGET/scripts/core/"
 
@@ -488,9 +458,13 @@ mkdir -p "$TARGET/scripts/optional"
 # lives in the unsynced scripts/local/); the rm -f also sweeps stale
 # copies from a pre-exclusion bootstrap — --ignore-existing would
 # otherwise leave them behind in existing consumers.
+# sync-core-scripts.yml was deleted upstream in KIT-0102 (ADR-0028
+# phase 4); the rm -f sweeps stale copies out of consumers bootstrapped
+# before that, the same way plugin-drift.yml is swept.
 rm -f "$TARGET/.github/workflows/plugin-drift.yml"
+rm -f "$TARGET/.github/workflows/sync-core-scripts.yml"
 "${RSYNC_BASE[@]}" \
-    --exclude='sync-core-scripts.yml' --exclude='sync-to-linear.yml' \
+    --exclude='sync-to-linear.yml' \
     --exclude='plugin-drift.yml' \
     "$PROJECT_ROOT/.github/" "$TARGET/.github/"
 
@@ -541,48 +515,6 @@ for f in pyproject.toml .gitignore .pre-commit-config.yaml .env.template .codera
         fi
     fi
 done
-
-# Create a consumer-appropriate manifest (no kit_builder tier)
-if [ ! -f "$TARGET/scripts/.core-manifest.json" ]; then
-    cat > "$TARGET/scripts/.core-manifest.json" << 'MANIFEST'
-{
-  "core_version": "2.0.0",
-  "source_repo": "movito/agentive-starter-kit",
-  "synced_at": "2026-03-29T00:00:00Z",
-  "files": {
-    "scripts_core": [
-      "core/__init__.py",
-      "core/check-bots.sh",
-      "core/ci-check.sh",
-      "core/logging_config.py",
-      "core/pattern_lint.py",
-      "core/project",
-      "core/sync_from_manifest.py",
-      "core/validate_task_status.py",
-      "core/verify-ci.sh",
-      "core/wait-for-bots.sh",
-      "core/VERSION"
-    ],
-    "commands_core": [
-      "check-ci.md",
-      "check-bots.md",
-      "wait-for-bots.md",
-      "start-task.md",
-      "commit-push-pr.md",
-      "preflight.md"
-    ],
-    "commands_optional": [
-      "babysit-pr.md",
-      "retro.md",
-      "triage-threads.md",
-      "status.md",
-      "check-spec.md"
-    ]
-  },
-  "opted_in": ["commands_optional"]
-}
-MANIFEST
-fi
 
 echo "Done"
 echo

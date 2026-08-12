@@ -3,39 +3,31 @@
 > How `agentive-starter-kit` distributes agents, commands, and shared
 > tooling to downstream projects — and how to keep everything updated.
 
-**Version**: 1.2.0
-**Last updated**: 2026-07-27
+**Version**: 2.0.0
+**Last updated**: 2026-08-11
 **Status**: Current
-**Related**: `docs/MANIFEST-UPGRADE-GUIDE.md`, `docs/PLUGIN-UPGRADE-GUIDE.md`,
-`docs/CROSS-REPO-PATTERN.md`, ADR-0008, KIT-ADR-0022, KIT-ADR-0024, KIT-ADR-0025,
-KIT-ADR-0026
+**Related**: `docs/PLUGIN-UPGRADE-GUIDE.md`, `docs/UPDATING-YOUR-PROJECT.md`,
+`docs/CROSS-REPO-PATTERN.md`, KIT-ADR-0024, KIT-ADR-0025, KIT-ADR-0028
 
 ---
 
 ## TL;DR
 
 - **One upstream source of truth**: this repo.
-- **Two distribution channels**: a **plugin** (install-based) and a
-  **manifest sync** GitHub Action (vendored-file-based).
-- **Commands & scripts propagate two ways** (Channel B): a **push** —
-  merging to `main` fires the sync Action, which opens PRs downstream
-  (**currently parked** — see below) — and, since KIT-ADR-0026, a **pull**
-  — a consumer runs `./scripts/core/project sync` to fetch updates on
-  demand (selective or full, version-pinnable). Both feed one tested
-  engine, so they can't drift.
+- **Two distribution channels, both install-based**: the
+  **agentive-workflow plugin** (agents, skills, slash commands) and the
+  **agentive-kit package** (the `agentive` CLI and shared tooling).
+- **Nothing is copied downstream any more.** The copy era — a
+  `.core-manifest.json` naming a file set, a push Action that opened PRs,
+  and a `project sync` pull engine — was **retired in KIT-ADR-0028
+  phase 4** (KIT-0102, 2026-08-11). New projects are born packaged.
+- **Everything is semver-pinned**: agents in frontmatter (`version`), the
+  plugin and package by release version.
 
-> ⚠️ **The push path is parked (KIT-0045).** `sync-core-scripts.yml` is
-> `workflow_dispatch`-only: the push trigger was disabled 2026-07-14 after
-> 22 consecutive failures caused by a `CROSS_REPO_TOKEN` secret that was
-> never provisioned. **Pull and manual dispatch are the live mechanisms
-> today** — merging to `main` opens no downstream PRs. Revert these notes
-> when KIT-0045 re-enables it.
-- **Agents do not auto-propagate** via either path today — the pull channel
-  carries scripts/commands/kit files, **not** agents, which still ship
-  through the plugin or a bootstrap merge. Closing that asymmetry is tracked
-  as KIT-0026.
-- **Everything is semver-pinned**: agents in frontmatter (`version`),
-  the sync unit via `core_version` in the manifest.
+> **Reading this for history?** Sections below marked *(retired)* describe
+> the copy channel as it worked until 2026-08-11. They are kept because
+> ADRs and retros reference them; nothing they describe is live. The
+> machinery itself is in git history.
 
 ---
 
@@ -48,9 +40,8 @@ lives here. Nothing is authored in a consumer repo and pushed back up.
 
 ## 2. Two distribution channels
 
-> Both diagrams below show Channel B's **push** arrow as designed. That
-> trigger is **parked** (KIT-0045) — `workflow_dispatch` and the pull path
-> are the live mechanisms today.
+Both channels are **install-based**. Nothing is copied into a consumer
+tree by upstream any more.
 
 Rendered view (GitHub renders Mermaid natively):
 
@@ -64,23 +55,22 @@ flowchart TD
         PLUGIN -->|"claude plugin update<br/>/ upgrader agent"| CONSA
     end
 
-    subgraph B["Channel B — Manifest sync (vendored files)"]
-        ACT["sync-core-scripts.yml Action<br/>driven by scripts/.core-manifest.json<br/><br/>carries: scripts/core · .claude/commands · .claude/skills · .kit/**"]
-        CONSB["consumer repo<br/>vendored files + PR to review<br/>opted_in tiers preserved"]
-        ACT -->|"auto PR on push to main<br/>(CROSS_REPO_TOKEN)<br/>⚠ PARKED — KIT-0045"| CONSB
+    subgraph B["Channel B — Package (install-based)"]
+        PKG["agentive-kit package<br/><br/>carries: the agentive CLI ·<br/>doctor checks · shared tooling"]
+        CONSB["consumer repo<br/>agentive CLI on PATH<br/>version-pinned"]
+        PKG -->|"package install / upgrade"| CONSB
     end
 
     SRC -->|"publish / re-publish"| PLUGIN
-    SRC -->|"push to watched paths<br/>⚠ PARKED — KIT-0045"| ACT
+    SRC -->|"release"| PKG
 
-    AGENTS{{"Agents: NOT watched by the Action<br/>ship via plugin (a) or bootstrap merge (b)<br/>— KIT-ADR-0025 / KIT-0033"}}
-    SRC -.->|"special case"| AGENTS
-    AGENTS -.-> PLUGIN
+    OLD{{"Copy channel (manifest sync Action + project sync)<br/>RETIRED — KIT-ADR-0028 phase 4, KIT-0102"}}
+    SRC -.->|"until 2026-08-11"| OLD
 
     classDef src fill:#1f2937,color:#fff,stroke:#111;
-    classDef note fill:#fef3c7,color:#78350f,stroke:#d97706;
+    classDef note fill:#fee2e2,color:#7f1d1d,stroke:#dc2626;
     class SRC src;
-    class AGENTS note;
+    class OLD note;
 ```
 
 Plain-text view (terminals, diffs, non-Mermaid viewers):
@@ -91,44 +81,53 @@ Plain-text view (terminals, diffs, non-Mermaid viewers):
                  │           canonical source of truth        │
                  └───────────────┬───────────────┬───────────┘
                                  │               │
-         Channel A: PLUGIN       │               │   Channel B: MANIFEST SYNC
-         (install-based)         │               │   (vendored file copies)
+         Channel A: PLUGIN       │               │   Channel B: PACKAGE
+         (install-based)         │               │   (install-based)
                                  ▼               ▼
       ┌──────────────────────────────┐   ┌──────────────────────────────────┐
-      │ agentive-workflow plugin      │   │ sync-core-scripts.yml (Action)    │
-      │ served via                    │   │ driven by                         │
-      │ movito/agentive-skills        │   │ scripts/.core-manifest.json       │
-      │ marketplace                   │   │                                   │
-      │                               │   │ on push to watched paths on main: │
-      │ carries:                      │   │  • matrix over downstream repos   │
-      │  • agents  (namespaced)       │   │  • copy files per manifest tiers  │
-      │  • commands (namespaced)      │   │  • open a PR (CROSS_REPO_TOKEN)   │
-      │  • skills   (namespaced)      │   │                                   │
-      │                               │   │ carries:                          │
-      │ consumer updates via:         │   │  • scripts/core/**                │
-      │  claude plugin update         │   │  • .claude/commands/**            │
-      │  (or the `upgrader` agent)    │   │  • .kit/** + .claude/skills/**    │
+      │ agentive-workflow plugin      │   │ agentive-kit package              │
+      │ served via                    │   │                                   │
+      │ movito/agentive-skills        │   │ carries:                          │
+      │ marketplace                   │   │  • the `agentive` CLI             │
+      │                               │   │  • doctor checks                  │
+      │ carries:                      │   │  • shared Python tooling          │
+      │  • agents  (namespaced)       │   │                                   │
+      │  • commands (namespaced)      │   │ consumer updates via:             │
+      │  • skills   (namespaced)      │   │  package install / upgrade        │
+      │                               │   │                                   │
+      │ consumer updates via:         │   │                                   │
+      │  claude plugin update         │   │                                   │
+      │  (or the `upgrader` agent)    │   │                                   │
       └───────────────┬──────────────┘   └────────────────┬─────────────────┘
                       │                                    │
                       ▼                                    ▼
       ┌──────────────────────────────┐   ┌──────────────────────────────────┐
       │ consumer repo                 │   │ consumer repo                     │
-      │  agentive-workflow:<name>     │   │  vendored files + PR to review    │
-      │  installed, version-pinned    │   │  opted_in tiers preserved         │
+      │  agentive-workflow:<name>     │   │  agentive CLI on PATH             │
+      │  installed, version-pinned    │   │  version-pinned                   │
       └──────────────────────────────┘   └──────────────────────────────────┘
 ```
 
-Why two channels: the plugin gives consumers *installable, version-pinned*
-artifacts they don't maintain; the manifest sync is for files that must
-physically live in the consumer's tree (scripts they run, commands,
-kit-builder scaffolding).
+Why two channels: the plugin carries what Claude Code loads (agents,
+skills, commands); the package carries what a human or script executes
+(the CLI and its tooling). Both are installed and version-pinned, so a
+consumer never maintains a copy it did not write.
 
-| | **Channel A — Plugin** | **Channel B — Manifest sync** |
+| | **Channel A — Plugin** | **Channel B — Package** |
 |---|---|---|
-| **What** | `agentive-workflow` plugin, from the `movito/agentive-skills` marketplace | `sync-core-scripts.yml` Action + `scripts/.core-manifest.json` |
-| **Carries** | Agents, commands, skills as **namespaced installs** (`agentive-workflow:feature-developer-v7`, `agentive-workflow:check-ci`) | **Vendored file copies**: `scripts/core/`, `.claude/commands/`, `.claude/skills/`, `.kit/` templates/ADRs/workflows |
-| **Consumer update path** | `claude plugin update` / `upgrader` agent | **Push** (⚠ parked, KIT-0045 — manual `workflow_dispatch` until re-enabled): automated PR into the consumer repo. **Pull** (live): `./scripts/core/project sync` from the consumer (on-demand, KIT-ADR-0026) |
-| **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | ADR-0008 (`.kit/adr/`), KIT-ADR-0022, KIT-ADR-0026, `docs/MANIFEST-UPGRADE-GUIDE.md` |
+| **What** | `agentive-workflow` plugin, from the `movito/agentive-skills` marketplace | the `agentive-kit` package |
+| **Carries** | Agents, commands, skills as **namespaced installs** (`agentive-workflow:feature-developer`, `agentive-workflow:check-ci`) | The `agentive` CLI, doctor checks, shared Python tooling |
+| **Consumer update path** | `claude plugin update` / `upgrader` agent | package install / upgrade |
+| **Governed by** | KIT-ADR-0024 §3, KIT-ADR-0025 | KIT-ADR-0028 |
+
+> **Retired: Channel C — manifest sync (copy-based).** Until 2026-08-11 a
+> third channel copied files into consumer trees: `sync-core-scripts.yml`
+> pushed PRs downstream, and `./scripts/core/project sync` pulled on
+> demand, both driven by `scripts/.core-manifest.json`. The push half
+> never ran in production (`CROSS_REPO_TOKEN` was never provisioned —
+> KIT-0045), and the pull half had no live consumers once projects were
+> born packaged. All of it was deleted in KIT-ADR-0028 phase 4 (KIT-0102).
+> Governed historically by ADR-0008, KIT-ADR-0022, KIT-ADR-0026.
 
 ### Canonical homes (KIT-ADR-0027 P6)
 
@@ -144,73 +143,20 @@ copies of each, namespaced `agentive-workflow:<name>`.
 `.kit/skills/` is retired (0.9.0, KIT-0059): its one-release read-both
 symlinks are gone; `.claude/skills/` is the only skills home.
 
-## 3. The tiered manifest (Channel B's brain)
+## 3–4. The manifest and sync mechanics *(retired)*
 
-`scripts/.core-manifest.json` — `core_version` is the semver of the sync
-unit. Files are grouped into **tiers**, and tier membership decides who
-receives what:
+Sections 3, 4 and 4b of this document described the copy channel's
+internals: the tiered manifest (`scripts/.core-manifest.json`) with its
+`core_version`, `files` tiers and `opted_in` list; the push Action's
+matrix/copy/PR mechanics; and the KIT-ADR-0026 pull path
+(`./scripts/core/project sync`, its dry-run/branch/commit behavior and
+frozen exit-code contract).
 
-| Tier | Sync rule |
-|------|-----------|
-| `scripts_core` | Always sync to every downstream |
-| `commands_core` | Always sync to every downstream |
-| `commands_optional` | Sync **only if** consumer opted in |
-| `kit_builder` | Sync **only to** kit-family repos (`is_kit: true`) |
-
-> The current `core_version` and the per-tier file counts live in
-> `scripts/.core-manifest.json` — read them there. They were hardcoded
-> here once and were three minor versions and nine files out of date by
-> the time anyone noticed (KIT-0069 / A57).
-
-`commands_core` is the "most essential commands" set:
-`check-ci`, `check-bots`, `wait-for-bots`, `start-task`,
-`commit-push-pr`, `preflight`.
-
-A consumer's `opted_in` array is **preserved across syncs** — the Action
-reads the downstream manifest and never clobbers the consumer's tier
-choices.
-
-## 4. The sync Action mechanics
-
-`.github/workflows/sync-core-scripts.yml` is **`workflow_dispatch`-only
-today** (parked, KIT-0045). As designed — and as it will behave again once
-re-enabled — it fires on push to `main` when any watched path changes
-(`scripts/core/**`, `.claude/commands/**`, `.kit/templates/**`, the
-manifest itself, and more). It:
-
-1. runs a **matrix** over downstream repos (today: `dispatch-kit`,
-   `adversarial-workflow`, `adversarial-evaluator-library`),
-2. checks out source + target, walks the manifest tier-by-tier honoring
-   the opt-in / kit-only rules,
-3. copies files and opens a **PR** into each consumer using the
-   `CROSS_REPO_TOKEN` secret.
-
-Consumers review and merge on their own schedule — nothing is force-pushed.
-
-### 4b. The pull path — consumer-initiated (KIT-ADR-0026)
-
-The push Action is upstream-initiated: a consumer waits for a merge to `main`,
-and repos outside the matrix receive nothing. KIT-ADR-0026 adds a **pull**
-path so any consumer can sync from its own terminal in under two minutes:
-
-```bash
-./scripts/core/project sync --dry-run          # what would change (read-only)
-./scripts/core/project sync                     # pull everything entitled
-./scripts/core/project sync --tier commands_core   # one tier
-./scripts/core/project sync --ref v0.7.0        # pin to a tag, not main
-```
-
-Crucially, **one engine backs both paths.** The tier/opt-in/cleanup logic
-lives in `scripts/core/sync_from_manifest.py`; the Action and `project sync`
-are two thin callers of it, so push and pull cannot diverge. The pull command
-resolves its source as `--source <dir>` → `gh api` tarball → shallow clone,
-applies to a review branch (or the working tree with `--no-branch`), and marks
-partial pulls in the manifest (`partial_sync`) so a mixed-version tree is
-explicit. Same review contract as the push PRs: the consumer reads a plain
-`git diff` and merges on its own schedule.
-
-The push Action also gained a `workflow_dispatch` trigger (optional `repo`
-filter) for on-demand *remote*-initiated syncs.
+All of it was deleted in KIT-ADR-0028 phase 4 (KIT-0102, 2026-08-11).
+The detail is preserved in git history and in ADR-0008, KIT-ADR-0022 and
+KIT-ADR-0026 (the last now superseded by KIT-ADR-0028). It is omitted
+here because a reader following it today would be configuring machinery
+that no longer exists.
 
 ## 5. Agents are the special case
 
@@ -271,36 +217,36 @@ its localization.
 > abort beats a silent clobber, and markdown-fence parsing is out of
 > scope for a stdlib helper. Declined twice on PR #70; do not re-raise.
 
-### In transition
+### Resolved
 
-KIT-0026 (backlog) proposes adding `agents_core` / `skills_core` tiers so
-agents *also* flow through Channel B. Until that ships, agent updates reach
-consumers via the plugin (a) or a bootstrap/re-bootstrap merge (b) — **not**
-the sync Action, and **not** the new `project sync` pull path either. The
-KIT-ADR-0026 engine's per-tier strategy dispatch is designed so an
-`agents_core` tier lands as a new tier plus a KIT-LOCAL-marker merge strategy,
-not an engine rewrite.
+The old asymmetry — commands propagated by file copy while agents shipped
+only via the plugin — is gone. KIT-0026 (proposing `agents_core` /
+`skills_core` sync tiers) was **canceled**: the copy channel it would have
+extended no longer exists.
 
-> **The asymmetry to remember:** editing a *command* on `main` opens
-> downstream PRs automatically **and** is pullable with `project sync`;
-> editing an *agent* is neither — it ships via the plugin or a bootstrap merge.
+> **The rule now:** agents, skills and commands all ship through the
+> plugin, and the tooling ships through the package. Editing any of them
+> on `main` reaches consumers when the next plugin or package release is
+> published — never by an automatic file copy.
 
 ## 6. Versioning discipline
 
 Per KIT-0029, every canonical agent pins in frontmatter: `model`,
-`version` (semver), `last-updated`, `origin`, `created-by`. Rules from
-`docs/MANIFEST-UPGRADE-GUIDE.md`:
+`version` (semver), `last-updated`, `origin`, `created-by`:
 
-- **Model-pin-only bump → semver patch**, and update `last-updated`.
-- The manifest's `core_version` is the semver of the sync unit as a whole.
+- **Model-pin-only bump → semver patch**, and update `last-updated`
+  (procedure: `docs/MANIFEST-UPGRADE-GUIDE.md` § Agent Model Pins).
+- The plugin and the package each carry their own release version.
 
 Documents (like this one) are semver-stamped too — see the header.
 
-## 7. Two upgrade surfaces, one agent
+## 7. Upgrade surfaces
 
-- `docs/MANIFEST-UPGRADE-GUIDE.md` — the **scripts/manifest** surface
-  (Channel B).
 - `docs/PLUGIN-UPGRADE-GUIDE.md` — the **plugin** surface (Channel A).
+- `docs/UPDATING-YOUR-PROJECT.md` — the index: what reaches a project
+  through which channel, plus the whole-repo merge for everything else.
+- `docs/MANIFEST-UPGRADE-GUIDE.md` — retired as an upgrade path; retains
+  the **Agent Model Pins** procedure.
 - The **`upgrader` agent** automates the plugin runbook: raises a consumer
   from one plugin version to the next *and* refreshes local agent model
   pins on a rollout, using a two-phase `PREVIEW → operator ACK → APPLY`
@@ -312,19 +258,13 @@ Documents (like this one) are semver-stamped too — see the header.
 
 1. Edit the canonical agent/command in `agentive-starter-kit`, bump its
    `version` + `last-updated`, commit to a branch → PR → merge to `main`.
-2. **Commands & scripts** (two paths, one engine):
-   - **Push** (parked, KIT-0045 — run it manually via `workflow_dispatch`
-     until then) — merging to `main` auto-fires `sync-core-scripts.yml`,
-     which opens update PRs in each downstream. Consumers merge on their
-     schedule; `opted_in` tiers are respected.
-   - **Pull** — a consumer runs `./scripts/core/project sync --dry-run` to see
-     what changed and `./scripts/core/project sync` to apply it (selective via
-     `--tier`/`--only`, pinnable via `--ref`) without waiting for a push PR.
-3. **Agents**: re-publish the plugin (consumers run `claude plugin update`
-   or the `upgrader` agent), or the consumer picks up body changes on its
-   next bootstrap merge — KIT-LOCAL regions preserved.
-4. Consumers verify with the synced `commands_core` gates (`preflight`,
-   `check-ci`, `check-bots`).
+2. **Agents, skills, commands**: re-publish the plugin — consumers run
+   `claude plugin update` or the `upgrader` agent. KIT-LOCAL regions in
+   vendored agent bodies are preserved across a re-bootstrap merge.
+3. **CLI and shared tooling**: cut an `agentive-kit` package release;
+   consumers upgrade the package.
+4. Consumers verify with the plugin's gates (`preflight`, `check-ci`,
+   `check-bots`).
 
 ---
 
@@ -333,8 +273,7 @@ Documents (like this one) are semver-stamped too — see the header.
 | Term | Meaning |
 |------|---------|
 | **Upstream / kit** | `agentive-starter-kit` — the canonical source repo |
-| **Consumer / downstream** | A project that installs the plugin and/or receives manifest syncs |
-| **Kit-family repo** | A downstream that is itself part of the tooling (receives `kit_builder`); `is_kit: true` in the sync matrix |
-| **Tier** | A named group of files in the manifest with a shared sync rule |
-| **Opt-in** | A consumer's recorded choice to receive a non-core tier (`opted_in` array) |
+| **Consumer / downstream** | A project that installs the plugin and/or the package |
+| **Kit-family repo** | A downstream that is itself part of the tooling |
 | **KIT-LOCAL region** | A marker-delimited, consumer-owned section of a vendored agent file |
+| **Tier**, **Opt-in** | *(retired)* Manifest concepts from the copy channel — a named file group and a consumer's recorded choice to receive it. Removed in KIT-0102. |

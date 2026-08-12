@@ -1,6 +1,8 @@
 # KIT-0074: Stacked-PR tooling — review-input base awareness + Gate 1 honesty
 
-**Status**: Backlog
+> **Archived (2026-08-12, backlog review — premise-tested, operator-approved)**: substantially delivered — the F1 headline (`--base <ref>` on review-input) shipped in the packaged agentive_kit.review_input (verified: flag + docs + usage across three stacked series). Thin remainders (auto-detect PR base; Gate 1 stacked at-cap honesty) recorded as one line in KIT-0103 R3's preflight hardening. Revive only if stacked review-input pain recurs despite --base.
+
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 hours

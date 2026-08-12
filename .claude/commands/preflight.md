@@ -1,14 +1,23 @@
 ---
 description: Check all 7 completion gates before requesting human review
 argument-hint: "[optional --pr PR_NUMBER --task TASK_ID --repo owner/name]"
-version: 1.3.0
+version: 1.5.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-08-08
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Preflight Check
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/preflight` — runs all 7 completion gates and presents a
+> PASS/FAIL table with a READY / NOT READY verdict.
+> Reads: CI, bot reviews, and threads via `gh`; `.kit/` review
+> artifacts in the planning repo · Writes: nothing
+> Source: [preflight.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/preflight.md) · Docs: [task completion protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md)
 
 Run all 7 completion gates and present a PASS/FAIL table.
 
@@ -23,10 +32,13 @@ Run all 7 completion gates and present a PASS/FAIL table.
   the planning repo's `.kit/` directory — those artifacts always live
   in planning regardless of where code lives.
 
-Override with `--repo owner/name` if needed:
+Override with `--repo owner/name` if needed. Pass `--task` explicitly
+alongside it: `--task` otherwise defaults to *derived from the branch*,
+and once you have pointed `--repo` somewhere other than the auto-detected
+repo, branch-derivation is the thing least likely to still be right.
 
 ```bash
-agentive preflight --repo owner/name --pr PR_NUMBER
+agentive preflight --repo owner/name --pr PR_NUMBER --task TASK-ID
 ```
 
 ## Step 1: Run preflight
@@ -36,7 +48,10 @@ agentive preflight $ARGUMENTS
 ```
 
 **Argument shape**: it takes named flags only — `--task <TASK-ID>
---pr <N>` (plus optional `--repo owner/name`). A positional task ID
+--pr <N>` (plus optional `--repo owner/name`). Every flag has a
+fallback (`--pr` auto-detects, `--task` derives from the branch), so a
+bare `agentive preflight` works in the common case; pass them explicitly
+whenever the auto-detection could be wrong. A positional task ID
 (`agentive preflight KIT-0044 --pr 76`) fails with "Unknown argument"
 (KIT-0044 retro #4).
 

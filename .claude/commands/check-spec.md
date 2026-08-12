@@ -1,27 +1,107 @@
 ---
 description: Check Spec Compliance
-version: 1.1.0
+version: 1.8.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-07-27
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Check Spec Compliance
 
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/check-spec` — traces every task requirement to code and tests
+> before you commit; reports PASS/PARTIAL/FAIL.
+> Reads: the task spec in `.kit/tasks/`, the full diff and changed
+> files · Writes: optionally `.adversarial/inputs/<TASK-ID>-spec-compliance-input.md`
+> Source: [check-spec.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/check-spec.md) · Docs: [task completion protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md)
+
 Verify that all task requirements are implemented before committing.
 
 **When**: After tests pass + self-review, BEFORE `/commit-push-pr`.
 
+## Step 0: Resolve the repos
+
+In cross-repo mode the spec lives in the planning repo while the code
+lives in the target repo, so a bare `git` command answers about the
+wrong one. Resolve both roots before Step 1.
+
+**Use the canonical parser rather than hand-rolling a `grep`** — it
+resolves `CLAUDE.md`, extracts the fields, and validates the GitHub value
+as `owner/name`:
+
+```bash
+if ! . scripts/core/lib/target_repo.sh 2>/dev/null; then
+    echo "target_repo.sh unavailable — using the manual fallback below" >&2
+else
+    target_repo_init || exit 1   # bad owner/name format: report and stop
+
+    # The helper does NOT reject a half-filled section (verified
+    # 2026-08-09): with `Path` but no `GitHub` it returns 0 and sets
+    # GIT_DIR_ARG while leaving GH_REPO_ARG empty. Split mode needs BOTH.
+    if { [ -n "$TARGET_PATH" ] && [ -z "$TARGET_REPO" ]; } || \
+       { [ -n "$TARGET_REPO" ] && [ -z "$TARGET_PATH" ]; }; then
+        echo "ERROR: '## Target Repository' has only one of Path/GitHub — split mode needs both" >&2
+        exit 1
+    fi
+fi
+echo "TARGET_PATH=${TARGET_PATH:-<single-repo mode>}"
+```
+
+That printed value IS the target root the rest of this document calls
+`$TARGET` — read it out of the output. When it prints
+`<single-repo mode>` the section is absent, and the target root is
+instead what `git rev-parse --show-toplevel` prints; run that and read
+its output the same way.
+
+- **Both `Path` and `GitHub` set** → split mode; the target root is the
+  `Path` value.
+- **Both absent** → single-repo mode; the target root is the current
+  repo, so the commands below are unchanged.
+- **Exactly one set, or a bad `owner/name`** → the section is malformed.
+  Report which field is missing and stop; do not guess which repo to read.
+
+**Manual fallback** (consumer projects without `scripts/core/lib/` — the
+`if !` above routes here rather than exiting). Reading the values is not
+enough: you must know which literal path to type into every
+`git -C "$TARGET"` below, or they resolve against the wrong repo.
+
+```bash
+sed -n '/^## Target Repository/,/^## /p' CLAUDE.md | grep -E '^\- \*\*(Path|GitHub)\*\*:'
+```
+
+From what that printed:
+
+- **Both present, GitHub matches `owner/name`** → the target root is the
+  `Path` value.
+- **Neither present** → single-repo mode; the target root is the current
+  repo (`git rev-parse --show-toplevel`, read from the output).
+- **Exactly one present, or a malformed GitHub value** → STOP rather
+  than guessing which repo to read.
+
+Every code-side command below is written `git -C "$TARGET"`, which is
+correct in BOTH modes — that is why the target root is resolved in
+single-repo mode too. Task specs are always read from the planning repo
+(the current directory), never through `$TARGET`.
+
+> **`$TARGET` is a placeholder, not a shell variable** — each Bash call
+> runs a fresh shell, so an assignment would not survive to the next
+> call. Resolve the root once above, then type the literal path (quoted,
+> if it contains spaces) into
+> every command you issue.
+
 ## Step 1: Identify the task
 
 ```bash
-# Get task ID from branch name
-git branch --show-current
+# The task ID comes from the CODE branch — in split mode that is the
+# target's branch, not the planning repo's (which sits on main).
+git -C "$TARGET" branch --show-current
 ```
 
 ```bash
-# Find the task spec
+# Find the task spec — always in the planning repo
 ls .kit/tasks/3-in-progress/
 ```
 
@@ -36,7 +116,37 @@ durable record (KIT-0072 will feed this same file to the evaluator).
 You MUST have in front of you:
 
 1. **Full task spec** — the entire task file content
-2. **Full source of every changed file** — use `git diff --name-only main` to find them, then read each file completely
+2. **Full source of every changed file** — discover them against the real
+   merge base, in the repo the code lives in:
+
+   **Fail closed at each step.** Every command here can fail in a way
+   that still produces a plausible-looking file list, and a wrong list
+   means tracing the spec against the wrong changes — silently.
+
+   ```bash
+   # Resolve the default branch instead of assuming `main`.
+   BASE=$(git -C "$TARGET" remote show origin | sed -n 's/.*HEAD branch: //p')
+
+   # `remote show` prints `(unknown)` when the remote has no HEAD, and
+   # nothing at all when it is unreachable — either way BASE is unusable.
+   if [ -z "$BASE" ] || [ "$BASE" = "(unknown)" ]; then
+       echo "ERROR: could not determine the default branch for origin" >&2
+       exit 1
+   fi
+
+   # A failed fetch leaves the OLD origin/$BASE in place, so the diff
+   # below would still 'work' and report a stale changed-file set. Stop.
+   git -C "$TARGET" fetch origin "$BASE" || exit 1
+
+   # Three dots, not two: `origin/$BASE...HEAD` diffs against the merge
+   # base, so commits landed on the base since you branched are not
+   # misreported as your changes. `origin/$BASE` (not the local branch)
+   # is the honest base — a stale local copy silently widens or narrows
+   # the set.
+   git -C "$TARGET" diff --name-only "origin/$BASE...HEAD"
+   ```
+
+   Then read each file completely.
 3. **Full test file content** — for every test file that was modified
 
 Do NOT summarize or truncate — tracing requirements to code needs complete

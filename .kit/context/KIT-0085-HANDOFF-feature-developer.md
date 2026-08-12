@@ -5,7 +5,7 @@
 **Date**: 2026-08-04
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/1-backlog/KIT-0085-external-starter-authoring-path.md`
+**Task**: `.kit/tasks/6-canceled/KIT-0085-external-starter-authoring-path.md`
 **Status**: Queued — third in line, after KIT-0084 then KIT-0083
 **Evaluation**: arch-review-fast, 2 rounds (round-1 findings folded into
 the spec; round-2 advisories accepted-as-noted — see spec header and
@@ -164,7 +164,7 @@ would touch `planner.md`'s own workflow text beyond a pointer.
 
 ---
 
-**Task File**: `.kit/tasks/1-backlog/KIT-0085-external-starter-authoring-path.md`
+**Task File**: `.kit/tasks/6-canceled/KIT-0085-external-starter-authoring-path.md`
 **Evaluation Log**: `.adversarial/logs/KIT-0085-external-starter-authoring-path--arch-review-fast.md`
 **Fixture**: `tests/fixtures/external-starter/`
 **Handoff Date**: 2026-08-04

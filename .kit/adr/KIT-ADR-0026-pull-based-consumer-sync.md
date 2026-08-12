@@ -1,10 +1,17 @@
 # KIT-ADR-0026: Pull-Based Consumer Sync — One Engine, Two Callers
 
-**Status**: Accepted
+**Status**: Superseded by KIT-ADR-0028 (2026-08-11, KIT-0102)
 **Date**: 2026-07-03 (amended same day after adversarial review — see
 Evaluation trail)
 **Author**: Claude Code + User
 **Supersedes**: None
+**Superseded by**: KIT-ADR-0028 (versioned packages, not file copies).
+The pull engine this ADR introduced — `scripts/core/sync_from_manifest.py`,
+`scripts/.core-manifest.json` and the `project sync` subcommand — was
+deleted in KIT-ADR-0028 phase 4 (KIT-0102). Consumers are born packaged;
+kit artifacts ship via the agentive-workflow plugin and the agentive-kit
+package. This ADR is retained as the record of why the pull channel
+existed and how it worked.
 **Related**: KIT-ADR-0022 (manifest sync ownership — the push channel this
 complements), KIT-ADR-0024 (plugin/manifest distribution topology),
 KIT-ADR-0025 (agent localization; KIT-LOCAL markers constrain any future

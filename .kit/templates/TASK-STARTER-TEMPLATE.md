@@ -1,385 +1,246 @@
-# Task Starter Message Template
+# Task Starter Template — the single starter authority
 
-**Version**: 1.1.0
-**Last Updated**: 2026-07-14
-**Purpose**: Standardized format for handing off tasks to implementation agents
-**Used By**: Coordinators (planner, coordinator) when assigning tasks
-
----
-
-## When to Create a Task Starter
-
-Create a task starter message when:
-- Assigning a task to an implementation agent
-- Task has been evaluated and revised (if applicable)
-- Ready for agent to begin work
-- User needs to invoke the agent in a new tab
+**Version**: 2.0.0
+**Last Updated**: 2026-08-11
+**Purpose**: THE contract for task starter messages. Every starter a
+planner produces — in this repo or any consumer project — instantiates
+this template. Planner agent bodies point here; they do not carry
+their own section lists (two authorities drift — KIT-0101 R5, from an
+operator comparison of kit starters against a consumer planner's).
+**Used By**: Coordinators (planner, planner-f5) at assignment time
 
 ---
 
-## Task Starter Message Format
+## The required core (no starter may omit any of these)
 
-### Header Section
+Every starter carries ALL of the following, however small the task.
+Depth scales; the core does not (see the proportionality rule below).
 
-```markdown
-## Task Assignment: [TASK-ID] - [Task Title]
+1. **Header** — `## Task Assignment: <TASK-ID> — <Title>`, followed by
+   links to BOTH files:
+   - **Task File**: `.kit/tasks/<folder>/<TASK-ID>-<slug>.md`
+   - **Handoff File**: `.kit/context/<TASK-ID>-HANDOFF-<agent-type>.md`
+2. **Mission** — 2–3 sentences: what needs to be done and why, ending
+   in a clear action-oriented goal.
+3. **Acceptance criteria as checkboxes** — the definition of done. A
+   mission without ACs has no definition of done (the observed gap
+   that motivated this core): even a one-line task gets at least one
+   `- [ ]` criterion, specific and checkable.
+4. **Time estimate** — a number or range; phase breakdown only when
+   the task has phases.
+5. **⚠️ LAUNCH block — planner-pre-created, real values only.** The
+   worktree/branch is created at AUTHORING time by the planner
+   (ordering rule, `WORKTREE-WORKFLOW.md`: `project start` on `main`,
+   push, THEN `git worktree add`). The block names the worktree path
+   and branch that ACTUALLY exist — never placeholders, never "create
+   a branch". KIT-0043 measured the cost of a session launched from
+   the primary clone (~40 stray `cd` prefixes); KIT-0083/0088 the
+   cost of a session inventing its own branch.
+6. **⚠️ FIRST ACTIONS — verification only.** The session verifies the
+   topology; it never creates it (never `checkout -b`):
 
-**Task File**: `.kit/tasks/[folder]/[TASK-ID]-[slug].md`
-**Handoff File**: `.kit/context/[TASK-ID]-HANDOFF-[agent-type].md`
-```
+   ```text
+   ⚠️ FIRST ACTIONS (verification only — never `checkout -b`):
+   1. `git branch --show-current` → expect `feature/<TASK-ID>-<slug>`;
+      anything else: STOP and ask
+   2. `git rev-parse --show-toplevel` → expect `<worktree path>`
+   ```
 
-### Overview Section
+   The task file is already in `3-in-progress/` — the planner moved it
+   before creating the worktree, so the starter never instructs the
+   agent to run `project start`.
+7. **Recommended agent** — named explicitly (e.g. `feature-developer`,
+   or the `-f5` variant with a one-clause reason).
+8. **Session-rename footer** — every starter ends by suggesting:
+   *"Rename the session to `<TASK-ID> <short task name>`"* (operator
+   convention, 2026-08-06: named sessions are findable for /resume
+   and in session lists).
 
-```markdown
-### Overview
+## House improvements (include when the task warrants them)
 
-[2-3 sentence summary of what needs to be done and why]
+Codified from live use — these are what separate a good starter from
+a minimal one. Include each WHEN it applies; omit silently when not:
 
-[Brief context about the problem being solved or opportunity being addressed]
+- **Authority pointer** — one line stating where truth lives: *"the
+  spec's R1–R5 are authoritative"* / *"the handoff's Session topology
+  is authoritative"*. Prevents the starter itself from becoming a
+  competing spec.
+- **Budget and gate citations** — when the task runs under a standing
+  policy (review-surface budget, evaluator tier policy, circuit
+  breaker), cite it in one line each. Cite, don't restate.
+- **Out of scope — do not touch** — name the adjacent surfaces the
+  agent must leave alone, with the parking place for discovered gaps
+  (usually `1-backlog/`).
+- **Evaluation status** — if the spec was evaluated, one line: verdict
+  + where the dispositions live ("don't re-litigate").
+- **Success metrics** — quantitative/qualitative targets, for tasks
+  where "done" has measurable shape beyond the ACs.
+- **Contract-string cautions** — when the task touches text that tests
+  pin (sentinels, printed contract lines), say so and name the test.
 
-Your mission: [Clear, action-oriented statement of the agent's goal]
-```
+## The proportionality rule
 
-### Acceptance Criteria Section
-
-```markdown
-### Acceptance Criteria (Must Have)
-
-- [ ] **[Category 1]**: [Specific, measurable criterion]
-- [ ] **[Category 2]**: [Specific, measurable criterion]
-- [ ] **[Category 3]**: [Specific, measurable criterion]
-- [ ] **[Category 4]**: [Specific, measurable criterion]
-- [ ] **[Category 5]**: [Specific, measurable criterion]
-- [ ] **[Category 6]**: [Specific, measurable criterion]
-
-[Include 5-8 checkboxes covering the most critical deliverables]
-```
-
-### Success Metrics Section
-
-```markdown
-### Success Metrics
-
-**Quantitative**:
-- [Metric 1]: [Target value] (baseline: [current value])
-- [Metric 2]: [Target value] (baseline: [current value])
-- [Metric 3]: [Target value] (baseline: [current value])
-- [Metric 4]: [Target value] (baseline: [current value])
-
-**Qualitative**:
-- [Quality attribute 1] ([how this will be verified])
-- [Quality attribute 2] ([how this will be verified])
-- [Quality attribute 3] ([how this will be verified])
-```
-
-### Time Estimate Section
-
-```markdown
-### Time Estimate
-
-[Total range] total:
-- [Phase 1]: [time range]
-- [Phase 2]: [time range]
-- [Phase 3]: [time range]
-- [Phase 4]: [time range]
-
-[OR for simpler tasks:]
-
-**Estimated**: [X-Y] hours
-- [Breakdown by major component if helpful]
-```
-
-### Notes Section
-
-```markdown
-### Notes
-
-[Include important context that doesn't fit elsewhere:]
-- Evaluation status (if applicable)
-- Dependencies or blockers
-- Related work or reference implementations
-- Key decisions or constraints
-- Starting point suggestions
-
-[If task was evaluated, mention it:]
-- This spec has been evaluated by Evaluator and revised (cost: $X.XX)
-- All [CRITICAL/HIGH/etc.] feedback addressed
-- See handoff file for detailed implementation guidance
-
-**⚠️ LAUNCH** (un-skippable — see `WORKTREE-WORKFLOW.md`):
-Open the session tab with its working directory set to
-`[worktree path, e.g. ../ask-worktrees/[TASK-ID]]` — branch
-`feature/[TASK-ID]-short-description`, created and provisioned via
-`./scripts/local/new-worktree.sh [TASK-ID] short-description`.
-(Pass the slug explicitly, or omit it and copy the branch name the
-helper derives from the task filename — the LAUNCH block's branch must
-match what the helper actually created.)
-Do NOT run the session from the primary clone.
-
-**⚠️ FIRST ACTIONS** (in order):
-1. `git branch --show-current` (expect: `feature/[TASK-ID]-short-description`)
-2. `./scripts/core/project start [TASK-ID]` (move task to `3-in-progress/`)
-```
-
-The LAUNCH block is **mandatory** in every starter — the KIT-0043 pilot
-measured the cost of skipping it (~40 `cd` prefixes when the session ran
-from the primary clone). Create the worktree with the helper BEFORE
-writing the starter, so the path and branch in the block are real.
-
-### Footer
-
-```markdown
----
-
-**Ready to assign to `[agent-name]` agent when you are.**
-
-[OR if specific agent:]
-
-**Recommended agent**: `[agent-name]` ([reason - e.g., "TDD expertise required"])
-
-**Session name**: rename the session to `[TASK-ID] [short task name]`
-(e.g. via /rename) so it is findable for /resume and in session lists.
-```
-
-The session-name line is part of every starter's footer — operator
-convention (2026-08-06): task sessions are named `TASK-ID <name>` so
-they can be found again mid-flight and after.
+**Depth scales with the task; the core never does.** A one-day
+enumerated fix gets the compact form below — core plus only the house
+improvements that apply. A multi-PR or journey-shaped task gets the
+full form — phased ACs, budget citations, per-PR structure. What is
+NEVER proportional: dropping a core element because the task is
+small. The compact example carries every one of the eight.
 
 ---
 
-## Example Task Starter
-
-Here's a complete example following the template:
+## Worked example — compact (small enumerated task)
 
 ```markdown
-## Task Assignment: TASK-0102 - Linear Task Sync TDD Rebuild
+## Task Assignment: TASK-0031 — Fix stale doctor hints in seeded README
 
-**Task File**: `.kit/tasks/2-todo/TASK-0102-linear-task-sync-tdd-rebuild.md`
-**Handoff File**: `.kit/context/TASK-0102-HANDOFF-implementation-agent.md`
+**Task File**: `.kit/tasks/3-in-progress/TASK-0031-stale-doctor-hints.md`
+**Handoff File**: `.kit/context/TASK-0031-HANDOFF-feature-developer.md`
+
+Three seeded-README hints still name the retired `check-env.sh`; the
+doctor replaced it in 0.9. Sweep the seeds, update the hints, prove
+the sweep with a grep. The task file's list of three sites is
+authoritative.
+
+**Acceptance Criteria**:
+- [ ] All three seed sites name `project doctor` (grep-proven in the PR)
+- [ ] No other `check-env.sh` reference survives outside CHANGELOG history
+
+**Time Estimate**: 2 h
+
+**⚠️ LAUNCH** — already done by the planner. Worktree:
+`../myproj-worktrees/TASK-0031` on `feature/TASK-0031-stale-doctor-hints`
+(task already `3-in-progress`). Open the session tab there.
+
+**⚠️ FIRST ACTIONS** (verification only — never `checkout -b`):
+1. `git branch --show-current` → expect `feature/TASK-0031-stale-doctor-hints`; anything else: STOP and ask
+2. `git rev-parse --show-toplevel` → expect `../myproj-worktrees/TASK-0031`
+
+**Recommended agent**: `feature-developer`
+
+Rename the session to `TASK-0031 stale doctor hints`.
+```
+
+## Worked example — full (multi-PR task)
+
+```markdown
+## Task Assignment: TASK-0087 — Split the export pipeline (+ release 1.4)
+
+**Task File**: `.kit/tasks/3-in-progress/TASK-0087-split-export-pipeline.md`
+  ← R1–R4 authoritative; evaluation dispositions in the header
+**Handoff File**: `.kit/context/TASK-0087-HANDOFF-feature-developer.md`
+  ← Session topology + the schema-pin cautions; read FIRST
 
 ### Overview
 
-Rebuild our Linear task folder synchronization system using proper Test-Driven Development. The current sync was built without tests and shows 12+ legacy mapping warnings per sync. Two sync scripts exist with unclear responsibilities, and zero tests cover the core sync functionality.
-
-Your mission: Follow the RED-GREEN-REFACTOR TDD cycle to create a properly tested, single sync implementation that eliminates legacy warnings and syncs all 178 tasks correctly to Linear.
+The export pipeline conflates rendering and packaging; every format
+addition touches both. Split it behind the renderer interface (R1–R2),
+migrate the two built-in formats (R3), and prove parity with the
+golden-file suite (R4). Ships as package release 1.4.
 
 ### Acceptance Criteria (Must Have)
 
-- [ ] **RED Phase**: 30+ failing tests written defining sync behavior
-- [ ] **GREEN Phase**: All tests pass, sync works correctly
-- [ ] **REFACTOR Phase**: Single sync implementation, legacy code removed
-- [ ] **Test Coverage**: ≥80% for sync logic (measured via pytest-cov)
-- [ ] **No Legacy Warnings**: Zero "Legacy mapping used" messages
-- [ ] **Real Sync Verification**: All 178 tasks show correct Linear status
-- [ ] **Documentation**: 6 files created/updated with examples
-
-### Success Metrics
-
-**Quantitative**:
-- 30+ tests covering sync scenarios (all passing)
-- 80%+ test coverage for sync logic
-- 100% sync accuracy (178/178 tasks in correct Linear status)
-- 0 legacy warnings (down from 12+)
-- 1 sync script (down from 2)
-
-**Qualitative**:
-- Tests serve as documentation (clear, descriptive names)
-- Safe to refactor (tests provide safety net)
-- "Done" means "working" (objective test verification)
+- [ ] **Two PRs, each within the review budget**: PR 1 = R1–R2
+      (interface + core), PR 2 = R3–R4 (migration + parity). Either
+      blows the budget → STOP and report a further split
+- [ ] R1: renderer interface extracted; no format-specific imports in
+      the packager (grep-proven list in PR)
+- [ ] R2: packager consumes the interface only; contract tests pin it
+- [ ] R3: both built-in formats migrated; schema pins updated in the
+      same commit (`tests/test_export_schema.py` — that test's own rule)
+- [ ] R4: golden-file parity run recorded in the PR body
+- [ ] Release 1.4 shipped; post-merge verification cited
 
 ### Time Estimate
 
-7-10.5 hours total:
-- Phase 1 (RED - Tests): 2-3 hours
-- Phase 2 (GREEN - Implementation): 2.5-3.5 hours
-- Phase 3 (REFACTOR - Cleanup): 1-2 hours
-- Phase 4 (Documentation): 1.5-2 hours
+2 days: interface (3 h), packager rework (4 h), migration (4 h),
+parity + release + review loops (3 h).
 
 ### Notes
 
-- This spec has been evaluated by Evaluator and revised (cost: $0.03)
-- All critical feedback addressed (rate limiting, dependencies, documentation)
-- See handoff file for starting point and implementation details
-- Follow `tests/test_linear_comments.py` as TDD example pattern
+- Evaluator: fast tier on PR 1 (mostly moves), full trio on PR 2
+  (behavior changes) — per the standing tier policy.
+- Out of scope: the plugin export (TASK-0090) and anything under
+  `vendor/`. Gaps discovered there → file in `1-backlog/`.
+- Spec evaluated: REVISION_SUGGESTED, both findings dispositioned in
+  the spec header — don't re-litigate.
 
-**⚠️ LAUNCH** (un-skippable — see `WORKTREE-WORKFLOW.md`):
-Open the session tab with its working directory set to
-`../ask-worktrees/TASK-0102` — branch `feature/TASK-0102-linear-sync-tdd`,
-created and provisioned via
-`./scripts/local/new-worktree.sh TASK-0102 linear-sync-tdd`.
-Do NOT run the session from the primary clone.
+**⚠️ LAUNCH** — already done by the planner. Worktree:
+`../myproj-worktrees/TASK-0087` on `feature/TASK-0087-split-export-pipeline`
+(real venv provisioned, task already `3-in-progress`). Open the
+session tab there.
 
-**⚠️ FIRST ACTIONS** (in order):
-1. `git branch --show-current` (expect: `feature/TASK-0102-linear-sync-tdd`)
-2. `./scripts/core/project start TASK-0102`
+**⚠️ FIRST ACTIONS** (verification only — never `checkout -b`):
+1. `git branch --show-current` → expect `feature/TASK-0087-split-export-pipeline`; anything else: STOP and ask
+2. `git rev-parse --show-toplevel` → expect `../myproj-worktrees/TASK-0087`
 
----
+**Recommended agent**: `feature-developer-f5` (multi-PR judgment,
+sustained run)
 
-**Ready to assign to `test-runner` or `powertest-runner` agent when you are.**
+Rename the session to `TASK-0087 export pipeline split`.
 ```
 
 ---
 
-## Complementary Handoff File
+## The companion handoff file
 
-The task starter references a handoff file that contains:
-- Detailed implementation guidance
-- Critical technical details
-- Starting point code examples
-- Resources and references
-- Evaluation history
-- Success criteria
-
-See template structure below for creating handoff files.
-
-### Handoff File Structure
+The starter stays viewport-sized; depth lives in the handoff file the
+header links. Structure:
 
 ```markdown
-# [TASK-ID]: [Task Title] - Implementation Handoff
+# <TASK-ID>: <Title> — Implementation Handoff
 
-**You are the [agent-type]. Implement this task directly. Do not delegate or spawn other agents.**
+**You are the <agent-type>. Implement this task directly. Do not
+delegate or spawn other agents.**
 
 **Date**: YYYY-MM-DD
-**From**: [Coordinator Name]
-**To**: [Agent Type] ([specific agent if known])
-**Task**: .kit/tasks/[folder]/[TASK-ID]-[slug].md
-**Status**: Ready for implementation
-**Evaluation**: [Status - e.g., "✅ REVISED", "N/A", etc.]
+**From**: <coordinator>  **To**: <agent-type>
+**Task**: .kit/tasks/<folder>/<TASK-ID>-<slug>.md
+**Status**: Ready
+**Evaluation**: <verdict + log link, or N/A>
+**Target Codebase**: <this repo | the target repo> (split mode)
 
----
+## Session topology (read before anything else)
+[Worktree path, branch, single/multi-PR plan — REQUIRED section]
 
-## Task Summary
-[Detailed task summary - can be longer than task starter]
+## Mission
+[Detailed breakdown; phases if phased]
 
-## Current Situation
-[Context about why this task exists]
+## Verified anchors (dated — re-verify before relying)
+[File:line anchors for every surface the task touches]
 
-## Your Mission
-[Detailed breakdown of what the agent needs to do]
-- Phase 1: [Details]
-- Phase 2: [Details]
-- Phase 3: [Details]
+## Test approach
+[What proves it — suites, replays, grep sweeps]
 
-## Acceptance Criteria (Must Have)
-[Same as task starter but can include additional detail]
-
-## Success Metrics
-[Same as task starter]
-
-## Critical Implementation Details
-[Technical details, code examples, gotchas]
-
-### 1. [Detail Category 1]
-[Detailed explanation with code examples]
-
-### 2. [Detail Category 2]
-[Detailed explanation]
-
-## Resources for Implementation
-[Links to reference code, docs, ADRs, etc.]
-
-## Time Estimate
-[Same as task starter]
-
-## Starting Point
-[Concrete first steps - what to create, what to run]
-
-## Questions for [Coordinator]
-[How agent should communicate if blocked]
-
-## Evaluation History
-[If task was evaluated, include summary]
-
-## Success Looks Like
-[Concrete end state description]
-
-## Notes
-[Additional context]
-
----
-
-**Task File**: `.kit/tasks/[folder]/[TASK-ID]-[slug].md`
-**Evaluation Log**: `.adversarial/logs/[input-name]--[evaluator].md` (if applicable)
-**Handoff Date**: YYYY-MM-DD
-**Coordinator**: [Name]
+## Out of scope — do not touch
+[Named surfaces + where to file discovered gaps]
 ```
 
 ---
 
-## Best Practices
+## Planner workflow (authoring time)
 
-### DO:
-- ✅ Keep task starter concise (fit in user's viewport)
-- ✅ Put detailed guidance in handoff file
-- ✅ Use checkboxes for acceptance criteria (visual progress)
-- ✅ Include both quantitative and qualitative metrics
-- ✅ Mention evaluation status if task was evaluated
-- ✅ Provide time estimates to set expectations
-- ✅ Make success criteria objective and measurable
-- ✅ Link to both task file and handoff file
+1. Task spec evaluated and revised; handoff file written (Session
+   topology REQUIRED).
+2. `./scripts/core/project start <TASK-ID>` **on `main`**, push.
+3. Create the worktree/branch (`./scripts/local/new-worktree.sh
+   <TASK-ID> <slug>`, or `git worktree add` — in split mode against
+   the target repo). The LAUNCH block quotes what this ACTUALLY
+   created.
+4. Write the starter from this template — required core always, house
+   improvements as warranted, depth per the proportionality rule.
+5. Update `agent-handoffs.json`; present the starter with a one-line
+   summary: *"Task starter ready — invoke `<agent-name>` in a new
+   tab."*
 
-### DON'T:
-- ❌ Include full task specification in starter (too long)
-- ❌ Skip acceptance criteria (agent needs clear goals)
-- ❌ Use vague success metrics ("make it better")
-- ❌ Forget to mention evaluation cost/status
-- ❌ Omit time estimates (user needs to know scope)
-- ❌ Create starter without companion handoff file
-- ❌ Use jargon without explanation
+## Implementing-agent contract (receiving time)
 
----
-
-## Checklist for Creating Task Starter
-
-Before sending task starter to user:
-
-- [ ] Task specification file exists and is complete
-- [ ] Handoff file created with detailed guidance
-- [ ] Task starter includes all required sections
-- [ ] Acceptance criteria are specific and measurable
-- [ ] Success metrics include both quantitative and qualitative
-- [ ] Time estimate is realistic and broken down by phase
-- [ ] Evaluation status mentioned (if applicable)
-- [ ] Both task file and handoff file links included
-- [ ] **Worktree created** (`./scripts/local/new-worktree.sh <TASK-ID>`) and
-      **LAUNCH block included** with the real worktree path and branch
-- [ ] **FIRST ACTION reminder included** (`./scripts/core/project start <TASK-ID>`)
-- [ ] Recommended agent type specified
-- [ ] agent-handoffs.json updated with task assignment
-- [ ] Message is concise enough to fit in viewport
+1. FIRST ACTIONS are verification only — wrong branch or path: STOP
+   and ask, never `checkout -b`, never proceed from the primary clone.
+2. Read the task file and handoff file before any edit.
+3. Work the ACs; the starter's checkboxes are the definition of done.
 
 ---
 
-## Integration with Agent Workflows
-
-### For Coordinators (planner)
-
-After creating task specification and addressing evaluation feedback:
-
-1. Create handoff file: `.kit/context/[TASK-ID]-HANDOFF-[agent-type].md`
-2. Update `agent-handoffs.json` with task assignment
-3. Create the task worktree: `./scripts/local/new-worktree.sh [TASK-ID]`
-4. Create task starter message using this template (LAUNCH block carries
-   the worktree path and branch the helper just printed)
-5. Send task starter to user
-6. User invokes agent in new tab **with cwd set to the worktree path**
-
-### For Implementation Agents
-
-When receiving task starter:
-1. **Verify the worktree**: `git branch --show-current` must match the
-   LAUNCH block's branch (the worktree already exists — never `checkout -b`)
-2. **Start task**: `./scripts/core/project start <TASK-ID>` to move task to `3-in-progress/`
-3. Read task file for full specification
-4. Read handoff file for implementation guidance
-5. Update `agent-handoffs.json` status to "in_progress"
-6. Begin work following acceptance criteria
-7. Report progress back through handoff updates
-
----
-
-**Template Version**: 1.1.0
-**Created**: 2025-11-16
-**Maintained By**: Coordinators (planner, coordinator)
-**Related**: AGENT-TEMPLATE.md, OPERATIONAL-RULES.md,
+**Related**: `AGENT-TEMPLATE.md`, `OPERATIONAL-RULES.md`,
 `.kit/context/workflows/WORKTREE-WORKFLOW.md`

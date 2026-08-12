@@ -6,7 +6,6 @@ Project CLI - Command Launcher for Agentive Projects
 Simple memorable command interface for common project operations.
 
 Usage:
-    ./scripts/core/project sync           - Pull core files from upstream (KIT-ADR-0026)
     ./scripts/core/project linearsync     - Sync tasks to Linear
     ./scripts/core/project move <id> <status> - Move task and update Status field
     ./scripts/core/project complete <id>  - Move task to done
@@ -1052,336 +1051,6 @@ def cmd_install_evaluators(args, project_dir):
     print("  MISTRAL_API_KEY  - Mistral evaluators")
 
 
-# ── Core sync (KIT-ADR-0026): `project sync` pull wrapper ───────────────────
-# Where each known removed manifest entry points instead, surfaced in the
-# `Removed from sync unit` block so a retirement (e.g. check-sync.sh) is
-# announced, not silent.
-REMOVED_ENTRY_REPLACEMENTS = {
-    "core/check-sync.sh": "./scripts/core/project sync --dry-run",
-}
-
-
-def _flag_value(args, name, default=None):
-    """Return the value following ``name`` in ``args`` (last wins), or default."""
-    value = default
-    for i, arg in enumerate(args):
-        if arg == name and i + 1 < len(args):
-            value = args[i + 1]
-    return value
-
-
-def _flag_values(args, name):
-    """Return all values following each occurrence of ``name`` in ``args``."""
-    values = []
-    for i, arg in enumerate(args):
-        if arg == name and i + 1 < len(args):
-            values.append(args[i + 1])
-    return values
-
-
-def _read_json_file(path):
-    """Best-effort JSON read; returns {} on any problem."""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            data = json.load(handle)
-        return data if isinstance(data, dict) else {}
-    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
-        return {}
-
-
-def _local_manifest(project_dir):
-    return _read_json_file(project_dir / "scripts" / ".core-manifest.json")
-
-
-def _infer_is_kit(project_dir):
-    """A kit repo declares ``kit_builder`` in its manifest ``opted_in`` list.
-
-    Inferred locally (per KIT-ADR-0026), not from the Action matrix, so repos
-    outside the matrix are first-class citizens of the pull channel.
-    """
-    opted_in = _local_manifest(project_dir).get("opted_in", [])
-    return isinstance(opted_in, list) and "kit_builder" in opted_in
-
-
-def _source_repo(project_dir):
-    return _local_manifest(project_dir).get(
-        "source_repo", "movito/agentive-starter-kit"
-    )
-
-
-def _manifest_version(source_root):
-    version = _read_json_file(source_root / "scripts" / ".core-manifest.json").get(
-        "core_version"
-    )
-    return version if version else "unknown"
-
-
-def _normalize_source_root(path):
-    """Return the repo root: the dir whose child is ``scripts/.core-manifest.json``.
-
-    GitHub tarballs unpack into a nested ``<owner>-<repo>-<sha>/`` directory;
-    a checkout or clone does not. Descend into a single child when needed so
-    the engine never sees the transport quirk.
-    """
-    path = Path(path)
-    if (path / "scripts" / ".core-manifest.json").is_file():
-        return path
-    children = [c for c in path.iterdir() if c.is_dir()]
-    if len(children) == 1:
-        return children[0]
-    return path  # let the engine raise a clean ManifestError (exit 3)
-
-
-def _safe_extract(tar, dest):
-    """Extract ``tar`` into ``dest``, rejecting any member that escapes it."""
-    dest = Path(dest).resolve()
-    for member in tar.getmembers():
-        target = (dest / member.name).resolve()
-        if target != dest and dest not in target.parents:
-            raise RuntimeError(f"unsafe path in tarball: {member.name!r}")
-    tar.extractall(dest)
-
-
-def resolve_source(ref, explicit_source, source_repo, workdir):
-    """Obtain the upstream source tree; return its repo root.
-
-    Resolution order (KIT-ADR-0026): ``--source`` dir → ``gh api`` tarball →
-    shallow ``git clone``. Exits 4 with guidance naming all three if none is
-    available. ``workdir`` is a scratch dir for fetched content.
-    """
-    if explicit_source:
-        path = Path(explicit_source).expanduser()
-        if not path.is_dir():
-            print(f"❌ --source path is not a directory: {path}")
-            sys.exit(4)
-        return _normalize_source_root(path)
-
-    # gh api tarball (works for private repos when gh is authenticated)
-    if shutil.which("gh"):
-        tarball = Path(workdir) / "source.tar.gz"
-        extract = Path(workdir) / "extracted"
-        extract.mkdir(exist_ok=True)
-        try:
-            with open(tarball, "wb") as out:
-                result = subprocess.run(
-                    ["gh", "api", f"repos/{source_repo}/tarball/{ref}"],
-                    stdout=out,
-                    stderr=subprocess.PIPE,
-                    timeout=120,
-                )
-            if result.returncode == 0 and tarball.stat().st_size > 0:
-                with tarfile.open(tarball) as tar:
-                    _safe_extract(tar, extract)
-                return _normalize_source_root(extract)
-        except (tarfile.TarError, RuntimeError, subprocess.TimeoutExpired) as exc:
-            print(f"⚠️  tarball fetch failed ({exc}); trying git clone…")
-
-    # shallow clone fallback (needs git credentials for private repos)
-    if shutil.which("git"):
-        clone_dir = Path(workdir) / "clone"
-        try:
-            result = subprocess.run(
-                [
-                    "git",
-                    "clone",
-                    "--depth",
-                    "1",
-                    "--branch",
-                    ref,
-                    f"https://github.com/{source_repo}.git",
-                    str(clone_dir),
-                ],
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-            if result.returncode == 0:
-                return _normalize_source_root(clone_dir)
-        except subprocess.TimeoutExpired:
-            print("⚠️  git clone timed out")
-
-    print("❌ Could not obtain the upstream source. Any one of:")
-    print("   1. --source <dir>   a local checkout/unpacked tree of the kit")
-    print("   2. gh auth login    so `gh api` can fetch the tarball")
-    print("   3. install git      for a shallow clone fallback")
-    sys.exit(4)
-
-
-def _clean_git_env():
-    """Env with inherited GIT_* location vars stripped so ``git -C`` is
-    authoritative.
-
-    Ambient ``GIT_DIR`` / ``GIT_WORK_TREE`` (set e.g. by pre-commit or a hook)
-    would otherwise override ``-C`` and point git at the wrong repository.
-    """
-    env = os.environ.copy()
-    for var in (
-        "GIT_DIR",
-        "GIT_WORK_TREE",
-        "GIT_INDEX_FILE",
-        "GIT_OBJECT_DIRECTORY",
-        "GIT_COMMON_DIR",
-    ):
-        env.pop(var, None)
-    return env
-
-
-def _git(project_dir, *args, capture=True):
-    return subprocess.run(
-        ["git", "-C", str(project_dir), *args],
-        capture_output=capture,
-        text=True,
-        env=_clean_git_env(),
-    )
-
-
-def _dirty_touched_paths(project_dir, preview):
-    """Paths the sync would touch that already have uncommitted changes.
-
-    Returns [] when git is unavailable or the dir is not a repo (nothing to
-    protect). ``preview`` is a dry-run SyncReport.
-    """
-    if not shutil.which("git"):
-        return []
-    # -z: NUL-separated records, no path quoting (avoids core.quotePath issues).
-    status = _git(project_dir, "status", "--porcelain", "-z")
-    if status.returncode != 0:
-        return []
-    dirty = set()
-    fields = status.stdout.split("\0")
-    i = 0
-    while i < len(fields):
-        entry = fields[i]
-        if not entry:
-            i += 1
-            continue
-        xy, path = entry[:2], entry[3:]
-        if path:
-            dirty.add(path)
-        # Rename/copy: the original path is the next NUL-terminated field.
-        if xy and xy[0] in ("R", "C"):
-            i += 1
-            if i < len(fields) and fields[i]:
-                dirty.add(fields[i])
-        i += 1
-    touched = set(preview.added) | set(preview.modified) | set(preview.removed_files)
-    # The engine always rewrites the manifest, but it isn't in the diff lists —
-    # include it so uncommitted local manifest edits also trip the guard.
-    touched.add("scripts/.core-manifest.json")
-    return sorted(p for p in touched if p in dirty)
-
-
-def _create_branch(project_dir, base_name):
-    """Create a fresh branch from the CURRENT HEAD; return its name (or None).
-
-    Always creates from HEAD — never switches to an existing branch's tip, which
-    would apply the sync somewhere other than where the operator started and
-    invalidate the dirty preview computed beforehand. On name collision the
-    branch is uniquified (`<base>-2`, `<base>-3`, …).
-    """
-    branch = base_name
-    suffix = 1
-    while _git(project_dir, "rev-parse", "--verify", "--quiet", branch).returncode == 0:
-        suffix += 1
-        branch = f"{base_name}-{suffix}"
-    result = _git(project_dir, "checkout", "-b", branch)
-    if result.returncode != 0:
-        print(f"❌ Could not create branch {branch}: {result.stderr.strip()}")
-        return None
-    print(f"🔀 On branch {branch}")
-    return branch
-
-
-def _stage_and_commit(project_dir, version, report):
-    """Stage only the paths the sync actually changed and commit. True on success.
-
-    Staging exact paths (not whole roots) keeps unrelated uncommitted work in
-    those trees out of the sync commit. Deleted files (removed_files) are staged
-    as deletions by ``git add``.
-    """
-    paths = set(report.added) | set(report.modified) | set(report.removed_files)
-    paths.add("scripts/.core-manifest.json")
-    for path in sorted(paths):
-        _git(project_dir, "add", "--", path)
-    result = _git(
-        project_dir,
-        "commit",
-        "-m",
-        f"chore: core sync to v{version} from upstream",
-    )
-    if result.returncode != 0:
-        print(
-            f"⚠️  Nothing committed: {result.stdout.strip() or result.stderr.strip()}"
-        )
-        return False
-    return True
-
-
-def _print_diff_stat(project_dir, committed):
-    """Show a diff --stat: last commit if we committed, else the working tree."""
-    if committed:
-        result = _git(project_dir, "show", "--stat", "--oneline", "HEAD")
-    else:
-        result = _git(project_dir, "diff", "--stat")
-    if result.returncode == 0 and result.stdout.strip():
-        print("\n" + result.stdout.rstrip())
-
-
-def _print_sync_report(report, *, dry_run, committed, project_dir):
-    """Human-facing summary. Branches on report.status, not the exit code."""
-    headers = {
-        "clean": "✅ Core sync: already up to date",
-        "applied": "✅ Core sync: applied",
-        "applied_with_warnings": "⚠️  Core sync: applied with warnings",
-        "warnings": "⚠️  Core sync: nothing written, but warnings need attention",
-        "drift": "🔍 Core sync (dry-run): updates available",
-    }
-    print(headers.get(report.status, f"Core sync: {report.status}"))
-
-    for path in report.added:
-        print(f"   + {path}")
-    for path in report.modified:
-        print(f"   ~ {path}")
-    for path in report.removed_files:
-        print(f"   - {path}")
-    for warning in report.warnings:
-        print(f"   ⚠ {warning}")
-
-    if report.removed_entries:
-        print("\n🗑️  Removed from sync unit:")
-        for entry in report.removed_entries:
-            replacement = REMOVED_ENTRY_REPLACEMENTS.get(entry)
-            if replacement:
-                print(f"     {entry}  →  {replacement}")
-            else:
-                print(f"     {entry}")
-        print("   (dropped upstream — remove your local copy if unused)")
-
-    if report.skipped_additions:
-        print(
-            f"\nℹ️  Upstream has {len(report.skipped_additions)} entr"
-            f"{'y' if len(report.skipped_additions) == 1 else 'ies'} "
-            "this shape does not record (skipped):"
-        )
-        for entry in report.skipped_additions:
-            print(f"     {entry}")
-        print(
-            "   (additions arrive via re-bootstrap or a manual manifest add "
-            "— KIT-0049 v1)"
-        )
-
-    if report.would_set_partial_sync or not report.complete:
-        print(
-            "\n   Note: partial sync — core_version left unchanged "
-            "(partial_sync set). A full pull converges it."
-        )
-
-    if not dry_run and report.status in ("applied", "applied_with_warnings"):
-        _print_diff_stat(project_dir, committed)
-    elif dry_run and report.status == "drift":
-        print("\n   Run without --dry-run to apply.")
-
-
 def _normalize_bots(raw):
     """Canonical form of a bots declaration, or None when invalid.
 
@@ -1568,17 +1237,19 @@ def _doctor_install(project_dir):
 # ── Doctor: extracted to the agentive-kit package (KIT-0090 PR 2) ──────────
 # The driver, per-shape/profile check inclusion, config-home resolution
 # and preset comparison live in agentive_kit.doctor. _doctor_install and
-# _normalize_bots above are KEPT here — cmd_sync's shape gate must work
-# package-free for consumers until phase 3 (recorded duplication; this
-# script retires in phase 4).
+# _normalize_bots above are KEPT here — the preset comparison and the
+# doctor's shape/profile gating must work package-free for repos without
+# agentive-kit installed (recorded duplication). cmd_sync, the original
+# reason this pair lived here, was retired in KIT-0102 (ADR-0028 phase 4).
 
 
 # ── Inline doctor FALLBACK (KIT-0090 PR 2) ─────────────────────────────────
 # agentive_kit.doctor is canonical; this inline copy exists so a repo
 # WITHOUT the package (door-made consumers before the phase-2
-# package-install door, consumers syncing main pre-publish) still has a
-# working doctor. Recorded duplication — retires with this script in
-# phase 4. Keep in sync only via the package (fixes land there first).
+# package-install door) still has a working doctor. Recorded duplication
+# — this shim's own retirement is a later housekeeping call (KIT-0102
+# left it in place by design). Keep aligned only via the package (fixes
+# land there first).
 
 
 def _check_declared(check_path, keyword):
@@ -2078,222 +1749,6 @@ def _kit_doctor():
     return None
 
 
-def cmd_sync(args, project_dir):
-    """`project sync`: pull core files from upstream via the sync engine.
-
-    Shape-scoped sync (KIT-0049, replacing the KIT-0048 refusal): a
-    planning-shaped repo syncs via manifest intersection — the engine's
-    ``allowlist`` is the consumer's own recorded file list, so sync
-    updates what the repo HAS and never introduces unrecorded files.
-    Upstream additions are skipped BY NAME in the report (v1 limitation:
-    additions arrive via re-bootstrap or a manual manifest add). A
-    malformed/unreadable shape record still refuses with exit 2.
-
-    Resolution/branch mechanics per KIT-ADR-0026 §2. Returns a process exit
-    code (the engine's exit-code contract).
-
-    Wrapper exit-code convention (KIT-0037): the engine reserves ``0``
-    (clean/applied) and ``1`` (drift/warnings) — see the contract in
-    ``sync_from_manifest.py``'s module docstring. Wrapper-level failures
-    (usage, dirty tree, branch creation, engine import) must therefore
-    exit ``2``, never ``0``/``1``; source-acquisition failures exit ``4``
-    (``resolve_source()``, matching the engine's I/O-error code); engine
-    failures pass through the engine's own code. Also a self-review
-    checklist item (``.claude/skills/self-review/SKILL.md``).
-    """
-    # Sync provisions by SHAPE; the profile only scopes doctor checks
-    # and the bots declaration only scopes preflight gates, so errors
-    # in those records alone do not block a sync whose shape is
-    # readable (minimal coupling — KIT-0050, KIT-0056).
-    shape, _profile, _bots, record_errors = _doctor_install(project_dir)
-    if shape is None:
-        shape_errors = [d for record, d in record_errors if record == "shape-record"]
-        detail = shape_errors[0] if shape_errors else "shape record unreadable"
-        print(f"❌ sync refused: {detail}")
-        print("   Fix the kit-install region in CLAUDE.md before syncing —")
-        print("   an unreadable shape record could mis-provision this repo.")
-        # Wrapper-level refusal → 2 (wrapper exit-code convention above).
-        return 2
-
-    allowlist = None
-    if shape == "planning":
-        manifest_path = project_dir / "scripts" / ".core-manifest.json"
-        try:
-            with open(manifest_path, encoding="utf-8") as f:
-                consumer_manifest = json.load(f)
-            files_section = consumer_manifest["files"]
-            # full dict[str, list[str]] validation: a string tier would
-            # iterate as CHARACTERS and a non-string member would be
-            # silently discarded — either way the allowlist is poisoned
-            # while sync exits clean (BugBot + CodeRabbit, PR #79).
-            # Schema violations refuse.
-            for tier, entries in files_section.items():
-                if not isinstance(entries, list):
-                    raise TypeError(f"files tier {tier!r} is not a list")
-                for entry in entries:
-                    if not isinstance(entry, str):
-                        raise TypeError(
-                            f"files tier {tier!r} has a non-string entry: " f"{entry!r}"
-                        )
-            allowlist = sorted(
-                {entry for entries in files_section.values() for entry in entries}
-            )
-        except (
-            OSError,
-            json.JSONDecodeError,
-            KeyError,
-            TypeError,
-            AttributeError,  # "files": null / list — schema violations
-        ) as exc:
-            print("❌ sync refused: planning shape requires a readable manifest")
-            print(f"   ({manifest_path}: {exc.__class__.__name__})")
-            print("   Re-bootstrap with --shape planning to restore it.")
-            # Wrapper-level precondition failure → 2.
-            return 2
-        # Defense in depth: the consumer manifest is consumer-owned, so
-        # hold its entries to the same path rules the engine applies to
-        # the source manifest — a traversal/absolute entry must refuse,
-        # not ride the allowlist (claude-code review).
-        bad_entries = [
-            entry
-            for entry in allowlist
-            if ".." in Path(entry).parts or Path(entry).is_absolute()
-        ]
-        if bad_entries:
-            print("❌ sync refused: manifest records unsafe path entries:")
-            for entry in bad_entries:
-                print(f"     {entry}")
-            return 2
-        if not allowlist:
-            print("❌ sync refused: the manifest records no files to sync")
-            return 2
-        print(f"🔷 planning shape: syncing the {len(allowlist)} recorded entries")
-
-    known_bool = {"--dry-run", "--no-branch"}
-    known_val = {"--ref", "--source", "--tier", "--only"}
-    i = 0
-    while i < len(args):
-        arg = args[i]
-        if arg in known_bool:
-            i += 1
-        elif arg in known_val:
-            # A value must follow and must not itself be a flag — otherwise a
-            # missing value silently falls back to the default (or swallows the
-            # next flag).
-            if i + 1 >= len(args) or args[i + 1].startswith("-"):
-                print(f"❌ Option {arg} requires a value")
-                print(
-                    "Usage: ./scripts/core/project sync [--dry-run] [--no-branch] "
-                    "[--ref REF] [--source DIR] [--tier TIER]... [--only ENTRY]..."
-                )
-                # Usage error → 2 (wrapper exit-code convention, see docstring).
-                return 2
-            i += 2
-        elif arg.startswith("-"):
-            print(f"❌ Unknown option: {arg}")
-            print(
-                "Usage: ./scripts/core/project sync [--dry-run] [--no-branch] "
-                "[--ref REF] [--source DIR] [--tier TIER]... [--only ENTRY]..."
-            )
-            # Usage error → 2 (wrapper exit-code convention, see docstring).
-            return 2
-        else:
-            i += 1
-
-    dry_run = "--dry-run" in args
-    no_branch = "--no-branch" in args
-    ref = _flag_value(args, "--ref", "main")
-    explicit_source = _flag_value(args, "--source")
-    tiers = _flag_values(args, "--tier") or None
-    only = _flag_values(args, "--only") or None
-
-    engine_dir = Path(__file__).resolve().parent
-    if str(engine_dir) not in sys.path:
-        sys.path.insert(0, str(engine_dir))
-    try:
-        import sync_from_manifest as engine
-    except ImportError as exc:
-        print(f"❌ Sync engine unavailable (scripts/core/sync_from_manifest.py): {exc}")
-        # Missing/broken install — not drift. Exit 1 is reserved for
-        # drift/warnings, so automation must not read this as "updates
-        # available" (wrapper exit-code convention, see docstring).
-        return 2
-
-    is_kit = _infer_is_kit(project_dir)
-    source_repo = _source_repo(project_dir)
-
-    with tempfile.TemporaryDirectory(prefix="core-sync-src-") as workdir:
-        source_path = resolve_source(ref, explicit_source, source_repo, workdir)
-
-        # Dirty guard for ANY apply (branch mode too): `git checkout -b` carries
-        # uncommitted edits onto the new branch, where the engine would then
-        # overwrite them — so a dirty touched path must block both modes.
-        if not dry_run:
-            try:
-                preview = engine.sync(
-                    source_path,
-                    project_dir,
-                    engine.SyncOptions(
-                        tiers=tiers,
-                        only=only,
-                        dry_run=True,
-                        is_kit=is_kit,
-                        allowlist=allowlist,
-                    ),
-                )
-            except engine.SyncError as exc:
-                print(f"❌ {exc}")
-                return exc.exit_code
-            dirty = _dirty_touched_paths(project_dir, preview)
-            if dirty:
-                print("❌ Uncommitted changes in paths this sync would touch:")
-                for path in dirty:
-                    print(f"     {path}")
-                print("   Commit or stash them before syncing.")
-                # Precondition failure → 2 (wrapper exit-code convention,
-                # see docstring).
-                return 2
-
-        version = _manifest_version(source_path)
-        committed = False
-        if not dry_run and not no_branch:
-            if _create_branch(project_dir, f"chore/core-sync-{version}") is None:
-                # Environment/precondition failure — not drift (exit 1 is
-                # reserved for that in the engine contract; wrapper
-                # exit-code convention, see docstring).
-                return 2
-
-        try:
-            report = engine.sync(
-                source_path,
-                project_dir,
-                engine.SyncOptions(
-                    tiers=tiers,
-                    only=only,
-                    dry_run=dry_run,
-                    is_kit=is_kit,
-                    allowlist=allowlist,
-                ),
-            )
-        except engine.SyncError as exc:
-            print(f"❌ {exc}")
-            return exc.exit_code
-
-    if (
-        not dry_run
-        and not no_branch
-        and report.status in ("applied", "applied_with_warnings")
-    ):
-        # committed reflects whether `git commit` actually succeeded, so the
-        # diff-stat shows the last commit (committed) vs the working tree (not).
-        committed = _stage_and_commit(project_dir, version, report)
-
-    _print_sync_report(
-        report, dry_run=dry_run, committed=committed, project_dir=project_dir
-    )
-    return report.exit_code
-
-
 def main():
     """Launch project commands."""
     # Get the project directory (parent of scripts/core/)
@@ -2316,10 +1771,25 @@ def main():
 
     # Handle commands
     if command == "sync":
-        # Core-file sync from upstream (KIT-ADR-0026). Note: `sync` used to be
-        # an alias for `linearsync`; it now means core sync. Use `linearsync`
-        # (or `linear`) for Linear task sync.
-        sys.exit(cmd_sync(sys.argv[2:], project_dir))
+        # Retired in KIT-0102 (KIT-ADR-0028 phase 4): the copy-sync channel
+        # is gone — kit artifacts ship via the agentive-workflow plugin and
+        # the agentive-kit package. Named explicitly rather than falling
+        # through to "Unknown command", because `sync` meant two different
+        # things historically (Linear task sync, then core-file sync) and a
+        # bare "unknown" would strand both muscle memories.
+        print("❌ `project sync` was retired in KIT-ADR-0028 (phase 4).")
+        print()
+        print("   The copy-sync channel no longer exists. Kit artifacts")
+        print("   now ship two ways, both install-based:")
+        print("   • agents, skills, commands → the agentive-workflow plugin")
+        print("     (/plugin update — docs/PLUGIN-UPGRADE-GUIDE.md)")
+        print("   • the `agentive` CLI + tooling → the agentive-kit package")
+        print()
+        print("   Full upgrade story: docs/UPDATING-YOUR-PROJECT.md")
+        print()
+        print("   (Looking for Linear task sync? That is a different")
+        print("    command and still works: `project linearsync`.)")
+        sys.exit(2)
 
     if command in ["linearsync", "linear"]:
         # Linear sync command (optional layer — consumers may not carry it)
@@ -2417,7 +1887,7 @@ except Exception as e:
         except (FileNotFoundError, OSError):
             print(f"❌ Could not read {version_file}")
             print("   scripts/core/VERSION is the single source for the")
-            print("   core-scripts version — restore it or re-sync core.")
+            print("   core-scripts version — restore it from git.")
             sys.exit(1)
         print(f"Project CLI v{core_version} (core scripts)")
         sys.exit(0)
@@ -2771,12 +2241,6 @@ Agent Management:
 Configuration:
   reconfigure          Update project files with correct identity after upstream merge
   reconfigure --verify Same as above, then audit for remaining identity leaks
-
-Core Sync (from upstream kit):
-  sync                 Pull core files via the manifest engine (KIT-ADR-0026)
-                       Options: --dry-run, --ref <tag> (default main),
-                       --source <dir>, --tier <t>..., --only <entry>...,
-                       --no-branch (apply to working tree, don't branch)
 
 Linear Sync:
   linearsync, linear   Sync task files to Linear

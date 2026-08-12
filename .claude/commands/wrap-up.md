@@ -1,7 +1,7 @@
 ---
 description: Finalize session — run retro, move the task to done, and confirm completion
-version: 2.0.0
-last-updated: 2026-07-28
+version: 2.3.1
+last-updated: 2026-08-11
 distribution: builder-only
 ---
 
@@ -9,6 +9,16 @@ distribution: builder-only
 
 > **Builder-side command**: operates the kit factory; not distributed
 > via `scripts/.core-manifest.json` (intended — see KIT-0077).
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/wrap-up` — finalizes the session: runs `/retro`, moves the
+> task to done if the PR merged, and prints a verified summary.
+> Reads: PR state via `gh`, `CLAUDE.md` target-repo pointer, the
+> current branch, task/starter files in `.kit/` · Writes: the retro
+> file, a task-file move (merged PRs only)
+> Source: [wrap-up.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/wrap-up.md) · Docs: [task completion protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md)
 
 Run this as your final action when all work is complete, all gates pass, and the review starter is written.
 
@@ -81,8 +91,14 @@ GH_TARGET pr view --json number,title --jq '{pr: .number, title: .title}' 2>/dev
 ```
 
 ```bash
-ls .kit/context/*-REVIEW-STARTER.md 2>/dev/null || echo "No review starter found"
+# Task-SPECIFIC, not a repo-wide glob: `*-REVIEW-STARTER.md` succeeds on
+# ANOTHER task's starter, after which Step 4 prints a path for THIS task
+# that does not exist. Substitute the real ID.
+ls .kit/context/<TASK-ID>-REVIEW-STARTER.md 2>/dev/null || echo "No review starter found for <TASK-ID>"
 ```
+
+Remember the result — Step 4 prints this path as a claim, and prints it
+only if this check found the file.
 
 If you can't determine the task ID from the branch name, ask the user.
 
@@ -109,17 +125,39 @@ If the PR is not yet merged, skip this step — the task stays in `4-in-review`.
 
 ## Step 4: Confirm completion
 
-Print a summary for the user:
+Print a summary for the user. **The header line depends on what Step 3
+actually did** — pick the variant that matches, never print COMPLETE by
+default.
+
+**Variant A — PR merged, Step 3 ran `project complete`:**
 
 ```text
 🔬 <AGENT-NAME> | Task: <TASK-ID> — COMPLETE
 
-PR: <PR-URL>
+PR: <PR-URL> (merged)
+Task: 5-done
+Review starter: .kit/context/<TASK-ID>-REVIEW-STARTER.md
+Retro: .kit/context/retros/<TASK-ID>-retro.md
+```
+
+**Variant B — PR not merged, Step 3 skipped:**
+
+```text
+🔬 <AGENT-NAME> | Task: <TASK-ID> — IN REVIEW (not complete)
+
+PR: <PR-URL> (<open|closed|draft>) — not merged
+Task: stays in 4-in-review until the PR merges
 Review starter: .kit/context/<TASK-ID>-REVIEW-STARTER.md
 Retro: .kit/context/retros/<TASK-ID>-retro.md
 
 Ready for human review.
 ```
+
+Variant B is the common case at the end of an implementation session —
+the session ends when the PR is *ready*, not when it is merged. Printing
+COMPLETE there tells the operator work is finished when it is still
+awaiting their review, and the task file itself says `4-in-review`,
+so the summary would contradict the tree.
 
 Every line is a claim — verify before printing it. If Step 2's `/retro`
 failed, replace the retro line with the failure, e.g.:
@@ -128,7 +166,17 @@ failed, replace the retro line with the failure, e.g.:
 Retro: NOT WRITTEN — /retro failed (<one-line reason>)
 ```
 
-Same for the task move: if Step 3 skipped because the PR is unmerged,
-say the task stays in `4-in-review` rather than implying completion.
+The **review-starter line is the same kind of claim**, and both variants
+above print it unconditionally. Print the path only when Step 1's
+task-specific check actually found the file; otherwise say so:
+
+```text
+Review starter: NOT FOUND — no .kit/context/<TASK-ID>-REVIEW-STARTER.md
+```
+
+A path printed because the template contains it, rather than because the
+file is there, is exactly the trap this section exists to prevent — and a
+repo-wide glob that matched some *other* task's starter is not evidence
+about this one.
 
 Remind the user to `/rename` the session with the task ID for easy `/resume` later.

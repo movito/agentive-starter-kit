@@ -1,7 +1,8 @@
 # KIT-ADR-0028: Distribute the kit as versioned packages — retire copy-based sync
 
-**Status**: **Accepted** (operator, 2026-08-06 — "Excellent. I approve
-of the ADR.")
+**Status**: **Accepted — COMPLETE** (accepted by operator 2026-08-06;
+all four migration phases done as of 2026-08-11, annotated below. The
+copy era's final ledger: −4,134 lines in the closing PR alone.)
 **Date**: 2026-08-05 (proposed) / 2026-08-06 (accepted)
 **Deciders**: Fredrik Matheson (operator), planner-f5
 **Extends**: KIT-ADR-0025 (plugin agents project-agnostic, specifics
@@ -101,13 +102,31 @@ agent file — a contract is edited once, propagation ceases to exist);
 KIT-0087 F2 (the single install path becomes the package's job);
 KIT-0082 (acceptance surface collapses to install + doctor).
 
-**Migration is staged, not big-bang**:
-1. Publish the packages (plugin already exists; scripts package is new)
-2. Switch the door to package-install mode; new projects are born
-   packaged
-3. Move existing consumers via the upgrader agent
-4. Retire the sync machinery and close the dissolved tasks with
-   dispositions pointing here
+**Migration is staged, not big-bang** (status annotated 2026-08-11):
+1. Publish the packages — **DONE**: agentive-kit 0.1.0→0.3.1
+   (KIT-0090/0091/0092); plugin 2.0.0→2.0.3 (KIT-0096–0101)
+2. Switch the door to package-install mode — **DONE**: KIT-0093
+   (agentive-kit 0.3.0); new projects born packaged, acceptance-tested
+3. Move existing consumers via the upgrader agent — **CLOSED AS NO-OP**
+   (2026-08-11, evidence-based): the only live consumer
+   (ev-fast-charging-loads-planning) was re-intaken fresh through the
+   packaged door and verified (doctor 10/0/0, zero copies); the sole
+   script-carrying repo remaining is its retired `_old` archive, kept
+   deliberately by the operator — an artifact, not a migration target.
+   No upgrader migration was ever needed.
+4. Retire the sync machinery — **DONE**: KIT-0102 (PR #127,
+   2026-08-11). Deleted the push Action (`sync-core-scripts.yml`), the
+   pull engine (`sync_from_manifest.py`), the manifest
+   (`.core-manifest.json`), the `project sync` subcommand, the
+   `60-push-sync-token.sh` doctor check (both homes) and their tests;
+   the setup door no longer seeds a manifest or ships the engine.
+   KIT-ADR-0026 marked Superseded. Enumeration corrected two spec
+   guesses — `40-version-skew.py` (venv/black skew, not manifest skew)
+   and `scripts/core/VERSION` (still read by `project version`) both
+   PRESERVED. Both-directions drift check clean: 0 consumer copies
+   newer than canon. (The dissolved-task dispositions were already
+   written at the 2026-08-08 backlog review, ahead of schedule at
+   operator direction.)
 
 **Costs and risks, stated honestly**:
 - PyPI release discipline becomes real work (versioning, changelogs,

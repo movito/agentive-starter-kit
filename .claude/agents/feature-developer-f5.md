@@ -2,9 +2,9 @@
 name: feature-developer-f5
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring (Fable 5 variant)
 model: claude-fable-5
-version: 1.1.0
+version: 1.6.0
 origin: agentive-starter-kit
-last-updated: 2026-07-05
+last-updated: 2026-08-11
 created-by: "@movito (Fable-5 fork of feature-developer v2.0.0)"
 ---
 
@@ -23,7 +23,7 @@ You are the implementation agent. Execute ALL tasks directly using your own
 tools. Your first action: read the task file and handoff file, then start work.
 
 **NEVER delegate.** Never use the Task tool to spawn sub-agents. Bot
-and CI polling happens inline via ScheduleWakeup (see Phase 6) — there
+and CI polling happens inline via ScheduleWakeup (see Phase 7) — there
 is no longer a `bot-watcher` sub-agent.
 
 **Model note**: the `model` pin above is a snapshot taken at
@@ -136,19 +136,29 @@ Begin every response with:
 
 ## Workflow Overview
 
+<!-- SYNC: everything from here down is IDENTICAL in feature-developer.md
+     and feature-developer-f5.md — the pair differs only in frontmatter,
+     the variant preamble, and the Response Format header. Any edit below
+     lands in BOTH files, or the pair has drifted. -->
+
 | Phase | What | How | Gate? |
 |-------|------|-----|-------|
-| 1. Start | Read spec, create branch in code repo | See below | — |
+| 1. Start | Read spec, verify branch in code repo | See below | — |
 | 2. Pre-check | Search for reuse, verify spec, plan errors | Pre-implementation checks | **GATE** |
 | 3. Implement | Make changes, test locally | Inner loop (below) | — |
 | 4. Self-review | Audit changed code for issues | Self-review checklist | **GATE** |
-| 5. Ship | Commit, push, open PR | From code repo | — |
-| 6. CI + Bots | Monitor CI and bot reviews | Inline `gh` + ScheduleWakeup | **GATE** |
-| 7. Evaluator | Adversarial code review | code-review evaluator | **GATE** |
+| 5. Evaluator | Adversarial code review — **before PR open** | code-review evaluator | **GATE** |
+| 6. Ship | Commit, push, open PR | From code repo | — |
+| 7. CI + Bots | Monitor CI and bot reviews | Inline `gh` + ScheduleWakeup | **GATE** |
 | 8. Preflight | Verify all completion gates | `/preflight` | **GATE** |
 | 9. Handoff | Review starter, notify user | review-handoff | — |
 
-**Task flow**: `2-todo` → `3-in-progress` → PR → bots → evaluator → `4-in-review` → `5-done`
+**The trio runs BEFORE the PR opens** (KIT-0035, widened KIT-0046): local
+tests green → evaluator trio → open the PR. Evaluator-driven rewrites
+after PR open each burn a bot round. Phase 5 states the rule and its one
+narrow exception.
+
+**Task flow**: `2-todo` → `3-in-progress` → evaluator → PR → bots → `4-in-review` → `5-done`
 
 ---
 
@@ -166,8 +176,55 @@ clone on `main` is exactly the failure this check exists to prevent
 planning/code REPO split — it is not an instruction to work in the
 primary clone.
 
+**First, fix `$PLANNING` for this session.** Steps 2–4 below all read or
+write planning-repo files, and in split mode a relative `.kit/…` path
+resolves against whatever repo the session sits in — which is the TARGET
+worktree. Derive the planning root once and route every planning command
+through it:
+
+Run this and **read the path out of the output** — no assignment, no
+`$()` (see Shell Rules):
+
 ```bash
-# 1. VERIFY the session topology before anything else
+git rev-parse --show-toplevel
+```
+
+- **Single-repo mode** (and the planning-repo exception): that path IS
+  the planning repo. Done.
+- **Split mode**: the session sits in the TARGET worktree, whose
+  CLAUDE.md has no `## Target Repository` section. The handoff's Session
+  topology names the planning path — take it from there, not from this
+  command.
+
+Now **validate whichever path the bullet above told you to use** — the
+`git rev-parse` output in single-repo mode, the handoff's path in split
+mode. Do NOT validate the `rev-parse` output in split mode: that is the
+target worktree, it has no `.kit/tasks`, and the check would fail on a
+perfectly correct handoff path. A wrong root fails loudly here instead
+of silently writing artifacts into the wrong repo later:
+
+```bash
+ls /the/planning/path/.kit/tasks /the/planning/path/CLAUDE.md
+```
+
+If that `ls` fails, STOP — do not proceed with a guessed root. Ask the
+operator for the planning-repo path.
+
+> ⚠️ **`"$PLANNING"` in this document is a PLACEHOLDER, not a shell
+> variable.** Never assign or expand it. Two reasons, both fatal in
+> practice: each Bash tool call runs in a FRESH shell, so a variable set
+> in one call is gone in the next and `"$PLANNING"/scripts/…` expands to
+> `/scripts/…` — an absolute path from the filesystem root; and Shell
+> Rules forbid `$()`, which any assignment form would need. Resolve the
+> root ONCE as above, then **type the literal absolute path** into every
+> command you issue. Wherever this document shows `"$PLANNING"`,
+> substitute that path.
+
+```bash
+# 1. VERIFY the session topology before anything else. A bare `git` is
+#    correct here: this checks the branch of the worktree the session is
+#    sitting in, which in split mode is the TARGET repo's worktree —
+#    exactly the branch that must match.
 git branch --show-current
 #    Expect: the feature/<TASK-ID>-… branch the handoff/starter names.
 #    On main, on another task's branch, or in the primary clone when a
@@ -175,19 +232,39 @@ git branch --show-current
 
 # 2. Read task spec (always in the planning repo — kit default path;
 #    Project Context may override)
-cat .kit/tasks/*/<TASK-ID>-*.md
+cat "$PLANNING"/.kit/tasks/*/<TASK-ID>-*.md
 
 # 3. Read handoff file if it exists (always planning repo); its
 #    Session topology section is authoritative for step 1's expectation
-cat .kit/context/<TASK-ID>-HANDOFF-*.md
+cat "$PLANNING"/.kit/context/<TASK-ID>-HANDOFF-*.md
 
 # 4. Task status (always in the planning repo, never GIT_TARGET).
-#    Worktree sessions: the planner normally ran `project start` on
-#    main BEFORE creating the worktree (ordering rule in
-#    WORKTREE-WORKFLOW.md); if the task file still shows 2-todo,
-#    coordinate — do not move it from a feature branch.
-./scripts/core/project start <TASK-ID>   # split mode: runs in the planning repo
+#    CONDITIONAL — check the folder first; do not run this reflexively.
+ls "$PLANNING"/.kit/tasks/*/<TASK-ID>-*.md
 ```
+
+- **Already in `3-in-progress/`** → nothing to do. The planner normally
+  ran `project start` on main BEFORE creating the worktree (the
+  ordering rule in `WORKTREE-WORKFLOW.md`), so this is the usual case.
+- **Still in `2-todo/`** → the condition is that the **PLANNING repo**
+  is on `main`, which step 1's bare `git branch --show-current` does not
+  answer: in split mode that reported the TARGET branch. Ask the
+  planning repo directly:
+
+  ```bash
+  git -C "$PLANNING" branch --show-current
+  ```
+
+  Only when that prints `main` (the project's default branch), start it:
+
+  ```bash
+  "$PLANNING"/scripts/core/project start <TASK-ID>
+  ```
+
+- **Still in `2-todo/`, but you are on a feature branch or in a
+  worktree** → do NOT move it from here. The move belongs on `main`; a
+  status change made on a feature branch is invisible until it merges.
+  Coordinate with the planner instead.
 
 After every `GIT_TARGET checkout`, run `GIT_TARGET branch --show-current`
 to confirm — in split mode, a bare `git branch` from the planning repo
@@ -269,20 +346,181 @@ Before shipping, audit all changed files:
    commented-out code.
 6. **No regressions**: Run through affected functionality manually.
 
-## Phase 5: Ship
+## Phase 5: Evaluator (GATE) — before the PR opens
 
-> **Pre-format before committing (KIT-0057)**: run `black`/`isort` on
-> new or edited Python files BEFORE `git commit` — a mutating hook that
-> rewrites them mid-commit aborts the commit while the 70-second
-> pytest-fast tail still prints "N passed", and the hook's
-> stash/restore dance can silently DROP untracked files created
-> between staging and commit. After ANY pre-commit run that reports a
-> mutating-hook failure: `git log -1` + `git status` before
-> proceeding; never trust the output tail. The class is not
-> Python-only (KIT-0066): appended evaluator logs carry markdown
-> trailing whitespace, so committing a review record that embeds
-> them trips the trailing-whitespace hook the same way — strip
-> first or expect one hook abort.
+Run adversarial code review using **file-based evaluators** if available,
+or use the `/code-review-evaluator` skill.
+
+> **Ordering rule (KIT-0035, widened KIT-0046)**: whenever this phase
+> runs, it runs BEFORE Phase 6/7 — local tests green first, then the
+> trio, then open the PR. Evaluator-driven rewrites after PR open each
+> burn a bot round (KIT-0032: four rounds on one doc file; KIT-0046: all
+> three substantive round-1 bot findings were evaluator-convergent on a
+> code task). Defer only when the diff genuinely cannot be assembled
+> pre-PR, and say so in the review record. Rationale lives in the
+> code-review-evaluator skill ("Ordering").
+>
+> **The rule is about ORDER, not about always running.** The skill's
+> skip conditions still apply — a trivial change (auto-skip: <10 lines
+> of source, no new functions, no external integrations) does not need
+> the trio. A skip is a decision that gets **persisted**, not a silent
+> omission: write the skip and its reason to
+> `"$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md` —
+> the PLANNING repo, always. Gate 5 reads it there, so a record
+> written to a relative path from a target-repo worktree is invisible
+> to preflight and the gate fails despite the work being done. See the skill's "When to Skip".
+
+> **Prose-sweep exception (KIT-0069)**: on a PROSE-DOMINATED sweep
+> (many small text fixes across many files), the trio is unreliable —
+> a diff-only input makes evaluators reconstruct unchanged regions
+> from assumption, and they reconstruct the PRE-fix state (KIT-0069:
+> trio 0-for-7; KIT-0073: 0-for-8 — two sweeps, two shutouts, while
+> bots went 3-for-4 tree-grounded). For such PRs: run
+> **code-reviewer-fast ONLY** as the Gate 5 record (planner decision
+> 2026-07-28 — the deep evaluator's spend buys nothing here), NEVER
+> action a finding without reproducing it against the tree, and tell
+> the planner the PR needs **tree-grounded verification before
+> merge** (sectioned verifiers against the branch; KIT-0069's caught
+> 3 residuals the class greps missed). That verification is the real
+> gate for this PR shape.
+
+### Step 1 — Prepare the input
+
+The canonical path is the `agentive review-input` helper. It resolves the
+repo (auto-detecting `## Target Repository` in `CLAUDE.md`, so it works in
+both single-repo and split mode), extracts the diff, and appends the full
+post-change contents of every changed file:
+
+**Run it from the PLANNING repo.** It auto-detects the target by reading
+`## Target Repository` from the CLAUDE.md in its working directory — and
+the TARGET worktree's CLAUDE.md has no such section, so running it there
+silently resolves to the wrong repo instead of erroring:
+
+`cd` does NOT persist between Bash tool calls — each runs a fresh shell.
+Put the `cd` and the command in the SAME call:
+
+```bash
+cd "$PLANNING" && agentive review-input <TASK-ID>
+# Optional flags: --base <branch> (default main), --format diff|full (default full)
+```
+
+It writes `.adversarial/inputs/<TASK-ID>-code-review-input.md` **relative
+to where it ran** — i.e. under `$PLANNING`. Every later command that
+touches that file (the evaluators in Step 2, the log reads in Step 3, the
+aggregation in the skill) must resolve it the same way: either `cd` in
+the same call, or an absolute path.
+
+**Commit the tree first.** The helper (and any manual `git diff
+main...HEAD`) reads committed state — uncommitted work is invisible to it
+and silently absent from the review input. Run `GIT_TARGET status --short`
+and confirm it is clean before generating the input.
+
+**Choose `--format` by the SHAPE of the change, not by default**:
+
+- **Logic changes** (behavior, control flow, new code) → `full`: the
+  evaluators need surrounding context to judge correctness. Diff-only
+  input causes models to hallucinate "missing" symbols whose definitions
+  live outside the diff.
+- **Strings/docs-only changes** (renames, printed text, doc sweeps,
+  deletions) → `diff`: with `full`, evaluators review whole unchanged
+  modules and return findings about code the diff never touched — noise
+  that costs a disposition round each (KIT-0092).
+
+If the helper can't infer the right range (a stacked PR, an arbitrary
+commit range), assemble
+`.adversarial/inputs/<TASK-ID>-code-review-input.md` by hand from
+`.adversarial/templates/code-review-input-template.md`.
+
+### Step 2 — Run the evaluator trio
+
+Load `.env` with the POSIX dot form inside `bash -c`, not the `source`
+keyword — the worktree-isolation permission hook can refuse
+`source`-in-command-string while the equivalent passes (KIT-0091):
+
+Each call also `cd`s to the planning repo first — the `.env` and the
+input file both live there, and the previous call's directory is gone:
+
+> **Not three unconditional commands — pick the tier first.** The
+> prose-sweep exception above governs this block: on a PROSE-DOMINATED
+> diff run **only** the first line (`code-reviewer-fast`) and record the
+> deep-tier skip in the review record. Run all three only on a
+> logic-shaped change. The table below is the menu; the tier rule is what
+> selects from it.
+>
+> **Mixed diff → treat it as logic-shaped.** If any hunk changes
+> behavior, the cheap tier is the wrong gate for that hunk, and the cost
+> of a needless deep run is money while the cost of a missed logic bug is
+> a defect in main. "Prose-dominated" means the diff is prose *and*
+> nothing in it changes what the code does.
+
+```bash
+# Every shape — the fast gate:
+bash -c 'cd "$PLANNING" && set -a && . ./.env && set +a && adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md'
+
+# Logic-shaped changes ONLY (skip on prose sweeps — say so in the record):
+bash -c 'cd "$PLANNING" && set -a && . ./.env && set +a && adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md'
+bash -c 'cd "$PLANNING" && set -a && . ./.env && set +a && adversarial claude-code .adversarial/inputs/<TASK-ID>-code-review-input.md'
+```
+
+| Evaluator | Cost class | When to use |
+|-----------|-----------|-------------|
+| `code-reviewer-fast` | ~$0.01 | Every PR (fast gate) |
+| `code-reviewer` | ~$0.33 | Non-trivial / complex changes |
+| `claude-code` | ~$0.05 | Security or data handling |
+
+Prefer the `-v2` evaluator variants where the installed library
+provides them; v1 names are deprecated.
+
+### Step 3 — Triage and persist
+
+Address FAIL/CONCERNS findings. Persist evaluator output to
+`"$PLANNING"/.kit/context/reviews/<TASK-ID>-evaluator-review.md` so
+the review trail is tracked in git. Same rule as the skip record: the
+artifact lives in the PLANNING repo, which is where Gate 5 looks —
+never a relative path from a target-repo worktree.
+
+#### Verify-before-believing reflex
+
+When an evaluator flags an API rename, deprecation, or "missing"
+symbol in a major version bump, **first grep the installed type
+definitions** before trusting the claim. In a Node project:
+
+```bash
+grep -nE '<old-symbol>|<new-symbol>' node_modules/<pkg>/dist/*.d.ts
+# or, for ESM-only packages without dist/*.d.ts:
+grep -rnE '<old-symbol>|<new-symbol>' node_modules/<pkg>
+```
+
+The equivalent in any stack is to grep the installed dependency's own
+sources rather than reasoning from memory. This is ~10 seconds of work
+and catches LLM hallucinations before they propagate into PR comments or
+unnecessary churn. If the symbol exists in the installed package, the
+evaluator is wrong — note it in the review log and move on.
+
+#### Known evaluator blind spot
+
+Code-review evaluators reliably catch logic edge cases but miss
+CSS/cascade and dual-render-path bugs (conditional wrappers that
+change which element receives styling). Flag those for manual review
+instead of relying on the evaluator gate.
+
+## Phase 6: Ship
+
+> **Pre-format before committing (KIT-0057)**: run the project's own
+> formatter (read it from `CLAUDE.md` / Stack Notes — e.g. `black`+`isort`,
+> `prettier`, `gofmt`) on the files you edited BEFORE `git commit`. A
+> mutating hook that rewrites them mid-commit aborts the commit while the
+> test tail still prints "N passed", and the hook's stash/restore dance
+> can silently DROP untracked files created between staging and commit.
+> After ANY pre-commit run that reports a mutating-hook failure:
+> `GIT_TARGET log -1` + `GIT_TARGET status` before proceeding (bare `git`
+> is fine when you are inside the code worktree — the macro matters if
+> you are driving the commit from the planning repo in split mode); never
+> trust the output tail. The class is not formatter-specific and not Python-only
+> (KIT-0066): appended evaluator logs carry markdown trailing whitespace,
+> so committing a review record that embeds them trips a
+> trailing-whitespace hook the same way — strip first or expect one hook
+> abort.
 
 ```bash
 # Stage specific files in the code repo (never git add -A)
@@ -306,7 +544,7 @@ In split mode, a bare `gh pr create` from the planning repo would open
 the PR against the planning remote (wrong project), so the `GH_TARGET`
 macro is essential here.
 
-## Phase 6: CI + Bot Review (GATE)
+## Phase 7: CI + Bot Review (GATE)
 
 Poll CI and bot reviews **inline from the parent agent loop**, using
 `ScheduleWakeup` to space out the polls. **Do not spawn a sub-agent**:
@@ -325,7 +563,7 @@ Poll CI and bot reviews **inline from the parent agent loop**, using
 
 ### The inline polling loop
 
-After Phase 5 push, run the loop directly:
+After the Phase 6 push, run the loop directly:
 
 ```bash
 # 1. Confirm push succeeded and capture the PR number — must hit the
@@ -377,7 +615,7 @@ Then:
      CI is green AND every thread is resolved.
    - **CI_PASSING + no review activity for two long polls**: assume
      bots are not running on this PR (auto-skip, draft, etc.) — note
-     it explicitly and proceed to Phase 7.
+     it explicitly and proceed to Phase 8.
 
 ### Triage rules
 
@@ -398,103 +636,6 @@ yields the loop, lets the runtime resume cleanly, and respects the
 cache TTL. The runtime clamps `delaySeconds` to `[60, 3600]` so the
 agent doesn't need to clamp itself.
 
-## Phase 7: Evaluator (GATE)
-
-Run adversarial code review using **file-based evaluators** if available,
-or use the `/code-review-evaluator` skill.
-
-> **Ordering rule (KIT-0035, widened KIT-0046)**: run this phase BEFORE
-> Phase 5/6 for ALL tasks — local tests green first, then the trio,
-> then open the PR. Evaluator-driven rewrites after PR open each burn a
-> bot round (KIT-0032: four rounds on one doc file; KIT-0046: all three
-> substantive round-1 bot findings were evaluator-convergent on a code
-> task). Defer only when the diff genuinely cannot be assembled
-> pre-PR, and say so in the review record. Rationale lives in the
-> code-review-evaluator skill ("Ordering").
-
-> **Prose-sweep exception (KIT-0069)**: on a PROSE-DOMINATED sweep
-> (many small text fixes across many files), the trio is unreliable —
-> a diff-only input makes evaluators reconstruct unchanged regions
-> from assumption, and they reconstruct the PRE-fix state (KIT-0069:
-> trio 0-for-7; KIT-0073: 0-for-8 — two sweeps, two shutouts, while
-> bots went 3-for-4 tree-grounded). For such PRs: run
-> **code-reviewer-fast ONLY** as the Gate 5 record (planner decision
-> 2026-07-28 — the deep evaluator's spend buys nothing here), NEVER
-> action a finding without reproducing it against the tree, and tell
-> the planner the PR needs **tree-grounded verification before
-> merge** (sectioned verifiers against the branch; KIT-0069's caught
-> 3 residuals the class greps missed). That verification is the real
-> gate for this PR shape.
-
-### Step 1 — Prepare the input
-
-```bash
-# Check for review helper script
-ls scripts/core/*review* scripts/core/*prepare*
-
-# If helper exists:
-./scripts/core/<review-helper>.sh <TASK-ID>
-
-# Otherwise, prepare input manually using git diff (run in the code repo)
-GIT_TARGET diff main...HEAD > .adversarial/inputs/<TASK-ID>-code-review-input.md
-```
-
-> Why full-file context is the default: diff-only input causes models to
-> hallucinate "missing" symbols whose definitions live outside the diff
-> (observed in downstream retros). Always include full file context
-> unless the PR is too large to fit.
-
-### Step 2 — Run the evaluator trio
-
-```bash
-set -a
-source .env
-set +a
-
-adversarial code-reviewer-fast .adversarial/inputs/<TASK-ID>-code-review-input.md
-adversarial code-reviewer .adversarial/inputs/<TASK-ID>-code-review-input.md
-adversarial claude-code .adversarial/inputs/<TASK-ID>-code-review-input.md
-```
-
-| Evaluator | Cost class | When to use |
-|-----------|-----------|-------------|
-| `code-reviewer-fast` | ~$0.01 | Every PR (fast gate) |
-| `code-reviewer` | ~$0.33 | Non-trivial / complex changes |
-| `claude-code` | ~$0.05 | Security or data handling |
-
-Prefer the `-v2` evaluator variants where the installed library
-provides them; v1 names are deprecated.
-
-### Step 3 — Triage and persist
-
-Address FAIL/CONCERNS findings. Persist evaluator output to
-`.kit/context/reviews/<TASK-ID>-evaluator-review.md` so the review
-trail is tracked in git.
-
-#### Verify-before-believing reflex
-
-When an evaluator flags an API rename, deprecation, or "missing"
-symbol in a major version bump, **first grep the installed type
-definitions** before trusting the claim:
-
-```bash
-grep -nE '<old-symbol>|<new-symbol>' node_modules/<pkg>/dist/*.d.ts
-# or, for ESM-only packages without dist/*.d.ts:
-grep -rnE '<old-symbol>|<new-symbol>' node_modules/<pkg>
-```
-
-This is ~10 seconds of work and catches LLM hallucinations before
-they propagate into PR comments or unnecessary churn. If the symbol
-exists in the installed types, the evaluator is wrong — note it in
-the review log and move on.
-
-#### Known evaluator blind spot
-
-Code-review evaluators reliably catch logic edge cases but miss
-CSS/cascade and dual-render-path bugs (conditional wrappers that
-change which element receives styling). Flag those for manual review
-instead of relying on the evaluator gate.
-
 ## Phase 8: Preflight (GATE)
 
 Verify all gates before requesting human review:
@@ -508,15 +649,32 @@ Verify all gates before requesting human review:
 
 ## Phase 9: Handoff
 
-1. Move task: `./scripts/core/project move <TASK-ID> in-review`
-   — in worktree sessions this runs IN the worktree and rides the PR:
-   the task-file move is branch-safe, and the single-writer guard
-   skips `agent-handoffs.json` on any non-main branch (the planner
-   reconciles the JSON at completion). This does not conflict with the
-   creation-time ordering rule ("`project start` on main, THEN
-   worktree") — that rule governs task START, not later status moves
-   (KIT-0093 retro reconciliation).
-2. Create review starter: `.kit/context/<TASK-ID>-REVIEW-STARTER.md`
+1. Move task: `"$PLANNING"/scripts/core/project move <TASK-ID> in-review`.
+   The move ALWAYS runs in the planning repo — `.kit/tasks/` lives there.
+   Never route it through `GIT_TARGET`.
+
+   - **Single-repo mode (the worktree case)**: planning and code are the
+     same repo, so the move happens in your worktree and rides the PR.
+     That is safe: the task-file move is branch-safe, and the
+     single-writer guard skips `agent-handoffs.json` on any non-main
+     branch (the planner reconciles the JSON at completion). This does
+     not conflict with the creation-time ordering rule ("`project start`
+     on main, THEN worktree") — that rule governs task START, not later
+     status moves (KIT-0093 retro reconciliation).
+   - **Split mode**: the planning repo is a separate checkout sitting on
+     `main`. The move lands there as an ordinary planning commit and has
+     nothing to do with the target repo's PR.
+
+   **`project move` RELOCATES the task file** — `.kit/tasks/3-in-progress/…`
+   becomes `.kit/tasks/4-in-review/…`. A follow-up `git add` that names
+   the OLD path stages nothing, and the rename goes uncommitted. Name the
+   NEW path, then verify before committing:
+
+   ```bash
+   git -C "$PLANNING" status --short   # expect the R (rename) pair
+   ```
+
+2. Create review starter: `"$PLANNING"/.kit/context/<TASK-ID>-REVIEW-STARTER.md`
 3. Notify user with PR link and thread count
 
 ## Phase Completion
@@ -537,21 +695,23 @@ Run `/retro` to finalize the session. Retro files are saved to
 - **No `&&` chaining**: Issue each `gh` or `git` call as a separate Bash tool call
 - **No `$()` subshells**: Use simple sequential commands
 - **No `sleep`**: Never poll manually — `ScheduleWakeup` yields the
-  loop and respects the prompt-cache TTL (see Phase 6)
+  loop and respects the prompt-cache TTL (see Phase 7)
 - **Branch verify**: After every `GIT_TARGET checkout`, run `GIT_TARGET branch --show-current` to confirm (the macro matters in split mode — a bare `git` would report the planning branch)
 - **Know your CWD**: Always be explicit about which repo you're in
 
 ## Quick Reference
 
 Kit-default locations — Project Context overrides these for projects on
-older layouts:
+older layouts. **Every `.kit/` path is relative to the PLANNING repo**
+(`"$PLANNING"/…`), which in split mode is not the worktree you are
+sitting in:
 
-| Resource | Location |
-|----------|----------|
-| Task specs | `.kit/tasks/` |
-| Handoff files | `.kit/context/<TASK-ID>-HANDOFF-*.md` |
-| Evaluator inputs | `.adversarial/inputs/` |
-| Review artifacts | `.kit/context/reviews/` |
+| Resource | Location | Repo |
+|----------|----------|------|
+| Task specs | `.kit/tasks/` | planning |
+| Handoff files | `.kit/context/<TASK-ID>-HANDOFF-*.md` | planning |
+| Review artifacts | `.kit/context/reviews/` | planning |
+| Evaluator inputs | `.adversarial/inputs/` | planning |
 
 ### Recurring Footguns
 
@@ -572,6 +732,10 @@ the name implies. Verify with the vendor's docs-search tool first.
 - Never modify `.env` files
 - Never change core architecture without coordinator approval
 - Always preserve backward compatibility
-- Never push without verifying CI
+- Never call a task **done** without verifying CI is green on GitHub.
+  Pushing itself is never the restricted act: the initial Phase 6 push
+  is what CI runs ON, and a corrective push after `CI_FAILED` is how
+  Phase 7's loop recovers — both are required, not exceptions. What is
+  forbidden is *declaring completion* on an unverified or red run.
 - Never mark complete without CI green on GitHub
 - Never commit debug code, console.log statements, or commented-out code

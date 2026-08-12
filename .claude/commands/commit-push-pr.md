@@ -1,14 +1,23 @@
 ---
 description: Commit all changes, push to remote, and open a pull request
 argument-hint: "[optional commit message override]"
-version: 1.0.0
+version: 1.1.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-02-27
+last-updated: 2026-08-11
 created-by: "@movito with planner2"
 ---
 
 # Commit, Push, and Open PR
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/commit-push-pr` — stages your changes, commits, pushes, and
+> opens a pull request, then runs an informational preflight.
+> Reads: git status/diff/log · Writes: a commit on the current
+> branch, a push to origin, a GitHub PR
+> Source: [commit-push-pr.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/commit-push-pr.md) · Docs: [commit protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/COMMIT-PROTOCOL.md)
 
 ## Step 1: Gather context
 

@@ -1,8 +1,8 @@
 ---
 description: Interview the user and create their new project through the setup door or the intake agent
-version: 1.1.0
+version: 1.2.0
 origin: agentive-starter-kit
-last-updated: 2026-07-28
+last-updated: 2026-08-11
 created-by: "@movito with feature-developer-f5 (KIT-0067)"
 distribution: builder-only
 ---
@@ -11,6 +11,18 @@ distribution: builder-only
 
 > **Builder-side command**: operates the kit factory; not distributed
 > via `scripts/.core-manifest.json` (intended — see KIT-0077).
+
+**First response — open with this transparency header, before any
+other output or tool call:**
+
+> 🧭 `/new-project` — interviews you in plain language and creates
+> your new project, via the setup door or the intake agent.
+> Reads: `./scripts/local/bootstrap --help`, your operator preset;
+> on the prototype route, your brief file and code folder (to
+> validate them) · Writes: the new project's directory (door route);
+> the intake route only prints a handoff — nothing in this repo
+> either way
+> Source: [new-project.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/new-project.md) · Docs: [starting a project](https://github.com/movito/agentive-starter-kit/blob/main/docs/STARTING-A-PROJECT.md)
 
 Create a new project from this kit — the front door to the factory
 flow described in `docs/STARTING-A-PROJECT.md`. Interview the user in
@@ -87,16 +99,43 @@ Before handing off, confirm the brief is a readable, non-empty file
 and the code path is a directory — a dangling or wrong-kind path
 should be caught here, not by the intake agent one tab later.
 
-Then hand off — agents run in a **new tab**, never in this session.
-Print the invocation for the user:
+Then hand off to a new tab — and say why when you print it: **agent
+identity is fixed at session launch**, so this session cannot become
+`project-intake` mid-flight, and the intake's contract needs a fresh
+context of its own. Print the invocation for the user:
 
 ```text
 ⚠️ LAUNCH
-Open a new tab in this kit checkout and invoke the project-intake
-agent with:
-  Brief: <path-to-brief.md>
-  Code:  <path-to-code-folder>
+Open a new tab in this kit checkout and paste:
+
+  claude --agent project-intake "Begin the intake. Brief: <path-to-brief.md>  Code: <path-to-code-folder>"
 ```
+
+Substitute real absolute paths into that message before printing it —
+never leave the placeholders for the operator to fill. You validated both
+paths a moment ago, so you have them.
+
+**Then shell-escape the finished message before you print it.** The
+operator pastes this line into a shell, so it is a command, not display
+text: inside double quotes `$(…)`, backticks and `\` still evaluate, and
+swapping to single quotes breaks on an apostrophe. Escape the whole
+argument properly — `printf '%q'` or your language's equivalent — rather
+than reasoning about which quote character to use:
+
+```bash
+printf 'claude --agent project-intake %q\n' "Begin the intake. Brief: $BRIEF  Code: $CODE"
+```
+
+Most paths need none of this; the ones that do would otherwise emit a
+line that breaks — or silently executes something — when pasted.
+
+**The opening message is part of the command, not decoration.** A session
+cannot speak first: `project-intake` runs a FIRST-TURN CONTRACT that
+fires on the first USER message, so a launch without one leaves the
+operator at an idle prompt wondering whether anything loaded (KIT-0075,
+reproduced live under native `--agent` on 2026-08-11). If you ever print
+a launch line without the message, print with it: "the agent waits for
+your first message — type `begin`".
 
 The intake agent runs the door itself and prints the final LAUNCH
 line for the planning repo when it finishes. Your job ends at this
@@ -124,15 +163,22 @@ handoff — do not run the door yourself on this route.
 ## Step 3: finish loudly
 
 End with the LAUNCH line for wherever work continues (the door route:
-the created project; on a planning shape, that's the planning repo):
+the created project; on a planning shape, that's the planning repo).
+State the reason for the hop alongside it: the planner must run **in
+the created project's own directory** with the project's files and
+CLAUDE.md around it, and agent identity is per-session — this session
+cannot become the planner:
 
 ```text
 ⚠️ LAUNCH
-Open a new tab with working directory <absolute-path-to-created-project>
+Open a new tab in <absolute-path-to-created-project> and paste:
+
+  claude --agent planner "Triage the backlog and recommend what to start."
 ```
 
-Then state the first-session instruction in one line: open that tab
-and invoke the `planner` agent (provided by the `agentive-workflow`
-plugin — the door's tail printed the install lines if it is missing)
-— the planner triages the backlog and recommends what to start (the
-project's seeded `CLAUDE.md` and README say the same thing).
+The launch line carries its opening message for the same reason as the
+intake handoff above — a session cannot speak first, so a bare `claude
+--agent planner` just idles. The `planner` agent ships with the
+`agentive-workflow` plugin (the door's tail printed the install lines if
+it is missing); it triages the backlog and recommends what to start, and
+the project's seeded `CLAUDE.md` and README say the same thing.

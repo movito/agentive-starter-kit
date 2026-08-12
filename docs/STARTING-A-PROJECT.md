@@ -255,9 +255,11 @@ That printed path **is** the navigation mechanism: open a new Claude
 Code tab (or terminal) at that path and continue there. Two habits
 make this work:
 
-- **Agents run in new tabs, never in your main thread.** The main
-  session is for coordination; an agent invocation gets its own tab so
-  its context stays clean and yours stays yours.
+- **Agents run in new tabs, never in your main thread.** Agent
+  identity is fixed at session launch — a running session cannot
+  become another agent mid-flight — so an agent invocation gets its
+  own tab; a different contract starts on fresh context, and your
+  coordination thread stays yours.
 - **One tab per working directory.** A planning repo tab plans; a code
   repo tab codes. The printed LAUNCH path always tells you which one
   you're opening.
