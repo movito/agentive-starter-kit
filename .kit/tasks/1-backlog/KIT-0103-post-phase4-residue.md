@@ -48,6 +48,23 @@ is not in a rate-limited state ("pass — Review rate limited" means
 the head may be unreviewed). Falsify both once (stale-SHA approval →
 gate FAILs; REST-vs-GraphQL divergence fixture).
 
+## R4 — package hygiene riders (folded from archived KIT-0095, 2026-08-12)
+
+Both verified still live at fold time: (a) remove the inert
+`ADVERSARIAL_UNATTENDED=1` decoration from `review_input.py`'s printed
+hints (the `echo y |` half does the work; verify against the installed
+tool per self-review lesson #10's uv-path note); (b) the
+worktree-hookpath doctor WARN (fires when a worktree's environment
+gives git hooks no usable pytest; quiet when provisioned — break-once
+both directions; cite the KIT-0092 incident).
+
+## R3 addendum (from archived KIT-0074, 2026-08-12)
+
+While hardening the preflight gates: consider Gate 1's at-cap
+reporting under STACKED runs, and review-input auto-defaulting
+`--base` to the PR's actual base (`gh pr view --json baseRefName`)
+when unset — both thin remainders of KIT-0074, neither urgent.
+
 ## Acceptance Criteria
 
 - [ ] R1: class grep opens the work, end grep proves it; ships in the

@@ -1,8 +1,10 @@
 # KIT-0085: Task starters need a valid external-authoring path — split the checklist, stamp the LAUNCH block, add ingestion
 
+> **Archived (2026-08-12, backlog review — premise-tested, operator-approved)**: premise document no longer exists — this spec critiques TASK-STARTER-TEMPLATE v1.1.0's kit-checkout assumptions; KIT-0101 R5 replaced the template wholesale (v2.0.0, single authority, required core, worked examples). Whether v2 serves EXTERNAL authors is a fresh question, answered at the next externally-authored starter — that event is the revive condition. The PLAY-0001 fixture stays in tests/fixtures/external-starter/.
+
 > **Demoted to backlog (2026-08-08, tidy)**: still valid (the EFKT external-authoring pain was real; templates remain per-repo content) but not assignable now, and its tooling half (ingest/stub scripts) belongs in agentive-kit post-ADR-0028. Re-scope the tooling to package modules at promotion.
 
-**Status**: Backlog
+**Status**: Canceled
 **Priority**: high (every externally-authored starter is born non-compliant; the template forces the improvisation it exists to prevent)
 **Type**: Process / Template + tooling
 **Estimated Effort**: 4-6 h

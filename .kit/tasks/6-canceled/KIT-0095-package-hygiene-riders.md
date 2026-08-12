@@ -1,6 +1,8 @@
 # KIT-0095: Package + doctor hygiene riders (next agentive-kit release)
 
-**Status**: Backlog
+> **Archived (2026-08-12, backlog review — premise-tested, operator-approved)**: folded into KIT-0103 (R4) — both riders verified still live (the inert ADVERSARIAL_UNATTENDED hint ships in review_input.py; the worktree-hookpath WARN remains unbuilt) and both are release-train items; KIT-0103 is the release-train vehicle. One bundle, not two.
+
+**Status**: Canceled
 **Priority**: low (riders — ship with whatever cuts the next
 agentive-kit release: KIT-0074, phase 3, or a standalone 0.3.2)
 **Type**: Infrastructure / hygiene

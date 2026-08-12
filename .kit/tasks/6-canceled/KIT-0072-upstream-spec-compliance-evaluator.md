@@ -1,6 +1,8 @@
 # KIT-0072: Upstream the spec-compliance evaluator to the library
 
-**Status**: Backlog
+> **Archived (2026-08-12, backlog review — premise-tested, operator-approved)**: zero demand — premise intact (the evaluator never existed in the library) but three weeks of the heaviest gate usage in the repo's history never felt the gap; the manual /check-spec trace sufficed. A contribution to an external repo waits for a need. Revive when a spec-compliance miss actually bites, or the library repo solicits the contribution.
+
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 0.5 day (cross-repo)
