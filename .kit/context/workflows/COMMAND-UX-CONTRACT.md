@@ -38,10 +38,10 @@ Binding rules:
 
 Twelve of the fourteen commands ship to consumers via the
 `agentive-workflow` plugin; two (`/new-project`, `/setup-preset`) are
-kit-side only. (The plugin is a separate channel from
-`scripts/.core-manifest.json` script sync — a command whose
-frontmatter says `distribution: builder-only` / "not distributed via
-the manifest" can still ship in the plugin; `/wrap-up` does.)
+kit-side only. (A command whose frontmatter says `distribution:
+builder-only` — or, in older wording, "not distributed via the
+manifest" — can still ship in the plugin; `/wrap-up` does. The manifest
+that wording referred to was retired in KIT-0102.)
 **All Source links point at the kit canonical**
 (`https://github.com/movito/agentive-starter-kit/blob/main/...`),
 never at the marketplace copy. Why:
