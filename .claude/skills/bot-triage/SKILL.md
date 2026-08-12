@@ -70,6 +70,13 @@ Reference knowledge for triaging automated review comments. Use `/triage-threads
   pattern is `^\s*` + token, never `^` + token: KIT-0067's `^```$`
   sweep fixed 4 fences and missed a list-indented one three lines
   away. A zero-hit grep proves the anchored token, not the class.
+- **GREP-FIRST sweeps (added 2026-08-12 — fourth incomplete-sweep
+  occurrence across KIT-0098/0100/0102)**: write the class grep BEFORE
+  editing anything; its hit list IS the work list, checked off site by
+  site. The recurring failure is not a missed re-check at the end — it
+  is a sweep DEFINED from the flagged site instead of from the class,
+  so sibling sites were never on the list. End-state grep stays as the
+  proof; the opening grep is what makes it provable.
 - **Syntax-verify committable suggestions touching shell before applying** —
   especially heredocs, quoting, or redirects: run `bash -n` (or a scratch
   execution test) on the suggested code first. Committable ≠ compilable:
