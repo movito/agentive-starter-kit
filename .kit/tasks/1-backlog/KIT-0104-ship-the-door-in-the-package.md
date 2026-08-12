@@ -1,4 +1,4 @@
-# KIT-0101: Ship the door in the package — `agentive new` / `agentive adopt`
+# KIT-0104: Ship the door in the package — `agentive new` / `agentive adopt`
 
 **Status**: Backlog
 **Priority**: high — this is the load-bearing move of KIT-ADR-0030;
@@ -16,7 +16,7 @@ on taking Cowork one-offs and turning them into usable software")
 **ADR**: `.kit/adr/KIT-ADR-0030-the-door-is-a-tool-not-a-place.md` (D1)
 **Extends**: KIT-ADR-0028 phase 2 (KIT-0093 — `--new` projects born
 packaged; that work is what makes this port possible)
-**Blocks**: KIT-0102 (`project-intake` into the plugin — its "must run
+**Blocks**: KIT-0105 (`project-intake` into the plugin — its "must run
 from a kit checkout" constraint dies with this task)
 **Sequenced with**: ADR-0028 phase 3 (consumer migration) — `adopt`
 waits for it; `new` does not
@@ -101,4 +101,4 @@ Move the door into `agentive-kit` as `agentive new` / `agentive adopt`.
   engines are full of heredocs-in-`$( )` — see the
   `bash32_heredoc_apostrophes` entry in `.kit/context/patterns.yml`.
 - This task is one of the two the ADR's own WIP cap allows open at
-  once (KIT-ADR-0030 D5). The other is KIT-0102.
+  once (KIT-ADR-0030 D5). The other is KIT-0105.

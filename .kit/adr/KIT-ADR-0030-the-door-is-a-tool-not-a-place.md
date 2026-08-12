@@ -93,6 +93,26 @@ The kit is its own only consumer, so "wrong" has had no victim outside
 the kit — which is how audit-driven work came to be the default
 generator.
 
+**The rule was demonstrated before it was written.** *(Added
+2026-08-12.)* Between this ADR being drafted and being accepted, the
+operator ran a live `/new-project` + `/setup-preset` test. It produced
+four findings — F7 (commands must self-explain before acting: "I'm just
+typing a command and seeing stuff happen"), F8 (interview agents launch
+silent; a bare `claude --agent` just idles), F9 ("it isn't clear why I
+can't just keep working in the session I ran /new-project in"), and F10
+(intake reported "ready" while the door had left doctor FAILs
+outstanding — the first packaged intake, a CLI-gap cascade, resolved
+live). Those became KIT-0100 and KIT-0101 and shipped inside two days.
+
+Two things to take from it. First, the generator works: one live run,
+four findings, every one an experience the operator actually had —
+none of which an audit would have ranked, because none is a false
+statement. Second, F9 is this ADR's own thesis arriving from the other
+direction — the operator asking why the flow makes him change sessions.
+F9 addresses the *session* hop; D1 and D2 address the *clone* hop
+underneath it. Fixing the first without the second leaves the harder
+half standing.
+
 ## Decision
 
 ### D1 — The door ships in the package
@@ -104,8 +124,12 @@ place you must stand and becomes a tool you have installed.
 
 - `new` ships first: post-KIT-0093 its scaffold is enumerated content,
   packageable as package data.
-- `adopt` follows when ADR-0028 phase 3 lands and it stops copying
-  script trees.
+- `adopt` follows immediately. *(Updated 2026-08-12: KIT-ADR-0028 is
+  now **Accepted — COMPLETE**; phase 3 closed as a no-op and phase 4
+  retired the sync machinery in KIT-0102 — `sync_from_manifest.py`,
+  `.core-manifest.json` and the push-sync doctor check are gone. There
+  is no longer a copying `adopt` to wait on, so the earlier
+  "deferred until phase 3" staging is void.)*
 - `scripts/local/bootstrap` becomes a thin `exec` shim into the
   package for one release, then goes — per KIT-ADR-0027 P3's rule that
   convergence is structural, not social, and that the removal task is
@@ -227,7 +251,7 @@ Supporting mechanics:
   unopposed.
 - **A WIP cap**: at most two open kit tasks not traceable to a live
   project. This ADR follows its own rule — it files tasks for D1 and D2
-  only (KIT-0101, KIT-0102); D3/D4/D6 are sequenced here and filed when
+  only (KIT-0104, KIT-0105); D3/D4/D6 are sequenced here and filed when
   D1 lands.
 - **Demand-reduction mechanisms count as supporting this rule**, not as
   exceptions to it. The review-surface budget (PR-SIZE-WORKFLOW) and the

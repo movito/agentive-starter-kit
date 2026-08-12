@@ -1,7 +1,7 @@
-# KIT-0102: `project-intake` ships in the plugin — run intake in the deliverable folder
+# KIT-0105: `project-intake` ships in the plugin — run intake in the deliverable folder
 
 **Status**: Backlog
-**Priority**: high — the operator-facing half of KIT-ADR-0030; KIT-0101
+**Priority**: high — the operator-facing half of KIT-ADR-0030; KIT-0104
 removes the technical precondition, this task collects the benefit
 **Type**: Architecture / distribution
 **Estimated Effort**: 0.5-1 day
@@ -11,7 +11,7 @@ removes the technical precondition, this task collects the benefit
 ## Related
 
 **ADR**: `.kit/adr/KIT-ADR-0030-the-door-is-a-tool-not-a-place.md` (D2)
-**Blocked by**: KIT-0101 (`agentive new` in the package — until the
+**Blocked by**: KIT-0104 (`agentive new` in the package — until the
 door ships, the intake agent genuinely cannot run outside a kit
 checkout)
 **Related**: KIT-0066 (the intake flow), KIT-0081 (the live intake that
@@ -22,7 +22,7 @@ mechanics + the drift guard)
 
 `.claude/agents/project-intake.md` states: "**Where you run**: from an
 agentive-starter-kit checkout — the door is kit-side only and does not
-ship to consumer projects." Once KIT-0101 lands, that sentence is false
+ship to consumer projects." Once KIT-0104 lands, that sentence is false
 and the constraint is gone.
 
 Move `project-intake` into the `agentive-workflow` plugin, alongside
@@ -53,11 +53,12 @@ in place** — the deliverable is the input, where it already sits.
   with a ready-to-paste task body — the operator files it in the kit
   when they are next there. This preserves the KIT-0081 feedback loop,
   which KIT-ADR-0030 D5 makes the *primary* generator of kit work.
-- **F4 — `init.defaultBranch` guard** (KIT-0081 F3, never fixed): the
-  agent must `git init -b main` and verify the branch before first
-  push. On the live `ev-fast-charging-loads` intake this landed the code
-  repo on `master` and needed a manual rename + default-branch PATCH +
-  remote-master deletion.
+- **F4 — DONE UPSTREAM, do not re-implement** *(verified 2026-08-12
+  against `origin/main`)*: the `init.defaultBranch` guard shipped in
+  the intake agent (`project-intake.md:165` rationale, `:200`
+  `git -C <code-path> branch --show-current` must print `main`). The
+  KIT-0081 F3 gap is closed. Carry the behavior through the move
+  unchanged; add a test rather than a fix.
 - **F5 — prose sweep by class.** Every surface asserting intake is
   kit-side: the agent body, `docs/STARTING-A-PROJECT.md`,
   `.kit/templates/PROTOTYPE-HANDOFF-TEMPLATE.md` step 3 ("Open a new
@@ -72,7 +73,7 @@ in place** — the deliverable is the input, where it already sits.
       relationship to any kit checkout
 - [ ] A missing `agentive` CLI produces a printed install command, not
       a failure
-- [ ] Created code repo is on `main`, verified, before first push
+- [ ] The existing `main`-branch guard still holds after the move (test, not fix)
 - [ ] No live surface still says intake runs from a kit checkout
 
 ## Notes
@@ -81,4 +82,4 @@ in place** — the deliverable is the input, where it already sits.
   verify model IDs against live docs, not memory (KIT-0069 F1 lesson).
 - The handoff brief stays the primary input — KIT-ADR-0030 D3. This
   task does **not** implement the derived-brief fallback; that is
-  sequenced after KIT-0101 lands, per the ADR's WIP cap.
+  sequenced after KIT-0104 lands, per the ADR's WIP cap.
