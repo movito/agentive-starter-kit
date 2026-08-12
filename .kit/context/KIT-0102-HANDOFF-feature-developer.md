@@ -5,7 +5,7 @@
 **Date**: 2026-08-11
 **From**: planner-f5
 **To**: feature-developer
-**Task**: `.kit/tasks/3-in-progress/KIT-0102-retire-sync-machinery.md`
+**Task**: `.kit/tasks/4-in-review/KIT-0102-retire-sync-machinery.md`
 **Status**: Ready — the final ADR-0028 step; the spec's inventory table
 IS the work list
 **Evaluation**: gate passed with one dispositioned finding (spec
@@ -96,6 +96,6 @@ turned into method. The spec's inventory is authoritative.
 
 ---
 
-**Task File**: `.kit/tasks/3-in-progress/KIT-0102-retire-sync-machinery.md`
+**Task File**: `.kit/tasks/4-in-review/KIT-0102-retire-sync-machinery.md`
 **Records to edit**: `.kit/adr/KIT-ADR-0026-*.md`, `.kit/adr/KIT-ADR-0028-*.md`
 **The two governing incidents**: KIT-0067 (function enumeration), KIT-0096 (both-directions drift)
