@@ -297,6 +297,26 @@ echo
 # ─────────────────────────────────────────
 RSYNC_BASE=(rsync -a --ignore-existing --exclude='.git/' --exclude='.venv/' --exclude='__pycache__/' --exclude='.DS_Store')
 
+# The copy-sync machinery retired in KIT-0102 (ADR-0028 phase 4), as
+# paths relative to $TARGET. Defined ONCE and swept in both shapes:
+# RSYNC_BASE uses --ignore-existing and the planning cp loop is
+# [ ! -e ]-guarded, so neither can ever remove a stale file on its own.
+# Adding a newly-retired path here must reach both shapes (CodeRabbit,
+# PR #127).
+RETIRED_SYNC_PATHS=(
+    "scripts/core/sync_from_manifest.py"
+    "scripts/.core-manifest.json"
+    "scripts/core/doctor.d/60-push-sync-token.sh"
+)
+
+# Remove the retired copy-sync files from $TARGET (no-op when absent).
+sweep_retired_sync() {
+    local rel
+    for rel in "${RETIRED_SYNC_PATHS[@]}"; do
+        rm -f "$TARGET/$rel"
+    done
+}
+
 # The planning-shape ship list (KIT-0048 F1) — enumerated, never a glob
 # (the KIT-0044 provisioning lesson). Two shapes only; if a third shape
 # appears, a declarative set belongs to P3's door, not here.
@@ -357,13 +377,9 @@ rm -f "$TARGET/.claude/agents/planner2.md" \
     "$PROJECT_ROOT/.claude/" "$TARGET/.claude/"
 
 if [ "$SHAPE" = "planning" ]; then
-    # Sweep the retired copy-sync machinery (KIT-0102, ADR-0028 phase 4)
-    # out of consumers bootstrapped before it: the cp loop below is
-    # guarded by [ ! -e ] and doctor.d/ rsyncs with --ignore-existing, so
-    # neither would ever remove a stale file on its own.
-    rm -f "$TARGET/scripts/core/sync_from_manifest.py" \
-          "$TARGET/scripts/.core-manifest.json" \
-          "$TARGET/scripts/core/doctor.d/60-push-sync-token.sh"
+    # Sweep the retired copy-sync machinery out of consumers bootstrapped
+    # before KIT-0102 (see RETIRED_SYNC_PATHS).
+    sweep_retired_sync
     # lifecycle + gate machinery (enumerated)
     for rel in "${PLANNING_CORE[@]}"; do
         mkdir -p "$TARGET/scripts/core/$(dirname "$rel")"
@@ -428,13 +444,9 @@ else
 "${RSYNC_BASE[@]}" --exclude='cache/' --exclude='memories/' --exclude='claude-code/' \
     "$PROJECT_ROOT/.serena/" "$TARGET/.serena/"
 
-# scripts/core/ — shared scripts. The copy-sync machinery was retired in
-# KIT-0102 (ADR-0028 phase 4); RSYNC_BASE uses --ignore-existing, so a
-# consumer bootstrapped earlier would keep the dead engine and a manifest
-# pointing at it forever. Sweep both, same as the retired workflow above.
-rm -f "$TARGET/scripts/core/sync_from_manifest.py" \
-      "$TARGET/scripts/.core-manifest.json" \
-      "$TARGET/scripts/core/doctor.d/60-push-sync-token.sh"
+# scripts/core/ — shared scripts. Sweep the retired copy-sync machinery
+# out of consumers bootstrapped before KIT-0102 (see RETIRED_SYNC_PATHS).
+sweep_retired_sync
 mkdir -p "$TARGET/scripts/core"
 "${RSYNC_BASE[@]}" "$PROJECT_ROOT/scripts/core/" "$TARGET/scripts/core/"
 

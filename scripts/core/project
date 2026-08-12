@@ -1779,10 +1779,16 @@ def main():
         # bare "unknown" would strand both muscle memories.
         print("❌ `project sync` was retired in KIT-ADR-0028 (phase 4).")
         print()
-        print("   The copy-sync channel no longer exists. Instead:")
-        print("   • kit updates      → the agentive-workflow plugin")
-        print("     (/plugin update, see docs/PLUGIN-UPGRADE-GUIDE.md)")
-        print("   • Linear task sync → ./scripts/core/project linearsync")
+        print("   The copy-sync channel no longer exists. Kit artifacts")
+        print("   now ship two ways, both install-based:")
+        print("   • agents, skills, commands → the agentive-workflow plugin")
+        print("     (/plugin update — docs/PLUGIN-UPGRADE-GUIDE.md)")
+        print("   • the `agentive` CLI + tooling → the agentive-kit package")
+        print()
+        print("   Full upgrade story: docs/UPDATING-YOUR-PROJECT.md")
+        print()
+        print("   (Looking for Linear task sync? That is a different")
+        print("    command and still works: `project linearsync`.)")
         sys.exit(2)
 
     if command in ["linearsync", "linear"]:

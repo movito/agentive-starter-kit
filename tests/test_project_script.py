@@ -1122,8 +1122,12 @@ class TestCallerPathsRealTree:
         assert result.returncode == 2
         assert "Unknown command" not in result.stdout
         assert "retired" in result.stdout.lower()
-        # both muscle memories get a destination
-        assert "plugin" in result.stdout.lower()
+        # names the two canonical replacements, not a look-alike command
+        assert "agentive-workflow plugin" in result.stdout
+        assert "agentive-kit package" in result.stdout
+        assert "docs/UPDATING-YOUR-PROJECT.md" in result.stdout
+        # the other muscle memory (sync once aliased linearsync) is
+        # redirected, but explicitly as a DIFFERENT command
         assert "linearsync" in result.stdout
 
     def test_sync_retirement_ignores_extra_args(self, bare_tree):

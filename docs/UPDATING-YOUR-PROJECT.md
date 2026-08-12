@@ -69,7 +69,8 @@ packaged layout.
 `project sync` and `scripts/.core-manifest.json` were removed in
 KIT-ADR-0028 phase 4 (KIT-0102). The copy channel no longer exists in
 any direction — upstream ships nothing to pull, and running `project
-sync` now prints a pointer to this section.
+sync` now prints the replacements below and points back at this
+document.
 
 Kit artifacts reach your project through the **agentive-workflow
 plugin** (agents, skills, commands — see §2) and the **agentive-kit
