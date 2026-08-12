@@ -3,15 +3,15 @@
     "status": "available",
     "current_task": null,
     "task_started": null,
-    "brief_note": "2026-08-11: KIT-0101 DONE \u2014 plugin 2.0.3 live (verified), drift guard green, both kit PRs merged. The operator-findings cycle is COMPLETE: transparency headers on all 14 commands (+COMMAND-UX-CONTRACT authority), session hops reasoned, F10 completion checklist live in intake+door, journey replayed, starter template v2.0.0 = single authority. Retro processed: timeout raised to >=600s in TESTING-WORKFLOW; F10 agent-name ruling = bare 'planner' stands (canonical default; -f5 is operator habit). Cleanup done both repos. BOARD AT REST: todo empty; backlog 4 (0072, 0074, 0085, 0094+0095 \u2014 all optional-when-convenient); phase 3 likely moot (EV project already packaged \u2014 verify then close or re-scope), phase 4 (sync retirement) is the last ADR-0028 step, then ADR-0029 trigger fires. The operator's next move is BUILDING (EV project, 8 PLAY tasks, green on 2.0.3-updatable toolchain).",
-    "details_link": ".kit/tasks/5-done/KIT-0101-cold-start-ux-contract.md",
+    "brief_note": "2026-08-12: KIT-0102 DONE, ADR-0028 COMPLETE in all four phases (-4,134 lines in the closing PR; enumeration corrected two planner spec guesses \u2014 40-version-skew and VERSION preserved). Retro processed: grep-first rule refined (derive class from the changed thing's full surface \u2014 blind-spot inheritance); reviewThreads-first is now triage step 0; rate-limited-pass + SHA-match added to the check-run-is-not-review-state rule; both gates' CODE half = KIT-0103 R3 (preflight hardening). Insights x3. Board: todo empty; backlog 5 (0072, 0074, 0085, 0094+0095, 0103 \u2014 all when-convenient/release-train). **KIT-ADR-0029 TRIGGER HAS FIRED** (its named condition: 0093 closed, 0092 shipped, phases 3-4 done) \u2014 task-as-folder implementation is the next kit work item when the operator calls it; the ADR carries the full analysis + migration of ~107 per-task files. Otherwise: kit at rest, operator building (EV project, PLAY tasks).",
+    "details_link": ".kit/tasks/5-done/KIT-0102-retire-sync-machinery.md",
     "handoff_file": null
   },
   "feature-developer": {
     "status": "idle",
     "current_task": null,
     "task_started": null,
-    "brief_note": "No active assignment. Kit at rest; next kit work is operator-initiated (phase 4, or backlog-when-convenient).",
+    "brief_note": "No active assignment. Next kit work: KIT-ADR-0029 implementation (task-as-folder) on operator go, or KIT-0103 with the next release train.",
     "details_link": null,
     "handoff_file": null
   },

@@ -35,6 +35,19 @@ install agentive-kit and remove scripts/core" — instead of the raw
 error. Portable shell; contract-string pin if the acceptance test
 covers the tail.
 
+## R3 — preflight gate hardening (from the KIT-0102 retro, accepted
+by planner 2026-08-12)
+
+Two silently-certify-unreviewed-PR failure modes, doc-fixed in
+bot-triage the same day; this is their CODE half in `agentive
+preflight`'s bot/review gates: (a) thread verification uses the
+reviewThreads GraphQL count, never REST `pulls/comments` (REST
+under-counted 3-of-10 on #127); (b) a bot approval only satisfies the
+gate when its review's commit SHA matches the PR head AND the check
+is not in a rate-limited state ("pass — Review rate limited" means
+the head may be unreviewed). Falsify both once (stale-SHA approval →
+gate FAILs; REST-vs-GraphQL divergence fixture).
+
 ## Acceptance Criteria
 
 - [ ] R1: class grep opens the work, end grep proves it; ships in the

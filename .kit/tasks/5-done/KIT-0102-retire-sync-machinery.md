@@ -1,6 +1,6 @@
 # KIT-0102: ADR-0028 phase 4 — retire the copy-sync machinery
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high (the final ADR-0028 step; pure deletion + record
 bookkeeping — after it, the copy era has no living machinery)
 **Type**: Retirement (deletion-shaped — the KIT-0067 law governs)
