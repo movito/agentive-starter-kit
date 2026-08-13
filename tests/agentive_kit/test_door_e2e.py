@@ -345,6 +345,10 @@ class TestAdopt:
         assert result.returncode == 0, result.stderr + result.stdout
         # the consumer engine names the pair it was invoked with
         assert "Recording install (shape: planning, profile: none)" in (result.stdout)
+        # ... and every identity-describing message agrees (CodeRabbit
+        # round 2: status/commit metadata must use the effective pair)
+        assert "Setup door: mode=adopt shape=planning profile=none" in result.stdout
+        assert "Install complete: shape=planning profile=none" in result.stdout
         text = (target / "CLAUDE.md").read_text(encoding="utf-8")
         assert "shape: planning" in text
         assert text.count("BEGIN KIT-LOCAL: kit-install") == 1

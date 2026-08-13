@@ -1299,7 +1299,10 @@ def run_doctor_tail(opts: DoorOptions) -> None:
         verdict = f"doctor could not run (exit {doctor_exit})"
     print()
     print(f"Doctor verdict: {verdict}")
-    print(f"Install complete: shape={opts.shape} profile={opts.profile} → {target}")
+    print(
+        f"Install complete: shape={opts.effective_shape} "
+        f"profile={opts.effective_profile} → {target}"
+    )
 
 
 # ─────────────────────────────────────────
@@ -1378,8 +1381,8 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
     target = opts.target
     assert target is not None
     print(
-        f"Setup door: mode={opts.mode} shape={opts.shape} "
-        f"profile={opts.profile} target={target}"
+        f"Setup door: mode={opts.mode} shape={opts.effective_shape} "
+        f"profile={opts.effective_profile} target={target}"
     )
 
     if opts.mode == "adopt" and opts.no_kit:
@@ -1388,7 +1391,7 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
         if not (target / ".git").exists():
             _git_init_commit(
                 target,
-                f"Initial commit: rung-0 repo (profile: {opts.profile})",
+                f"Initial commit: rung-0 repo (profile: {opts.effective_profile})",
             )
         verify_packages(target)
         # Explicit offer answers are acknowledged OUT LOUD, never
@@ -1413,8 +1416,8 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
             "pair is additive (KIT-ADR-0032)."
         )
         print(
-            f"Install complete: shape={opts.shape} profile={opts.profile} "
-            f"→ {target} (rung 0)"
+            f"Install complete: shape={opts.effective_shape} "
+            f"profile={opts.effective_profile} → {target} (rung 0)"
         )
         raise DoorExit(0)
 
@@ -1466,7 +1469,7 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
         _git_init_commit(
             target,
             "Initial commit: agentive project scaffold "
-            f"(shape: {opts.shape}, profile: {opts.profile})",
+            f"(shape: {opts.effective_shape}, profile: {opts.effective_profile})",
         )
 
     # ── Working .env from day one (KIT-0084) — --new only ──
