@@ -1,6 +1,27 @@
 # KIT-0030: Consolidate Shared Agents/Skills/Commands into the agentive-workflow Plugin (Sync Phase 2)
 
-**Status**: Blocked
+> **ARCHIVED 2026-08-13 (planner, operator-approved) — premise
+> substantially eroded; overtaken by events.**
+>
+> Evidence at archive time:
+>
+> - Requirement 1's gate ("spike: verify plugins can ship agents") is
+>   long proven — the `agentive-workflow` plugin ships **thirteen
+>   agents** today (KIT-0096-era roster + drift guard).
+> - The channel table below is anchored on `.core-manifest.json` sync
+>   (KIT-0026) — **retired by KIT-0102** (PR #127, 2026-08-12); the
+>   machinery this task would consolidate against no longer exists.
+> - The surviving intent — migrate downstream projects (suwinex, moss,
+>   label-maker gate) — is a much smaller job post-KIT-ADR-0028:
+>   plugin update + package install via the upgrader agent, not
+>   manifest consolidation. This spec would mislead more than guide.
+>
+> **Revive condition**: the downstream-upgrade phase opens (KIT-0045
+> token). Do not revive this file — file a fresh, small migration task
+> against the then-current plugin/package reality and cite this
+> archive.
+
+**Status**: Canceled
 **Priority**: medium
 **Assigned To**: unassigned
 **Estimated Effort**: 2-3 sessions

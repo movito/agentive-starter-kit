@@ -1,7 +1,7 @@
 # KIT-0094: Own the markdown lint — class sweep + pre-commit gate, so bots stop reviewing style
 
 **Status**: Backlog
-**Priority**: low (quick win — assign between phases or as a passenger on any doc-heavy task)
+**Priority**: low (quick win — assign between phases or as a passenger on any doc-heavy task; **preferred vehicle (planner, 2026-08-13): passenger on KIT-0104**, whose F5 prose sweep is doc-heavy and would otherwise re-feed the bot-nit machine this task retires)
 **Type**: Infrastructure / hygiene
 **Estimated Effort**: 2-3 h
 **Created**: 2026-08-08

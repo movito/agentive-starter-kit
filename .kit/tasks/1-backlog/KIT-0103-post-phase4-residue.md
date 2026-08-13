@@ -11,6 +11,15 @@ PR threads / review starter)
 **Evaluation**: skipped (planner) — enumerated cleanup, decisions made
 below
 
+## Sequencing (planner, 2026-08-13 — post KIT-ADR-0030 split)
+
+- **R1 rides KIT-0105's release train**: 0105 already forces a plugin
+  release (drift guard red-by-design until it ships). Land R1's canon
+  fixes on the same train; do not cut a release for cleanup alone.
+- **R2 waits for KIT-0104**: the door is being ported into the package
+  (KIT-ADR-0030). Implementing detect-and-warn in the shell door now is
+  work done twice; R2 becomes a small rider on or after 0104.
+
 ## R1 — release-train cleanup of stale sync references
 
 Six rostered `.claude/` files still carry references to the retired
