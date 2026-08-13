@@ -34,14 +34,23 @@ from agentive_kit import door  # noqa: E402
 
 
 def _pairs():
-    return [
+    pairs = [
         pytest.param(repo_rel, pkg_path, id=repo_rel)
         for repo_rel, pkg_path in door.sync_pairs()
     ]
+    # an empty manifest would make every guard below pass vacuously
+    # (CodeRabbit) — fail collection loudly instead
+    assert pairs, "door sync manifest expanded to nothing — check _SYNC_SOURCES"
+    return pairs
 
 
 @pytest.mark.parametrize("repo_rel,pkg_path", _pairs())
 def test_packaged_copy_matches_kit_source(repo_rel, pkg_path):
+    # a missing packaged file must produce the manifest message, not a
+    # bare FileNotFoundError from read_bytes (CodeRabbit)
+    assert (
+        pkg_path.is_file()
+    ), f"sync manifest names a packaged copy that does not exist: {pkg_path}"
     source = REPO_ROOT / repo_rel
     assert source.is_file(), (
         f"packaged copy {pkg_path} has no kit-tree source at {repo_rel} — "

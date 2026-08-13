@@ -572,6 +572,7 @@ class DoorOptions:
         self.profile_cli = ""
         self.shape = ""
         self.profile = ""
+        self.effective_shape = ""
         self.effective_profile = ""
         self.name = ""
         self.prefix = ""
@@ -778,8 +779,11 @@ def load_record(target: Path) -> dict[str, str]:
     record: dict[str, str] = {}
     for key in ("shape", "profile", "bots", "target_path", "target_github"):
         match = re.search(rf"^[ \t]*{key}:[ \t]*(.*?)[ \t]*$", region, re.MULTILINE)
-        if match and match.group(1):
-            record[key] = match.group(1)
+        # .strip() catches the \r a CRLF CLAUDE.md leaves before the
+        # MULTILINE $ (extract_region keeps CRLF interiors; the bash
+        # door's [[:space:]] trim ate it too — BugBot, this PR)
+        if match and match.group(1).strip():
+            record[key] = match.group(1).strip()
     return record
 
 
@@ -1122,11 +1126,18 @@ def verify_packages(target: Path) -> None:
     plugin_ok = False
     claude_bin = shutil.which("claude")
     if claude_bin:
-        mkt = _run(
-            ["claude", "plugin", "marketplace", "list"],
-            capture_output=True,
-            text=True,
-        )
+        # timeout-bounded: the probes are best-effort verification, so
+        # a hung `claude` degrades to the install instruction instead
+        # of stalling the tail (CodeRabbit, this PR)
+        try:
+            mkt = _run(
+                ["claude", "plugin", "marketplace", "list"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired:
+            mkt = None
         # marketplace source anchored to GitHub (a Directory source
         # silently defeats version pins — KIT-0030; the doctor
         # 50-plugin-source.sh approach)
@@ -1135,12 +1146,26 @@ def verify_packages(target: Path) -> None:
             r"movito/agentive-skills(\s*\)|$)",
             re.IGNORECASE,
         )
-        if mkt.returncode == 0 and any(
-            source_re.search(line) for line in mkt.stdout.splitlines()
+        if (
+            mkt is not None
+            and mkt.returncode == 0
+            and any(source_re.search(line) for line in mkt.stdout.splitlines())
         ):
-            plugins = _run(["claude", "plugin", "list"], capture_output=True, text=True)
+            try:
+                plugins = _run(
+                    ["claude", "plugin", "list"],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+            except subprocess.TimeoutExpired:
+                plugins = None
             plugin_re = re.compile(r"agentive-workflow([@ (]|$)", re.IGNORECASE)
-            if plugins.returncode == 0 and plugin_re.search(plugins.stdout):
+            if (
+                plugins is not None
+                and plugins.returncode == 0
+                and plugin_re.search(plugins.stdout)
+            ):
                 plugin_ok = True
     if plugin_ok:
         print(
@@ -1307,21 +1332,28 @@ def _seed_check_hook(opts: DoorOptions, staged_root: Path) -> None:
         return
     hook.parent.mkdir(parents=True, exist_ok=True)
     template = (
-        staged_root / "scripts" / "local" / "templates" / f"checks-{opts.profile}.sh"
+        staged_root
+        / "scripts"
+        / "local"
+        / "templates"
+        / f"checks-{opts.effective_profile}.sh"
     )
     shutil.copy2(template, hook)
     os.chmod(hook, 0o755)
-    print(f"Seeded scripts/local/checks.sh (profile: {opts.profile})")
+    print(f"Seeded scripts/local/checks.sh (profile: {opts.effective_profile})")
 
 
 def _consumer_record_args(opts: DoorOptions) -> list[str]:
+    # engines receive the EFFECTIVE pair — a recorded target's engines
+    # must act on the recorded identity, never the resolved defaults
+    # (CodeRabbit, this PR)
     args = [
         "--internal-record-only",
         "--packaged",
         "--shape",
-        opts.shape,
+        opts.effective_shape,
         "--profile",
-        opts.profile,
+        opts.effective_profile,
     ]
     if opts.mode == "adopt":
         # an adopted repo's KIT-LOCAL regions are consumer-owned —
@@ -1383,12 +1415,13 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
         )
         raise DoorExit(0)
 
+    # effective pair, same rule as _consumer_record_args
     scaffold_args = [
         str(target),
         "--shape",
-        opts.shape,
+        opts.effective_shape,
         "--profile",
-        opts.profile,
+        opts.effective_profile,
     ]
     if opts.name:
         scaffold_args += ["--name", opts.name]
@@ -1526,10 +1559,23 @@ def main(mode: str, argv: list[str]) -> None:
         raise DoorExit(2)
     if opts.shape == "planning" and not opts.profile_cli:
         print("planning shape → profile none (forced; the only legal pair)")
-    # The EFFECTIVE profile: on adopt of a recorded target the record
-    # wins over the resolved default (the engine preserves it), so
-    # every Python-toolchain surface keys on THIS.
+    # The EFFECTIVE pair: on adopt of a recorded target the record wins
+    # over the resolved default — every Python-toolchain surface keys
+    # on the effective profile, and the ENGINES receive the effective
+    # pair (CodeRabbit, this PR: passing resolved defaults would seed
+    # single/python state into a recorded planning/none target whose
+    # record the same run preserves — a latent the bash door shares).
+    opts.effective_shape = opts.record.get("shape", "") or opts.shape
     opts.effective_profile = opts.record.get("profile", "") or opts.profile
+    if opts.record and not validate_pair(opts.effective_shape, opts.effective_profile):
+        # a hand-edited record carrying an illegal pair must stop here,
+        # not reach the engines
+        print(
+            "       (from the target's kit-install record — fix the "
+            "record in CLAUDE.md, then re-run)",
+            file=sys.stderr,
+        )
+        raise DoorExit(2)
     if not validate_combo(opts):
         raise DoorExit(2)
 
@@ -1648,6 +1694,13 @@ def main(mode: str, argv: list[str]) -> None:
         env_source = preset_get(opts.preset, "env-source")
         if env_source is not None:
             expanded = Path(_expand_tilde(env_source))
+            if not expanded.is_absolute() and opts.preset_path is not None:
+                # a relative env-source is relative to the PRESET's own
+                # home — the seeded guardrails put env.source right
+                # beside the preset, and the packaged door runs from
+                # anywhere, so cwd-relative would be a lottery (BugBot,
+                # this PR)
+                expanded = opts.preset_path.parent / expanded
             if not expanded.is_file():
                 _die_usage(
                     mode,

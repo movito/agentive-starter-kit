@@ -349,6 +349,19 @@ class TestLoadRecord:
         assert rec["shape"] == "single"
         assert rec["profile"] == "none"
 
+    def test_crlf_record_values_are_trimmed(self, tmp_path):
+        # BugBot, this PR: a CRLF CLAUDE.md leaves \r before the
+        # MULTILINE $ — values like 'single\r' would false-conflict
+        # with identical flags and break every == comparison downstream
+        (tmp_path / "CLAUDE.md").write_bytes(
+            b"# X\r\n\r\n<!-- BEGIN KIT-LOCAL: kit-install -->\r\n"
+            b"shape: single\r\nprofile: none\r\n"
+            b"<!-- END KIT-LOCAL: kit-install -->\r\n"
+        )
+        rec = door.load_record(tmp_path)
+        assert rec["shape"] == "single"
+        assert rec["profile"] == "none"
+
     def test_absent_region_loads_nothing(self, tmp_path):
         (tmp_path / "CLAUDE.md").write_text("# plain\n", encoding="utf-8")
         assert door.load_record(tmp_path) == {}
@@ -590,7 +603,9 @@ class TestSyncPairs:
         # kit working tree and execs an interactive agent — unreachable
         # from the packaged door; its successor is project-intake
         # (KIT-ADR-0031).
-        names = sorted(p.name for p in door._ENGINES_DIR.iterdir())
+        # is_file(): pip byte-compiles installed kit_markers.py, so a
+        # non-editable install grows __pycache__/ here (CodeRabbit)
+        names = sorted(p.name for p in door._ENGINES_DIR.iterdir() if p.is_file())
         assert names == [
             "engine-consumer.sh",
             "engine-scaffold.sh",

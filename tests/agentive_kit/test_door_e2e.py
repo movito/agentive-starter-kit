@@ -19,6 +19,7 @@ them.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -187,8 +188,9 @@ class TestNewSingle:
     def test_adversarial_pins_are_real(self, new_single):
         target, result = new_single
         text = (target / ".adversarial" / "config.yml").read_text(encoding="utf-8")
-        assert 'adversarial_cli_version: "' in text
-        assert 'evaluator_library_version: "' in text
+        # non-empty values, not just the keys (CodeRabbit)
+        assert re.search(r'^adversarial_cli_version: "[^"]+"$', text, re.M), text
+        assert re.search(r'^evaluator_library_version: "[^"]+"$', text, re.M), text
 
     def test_env_seeded_with_identity(self, new_single):
         target, result = new_single
@@ -317,6 +319,50 @@ class TestAdopt:
         assert "No toolchain (consumer-tuned)" in text
         assert text.count("BEGIN KIT-LOCAL: kit-install") == 1
         assert text.count("BEGIN KIT-LOCAL: project-rules") == 1
+
+    def test_flagless_readopt_engines_get_recorded_identity(self, tmp_path):
+        """CodeRabbit, this PR: a flagless re-adopt of a recorded
+        target must drive the engines with the RECORDED pair, never
+        the resolved defaults (which fall to single/python)."""
+        env = _door_env(tmp_path)
+        target = self._make_repo(tmp_path, "planrec")
+        assert (
+            run_door(
+                "adopt",
+                str(target),
+                "--shape",
+                "planning",
+                "--target-path",
+                "../prod",
+                "--target-github",
+                "acme/prod",
+                cwd=tmp_path,
+                env=env,
+            ).returncode
+            == 0
+        )
+        result = run_door("adopt", str(target), cwd=tmp_path, env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        # the consumer engine names the pair it was invoked with
+        assert "Recording install (shape: planning, profile: none)" in (result.stdout)
+        text = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "shape: planning" in text
+        assert text.count("BEGIN KIT-LOCAL: kit-install") == 1
+
+    def test_hand_edited_illegal_record_pair_refused(self, tmp_path):
+        env = _door_env(tmp_path)
+        target = self._make_repo(tmp_path, "badrec")
+        (target / "CLAUDE.md").write_text(
+            "# X\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: planning\nprofile: python\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+            encoding="utf-8",
+        )
+        result = run_door("adopt", str(target), cwd=tmp_path, env=env)
+        assert result.returncode == 2
+        combined = result.stdout + result.stderr
+        assert "illegal shape/profile combination" in combined
+        assert "kit-install record" in combined
 
     def test_conflicting_profile_flag_rejected(self, tmp_path):
         env = _door_env(tmp_path)
@@ -575,6 +621,26 @@ class TestPreset:
         assert result.returncode == 2
         assert "env-source not found" in result.stdout + result.stderr
         assert not target.exists(), "a bad preset must abort a pristine run"
+
+    def test_relative_env_source_resolves_against_preset_home(self, tmp_path):
+        """BugBot, this PR: `env-source: env.source` — the natural form,
+        since the seeded guardrails put env.source beside the preset —
+        must resolve against the preset home, never the process cwd."""
+        cfg = self._write_preset(tmp_path, "env-source: env.source\n")
+        source = cfg / "env.source"
+        source.write_text("OPENAI_API_KEY=sk-rel\n", encoding="utf-8")
+        source.chmod(0o600)
+        env = _door_env(tmp_path, config_dir=cfg)
+        # run from a DIFFERENT cwd that also contains a decoy env.source
+        decoy_cwd = tmp_path / "elsewhere"
+        decoy_cwd.mkdir()
+        (decoy_cwd / "env.source").write_text("DECOY=1\n", encoding="utf-8")
+        target = tmp_path / "rel-source"
+        result = run_door("new", str(target), cwd=decoy_cwd, env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        assert "OPENAI_API_KEY=sk-rel" in lines
+        assert "DECOY=1" not in lines
 
     def test_record_beats_preset_on_readopt(self, tmp_path):
         env0 = _door_env(tmp_path)
