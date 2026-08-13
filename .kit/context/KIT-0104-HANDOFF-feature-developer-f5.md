@@ -3,6 +3,57 @@
 **You are the feature-developer-f5. Implement this task directly. Do
 not delegate or spawn other agents.**
 
+> ## PR 2 ADDENDUM (2026-08-13, planner — read this FIRST if you are
+> ## the PR 2 session)
+>
+> **PR 1 is MERGED** (#129, squash `ca11cd7`; planner deep-dive PASS;
+> record: `.kit/context/reviews/KIT-0104-evaluator-review.md`, review
+> starter `.kit/context/KIT-0104-REVIEW-STARTER.md`). You are a FRESH
+> session — the PR 1 session was retired at ~500k tokens. Everything
+> you need is in files; do not guess at PR 1 history beyond them.
+>
+> **What PR 1 shipped** (now on main): `agentive_kit/door/` — Python
+> front owns parsing + matrix (sole owner) + preset chain +
+> orchestration; engines run unmodified as packaged data from a staged
+> faux kit root; `tests/test_door_data_sync.py` byte-pins the kit-tree
+> ↔ package copies BOTH directions (edit both sides in the same
+> commit or it fails). `bootstrap` is UNTOUCHED — that is your job.
+>
+> **PR 1 operator decisions you inherit** (recorded in the review
+> starter — binding, do not re-open): adopt = packaged-mode (no
+> kit-tree copies; legacy copy-adopt retires WITH your shim); preset
+> home anchors `<target-parent>/agentive-config`
+> (`AGENTIVE_KIT_CONFIG_DIR` overrides); `--design-materials` refused
+> with a project-intake pointer; `adopt --no-kit` = rung 0.
+>
+> **PR 2 scope** (spec PR Plan item 2 — F2 help half, F3, F4):
+> 1. `scripts/local/bootstrap` → thin `exec` shim into the package;
+>    equivalent flags; help output deferred to the package (grep-proof
+>    that no second matrix copy survives).
+> 2. `agentive new --no-kit` — rung 0 from the `new` verb; mirror the
+>    rung-0 tail semantics from `_orchestrate` (offers acknowledged
+>    out loud, no record, no doctor).
+> 3. File the shim-removal task AND the engine-consolidation
+>    follow-up, both pinned to the next minor release, linked from
+>    the PR.
+> 4. The known-bigger part (PR 1 session's own flag):
+>    `tests/test_bootstrap_shapes.py` and the sourced-function unit
+>    layer of `tests/test_setup_door.py` get rewritten to pin the
+>    packaged contract — characterize-first, then rewrite. If the PR
+>    outgrows the review-surface budget (PR-SIZE-WORKFLOW): STOP and
+>    report a split to the planner; do not push through.
+>
+> **Session topology (PR 2)**: worktree
+> `/Users/broadcaster_three/Github/ask-worktrees/KIT-0104` (unchanged,
+> real venv), branch `feature/KIT-0104-pr2-shim` — already created by
+> the planner off merged main, upstream set. Verify, never create.
+>
+> The original handoff below remains valid for anchors and fences,
+> EXCEPT: its anchors predate the merge — re-verify against main
+> (`validate_combo` now ALSO lives in
+> `packages/agentive-kit/src/agentive_kit/door/__init__.py:487`; the
+> bash copy in `bootstrap` is what your shim retires).
+
 **Date**: 2026-08-13
 **From**: planner-f5  **To**: feature-developer-f5
 **Task**: .kit/tasks/3-in-progress/KIT-0104-ship-the-door-in-the-package.md
