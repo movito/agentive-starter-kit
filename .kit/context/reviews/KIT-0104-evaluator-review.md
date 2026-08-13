@@ -114,3 +114,89 @@ throughout, "test coverage genuinely strong". Actionable triage:
 Trio complete pre-PR (KIT-0035 ordering honored). Fix commits:
 `d7239d9` (fast-gate), plus the deep-tier fix commit following this
 record. All 148 door tests + full suite green after fixes.
+
+---
+
+# PR 2 section — the shim + `new --no-kit` (2026-08-13)
+
+**Change shape**: logic (bash shim rewrite + door rung-0
+generalization) → full trio per the tier rule.
+**Input**: `.adversarial/inputs/KIT-0104-code-review-input.md`
+regenerated via `agentive review-input KIT-0104 --format full`
+(10,140 lines — full post-change contents; no data-store files in this
+diff, so no exclusions needed).
+**Diff**: 832 additions / 3,263 deletions across 11 files (operator
+approved shipping as one PR over the 500-addition target: the test
+rewrite is indivisible from the shim — the shim breaks the legacy
+characterization instantly — and no green split lands under budget).
+
+## Verdicts
+
+| Evaluator | Verdict | Outcome |
+|---|---|---|
+| code-reviewer-fast (gemini-2.5-flash) | CONCERNS | 3 minor robustness notes — all declined with parity evidence (below) |
+| code-reviewer (o3-class) | FAIL | Both "blocking bugs" REFUTED against main's door; 0 findings actioned |
+| claude-code | APPROVED | 1 remediation taken (PKG_SRC probe); rest self-remediated in the report |
+
+## Dispositions
+
+### code-reviewer-fast (CONCERNS)
+
+1. `config_home` doesn't type-check a file-valued
+   `AGENTIVE_KIT_CONFIG_DIR` — PR 1 code, unchanged in this diff; the
+   evaluator's own analysis shows graceful degradation (no preset
+   loaded, no seeding). DECLINED, out of diff scope.
+2. `~user/dir` unexpanded in the shim's materials branch — byte-parity
+   with the historical door (`${TARGET/#\~/$HOME}` is the same
+   expression main uses); the branch is deprecated and dies with the
+   shim (KIT-0107). DECLINED, parity.
+3. No explicit `-x` probe on `engine-materials.sh` before exec — same
+   property as main's door (`exec "$ENGINE_MATERIALS"`); the file is
+   tracked +x. DECLINED, parity on a dying branch.
+
+### code-reviewer deep (FAIL — refuted)
+
+1. "Dash-leading target is a regression from the bash door (GNU getopt
+   allowed `--`)" — **wrong premise**: main's door never used getopt;
+   its hand-rolled parser dies `unknown argument` on any `-*`
+   non-flag, and `reject_flaglike` (a BugBot-driven guard, PR #81)
+   explicitly REFUSES dash-leading targets. Verified against
+   `git show main:scripts/local/bootstrap` (lines 364, 958-961).
+   Parity, not regression. REFUTED.
+2. "`ensure_git_identity` ignores local/.git-config and `GIT_AUTHOR_*`
+   env identity" — main's door checks exactly `--global`/`--system`
+   (line 524ff) and unsets ALL `GIT_*` at the top; the packaged door
+   mirrors both. The scrub is the deliberate KIT-0048 defense, not a
+   bug. REFUTED (parity + documented design).
+3. "`_scrubbed_env` kills legitimate `GIT_AUTHOR_*`" — same as 2:
+   deliberate, inherited, documented. REFUTED.
+4. "config_home can resolve to `/agentive-config` for a root-anchored
+   target" — real edge of the PR 1 target-parent anchor decision
+   (operator-approved 2026-08-13); seeding only touches a directory
+   that ALREADY exists and never creates it. Not this diff's code.
+   NOTED for the planner; no action in PR 2.
+5. "`AGENTIVE_KIT_CONFIG_DIR=~` seeds guard files into `$HOME`" —
+   requires the operator to point the TRUSTED override at `~`
+   (the design names the value operator-owned); same semantics as
+   main's `${VAR/#\~/$HOME}`. PR 1 code. DECLINED, out of scope.
+6. "Rung-0 `_seed_check_hook` silently preserves a pre-existing
+   non-executable hook" — preservation IS the contract: the hook is
+   consumer-owned after seeding (KIT-0050 N4;
+   `test_rebootstrap_preserves_customized_hook` pins it, and the
+   function says so out loud). REFUTED (by design).
+
+### claude-code (APPROVED)
+
+- PKG_SRC probe deepened to `agentive_kit/cli.py` (was the package
+  dir) so a hollowed-out checkout gets the install instruction, not a
+  traceback — ACTIONED in the shim.
+- PYTHONPATH trust assumption: kit-side developer tool, documented in
+  the shim header. ACCEPTED as noted.
+- TOCTOU on `--new` mkdir, `compgen` portability, `O_NOFOLLOW`
+  platform note, unreachable `preset_path=None` arm — each marked "no
+  change needed" by the evaluator itself. ACCEPTED.
+
+Trio complete pre-PR (KIT-0035 ordering honored). Fix commit for the
+probe follows this record. Full suite green (1110 passed, 13 skipped);
+grep proof of matrix single-ownership pinned as
+`tests/test_setup_door.py::TestShimStatic`.

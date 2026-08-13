@@ -142,7 +142,10 @@ if [ "$MATERIALS" -eq 1 ] && [ "$HELP" -eq 0 ]; then
 fi
 
 # ── Everything else: exec the packaged door ──
-if [ ! -d "$PKG_SRC/agentive_kit" ]; then
+# Probe a real module file, not just the directory — a hollowed-out or
+# half-synced checkout fails here with the instruction instead of a
+# Python traceback (claude-code evaluator, this PR).
+if [ ! -f "$PKG_SRC/agentive_kit/cli.py" ]; then
     echo "Error: packaged door source not found at $PKG_SRC" >&2
     echo "       This shim runs from an agentive-starter-kit checkout; from" >&2
     echo "       anywhere else, install the CLI and use it directly:" >&2
