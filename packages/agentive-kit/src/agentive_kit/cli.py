@@ -26,6 +26,13 @@ agentive-kit v{agentive_kit.__version__}
 
 Usage: agentive <command> [options]
 
+Project Creation:
+  new <dir> [flags]    Create a packaged agentive project (the setup
+                       door; see 'agentive new --help' for the
+                       shape × profile matrix and every flag)
+  adopt <dir> [flags]  Install the workflow into an existing directory
+                       (see 'agentive adopt --help')
+
 Task Management:
   move <id> <status>   Move task to folder and update Status field
   complete <id>        Move task to done (shorthand)
@@ -119,6 +126,17 @@ def main(argv: list[str] | None = None) -> None:
             args[1], shorthand_targets[command], _project_root()
         )
         sys.exit(0 if result and not result.status_update_failed else 1)
+
+    if command in ("new", "adopt"):
+        # The setup door (KIT-0104, KIT-ADR-0030). Flags pass through
+        # verbatim — the door owns its own parsing (including --help)
+        # and its 0/1/2 exit contract. Deliberately NOT routed through
+        # _project_root(): the door runs from anywhere and CREATES
+        # projects; it must never require standing inside one.
+        from agentive_kit import door
+
+        door.main(command, args[1:])
+        return  # unreachable — door.main() always raises DoorExit
 
     if command == "preflight":
         # Flags pass through verbatim — preflight owns its own parsing

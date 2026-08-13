@@ -41,8 +41,18 @@ where = ["src"]
 # The doctor check set ships as executable data files run by the
 # driver (per-check decision recorded in agentive_kit/doctor/
 # __init__.py) — the repo-local scripts/core/doctor.d wins when
-# present.
-agentive_kit = ["doctor/checks/*"]
+# present. The setup door (KIT-0104) ships its two engines and the
+# scaffold data store the same way; depth-limited globs, not `**`,
+# so no setuptools>=62.3 floor is needed. All door/data names are
+# dot-free by design (agentive_kit/door/__init__.py stages them into
+# the kit-tree layout at runtime).
+agentive_kit = [
+    "doctor/checks/*",
+    "door/engines/*",
+    "door/data/*",
+    "door/data/*/*",
+    "door/data/*/*/*",
+]
 
 [tool.setuptools.dynamic]
 version = { attr = "agentive_kit.__version__" }

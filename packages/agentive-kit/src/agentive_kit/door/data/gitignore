@@ -1,0 +1,184 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+# Track the cross-repo helper library (not a Python venv lib/)
+!scripts/core/lib/
+!scripts/core/lib/**
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.ruff_cache/
+cover/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# DaVinci Resolve specific
+*.drp
+*.drt
+resolve_backups/
+
+# Project specific
+*.log
+temp/
+output/
+exported_edls/
+rendered_videos/
+# GUI test artifacts (if frontend directory exists)
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/*.aaf
+
+# Test cutlist files (user-generated test data)
+*_cutlist.json
+*.aaf
+
+# Security - never commit these
+*.key
+*.pem
+*.p12
+config/secrets.json
+.secrets/
+
+# Development
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Dual-agent workflow artifacts
+tasks/*.diff
+tasks/*.txt
+tasks/review_notes.md
+adversarial-workflow/test_venv*/
+
+# Adversarial Workflow
+.adversarial/logs/
+.adversarial/artifacts/
+# Evaluator inputs regenerate from git/PR state (the persisted review
+# record lives in .kit/context/reviews/); ignoring them keeps
+# `git worktree remove` clean after evaluator sessions (KIT-0046 retro).
+.adversarial/inputs/
+
+# Audio processing work files (user projects)
+audio-processing/
+
+# Parser output logs (temporary)
+logs/parser-output/
+
+# Teleport (kiro) directory
+.kiro/
+logs/
+
+# Task monitoring system
+.task-monitor.db
+.task-monitor.db-journal
+
+# Serena config (generated from template)
+.serena/project.yml
+# Local-only override stub Serena writes on project activation
+.serena/project.local.yml
+
+# Adversarial Workflow
+# Evaluators are installed via: ./scripts/core/project install-evaluators
+# No trailing slash: in provisioned worktrees this is a SYMLINK to the
+# primary clone's install, and dir-only patterns don't match symlinks
+.adversarial/evaluators
+
+# Dispatch runtime artifacts. KIT-0077 retired the kit's dispatch-kit
+# ADOPTION (config, setup-dev install, agent instructions) but these
+# entries STAY: the shipped scripts/core/ scripts keep their guarded
+# fire-and-forget `dispatch emit` calls, and on any machine with the CLI
+# on PATH those calls really do write bus.jsonl. Verified 2026-07-28 —
+# a preflight run regenerated .dispatch/bus.jsonl in this very worktree.
+.dispatch/config.local.yml
+.dispatch/bus.jsonl
+
+# Claude Code session state (harness-owned; never repo content — a stray
+# memory file tracked here shipped into every bootstrapped export until
+# 2026-07-24, KIT-0066 follow-up)
+.claude/projects/
+
+# Operator-owned untracked state — one careless `git add -A` from
+# being committed without this line (KIT-0077 staged-diff near-miss)
+.kit/adversarial/

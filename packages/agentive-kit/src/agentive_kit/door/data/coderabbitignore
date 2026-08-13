@@ -1,0 +1,18 @@
+# CodeRabbit ignore file
+# Prevents CodeRabbit from reviewing non-code artifacts that generate noise
+
+# Adversarial evaluator artifacts (inputs and logs)
+.adversarial/inputs/
+.adversarial/logs/
+.adversarial/artifacts/
+
+# Agent review artifacts (evaluator outputs, review starters)
+.kit/context/reviews/
+.kit/context/*-REVIEW-STARTER.md
+.kit/context/*-HANDOFF-*.md
+
+# Task specs (markdown, not code)
+.kit/tasks/
+
+# Session retrospectives (records, not code — KIT-0062 residual, 2026-08-08)
+.kit/context/retros/
