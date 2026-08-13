@@ -283,12 +283,15 @@ class TestNewNoKit:
         assert not (target / ".adversarial").exists()
         assert not (target / ".env").exists()
         assert not (target / "scripts" / "core").exists()
-        # committed on main, single rung-0 commit
+        # committed on main, single rung-0 commit. env=env: the door
+        # ran GIT_*-scrubbed, so the probes must too — a runner-leaked
+        # GIT_DIR would point them at the wrong repo (CodeRabbit)
         branch = subprocess.run(
             ["git", "-C", str(target), "branch", "--show-current"],
             capture_output=True,
             text=True,
             timeout=30,
+            env=env,
         )
         assert branch.stdout.strip() == "main"
         log = subprocess.run(
@@ -296,6 +299,7 @@ class TestNewNoKit:
             capture_output=True,
             text=True,
             timeout=30,
+            env=env,
         )
         assert len(log.stdout.strip().splitlines()) == 1
         assert "rung-0" in log.stdout

@@ -71,22 +71,30 @@ MATERIALS=0
 HELP=0
 PASS=()
 
+set_mode() {  # one mode per run — a second flag would silently drop
+    # the first target (the masking class; CodeRabbit, this PR)
+    if [ -n "$MODE" ]; then
+        die_usage "only one mode flag is allowed (--new or --adopt, once)"
+    fi
+    MODE="$1"
+}
+
 while [ $# -gt 0 ]; do
     case "$1" in
         --new)
-            MODE="new"
+            set_mode new
             shift
             reject_flaglike --new "${1:-}"
             TARGET="${1:-}"
             ;;
-        --new=*)   MODE="new"; TARGET="${1#--new=}" ;;
+        --new=*)   set_mode new; TARGET="${1#--new=}" ;;
         --adopt)
-            MODE="adopt"
+            set_mode adopt
             shift
             reject_flaglike --adopt "${1:-}"
             TARGET="${1:-}"
             ;;
-        --adopt=*) MODE="adopt"; TARGET="${1#--adopt=}" ;;
+        --adopt=*) set_mode adopt; TARGET="${1#--adopt=}" ;;
         --design-materials)
             MATERIALS=1
             PASS+=("$1")
@@ -119,6 +127,14 @@ if [ "$MATERIALS" -eq 1 ] && [ "$HELP" -eq 0 ]; then
     TARGET="${TARGET/#\~/$HOME}"
     [ -d "$TARGET" ] ||
         die_usage "--adopt target does not exist: $TARGET"
+    # The old door refused the kit checkout as a target before any
+    # adopt handoff; the packaged path still does. This branch bypasses
+    # the package, so it needs the guard itself — otherwise
+    # `--adopt . --design-materials` from the kit root would rsync the
+    # kit onto itself (BugBot, this PR).
+    TARGET="$(cd "$TARGET" && pwd)"
+    [ "$TARGET" = "$PROJECT_ROOT" ] &&
+        die_usage "target is the kit source repo itself ($PROJECT_ROOT)"
     # The flow is fixed (adopt, single shape, python profile) and runs
     # entirely kit-side. Any other flag alongside it would be silently
     # dropped by the engine — refused loudly instead (the masking

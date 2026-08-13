@@ -47,8 +47,10 @@ guard retires with the duplication it guarded.
 
 ## Acceptance
 
-- [ ] No file exists in two byte-pinned homes (grep proof in the PR
-      body: the `_SYNC_SOURCES` map is gone or empty)
+- [ ] Each engine has exactly one source path — pinned by an
+      EXECUTABLE assertion that fails while both the kit-tree and
+      packaged copies exist (an absent `_SYNC_SOURCES` map proves
+      nothing on its own; grep proof in the PR body as a supplement)
 - [ ] `agentive new` / `agentive adopt` E2E suite green with no
       kit-tree engine copies
 - [ ] The full suite is green on both macOS (bash 3.2/BSD) and CI Linux

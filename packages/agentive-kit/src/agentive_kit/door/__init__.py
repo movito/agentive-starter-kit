@@ -695,9 +695,10 @@ AGENTIVE_KIT_CONFIG_DIR overrides the location (an override, never a
 search chain — a TRUSTED, operator-owned value). Author a preset
 conversationally with the /setup-preset command.
 
-Every --new target ends with a present, mode-0600, gitignored .env —
-copied from the preset's env-source when set, else seeded from the
-scaffold's .env.template. API keys move only by OPERATOR action.
+Every --new target with a kit install ends with a present, mode-0600,
+gitignored .env — copied from the preset's env-source when set, else
+seeded from the scaffold's .env.template. Rung 0 (--no-kit) has no
+scaffold, so it gets no .env. API keys move only by OPERATOR action.
 
 Exit contract:
   0  install succeeded — the doctor verdict is REPORTED, never encoded

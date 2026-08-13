@@ -206,6 +206,15 @@ class TestTranslation:
         assert result.returncode == 2
         assert "target directory is required" in result.stderr
 
+    def test_second_mode_flag_refused_never_drops_first_target(self, tmp_path):
+        # CodeRabbit (this PR): '--new a --adopt b' must not silently
+        # drop 'a' (the masking class) — one mode per run
+        result = run_door(
+            "--new", str(tmp_path / "a"), "--adopt", str(tmp_path / "b"), timeout=30
+        )
+        assert result.returncode == 2
+        assert "only one mode flag is allowed" in result.stderr
+
     def test_mode_flag_must_not_swallow_following_flag(self):
         # BugBot PR #81: '--new --shape planning' must not adopt
         # '--shape' as the target directory
@@ -237,8 +246,9 @@ class TestTranslation:
 
 class TestMaterialsBranch:
     """The one legacy branch the shim keeps (dies with it, KIT-0107):
-    exactly `--adopt <dir> --design-materials [--no-preset]` — anything
-    else alongside is refused loudly, never silently dropped."""
+    exactly `--adopt <dir> --design-materials` — any other flag
+    alongside (including `--no-preset`: the materials engine reads no
+    preset) is refused loudly, never silently dropped."""
 
     def test_requires_adopt(self, tmp_path):
         result = run_door("--new", str(tmp_path / "x"), "--design-materials")
@@ -262,7 +272,18 @@ class TestMaterialsBranch:
             ["--shape", "planning"],
             ["--profile", "none"],
             ["--bots", "none"],
+            # the materials engine reads no preset, so the flag would
+            # be a silent no-op — refused like the rest (CodeRabbit)
+            ["--no-preset"],
         ):
             result = run_door("--adopt", str(target), "--design-materials", *extra)
             assert result.returncode == 2, extra
             assert "cannot be combined with --design-materials" in result.stderr, extra
+
+    def test_kit_checkout_target_refused(self):
+        """BugBot (this PR): the branch bypasses the package's
+        kit-checkout guard, so it carries the old door's own refusal —
+        the materials flow must never rsync the kit onto itself."""
+        result = run_door("--adopt", str(REPO_ROOT), "--design-materials")
+        assert result.returncode == 2
+        assert "kit source repo itself" in result.stderr
