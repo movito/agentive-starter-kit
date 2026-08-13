@@ -353,6 +353,29 @@ class TestAdopt:
         assert "shape: planning" in text
         assert text.count("BEGIN KIT-LOCAL: kit-install") == 1
 
+    def test_gitless_recorded_readopt_commits_effective_pair(self, tmp_path):
+        """CodeRabbit round 3: the commit-metadata site only fires on
+        gitless targets — a recorded planning adopt of one must commit
+        with the effective pair, not the resolved defaults."""
+        env = _door_env(tmp_path)
+        target = tmp_path / "gitless-planrec"
+        target.mkdir()
+        (target / "CLAUDE.md").write_text(
+            "# X\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: planning\nprofile: none\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+            encoding="utf-8",
+        )
+        result = run_door("adopt", str(target), cwd=tmp_path, env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        log = subprocess.run(
+            ["git", "-C", str(target), "log", "-1", "--format=%B"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert "(shape: planning, profile: none)" in log.stdout
+
     def test_hand_edited_illegal_record_pair_refused(self, tmp_path):
         env = _door_env(tmp_path)
         target = self._make_repo(tmp_path, "badrec")
