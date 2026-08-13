@@ -1,19 +1,19 @@
 {
   "planner": {
-    "status": "available",
-    "current_task": null,
-    "task_started": null,
-    "brief_note": "2026-08-12: BACKLOG CUT (operator-approved, premise-tested): archived 0072 (zero demand), 0074 (--base shipped; remainders -> 0103 R3 addendum), 0075 (native launch verdict-by-usage), 0085 (premise document replaced by template v2.0.0), 0095 (folded -> 0103 R4). BACKLOG = 2: KIT-0094 (markdownlint quick-win) + KIT-0103 (the release-train bundle: R1 stale sync refs, R2 detect-and-warn, R3 preflight hardening + addendum, R4 hygiene riders). Todo empty. ADR-0028 COMPLETE; KIT-ADR-0029 trigger FIRED \u2014 task-as-folder is the next structural work on operator go. Kit fully at rest; operator building (EV project).",
-    "details_link": ".kit/tasks/5-done/KIT-0102-retire-sync-machinery.md",
-    "handoff_file": null
+    "status": "handoff_ready",
+    "current_task": "KIT-0104",
+    "task_started": "2026-08-13",
+    "brief_note": "2026-08-13: KIT-ADR-0030 split into 0030-0034 (operator decision, PR #128 closed unmerged, evaluated o3+claude-arch); KIT-0104 ASSIGNED (starter issued; worktree ../ask-worktrees/KIT-0104; 3-PR plan in spec; KIT-0094 rides PR 3). Backlog after premise review: 0094, 0103 (sequenced onto 0104/0105 trains), 0105 (blocked by 0104). KIT-0030 archived with evidence. 7-blocked empty. Linear sync workflow disabled (free-plan cap; operator choice). Dependabot #122/#123 merged, artifact pair v7/v8 verified.",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0104-ship-the-door-in-the-package.md",
+    "handoff_file": ".kit/context/KIT-0104-HANDOFF-feature-developer-f5.md"
   },
   "feature-developer": {
-    "status": "idle",
-    "current_task": null,
-    "task_started": null,
-    "brief_note": "No active assignment. Next kit work: KIT-ADR-0029 implementation (task-as-folder) on operator go, or KIT-0103 with the next release train.",
-    "details_link": null,
-    "handoff_file": null
+    "status": "assigned",
+    "current_task": "KIT-0104",
+    "task_started": "2026-08-13",
+    "brief_note": "KIT-0104: door into the package (agentive new/adopt). Three sequential PRs per the spec's PR Plan; worktree ../ask-worktrees/KIT-0104 on feature/KIT-0104-door-in-package. Recommended variant: feature-developer-f5.",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0104-ship-the-door-in-the-package.md",
+    "handoff_file": ".kit/context/KIT-0104-HANDOFF-feature-developer-f5.md"
   },
   "code-reviewer": {
     "status": "idle",

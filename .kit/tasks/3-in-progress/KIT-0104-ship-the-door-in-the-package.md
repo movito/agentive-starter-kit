@@ -1,6 +1,6 @@
 # KIT-0104: Ship the door in the package — `agentive new` / `agentive adopt`
 
-**Status**: Backlog
+**Status**: In Progress
 **Priority**: high — this is the load-bearing move of KIT-ADR-0030;
 every other move in the 0030–0034 set still starts inside the factory
 until it lands
@@ -11,6 +11,12 @@ evaluator findings folded in)
 **Source**: KIT-ADR-0030 (operator conversation 2026-08-09 —
 "I am spending more time working on getting ASK back on track than I am
 on taking Cowork one-offs and turning them into usable software")
+**Evaluation**: arch-review-fast 2026-08-13 — REVISION_SUGGESTED, one
+finding (interim hybrid engine risk); dispositioned by pinning the
+engine-consolidation follow-up to the next minor release (F2), same
+pin as the shim removal. Log:
+`.adversarial/logs/KIT-0104-ship-the-door-in-the-package--arch-review-fast.md`.
+Don't re-litigate — the ADR's revisit trigger covers a missed pin.
 
 ## Related
 
