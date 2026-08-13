@@ -771,7 +771,10 @@ def load_record(target: Path) -> dict[str, str]:
         return {}
     try:
         text = claude_md.read_text(encoding="utf-8")
-    except OSError:
+    except (OSError, UnicodeDecodeError):
+        # best-effort by contract: a CLAUDE.md the door cannot decode
+        # loads nothing here — the engine's own reader fails loud on it
+        # (UnicodeDecodeError is not an OSError; BugBot round 2)
         return {}
     region = markers.extract_region(text, "kit-install")
     if region is None:

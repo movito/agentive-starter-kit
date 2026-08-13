@@ -369,6 +369,13 @@ class TestLoadRecord:
     def test_missing_file_loads_nothing(self, tmp_path):
         assert door.load_record(tmp_path) == {}
 
+    def test_non_utf8_file_loads_nothing_never_tracebacks(self, tmp_path):
+        # BugBot round 2: UnicodeDecodeError is not an OSError — the
+        # documented best-effort contract (load nothing, the engine
+        # fails loud later) must hold for undecodable files too
+        (tmp_path / "CLAUDE.md").write_bytes(b"\xff\xfe garbage \xff\n")
+        assert door.load_record(tmp_path) == {}
+
 
 def _resolved_opts(mode="new", **overrides):
     opts = door.DoorOptions(mode)
