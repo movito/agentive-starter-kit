@@ -264,6 +264,110 @@ class TestNewPlanning:
         assert not (target / "tests").exists()
 
 
+class TestNewNoKit:
+    """KIT-0104 F4: rung 0 (KIT-ADR-0032) is reachable from the ``new``
+    verb too — a blank project, not a kit install."""
+
+    def test_new_no_kit_is_rung_zero(self, tmp_path):
+        env = _door_env(tmp_path)
+        target = tmp_path / "blank-proto"
+        result = run_door("new", str(target), "--no-kit", cwd=tmp_path, env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "rung 0" in result.stdout.lower()
+        assert "Doctor not run (nothing to check)" in result.stdout
+        assert "Doctor verdict:" not in result.stdout
+        # check hook + git, NOTHING else — no .kit/, no record, no .env
+        assert (target / "scripts" / "local" / "checks.sh").is_file()
+        assert not (target / ".kit").exists()
+        assert not (target / "CLAUDE.md").exists()
+        assert not (target / ".adversarial").exists()
+        assert not (target / ".env").exists()
+        assert not (target / "scripts" / "core").exists()
+        # committed on main, single rung-0 commit
+        branch = subprocess.run(
+            ["git", "-C", str(target), "branch", "--show-current"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert branch.stdout.strip() == "main"
+        log = subprocess.run(
+            ["git", "-C", str(target), "log", "--oneline"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert len(log.stdout.strip().splitlines()) == 1
+        assert "rung-0" in log.stdout
+
+    def test_new_no_kit_offers_acknowledged_never_dropped(self, tmp_path):
+        """Same masking-class contract as the adopt side: explicit
+        offer answers rung 0 cannot honor are acknowledged out loud."""
+        env = _door_env(tmp_path)
+        target = tmp_path / "blank-offers"
+        result = run_door(
+            "new",
+            str(target),
+            "--no-kit",
+            "--with-evaluators",
+            "--with-venv",
+            cwd=tmp_path,
+            env=env,
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Evaluators not installed" in result.stdout
+        assert "venv setup skipped" in result.stdout
+        assert not (target / ".adversarial").exists()
+
+    def test_new_no_kit_with_bots_rejected_loud(self, tmp_path):
+        env = _door_env(tmp_path)
+        result = run_door(
+            "new",
+            str(tmp_path / "botsless"),
+            "--no-kit",
+            "--bots",
+            "coderabbit",
+            cwd=tmp_path,
+            env=env,
+        )
+        assert result.returncode == 2
+        assert "--no-kit targets record nothing" in (result.stdout + result.stderr)
+        assert not (tmp_path / "botsless").exists()
+
+    def test_new_no_kit_with_name_rejected_loud(self, tmp_path):
+        """--name/--prefix shape the scaffold rung 0 never gets — an
+        error, never a silent drop."""
+        env = _door_env(tmp_path)
+        result = run_door(
+            "new",
+            str(tmp_path / "named"),
+            "--no-kit",
+            "--name",
+            "X",
+            cwd=tmp_path,
+            env=env,
+        )
+        assert result.returncode == 2
+        assert "--no-kit targets get no scaffold" in (result.stdout + result.stderr)
+        assert not (tmp_path / "named").exists()
+
+    def test_new_no_kit_env_source_acknowledged_not_applied(self, tmp_path):
+        """A preset env-source cannot be honored on rung 0 (no
+        .gitignore to keep the secrets out of git) — said out loud."""
+        cfg = tmp_path / "cfg"
+        cfg.mkdir()
+        source = cfg / "env.source"
+        source.write_text("ANTHROPIC_API_KEY=sk-test\n", encoding="utf-8")
+        source.chmod(0o600)
+        (cfg / "preset").write_text("env-source: env.source\n", encoding="utf-8")
+        env = _door_env(tmp_path, config_dir=cfg)
+        target = tmp_path / "blank-preset"
+        result = run_door("new", str(target), "--no-kit", cwd=tmp_path, env=env)
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "env-source not applied" in result.stdout
+        assert not (target / ".env").exists()
+
+
 class TestAdopt:
     def _make_repo(self, base: Path, name: str) -> Path:
         target = base / name

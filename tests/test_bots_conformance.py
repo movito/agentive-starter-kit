@@ -1,8 +1,9 @@
 """Cross-reader conformance for the bots declaration (KIT-0056 retro #2).
 
 ONE fixture table run through all three readers of the kit-install
-``bots:`` record — the setup door (``normalize_bots`` over
-``record_field``), the project script (``_doctor_install`` /
+``bots:`` record — the packaged door (``agentive_kit.door``'s
+``normalize_bots`` over ``load_record``; the bash front retired into
+an exec shim, KIT-0104), the project script (``_doctor_install`` /
 ``_normalize_bots``), and ``preflight-check.sh`` (Gates 2/3) — asserting
 they agree on validity and on the effective token set. KIT-0056's five
 reviewers found five faces of one seams-between-readers class; pairwise
@@ -42,9 +43,9 @@ PROJECT_SCRIPT = REPO_ROOT / "scripts" / "core" / "project"
 if not DOOR.exists() or not KIT_MARKERS.exists():
     pytest.skip("scripts/local absent (consumer checkout)", allow_module_level=True)
 
+from agentive_kit import door as pkg_door  # noqa: E402  (conftest sys.path)
 from test_preflight_check import proj  # noqa: E402,F401  (fixture re-export)
 from test_preflight_check import _baseline, _gates, _graphql  # noqa: E402
-from test_setup_door import _scrubbed_env, sourced  # noqa: E402
 
 # The project script is extensionless — exec it as a module, the
 # test_project_script.py pattern (distinct module name: no collision).
@@ -133,21 +134,27 @@ def _preflight_verdict(proj, lines: list[str]) -> tuple[bool, frozenset]:
         (local_dir / "kit_markers.py").unlink(missing_ok=True)
 
 
-def _door_verdict(lines: list[str]) -> tuple[bool, frozenset | None]:
-    """The door's reading: record_field (first key wins) + normalize_bots.
+def _door_verdict(tmp_path: Path, lines: list[str]) -> tuple[bool, frozenset | None]:
+    """The packaged door's reading: load_record (first key wins, empty
+    values skipped) + normalize_bots.
 
     Returns (False, None) for a not-valid declaration — the door refuses
     or re-asks instead of failing closed, so there is no effective set.
+    An absent/empty value is "unanswered" to the door, which matches the
+    table's not-valid rows (the door would re-ask, never fail closed).
     """
-    env = _scrubbed_env()
-    env["CONF_REGION"] = _region(lines)
-    result = sourced(
-        'raw="$(record_field "$CONF_REGION" bots)"; normalize_bots "$raw"',
-        env=env,
-    )
-    if result.returncode != 0:
+    root = tmp_path / "door-reader"
+    root.mkdir()
+    (root / "CLAUDE.md").write_text("# stub\n\n" + _region(lines), encoding="utf-8")
+    raw = pkg_door.load_record(root).get("bots")
+    if raw is None:
         return False, None
-    canonical = result.stdout.strip()
+    try:
+        canonical = pkg_door.normalize_bots(raw)
+    except ValueError:
+        return False, None
+    if canonical is None:
+        return False, None
     if canonical == "none":
         return True, frozenset()
     return True, frozenset(canonical.split())
@@ -159,7 +166,7 @@ def _door_verdict(lines: list[str]) -> tuple[bool, frozenset | None]:
 def test_three_readers_agree(case_id, lines, valid, effective, proj, tmp_path):
     project_valid, project_set = _project_verdict(tmp_path, lines)
     preflight_valid, preflight_set = _preflight_verdict(proj, lines)
-    door_valid, door_set = _door_verdict(lines)
+    door_valid, door_set = _door_verdict(tmp_path, lines)
 
     assert project_valid == valid, f"{case_id}: project reader disagrees on validity"
     assert preflight_valid == valid, f"{case_id}: preflight disagrees on validity"

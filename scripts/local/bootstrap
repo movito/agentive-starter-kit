@@ -1,1230 +1,164 @@
 #!/usr/bin/env bash
-# bootstrap — the one setup door (KIT-0053, KIT-ADR-0027 P3)
+# bootstrap — exec shim over the packaged setup door (KIT-0104 F3)
 #
-# The single kit-side entrance for creating or adopting a project. It
-# RESOLVES the install questions, VALIDATES the shape×profile matrix,
-# and ORCHESTRATES the engines; the engines do the work, and the
-# consumer engine remains the only writer of the CLAUDE.md kit-install
-# record. Kit-side only: runs from an agentive-starter-kit clone
-# against a target; never ships on any sync tier or consumer rsync.
+# The door ships in the agentive-kit package as `agentive new` /
+# `agentive adopt` (KIT-ADR-0030). This shim keeps the historical
+# kit-side invocation working for one more minor release:
 #
-# Usage:
-#   scripts/local/bootstrap --new <dir>   [--shape single|planning] [--profile python|none]
-#   scripts/local/bootstrap --adopt <dir> [--shape single|planning] [--profile python|none]
+#   scripts/local/bootstrap --new <dir>   [flags]  →  agentive new <dir> [flags]
+#   scripts/local/bootstrap --adopt <dir> [flags]  →  agentive adopt <dir> [flags]
 #
-# Examples (one per matrix cell):
-#   bootstrap --new ~/Github/my-app                        # single+python (default)
-#   bootstrap --new ~/Github/my-notes --profile none       # single+none (docs-only)
-#   bootstrap --new ~/Github/my-planning --shape planning \
-#             --target-path ../my-product --target-github acme/my-product
-#   bootstrap --adopt ~/Github/existing-app                # single+python
-#   bootstrap --adopt ~/Github/docs-repo --profile none    # single+none
-#   bootstrap --adopt ~/Github/coord-repo --shape planning # planning+none (forced)
-#   bootstrap --adopt ~/Github/materials --design-materials  # bootstrap-agent flow
+# Everything else — the flag surface, the shape × profile matrix,
+# preset resolution, help text, the 0/1/2 exit contract — lives in the
+# package (single owner: agentive_kit/door, per KIT-ADR-0027 P3).
+# This file deliberately carries NO copy of any of it: `--help` is
+# answered by the package, and the shim execs the CHECKOUT'S OWN
+# package source (packages/agentive-kit/src), so a kit checkout's
+# bootstrap always behaves like the code it sits next to — never like
+# an older installed wheel.
 #
-# Shape × profile legality (single owner: THIS file — doctor and every
-# other reader consult the recorded pair, never re-derive the matrix):
+# One legacy branch stays here: `--adopt <dir> --design-materials`
+# (the interactive bootstrap-agent flow). It rsyncs a kit working tree
+# and execs a claude session, which cannot ship as package data; its
+# successor is the project-intake agent (KIT-ADR-0031 / KIT-0105), and
+# the branch dies with this shim.
 #
-#   |          | python      | none         |
-#   |----------|-------------|--------------|
-#   | single   | ✔ (default) | ✔ (docs-only)|
-#   | planning | ✘           | ✔ (forced)   |
-#
-# Flags (every interactive question has one — non-TTY runs never hang):
-#   --new <dir>          create <dir> (must not exist): packaged content
-#                        scaffold — .kit/ skeleton + records + pins;
-#                        scripts come from agentive-kit, agents from
-#                        the plugin (verified or instructed, KIT-0093)
-#   --adopt <dir>        install into an existing directory
-#   --shape <s>          single (default) | planning
-#   --profile <p>        python | none (default: by shape, see matrix)
-#   --name / --prefix    project name / task prefix (--new, single only)
-#   --target-path / --target-github
-#                        product-repo pointer (planning only)
-#   --no-kit             skip the .kit workflow (adopt, single only)
-#   --bots <b>           declare which review bots run on this project:
-#                        'coderabbit bugbot' (or a subset) | 'none'
-#                        (comma or space separated). Recorded as a
-#                        `bots:` line in the kit-install region; the
-#                        preflight gates SKIP declared-absent bots.
-#                        No flag/answer = no line = both bots expected
-#                        (today's behavior; zero migration).
-#   --design-materials / --no-design-materials
-#                        (adopt, single+python) run the bootstrap-agent
-#                        materials flow / silence its detection hint
-#   --with-evaluators / --without-evaluators
-#                        answer the evaluator-install offer (provisions
-#                        the evaluator library + the adversarial CLI)
-#   --with-venv / --without-venv
-#                        answer the venv offer (profile python only)
-#   --no-preset          ignore the operator preset for this run (the
-#                        stranger path — behaves as if no preset exists)
-#
-# Resolution chain (F5): CLI flag → operator preset
-# (<kit-parent>/agentive-config/preset — see "Operator preset" below)
-# → kit default → interactive prompt (TTY only). On --adopt of a target that
-# already carries a kit-install record, the record's values win over
-# the preset for shape/profile/bots/target-pointer (the record is the
-# project's identity; divergence is `project doctor --against-preset`'s
-# INFO surface, never a silent re-answer). Required answers missing in
-# a non-TTY run fail with usage (exit 2); optional offers default to
-# "skip, with notice".
-#
-# Operator preset (KIT-0056, relocated KIT-0058; ADR-0027 P7): flat
-# `key: value` lines, one per line, '#' comments allowed. Recognized
-# keys (exactly the door's questions, nothing else): shape, profile,
-# bots, evaluators (yes|no), venv (yes|no), target-path,
-# target-github, env-source. `env-source: <path>` names an
-# operator-owned .env template (chmod 600 expected); on --new the door
-# copies it to the target's .env (mode 0600), never printing or
-# staging it. Unknown keys WARN and are skipped; a malformed line
-# fails loud naming the line. Flat keys only is a conscious v1
-# boundary of the format. The preset lives at
-# <kit-parent>/agentive-config/preset — a VISIBLE sibling of the kit's
-# primary clone (worktree-safe via --git-common-dir), never inside any
-# repo: no sync tier, rsync, or export touches it. The
-# AGENTIVE_KIT_CONFIG_DIR env var overrides the location (tests,
-# unusual layouts) — an override, never a search chain, and a
-# TRUSTED, operator-owned value (never source it from an untrusted
-# environment: the door reads and seeds whatever it names). On first use
-# of an existing config home the door seeds .gitignore + README
-# guardrails (idempotent, never overwriting, never creating the
-# folder itself). Author a preset conversationally with the
-# /setup-preset command; example file: docs/preset.example.
-#
-# Working .env from day one (KIT-0084): every --new target ends with a
-# present, mode-0600, gitignored .env — copied from the preset's
-# env-source when set, else seeded from the target's own .env.template.
-# The door then fills PROJECT_NAME (target basename) and TASK_PREFIX
-# (single shape: the export engine's derived prefix; planning shape:
-# left EMPTY until intake decides it — `project doctor` warns while it
-# is empty or the old 'TASK' placeholder). API keys move only by
-# OPERATOR action: with no env-source, a TTY run asks consent before
-# copying the kit checkout's .env, and a non-TTY run prints the exact
-# copy command and continues. Agents must never copy key material into
-# a project — the permission classifier blocks it, by design.
-#
-# Exit contract (F6):
-#   0  install succeeded — the doctor verdict is REPORTED prominently,
-#      never encoded (a fresh repo with doctor WARNs still installed)
-#   1  install failed (an engine or record step errored)
-#   2  usage error or illegal shape/profile combination
-#
-# Every non-materials run finishes with `project doctor` in the target
-# (P4). The --design-materials path execs an interactive claude
-# session, so doctor cannot follow it — run it in the target afterward.
+# Removal is pinned to the next minor kit release:
+# .kit/tasks/1-backlog/KIT-0107-remove-the-bootstrap-shim.md
 
 set -e
 set -o pipefail
 IFS=$' \t\n'
 
-# The door commits into $TARGET on --new; a leaked GIT_DIR would
+# The materials engine commits into $TARGET; a leaked GIT_DIR would
 # redirect that at the real repository (the KIT-0048 incident class).
+# The packaged door scrubs GIT_* for itself — this covers the one
+# branch that never reaches it.
 for _git_var in $(compgen -A variable | grep '^GIT_' || true); do
     unset "$_git_var"
 done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-ENGINE_CONSUMER="$SCRIPT_DIR/engine-consumer.sh"
 ENGINE_MATERIALS="$SCRIPT_DIR/engine-materials.sh"
-ENGINE_SCAFFOLD="$SCRIPT_DIR/engine-scaffold.sh"
+PKG_SRC="$PROJECT_ROOT/packages/agentive-kit/src"
 
-# ─────────────────────────────────────────
-# F2 — the matrix, door-owned data
-# ─────────────────────────────────────────
-readonly LEGAL_PAIRS="single:python single:none planning:none"
-
-legal_pairs_human() {
-    echo "single+python (default), single+none, planning+none (forced)"
+notice() {
+    echo "Notice: scripts/local/bootstrap is now a shim over the packaged door" >&2
+    echo "        (agentive new / agentive adopt) and is removed in the next" >&2
+    echo "        minor release — KIT-0107 (.kit/tasks/1-backlog/)." >&2
 }
 
-# ─────────────────────────────────────────
-# Resolution chain (F5)
-# ─────────────────────────────────────────
-# The operator-preset layer (KIT-0056 fills the KIT-0053 P7 seam). ALL
-# resolution logic stays inside resolve_setting below — the preset is
-# one layer of that one chain; never a second resolver anywhere.
-PRESET_KEYS="shape profile bots evaluators venv target-path target-github env-source"
-PRESET_DATA=""   # "key=value" lines once loaded (empty = no preset)
-PRESET_PATH=""   # set when a preset file was loaded (for messages)
-# defaults so the sourced function layer works without main()
-NO_PRESET="${NO_PRESET:-0}"
-REC_SHAPE=""
-REC_PROFILE=""
-REC_BOTS=""
-REC_TARGET_PATH=""
-REC_TARGET_GITHUB=""
-
-config_home() {
-    # F1 (KIT-0058, ADR-0027 P7 amendment): the operator config home
-    # is a VISIBLE sibling of the kit's primary clone —
-    # <kit-parent>/agentive-config/ — resolved worktree-safely via
-    # --git-common-dir (the common dir names the primary clone's .git
-    # even from a linked worktree). AGENTIVE_KIT_CONFIG_DIR is the
-    # ONLY override — an override, never a search chain. This
-    # function LOCATES and writes nothing (seed_config_home is the
-    # writer); rc 1 when the kit checkout is not a git clone (no
-    # sibling to name — the preset layer then has nothing to read).
-    if [ -n "${AGENTIVE_KIT_CONFIG_DIR:-}" ]; then
-        # leading-~ expansion, the env-source precedent — an env file
-        # can carry a literal tilde the shell never expanded (o3)
-        printf '%s\n' "${AGENTIVE_KIT_CONFIG_DIR/#\~/$HOME}"
-        return 0
-    fi
-    local common
-    # KIT-0080: --path-format=absolute needs git >= 2.31; Apple's system
-    # git (2.30.1) echoes the flag back as an output line and exits 0.
-    # That made this resolve to the relative garbage ./agentive-config,
-    # so a correctly-authored operator preset was SILENTLY ignored on
-    # every door run on stock macOS (S3 — misprovisioned planning
-    # repos). Plain --git-common-dir is portable; its output is relative
-    # to the -C directory, so absolutize there.
-    # Emptiness-checked BEFORE joining: on failure the substitution is
-    # empty, which would otherwise resolve to $PROJECT_ROOT — a
-    # confident wrong home instead of the rc 1 that tells the preset
-    # layer there is nothing to read. A relative answer is joined by
-    # STRING, not `cd`+`pwd`, so a symlinked checkout keeps its logical
-    # path (doctor's mirror of this resolver does the same, and the
-    # equivalence test pins the two together).
-    local raw
-    raw="$(git -C "$PROJECT_ROOT" rev-parse --git-common-dir 2>/dev/null)" || return 1
-    [ -n "$raw" ] || return 1
-    case "$raw" in
-        /*) common="$raw" ;;
-        *)  common="$PROJECT_ROOT/$raw" ;;
-    esac
-    # Two levels: $common is <primary-clone>/.git, so one dirname gives
-    # the clone root and the second its PARENT, the visible sibling's
-    # home.
-    printf '%s\n' "$(dirname "$(dirname "$common")")/agentive-config"
-}
-
-load_preset() {
-    # Malformed lines fail loud naming the line — never a silent
-    # partial read (the record-reader face of the masking class:
-    # partial reads poison dependent answers together). Unknown keys
-    # WARN and are skipped (forward compatibility), never an error.
-    local home file
-    [ "$NO_PRESET" -eq 1 ] && return 0
-    home="$(config_home)" || return 0
-    file="$home/preset"
-    [ -f "$file" ] || return 0
-    if [ ! -r "$file" ]; then
-        # set -e would kill the read loop anyway — but with bash's raw
-        # "Permission denied", not a diagnosis
-        echo "Error: preset exists but is not readable: $file — fix its permissions, or pass --no-preset" >&2
-        exit 2
-    fi
-    local lineno=0 line key value data="" seen=" "
-    while IFS= read -r line || [ -n "$line" ]; do
-        lineno=$((lineno + 1))
-        line="${line%$'\r'}"  # CRLF tolerance (kit_markers precedent)
-        case "$line" in
-            ''|'#'*) continue ;;
-        esac
-        case "$line" in
-            *:*) ;;
-            *)
-                echo "Error: malformed preset line $lineno in $file: '$line' (expected 'key: value')" >&2
-                exit 2
-                ;;
-        esac
-        key="${line%%:*}"
-        value="${line#*:}"
-        key="$(printf '%s' "$key" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-        value="$(printf '%s' "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-        case " $PRESET_KEYS " in
-            *" $key "*) ;;
-            *)
-                echo "Warning: unknown preset key '$key' (line $lineno in $file) — ignored" >&2
-                continue
-                ;;
-        esac
-        case "$seen" in
-            *" $key "*)
-                echo "Error: duplicate preset key '$key' (line $lineno in $file) — a preset answers each question once" >&2
-                exit 2
-                ;;
-        esac
-        seen="$seen$key "
-        data="$data$key=$value"$'\n'
-    done < "$file"
-    PRESET_DATA="$data"
-    PRESET_PATH="$file"
-}
-
-preset_get() {  # $1 key → value on stdout; rc 1 when unanswered
-    # pure parameter expansion — no sed, so a key name can never
-    # alter the match program (claude-code review, this PR)
-    [ -n "$PRESET_DATA" ] || return 1
-    local line
-    while IFS= read -r line; do
-        case "$line" in
-            "$1="*)
-                [ -n "${line#*=}" ] || return 1  # empty = unanswered
-                printf '%s\n' "${line#*=}"
-                return 0
-                ;;
-        esac
-    done <<< "$PRESET_DATA"
-    return 1
-}
-
-normalize_bots() {  # $1 raw (comma/space separated) → canonical, rc 1 on invalid/empty
-    # Case-insensitive by the _check_declared precedent ('# Shapes:
-    # Single' matches shape 'single') — every bots reader (this, the
-    # project script's _normalize_bots, preflight) shares the rule so
-    # one input can never be valid to one reader and invalid to another.
-    local raw tok cr=0 bb=0 none=0
-    raw="$(printf '%s' "$1" | tr ',' ' ' | tr '[:upper:]' '[:lower:]')"
-    # read-loop, not `for tok in $raw`: an unquoted for would glob a
-    # token like '*' into filenames before validation (CodeRabbit)
-    while IFS= read -r tok; do
-        [ -n "$tok" ] || continue
-        case "$tok" in
-            coderabbit) cr=1 ;;
-            bugbot)     bb=1 ;;
-            none)       none=1 ;;
-            *)
-                echo "Error: unknown bot '$tok' (expected: coderabbit, bugbot, or none)" >&2
-                return 1
-                ;;
-        esac
-    done <<EOF
-$(printf '%s\n' "$raw" | tr ' ' '\n')
-EOF
-    if [ "$none" -eq 1 ]; then
-        if [ "$cr" -eq 1 ] || [ "$bb" -eq 1 ]; then
-            echo "Error: 'none' cannot be combined with bot names (got: $1)" >&2
-            return 1
-        fi
-        echo "none"
-        return 0
-    fi
-    if [ "$cr" -eq 1 ] && [ "$bb" -eq 1 ]; then echo "coderabbit bugbot"
-    elif [ "$cr" -eq 1 ]; then echo "coderabbit"
-    elif [ "$bb" -eq 1 ]; then echo "bugbot"
-    else return 1  # empty → unanswered, caller decides
-    fi
-}
-
-kit_default() {  # $1 key, $2 shape context (for profile)
-    case "$1" in
-        shape) echo "single" ;;
-        profile)
-            case "${2:-}" in
-                planning) echo "none" ;;
-                *) echo "python" ;;
-            esac
-            ;;
-        *) return 1 ;;  # no kit default — falls to the prompt layer
-    esac
-}
-
-resolve_setting() {  # $1 key, $2 cli value, $3 shape context → stdout
-    local v rec=""
-    if [ -n "$2" ]; then
-        echo "$2"
-        return 0
-    fi
-    # Adopt of a recorded target: a question the record already
-    # answered is not open, so the preset layer is not consulted for
-    # it — the chain falls through to the kit default exactly as on a
-    # preset-less machine (N1). The record itself is preserved by the
-    # engine; preset divergence is doctor --against-preset's INFO
-    # surface, never a silent re-answer.
-    case "$1" in
-        shape)   rec="$REC_SHAPE" ;;
-        profile) rec="$REC_PROFILE" ;;
-        bots)    rec="$REC_BOTS" ;;
-    esac
-    # empty-but-successful preset output counts as unanswered — a
-    # preset that echoes nothing must fall through, not resolve to ""
-    if [ -z "$rec" ] && v="$(preset_get "$1")" && [ -n "$v" ]; then
-        echo "$v"
-        return 0
-    fi
-    if v="$(kit_default "$1" "${3:-}")"; then
-        echo "$v"
-        return 0
-    fi
-    return 1  # unanswered — caller prompts (TTY) or fails/skips
-}
-
-# ─────────────────────────────────────────
-# Validation (pure — no filesystem access)
-# ─────────────────────────────────────────
 die_usage() {
     echo "Error: $1" >&2
-    echo "Run 'scripts/local/bootstrap --help' for usage and examples." >&2
+    echo "Run 'scripts/local/bootstrap --help' for usage (answered by the package)." >&2
     exit 2
 }
 
 reject_flaglike() {  # $1 flag, $2 captured value — a following flag is
     # not a value ('--new --shape planning' must not adopt '--shape'
-    # as its target; BugBot, PR #81; -* also catches short options
-    # like -h). Empty stays allowed: the later required-answer
-    # handling prompts or fails with its own message.
+    # as its target; BugBot, PR #81). Empty stays allowed: the package
+    # prompts (TTY) or fails with its own message.
     case "$2" in
         -*) die_usage "$1 requires a value (got the flag '$2' instead)" ;;
     esac
 }
 
-validate_values() {  # $1 shape, $2 profile ("" = unresolved) → 0/message+1
+# ── Translate the historical mode flags to package verbs ──
+MODE=""
+TARGET=""
+MATERIALS=0
+HELP=0
+PASS=()
+
+while [ $# -gt 0 ]; do
     case "$1" in
-        single|planning) ;;
+        --new)
+            MODE="new"
+            shift
+            reject_flaglike --new "${1:-}"
+            TARGET="${1:-}"
+            ;;
+        --new=*)   MODE="new"; TARGET="${1#--new=}" ;;
+        --adopt)
+            MODE="adopt"
+            shift
+            reject_flaglike --adopt "${1:-}"
+            TARGET="${1:-}"
+            ;;
+        --adopt=*) MODE="adopt"; TARGET="${1#--adopt=}" ;;
+        --design-materials)
+            MATERIALS=1
+            PASS+=("$1")
+            ;;
+        --help|-h)
+            HELP=1
+            PASS+=("$1")
+            ;;
         *)
-            echo "Error: unknown shape: '$1' (expected: single | planning)" >&2
-            return 1
+            PASS+=("$1")
             ;;
     esac
-    case "$2" in
-        python|none|"") ;;
-        *)
-            echo "Error: unknown profile: '$2' (expected: python | none)" >&2
-            return 1
-            ;;
-    esac
-    return 0
-}
+    if [ $# -gt 0 ]; then shift; fi
+done
 
-validate_pair() {  # $1 shape, $2 profile → 0 legal / message + 1
-    case " $LEGAL_PAIRS " in
-        *" $1:$2 "*) return 0 ;;
-    esac
-    echo "Error: illegal shape/profile combination: $1 + $2" >&2
-    echo "       Legal pairs: $(legal_pairs_human)" >&2
-    return 1
-}
-
-# Cross-flag legality. Reads the resolved globals; returns 0 or prints
-# the offending pairing and returns 1 (main converts to exit 2).
-validate_combo() {
-    if [ "$SHAPE" = "planning" ]; then
-        [ "$NO_KIT" -eq 1 ] &&
-            { echo "Error: --no-kit contradicts --shape planning (the planning shape IS the kit workflow)" >&2; return 1; }
-        [ "$DESIGN_MATERIALS" = "yes" ] &&
-            { echo "Error: --design-materials applies to single-shape adopts only" >&2; return 1; }
-        [ -n "$NAME" ] || [ -n "$PREFIX" ] &&
-            { echo "Error: --name/--prefix apply to '--new --shape single' exports only" >&2; return 1; }
+if [ -z "$MODE" ]; then
+    if [ "$HELP" -eq 1 ]; then
+        MODE="new"  # bare --help: defer to the package's new-verb help
     else
-        [ -n "$TARGET_PATH" ] || [ -n "$TARGET_GITHUB" ] &&
-            { echo "Error: --target-path/--target-github apply to the planning shape only" >&2; return 1; }
+        die_usage "mode is required: --new <dir> or --adopt <dir>"
     fi
-    if [ "$MODE" = "new" ]; then
-        [ "$NO_KIT" -eq 1 ] &&
-            { echo "Error: --no-kit applies to --adopt (single shape) only" >&2; return 1; }
-        [ "$DESIGN_MATERIALS" = "yes" ] &&
-            { echo "Error: --design-materials applies to --adopt only" >&2; return 1; }
-    else
-        [ -n "$NAME" ] || [ -n "$PREFIX" ] &&
-            { echo "Error: --name/--prefix apply to --new only" >&2; return 1; }
-    fi
-    if [ "$EFFECTIVE_PROFILE" = "none" ]; then
-        [ "$WITH_VENV" = "yes" ] &&
-            { echo "Error: --with-venv requires profile python (effective profile: none)" >&2; return 1; }
-        [ "$DESIGN_MATERIALS" = "yes" ] &&
-            { echo "Error: --design-materials requires profile python (the materials flow runs setup-dev)" >&2; return 1; }
-    fi
-    if [ "$DESIGN_MATERIALS" = "yes" ] && [ "$NO_KIT" -eq 1 ]; then
-        # the materials engine ships the full kit workflow — honoring
-        # --no-kit there is impossible, so ignoring it silently would
-        # drop what the operator asked for (the masking class)
-        echo "Error: --no-kit contradicts --design-materials (the materials flow installs the full kit workflow)" >&2
-        return 1
-    fi
-    return 0
-}
+fi
 
-usage() {
-    # print the header block: line 2 up to the first non-comment,
-    # non-blank line (order-insensitive to what that line is)
-    sed -n '2,/^[^#]/p' "${BASH_SOURCE[0]}" | sed '$d' | sed 's/^# \{0,1\}//'
-}
-
-# ─────────────────────────────────────────
-# Prompt layer (TTY only)
-# ─────────────────────────────────────────
-is_tty() { [ -t 0 ]; }
-
-prompt_yn() {  # $1 question → "yes"/"no"
-    local ans
-    read -r -p "$1 [y/N] " ans
-    case "$ans" in
-        [Yy]*) echo "yes" ;;
-        *) echo "no" ;;
-    esac
-}
-
-# ─────────────────────────────────────────
-# Orchestration helpers
-# ─────────────────────────────────────────
-load_record() {
-    # Adopt of a target that already carries a kit-install record:
-    # load its values ONCE, before resolution, so resolve_setting can
-    # keep the preset out of already-answered questions. Reads via
-    # kit_markers, the record's one reader library. An unreadable
-    # record loads nothing here — the engine and doctor fail loud on
-    # it; the door's conflict checks simply have nothing to compare.
-    REC_SHAPE=""
-    REC_PROFILE=""
-    REC_BOTS=""
-    REC_TARGET_PATH=""
-    REC_TARGET_GITHUB=""
-    [ "$MODE" = "adopt" ] || return 0
-    [ -f "$TARGET/CLAUDE.md" ] || return 0
-    local rec
-    rec="$(python3 "$SCRIPT_DIR/kit_markers.py" extract "$TARGET/CLAUDE.md" kit-install 2>/dev/null)" || return 0
-    # leading/trailing-whitespace tolerant, like the Python reader's
-    # line.strip() — an indented hand-edited line must not be visible
-    # to one reader and invisible to another (o3, this PR)
-    REC_SHAPE="$(record_field "$rec" shape)"
-    REC_PROFILE="$(record_field "$rec" profile)"
-    REC_BOTS="$(record_field "$rec" bots)"
-    REC_TARGET_PATH="$(record_field "$rec" target_path)"
-    REC_TARGET_GITHUB="$(record_field "$rec" target_github)"
-    return 0
-}
-
-record_field() {  # $1 region text, $2 key → first value, whitespace-trimmed
-    printf '%s\n' "$1" |
-        sed -n "s/^[[:space:]]*$2:[[:space:]]*//p" | head -1 |
-        sed 's/[[:space:]]*$//'
-}
-
-check_record_conflict() {
-    # EXPLICIT flags that contradict the existing record are an error,
-    # never a silent preserve (CodeRabbit PR #81; the PR #78
-    # target-pointer precedent). Only the door can do this — it alone
-    # knows whether a value was operator-given or defaulted. (Preset
-    # values never reach here: resolve_setting keeps the preset out of
-    # recorded questions.)
-    if [ -n "$SHAPE_CLI" ] && [ -n "$REC_SHAPE" ] && [ "$SHAPE_CLI" != "$REC_SHAPE" ]; then
-        die_usage "--shape $SHAPE_CLI conflicts with the target's existing kit-install record (shape: $REC_SHAPE) — update the record first, or drop the flag"
-    fi
-    if [ -n "$PROFILE_CLI" ] && [ -n "$REC_PROFILE" ] && [ "$PROFILE_CLI" != "$REC_PROFILE" ]; then
-        die_usage "--profile $PROFILE_CLI conflicts with the target's existing kit-install record (profile: $REC_PROFILE) — update the record first, or drop the flag"
-    fi
-    if [ -n "$BOTS_CLI" ] && [ -n "$REC_BOTS" ]; then
-        # compare NORMALIZED forms — 'BugBot CodeRabbit' in the record
-        # is the same declaration as --bots 'coderabbit bugbot', not a
-        # conflict (BugBot, this PR). An unnormalizable record keeps
-        # its raw text: the inevitable mismatch then routes the
-        # operator to fix the record, which is the right advice.
-        local rec_bots_canon
-        rec_bots_canon="$(normalize_bots "$REC_BOTS" 2>/dev/null)" || rec_bots_canon="$REC_BOTS"
-        if [ "$BOTS_CLI" != "$rec_bots_canon" ]; then
-            die_usage "--bots '$BOTS_CLI' conflicts with the target's existing kit-install record (bots: $REC_BOTS) — update the record first, or drop the flag"
-        fi
-    fi
-    return 0
-}
-
-ensure_git_identity() {
-    # Fail fast with a real message when the install will commit into
-    # the target but git has no identity — otherwise the engine dies
-    # mid-run with git's "Please tell me who you are" (o3 finding).
-    # Commits need BOTH user.name and user.email (BugBot); --global
-    # includes the XDG config scope.
-    local key
-    for key in user.name user.email; do
-        if git config --global --get "$key" >/dev/null 2>&1; then
-            continue
-        fi
-        if git config --system --get "$key" >/dev/null 2>&1; then
-            continue
-        fi
-        echo "Error: git identity incomplete ($key unset) — this install commits into the target." >&2
-        echo "       Set it first:" >&2
-        echo "         git config --global user.name  'Your Name'" >&2
-        echo "         git config --global user.email you@example.com" >&2
-        exit 1
-    done
-}
-
-seed_config_home() {
-    # F2 (KIT-0058): defensive seeding on FIRST USE — an orchestrate
-    # step, distinct from config_home (resolve locates and writes
-    # nothing; accepted arch-review finding). Idempotent, never
-    # overwrites an existing file, and never creates the folder
-    # itself (N3: creating it is the operator engaging the preset
-    # flow — /setup-preset guides that; no drive-by dirs on
-    # preset-less runs). A seeding failure warns and continues:
-    # guardrails are a courtesy, never the install's critical path.
-    local home
-    [ "$NO_PRESET" -eq 1 ] && return 0
-    home="$(config_home)" || return 0
-    [ -d "$home" ] || return 0
-    # temp-then-mv (the TEMP-THEN-COMMIT pattern): never-overwrite
-    # means an interrupted partial write would otherwise stick forever
-    # (claude-code review, this PR)
-    if [ ! -e "$home/.gitignore" ]; then
-        if printf 'env.source\n*.env\n' > "$home/.gitignore.tmp" 2>/dev/null &&
-           mv "$home/.gitignore.tmp" "$home/.gitignore" 2>/dev/null; then
-            echo "Seeded $home/.gitignore (env.source and *.env stay out of git)"
-        else
-            rm -f "$home/.gitignore.tmp" 2>/dev/null || true
-            echo "Warning: could not seed $home/.gitignore — check the folder's permissions" >&2
-        fi
-    fi
-    if [ ! -e "$home/README.md" ]; then
-        if cat > "$home/README.md.tmp" 2>/dev/null <<'CONFIG_README'
-# agentive-config
-
-Operator config for the agentive-starter-kit setup door — a visible
-sibling of the kit checkout, personal and per-machine, never
-distributed by any sync or export path. `preset` pre-answers the
-door's questions (author it conversationally with /setup-preset;
-format reference: docs/preset.example in the kit). Keeping this
-folder in a PRIVATE git repo is welcome — the seeded .gitignore
-keeps `env.source` and `*.env` out of git, and `project doctor`
-warns if the remote is not private. Secrets stay in `env.source`
-(chmod 600), referenced by path from the preset — never committed,
-never pasted into chat.
-CONFIG_README
-        then
-            if mv "$home/README.md.tmp" "$home/README.md" 2>/dev/null; then
-                echo "Seeded $home/README.md (what this folder is; private-repo pattern welcome)"
-            else
-                rm -f "$home/README.md.tmp" 2>/dev/null || true
-                echo "Warning: could not seed $home/README.md — check the folder's permissions" >&2
-            fi
-        else
-            rm -f "$home/README.md.tmp" 2>/dev/null || true
-            echo "Warning: could not seed $home/README.md — check the folder's permissions" >&2
-        fi
-    fi
-    return 0
-}
-
-copy_env_into_target() {  # $1 source file — the ONE writer of $TARGET/.env
-    # Shared discipline for every .env seeding path (KIT-0084): the
-    # copy is refused unless .env is gitignored in the target; the file
-    # is BORN 0600 (umask-first — no window at looser permissions,
-    # claude-code review, PR #83); contents are NEVER printed, logged,
-    # or staged.
-    if ! git -C "$TARGET" check-ignore -q .env; then
-        echo "Error: .env is not gitignored in the target — refusing to seed secrets into it" >&2
-        exit 1
-    fi
-    (
-        umask 077
-        cat "$1" > "$TARGET/.env"
-    )
-    chmod 600 "$TARGET/.env"
-}
-
-apply_env_source() {  # $1 source path (from the preset) — --new only (F6)
-    # Secrets by reference: the preset names an operator-owned .env
-    # template; the door copies it 0600 (discipline lives in
-    # copy_env_into_target).
-    local src="${1/#\~/$HOME}"
-    if [ ! -f "$src" ] || [ ! -r "$src" ]; then
-        # defense in depth — main pre-validated both before any work
-        echo "Error: preset env-source missing or unreadable: $src" >&2
-        exit 1
-    fi
-    local mode
-    mode="$(stat -f '%Lp' "$src" 2>/dev/null || stat -c '%a' "$src" 2>/dev/null || echo unknown)"
-    if [ "$mode" != "600" ]; then
-        echo "Warning: env-source $src is mode $mode (0600 expected) — tighten it: chmod 600 $src" >&2
-    fi
-    copy_env_into_target "$src"
-    echo "Seeded .env from preset env-source (mode 0600, gitignored; contents never printed)"
-}
-
-seed_env_from_template() {  # KIT-0084 F1 — --new with no env-source preset
-    # Fallback seeding: the target's own .env.template. It carries no
-    # secrets, but the seeded file will — so the same discipline as
-    # the env-source path applies from birth.
-    if [ ! -f "$TARGET/.env.template" ]; then
-        echo "Warning: no .env.template in the target — .env not seeded; create it by hand (chmod 600)" >&2
-        return 0
-    fi
-    copy_env_into_target "$TARGET/.env.template"
-    echo "Seeded .env from .env.template (mode 0600, gitignored) — API keys still to be added"
-}
-
-offer_env_carryover() {  # KIT-0084 F3 — operator-consented key carry-over
-    # Key material moves ONLY by operator action. The door runs under
-    # the operator's own hands, so a TTY consent question is the
-    # acceptable surface; agents must never copy keys into a project
-    # (the permission classifier blocks it — correctly, so a non-TTY
-    # run prints the exact command for the operator and continues).
-    local kit_env="$PROJECT_ROOT/.env"
-    if [ ! -f "$kit_env" ] || [ ! -r "$kit_env" ]; then
-        echo "No API keys seeded — add them to $TARGET/.env ('project doctor' names what is missing)"
-        return 0
-    fi
-    # same source-mode courtesy warning as apply_env_source (claude-code
-    # review, this PR)
-    local mode
-    mode="$(stat -f '%Lp' "$kit_env" 2>/dev/null || stat -c '%a' "$kit_env" 2>/dev/null || echo unknown)"
-    if [ "$mode" != "600" ]; then
-        echo "Warning: $kit_env is mode $mode (0600 expected) — tighten it: chmod 600 $kit_env" >&2
-    fi
-    if is_tty; then
-        local ans
-        ans="$(prompt_yn "Copy the kit clone's .env — the WHOLE file, all keys and settings — from $kit_env into the new project's .env?")"
-        if [ "$ans" = "yes" ]; then
-            copy_env_into_target "$kit_env"
-            echo "Seeded .env from $kit_env (mode 0600, gitignored; contents never printed)"
-        else
-            # install -m 600: the copy is BORN 0600 — a cp+chmod pair
-            # would open a window at the source's mode (CodeRabbit)
-            echo "Keys not copied — add them to $TARGET/.env yourself, or run:"
-            echo "    install -m 600 \"$kit_env\" \"$TARGET/.env\""
-            echo "  (then re-check PROJECT_NAME/TASK_PREFIX in it — 'project doctor' flags them)"
-        fi
-    else
-        echo "API keys not seeded (non-interactive) — as the operator, run:"
-        echo "    install -m 600 \"$kit_env\" \"$TARGET/.env\""
-        echo "  (operator-only: agents must never copy key material; then re-check"
-        echo "   PROJECT_NAME/TASK_PREFIX in it and re-run 'project doctor')"
-    fi
-}
-
-fill_env_identity() {  # KIT-0084 F2 — PROJECT_NAME/TASK_PREFIX, --new only
-    # Callers must have seeded $TARGET/.env via copy_env_into_target
-    # (which verifies the gitignore) — this rewrite adds no new file.
-    [ -f "$TARGET/.env" ] || return 0
-    local name prefix=""
-    name="$(basename "$TARGET")"
-    if [ "$SHAPE" = "single" ]; then
-        # the export engine already derived and recorded the prefix
-        # (from --prefix or the name's initials) — read the recorded
-        # value rather than re-deriving it here
-        prefix="$(python3 - "$TARGET/.kit/context/current-state.json" 2>/dev/null <<'PYEOF'
-import json
-import sys
-
-try:
-    with open(sys.argv[1], encoding="utf-8") as f:
-        value = json.load(f)["project"]["task_prefix"]
-except (OSError, ValueError, KeyError):
-    value = None
-# a JSON null must yield nothing, never the string "None" (fast-v2
-# evaluator, this PR)
-if isinstance(value, str):
-    print(value)
-PYEOF
-)" || prefix=""
-        [ -n "$prefix" ] || prefix="$PREFIX"
-    fi
-    # newlines/CRs in a folder name or prefix would smuggle extra
-    # assignments into .env, and quote characters cannot be written
-    # into a dotenv line faithfully — strip them (o3 + CodeRabbit
-    # reviews, this PR; the values are operator-owned, so this is
-    # hardening, not a trust boundary)
-    name="${name//[$'\n'$'\r'\"\']/}"
-    prefix="${prefix//[$'\n'$'\r'\"\']/}"
-    # planning shape: no prefix exists at door time — written EMPTY,
-    # never 'TASK'; intake decides it and doctor warns meanwhile.
-    # Rewrite in memory (no temp file: a leaked temp beside .env would
-    # not be gitignored), values passed via ENVIRON — never
-    # interpolated into the awk program.
-    # first assignment rewritten, later DUPLICATES dropped — dotenv
-    # parsers are last-assignment-wins, so a surviving duplicate would
-    # silently override the identity just written (fast-v2 evaluator,
-    # this PR)
-    # indentation and an `export ` prefix tolerated to stay in step
-    # with the doctor's reader (fast-v2 round 2; CodeRabbit). Values
-    # carrying '#', spaces, or tabs are written double-quoted so a
-    # dotenv parser (and the doctor) reads them back intact — safe
-    # because quote characters were stripped above.
-    local content
-    content="$(ENV_NAME="$name" ENV_PREFIX="$prefix" awk '
-        function emit(k, v) {
-            if (v ~ /[# \t]/) print k "=\"" v "\""
-            else print k "=" v
-        }
-        /^[[:space:]]*(export[[:space:]]+)?PROJECT_NAME=/ {
-            if (!seen_name++) emit("PROJECT_NAME", ENVIRON["ENV_NAME"])
-            next
-        }
-        /^[[:space:]]*(export[[:space:]]+)?TASK_PREFIX=/ {
-            if (!seen_prefix++) emit("TASK_PREFIX", ENVIRON["ENV_PREFIX"])
-            next
-        }
-        { print }
-        END {
-            if (!seen_name) emit("PROJECT_NAME", ENVIRON["ENV_NAME"])
-            if (!seen_prefix) emit("TASK_PREFIX", ENVIRON["ENV_PREFIX"])
-        }
-    ' "$TARGET/.env")"
-    # command substitution strips trailing newlines; printf restores
-    # exactly one — trailing blank lines collapse, which is fine here.
-    # Temp-then-mv so a failed write never truncates the operator's
-    # .env (CodeRabbit); the temp lives inside .git/ when possible so
-    # an interrupted run can never leave stageable key material.
-    local tmpdir="$TARGET"
-    [ -d "$TARGET/.git" ] && tmpdir="$TARGET/.git"
-    local tmp
-    tmp="$(mktemp "$tmpdir/.env-rewrite.XXXXXX")" || {
-        echo "Error: could not create temp file for the .env rewrite" >&2
-        exit 1
-    }
-    if ! printf '%s\n' "$content" > "$tmp"; then
-        rm -f "$tmp"
-        echo "Error: .env rewrite failed — the seeded .env is untouched" >&2
-        exit 1
-    fi
-    chmod 600 "$tmp"
-    mv "$tmp" "$TARGET/.env"
-    echo "Project identity written to .env: PROJECT_NAME=$name TASK_PREFIX=${prefix:-(empty — set at intake; doctor warns until then)}"
-}
-
-run_offers() {
-    if [ "$WITH_EVALUATORS" = "" ]; then
-        if is_tty; then
-            WITH_EVALUATORS="$(prompt_yn "Install adversarial evaluators now? (library + CLI)")"
-        else
-            echo "Offer skipped (non-interactive): evaluators (library + CLI) — pass --with-evaluators to install"
-            WITH_EVALUATORS="no"
-        fi
-    fi
-    if [ "$WITH_EVALUATORS" = "yes" ]; then
-        # Copied-scripts targets (adopt/legacy) keep their own
-        # installer; packaged scaffolds use the installed CLI; a
-        # missing CLI degrades to an instruction (KIT-0083 pattern).
-        if [ -x "$TARGET/scripts/core/project" ]; then
-            (cd "$TARGET" && ./scripts/core/project install-evaluators) ||
-                echo "Warning: evaluator install failed — doctor will flag it; re-run './scripts/core/project install-evaluators' in the target"
-        elif command -v agentive >/dev/null 2>&1; then
-            (cd "$TARGET" && agentive install-evaluators) ||
-                echo "Warning: evaluator install failed — doctor will flag it; re-run 'agentive install-evaluators' in the target"
-        else
-            echo "Evaluators not installed — install the lifecycle CLI first (see above), then run 'agentive install-evaluators' in the target"
-        fi
-    fi
-
-    # EFFECTIVE_PROFILE, not PROFILE: a profile:none-recorded adopt
-    # resolves PROFILE to the python default, but its venv offer (TTY
-    # prompt AND the non-TTY --with-venv hint) would be wrong — the
-    # record has no Python toolchain (BugBot round 3, PR #83)
-    if [ "$EFFECTIVE_PROFILE" = "python" ]; then
-        if [ ! -f "$TARGET/scripts/optional/setup-dev.sh" ]; then
-            # Packaged scaffolds ship no setup-dev.sh — an explicit
-            # venv answer is acknowledged out loud, never silently
-            # dropped (the masking class), and the default path says
-            # so once too (BugBot, PR #116: silence here while the
-            # adopt flow prints its offer notice reads as an omission).
-            if [ "$WITH_VENV" = "yes" ]; then
-                echo "venv setup skipped: this scaffold ships no setup-dev.sh — create one when your pyproject exists (python3 -m venv .venv)"
-            else
-                echo "venv: not offered — packaged scaffolds ship no setup-dev.sh; create one when your pyproject exists (python3 -m venv .venv)"
-            fi
-        else
-            if [ "$WITH_VENV" = "" ]; then
-                if is_tty; then
-                    WITH_VENV="$(prompt_yn "Set up the Python venv now (setup-dev.sh)?")"
-                else
-                    echo "Offer skipped (non-interactive): venv — pass --with-venv to set up"
-                    WITH_VENV="no"
-                fi
-            fi
-            if [ "$WITH_VENV" = "yes" ]; then
-                (cd "$TARGET" && bash scripts/optional/setup-dev.sh) ||
-                    echo "Warning: venv setup failed — run 'bash scripts/optional/setup-dev.sh' in the target"
-            fi
-        fi
-    fi
-}
-
-verify_packages() {
-    # KIT-0093 (ADR-0028 phase 2): the two package installs are
-    # VERIFIED or INSTRUCTED, never assumed and never a hard failure
-    # (the KIT-0083 degradation pattern). The exact strings below are
-    # a contract — tests/test_scaffold_acceptance.py defines them.
-    echo
-    echo "━━━ package verification ━━━"
-    if command -v agentive >/dev/null 2>&1; then
-        local ver
-        ver="$(agentive --version 2>/dev/null | head -1)" || ver=""
-        echo "agentive CLI: ${ver:-found on PATH} (verified)"
-    else
-        echo "Install the lifecycle CLI: uv tool install agentive-kit"
-        echo "  (task lifecycle, doctor, preflight, evaluator provisioning)"
-    fi
-    # Plugin detection reuses the doctor 50-plugin-source.sh approach:
-    # the local plugin registry, marketplace source anchored to GitHub
-    # (a Directory source silently defeats version pins — KIT-0030).
-    local plugin_ok=0 mkt plugins
-    if command -v claude >/dev/null 2>&1; then
-        if mkt="$(claude plugin marketplace list 2>/dev/null)" &&
-           printf '%s\n' "$mkt" | grep -qiE '^[[:space:]]*source: *(github \(|https://github\.com/)movito/agentive-skills([[:space:]]*\)|$)'; then
-            if plugins="$(claude plugin list 2>/dev/null)" &&
-               printf '%s\n' "$plugins" | grep -qiE 'agentive-workflow([@ (]|$)'; then
-                plugin_ok=1
-            fi
-        fi
-    fi
-    if [ "$plugin_ok" -eq 1 ]; then
-        echo "agent plugin: verified (agentive-workflow via the agentive-skills marketplace)"
-    else
-        echo "Install the agent plugin:"
-        echo "    claude plugin marketplace add movito/agentive-skills"
-        echo "    claude plugin install agentive-workflow@agentive-skills"
-        if ! command -v claude >/dev/null 2>&1; then
-            echo "  (needs the Claude Code CLI on PATH first)"
-        fi
-    fi
-}
-
-run_doctor_tail() {
-    echo
-    echo "━━━ project doctor (${TARGET}) ━━━"
-    local doctor_exit=0
-    # Copied-scripts targets (adopt/legacy) run their own doctor;
-    # packaged scaffolds run the installed CLI's; a missing CLI
-    # degrades to the instruction (already printed by verify_packages).
-    if [ -x "$TARGET/scripts/core/project" ]; then
-        set +e
-        (cd "$TARGET" && ./scripts/core/project doctor)
-        doctor_exit=$?
-        set -e
-    elif command -v agentive >/dev/null 2>&1 &&
-         agentive help 2>/dev/null | grep -q '^  doctor'; then
-        set +e
-        (cd "$TARGET" && agentive doctor)
-        doctor_exit=$?
-        set -e
-    elif command -v agentive >/dev/null 2>&1; then
-        # An installed pre-0.3 CLI has no doctor subcommand yet — an
-        # upgrade instruction beats a misleading "FAILURES" verdict.
-        echo "Doctor not run — the installed agentive CLI predates 'agentive doctor'."
-        echo "    uv tool upgrade agentive-kit"
-        # %q: the line is pasted into a shell, so TARGET must be
-        # escaped — spaces or metacharacters in an operator-supplied
-        # path would otherwise break or execute (CodeRabbit, PR #125)
-        printf '    cd -- %q && agentive doctor\n' "$TARGET"
-        echo
-        echo "Install complete: shape=$SHAPE profile=$PROFILE → $TARGET"
-        return 0
-    else
-        echo "Doctor not run — the lifecycle CLI is not installed."
-        echo
-        echo "Install complete: shape=$SHAPE profile=$PROFILE → $TARGET"
-        echo
-        # KIT-0101 R3 (KIT-0100 F10b): a missing CLI is the ONE gap
-        # that cascades (no doctor, no evaluator provisioning, no
-        # preflight), so it is the HEADLINE next step, not an inline
-        # notice. The install line must stay byte-identical to the
-        # verify_packages one — tests/test_scaffold_acceptance.py
-        # pins both, and pins move with wording in the same commit.
-        echo "━━━ NEXT STEP (required): install the lifecycle CLI ━━━"
-        echo "Nothing below works until this is done — doctor, evaluator"
-        echo "provisioning, and preflight all run through it:"
-        echo "    Install the lifecycle CLI: uv tool install agentive-kit"
-        # %q as above — this line is a pasteable command, not display text
-        printf '    cd -- %q && agentive doctor\n' "$TARGET"
-        return 0
-    fi
-    local verdict
-    # doctor's exit contract (KIT-0046 F3): 1 = at least one FAIL,
-    # 2 = warnings only. (The two were swapped here until KIT-0056 —
-    # a FAILing doctor reported as "WARNINGS".)
-    case "$doctor_exit" in
-        0) verdict="all checks passed" ;;
-        1) verdict="FAILURES (see above) — install still succeeded; fix before working" ;;
-        2) verdict="WARNINGS (see above) — install still succeeded" ;;
-        *) verdict="doctor could not run (exit $doctor_exit)" ;;
-    esac
-    echo
-    echo "Doctor verdict: $verdict"
-    echo "Install complete: shape=$SHAPE profile=$PROFILE → $TARGET"
-}
-
-main() {
-    MODE=""
-    TARGET=""
-    SHAPE_CLI=""
-    PROFILE_CLI=""
-    NAME=""
-    PREFIX=""
-    TARGET_PATH=""
-    TARGET_GITHUB=""
-    NO_KIT=0
-    DESIGN_MATERIALS=""
-    WITH_EVALUATORS=""
-    WITH_VENV=""
-    BOTS_CLI=""
-    BOTS=""
-    NO_PRESET=0
-
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            --new)              shift; MODE="new";   TARGET="${1:-}"; reject_flaglike --new "$TARGET" ;;
-            --new=*)            MODE="new";   TARGET="${1#--new=}" ;;
-            --adopt)            shift; MODE="adopt"; TARGET="${1:-}"; reject_flaglike --adopt "$TARGET" ;;
-            --adopt=*)          MODE="adopt"; TARGET="${1#--adopt=}" ;;
-            --shape)            shift; SHAPE_CLI="${1:-}"; reject_flaglike --shape "$SHAPE_CLI" ;;
-            --shape=*)          SHAPE_CLI="${1#--shape=}" ;;
-            --profile)          shift; PROFILE_CLI="${1:-}"; reject_flaglike --profile "$PROFILE_CLI" ;;
-            --profile=*)        PROFILE_CLI="${1#--profile=}" ;;
-            --name)             shift; NAME="${1:-}"; reject_flaglike --name "$NAME" ;;
-            --name=*)           NAME="${1#--name=}" ;;
-            --prefix)           shift; PREFIX="${1:-}"; reject_flaglike --prefix "$PREFIX" ;;
-            --prefix=*)         PREFIX="${1#--prefix=}" ;;
-            --target-path)      shift; TARGET_PATH="${1:-}"; reject_flaglike --target-path "$TARGET_PATH" ;;
-            --target-path=*)    TARGET_PATH="${1#--target-path=}" ;;
-            --target-github)    shift; TARGET_GITHUB="${1:-}"; reject_flaglike --target-github "$TARGET_GITHUB" ;;
-            --target-github=*)  TARGET_GITHUB="${1#--target-github=}" ;;
-            --no-kit)           NO_KIT=1 ;;
-            --bots)             shift; BOTS_CLI="${1:-}"; reject_flaglike --bots "$BOTS_CLI" ;;
-            --bots=*)           BOTS_CLI="${1#--bots=}" ;;
-            --no-preset)        NO_PRESET=1 ;;
-            --design-materials)    DESIGN_MATERIALS="yes" ;;
-            --no-design-materials) DESIGN_MATERIALS="no" ;;
-            --with-evaluators)     WITH_EVALUATORS="yes" ;;
-            --without-evaluators)  WITH_EVALUATORS="no" ;;
-            --with-venv)           WITH_VENV="yes" ;;
-            --without-venv)        WITH_VENV="no" ;;
-            --help|-h)          usage; exit 0 ;;
-            *)                  die_usage "unknown argument: $1" ;;
-        esac
-        if [ $# -gt 0 ]; then shift; fi
-    done
-
-    # ── Resolve (CLI → preset → kit default → prompt) ──
-    if [ -n "$BOTS_CLI" ]; then
-        BOTS_CLI="$(normalize_bots "$BOTS_CLI")" || die_usage "invalid --bots value"
-    fi
-    load_preset
-    if [ -n "$PRESET_PATH" ]; then
-        echo "Preset: $PRESET_PATH (pass --no-preset to ignore it)"
-    fi
-    # First-use guardrail seeding (F2) — right after the read, so an
-    # engaged config home gains its .gitignore before any operator
-    # git-init happens around it. No-ops on the stranger path (N2).
-    seed_config_home
-
-    if [ -z "$MODE" ]; then
-        if is_tty; then
-            local pick
-            read -r -p "Create a new project or adopt an existing directory? [new/adopt] " pick
-            case "$pick" in
-                new|adopt) MODE="$pick" ;;
-                *) die_usage "mode is required: --new <dir> or --adopt <dir>" ;;
-            esac
-        else
-            die_usage "mode is required: --new <dir> or --adopt <dir>"
-        fi
-    fi
-    if [ -z "$TARGET" ]; then
-        if is_tty; then
-            read -r -p "Target directory: " TARGET
-        fi
-        [ -n "$TARGET" ] || die_usage "target directory is required (--$MODE <dir>)"
-    fi
+# ── The one legacy branch: the design-materials flow ──
+if [ "$MATERIALS" -eq 1 ] && [ "$HELP" -eq 0 ]; then
+    [ "$MODE" = "adopt" ] ||
+        die_usage "--design-materials applies to --adopt only"
+    [ -n "$TARGET" ] ||
+        die_usage "target directory is required (--adopt <dir>)"
     TARGET="${TARGET/#\~/$HOME}"
-
-    load_record
-
-    SHAPE="$(resolve_setting shape "$SHAPE_CLI")"
-    validate_values "$SHAPE" "$PROFILE_CLI" || exit 2
-    if [ "$SHAPE" = "planning" ] && [ "$PROFILE_CLI" = "python" ]; then
-        validate_pair planning python || exit 2
-    fi
-    PROFILE="$(resolve_setting profile "$PROFILE_CLI" "$SHAPE")"
-    validate_pair "$SHAPE" "$PROFILE" || exit 2
-    if [ "$SHAPE" = "planning" ] && [ -z "$PROFILE_CLI" ]; then
-        echo "planning shape → profile none (forced; the only legal pair)"
-    fi
-    # The EFFECTIVE profile: on adopt of a recorded target the record
-    # wins over the resolved default (the engine preserves it), so
-    # every Python-toolchain surface — the venv offer, the preset venv
-    # answer, --with-venv, --design-materials — must key on THIS, not
-    # on the resolved PROFILE, or a docs-only recorded project gets
-    # offered setup-dev.sh (BugBot rounds 2-3, PR #83).
-    EFFECTIVE_PROFILE="$PROFILE"
-    [ -n "$REC_PROFILE" ] && EFFECTIVE_PROFILE="$REC_PROFILE"
-    validate_combo || exit 2
-
-    # Preset may answer the planning shape's target-pointer questions —
-    # but only when neither a flag nor the target's record already did
-    # (same record-beats-preset rule as resolve_setting).
-    if [ "$SHAPE" = "planning" ]; then
-        local pv
-        if [ -z "$TARGET_PATH" ] && [ -z "$REC_TARGET_PATH" ] && pv="$(preset_get target-path)"; then
-            TARGET_PATH="$pv"
-        fi
-        if [ -z "$TARGET_GITHUB" ] && [ -z "$REC_TARGET_GITHUB" ] && pv="$(preset_get target-github)"; then
-            TARGET_GITHUB="$pv"
-        fi
-    fi
-
-    if [ -n "$TARGET_GITHUB" ] && ! printf '%s' "$TARGET_GITHUB" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
-        die_usage "--target-github must look like owner/repo (got: $TARGET_GITHUB)"
-    fi
-
-    # ── Target checks ──
-    if [ "$MODE" = "new" ]; then
-        [ -e "$TARGET" ] && die_usage "--new target already exists: $TARGET (use --adopt for existing directories)"
-    else
-        [ -d "$TARGET" ] || die_usage "--adopt target does not exist: $TARGET (use --new to create one)"
-        TARGET="$(cd "$TARGET" && pwd)"
-        [ "$TARGET" = "$PROJECT_ROOT" ] &&
-            die_usage "target is the kit source repo itself ($PROJECT_ROOT)"
-    fi
-
-    # ── Design-material detection (adopt, single: a git-less target is
-    #    materials-shaped — bootstrap.sh's historical precondition) ──
-    if [ "$MODE" = "adopt" ] && [ "$SHAPE" = "single" ] && [ -z "$DESIGN_MATERIALS" ]; then
-        if [ ! -e "$TARGET/.git" ] && [ "$PROFILE" = "python" ]; then
-            if is_tty; then
-                DESIGN_MATERIALS="$(prompt_yn "Target has no git repo — treat its contents as design materials and launch the bootstrap-agent flow?")"
-            else
-                echo "Hint: target has no git repo — if it holds design materials, re-run with --design-materials for the bootstrap-agent flow"
-                DESIGN_MATERIALS="no"
-            fi
-        else
-            DESIGN_MATERIALS="no"
-        fi
-    fi
-
-    # ── Bots declaration (KIT-0056, ADR-0027 P5) ──
-    # CLI → preset → TTY prompt. Unanswered = no `bots:` line = both
-    # bots expected (today's behavior — zero migration, N1). A target
-    # whose record already declares bots keeps its declaration (the
-    # engine preserves the region; a conflicting flag errors below).
-    if [ "$DESIGN_MATERIALS" != "yes" ] && [ -z "$REC_BOTS" ]; then
-        local bots_raw
-        if [ -n "$BOTS_CLI" ]; then
-            BOTS="$BOTS_CLI"  # already normalized at parse time
-        elif bots_raw="$(preset_get bots)"; then
-            BOTS="$(normalize_bots "$bots_raw")" ||
-                die_usage "invalid preset key 'bots: $bots_raw'"
-        elif is_tty; then
-            read -r -p "Which bots review PRs here? [coderabbit bugbot / none — Enter = expect both, record nothing] " bots_raw
-            if [ -n "$bots_raw" ]; then
-                BOTS="$(normalize_bots "$bots_raw")" || die_usage "invalid bots answer"
-            fi
-        fi
-    fi
-
-    # ── Preset offer answers + env-source (validated BEFORE any work
-    #    — a bad preset value must abort a pristine run, not a
-    #    half-installed target) ──
-    local offer
-    if [ -z "$WITH_EVALUATORS" ] && offer="$(preset_get evaluators)"; then
-        case "$offer" in
-            yes|no) WITH_EVALUATORS="$offer" ;;
-            *) die_usage "preset key 'evaluators' must be yes or no (got: $offer)" ;;
+    [ -d "$TARGET" ] ||
+        die_usage "--adopt target does not exist: $TARGET"
+    # The flow is fixed (adopt, single shape, python profile) and runs
+    # entirely kit-side. Any other flag alongside it would be silently
+    # dropped by the engine — refused loudly instead (the masking
+    # class). --no-kit keeps its historical message.
+    for extra in "${PASS[@]}"; do
+        case "$extra" in
+            --design-materials) ;;
+            --no-kit)
+                die_usage "--no-kit contradicts --design-materials (the materials flow installs the full kit workflow)"
+                ;;
+            *)
+                die_usage "'$extra' cannot be combined with --design-materials (the materials flow is fixed: adopt, single shape, python profile)"
+                ;;
         esac
-    fi
-    # The venv answer keys on EFFECTIVE_PROFILE (see its definition):
-    # a preset 'venv: yes' must never run setup-dev.sh on a project
-    # whose record says profile: none (BugBot round 2). Ignoring the
-    # answer is said out loud — never a silent drop.
-    if [ "$PROFILE" = "python" ] && [ -z "$WITH_VENV" ] && offer="$(preset_get venv)"; then
-        # validate BEFORE deciding applicability — a malformed value
-        # fails loud even when the answer would be ignored (N2)
-        case "$offer" in
-            yes|no) ;;
-            *) die_usage "preset key 'venv' must be yes or no (got: $offer)" ;;
-        esac
-        if [ "$EFFECTIVE_PROFILE" != "python" ]; then
-            echo "Preset venv answer ignored — the target's record (profile: $EFFECTIVE_PROFILE) has no Python toolchain"
-        else
-            WITH_VENV="$offer"
-        fi
-    fi
-    ENV_SOURCE=""
-    if [ "$MODE" = "new" ] && offer="$(preset_get env-source)"; then
-        ENV_SOURCE="${offer/#\~/$HOME}"
-        [ -f "$ENV_SOURCE" ] ||
-            die_usage "preset env-source not found: $ENV_SOURCE — fix the preset (or drop the key)"
-        [ -r "$ENV_SOURCE" ] ||
-            die_usage "preset env-source is not readable: $ENV_SOURCE — fix its permissions"
-    fi
+    done
+    notice
+    echo "Handing off to the design-materials flow (ends in an interactive"
+    echo "bootstrap-agent session). Doctor cannot run after an exec — run"
+    echo "'./scripts/core/project doctor' in the target when the agent is done."
+    exec "$ENGINE_MATERIALS" "$TARGET"
+fi
 
-    # ── Orchestrate ──
-    if [ "$MODE" = "adopt" ]; then
-        check_record_conflict
-    fi
-    # a --new install (and an adopt of a git-less target) will commit
-    if [ "$MODE" = "new" ] || [ ! -e "$TARGET/.git" ]; then
-        ensure_git_identity
-    fi
-    echo "Setup door: mode=$MODE shape=$SHAPE profile=$PROFILE target=$TARGET"
+# ── Everything else: exec the packaged door ──
+if [ ! -d "$PKG_SRC/agentive_kit" ]; then
+    echo "Error: packaged door source not found at $PKG_SRC" >&2
+    echo "       This shim runs from an agentive-starter-kit checkout; from" >&2
+    echo "       anywhere else, install the CLI and use it directly:" >&2
+    echo "           uv tool install agentive-kit" >&2
+    echo "           agentive $MODE --help" >&2
+    exit 1
+fi
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "Error: python3 is required (the door ships in the agentive-kit package)" >&2
+    exit 1
+fi
 
-    if [ "$MODE" = "adopt" ] && [ "$DESIGN_MATERIALS" = "yes" ]; then
-        echo "Handing off to the design-materials flow (ends in an interactive"
-        echo "bootstrap-agent session). Doctor cannot run after an exec — run"
-        echo "'./scripts/core/project doctor' in the target when the agent is done."
-        exec "$ENGINE_MATERIALS" "$TARGET"
-    fi
-
-    if [ "$MODE" = "new" ]; then
-        # ── Packaged-install mode (KIT-0093, ADR-0028 phase 2) ──
-        # Content + pins + record; the lifecycle scripts come from
-        # agentive-kit and the agent bodies from the plugin — nothing
-        # is copied. Same flow for BOTH shapes.
-        mkdir -p "$TARGET"
-        TARGET="$(cd "$TARGET" && pwd)"
-        set -- "$TARGET" --shape "$SHAPE" --profile "$PROFILE"
-        [ -n "$NAME" ] && set -- "$@" --name "$NAME"
-        [ -n "$PREFIX" ] && set -- "$@" --prefix "$PREFIX"
-        [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
-        [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
-        "$ENGINE_SCAFFOLD" "$@" ||
-            { echo "Error: scaffold engine failed (exit $?)" >&2; exit 1; }
-        # The consumer engine stays the ONE writer of the CLAUDE.md
-        # kit-install record (and seeds the per-repo check hook).
-        set -- --internal-record-only --packaged --shape "$SHAPE" --profile "$PROFILE"
-        # --name reaches the record step too, or CLAUDE.md would title
-        # from the basename while README/current-state carry the name
-        # (BugBot, PR #116).
-        [ -n "$NAME" ] && set -- "$@" --project-name "$NAME"
-        [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
-        [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
-        [ -n "$BOTS" ] && set -- "$@" --bots "$BOTS"
-        "$ENGINE_CONSUMER" "$@" "$TARGET" ||
-            { echo "Error: install record step failed (exit $?)" >&2; exit 1; }
-        if git -C "$TARGET" init --quiet -b main &&
-           git -C "$TARGET" add -A &&
-           git -C "$TARGET" commit --quiet -m "Initial commit: agentive project scaffold (shape: $SHAPE, profile: $PROFILE)"; then
-            echo "Scaffold committed (branch: main)."
-        else
-            # F6: a failed record step is an install failure — the
-            # scaffold is on disk but sits uncommitted
-            echo "Error: initial commit failed — commit the scaffold in the target yourself, then re-run doctor" >&2
-            exit 1
-        fi
-    else
-        set -- --shape "$SHAPE" --profile "$PROFILE"
-        [ "$NO_KIT" -eq 1 ] && set -- "$@" --no-kit
-        [ -n "$TARGET_PATH" ] && set -- "$@" --target-path "$TARGET_PATH"
-        [ -n "$TARGET_GITHUB" ] && set -- "$@" --target-github "$TARGET_GITHUB"
-        [ -n "$BOTS" ] && set -- "$@" --bots "$BOTS"
-        "$ENGINE_CONSUMER" "$@" "$TARGET" ||
-            { echo "Error: consumer engine failed (exit $?)" >&2; exit 1; }
-    fi
-
-    # ── Working .env from day one (KIT-0084) — --new only: seed from
-    #    the preset env-source (F6) or the target's template, offer the
-    #    operator key carry-over, then fill the identity fields ──
-    if [ "$MODE" = "new" ]; then
-        if [ -n "$ENV_SOURCE" ]; then
-            apply_env_source "$ENV_SOURCE"
-        else
-            seed_env_from_template
-            offer_env_carryover
-        fi
-        fill_env_identity
-    fi
-
-    verify_packages
-    run_offers
-    run_doctor_tail
-    exit 0
-}
-
-# Source guard: `source scripts/local/bootstrap` loads the functions
-# for tests (resolve/validate run with no filesystem access); direct
-# invocation runs main.
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-    main "$@"
+notice
+export PYTHONPATH="$PKG_SRC${PYTHONPATH:+:$PYTHONPATH}"
+if [ -n "$TARGET" ]; then
+    exec python3 -m agentive_kit.cli "$MODE" "$TARGET" "${PASS[@]}"
+else
+    exec python3 -m agentive_kit.cli "$MODE" "${PASS[@]}"
 fi

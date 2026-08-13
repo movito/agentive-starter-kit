@@ -40,6 +40,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The door ships in the package — KIT-ADR-0030** (KIT-0104, PRs
+  #129 + the shim PR): the setup door is now `agentive new` /
+  `agentive adopt` — same flags, same resolution chain (preset home
+  anchors to the TARGET's parent in the packaged world), same engines
+  running as packaged data, byte-pinned to their kit-tree twins by
+  `tests/test_door_data_sync.py`. Project creation no longer requires
+  standing in a kit checkout. `scripts/local/bootstrap` is a thin exec
+  shim over the packaged door (removal pinned to 0.10.0 — KIT-0107;
+  engine consolidation filed as KIT-0108) and keeps exactly one legacy
+  branch, `--adopt --design-materials`, until project-intake (KIT-0105)
+  succeeds it. Two deliberate retirements ride the shim: **adopt is
+  packaged-mode** (content scaffold + record; the legacy copy-adopt
+  that rsync'd the toolchain is gone) and **`--no-kit` is rung 0 from
+  BOTH verbs** (KIT-ADR-0032: plain repo + check hook, no `.kit/`, no
+  record — `new --no-kit` is the KIT-0104 F4 addition; the old
+  seeded-record `--no-kit` is gone). The shape × profile matrix has
+  exactly one implementation: the package.
 - **The door switches to package-install mode — KIT-ADR-0028 phase 2**
   (KIT-0093, agentive-kit 0.3.0): `bootstrap --new` (both shapes)
   scaffolds CONTENT — `.kit/` skeleton with workflow docs,
