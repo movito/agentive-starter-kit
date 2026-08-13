@@ -252,7 +252,17 @@ def load_preset(
         )
         raise DoorExit(2)
     data: dict[str, str] = {}
-    text = preset_file.read_text(encoding="utf-8")
+    try:
+        text = preset_file.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        # a preset the door cannot read is a usage problem to fix, never
+        # a traceback (fast-gate evaluator, this PR)
+        print(
+            f"Error: could not read preset {preset_file}: {exc} — fix the "
+            "file, or pass --no-preset",
+            file=sys.stderr,
+        )
+        raise DoorExit(2) from None
     for lineno, line in enumerate(text.splitlines(), start=1):
         line = line.rstrip("\r")  # CRLF tolerance (kit_markers precedent)
         stripped = line.strip()
@@ -416,7 +426,13 @@ def resolve_setting(
     → kit default. A question the target's record already answered is
     not open, so the preset layer is not consulted for it — the chain
     falls through to the kit default exactly as on a preset-less
-    machine. The record itself is preserved by the engine."""
+    machine. The record itself is preserved by the engine
+    (append-if-absent / --preserve-regions), so the RESOLVED value may
+    deliberately differ from the recorded one — every surface that must
+    follow the record (venv offer, materials gate) keys on
+    ``effective_profile``, never on this return value. This mirrors the
+    bash door byte-for-byte (bootstrap resolve_setting + its
+    EFFECTIVE_PROFILE pattern, BugBot rounds 2-3 of PR #83)."""
     if cli_value:
         return cli_value
     rec_value = (record or {}).get(key.replace("-", "_"), "")
@@ -817,7 +833,11 @@ def ensure_git_identity() -> None:
                 capture_output=True,
                 text=True,
             )
-            if result.returncode == 0:
+            # exit 0 with an EMPTY value is still no identity — git
+            # itself refuses to commit with an empty ident, so catching
+            # it here keeps the message actionable (fast-gate
+            # evaluator, this PR)
+            if result.returncode == 0 and result.stdout.strip():
                 found = True
                 break
         if not found:

@@ -182,6 +182,17 @@ class TestPreset:
         data, _ = self._load(tmp_path, "shape:\n")
         assert door.preset_get(data, "shape") is None
 
+    def test_non_utf8_preset_exits_2_never_tracebacks(self, tmp_path, capsys):
+        # fast-gate evaluator, this PR: a preset the door cannot decode
+        # is a usage problem to fix, never an unhandled UnicodeDecodeError
+        cfg = tmp_path / "agentive-config"
+        cfg.mkdir()
+        (cfg / "preset").write_bytes(b"shape: \xff\xfe single\n")
+        with pytest.raises(SystemExit) as exc_info:
+            door.load_preset(cfg, False)
+        assert exc_info.value.code == 2
+        assert "could not read preset" in capsys.readouterr().err
+
 
 class TestConfigHome:
     """Packaged-world anchor: <target-parent>/agentive-config, with
@@ -484,6 +495,42 @@ class TestFillEnvIdentity:
         (tmp_path / ".env").write_text("A=1\n", encoding="utf-8")
         door.fill_env_identity(self._opts(tmp_path))
         assert (tmp_path / ".env").stat().st_mode & 0o777 == 0o600
+
+
+class TestCopyEnvGuard:
+    """The one writer of target/.env refuses unless .env is gitignored
+    — the critical KIT-0084 guardrail (fast-gate test-gap finding)."""
+
+    def _repo(self, tmp_path, gitignore_body):
+        import subprocess
+
+        target = tmp_path / "repo"
+        target.mkdir()
+        subprocess.run(
+            ["git", "init", "-q", "-b", "main", str(target)],
+            check=True,
+            timeout=30,
+        )
+        if gitignore_body is not None:
+            (target / ".gitignore").write_text(gitignore_body, encoding="utf-8")
+        source = tmp_path / "source.env"
+        source.write_text("KEY=value\n", encoding="utf-8")
+        return target, source
+
+    def test_refuses_when_env_not_gitignored(self, tmp_path, capsys):
+        target, source = self._repo(tmp_path, "other-stuff\n")
+        with pytest.raises(SystemExit) as exc_info:
+            door.copy_env_into_target(target, source)
+        assert exc_info.value.code == 1
+        assert ".env is not gitignored" in capsys.readouterr().err
+        assert not (target / ".env").exists(), "refusal must not write"
+
+    def test_writes_0600_when_gitignored(self, tmp_path):
+        target, source = self._repo(tmp_path, ".env\n")
+        door.copy_env_into_target(target, source)
+        env_path = target / ".env"
+        assert env_path.read_text(encoding="utf-8") == "KEY=value\n"
+        assert env_path.stat().st_mode & 0o777 == 0o600
 
 
 class TestSyncPairs:
