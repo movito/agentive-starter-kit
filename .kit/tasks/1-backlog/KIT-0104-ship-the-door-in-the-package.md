@@ -82,6 +82,36 @@ there is no copying `adopt` left to wait on.
   door's `--help` (KIT-0067 F2 rule). Verify it still does after the
   help output moves into the package.
 
+## PR Plan
+
+Estimated total change is well over the ~500-line PR-sizing threshold
+and mixes a code seam with a doc sweep — the exact shape that produced
+PR #120's nine bot rounds. Ship as **three sequential PRs to main**
+(not stacked — CodeRabbit refuses stacked bases; STACKED-PR-WORKFLOW
+lessons apply):
+
+1. **PR 1 — the port** (F1, F2 ownership half): `agentive new` /
+   `agentive adopt` as package subcommands; engines ship as package
+   data invoked by the Python front; matrix legality lives in Python
+   from day one; tests including the no-kit-checkout-relationship
+   assertion. Pure code, one seam, self-contained — `bootstrap` is
+   untouched and still works.
+2. **PR 2 — the shim + flag** (F2 help deferral, F3, F4):
+   `scripts/local/bootstrap` becomes the `exec` shim; `new --no-kit`
+   lands; shim-removal task and engine-consolidation follow-up filed
+   and linked. Small and mechanical.
+3. **PR 3 — the prose sweep** (F5, F6): factory-clone language retired
+   across `docs/STARTING-A-PROJECT.md`, `README.md`,
+   `.claude/commands/new-project.md`, door help; `/new-project`
+   runtime-derivation verified. **KIT-0094 rides this PR as its
+   passenger** — the markdownlint config + pre-commit gate land with
+   the doc churn, so the sweep's own files are lint-clean before the
+   bots see them.
+
+Each PR is independently green and inside the review-surface budget
+(PR-SIZE-WORKFLOW); a bot loop on one cannot hold the others hostage.
+Acceptance below is judged at the end of PR 3.
+
 ## Acceptance
 
 - [ ] `agentive new <dir>` creates a working project from a directory
