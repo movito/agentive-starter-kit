@@ -56,8 +56,24 @@ def _git_identity_xdg(base: Path) -> Path:
 def _door_env(base: Path, config_dir: Path | None = None) -> dict[str, str]:
     """Scrubbed env: no GIT_* (the KIT-0048 leak class), hermetic git
     config, and a hermetic preset home unless a test supplies one —
-    the operator's REAL agentive-config must never leak into a run."""
+    the operator's REAL agentive-config must never leak into a run.
+
+    PYTHONPATH carries the agentive_kit package location into the
+    subprocess: in CI the package is importable only via
+    tests/conftest.py's sys.path injection, which a child interpreter
+    does not inherit (CI round 1 — all E2E runs died with
+    ModuleNotFoundError while passing locally against the dev
+    install). This is the CODE channel, the moral equivalent of an
+    installed wheel's site-packages — the no-kit-checkout assertion is
+    about the door's cwd/target/data resolution, which stays
+    checkout-free.
+    """
+    import agentive_kit
+
+    pkg_src = Path(agentive_kit.__file__).resolve().parents[1]
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    existing = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = f"{pkg_src}{os.pathsep}{existing}" if existing else str(pkg_src)
     env["XDG_CONFIG_HOME"] = str(_git_identity_xdg(base))
     env["AGENTIVE_KIT_CONFIG_DIR"] = str(
         config_dir if config_dir else base / _HERMETIC_CONFIG_NAME
