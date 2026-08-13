@@ -175,7 +175,14 @@ def sync_pairs() -> list[tuple[str, Path]]:
 # Errors and small helpers
 # ─────────────────────────────────────────
 class DoorExit(SystemExit):
-    """SystemExit carrying the door's exit contract (0/1/2)."""
+    """SystemExit carrying the door's exit contract (0/1/2).
+
+    Deliberately used for SUCCESS as well as failure (``DoorExit(0)``
+    at the end of orchestration) — the port keeps the bash door's
+    exit-is-the-interface shape, so ``door.main()`` never returns and
+    ``cli.py`` treats it exactly like the other pass-through
+    subcommands. Tests catch ``SystemExit`` (units) or read the
+    subprocess return code (E2E)."""
 
 
 def _die_usage(mode: str, message: str) -> None:
@@ -203,9 +210,12 @@ def _prompt_yn(question: str) -> str:
 
 def _expand_tilde(value: str) -> str:
     """Leading-~ expansion, the env-source precedent — a preset or env
-    value can carry a literal tilde the shell never expanded."""
-    if value == "~" or value.startswith("~/"):
-        return os.path.expanduser("~") + value[1:]
+    value can carry a literal tilde the shell never expanded.
+    ``expanduser`` also handles ``~user/…`` correctly (deep evaluator,
+    this PR — the bash door's ``${1/#\\~/$HOME}`` mangled that form);
+    a mid-string ``~`` stays literal."""
+    if value.startswith("~"):
+        return os.path.expanduser(value)
     return value
 
 
@@ -707,17 +717,26 @@ def parse_args(mode: str, argv: list[str]) -> DoorOptions:
                 value = argv[i] if i < len(argv) else ""
                 if value.startswith("-"):
                     # a following flag is not a value ('--shape --bots'
-                    # must not adopt '--bots'); empty stays allowed —
-                    # required-answer handling speaks later
+                    # must not adopt '--bots')
                     _die_usage(
                         mode,
                         f"{flag} requires a value (got the flag '{value}' " "instead)",
                     )
+                if not value:
+                    # deliberate deviation from the bash door, which let
+                    # a trailing '--shape' silently resolve to the kit
+                    # default (deep evaluator, this PR): an explicit
+                    # flag with no value is a mistake to surface, never
+                    # an answer to drop (the masking class)
+                    _die_usage(mode, f"{flag} requires a value")
                 setattr(opts, attr, value)
                 matched = True
                 break
             if arg.startswith(flag + "="):
-                setattr(opts, attr, arg[len(flag) + 1 :])
+                value = arg[len(flag) + 1 :]
+                if not value:
+                    _die_usage(mode, f"{flag} requires a value")
+                setattr(opts, attr, value)
                 matched = True
                 break
         if not matched and arg in _SWITCH_FLAGS:
@@ -884,7 +903,21 @@ def copy_env_into_target(target: Path, source: Path) -> None:
         )
     content = source.read_bytes()
     env_path = target / ".env"
-    fd = os.open(env_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    # O_NOFOLLOW: never write THROUGH a pre-planted .env symlink — the
+    # gitignore check above sees the symlink path, not its referent
+    # (deep evaluator, this PR; defense in depth — --new targets are
+    # door-created, so a pre-existing symlink is already anomalous).
+    try:
+        fd = os.open(
+            env_path,
+            os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW,
+            0o600,
+        )
+    except OSError:
+        _die_install(
+            f"refusing to write {env_path}: it exists as a symlink or "
+            "could not be opened — remove it and re-run"
+        )
     try:
         os.write(fd, content)
     finally:
@@ -1367,7 +1400,18 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
         scaffold_args += ["--target-github", opts.target_github]
 
     if opts.mode == "new":
-        target.mkdir(parents=True, exist_ok=True)
+        # exist_ok=False: main() already refused an existing target, so
+        # a directory appearing between that check and here is a race —
+        # fail loud rather than scaffold into it (claude-code
+        # evaluator, this PR)
+        try:
+            target.mkdir(parents=True, exist_ok=False)
+        except FileExistsError:
+            _die_usage(
+                opts.mode,
+                f"--new target already exists: {target} (use 'agentive "
+                "adopt' for existing directories)",
+            )
     rc = _run_engine(staged_root, "engine-scaffold.sh", scaffold_args)
     if rc != 0:
         _die_install(f"scaffold engine failed (exit {rc})")

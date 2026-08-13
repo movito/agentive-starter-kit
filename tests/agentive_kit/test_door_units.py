@@ -208,6 +208,17 @@ class TestConfigHome:
         monkeypatch.setenv("AGENTIVE_KIT_CONFIG_DIR", str(tmp_path / "cfg"))
         assert door.config_home(tmp_path / "elsewhere" / "app") == tmp_path / "cfg"
 
+    def test_tilde_user_form_expanded(self):
+        # deep evaluator: ~user/dir must expand via expanduser (the
+        # bash door's ${1/#~/$HOME} mangled that form); an unresolvable
+        # user stays literal, and a mid-string ~ is never touched
+        import getpass
+
+        me = getpass.getuser()
+        expanded = door._expand_tilde(f"~{me}/cfg")
+        assert not expanded.startswith("~")
+        assert door._expand_tilde("/a/~b") == "/a/~b"
+
     def test_env_override_expands_tilde(self, monkeypatch, tmp_path):
         monkeypatch.setenv("AGENTIVE_KIT_CONFIG_DIR", "~/kit-cfg")
         home = door.config_home(tmp_path / "app")
@@ -222,6 +233,16 @@ class TestParseArgs:
         assert opts.shape_cli == "planning"
         assert opts.profile_cli == "none"
         assert opts.target_raw == "dir-a"
+
+    @pytest.mark.parametrize("argv", [["dir", "--shape"], ["dir", "--shape="]])
+    def test_value_flag_with_no_value_is_usage_error(self, argv, capsys):
+        # deep evaluators (o3 + claude-code, convergent): the bash door
+        # let a trailing '--shape' silently resolve to the kit default;
+        # the packaged door surfaces the mistake (masking class)
+        with pytest.raises(SystemExit) as exc_info:
+            door.parse_args("new", argv)
+        assert exc_info.value.code == 2
+        assert "requires a value" in capsys.readouterr().err
 
     def test_value_flag_must_not_swallow_following_flag(self, capsys):
         with pytest.raises(SystemExit) as exc_info:
@@ -532,6 +553,20 @@ class TestCopyEnvGuard:
         assert env_path.read_text(encoding="utf-8") == "KEY=value\n"
         assert env_path.stat().st_mode & 0o777 == 0o600
 
+    def test_refuses_to_write_through_env_symlink(self, tmp_path, capsys):
+        # deep evaluator: a pre-planted .env symlink must never be
+        # followed — the gitignore check sees the symlink path, not
+        # its referent (O_NOFOLLOW)
+        target, source = self._repo(tmp_path, ".env\n")
+        victim = tmp_path / "victim-file"
+        victim.write_text("precious\n", encoding="utf-8")
+        (target / ".env").symlink_to(victim)
+        with pytest.raises(SystemExit) as exc_info:
+            door.copy_env_into_target(target, source)
+        assert exc_info.value.code == 1
+        assert "symlink" in capsys.readouterr().err
+        assert victim.read_text(encoding="utf-8") == "precious\n"
+
 
 class TestSyncPairs:
     """The staging maps must stay internally consistent."""
@@ -542,6 +577,13 @@ class TestSyncPairs:
         for repo_rel, pkg_path in pairs:
             assert pkg_path.is_file(), f"packaged copy missing: {pkg_path}"
             assert not repo_rel.startswith("/")
+
+    def test_stage_destinations_never_overlap(self):
+        # claude-code evaluator: overlapping staged paths would let a
+        # later _STAGE_MAP entry silently overwrite an earlier one —
+        # pin uniqueness across BOTH maps
+        destinations = list(door._STAGE_MAP.values()) + list(door._ENGINE_MAP.values())
+        assert len(destinations) == len(set(destinations))
 
     def test_engines_dir_ships_exactly_the_invocable_set(self):
         # engine-materials.sh is deliberately NOT packaged: it rsyncs a
