@@ -289,10 +289,12 @@ Two rules bind at authoring time, before the starter is written:
    lives in the target repo). The starter's LAUNCH block names that
    worktree path and branch; its FIRST ACTIONS are verification only —
    the template's contract: never `checkout -b` in a session.
-2. **The footer convention is unconditional** — every starter ends by
-   suggesting: *"Rename the session to `<TASK-ID> <short task name>`"*
-   (operator convention: named sessions are findable for /resume and
-   in session lists).
+2. **The closing checklist is unconditional** — every starter ends
+   with the operator launch checklist (template core #8), real values
+   only: `cd <worktree path>` → `claude --agent <recommended-agent>`
+   → paste the starter as the FIRST message (a bare agent launch
+   idles, KIT-0101 F8) → `/rename <TASK-ID> <short task name>`. A new
+   operator must be able to launch from the starter alone.
 
 Present the starter to the user with a one-line summary: *"Task starter
 ready — invoke `<agent-name>` in a new tab."*

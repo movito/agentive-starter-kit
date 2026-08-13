@@ -1,7 +1,7 @@
 # Task Starter Template — the single starter authority
 
-**Version**: 2.0.0
-**Last Updated**: 2026-08-11
+**Version**: 2.1.0
+**Last Updated**: 2026-08-13
 **Purpose**: THE contract for task starter messages. Every starter a
 planner produces — in this repo or any consumer project — instantiates
 this template. Planner agent bodies point here; they do not carry
@@ -51,10 +51,27 @@ Depth scales; the core does not (see the proportionality rule below).
    agent to run `project start`.
 7. **Recommended agent** — named explicitly (e.g. `feature-developer`,
    or the `-f5` variant with a one-clause reason).
-8. **Session-rename footer** — every starter ends by suggesting:
-   *"Rename the session to `<TASK-ID> <short task name>`"* (operator
-   convention, 2026-08-06: named sessions are findable for /resume
-   and in session lists).
+8. **Operator launch checklist — the starter's final section.** The
+   complete list of operator todos, numbered, with REAL values (no
+   placeholders), so an operator who has never launched a session can
+   execute it without any other document (operator request,
+   2026-08-13 — the KIT-0101 cold-start lesson one level up):
+
+   ```markdown
+   **🚀 Launch checklist (operator)**:
+   1. Open a new terminal tab: `cd <worktree absolute path>`
+   2. `claude --agent <recommended-agent>`
+   3. Paste this starter as the FIRST message — a bare agent launch
+      idles without one (KIT-0101 F8)
+   4. `/rename <TASK-ID> <short task name>` (named sessions are
+      findable for /resume — operator convention, 2026-08-06)
+   ```
+
+   The checklist subsumes the former session-rename footer (its step
+   4). Steps may be adapted when the task genuinely launches
+   differently (e.g. a review-only session with no worktree), but the
+   section itself is core: every starter ends with the operator's
+   todos.
 
 ## House improvements (include when the task warrants them)
 
@@ -118,7 +135,11 @@ authoritative.
 
 **Recommended agent**: `feature-developer`
 
-Rename the session to `TASK-0031 stale doctor hints`.
+**🚀 Launch checklist (operator)**:
+1. Open a new terminal tab: `cd /Users/me/Github/myproj-worktrees/TASK-0031`
+2. `claude --agent feature-developer`
+3. Paste this starter as the FIRST message
+4. `/rename TASK-0031 stale doctor hints`
 ```
 
 ## Worked example — full (multi-PR task)
@@ -177,7 +198,11 @@ session tab there.
 **Recommended agent**: `feature-developer-f5` (multi-PR judgment,
 sustained run)
 
-Rename the session to `TASK-0087 export pipeline split`.
+**🚀 Launch checklist (operator)**:
+1. Open a new terminal tab: `cd /Users/me/Github/myproj-worktrees/TASK-0087`
+2. `claude --agent feature-developer-f5`
+3. Paste this starter as the FIRST message
+4. `/rename TASK-0087 export pipeline split`
 ```
 
 ---
