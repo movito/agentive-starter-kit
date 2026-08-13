@@ -87,14 +87,22 @@ while [ $# -gt 0 ]; do
             reject_flaglike --new "${1:-}"
             TARGET="${1:-}"
             ;;
-        --new=*)   set_mode new; TARGET="${1#--new=}" ;;
+        --new=*)
+            set_mode new
+            TARGET="${1#--new=}"
+            reject_flaglike --new "$TARGET"
+            ;;
         --adopt)
             set_mode adopt
             shift
             reject_flaglike --adopt "${1:-}"
             TARGET="${1:-}"
             ;;
-        --adopt=*) set_mode adopt; TARGET="${1#--adopt=}" ;;
+        --adopt=*)
+            set_mode adopt
+            TARGET="${1#--adopt=}"
+            reject_flaglike --adopt "$TARGET"
+            ;;
         --design-materials)
             MATERIALS=1
             PASS+=("$1")

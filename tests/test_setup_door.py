@@ -224,6 +224,15 @@ class TestTranslation:
         result = run_door("--new", "-h", timeout=30)
         assert result.returncode == 2
         assert "requires a value" in result.stderr
+        # equals-form arms validate the suffix the same way — a
+        # '--new=--help' must be a usage error, never help exit 0
+        # (CodeRabbit round 2)
+        result = run_door("--new=--help", timeout=30)
+        assert result.returncode == 2
+        assert "requires a value" in result.stderr
+        result = run_door("--adopt=-h", timeout=30)
+        assert result.returncode == 2
+        assert "requires a value" in result.stderr
 
     def test_equals_form_translates(self, tmp_path):
         # --adopt=<dir> reaches the package as a target: the run gets
