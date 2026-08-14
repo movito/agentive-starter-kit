@@ -200,3 +200,51 @@ Trio complete pre-PR (KIT-0035 ordering honored). Fix commit for the
 probe follows this record. Full suite green (1110 passed, 13 skipped);
 grep proof of matrix single-ownership pinned as
 `tests/test_setup_door.py::TestShimStatic`.
+
+---
+
+## PR 3 — the prose sweep (F5/F6 + KIT-0094 passenger), 2026-08-14
+
+**Tier decision (recorded, not silent)**: PROSE-DOMINATED sweep →
+code-reviewer-fast ONLY, per the standing prose-sweep exception
+(KIT-0069 trio 0-for-7, KIT-0073 0-for-8; planner decision
+2026-07-28). Deep tier and claude-code deliberately skipped: the only
+behavior-bearing hunks are `.markdownlint-cli2.jsonc` +
+`.pre-commit-config.yaml` (the KIT-0094 gate), and that gate was
+**falsified live** — a planted bare fence failed the hook (exit 1),
+restore passed — which is stronger evidence than a diff-reading
+opinion. Everything else is markdown/comment/docstring prose. Input
+was `--format diff` (strings/docs-only shape, per the Phase 5 rule).
+
+**This PR still needs tree-grounded verification before merge**
+(sectioned verifiers against the branch) — that is the real gate for
+this PR shape; the planner owns it.
+
+### code-reviewer-fast (FAIL — verdict refuted against the tree)
+
+Log: `.adversarial/logs/KIT-0104-code-review-input--code-reviewer-fast.md`
+
+1. **"Conflicting ADRs KIT-ADR-0021 vs -B" (the FAIL driver)** —
+   REFUTED against the tree: `KIT-ADR-0021-B` line 9 declares
+   `**Supersedes**: KIT-ADR-0021 (original proposal)`; both are
+   Status: Proposed research records coexisting since 2026-03-30.
+   This PR touched them only to add MD040 fence languages. The
+   evaluator reconstructed a conflict from diff-only context — the
+   exact blind-spot class the prose-sweep exception exists for.
+2. **"Ambiguous API key handling on `agentive new`"** — NO CHANGE:
+   the doc states what the packaged door verifiably does
+   (`note_env_keys` in `door/__init__.py`: no kit-clone carryover,
+   says "No API keys seeded" out loud; PR 1 operator decision). The
+   doc already states the choice explicitly, which is what the
+   finding asked for.
+3. **"CHANGELOG references files not in the diff"** — NO CHANGE:
+   the KIT-0077 entry is a historical Unreleased entry from an
+   earlier PR; it appears in this diff only because the MD024
+   duplicate-heading merge moved section blocks. Changelogs
+   describing past PRs is the format working as intended.
+
+0 findings actioned / 3 dispositioned (1 refuted, 2 no-change-needed)
+— consistent with the two prior prose-sweep shutouts. KIT-0094
+acceptance evidence: config committed, sweep leaves in-scope files at
+0 issues (199 files linted), gate falsified once, full fast suite
+1018 passed both before and after the F5 rewrite.
