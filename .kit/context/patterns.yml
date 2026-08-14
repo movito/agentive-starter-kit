@@ -76,11 +76,35 @@ defensive:
       `REAL=` assignment; a spaced git path makes the stub exit 127).
       Concept name to think with: "interpolated paths in emitted
       shell", both faces.
+      WIDENED (KIT-0104 PR 3): a printed multi-step RECIPE is
+      executed ONCE at authoring time, in the context it addresses,
+      with the real output pasted next to the claim — a recipe never
+      run as printed can be wrong from the day it was written (the
+      KIT-0058 config-home recipe computed `<clone>` instead of
+      `<projects-parent>` for weeks; no preset ever loaded from where
+      the doc pointed; caught only when its paragraph happened to
+      enter a diff).
     examples:
       - "KIT-0071 bot rounds 2-6 were five faces of this one class, fixed instance-by-instance — four rounds were the cost of not sweeping at round 2 (a fresh fix_by_class_not_instance regression)"
       - "same family as bot-triage's committable-but-uncompilable rule (KIT-0058): displayed shell is code, verify it as code"
       - "KIT-0080/PR #107: generated-script face — the rule existed, its stated scope stopped one shape short (counted as a regression for that reason)"
     caught_by: "KIT-0071 retro (Surprising #2, Should Change #1); planner adopted 2026-07-27; generated-shell face CodeRabbit PR #107, widened 2026-08-06"
+  autofix_needs_semantic_pass:
+    rule: >
+      A lint autofix is a PROPOSED edit, not a safe one: it optimizes
+      for rule compliance, not meaning. markdownlint --fix on MD029
+      renumbers CONTINUED lists ("6./7." steps interrupted by a fence
+      become "1./1."), silently changing rendered numbering. After any
+      autofix, run a semantic pass over the diff; when a list is
+      interrupted by a code block, the structural repair is indenting
+      the block INTO the list item — never accepting the renumber.
+      Verification trick for big structural diffs: diff the SORTED
+      non-blank lines old-vs-new — content-preserving edits show only
+      the intended deletions (used to prove the KIT-0104 PR 3
+      CHANGELOG heading-merge touched exactly 10 heading lines).
+    examples:
+      - "KIT-0104 PR 3: babysit-pr.md Phase 4 and bootstrap.md Step 6 both renumbered by --fix; repaired structurally by hand"
+    caught_by: "KIT-0104 PR 3 retro (Surprising #1, Should Change #1); planner adopted 2026-08-14"
   depth_anchored_sweeps:
     rule: >
       When adding a SUBDIRECTORY under any path that copy/scrub/

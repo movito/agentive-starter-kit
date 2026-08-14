@@ -72,6 +72,12 @@ Reference knowledge for triaging automated review comments. Use `/triage-threads
   approving review's commit SHA matches the PR head — an APPROVED
   filed against an earlier commit certifies nothing about the code
   being merged.
+  **Sixth face (KIT-0104 PR 3): a bot check can show `skipping`
+  while the bot is actively reviewing** — BugBot's check-run read
+  `skipping` for an entire session during which it posted a
+  Medium-severity thread. Statuses lie in every direction; the
+  threads query is the only truth, in both the "clean" and the
+  "reviewed" directions.
 - **Class sweeps must be indentation-tolerant** — when sweeping a
   markdown/format class from one finding (e.g. MD040 bare fences), the
   pattern is `^\s*` + token, never `^` + token: KIT-0067's `^```$`
