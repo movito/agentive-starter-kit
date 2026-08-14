@@ -1,6 +1,6 @@
 # KIT-0110: Release tooling + verification — `plugin_resync.py` and the guard's blind half
 
-**Status**: Backlog
+**Status**: In Progress
 **Priority**: medium-high — **sequence BEFORE the KIT-0105 release**,
 so that train is the first release cut with real tooling instead of a
 fourth hand-rolled resync
@@ -11,9 +11,15 @@ original bundle spanned two repos and three work-shapes — the
 KIT-0102 mixed-shape profile; R1 → KIT-0111, R2 → KIT-0112)
 **Source**: KIT-0109 release follow-ups + retro escalation
 (`.kit/context/KIT-0109-KIT-FOLLOWUPS.md`, `retros/KIT-0109-retro.md`)
-**Evaluation**: skipped (planner) — remedies ruled at filing; the two
-halves below are one mechanism (the tool populates the column the
-check verifies), which is why they stay one task
+**Evaluation**: arch-review-fast 2026-08-14 — REVISION_SUGGESTED, 3
+findings, all dispositioned in-spec: base-retrieval mechanism now
+specified (F1 below); human-in-loop conflict surfacing ACCEPTED as
+designed (one operator, conflicts rare — the tool surfaces, it does
+not solve); roster schema validation added to R2. Log:
+`.adversarial/logs/KIT-0110-release-signal-integrity--arch-review-fast.md`.
+Don't re-litigate. The two halves below are one mechanism (the tool
+populates the column the check verifies), which is why they stay one
+task.
 
 ## R1 — `scripts/local/plugin_resync.py` (kit repo, PR 1)
 
@@ -24,6 +30,14 @@ third-occurrence rule. Codify the KIT-0109 method:
 - **Three-way merge, never copy**: base = the kit blob at the
   previously-rostered `kit_sha256`; a straight copy flattens the
   KIT-ADR-0025 generalization the plugin bodies legitimately carry.
+- **Base retrieval specified** (evaluator F1 disposition):
+  `kit_sha256` is a CONTENT hash, not a git blob id — the base is
+  found by walking the kit file's history (`git log --format=%H --
+  <path>`, `git show <rev>:<path>`) and sha256-hashing each version
+  until it matches the rostered value. Isolate this behind one
+  function (testable with a fixture repo); if no historical version
+  matches (content never committed, file renamed), FAIL LOUD naming
+  the component — never fall back to a silent copy.
 - Emits the work-list, performs mechanical merges, surfaces conflicts
   for the human — and writes/updates the `plugin_sha256` column (R2's
   input).
@@ -43,7 +57,14 @@ bodies differ from canon per KIT-ADR-0025):
 - `roster.yaml` gains `plugin_sha256` (hash of the shipped body);
 - a marketplace-side CI check verifies recorded == actual for every
   rostered component — same repo, no network, fires on exactly the
-  failure-shaped PR; falsify once (bump-without-copy → red);
+  failure-shaped PR; falsify once (bump-without-copy → red); the
+  check VALIDATES the roster schema before comparing (evaluator F3 —
+  a malformed roster must be its own loud failure, not a vacuous
+  pass);
+- **this is the marketplace repo's FIRST CI workflow** (verified
+  2026-08-14: no `.github/workflows/` exists there) — making it a
+  REQUIRED check is a GitHub-settings step the operator performs at
+  completion;
 - the roster header is rewritten to say what is verified WHERE —
   "intentionally differs" reads as "unverifiable" and is why the gap
   stayed invisible;
@@ -56,6 +77,10 @@ bodies differ from canon per KIT-ADR-0025):
 - [ ] `plugin_sha256` column populated for all rostered components;
       marketplace check live and falsified once
 - [ ] Roster header + kit guard header state the verification division
+- [ ] Base-not-found case fails loud (fixture-tested), never silent
+      copy
+- [ ] Operator step at completion: mark the marketplace check REQUIRED
+      in GitHub settings (planner reminds at the gate)
 - [ ] The next release (the KIT-0105 train) uses the tool and passes
       both checks — cited in that release's record
 
