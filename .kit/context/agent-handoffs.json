@@ -8,12 +8,12 @@
     "handoff_file": null
   },
   "feature-developer": {
-    "status": "idle",
-    "current_task": null,
-    "task_started": null,
-    "brief_note": "No active assignment. KIT-0110 DONE (plugin_resync.py + marketplace verify check, both PRs merged; retro + followups processed; one AC stays open by design — first-tooled-cut citation at the KIT-0105 release). Next assignable: KIT-0105 (carries KIT-0103 R1, KIT-0112, markdownlint rider on its train). KIT-0111 = anytime filler.",
-    "details_link": ".kit/tasks/5-done/KIT-0110-release-signal-integrity.md",
-    "handoff_file": null
+    "status": "assigned",
+    "current_task": "KIT-0105",
+    "task_started": "2026-08-14",
+    "brief_note": "KIT-0105: project-intake into the plugin — the last structural piece of the KIT-ADR-0030 arc. 3 PRs: agent move (kit worktree ../ask-worktrees/KIT-0105), canon-fix bundle (KIT-0103 R1 + KIT-0112 passengers), release 2.1.0 (marketplace, FIRST TOOLED CUT via plugin_resync.py; required check live). Spec evaluated APPROVED.",
+    "details_link": ".kit/tasks/3-in-progress/KIT-0105-project-intake-into-the-plugin.md",
+    "handoff_file": ".kit/context/KIT-0105-HANDOFF-feature-developer-f5.md"
   },
   "code-reviewer": {
     "status": "idle",
