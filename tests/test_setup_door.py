@@ -1,16 +1,30 @@
-"""Tests for scripts/local/bootstrap — the one setup door (KIT-0053).
+"""Tests for scripts/local/bootstrap — the exec shim over the packaged
+door (KIT-0104 F3).
 
-Three layers:
-- resolve/validate units run against the SOURCED door (no filesystem
-  side effects) — the F1 internal-decomposition contract;
-- the exit contract (F6): 0 install-ok / 1 install-failed / 2
-  usage-or-illegal, with illegal combos naming the legal pairs (F2);
-- scratch e2e per matrix cell x mode, each asserting the doctor tail
-  (P4) and the recorded shape/profile pair.
+The door lives in the agentive-kit package (``agentive new`` /
+``agentive adopt``); ``bootstrap`` only translates the historical
+``--new <dir>`` / ``--adopt <dir>`` flags to the package verbs and
+execs the checkout's own package source. This module pins the SHIM
+contract:
 
-Non-TTY discipline (N4): every subprocess here runs with stdin closed,
-so any prompt that leaked past the flag layer would hang and trip the
-timeout instead of silently passing.
+- flag translation (split and ``=`` forms, flag-swallowing guard);
+- help deferred to the package — no second copy of the matrix or the
+  flag table survives in the shim file (F2, asserted statically);
+- exit-code pass-through (the package's 0/1/2 contract);
+- the one legacy branch the shim keeps: ``--adopt --design-materials``
+  (dies with the shim — KIT-0107);
+- the removal notice on stderr.
+
+Everything the old door FRONT did — resolution chain, matrix
+validation, preset layer, record conflicts, .env seeding — is packaged
+code now, covered by ``tests/agentive_kit/test_door_units.py`` and
+``test_door_e2e.py``. Whole-flow coverage THROUGH the shim lives in
+``tests/test_bootstrap_shapes.py`` (packaged-contract shapes +
+shim-vs-direct equivalence) and ``tests/test_scaffold_acceptance.py``
+(per-shape acceptance, which imports this module's helpers).
+
+Non-TTY discipline (N4): every subprocess runs with stdin closed, so
+any prompt would hang and trip the timeout instead of silently passing.
 
 Consumer-rsync boundary: this module reads scripts/local/ content, so
 it is excluded from the consumer tests/ rsync in engine-consumer.sh
@@ -19,9 +33,7 @@ it is excluded from the consumer tests/ rsync in engine-consumer.sh
 
 from __future__ import annotations
 
-import json
 import os
-import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -43,12 +55,11 @@ for tool in ("bash", "git", "rsync"):
 
 
 # Nonexistent hermetic paths keep every door run hermetic (N1): the
-# operator's REAL config home (<kit-parent>/agentive-config/,
-# KIT-0058) must never leak into the suite — a filled preset would
-# change door answers and break characterization.
-# AGENTIVE_KIT_CONFIG_DIR is the door's one override; tests that need
-# a preset pass their own via extra (override wins). XDG_CONFIG_HOME
-# stays pinned too: git's own config lookup goes through it.
+# operator's REAL config home must never leak into the suite — a
+# filled preset would change door answers. AGENTIVE_KIT_CONFIG_DIR is
+# the door's one override; tests that need a preset pass their own via
+# extra (override wins). XDG_CONFIG_HOME stays pinned too: git's own
+# config lookup goes through it.
 _HERMETIC_XDG = REPO_ROOT / "tests" / ".no-such-xdg"
 _HERMETIC_CONFIG = REPO_ROOT / "tests" / ".no-such-config-home"
 
@@ -98,603 +109,6 @@ def run_door(
     )
 
 
-def sourced(snippet: str, env: dict | None = None) -> subprocess.CompletedProcess:
-    """Run a snippet with the door's functions loaded (no main)."""
-    return subprocess.run(
-        ["bash", "-c", f'source "{DOOR}"; {snippet}'],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        stdin=subprocess.DEVNULL,
-        env=env or _scrubbed_env(),
-    )
-
-
-def write_preset(base: Path, content: str) -> Path:
-    """A preset in a scratch config home (passed to the door via
-    AGENTIVE_KIT_CONFIG_DIR — never the real sibling folder, N1);
-    returns the config-home dir."""
-    cfg = base / "agentive-config"
-    cfg.mkdir(parents=True, exist_ok=True)
-    (cfg / "preset").write_text(content, encoding="utf-8")
-    return cfg
-
-
-class TestResolveValidateUnits:
-    """The sourced resolve/validate layer — no filesystem effects."""
-
-    @pytest.mark.parametrize(
-        "shape,profile",
-        [("single", "python"), ("single", "none"), ("planning", "none")],
-    )
-    def test_matrix_legal_cells(self, shape, profile):
-        result = sourced(f"validate_pair {shape} {profile}")
-        assert result.returncode == 0, result.stderr
-
-    def test_matrix_illegal_cell_names_legal_pairs(self):
-        result = sourced("validate_pair planning python")
-        assert result.returncode == 1
-        assert "illegal shape/profile combination" in result.stderr
-        for pair in ("single+python", "single+none", "planning+none"):
-            assert pair in result.stderr, f"rejection must name {pair}"
-
-    def test_kit_default_shape_is_single(self):
-        result = sourced('resolve_setting shape ""')
-        assert result.returncode == 0
-        assert result.stdout.strip() == "single"
-
-    @pytest.mark.parametrize(
-        "shape,expected", [("single", "python"), ("planning", "none")]
-    )
-    def test_kit_default_profile_follows_shape(self, shape, expected):
-        result = sourced(f'resolve_setting profile "" {shape}')
-        assert result.returncode == 0
-        assert result.stdout.strip() == expected
-
-    def test_cli_value_wins_over_default(self):
-        result = sourced("resolve_setting profile none single")
-        assert result.stdout.strip() == "none"
-
-    def test_preset_layer_unloaded_answers_nothing(self):
-        # No preset loaded (or --no-preset): the layer answers nothing —
-        # the machine behaves exactly like a preset-less machine (N1).
-        # (Guarded call: the sourced door sets -e, so a bare failing
-        # preset_get would exit the test shell before the echo.)
-        result = sourced('preset_get shape || echo "rc=$?"')
-        assert result.stdout.strip() == "rc=1"  # answers nothing, prints nothing
-
-    def test_unknown_values_rejected(self):
-        assert sourced('validate_values pyramid ""').returncode == 1
-        assert sourced("validate_values single elixir").returncode == 1
-
-    def test_empty_preset_answer_falls_through(self):
-        # o3 finding: a P7 preset that succeeds but echoes nothing must
-        # count as unanswered — the chain falls through to kit defaults
-        result = sourced('preset_get() { echo ""; }; resolve_setting shape ""')
-        assert result.returncode == 0
-        assert result.stdout.strip() == "single"
-
-
-class TestPresetUnits:
-    """KIT-0056 F5: the preset layer inside the ONE resolve chain —
-    CLI > preset > kit default (record short-circuits preset on adopt).
-    All sourced; the preset file lives in a scratch config home
-    (AGENTIVE_KIT_CONFIG_DIR), never the real sibling folder."""
-
-    def _env(self, tmp_path, content):
-        return _scrubbed_env(
-            AGENTIVE_KIT_CONFIG_DIR=str(write_preset(tmp_path, content))
-        )
-
-    def test_preset_beats_kit_default(self, tmp_path):
-        env = self._env(tmp_path, "shape: planning\n")
-        result = sourced('load_preset; resolve_setting shape ""', env=env)
-        assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == "planning"
-
-    def test_cli_beats_preset(self, tmp_path):
-        env = self._env(tmp_path, "shape: planning\n")
-        result = sourced("load_preset; resolve_setting shape single", env=env)
-        assert result.stdout.strip() == "single"
-
-    def test_record_short_circuits_preset(self, tmp_path):
-        # Adopt of a recorded target: the question is not open, so the
-        # preset is not consulted — the chain falls to the kit default
-        # exactly as on a preset-less machine (record wins; divergence
-        # is doctor --against-preset's INFO surface).
-        env = self._env(tmp_path, "profile: none\n")
-        result = sourced(
-            'load_preset; REC_PROFILE=none; resolve_setting profile "" single',
-            env=env,
-        )
-        assert result.stdout.strip() == "python"  # kit default, not the preset
-
-    def test_no_preset_flag_disables_the_layer(self, tmp_path):
-        env = self._env(tmp_path, "shape: planning\n")
-        result = sourced('NO_PRESET=1; load_preset; resolve_setting shape ""', env=env)
-        assert result.stdout.strip() == "single"
-
-    def test_unknown_key_warns_and_skips_never_errors(self, tmp_path):
-        env = self._env(tmp_path, "coffee: espresso\nshape: planning\n")
-        result = sourced('load_preset; resolve_setting shape ""', env=env)
-        assert result.returncode == 0, result.stderr
-        assert "unknown preset key 'coffee'" in result.stderr
-        assert "line 1" in result.stderr
-        # known keys after the unknown one still load (skip, not abort)
-        assert result.stdout.strip() == "planning"
-
-    def test_malformed_line_fails_loud_naming_the_line(self, tmp_path):
-        env = self._env(tmp_path, "shape: single\nprofile python\n")
-        result = sourced("load_preset", env=env)
-        assert result.returncode == 2
-        assert "malformed preset line 2" in result.stderr
-        assert "profile python" in result.stderr
-
-    def test_duplicate_key_fails_loud(self, tmp_path):
-        env = self._env(tmp_path, "shape: single\nshape: planning\n")
-        result = sourced("load_preset", env=env)
-        assert result.returncode == 2
-        assert "duplicate preset key 'shape'" in result.stderr
-
-    def test_empty_value_falls_through(self, tmp_path):
-        # an empty answer is unanswered, never a resolve to ""
-        env = self._env(tmp_path, "shape:\n")
-        result = sourced('load_preset; resolve_setting shape ""', env=env)
-        assert result.returncode == 0
-        assert result.stdout.strip() == "single"
-
-    def test_comments_and_blanks_ignored(self, tmp_path):
-        env = self._env(tmp_path, "# a comment\n\nshape: planning\n")
-        result = sourced('load_preset; resolve_setting shape ""', env=env)
-        assert result.stdout.strip() == "planning"
-
-    def test_env_not_gitignored_refuses_secret_copy(self, tmp_path):
-        # F6's hard guard, exercised directly: a target whose .env is
-        # NOT gitignored must refuse the copy outright — no .env file,
-        # exit 1, and the reason named
-        target = make_adopt_dir(tmp_path, "no-ignore")  # no .gitignore at all
-        src = tmp_path / "env-template"
-        src.write_text("KEY=secret-fixture\n", encoding="utf-8")
-        src.chmod(0o600)
-        result = sourced(f'TARGET="{target}"; apply_env_source "{src}"')
-        assert result.returncode == 1
-        assert "refusing to seed secrets" in result.stderr
-        assert not (target / ".env").exists()
-
-
-class TestNormalizeBots:
-    """KIT-0056 F1: 'none' alone, or a subset of coderabbit/bugbot —
-    normalized to canonical order, comma- or space-separated input."""
-
-    @pytest.mark.parametrize(
-        "raw,expected",
-        [
-            ("coderabbit bugbot", "coderabbit bugbot"),
-            ("bugbot coderabbit", "coderabbit bugbot"),
-            ("bugbot,coderabbit", "coderabbit bugbot"),
-            ("CodeRabbit,BUGBOT", "coderabbit bugbot"),  # case-insensitive
-            ("coderabbit", "coderabbit"),
-            ("bugbot", "bugbot"),
-            ("coderabbit coderabbit", "coderabbit"),  # duplicates collapse
-            ("bugbot,bugbot coderabbit", "coderabbit bugbot"),
-            ("none", "none"),
-            ("None", "none"),
-        ],
-    )
-    def test_canonical_forms(self, raw, expected):
-        result = sourced(f'normalize_bots "{raw}"')
-        assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == expected
-
-    def test_unknown_bot_rejected(self):
-        result = sourced('normalize_bots horsebot || echo "rc=$?"')
-        assert "unknown bot 'horsebot'" in result.stderr
-        assert result.stdout.strip() == "rc=1"
-
-    def test_glob_token_not_expanded(self, tmp_path):
-        # CodeRabbit PR #83: a '*' token must be rejected AS '*', not
-        # glob-expanded into whatever filenames the cwd holds
-        (tmp_path / "coderabbit").touch()  # a file a glob could hit
-        result = subprocess.run(
-            ["bash", "-c", f'source "{DOOR}"; normalize_bots "*"'],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            stdin=subprocess.DEVNULL,
-            env=_scrubbed_env(),
-            cwd=tmp_path,
-        )
-        assert result.returncode == 1
-        assert "unknown bot '*'" in result.stderr
-
-    def test_none_combined_rejected(self):
-        result = sourced('normalize_bots "none bugbot" || echo "rc=$?"')
-        assert "'none' cannot be combined" in result.stderr
-        assert result.stdout.strip() == "rc=1"
-
-    def test_empty_input_is_unanswered_not_error(self):
-        # rc 1 with NO error text: empty means "question still open"
-        # (the caller prompts or writes nothing), never a rejection
-        result = sourced('normalize_bots "" || echo "rc=$?"')
-        assert result.stdout.strip() == "rc=1"
-        assert result.stderr == ""
-
-
-class TestExitContract:
-    """F6: 0 install-ok / 1 install-failed / 2 usage-or-illegal."""
-
-    def test_help_exits_zero(self):
-        result = run_door("--help")
-        assert result.returncode == 0
-        assert "the one setup door" in result.stdout
-        assert "--new" in result.stdout and "--adopt" in result.stdout
-        assert "Exit contract" in result.stdout
-
-    def test_unknown_flag_is_usage(self):
-        assert run_door("--frobnicate").returncode == 2
-
-    def test_mode_flag_must_not_swallow_following_flag(self):
-        # BugBot PR #81: '--new --shape planning' must not adopt
-        # '--shape' as the target directory
-        result = run_door("--new", "--shape", "planning", timeout=30)
-        assert result.returncode == 2
-        assert "requires a value" in result.stderr
-        result = run_door("--adopt", "--profile", "none", timeout=30)
-        assert result.returncode == 2
-        assert "requires a value" in result.stderr
-        # short options are flags too, not targets
-        result = run_door("--new", "-h", timeout=30)
-        assert result.returncode == 2
-        assert "requires a value" in result.stderr
-
-    def test_missing_mode_non_tty_fails_fast(self):
-        result = run_door(timeout=30)
-        assert result.returncode == 2
-        assert "mode is required" in result.stderr
-
-    def test_missing_target_non_tty_fails_fast(self, tmp_path):
-        result = run_door("--adopt", timeout=30)
-        assert result.returncode == 2
-        assert "target directory is required" in result.stderr
-
-    def test_illegal_pair_exits_2_naming_pairs(self, tmp_path):
-        result = run_door(
-            "--adopt", str(tmp_path), "--shape", "planning", "--profile", "python"
-        )
-        assert result.returncode == 2
-        for pair in ("single+python", "single+none", "planning+none"):
-            assert pair in result.stderr
-
-    def test_unknown_shape_exits_2(self, tmp_path):
-        assert run_door("--adopt", str(tmp_path), "--shape", "cube").returncode == 2
-
-    def test_unknown_profile_exits_2(self, tmp_path):
-        result = run_door("--adopt", str(tmp_path), "--profile", "elixir")
-        assert result.returncode == 2
-
-    def test_venv_offer_needs_python_profile(self, tmp_path):
-        result = run_door("--adopt", str(tmp_path), "--profile", "none", "--with-venv")
-        assert result.returncode == 2
-        assert "--with-venv requires profile python" in result.stderr
-
-    def test_name_prefix_are_new_only(self, tmp_path):
-        result = run_door("--adopt", str(tmp_path), "--name", "X")
-        assert result.returncode == 2
-
-    def test_target_pointer_is_planning_only(self, tmp_path):
-        result = run_door("--adopt", str(tmp_path), "--target-path", "../x")
-        assert result.returncode == 2
-
-    def test_no_kit_materials_contradiction(self, tmp_path):
-        # BugBot PR #81: the materials engine installs the full kit
-        # workflow — --no-kit cannot be honored there and must be
-        # rejected loudly, never silently dropped
-        result = run_door("--adopt", str(tmp_path), "--design-materials", "--no-kit")
-        assert result.returncode == 2
-        assert "--no-kit contradicts --design-materials" in result.stderr
-
-    def test_no_kit_planning_contradiction(self, tmp_path):
-        result = run_door("--adopt", str(tmp_path), "--shape", "planning", "--no-kit")
-        assert result.returncode == 2
-
-    def test_invalid_bots_flag_exits_2(self, tmp_path):
-        result = run_door("--adopt", str(tmp_path), "--bots", "horsebot")
-        assert result.returncode == 2
-        assert "unknown bot 'horsebot'" in result.stderr
-
-    def test_bots_none_combined_exits_2(self, tmp_path):
-        result = run_door("--adopt", str(tmp_path), "--bots", "none coderabbit")
-        assert result.returncode == 2
-        assert "'none' cannot be combined" in result.stderr
-
-    def test_malformed_preset_exits_2_before_any_work(self, tmp_path):
-        cfg = write_preset(tmp_path, "this is not a preset\n")
-        env = _scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
-        result = run_door("--new", str(tmp_path / "proj"), env=env, timeout=30)
-        assert result.returncode == 2
-        assert "malformed preset line 1" in result.stderr
-        assert not (tmp_path / "proj").exists()
-
-    def test_new_target_must_not_exist(self, tmp_path):
-        result = run_door("--new", str(tmp_path))
-        assert result.returncode == 2
-        assert "already exists" in result.stderr
-
-    def test_adopt_target_must_exist(self, tmp_path):
-        result = run_door("--adopt", str(tmp_path / "nope"))
-        assert result.returncode == 2
-        assert "does not exist" in result.stderr
-
-    def test_adopting_the_kit_itself_refused(self):
-        result = run_door("--adopt", str(REPO_ROOT))
-        assert result.returncode == 2
-        assert "kit source repo" in result.stderr
-
-    def test_missing_git_identity_fails_fast_with_guidance(self, tmp_path):
-        # o3 finding: without an identity the export engine would die
-        # mid-run with git's own cryptic error — the door pre-checks
-        for key in ("user.email", "user.name"):
-            system_cfg = subprocess.run(
-                ["git", "config", "--system", "--get", key],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            if system_cfg.returncode == 0:
-                pytest.skip(f"system gitconfig carries {key} on this machine")
-        home = tmp_path / "bare-home"
-        home.mkdir()
-        env = _scrubbed_env(HOME=str(home), XDG_CONFIG_HOME=str(home / "xdg"))
-        result = run_door("--new", str(tmp_path / "proj"), env=env)
-        assert result.returncode == 1
-        assert "git identity incomplete" in result.stderr
-        assert not (tmp_path / "proj").exists()  # failed BEFORE any work
-
-        # email alone is not an identity — commits need name AND email
-        # (BugBot PR #81)
-        xdg = home / "xdg"
-        (xdg / "git").mkdir(parents=True)
-        (xdg / "git" / "config").write_text(
-            "[user]\n\temail = only-email@example.invalid\n", encoding="utf-8"
-        )
-        result = run_door("--new", str(tmp_path / "proj"), env=env)
-        assert result.returncode == 1
-        assert "user.name unset" in result.stderr
-
-
-def _kit_install_region(target: Path) -> str:
-    text = (target / "CLAUDE.md").read_text(encoding="utf-8")
-    assert "<!-- BEGIN KIT-LOCAL: kit-install -->" in text
-    return text.split("BEGIN KIT-LOCAL: kit-install")[1].split(
-        "END KIT-LOCAL: kit-install"
-    )[0]
-
-
-def _assert_doctor_tail(stdout: str) -> None:
-    assert "project doctor" in stdout
-    assert "DOCTOR:" in stdout, "doctor checks must have run"
-    assert "Doctor verdict:" in stdout
-    assert "Install complete:" in stdout
-
-
-def _assert_packaged_tail(stdout: str) -> None:
-    """--new (KIT-0093 packaged mode): the two installs are verified or
-    instructed, and doctor runs via the installed CLI when present —
-    green-or-actionably-instructive, never silent."""
-    assert "package verification" in stdout
-    assert (
-        "Doctor verdict:" in stdout
-        or "Install the lifecycle CLI: uv tool install agentive-kit" in stdout
-        or "uv tool upgrade agentive-kit" in stdout
-    )
-    assert "Install complete:" in stdout
-
-
-@pytest.mark.slow
-class TestAdoptE2E:
-    def test_adopt_single_defaults(self, tmp_path):
-        target = make_adopt_dir(tmp_path, "app")
-        result = run_door("--adopt", str(target))
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Setup door: mode=adopt shape=single profile=python" in result.stdout
-        # offers skipped with notice in non-TTY (N4)
-        assert "Offer skipped (non-interactive): evaluators" in result.stdout
-        assert "Offer skipped (non-interactive): venv" in result.stdout
-        _assert_doctor_tail(result.stdout)
-        region = _kit_install_region(target)
-        assert "shape: single" in region
-        assert "profile: python" in region
-        assert (target / "scripts" / "local" / "checks.sh").is_file()
-
-    def test_adopt_single_profile_none(self, tmp_path):
-        """The single:none matrix cell, adopt mode (CodeRabbit PR #81).
-        The profile scopes the check hook + record ONLY — the shipset
-        is the shape's job (ADR-0027 P1 / KIT-0050 contract), so the
-        toolchain still ships for a single-shape install."""
-        target = make_adopt_dir(tmp_path, "docsrepo")
-        result = run_door("--adopt", str(target), "--profile", "none")
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Setup door: mode=adopt shape=single profile=none" in result.stdout
-        # no venv offer for a toolchain-free profile
-        assert "Offer skipped (non-interactive): venv" not in result.stdout
-        _assert_doctor_tail(result.stdout)
-        region = _kit_install_region(target)
-        assert "shape: single" in region
-        assert "profile: none" in region
-        none_seed = REPO_ROOT / "scripts" / "local" / "templates" / "checks-none.sh"
-        hook = target / "scripts" / "local" / "checks.sh"
-        assert hook.read_bytes() == none_seed.read_bytes()
-        # shipset unchanged by profile: single shape ships the toolchain
-        assert (target / "pyproject.toml").is_file()
-        # a seeded pyproject carries the placeholder the onboarding
-        # agents rewrite, never the kit's own identity (BugBot PR #90 —
-        # the engine-export reset applied to the adopt copy path too)
-        seeded = (target / "pyproject.toml").read_text(encoding="utf-8")
-        assert (
-            'name = "your-project-name"  # TODO: Change this to your project name'
-            in seeded
-        )
-        assert 'name = "agentive-starter-kit"' not in seeded
-
-    def test_readopt_with_conflicting_profile_rejected(self, tmp_path):
-        """CodeRabbit PR #81: explicit flags that contradict the
-        target's existing kit-install record are an error, never a
-        silent preserve (the PR #78 target-pointer precedent)."""
-        target = make_adopt_dir(tmp_path, "docsrepo")
-        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
-        result = run_door("--adopt", str(target), "--profile", "python")
-        assert result.returncode == 2
-        assert "conflicts with the target's existing kit-install record" in (
-            result.stderr
-        )
-        # flagless re-adopt keeps working (nothing explicit to conflict)
-        # AND preserves the existing record — the default must not
-        # silently overwrite single:none with single:python
-        readopt = run_door("--adopt", str(target))
-        assert readopt.returncode == 0, readopt.stderr + readopt.stdout
-        assert "profile: none" in _kit_install_region(target)
-
-    def test_adopt_planning_records_pointer(self, tmp_path):
-        target = make_adopt_dir(tmp_path, "coord")
-        result = run_door(
-            "--adopt",
-            str(target),
-            "--shape",
-            "planning",
-            "--target-path",
-            "../product",
-            "--target-github",
-            "acme/product",
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "planning shape → profile none (forced" in result.stdout
-        # no venv offer for a toolchain-free shape
-        assert "Offer skipped (non-interactive): venv" not in result.stdout
-        _assert_doctor_tail(result.stdout)
-        region = _kit_install_region(target)
-        assert "shape: planning" in region
-        assert "profile: none" in region
-        assert "target_path: ../product" in region
-
-    def test_adopt_gitless_target_hints_materials(self, tmp_path):
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        target = tmp_path / "materials"
-        target.mkdir()
-        (target / "brief.md").write_text("# brief\n", encoding="utf-8")
-        result = run_door("--adopt", str(target), env=env)
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "--design-materials" in result.stdout  # the detection hint
-        _assert_doctor_tail(result.stdout)
-
-    def test_adopt_git_target_no_materials_hint(self, tmp_path):
-        target = make_adopt_dir(tmp_path, "app")
-        result = run_door("--adopt", str(target))
-        assert "re-run with --design-materials" not in result.stdout
-
-
-@pytest.mark.slow
-class TestNewE2E:
-    def test_new_single_exports_and_records(self, tmp_path):
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        target = tmp_path / "fresh-app"
-        result = run_door("--new", str(target), env=env)
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Content scaffold ready" in result.stdout  # scaffold engine
-        assert "Scaffold committed (branch: main)." in result.stdout
-        _assert_packaged_tail(result.stdout)
-        region = _kit_install_region(target)
-        assert "shape: single" in region
-        assert "profile: python" in region
-        assert (target / "scripts" / "local" / "checks.sh").is_file()
-        # kit_markers.py travels with the agentive-kit package (KIT-0093)
-        assert not (target / "scripts" / "local" / "kit_markers.py").exists()
-        # one scaffold commit, nothing dangling
-        log = subprocess.run(
-            ["git", "-C", str(target), "log", "--oneline"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            env=env,
-        )
-        assert len(log.stdout.strip().splitlines()) == 1
-        status = subprocess.run(
-            ["git", "-C", str(target), "status", "--porcelain"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            env=env,
-        )
-        assert status.stdout.strip() == ""
-
-    def test_new_export_carries_no_planning_corpus(self, tmp_path):
-        """The export engine's .kit/context/ scrubs are -maxdepth 1, so
-        every SUBDIRECTORY of context/ needs its own removal. KIT-0077
-        added context/archive/ (100 finished-task handoffs) and it
-        escaped the sweep until engine-export.sh gained an explicit
-        rm -rf. Mirrors test_engine_materials.py's corpus guard so the
-        class is closed on both consumer copy paths, not just one."""
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        target = tmp_path / "clean-app"
-        result = run_door("--new", str(target), env=env)
-        assert result.returncode == 0, result.stderr + result.stdout
-
-        context = target / ".kit" / "context"
-        assert context.is_dir(), "export should still scaffold .kit/context/"
-        leaked = [
-            str(p.relative_to(target))
-            for p in context.rglob("*")
-            if p.is_file() and re.match(r"^[A-Z]+-\d{4}", p.name)
-        ]
-        assert not leaked, f"kit planning corpus leaked into export: {leaked}"
-        assert not (
-            context / "archive"
-        ).exists(), "the kit's finished-task archive must never ship to a new project"
-
-    def test_new_single_profile_none_reseeds_rules(self, tmp_path):
-        """BugBot PR #81: the export carries the kit's python Project
-        Rules region; a profile-none install must reseed it to the
-        none content, never record none next to python guidance."""
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        target = tmp_path / "docs-app"
-        result = run_door("--new", str(target), "--profile", "none", env=env)
-        assert result.returncode == 0, result.stderr + result.stdout
-        region = _kit_install_region(target)
-        assert "profile: none" in region
-        text = (target / "CLAUDE.md").read_text(encoding="utf-8")
-        rules = text.split("BEGIN KIT-LOCAL: project-rules")[1].split(
-            "END KIT-LOCAL: project-rules"
-        )[0]
-        assert "No project toolchain is configured" in rules
-        assert "### Python" not in rules
-        assert text.count("BEGIN KIT-LOCAL: project-rules") == 1
-        # the none check hook seeded alongside (byte-identical to template)
-        none_seed = REPO_ROOT / "scripts" / "local" / "templates" / "checks-none.sh"
-        hook = target / "scripts" / "local" / "checks.sh"
-        assert hook.read_bytes() == none_seed.read_bytes()
-
-    def test_new_planning_scaffolds_and_records(self, tmp_path):
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        target = tmp_path / "fresh-planning"
-        result = run_door(
-            "--new",
-            str(target),
-            "--shape",
-            "planning",
-            "--target-path",
-            "../product",
-            env=env,
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        _assert_packaged_tail(result.stdout)
-        # born packaged (KIT-0093): the lifecycle comes from the
-        # installed CLI, never a script copy
-        assert not (target / "scripts" / "core").exists()
-        assert not (target / "pyproject.toml").exists()  # never-ship contract
-        region = _kit_install_region(target)
-        assert "shape: planning" in region
-        assert "profile: none" in region
-
-
 def _env_lines(target: Path) -> list[str]:
     return (target / ".env").read_text(encoding="utf-8").splitlines()
 
@@ -712,928 +126,173 @@ def _assert_env_invariants(target: Path, env: dict) -> None:
     assert check_ignore.returncode == 0, ".env must be gitignored"
 
 
-@pytest.mark.slow
-class TestEnvSeedingE2E:
-    """KIT-0084: every --new target ends with a working, safe .env."""
+class TestShimStatic:
+    """F2's grep proof, pinned as a test: the shim file carries no
+    second copy of the matrix, the legality logic, or the flag table —
+    the package is the single owner."""
 
-    def test_new_single_seeds_env_with_identity(self, tmp_path):
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        target = tmp_path / "fresh-env-app"
-        result = run_door("--new", str(target), "--prefix", "FEA", env=env)
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Seeded .env from .env.template" in result.stdout
-        _assert_env_invariants(target, env)
-        lines = _env_lines(target)
-        assert "PROJECT_NAME=fresh-env-app" in lines
-        assert "TASK_PREFIX=FEA" in lines
-        # F3, non-TTY face: the operator gets the exact command (when
-        # the kit clone has a .env to carry over) or the add-keys notice
-        kit_env = REPO_ROOT / ".env"
-        if kit_env.is_file():
-            # install -m 600: the copy is born 0600, no cp+chmod window
-            assert f'install -m 600 "{kit_env}" "{target}/.env"' in result.stdout
-            assert "operator" in result.stdout
-        else:
-            assert "No API keys seeded" in result.stdout
+    def test_no_matrix_copy_survives(self):
+        text = DOOR.read_text(encoding="utf-8")
+        for needle in (
+            "single:python",  # the LEGAL_PAIRS data form
+            "LEGAL_PAIRS",
+            "validate_pair",
+            "validate_combo",
+            "validate_values",
+            "legal_pairs_human",
+            "planning+none",  # the human-readable table form
+            "✔",  # the help-table matrix glyphs
+        ):
+            assert needle not in text, f"matrix copy in shim: {needle!r}"
 
-    def test_new_single_default_prefix_matches_recorded_state(self, tmp_path):
-        """Without --prefix the export engine derives one; the .env line
-        must be the RECORDED value, never re-derived and never TASK."""
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        target = tmp_path / "derived-app"
-        result = run_door("--new", str(target), env=env)
-        assert result.returncode == 0, result.stderr + result.stdout
-        _assert_env_invariants(target, env)
-        state = json.loads(
-            (target / ".kit" / "context" / "current-state.json").read_text(
-                encoding="utf-8"
-            )
-        )
-        recorded = state["project"]["task_prefix"]
-        assert recorded  # the export engine always derives something
-        lines = _env_lines(target)
-        assert f"TASK_PREFIX={recorded}" in lines
-        assert "TASK_PREFIX=TASK" not in lines
+    def test_no_resolution_chain_survives(self):
+        """The preset/record/default chain is package code — none of
+        its function surface may reappear in the shim."""
+        text = DOOR.read_text(encoding="utf-8")
+        for needle in (
+            "resolve_setting",
+            "load_preset",
+            "preset_get",
+            "kit_default",
+            "load_record",
+            "check_record_conflict",
+            "normalize_bots",
+        ):
+            assert needle not in text, f"resolver copy in shim: {needle!r}"
 
-    def test_new_planning_seeds_env_with_empty_prefix(self, tmp_path):
-        """Planning shape has no prefix at door time — written EMPTY
-        (doctor warns until intake decides it), never 'TASK'."""
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        target = tmp_path / "fresh-env-planning"
-        result = run_door(
-            "--new",
-            str(target),
-            "--shape",
-            "planning",
-            "--target-path",
-            "../product",
-            env=env,
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Seeded .env from .env.template" in result.stdout
-        _assert_env_invariants(target, env)
-        lines = _env_lines(target)
-        assert "PROJECT_NAME=fresh-env-planning" in lines
-        assert "TASK_PREFIX=" in lines  # the line exists, empty
-        assert "TASK_PREFIX=TASK" not in lines
+    def test_only_the_materials_engine_is_referenced(self):
+        """The shim's one legacy branch drives engine-materials.sh; the
+        scaffold/consumer engines are reached only through the package."""
+        text = DOOR.read_text(encoding="utf-8")
+        assert "engine-materials.sh" in text
+        assert "engine-consumer.sh" not in text
+        assert "engine-scaffold.sh" not in text
 
-    def test_env_source_seeded_env_gets_identity_filled(self, tmp_path):
-        """The preset env-source path (F6) gains the identity fields
-        too — appended when the operator's template lacks them — and
-        the secret still never surfaces."""
-        _cfg, env = _demo_preset_env(tmp_path)
-        target = tmp_path / "preset-env-app"
-        result = run_door("--new", str(target), env=env)
-        assert result.returncode == 0, result.stderr + result.stdout
-        _assert_env_invariants(target, env)
-        lines = _env_lines(target)
-        assert f"OPENAI_API_KEY={SECRET}" in lines  # carried over intact
-        assert "PROJECT_NAME=preset-env-app" in lines
-        # appended: single shape reads the export engine's recorded prefix
-        prefix_lines = [ln for ln in lines if ln.startswith("TASK_PREFIX=")]
-        assert prefix_lines and prefix_lines[0] not in ("TASK_PREFIX=TASK",)
-        assert SECRET not in result.stdout + result.stderr
-        # env-source present → no template seeding, no carry-over offer
-        assert "Seeded .env from .env.template" not in result.stdout
-        assert "API keys not seeded" not in result.stdout
+    def test_shim_names_its_removal_task(self):
+        assert "KIT-0107" in DOOR.read_text(encoding="utf-8")
 
 
-class TestFillEnvIdentityUnits:
-    """KIT-0084 F2, sourced: the .env rewrite in isolation."""
+class TestTranslation:
+    """Historical flags reach the package as verbs."""
 
-    def _target_with_env(
-        self, tmp_path: Path, content: str, name: str = "unit-target"
-    ) -> Path:
-        target = tmp_path / name
-        target.mkdir()
-        # a .git dir so the rewrite's temp file takes its real home
-        # (inside .git/, never stageable)
-        (target / ".git").mkdir()
-        (target / ".env").write_text(content, encoding="utf-8")
-        (target / ".env").chmod(0o600)
-        return target
+    def test_help_deferred_to_package_new(self):
+        result = run_door("--help")
+        assert result.returncode == 0
+        assert "agentive new — the agentive setup door" in result.stdout
+        # the shim's own header must not answer — the package does
+        assert "the one setup door" not in result.stdout
 
-    def test_planning_rewrites_placeholder_to_empty(self, tmp_path):
-        target = self._target_with_env(
-            tmp_path, "PROJECT_NAME=\nTASK_PREFIX=TASK\nOPENAI_API_KEY=x\n"
-        )
-        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
-        assert result.returncode == 0, result.stderr
-        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
-        assert "PROJECT_NAME=unit-target" in lines
-        assert "TASK_PREFIX=" in lines
-        assert "TASK_PREFIX=TASK" not in lines
-        assert "OPENAI_API_KEY=x" in lines  # untouched
-        assert ((target / ".env").stat().st_mode & 0o777) == 0o600
+    def test_help_deferred_to_package_adopt(self, tmp_path):
+        # a bare '-h' after --adopt is a swallowed-flag error (see the
+        # guard test below) — adopt help rides an ordinary invocation
+        result = run_door("--adopt", str(tmp_path), "--help")
+        assert result.returncode == 0
+        assert "agentive adopt — the agentive setup door" in result.stdout
 
-    def test_missing_lines_appended_commented_left_alone(self, tmp_path):
-        target = self._target_with_env(
-            tmp_path, "# PROJECT_NAME=commented\nOPENAI_API_KEY=x\n"
-        )
-        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
-        assert result.returncode == 0, result.stderr
-        text = (target / ".env").read_text(encoding="utf-8")
-        assert "# PROJECT_NAME=commented" in text  # comments never rewritten
-        assert "PROJECT_NAME=unit-target" in text.splitlines()
-        assert "TASK_PREFIX=" in text.splitlines()
+    def test_removal_notice_on_stderr(self):
+        result = run_door("--help")
+        assert "shim over the packaged door" in result.stderr
+        assert "KIT-0107" in result.stderr
+        # notice never pollutes stdout (the derivable-help surface)
+        assert "shim over the packaged door" not in result.stdout
 
-    def test_no_env_file_is_a_quiet_noop(self, tmp_path):
-        target = tmp_path / "no-env"
-        target.mkdir()
-        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
-        assert result.returncode == 0, result.stderr
-        assert not (target / ".env").exists()
-
-    def test_duplicate_identity_lines_deduplicated(self, tmp_path):
-        """fast-v2/o3 review: dotenv parsers are last-assignment-wins,
-        so a surviving duplicate would silently override the identity
-        the door just wrote — later duplicates must be dropped."""
-        target = self._target_with_env(
-            tmp_path,
-            "PROJECT_NAME=old-one\nOPENAI_API_KEY=x\n"
-            "  PROJECT_NAME=old-two\nTASK_PREFIX=AAA\nTASK_PREFIX=BBB\n",
-        )
-        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
-        assert result.returncode == 0, result.stderr
-        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
-        name_lines = [ln for ln in lines if ln.startswith("PROJECT_NAME=")]
-        prefix_lines = [ln for ln in lines if ln.startswith("TASK_PREFIX=")]
-        assert name_lines == ["PROJECT_NAME=unit-target"]
-        assert prefix_lines == ["TASK_PREFIX="]
-        assert "OPENAI_API_KEY=x" in lines
-
-    def test_export_prefixed_duplicates_deduplicated(self, tmp_path):
-        """CodeRabbit: the doctor accepts `export KEY=`, so an exported
-        duplicate surviving the rewrite would override the identity
-        under last-wins parsers — it must be dropped too."""
-        target = self._target_with_env(
-            tmp_path,
-            "PROJECT_NAME=old\nexport PROJECT_NAME=older\n"
-            "export TASK_PREFIX=ZZZ\nOPENAI_API_KEY=x\n",
-        )
-        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
-        assert result.returncode == 0, result.stderr
-        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
-        assert [ln for ln in lines if "PROJECT_NAME" in ln] == [
-            "PROJECT_NAME=unit-target"
-        ]
-        assert [ln for ln in lines if "TASK_PREFIX" in ln] == ["TASK_PREFIX="]
-        assert "OPENAI_API_KEY=x" in lines
-
-    def test_special_char_name_written_quoted(self, tmp_path):
-        """CodeRabbit: a value carrying '#' or spaces is written
-        double-quoted so the doctor (and dotenv parsers) read it back
-        intact; quote characters themselves are stripped."""
-        target = self._target_with_env(
-            tmp_path, "PROJECT_NAME=\nTASK_PREFIX=\n", name="acme #1's"
-        )
-        result = sourced(f'TARGET="{target}"; SHAPE=planning; fill_env_identity')
-        assert result.returncode == 0, result.stderr
-        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
-        assert 'PROJECT_NAME="acme #1s"' in lines  # quoted; "'" stripped
-
-    def test_null_recorded_prefix_writes_empty_never_none(self, tmp_path):
-        """fast-v2 review: a JSON null task_prefix must never become
-        the literal string 'None' in .env."""
-        target = self._target_with_env(tmp_path, "TASK_PREFIX=TASK\n")
-        state_dir = target / ".kit" / "context"
-        state_dir.mkdir(parents=True)
-        (state_dir / "current-state.json").write_text(
-            '{"project": {"name": "x", "task_prefix": null}}', encoding="utf-8"
-        )
-        result = sourced(f'TARGET="{target}"; SHAPE=single; fill_env_identity')
-        assert result.returncode == 0, result.stderr
-        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
-        assert "TASK_PREFIX=" in lines
-        assert "TASK_PREFIX=None" not in lines
-
-
-SECRET = "KIT0056-FIXTURE-SECRET-NEVER-PRINT"
-
-
-def _demo_preset_env(tmp_path: Path) -> tuple[Path, dict[str, str]]:
-    """A FULL preset (every door question answered) in a scratch
-    config home, plus git identity and a 0600 env template carrying a
-    fixture secret. Returns (config_home, env)."""
-    xdg = _git_identity(tmp_path)  # xdg-config/ with git/config
-    env_template = tmp_path / "env-template"
-    env_template.write_text(f"OPENAI_API_KEY={SECRET}\n", encoding="utf-8")
-    env_template.chmod(0o600)
-    cfg = write_preset(
-        tmp_path,
-        "# full operator preset (KIT-0056 N4 fixture)\n"
-        "shape: single\n"
-        "profile: python\n"
-        "bots: coderabbit bugbot\n"
-        "evaluators: no\n"
-        "venv: no\n"
-        f"env-source: {env_template}\n",
-    )
-    env = _scrubbed_env(XDG_CONFIG_HOME=str(xdg), AGENTIVE_KIT_CONFIG_DIR=str(cfg))
-    return cfg, env
-
-
-@pytest.mark.slow
-class TestPresetE2E:
-    """KIT-0056 P7 end to end. Preset fixtures live under scratch XDG
-    dirs — the suite never reads or writes the real ~/.config (N-rule
-    in the task spec)."""
-
-    def test_one_button_demo(self, tmp_path):
-        """N4, the acceptance bar: a full preset answers every question
-        — zero prompts, zero skipped-offer notices — and the resulting
-        record reflects the preset's declarations. Secrets arrive by
-        reference at mode 0600 and never appear in output or git."""
-        cfg, env = _demo_preset_env(tmp_path)
-        preset_file = cfg / "preset"
-        preset_before = preset_file.read_bytes()
-        target = tmp_path / "one-button"
-        result = run_door("--new", str(target), env=env)
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Preset:" in result.stdout  # the layer announced itself
-        # zero prompts is structural (stdin closed); zero NOTICES is the
-        # preset's work — nothing was skipped-with-notice
-        assert "Offer skipped" not in result.stdout
-        _assert_packaged_tail(result.stdout)
-        region = _kit_install_region(target)
-        assert "shape: single" in region
-        assert "profile: python" in region
-        assert "bots: coderabbit bugbot" in region
-        # F6: .env seeded 0600, gitignored, contents NEVER surfaced
-        dotenv = target / ".env"
-        assert dotenv.is_file()
-        assert (dotenv.stat().st_mode & 0o777) == 0o600
-        assert SECRET in dotenv.read_text(encoding="utf-8")
-        assert SECRET not in result.stdout + result.stderr
-        check_ignore = subprocess.run(
-            ["git", "-C", str(target), "check-ignore", "-q", ".env"],
-            env=env,
-            timeout=30,
-        )
-        assert check_ignore.returncode == 0, ".env must be gitignored"
-        status = subprocess.run(
-            ["git", "-C", str(target), "status", "--porcelain"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            env=env,
-        )
-        # rc asserted first — a FAILED git call also has empty stdout
-        # (CodeRabbit): empty output only means clean when git ran
-        assert status.returncode == 0, status.stderr
-        assert status.stdout.strip() == ""  # nothing staged, nothing dangling
-        tracked_grep = subprocess.run(
-            ["git", "-C", str(target), "grep", "-l", SECRET, "HEAD"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            env=env,
-        )
-        assert tracked_grep.returncode == 1, tracked_grep.stderr  # 1 = no match
-        assert tracked_grep.stdout.strip() == ""  # secret in no tracked file
-        # F7: the run read the preset but never touched it
-        assert preset_file.read_bytes() == preset_before
-
-    @staticmethod
-    def _door_output(stdout: str, target: Path) -> str:
-        # The doctor tail's config-home CHECK reports the environment
-        # (whether a config home exists) — the very thing this test
-        # varies between the two runs (KIT-0058). Mask that one check
-        # line and the verdict-count summary; every other byte of the
-        # two runs still compares exactly.
-        lines = [
-            ln
-            for ln in stdout.replace(str(target), "<T>").splitlines(keepends=True)
-            if not ln.startswith("DOCTOR:config-home:")
-            and not ln.startswith("Doctor: ")
-        ]
-        return "".join(lines)
-
-    def test_no_preset_gives_the_stranger_path(self, tmp_path):
-        """--no-preset with a preset present must be byte-identical to
-        a machine with no preset at all (N1's flip side) — modulo the
-        config-home doctor line, which by design names the environment
-        difference this test constructs."""
-        _cfg, env = _demo_preset_env(tmp_path)
-        # same basename in different parents: engine banners print the
-        # project NAME, so only the parent path may differ
-        target_a = make_adopt_dir(tmp_path / "a", "proj")
-        target_b = make_adopt_dir(tmp_path / "b", "proj")
-        with_flag = run_door(
-            "--adopt",
-            str(target_a),
-            "--no-preset",
-            env=env,
-        )
-        stranger = run_door("--adopt", str(target_b))
-        assert with_flag.returncode == 0, with_flag.stderr + with_flag.stdout
-        assert stranger.returncode == 0, stranger.stderr + stranger.stdout
-        normalized_a = self._door_output(with_flag.stdout, target_a)
-        normalized_b = self._door_output(stranger.stdout, target_b)
-        assert normalized_a == normalized_b
-        # the door's OWN chrome never mentions the preset in either run
-        assert "Preset:" not in with_flag.stdout
-        assert "Seeded" not in with_flag.stdout
-
-    def test_adopt_record_beats_preset(self, tmp_path):
-        """A recorded target keeps its identity: the preset answers
-        none of the recorded questions, and the record round-trips
-        untouched (divergence belongs to doctor --against-preset)."""
-        target = make_adopt_dir(tmp_path, "recorded")
-        first = run_door("--adopt", str(target), "--profile", "none", "--bots", "none")
-        assert first.returncode == 0, first.stderr + first.stdout
-        cfg = write_preset(
-            tmp_path, "shape: planning\nprofile: python\nbots: coderabbit bugbot\n"
-        )
-        readopt = run_door(
-            "--adopt", str(target), env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
-        )
-        assert readopt.returncode == 0, readopt.stderr + readopt.stdout
-        assert "Setup door: mode=adopt shape=single" in readopt.stdout
-        region = _kit_install_region(target)
-        assert "shape: single" in region
-        assert "profile: none" in region
-        assert "bots: none" in region
-
-    def test_preset_answers_the_offer_questions(self, tmp_path):
-        """Preset 'evaluators:'/'venv:' answers reach run_offers like
-        flags would — the non-interactive skip notices disappear (the
-        preset-less baseline asserts their presence). 'no' keeps the
-        test network-free; the wiring is identical for 'yes'."""
-        cfg = write_preset(tmp_path, "evaluators: no\nvenv: no\n")
-        target = make_adopt_dir(tmp_path, "offers")
-        result = run_door(
-            "--adopt", str(target), env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Offer skipped (non-interactive): evaluators" not in result.stdout
-        assert "Offer skipped (non-interactive): venv" not in result.stdout
-
-    def test_preset_venv_ignored_for_none_recorded_target(self, tmp_path):
-        """BugBot round 2: on adopt, the record's profile wins over the
-        resolved default for the venv answer too — a preset 'venv: yes'
-        must never run setup-dev.sh on a recorded docs-only project,
-        and ignoring the answer is said out loud."""
-        target = make_adopt_dir(tmp_path, "docs-only")
-        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
-        cfg = write_preset(tmp_path, "venv: yes\nevaluators: no\n")
-        result = run_door(
-            "--adopt", str(target), env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Preset venv answer ignored" in result.stdout
-        assert "profile: none" in result.stdout  # the reason is named
-        assert "setup-dev" not in result.stdout  # the venv step never ran
-        # BugBot round 3: the OFFER is closed too — no misleading
-        # non-TTY --with-venv hint (and in TTY, no prompt) on a
-        # docs-only recorded project
-        assert "Offer skipped (non-interactive): venv" not in result.stdout
-        assert "profile: none" in _kit_install_region(target)
-
-    def test_venv_offer_closed_for_none_recorded_target(self, tmp_path):
-        """BugBot round 3, the preset-less face: flagless adopt of a
-        profile:none-recorded target must not surface the venv offer
-        at all — the record has no Python toolchain."""
-        target = make_adopt_dir(tmp_path, "docs-flagless")
-        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
-        result = run_door("--adopt", str(target))
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "Offer skipped (non-interactive): venv" not in result.stdout
-        # the evaluators offer is profile-independent and stays open
-        assert "Offer skipped (non-interactive): evaluators" in result.stdout
-
-    def test_with_venv_flag_rejected_for_none_recorded_target(self, tmp_path):
-        """The explicit flag keys on the effective profile too —
-        --with-venv on a docs-only recorded project is the same
-        illegal ask as on a resolved-none run."""
-        target = make_adopt_dir(tmp_path, "docs-flagged")
-        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
-        result = run_door("--adopt", str(target), "--with-venv")
+    def test_missing_mode_non_tty_fails_fast(self):
+        result = run_door(timeout=30)
         assert result.returncode == 2
-        assert "--with-venv requires profile python" in result.stderr
+        assert "mode is required" in result.stderr
 
-    def test_bad_offer_value_fails_loud(self, tmp_path):
-        cfg = write_preset(tmp_path, "evaluators: maybe\n")
-        target = make_adopt_dir(tmp_path, "badval")
+    def test_missing_target_reaches_package_prompt_guard(self):
+        result = run_door("--adopt", timeout=30)
+        assert result.returncode == 2
+        assert "target directory is required" in result.stderr
+
+    def test_second_mode_flag_refused_never_drops_first_target(self, tmp_path):
+        # CodeRabbit (this PR): '--new a --adopt b' must not silently
+        # drop 'a' (the masking class) — one mode per run
         result = run_door(
-            "--adopt", str(target), env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
+            "--new", str(tmp_path / "a"), "--adopt", str(tmp_path / "b"), timeout=30
         )
         assert result.returncode == 2
-        assert "preset key 'evaluators' must be yes or no" in result.stderr
+        assert "only one mode flag is allowed" in result.stderr
 
-    def test_unreadable_preset_fails_loud(self, tmp_path):
-        # a present-but-unreadable preset must diagnose itself, not
-        # die with bash's raw "Permission denied" (fast-v2 finding)
-        if os.geteuid() == 0:
-            pytest.skip("permission checks are meaningless as root")
-        cfg = write_preset(tmp_path, "shape: single\n")
-        (cfg / "preset").chmod(0o000)
-        target = make_adopt_dir(tmp_path, "unreadable")
-        try:
-            result = run_door(
-                "--adopt",
-                str(target),
-                env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
-            )
-            assert result.returncode == 2
-            assert "not readable" in result.stderr
-            assert "--no-preset" in result.stderr  # the escape hatch is named
-        finally:
-            (cfg / "preset").chmod(0o600)
-
-    @pytest.mark.slow
-    def test_loose_env_source_perms_warn_but_proceed(self, tmp_path):
-        """0600 on the SOURCE is expected-not-enforced by design (F6:
-        it is the operator's own file; the target copy is always
-        0600) — but the warning must actually fire."""
-        _cfg, env = _demo_preset_env(tmp_path)
-        env_template = tmp_path / "env-template"
-        env_template.chmod(0o644)
-        target = tmp_path / "loose-perms"
-        result = run_door("--new", str(target), env=env)
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "0600 expected" in result.stderr
-        assert ((target / ".env").stat().st_mode & 0o777) == 0o600
-
-    def test_unreadable_env_source_fails_before_any_work(self, tmp_path):
-        if os.geteuid() == 0:
-            pytest.skip("permission checks are meaningless as root")
-        secret_file = tmp_path / "env-template"
-        secret_file.write_text("KEY=x\n", encoding="utf-8")
-        secret_file.chmod(0o000)
-        cfg = write_preset(tmp_path, f"env-source: {secret_file}\n")
-        env = _scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg))
-        try:
-            result = run_door("--new", str(tmp_path / "proj"), env=env, timeout=30)
-            assert result.returncode == 2
-            assert "not readable" in result.stderr
-            assert not (tmp_path / "proj").exists()  # failed BEFORE any work
-        finally:
-            secret_file.chmod(0o600)
-
-
-@pytest.mark.slow
-class TestBotsDeclarationE2E:
-    """KIT-0056 P5: the --bots flag through door + engine + record."""
-
-    def test_adopt_bots_subset_records_line(self, tmp_path):
-        target = make_adopt_dir(tmp_path, "one-bot")
-        result = run_door("--adopt", str(target), "--bots", "coderabbit")
-        assert result.returncode == 0, result.stderr + result.stdout
-        region = _kit_install_region(target)
-        assert "bots: coderabbit" in region
-        assert "bugbot" not in region
-
-    def test_new_planning_with_bots_records_line(self, tmp_path):
-        # the matrix's other seed path: the planning region body (4
-        # lines incl. the target pointer) gains the bots line too
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        target = tmp_path / "planning-bots"
-        result = run_door(
-            "--new", str(target), "--shape", "planning", "--bots", "none", env=env
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        region = _kit_install_region(target)
-        assert "shape: planning" in region
-        assert "target_github:" in region
-        assert "bots: none" in region
-
-    def test_readopt_adds_bots_line_surgically(self, tmp_path):
-        """An existing record without the line gains exactly the bots
-        line — shape/profile preserved byte-for-byte (the one-writer
-        path through kit_markers, never a region rewrite)."""
-        target = make_adopt_dir(tmp_path, "add-later")
-        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
-        before = _kit_install_region(target)
-        assert "shape: single\nprofile: none\n" in before
-        assert "bots:" not in before
-        result = run_door("--adopt", str(target), "--bots", "none")
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "bots line added" in result.stdout
-        after = _kit_install_region(target)
-        # prior lines byte-preserved, bots appended right after them
-        assert "shape: single\nprofile: none\nbots: none\n" in after
-
-    def test_readopt_conflicting_bots_rejected(self, tmp_path):
-        target = make_adopt_dir(tmp_path, "conflict")
-        assert run_door("--adopt", str(target), "--bots", "none").returncode == 0
-        result = run_door("--adopt", str(target), "--bots", "coderabbit bugbot")
+    def test_mode_flag_must_not_swallow_following_flag(self):
+        # BugBot PR #81: '--new --shape planning' must not adopt
+        # '--shape' as the target directory
+        result = run_door("--new", "--shape", "planning", timeout=30)
         assert result.returncode == 2
-        assert "conflicts with the target's existing kit-install record" in (
-            result.stderr
-        )
-        assert "bots: none" in _kit_install_region(target)  # record untouched
+        assert "requires a value" in result.stderr
+        result = run_door("--new", "-h", timeout=30)
+        assert result.returncode == 2
+        assert "requires a value" in result.stderr
+        # equals-form arms validate the suffix the same way — a
+        # '--new=--help' must be a usage error, never help exit 0
+        # (CodeRabbit round 2)
+        result = run_door("--new=--help", timeout=30)
+        assert result.returncode == 2
+        assert "requires a value" in result.stderr
+        result = run_door("--adopt=-h", timeout=30)
+        assert result.returncode == 2
+        assert "requires a value" in result.stderr
 
-    def test_indented_existing_bots_line_not_duplicated(self, tmp_path):
-        """o3 (this PR): an indented hand-edited bots line read as
-        'absent' by the engine would gain a SECOND bots line — the
-        whitespace-tolerant reader must see it and no-op."""
-        target = make_adopt_dir(tmp_path, "indented")
-        assert run_door("--adopt", str(target), "--bots", "none").returncode == 0
-        claude_md = target / "CLAUDE.md"
-        text = claude_md.read_text(encoding="utf-8")
-        claude_md.write_text(
-            text.replace("\nbots: none\n", "\n   bots: none\n"), encoding="utf-8"
-        )
-        result = run_door("--adopt", str(target), "--bots", "none")
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "bots line added" not in result.stdout
-        region = _kit_install_region(target)
-        assert region.count("bots:") == 1
+    def test_equals_form_translates(self, tmp_path):
+        # --adopt=<dir> reaches the package as a target: the run gets
+        # past the shim and fails on the PACKAGE's own target check
+        result = run_door(f"--adopt={tmp_path / 'nope'}", timeout=60)
+        assert result.returncode == 2
+        assert "--adopt target does not exist" in result.stderr
 
-    def test_equivalent_bots_record_is_not_a_conflict(self, tmp_path):
-        """BugBot PR #83: conflict checks compare NORMALIZED forms —
-        a hand-edited 'BugBot, CodeRabbit' record is the same
-        declaration as --bots 'bugbot coderabbit', not a conflict,
-        and the engine must not append a second line either."""
-        target = make_adopt_dir(tmp_path, "equiv")
-        first = run_door("--adopt", str(target), "--bots", "coderabbit bugbot")
-        assert first.returncode == 0, first.stderr + first.stdout
-        claude_md = target / "CLAUDE.md"
-        text = claude_md.read_text(encoding="utf-8")
-        claude_md.write_text(
-            text.replace("\nbots: coderabbit bugbot\n", "\nbots: BugBot, CodeRabbit\n"),
-            encoding="utf-8",
-        )
-        result = run_door("--adopt", str(target), "--bots", "bugbot coderabbit")
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "conflicts" not in result.stderr
-        assert "bots line added" not in result.stdout
-        region = _kit_install_region(target)
-        assert region.count("bots:") == 1
-        # the operator's spelling is preserved, not rewritten
-        assert "bots: BugBot, CodeRabbit" in region
+    def test_unknown_flag_is_the_packages_usage_error(self, tmp_path):
+        result = run_door("--new", str(tmp_path / "x"), "--frobnicate", timeout=60)
+        assert result.returncode == 2
+        assert "unknown argument: --frobnicate" in result.stderr
+        assert "agentive new --help" in result.stderr  # the package's pointer
 
-    def test_valueless_existing_bots_line_fails_loud(self, tmp_path):
-        """CodeRabbit PR #83: a record whose bots: line has NO value is
-        malformed, not absent — appending a second line after it would
-        leave two declarations; the engine refuses loudly instead."""
-        target = make_adopt_dir(tmp_path, "valueless")
-        assert run_door("--adopt", str(target), "--profile", "none").returncode == 0
-        claude_md = target / "CLAUDE.md"
-        text = claude_md.read_text(encoding="utf-8")
-        claude_md.write_text(
-            text.replace("\nprofile: none\n", "\nprofile: none\nbots:\n"),
-            encoding="utf-8",
-        )
-        result = run_door("--adopt", str(target), "--bots", "none")
-        assert result.returncode == 1
-        assert "bots: line with no value" in result.stdout + result.stderr
-        assert _kit_install_region(target).count("bots:") == 1  # no second line
-
-    def test_new_without_bots_writes_no_line(self, tmp_path):
-        """N1: no flag, no preset — the record is byte-identical to a
-        pre-KIT-0056 install (no bots line, zero migration)."""
-        target = make_adopt_dir(tmp_path, "no-decl")
-        result = run_door("--adopt", str(target))
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert "bots:" not in _kit_install_region(target)
+    def test_new_target_must_not_exist_via_package(self, tmp_path):
+        result = run_door("--new", str(tmp_path), timeout=60)
+        assert result.returncode == 2
+        assert "already exists" in result.stderr
 
 
-@pytest.mark.slow
-class TestMissingDependencyInstructions:
-    """KIT-0093 (CodeRabbit, PR #117): every other assertion accepts
-    verified-OR-instructed, so on a machine that HAS the tools the
-    instruction strings are never exercised. This test forces the
-    missing-CLI and missing-plugin branches hermetically — a restricted
-    PATH carrying only the tools the door itself needs — and pins the
-    exact contract lines plus the degradation guarantee (exit 0)."""
+class TestMaterialsBranch:
+    """The one legacy branch the shim keeps (dies with it, KIT-0107):
+    exactly `--adopt <dir> --design-materials` — any other flag
+    alongside (including `--no-preset`: the materials engine reads no
+    preset) is refused loudly, never silently dropped."""
 
-    _NEEDED_TOOLS = (
-        "bash",
-        "sh",
-        "env",
-        "git",
-        "python3",
-        "sed",
-        "awk",
-        "grep",
-        "tr",
-        "cut",
-        "sort",
-        "uniq",
-        "head",
-        "tail",
-        "basename",
-        "dirname",
-        "cat",
-        "cp",
-        "mv",
-        "rm",
-        "mkdir",
-        "touch",
-        "chmod",
-        "ls",
-        "wc",
-        "mktemp",
-        "install",
-        "stat",
-        "uname",
-    )
+    def test_requires_adopt(self, tmp_path):
+        result = run_door("--new", str(tmp_path / "x"), "--design-materials")
+        assert result.returncode == 2
+        assert "--design-materials applies to --adopt only" in result.stderr
 
-    def _restricted_path(self, tmp_path: Path) -> Path:
-        bindir = tmp_path / "restricted-bin"
-        bindir.mkdir()
-        for tool in self._NEEDED_TOOLS:
-            real = shutil.which(tool)
-            if real:  # builtins/absent tools simply aren't linked
-                (bindir / tool).symlink_to(real)
-        assert not (bindir / "agentive").exists()
-        assert not (bindir / "claude").exists()
-        return bindir
+    def test_requires_existing_target(self, tmp_path):
+        result = run_door("--adopt", str(tmp_path / "nope"), "--design-materials")
+        assert result.returncode == 2
+        assert "does not exist" in result.stderr
 
-    def test_new_without_cli_or_plugin_instructs_and_succeeds(self, tmp_path):
-        bindir = self._restricted_path(tmp_path)
-        env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(tmp_path)))
-        env["PATH"] = str(bindir)
-        target = tmp_path / "no-deps-app"
-        result = run_door("--new", str(target), env=env)
-        out = result.stdout
-        # Degradation, never a hard fail (the KIT-0083 pattern)
-        assert result.returncode == 0, result.stderr + out
-        assert "Install complete:" in out
-        # The exact contract lines (test_scaffold_acceptance docstring)
-        assert "Install the lifecycle CLI: uv tool install agentive-kit" in out
-        # KIT-0101 R3: the missing CLI is the one gap that cascades —
-        # the tail must elevate it to the headline next step
-        assert "NEXT STEP (required): install the lifecycle CLI" in out
-        assert "Install the agent plugin:" in out
-        assert "claude plugin marketplace add movito/agentive-skills" in out
-        assert "claude plugin install agentive-workflow@agentive-skills" in out
-        # Nothing claimed VERIFIED, and doctor honestly not run — the
-        # rejection targets the positive-verification forms only, so a
-        # future honest status line (e.g. 'agentive CLI: missing')
-        # would not trip it (CodeRabbit, PR #117)
-        assert not re.search(r"agentive CLI:.*\(verified\)", out)
-        assert "agent plugin: verified" not in out
-        assert "Doctor verdict:" not in out
+    def test_no_kit_contradiction_keeps_its_message(self, tmp_path):
+        target = make_adopt_dir(tmp_path, "mat")
+        result = run_door("--adopt", str(target), "--design-materials", "--no-kit")
+        assert result.returncode == 2
+        assert "--no-kit contradicts --design-materials" in result.stderr
 
+    def test_other_flags_refused_never_dropped(self, tmp_path):
+        target = make_adopt_dir(tmp_path, "mat")
+        for extra in (
+            ["--shape", "planning"],
+            ["--profile", "none"],
+            ["--bots", "none"],
+            # the materials engine reads no preset, so the flag would
+            # be a silent no-op — refused like the rest (CodeRabbit)
+            ["--no-preset"],
+        ):
+            result = run_door("--adopt", str(target), "--design-materials", *extra)
+            assert result.returncode == 2, extra
+            assert "cannot be combined with --design-materials" in result.stderr, extra
 
-class TestPresetNeverDistributed:
-    """F7: nothing in the config home (<kit-parent>/agentive-config/,
-    KIT-0058) rides any sync tier, rsync, or export path. Structural
-    check: the ONLY scripts allowed to reference the config-home
-    location are the door (reads it), the project script (doctor
-    --against-preset compares against it), and the config-home doctor
-    check — engines, sync, and export code must not know it exists."""
-
-    # KIT-0092 Part B (executed with KIT-0093 PR 2, where the old probe
-    # became blocking): the probe checks the config-home LOCATION
-    # ("agentive-config") only. The old probe also matched the literal
-    # "agentive-kit" — the PACKAGE name — so every package shim tripped
-    # it and ALLOWED grew to 7 entries for the wrong reason. Package
-    # references are legitimate everywhere; the config home has exactly
-    # three readers.
-    ALLOWED = {
-        "scripts/local/bootstrap",
-        "scripts/core/project",
-        "scripts/core/doctor.d/90-config-home.sh",
-    }
-
-    def test_preset_path_referenced_only_by_allowed_readers(self):
-        offenders = []
-        for path in (REPO_ROOT / "scripts").rglob("*"):
-            if not path.is_file():
-                continue
-            try:
-                text = path.read_text(encoding="utf-8")
-            except (UnicodeDecodeError, OSError):
-                continue
-            if "agentive-config" in text:
-                rel = str(path.relative_to(REPO_ROOT))
-                if rel not in self.ALLOWED:
-                    offenders.append(rel)
-        assert (
-            offenders == []
-        ), f"config-home location referenced outside the allowed readers: {offenders}"
-
-
-def _scratch_kit_clone(base: Path) -> tuple[Path, Path]:
-    """A throwaway 'kit checkout' (parent/kit) for resolution tests —
-    config_home derives parent/agentive-config from it."""
-    parent = base / "parent"
-    kit = parent / "kit"
-    kit.mkdir(parents=True)
-    subprocess.run(
-        ["git", "init", "--quiet", "-b", "main", str(kit)],
-        check=True,
-        timeout=30,
-        env=_scrubbed_env(),
-    )
-    return parent, kit
-
-
-class TestConfigHomeResolution:
-    """KIT-0058 F1: the config home is <kit-parent>/agentive-config,
-    resolved worktree-safely via --git-common-dir; the env override is
-    an override, never a search chain."""
-
-    def test_override_wins(self, tmp_path):
-        result = sourced(
-            "config_home",
-            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(tmp_path / "elsewhere")),
-        )
-        assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == str(tmp_path / "elsewhere")
-
-    def test_empty_override_falls_through_to_derivation(self, tmp_path):
-        # empty is unset, not "resolve to ''" — matches the Python
-        # mirror's truthiness check so the two can never disagree
-        _parent, kit = _scratch_kit_clone(tmp_path)
-        result = sourced(
-            f'PROJECT_ROOT="{kit}"; config_home',
-            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=""),
-        )
-        assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == str(tmp_path / "parent" / "agentive-config")
-
-    def test_derives_sibling_of_primary_clone(self, tmp_path):
-        parent, kit = _scratch_kit_clone(tmp_path)
-        env = _scrubbed_env()
-        del env["AGENTIVE_KIT_CONFIG_DIR"]
-        result = sourced(f'PROJECT_ROOT="{kit}"; config_home', env=env)
-        assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == str(parent / "agentive-config")
-
-    def test_worktree_resolves_to_primary_sibling(self, tmp_path):
-        # --git-common-dir names the PRIMARY clone's .git from a linked
-        # worktree — both checkouts must agree on ONE config home
-        parent, kit = _scratch_kit_clone(tmp_path)
-        env = _scrubbed_env()
-        del env["AGENTIVE_KIT_CONFIG_DIR"]
-        subprocess.run(
-            [
-                "git",
-                "-C",
-                str(kit),
-                "-c",
-                "user.name=t",
-                "-c",
-                "user.email=t@example.invalid",
-                "commit",
-                "--allow-empty",
-                "-q",
-                "-m",
-                "seed",
-            ],
-            check=True,
-            timeout=30,
-            env=env,
-        )
-        wt = tmp_path / "worktrees" / "kit-wt"
-        subprocess.run(
-            ["git", "-C", str(kit), "worktree", "add", "-q", str(wt)],
-            check=True,
-            timeout=30,
-            env=env,
-        )
-        from_primary = sourced(f'PROJECT_ROOT="{kit}"; config_home', env=env)
-        from_worktree = sourced(f'PROJECT_ROOT="{wt}"; config_home', env=env)
-        assert from_primary.returncode == 0, from_primary.stderr
-        assert from_worktree.returncode == 0, from_worktree.stderr
-        assert from_primary.stdout.strip() == from_worktree.stdout.strip()
-        assert from_primary.stdout.strip() == str(parent / "agentive-config")
-
-    def test_non_git_checkout_resolves_nothing(self, tmp_path):
-        plain = tmp_path / "not-a-clone"
-        plain.mkdir()
-        env = _scrubbed_env()
-        del env["AGENTIVE_KIT_CONFIG_DIR"]
-        result = sourced(
-            f'PROJECT_ROOT="{plain}"; config_home || echo "rc=$?"', env=env
-        )
-        assert "rc=1" in result.stdout
-
-    def test_door_and_doctor_agree_on_the_path(self, tmp_path):
-        """The 'two can never disagree' pin: the door's config_home and
-        the project script's _config_home resolve the SAME path for the
-        same checkout (doctor --against-preset names it in its
-        no-preset INFO line)."""
-        parent, kit = _scratch_kit_clone(tmp_path)
-        env = _scrubbed_env()
-        del env["AGENTIVE_KIT_CONFIG_DIR"]
-        bash_home = sourced(f'PROJECT_ROOT="{kit}"; config_home', env=env)
-        assert bash_home.returncode == 0, bash_home.stderr
-        checks = tmp_path / "checks"
-        checks.mkdir()
-        stub = checks / "10-stub.sh"
-        stub.write_text('#!/bin/bash\necho "DOCTOR:stub:PASS:ok"\n', encoding="utf-8")
-        stub.chmod(0o755)
-        project_script = REPO_ROOT / "scripts" / "core" / "project"
-        doctor = subprocess.run(
-            [
-                "python3",
-                str(project_script),
-                "doctor",
-                f"--root={kit}",
-                f"--dir={checks}",
-                "--against-preset",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            env=env,
-        )
-        info = [ln for ln in doctor.stdout.splitlines() if "no preset found at" in ln]
-        assert info, doctor.stdout
-        expected = f"{bash_home.stdout.strip()}/preset"
-        assert expected in info[0]
-
-
-class TestConfigHomeSeeding:
-    """KIT-0058 F2: first-use guardrail seeding — an orchestrate step
-    (resolve locates, writes nothing). Idempotent, never overwrites,
-    never creates the folder (N3)."""
-
-    def _run(self, tmp_path, cfg, *extra):
-        target = make_adopt_dir(tmp_path / f"t{len(list(tmp_path.iterdir()))}", "app")
-        return run_door(
-            "--adopt",
-            str(target),
-            *extra,
-            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
-        )
-
-    def test_first_use_seeds_gitignore_and_readme(self, tmp_path):
-        cfg = tmp_path / "agentive-config"
-        cfg.mkdir()
-        result = self._run(tmp_path, cfg)
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert (cfg / ".gitignore").read_text(encoding="utf-8") == (
-            "env.source\n*.env\n"
-        )
-        readme = (cfg / "README.md").read_text(encoding="utf-8")
-        assert "env.source" in readme  # the secrets story is told
-        assert "Seeded" in result.stdout  # announced, never silent
-
-    def test_seeding_is_idempotent(self, tmp_path):
-        cfg = tmp_path / "agentive-config"
-        cfg.mkdir()
-        assert self._run(tmp_path, cfg).returncode == 0
-        before = {p.name: p.read_bytes() for p in cfg.iterdir() if p.is_file()}
-        second = self._run(tmp_path, cfg)
-        assert second.returncode == 0, second.stderr + second.stdout
-        assert "Seeded" not in second.stdout
-        after = {p.name: p.read_bytes() for p in cfg.iterdir() if p.is_file()}
-        assert after == before
-
-    def test_seeding_never_overwrites(self, tmp_path):
-        cfg = tmp_path / "agentive-config"
-        cfg.mkdir()
-        (cfg / ".gitignore").write_text("my-own-rules\n", encoding="utf-8")
-        result = self._run(tmp_path, cfg)
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert (cfg / ".gitignore").read_text(encoding="utf-8") == "my-own-rules\n"
-        # the OTHER file still seeds — per-file independence
-        assert (cfg / "README.md").is_file()
-
-    def test_no_preset_flag_skips_seeding(self, tmp_path):
-        cfg = tmp_path / "agentive-config"
-        cfg.mkdir()
-        result = self._run(tmp_path, cfg, "--no-preset")
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert list(cfg.iterdir()) == []
-        assert "Seeded" not in result.stdout
-
-    def test_never_creates_the_folder(self, tmp_path):
-        # N3: a preset-less run must not drive-by-create the config
-        # home — engaging the preset flow (mkdir) is the user's move
-        cfg = tmp_path / "agentive-config"  # never created
-        result = self._run(tmp_path, cfg)
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert not cfg.exists()
-
-
-class TestPresetPathNamed:
-    """The loudness rule: the loaded preset path is NAMED in door
-    output. (The legacy ~/.config/agentive-kit notice and its tests
-    retired at 0.9.0 with the KIT-0059 removal set.)"""
-
-    def test_new_location_loads_named(self, tmp_path):
-        cfg = write_preset(tmp_path, "profile: none\n")
-        target = make_adopt_dir(tmp_path, "app")
-        result = run_door(
-            "--adopt",
-            str(target),
-            env=_scrubbed_env(AGENTIVE_KIT_CONFIG_DIR=str(cfg)),
-        )
-        assert result.returncode == 0, result.stderr + result.stdout
-        assert f"Preset: {cfg / 'preset'}" in result.stdout
-        assert "profile: none" in _kit_install_region(target)
-
-
-class TestConfigHomeOverrideTilde:
-    """o3 (this PR): an env file can hand the override a literal
-    leading tilde the shell never expanded — all resolvers expand it
-    (the env-source precedent)."""
-
-    def test_tilde_in_override_expands(self, tmp_path):
-        result = sourced(
-            "config_home",
-            env=_scrubbed_env(
-                AGENTIVE_KIT_CONFIG_DIR="~/agentive-config-tilde",
-                HOME=str(tmp_path),
-            ),
-        )
-        assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == str(tmp_path / "agentive-config-tilde")
+    def test_kit_checkout_target_refused(self):
+        """BugBot (this PR): the branch bypasses the package's
+        kit-checkout guard, so it carries the old door's own refusal —
+        the materials flow must never rsync the kit onto itself."""
+        result = run_door("--adopt", str(REPO_ROOT), "--design-materials")
+        assert result.returncode == 2
+        assert "kit source repo itself" in result.stderr

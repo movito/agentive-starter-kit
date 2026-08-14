@@ -3,12 +3,15 @@
 KIT-0053 pinned the historical flag surfaces of create-project.sh and
 bootstrap.sh before turning them into shims over the one setup door.
 KIT-0054 (0.9.0) removed the shims and the door's --legacy-shim
-fidelity channel, so this module keeps only what outlives them: the
-export/materials engine e2e coverage (re-pinned on door flags) and the
-static call-graph direction (door -> engine, never the reverse).
-TestOldEntrancesRemoved guards the removal itself — the historical
-entrance paths must stay gone, so an old invocation hard-fails instead
-of silently resurrecting a second door.
+fidelity channel; KIT-0104 then moved the door itself into the
+agentive-kit package and turned bootstrap into an exec shim over it.
+This module keeps what outlives all of that: the scaffold/materials
+engine e2e coverage (now exercised THROUGH the shim, so it also proves
+the shim's translation) and the static call-graph direction (shim →
+package → engine, plus the shim's one direct materials-engine call —
+never the reverse). TestOldEntrancesRemoved guards the removals — the
+historical entrance paths must stay gone, so an old invocation
+hard-fails instead of silently resurrecting a second door.
 
 Consumer-rsync boundary: this module reads scripts/local/ content, so
 it is excluded from the consumer tests/ rsync in the consumer engine
@@ -299,18 +302,26 @@ def _command_lines(text: str) -> list[str]:
 
 
 class TestCallGraph:
-    """F3: the call graph is strictly door -> engine."""
+    """The call graph after KIT-0104: the shim execs the PACKAGE (which
+    drives the scaffold/consumer engines as staged data), and keeps one
+    direct engine call — the materials branch that dies with it."""
 
-    def test_door_calls_engines_not_old_entrances(self):
+    def test_shim_execs_the_package_and_only_the_materials_engine(self):
         commands = _command_lines(DOOR.read_text(encoding="utf-8"))
-        for engine in ENGINES:
-            assert any(
-                engine.name in line for line in commands
-            ), f"door must reference {engine.name} in a command position"
+        assert any(
+            "agentive_kit.cli" in line for line in commands
+        ), "shim must exec the packaged door (python -m agentive_kit.cli)"
+        assert any(
+            "engine-materials.sh" in line for line in commands
+        ), "the materials branch drives engine-materials.sh directly"
+        for packaged_engine in ("engine-consumer.sh", "engine-scaffold.sh"):
+            assert not any(
+                packaged_engine in line for line in commands
+            ), f"shim must not drive {packaged_engine} — the package does"
         for old_name in ("bootstrap-consumer.sh", "create-project.sh"):
             assert not any(
                 old_name in line for line in commands
-            ), f"door must never call removed entrance {old_name}"
+            ), f"shim must never call removed entrance {old_name}"
 
     def test_engines_do_not_call_the_door(self):
         for engine in ENGINES:

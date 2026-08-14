@@ -37,9 +37,10 @@ here and in the KIT-0104 PR body):
 - **No kit-clone ``.env`` carry-over offer**: keys reach a new project
   via the preset's ``env-source`` (the packaged channel) or by operator
   hand — there is no kit checkout to copy from.
-- **``--no-kit`` adopt is rung 0** (KIT-ADR-0032): check hook + git
-  init only. No ``.kit/``, no CLAUDE.md, no kit-install record — a
-  plain repo, reported as success, never as a deficiency.
+- **``--no-kit`` is rung 0 from BOTH verbs** (KIT-ADR-0032; the ``new``
+  side is KIT-0104 F4): check hook + git init only. No ``.kit/``, no
+  CLAUDE.md, no kit-install record — a plain repo, reported as
+  success, never as a deficiency.
 
 Engine data staging: the engines resolve their source tree from their
 own location (``SCRIPT_DIR/../..``), so the door stages a faux kit
@@ -517,12 +518,6 @@ def validate_combo(opts: "DoorOptions") -> bool:
             )
             return False
     if opts.mode == "new":
-        if opts.no_kit:
-            print(
-                "Error: --no-kit applies to --adopt (single shape) only",
-                file=sys.stderr,
-            )
-            return False
         if opts.design_materials == "yes":
             print(
                 "Error: --design-materials applies to --adopt only",
@@ -533,6 +528,16 @@ def validate_combo(opts: "DoorOptions") -> bool:
         if opts.name or opts.prefix:
             print("Error: --name/--prefix apply to --new only", file=sys.stderr)
             return False
+    if opts.no_kit and (opts.name or opts.prefix):
+        # rung 0 gets no scaffold, so the flags would be silently
+        # dropped — an error, never a drop (the masking class; the
+        # KIT-0104 F4 counterpart of the --bots + --no-kit guard)
+        print(
+            "Error: --name/--prefix shape the kit scaffold, and --no-kit "
+            "targets get no scaffold (rung 0) — drop one of the flags",
+            file=sys.stderr,
+        )
+        return False
     if opts.effective_profile == "none":
         if opts.with_venv == "yes":
             print(
@@ -656,7 +661,7 @@ Flags (every interactive question has one — non-TTY runs never hang):
   --target-path / --target-github
                        product-repo pointer (planning only)
   --no-kit             rung 0 (KIT-ADR-0032): plain repo, no .kit/, no
-                       kit install (adopt, single shape only)
+                       kit install (single shape; both verbs)
   --bots <b>           declare which review bots run on this project:
                        'coderabbit bugbot' (or a subset) | 'none'
                        (comma or space separated). Recorded as a
@@ -690,9 +695,10 @@ AGENTIVE_KIT_CONFIG_DIR overrides the location (an override, never a
 search chain — a TRUSTED, operator-owned value). Author a preset
 conversationally with the /setup-preset command.
 
-Every --new target ends with a present, mode-0600, gitignored .env —
-copied from the preset's env-source when set, else seeded from the
-scaffold's .env.template. API keys move only by OPERATOR action.
+Every --new target with a kit install ends with a present, mode-0600,
+gitignored .env — copied from the preset's env-source when set, else
+seeded from the scaffold's .env.template. Rung 0 (--no-kit) has no
+scaffold, so it gets no .env. API keys move only by OPERATOR action.
 
 Exit contract:
   0  install succeeded — the doctor verdict is REPORTED, never encoded
@@ -1326,7 +1332,7 @@ def _git_init_commit(target: Path, message: str) -> None:
 
 
 def _seed_check_hook(opts: DoorOptions, staged_root: Path) -> None:
-    """Rung-0 check-hook seeding (adopt --no-kit): the hook is
+    """Rung-0 check-hook seeding (--no-kit, both verbs): the hook is
     toolchain-level, not kit-workflow-level, so rung 0 still gets it —
     but the record's writer (the consumer engine) is not run, because
     rung 0 records nothing (KIT-ADR-0032: no kit install)."""
@@ -1385,8 +1391,24 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
         f"profile={opts.effective_profile} target={target}"
     )
 
-    if opts.mode == "adopt" and opts.no_kit:
-        # ── Rung 0 (KIT-ADR-0032): plain repo — no .kit/, no record ──
+    if opts.mode == "new":
+        # exist_ok=False: main() already refused an existing target, so
+        # a directory appearing between that check and here is a race —
+        # fail loud rather than scaffold into it (claude-code
+        # evaluator, this PR)
+        try:
+            target.mkdir(parents=True, exist_ok=False)
+        except FileExistsError:
+            _die_usage(
+                opts.mode,
+                f"--new target already exists: {target} (use 'agentive "
+                "adopt' for existing directories)",
+            )
+
+    if opts.no_kit:
+        # ── Rung 0 (KIT-ADR-0032): plain repo — no .kit/, no record.
+        #    Reachable from BOTH verbs (KIT-0104 F4): adopt opts out of
+        #    the kit workflow, new creates a blank project. ──
         _seed_check_hook(opts, staged_root)
         if not (target / ".git").exists():
             _git_init_commit(
@@ -1401,13 +1423,19 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
         if opts.with_evaluators == "yes":
             print(
                 "Evaluators not installed — --no-kit targets carry no "
-                ".adversarial config (rung 0); adopt without --no-kit to "
+                ".adversarial config (rung 0); re-run without --no-kit to "
                 "get the kit workflow"
             )
         if opts.with_venv == "yes":
             print(
                 "venv setup skipped: rung-0 targets ship no setup-dev.sh — "
                 "create one when your pyproject exists (python3 -m venv .venv)"
+            )
+        if opts.env_source:
+            print(
+                "env-source not applied — rung-0 targets carry no .env "
+                "scaffold (no .gitignore to keep secrets out of git); add "
+                "keys by hand once the repo has one"
             )
         print()
         print(
@@ -1438,19 +1466,6 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
     if opts.target_github:
         scaffold_args += ["--target-github", opts.target_github]
 
-    if opts.mode == "new":
-        # exist_ok=False: main() already refused an existing target, so
-        # a directory appearing between that check and here is a race —
-        # fail loud rather than scaffold into it (claude-code
-        # evaluator, this PR)
-        try:
-            target.mkdir(parents=True, exist_ok=False)
-        except FileExistsError:
-            _die_usage(
-                opts.mode,
-                f"--new target already exists: {target} (use 'agentive "
-                "adopt' for existing directories)",
-            )
     rc = _run_engine(staged_root, "engine-scaffold.sh", scaffold_args)
     if rc != 0:
         _die_install(f"scaffold engine failed (exit {rc})")

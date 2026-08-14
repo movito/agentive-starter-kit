@@ -391,6 +391,11 @@ class TestValidateCombo:
     def test_default_new_is_legal(self):
         assert door.validate_combo(_resolved_opts()) is True
 
+    @pytest.mark.parametrize("mode", ["new", "adopt"])
+    def test_no_kit_single_is_legal_from_both_verbs(self, mode):
+        """KIT-0104 F4: rung 0 is reachable from new AND adopt."""
+        assert door.validate_combo(_resolved_opts(mode=mode, no_kit=True)) is True
+
     @pytest.mark.parametrize(
         "kwargs,fragment",
         [
@@ -403,7 +408,14 @@ class TestValidateCombo:
                 },
                 "--no-kit contradicts --shape planning",
             ),
-            ({"mode": "new", "no_kit": True}, "--no-kit applies to --adopt"),
+            (
+                {"mode": "new", "no_kit": True, "name": "x"},
+                "--no-kit targets get no scaffold",
+            ),
+            (
+                {"mode": "new", "no_kit": True, "prefix": "XX"},
+                "--no-kit targets get no scaffold",
+            ),
             (
                 {"mode": "new", "design_materials": "yes"},
                 "--design-materials applies to --adopt",
