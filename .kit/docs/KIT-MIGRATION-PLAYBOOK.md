@@ -196,8 +196,8 @@ git mv delegation/handoffs/* .kit/context/ 2>/dev/null
 > **Updated (KIT-0067 D1)**: the kit retired `.kit/launchers/`
 > entirely — agents are invoked via new Claude Code tabs or
 > `claude --agent <file>`, and setup runs through the one door
-> (`scripts/local/bootstrap` + `/new-project`). Do NOT migrate old
-> launchers forward; delete them.
+> (`agentive new` / `agentive adopt` + `/new-project`). Do NOT
+> migrate old launchers forward; delete them.
 
 ```bash
 # Retire the pre-kit launcher scripts (superseded by the setup door)
@@ -316,7 +316,7 @@ Launcher references (`agents/launch`, `agents/onboarding`,
 `agents/preflight`) have no new path — the launchers were retired
 (KIT-0067 D1). Grep for them after the bulk sed and rewrite each site
 to the current invocation (`claude --agent .claude/agents/<name>.md`,
-setup via `scripts/local/bootstrap`).
+setup via `agentive new` / `agentive adopt`).
 
 **After sed — CRITICAL VERIFICATION:**
 

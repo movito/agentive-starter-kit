@@ -2,15 +2,15 @@
 
 **A bit of structure to help you get more out of agentive software development**
 
-Using agents to build software works better if you add a bit of structure — Anthropic calls this a [harness](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents). This kit packages the structure we use to overcome the usual problems of agentive development: documentation, testing, architecture, and value for money (and tokens). From one permanent clone, you stamp out configured projects in about ten minutes, then tweak anything — agents, models, workflow — as you wish.
+Using agents to build software works better if you add a bit of structure — Anthropic calls this a [harness](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents). This kit packages the structure we use to overcome the usual problems of agentive development: documentation, testing, architecture, and value for money (and tokens). One command — `agentive new` — stamps out a configured project in about ten minutes, from wherever you are; then tweak anything — agents, models, workflow — as you wish.
 
-**Starting a project?** Read **[docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md)** — the operator flow from a permanent kit clone to a planner-ready project.
+**Starting a project?** Read **[docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md)** — the operator flow from idea (or prototype) to a planner-ready project.
 
 ---
 
 ## What's inside
 
-- A **front door for new projects** — the `/new-project` command and the one setup door (`scripts/local/bootstrap`)
+- A **front door for new projects** — the packaged setup door (`agentive new` / `agentive adopt`, runs from anywhere) and the guided `/new-project` interview
 - **Specialized agents** for planning, implementation, testing, and review (`.claude/agents/`)
 - **Adversarial evaluators** — independent AI second opinions on plans, code, and docs
 - **Task management** as markdown files in status folders (`.kit/tasks/README.md`), with optional Linear sync ([docs/LINEAR-INTEGRATION.md](docs/LINEAR-INTEGRATION.md))
@@ -62,15 +62,24 @@ that shipped the git 2.31 dependency (KIT-0080) and the missing-CLI gap
 
 You need Claude Code, git + gh (authenticated) — see [Requirements](#requirements) above; `agentive doctor` inside any packaged project tells you what's missing.
 
+The direct route — no kit clone required:
+
+```bash
+uv tool install agentive-kit
+agentive new ~/Github/my-project
+```
+
+The guided route — clone the kit and let it interview you:
+
 ```bash
 cd ~/Github
 git clone https://github.com/movito/agentive-starter-kit.git
 cd agentive-starter-kit && claude
 ```
 
-Then run `/new-project` in the session — **the one starting action for every situation** (blank project, prototype graduation, adopting a repo). It interviews you in plain language and drives the setup door; anything not yet installed (the `agentive` CLI, the agent plugin) comes back as a printed install command, never a dead end. When it finishes, open the tab its LAUNCH line names and start with the `planner` agent.
+Then run `/new-project` in the session — **the one guided entry for every situation** (blank project, prototype graduation, adopting a repo). It interviews you in plain language and drives the same setup door; anything not yet installed (the `agentive` CLI, the agent plugin) comes back as a printed install command, never a dead end. When it finishes, open the tab its LAUNCH line names and start with the `planner` agent.
 
-Full guide — factory model, prototype graduation, adopting an existing repo, operator presets: [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md). Authoritative option matrix: `./scripts/local/bootstrap --help`.
+Full guide — the sibling layout, prototype graduation, adopting an existing repo, operator presets: [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md). Authoritative option matrix: `agentive new --help`.
 
 ---
 
@@ -97,7 +106,7 @@ Independent AI review of your plans, code, and documentation, via the `adversari
 | You want | Where |
 |----------|-------|
 | Starting a project (all paths) | [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md) |
-| Setup-door options (shapes × profiles, `--adopt`, `--bots`) | `./scripts/local/bootstrap --help` |
+| Setup-door options (shapes × profiles, adopt, `--bots`) | `agentive new --help` / `agentive adopt --help` |
 | Operator preset (answer the door's questions once) | `/setup-preset` + [docs/STARTING-A-PROJECT.md](docs/STARTING-A-PROJECT.md) |
 | The split-pair pattern | [docs/CROSS-REPO-PATTERN.md](docs/CROSS-REPO-PATTERN.md) |
 | Linear task sync | [docs/LINEAR-INTEGRATION.md](docs/LINEAR-INTEGRATION.md) |

@@ -1,15 +1,16 @@
 ---
 description: Interview the user and create their new project through the setup door or the intake agent
-version: 1.2.0
+version: 1.3.0
 origin: agentive-starter-kit
-last-updated: 2026-08-11
+last-updated: 2026-08-14
 created-by: "@movito with feature-developer-f5 (KIT-0067)"
 distribution: builder-only
 ---
 
 # New Project
 
-> **Builder-side command**: operates the kit factory; not distributed
+> **Builder-side command**: the guided interview over the packaged
+> setup door (`agentive new` / `agentive adopt`); not distributed
 > via `scripts/.core-manifest.json` (intended — see KIT-0077).
 
 **First response — open with this transparency header, before any
@@ -17,31 +18,39 @@ other output or tool call:**
 
 > 🧭 `/new-project` — interviews you in plain language and creates
 > your new project, via the setup door or the intake agent.
-> Reads: `./scripts/local/bootstrap --help`, your operator preset;
-> on the prototype route, your brief file and code folder (to
-> validate them) · Writes: the new project's directory (door route);
-> the intake route only prints a handoff — nothing in this repo
-> either way
+> Reads: `agentive new --help` / `agentive adopt --help`, your
+> operator preset; on the prototype route, your brief file and code
+> folder (to validate them) · Writes: the new project's directory
+> (door route); the intake route only prints a handoff — nothing in
+> this repo either way
 > Source: [new-project.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/new-project.md) · Docs: [starting a project](https://github.com/movito/agentive-starter-kit/blob/main/docs/STARTING-A-PROJECT.md)
 
-Create a new project from this kit — the front door to the factory
-flow described in `docs/STARTING-A-PROJECT.md`. Interview the user in
-plain language, one question at a time, route them to the right
-creation path, run it, and finish by printing the LAUNCH line for the
-created project.
+Create a new project — the guided front door to the flow described in
+`docs/STARTING-A-PROJECT.md`. Interview the user in plain language,
+one question at a time, route them to the right creation path, run
+it, and finish by printing the LAUNCH line for the created project.
 
-This command runs **from an agentive-starter-kit checkout** (the setup
-door is kit-side only). If `./scripts/local/bootstrap` does not exist
-in the current repo, STOP and tell the user to open a session in their
-kit clone — never hunt for the door elsewhere.
+The setup door itself is the packaged `agentive new` /
+`agentive adopt` (KIT-ADR-0030) — it runs from anywhere; only this
+command file is kit-side. If the `agentive` CLI is missing AND this
+checkout has no `./scripts/local/bootstrap` shim to answer through,
+STOP and give the user the install command
+(`uv tool install agentive-kit`) — never hunt for the door elsewhere,
+never improvise a setup path.
 
 ## Binding rules — read before anything else
 
 1. **Derive, never hardcode.** Your FIRST action is:
 
    ```bash
-   ./scripts/local/bootstrap --help
+   agentive new --help
+   agentive adopt --help
    ```
+
+   (If `agentive` is not on PATH, `./scripts/local/bootstrap --help`
+   in this kit checkout answers with the same package-owned help —
+   it is an exec shim over the packaged door, removal pinned to
+   KIT-0107.)
 
    Build the entire interview from what that prints: the creation
    modes, the shape × profile legality matrix, the offer flags, and
@@ -153,7 +162,7 @@ handoff — do not run the door yourself on this route.
 2. Run the door with exactly the flags the interview produced, e.g.:
 
    ```bash
-   ./scripts/local/bootstrap --new <target-dir> <flags-from-interview>
+   agentive new <target-dir> <flags-from-interview>
    ```
 
 3. Show the user the door's output — especially the doctor verdict it

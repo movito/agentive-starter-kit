@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **The door ships in the package — KIT-ADR-0030** (KIT-0104, PRs
-  #129 + the shim PR): the setup door is now `agentive new` /
+  #129 + #130 + the prose sweep): the setup door is now `agentive new` /
   `agentive adopt` — same flags, same resolution chain (preset home
   anchors to the TARGET's parent in the packaged world), same engines
   running as packaged data, byte-pinned to their kit-tree twins by
@@ -77,7 +77,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   BOTH verbs** (KIT-ADR-0032: plain repo + check hook, no `.kit/`, no
   record — `new --no-kit` is the KIT-0104 F4 addition; the old
   seeded-record `--no-kit` is gone). The shape × profile matrix has
-  exactly one implementation: the package.
+  exactly one implementation: the package. The prose sweep (KIT-0104
+  F5/F6) retires the factory-clone precondition from every live
+  surface: `docs/STARTING-A-PROJECT.md` teaches the sibling layout
+  instead of the factory model (creation runs from anywhere; the kit
+  clone is the kit's development home and the seat of the guided
+  flows), README's Quickstart leads with `uv tool install agentive-kit
+  && agentive new`, `/new-project` and `/setup-preset` derive their
+  interviews from `agentive new --help` (runtime-read — no hardcoded
+  flag list, pinned by `tests/agentive_kit/test_door_units.py`), and
+  the preset/config-home docs say what the packaged door actually
+  does: anchor to the TARGET's parent, `<projects-parent>/
+  agentive-config`.
 - **The door switches to package-install mode — KIT-ADR-0028 phase 2**
   (KIT-0093, agentive-kit 0.3.0): `bootstrap --new` (both shapes)
   scaffolds CONTENT — `.kit/` skeleton with workflow docs,
@@ -138,6 +149,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Markdown lint owned locally — KIT-0094** (passenger on the
+  KIT-0104 prose-sweep PR): `.markdownlint-cli2.jsonc` runs the same
+  tool CodeRabbit runs, scoped to live markdown (historical records,
+  task specs, test fixtures, and byte-pinned packaged twins excluded
+  — the `.coderabbitignore` precedent), with the rule decisions
+  recorded once in the config (MD013/MD033/MD036/MD041/MD060 off,
+  MD029 `one_or_ordered` — the KIT-0092 diff-hunk numbering
+  false-positive class is decided here, not per-thread). A tree-wide
+  pre-commit gate (`pass_filenames: false` — CLI paths would extend
+  the config globs and bypass its ignores) fails a violation locally
+  before it can become a bot thread; falsified once by design. One
+  class sweep brought the ~1,150 pre-existing violations across 95
+  in-scope files to zero.
 - **`agentive-kit` package skeleton — KIT-ADR-0028 phase 1, PR 1**
   (KIT-0090): `packages/agentive-kit/` with `src/agentive_kit/`
   modules `gitio` (single home for git invocations; KIT-0080's

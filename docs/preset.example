@@ -6,19 +6,21 @@
 # writes this file for you (slash-commands exist only inside a
 # Claude Code session, not in the shell).
 #
-# Install location — a VISIBLE sibling of the kit checkout, personal,
-# per-machine, never distributed by any sync/export path (the
-# AGENTIVE_KIT_CONFIG_DIR env var overrides the location):
+# Install location — a VISIBLE sibling of your projects folder (the
+# packaged door anchors the config home to the TARGET's parent),
+# personal, per-machine, never distributed by any sync/export path
+# (the AGENTIVE_KIT_CONFIG_DIR env var overrides the location):
 #
-#   mkdir -p <kit-parent>/agentive-config
-#   cp docs/preset.example <kit-parent>/agentive-config/preset
-#   $EDITOR <kit-parent>/agentive-config/preset
+#   mkdir -p <projects-parent>/agentive-config
+#   cp docs/preset.example <projects-parent>/agentive-config/preset
+#   $EDITOR <projects-parent>/agentive-config/preset
 #
 # On first use the door seeds a .gitignore (env.source, *.env) and a
 # README into the folder — keeping it in a PRIVATE git repo is
 # welcome, and `project doctor` checks that guardrail.
 #
-# The door (scripts/local/bootstrap) resolves every question as
+# The door (agentive new / agentive adopt, KIT-ADR-0030) resolves
+# every question as
 # CLI flag > preset > kit default > interactive prompt. A preset may
 # pre-answer ONLY the door's questions — the keys below, nothing else.
 # Unknown keys are warned about and ignored; a malformed line (no
@@ -26,11 +28,11 @@
 # error. Flat 'key: value' lines only — that is a conscious boundary
 # of the format, not an accident.
 #
-# On --adopt of a target that already carries a kit-install record,
+# On adopt of a target that already carries a kit-install record,
 # the record's values win over the preset (the record is the
 # project's identity). Compare them any time with:
-#   ./scripts/core/project doctor --against-preset   (INFO-only)
-# Bypass the preset entirely for one run with: bootstrap --no-preset
+#   agentive doctor --against-preset   (INFO-only)
+# Bypass the preset entirely for one run with: --no-preset
 #
 # Uncomment and edit the lines you want pre-answered:
 
@@ -61,7 +63,7 @@
 # with mode 0600 — never printed, never staged (.env is gitignored).
 # Key material never lives in the preset itself. Keeping the file
 # next to this preset works well — the seeded .gitignore ignores it.
-#env-source: <kit-parent>/agentive-config/env.source
+#env-source: <projects-parent>/agentive-config/env.source
 
 # target-path / target-github: the product-repo pointer, planning
 # shape only (rarely useful in a global preset — usually per-project).

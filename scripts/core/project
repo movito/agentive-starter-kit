@@ -1356,7 +1356,7 @@ def _config_home(project_dir):
 def _print_preset_comparison(shape, profile, bots, record_errors, project_dir):
     """`doctor --against-preset` (KIT-0056 F8, ADR-0027 P7): compare
     the project's kit-install record against the operator preset at
-    ``<kit-parent>/agentive-config/preset`` (KIT-0058;
+    ``<projects-parent>/agentive-config/preset`` (KIT-0058;
     ``AGENTIVE_KIT_CONFIG_DIR`` overrides the location).
 
     INFO-only by design: divergence is reported as

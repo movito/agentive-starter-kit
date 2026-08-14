@@ -330,14 +330,13 @@ def _config_home(project_dir):
     door and doctor can never disagree on the path. Returns None when
     the checkout is not a git repository (no sibling to name).
 
-    Anchoring note (BugBot, PR #91): each resolver anchors to ITS OWN
-    checkout — the door to the kit clone, doctor to the project it
-    diagnoses. The two name the same folder exactly when kit and
-    project share a parent (the documented sibling layout); a consumer
-    checkout has no pointer to the kit clone's local path, so the
-    kit's parent is not computable from here. When the layouts
-    diverge, the override pins the real location, and every output
-    line below names the resolved path so the anchor is visible.
+    Anchoring note (BugBot, PR #91; updated KIT-0104): each resolver
+    anchors to ITS OWN root — the packaged door to the TARGET's
+    parent at creation time, doctor to the project it diagnoses. The
+    two name the same folder exactly when projects share a parent
+    (the documented sibling layout). When the layouts diverge, the
+    override pins the real location, and every output line below
+    names the resolved path so the anchor is visible.
     """
     override = os.environ.get("AGENTIVE_KIT_CONFIG_DIR")
     if override:
@@ -372,7 +371,7 @@ def _config_home(project_dir):
 def _print_preset_comparison(shape, profile, bots, record_errors, project_dir):
     """`doctor --against-preset` (KIT-0056 F8, ADR-0027 P7): compare
     the project's kit-install record against the operator preset at
-    ``<kit-parent>/agentive-config/preset`` (KIT-0058;
+    ``<projects-parent>/agentive-config/preset`` (KIT-0058;
     ``AGENTIVE_KIT_CONFIG_DIR`` overrides the location).
 
     INFO-only by design: divergence is reported as

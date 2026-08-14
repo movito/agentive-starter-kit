@@ -1,8 +1,8 @@
 ---
 description: Interview the user and author their setup-door preset in the visible config home
-version: 1.2.0
+version: 1.3.0
 origin: agentive-starter-kit
-last-updated: 2026-08-11
+last-updated: 2026-08-14
 created-by: "@movito with feature-developer-f5 (KIT-0058)"
 distribution: builder-only
 ---
@@ -18,24 +18,28 @@ other output or tool call:**
 > 🧭 `/setup-preset` — interviews you in plain language and writes
 > your setup-door preset, so future project creation runs on your
 > answers.
-> Reads: `./scripts/local/bootstrap --help`, any existing preset ·
+> Reads: `agentive new --help`, any existing preset ·
 > Writes: `preset` under `$AGENTIVE_KIT_CONFIG_DIR` when set;
-> otherwise `<kit-parent>/agentive-config/preset` (secrets by path
-> reference only — never values)
+> otherwise `<projects-parent>/agentive-config/preset` (secrets by
+> path reference only — never values)
 > Source: [setup-preset.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/setup-preset.md) · Docs: [starting a project](https://github.com/movito/agentive-starter-kit/blob/main/docs/STARTING-A-PROJECT.md)
 
 Author (or update) the operator preset for the setup door
-(`scripts/local/bootstrap`) by interviewing the user in plain
+(`agentive new` / `agentive adopt`) by interviewing the user in plain
 language, one question at a time, then writing
-`<kit-parent>/agentive-config/preset`.
+`<projects-parent>/agentive-config/preset`.
 
 ## Binding rules — read before anything else
 
 1. **Derive, never hardcode.** Your FIRST action is:
 
    ```bash
-   ./scripts/local/bootstrap --help
+   agentive new --help
    ```
+
+   (If `agentive` is not on PATH, `./scripts/local/bootstrap --help`
+   in this kit checkout answers with the same package-owned help —
+   an exec shim over the packaged door, removal pinned to KIT-0107.)
 
    Build the entire interview from what that prints: the recognized
    preset keys, the shape × profile legality matrix, the offer flags,
@@ -71,7 +75,11 @@ language, one question at a time, then writing
 
 ## Step 1: locate the config home
 
-The config home is a visible sibling of the kit's primary clone:
+The config home is a visible sibling of your projects folder — the
+packaged door anchors it to the TARGET's parent at creation time, so
+the preset must sit beside the projects you create. In the documented
+sibling layout the kit clone shares that parent, which is how this
+command computes it from where it runs:
 
 ```bash
 cd "$(git rev-parse --git-common-dir)" && pwd
@@ -87,9 +95,10 @@ portable across both, because plain `--git-common-dir` may print a
 path relative to the repo directory. — KIT-0080)
 If `AGENTIVE_KIT_CONFIG_DIR` is set in the environment, it overrides
 the location entirely (it is an override, never a search chain — do
-not look anywhere else). If the `git rev-parse` command fails (you
-are somehow not in a kit clone), STOP and tell the user: this command
-must run from an agentive-starter-kit checkout — never guess or
+not look anywhere else). If the `git rev-parse` command fails, or the
+user's projects do NOT live beside this kit clone, STOP and ask the
+user where their projects folder is (or have them set
+`AGENTIVE_KIT_CONFIG_DIR`) — never guess or
 invent a path. If the folder does not exist, create it —
 running this command IS the user engaging the preset flow. If a
 preset already exists there, read it and treat the interview as an
@@ -123,7 +132,7 @@ the user's answers have already excluded.
    `git init` + create a **private** remote. `project doctor` checks
    this guardrail from now on (WARN on a public remote, FAIL on a
    tracked `env.source`).
-5. State plainly that the first real `bootstrap --new <dir>` run is
+5. State plainly that the first real `agentive new <dir>` run is
    the end-to-end proof — the door announces the preset path it
-   loaded, and `./scripts/core/project doctor --against-preset`
+   loaded, and `agentive doctor --against-preset`
    compares any project's record against this preset at any time.
