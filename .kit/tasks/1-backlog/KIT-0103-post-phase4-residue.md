@@ -74,6 +74,12 @@ reporting under STACKED runs, and review-input auto-defaulting
 `--base` to the PR's actual base (`gh pr view --json baseRefName`)
 when unset — both thin remainders of KIT-0074, neither urgent.
 
+**+ review-input `--repo-root` / `--output` (KIT-0110 retro rider,
+2026-08-14)**: the helper resolves the repo from CWD's CLAUDE.md and
+writes CWD-relative, so marketplace-side reviews (KIT-0109 AND
+KIT-0110 — two hand-assemblies now) can't use it. A flag pair makes
+it serve any local checkout. Same surface as the `--base` item above.
+
 ## Acceptance Criteria
 
 - [ ] R1: class grep opens the work, end grep proves it; ships in the

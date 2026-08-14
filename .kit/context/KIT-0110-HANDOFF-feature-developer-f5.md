@@ -5,7 +5,7 @@ not delegate or spawn other agents.**
 
 **Date**: 2026-08-14
 **From**: planner-f5  **To**: feature-developer-f5
-**Task**: .kit/tasks/4-in-review/KIT-0110-release-signal-integrity.md
+**Task**: .kit/tasks/5-done/KIT-0110-release-signal-integrity.md
 **Status**: Ready
 **Evaluation**: arch-review-fast REVISION_SUGGESTED — all 3 findings
 dispositioned in the spec header (base retrieval specified;

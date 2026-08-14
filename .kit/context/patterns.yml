@@ -89,6 +89,21 @@ defensive:
       - "same family as bot-triage's committable-but-uncompilable rule (KIT-0058): displayed shell is code, verify it as code"
       - "KIT-0080/PR #107: generated-script face — the rule existed, its stated scope stopped one shape short (counted as a regression for that reason)"
     caught_by: "KIT-0071 retro (Surprising #2, Should Change #1); planner adopted 2026-07-27; generated-shell face CodeRabbit PR #107, widened 2026-08-06"
+  invariants_hold_on_every_abort_path:
+    rule: >
+      When code STATES an atomicity/all-or-nothing guarantee ("nothing
+      is written on failure", "all-or-none"), enumerate every abort
+      path and test EACH one against the stated invariant — a
+      preflight built for one abort cause (base-not-found) does not
+      cover a sibling cause (body-missing) that aborts mid-write. Same
+      shape as fix_by_class_not_instance, applied to invariants: the
+      guarantee names a class of exits; verifying one instance proves
+      nothing about the others. Reviewer heuristic: find every
+      raise/return/exit after the first write, and ask what state each
+      leaves behind.
+    examples:
+      - "KIT-0110 plugin_resync.py: 'nothing written' held for base-not-found but a missing-body abort fired AFTER merge writes — BugBot Medium + CodeRabbit Major convergent; the trio (incl. claude-code, which analyzed that exact path and concluded OK) missed it"
+    caught_by: "KIT-0110 retro (Should Change 1); planner adopted 2026-08-14"
   autofix_needs_semantic_pass:
     rule: >
       A lint autofix is a PROPOSED edit, not a safe one: it optimizes

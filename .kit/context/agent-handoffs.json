@@ -8,12 +8,12 @@
     "handoff_file": null
   },
   "feature-developer": {
-    "status": "assigned",
-    "current_task": "KIT-0110",
-    "task_started": "2026-08-14",
-    "brief_note": "KIT-0110: plugin_resync.py + the guard's blind half. Two PRs: kit worktree ../ask-worktrees/KIT-0110 (feature/KIT-0110-release-tooling), then marketplace branch feature/KIT-0110-plugin-sha256-check via git -C. Evaluated (fast, 3 findings dispositioned in-spec). Sequenced BEFORE the KIT-0105 release train.",
-    "details_link": ".kit/tasks/3-in-progress/KIT-0110-release-signal-integrity.md",
-    "handoff_file": ".kit/context/KIT-0110-HANDOFF-feature-developer-f5.md"
+    "status": "idle",
+    "current_task": null,
+    "task_started": null,
+    "brief_note": "No active assignment. KIT-0110 DONE (plugin_resync.py + marketplace verify check, both PRs merged; retro + followups processed; one AC stays open by design — first-tooled-cut citation at the KIT-0105 release). Next assignable: KIT-0105 (carries KIT-0103 R1, KIT-0112, markdownlint rider on its train). KIT-0111 = anytime filler.",
+    "details_link": ".kit/tasks/5-done/KIT-0110-release-signal-integrity.md",
+    "handoff_file": null
   },
   "code-reviewer": {
     "status": "idle",

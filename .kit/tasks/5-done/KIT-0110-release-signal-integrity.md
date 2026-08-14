@@ -1,6 +1,6 @@
 # KIT-0110: Release tooling + verification — `plugin_resync.py` and the guard's blind half
 
-**Status**: In Review
+**Status**: Done
 **Priority**: medium-high — **sequence BEFORE the KIT-0105 release**,
 so that train is the first release cut with real tooling instead of a
 fourth hand-rolled resync

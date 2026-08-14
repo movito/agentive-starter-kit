@@ -94,3 +94,9 @@ in place** — the deliverable is the input, where it already sits.
 - The handoff brief stays the primary input — KIT-ADR-0033. This task
   does **not** implement the derived-brief fallback; that is sequenced
   after KIT-0104 lands, per the KIT-ADR-0034 WIP cap.
+- **Release-train riders** (planner, 2026-08-14): this task's release
+  cut is the first tooled one — use `scripts/local/plugin_resync.py`
+  and cite it (the open KIT-0110 AC). KIT-0103 R1 + KIT-0112 ride the
+  same train. Marketplace PR rider: add a markdownlint job to
+  agentive-skills CI (KIT-0110 marketplace follow-up F2 — trivially
+  cheap now the first workflow exists).

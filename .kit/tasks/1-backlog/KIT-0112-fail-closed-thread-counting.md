@@ -31,6 +31,21 @@ not itself under-count one order of magnitude up.
   gets the same treatment. The grep hit list is the work list; quote
   it before/after in the PR.
 
+## R2 — Seventh lying-status face into bot-triage (canon, same train)
+*(added 2026-08-14 from the KIT-0110 retro — deferred here rather than
+committed immediately so the just-greened drift guard is not
+re-reddened outside a train; planner sequencing call)*
+
+Record in the bot-triage skill's lying-status list: **CodeRabbit's
+commit-status reads `pass — Review rate limited` while NO review
+exists behind an org fair-usage/spending cap** (KIT-0110, PR
+agentive-skills#10: "Next review available in: 51 minutes" + billing
+notice; the status said pass throughout). Recovery recipe: raise the
+cap, then an explicit `@coderabbitai review` comment — the review does
+NOT auto-trigger after the cap lifts. The reviewThreads-first rule
+(step 0) is what makes the absence visible; this face is more evidence
+for it, same family as faces four through six.
+
 ## Acceptance Criteria
 
 - [ ] Every completeness-asserting `first: N` site in `.claude/`

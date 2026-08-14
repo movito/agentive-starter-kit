@@ -7,6 +7,22 @@ routing rule ("marketplace-side → the KIT-0109 followups-file pattern
 via the planner")
 **Date**: 2026-08-14
 
+> **PLANNER RULINGS (2026-08-14, at KIT-0110 completion)**:
+> **F1 — ACCEPTED as the standing contract**: the falsification-run
+> story is the verifier's test regime — every future change to
+> `verify_plugin_integrity.py` re-runs the four falsifications
+> (green / bump-without-copy / malformed digest / planted files) and
+> records them in that PR. Adding pytest infra to a deliberately
+> infra-free repo is disproportionate at 206 lines and one operator.
+> Revisit if the script grows past trivial or a second contributor
+> arrives (same trigger as F4).
+> **F2 — homed**: markdownlint job rides the KIT-0105 release PR
+> (rider recorded in that spec).
+> **F3 — stands as declined-unless-queue** (documented below; no
+> action unless a merge queue is enabled).
+> **F4 — accepted residual stands** with its recorded revisit trigger
+> (external contributors).
+
 ## F1 — No executable tests for `verify_plugin_integrity.py`
 
 **Severity**: low (CodeRabbit Trivial, PR #10 round 1, thread
