@@ -266,14 +266,14 @@ Create your review report at `.kit/context/reviews/TASK-ID-review.md` (or `-roun
 
 ### Step 1: Read Task Specification
 
-```bash
+```text
 # Read the task file to understand requirements
 Read .kit/tasks/4-in-review/TASK-ID.md
 ```
 
 ### Step 2: Read Handoff (if exists)
 
-```bash
+```text
 # Check for implementation notes
 Glob .kit/context/*TASK-ID*.md
 ```
@@ -288,7 +288,7 @@ git diff HEAD~N --name-only  # Changed files
 
 ### Step 4: Review Code with Serena
 
-```python
+```text
 # Use semantic navigation for efficient review
 mcp__serena__get_symbols_overview("path/to/file.py")
 mcp__serena__find_symbol("ClassName/method_name", include_body=True)
@@ -296,7 +296,7 @@ mcp__serena__find_symbol("ClassName/method_name", include_body=True)
 
 ### Step 5: Verify Tests
 
-```bash
+```text
 # Check test existence and quality
 Glob tests/**/test_*.py
 Read tests/test_feature.py
@@ -304,7 +304,7 @@ Read tests/test_feature.py
 
 ### Step 6: Check ADR Compliance
 
-```bash
+```text
 # Review relevant ADRs
 Read docs/adr/ADR-XXXX.md
 ```

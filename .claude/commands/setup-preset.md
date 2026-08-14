@@ -82,10 +82,12 @@ sibling layout the kit clone shares that parent, which is how this
 command computes it from where it runs:
 
 ```bash
-cd "$(git rev-parse --git-common-dir)" && pwd
+cd "$(git rev-parse --git-common-dir)/../.." && pwd
 ```
 
-Take the parent of that path, plus `/agentive-config`.
+That prints the projects parent (two levels up from the primary
+clone's `.git`); the config home is that path plus
+`/agentive-config`.
 
 (Do not use `git rev-parse --path-format=absolute` here: that flag
 needs git ≥ 2.31, and stock macOS ships Apple Git 2.30.1, which echoes

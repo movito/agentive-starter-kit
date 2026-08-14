@@ -91,7 +91,8 @@ Three things follow from this model:
   lifecycle scripts via the `agentive-kit` PyPI package,
   agents/skills/commands via the `agentive-workflow` Claude Code
   plugin. The door verifies both installs or prints the exact install
-  commands. This holds for `adopt` too — nothing is copied.
+  commands. This holds for `adopt` too — it writes the same content
+  skeleton and copies no tooling.
 - **Navigation is by tabs, not `cd`.** When a tool finishes creating
   something, it prints where to go next; you open a new tab there
   (see [Tab handoffs](#tab-handoffs-the-launch-convention) below).
@@ -214,9 +215,9 @@ shape — again, `agentive new --help` is the reference.
 
 Install the agentive workflow into a repo that already exists — the
 `.kit/` content skeleton, records, and pins — preserving every file
-already present. Adopt is packaged-mode like `new`: nothing is
-copied; lifecycle scripts come from the `agentive-kit` package and
-agent bodies from the plugin.
+already present. Adopt is packaged-mode like `new`: no kit checkout
+or local tooling is copied; lifecycle scripts come from the
+`agentive-kit` package and agent bodies from the plugin.
 
 ```bash
 agentive adopt ~/Github/my-app
@@ -242,7 +243,7 @@ automates, and single-key evaluation mode is documented in the
 You do not need one. Install the CLI and run the door:
 
 ```bash
-uv tool install agentive-kit
+uv tool install agentive-kit   # or: pipx install agentive-kit
 agentive new ~/Github/my-tool
 ```
 

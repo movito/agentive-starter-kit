@@ -159,10 +159,16 @@ handoff — do not run the door yourself on this route.
    is answering questions for them (the door announces the preset
    path it loaded; a `--no-preset` run is available if they want to
    be asked everything).
-2. Run the door with exactly the flags the interview produced, e.g.:
+2. Run the door with exactly the flags the interview produced,
+   **through the same entry that answered the help in rule 1** — the
+   CLI when it is on PATH, else the checkout's shim (never derive
+   from one and run the other; the interview must not finish and
+   then fail on a missing CLI):
 
    ```bash
    agentive new <target-dir> <flags-from-interview>
+   # or, when `agentive` is not on PATH in this kit checkout:
+   ./scripts/local/bootstrap --new <target-dir> <flags-from-interview>
    ```
 
 3. Show the user the door's output — especially the doctor verdict it

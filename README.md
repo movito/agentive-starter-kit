@@ -65,7 +65,7 @@ You need Claude Code, git + gh (authenticated) — see [Requirements](#requireme
 The direct route — no kit clone required:
 
 ```bash
-uv tool install agentive-kit
+uv tool install agentive-kit   # or: pipx install agentive-kit
 agentive new ~/Github/my-project
 ```
 
