@@ -121,6 +121,8 @@ def validate_shipped(components: list[dict]) -> None:
         name = comp.get("name", "<unnamed>")
         if not _SAFE_NAME.match(name):
             problems.append(f"{name!r}: unsafe component name for path use")
+        # `in` on the kinds tuple: membership check against the known
+        # component kinds, not substring matching (DK rule exception).
         if comp.get("kind") not in ("agent", "command", "skill"):
             problems.append(f"{name}: unknown kind {comp.get('kind')!r}")
     if problems:
@@ -378,6 +380,26 @@ def _main(argv: list[str] | None = None) -> int:
         print(f"plugin_sha256 refreshed for {len(shipped)} shipped component(s).")
         return EXIT_OK
 
+    # ---- Preflight: every shipped body must exist BEFORE any write ----
+    # A drifted component may legitimately lack a body (new component →
+    # copy); a NON-drifted shipped component with no body is an integrity
+    # error, and it must abort here — after the merge loop it would leave
+    # merged bodies on disk with the roster unwritten (bot round 1,
+    # convergent BugBot + CodeRabbit finding).
+    drifted_names = {c["name"] for c in drifted}
+    body_missing = [
+        f"{comp['name']}: rostered as shipped but no body at "
+        f"{plugin_body_relpath(comp)}"
+        for comp in shipped
+        if comp["name"] not in drifted_names
+        and not (plugin_dir / plugin_body_relpath(comp)).is_file()
+    ]
+    if body_missing:
+        print("ERROR: published bodies missing (nothing written):")
+        for line in body_missing:
+            print(f"  - {line}")
+        return EXIT_INTEGRITY
+
     # ---- Base lookup for every drifted component BEFORE any write ----
     # (base-not-found aborts the whole run with nothing written; a silent
     # partial state would be worse than the drift.)
@@ -439,6 +461,8 @@ def _main(argv: list[str] | None = None) -> int:
         # recomputed hash is still the truth about what ships.
         body = plugin_dir / plugin_body_relpath(comp)
         if not body.is_file():
+            # Belt only: the preflight above guarantees non-drifted bodies
+            # exist and the merge loop wrote every drifted one.
             print(f"ERROR: {comp['name']}: published body still missing at {body}")
             return EXIT_INTEGRITY
         set_entry_field(

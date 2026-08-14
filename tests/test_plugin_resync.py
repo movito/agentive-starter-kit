@@ -287,6 +287,40 @@ class TestBaseNotFound:
         assert roster.read_text(encoding="utf-8") == before_roster
         assert body.read_text(encoding="utf-8") == PLUGIN_BODY
 
+    def test_missing_body_on_undrifted_component_aborts_before_writes(
+        self, kit, marketplace, capsys
+    ):
+        """Bot round 1 (convergent BugBot + CodeRabbit): a non-drifted
+        shipped component with no published body must abort in preflight —
+        BEFORE the merge loop writes anything — never leave merged bodies
+        on disk with the roster unwritten."""
+        agent2 = kit / ".claude" / "agents" / "settled.md"
+        agent2.write_text("---\nname: settled\n---\nsettled body\n", encoding="utf-8")
+        _git(kit, "add", ".")
+        _git(kit, "commit", "-q", "-m", "add settled")
+        extra = f"""\
+  - name: settled
+    kind: agent
+    ships: true
+    source: .claude/agents/settled.md
+    kit_sha256: {_sha(agent2.read_bytes())}
+    why: >-
+      in-sync component whose body was never copied
+"""
+        # demo-agent IS drifted, so the merge loop would write its body —
+        # the preflight must fire first and write nothing at all.
+        roster = _write_roster(marketplace, _sha(V1_BODY.encode()), extra=extra)
+        before_roster = roster.read_text(encoding="utf-8")
+        body = (
+            marketplace / "plugins" / "agentive-workflow" / "agents" / "demo-agent.md"
+        )
+        assert _run(kit, marketplace) == prs.EXIT_INTEGRITY
+        out = capsys.readouterr().out
+        assert "settled" in out
+        assert "nothing written" in out
+        assert roster.read_text(encoding="utf-8") == before_roster
+        assert body.read_text(encoding="utf-8") == PLUGIN_BODY
+
     def test_missing_kit_source_fails_loud(self, kit, marketplace, capsys):
         _write_roster(marketplace, _sha(V1_BODY.encode()))
         (kit / ".claude" / "agents" / "demo-agent.md").unlink()
