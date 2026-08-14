@@ -388,8 +388,8 @@ class TestHelpers:
         assert prs.frontmatter_version("---\nname: x\n---\nbody\n") is None
 
     def test_entry_bounds_exact_name_match(self):
-        """`demo` must never claim `demo-f5`'s block (== on the stripped
-        line, not startswith)."""
+        """`demo` must never claim `demo-f5`'s block (== on the
+        indent-anchored line, not startswith)."""
         lines = [
             "components:",
             "  - name: demo",
@@ -401,6 +401,21 @@ class TestHelpers:
         assert (start, end) == (1, 3)
         start, end = prs._entry_bounds(lines, "demo-f5")
         assert (start, end) == (3, 5)
+
+    def test_entry_bounds_ignores_lookalike_in_why_text(self):
+        """A `why: >-` continuation line beginning `- name:` (indented
+        deeper than the list) must neither open nor close an entry."""
+        lines = [
+            "components:",
+            "  - name: demo",
+            "    kind: agent",
+            "    why: >-",
+            "      - name: demo is mentioned here in prose",
+            "  - name: next",
+            "    kind: agent",
+        ]
+        start, end = prs._entry_bounds(lines, "demo")
+        assert (start, end) == (1, 5)
 
     def test_skill_body_path(self):
         comp = {"name": "self-review", "kind": "skill"}

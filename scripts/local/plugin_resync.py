@@ -55,6 +55,8 @@ from pathlib import Path
 # roster is (KIT-0110 evaluator F3).
 _GUARD_PATH = Path(__file__).resolve().parent / "check_plugin_drift.py"
 _spec = importlib.util.spec_from_file_location("check_plugin_drift", _GUARD_PATH)
+if _spec is None or _spec.loader is None:
+    raise ImportError(f"cannot load the drift guard from {_GUARD_PATH}")
 _guard = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_guard)
 
@@ -81,10 +83,13 @@ def sha256_bytes(data: bytes) -> str:
 
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["git", "-C", str(repo), *args],
-        capture_output=True,
-    )
+    try:
+        return subprocess.run(
+            ["git", "-C", str(repo), *args],
+            capture_output=True,
+        )
+    except FileNotFoundError as exc:
+        raise ResyncError("git is not on PATH — the resync needs it") from exc
 
 
 def plugin_body_relpath(comp: dict) -> str:
@@ -158,21 +163,22 @@ def merge_three_way(ours: bytes, base: bytes, theirs: bytes) -> tuple[bytes, boo
         paths = (tdp / "ours", tdp / "base", tdp / "theirs")
         for path, data in zip(paths, (ours, base, theirs)):
             path.write_bytes(data)
-        proc = subprocess.run(
-            [
-                "git",
-                "merge-file",
-                "--stdout",
-                "-L",
-                "plugin (published)",
-                "-L",
-                "base (rostered kit)",
-                "-L",
-                "kit (current)",
-                *(str(p) for p in paths),
-            ],
-            capture_output=True,
-        )
+        cmd = [
+            "git",
+            "merge-file",
+            "--stdout",
+            "-L",
+            "plugin (published)",
+            "-L",
+            "base (rostered kit)",
+            "-L",
+            "kit (current)",
+            *(str(p) for p in paths),
+        ]
+        try:
+            proc = subprocess.run(cmd, capture_output=True)
+        except FileNotFoundError as exc:
+            raise ResyncError("git is not on PATH — the resync needs it") from exc
     if proc.returncode == 255 or proc.returncode < 0:
         raise ResyncError(
             f"git merge-file failed: {proc.stderr.decode('utf-8', 'replace').strip()}"
@@ -195,19 +201,26 @@ def frontmatter_version(text: str) -> str | None:
 
 
 def _entry_bounds(lines: list[str], name: str) -> tuple[int, int]:
-    """Start/end line indices of a component's roster entry."""
+    """Start/end line indices of a component's roster entry.
+
+    Both matches are anchored to the roster's 2-space list indent so a
+    ``why: >-`` continuation line that happens to begin with ``- name:``
+    (indented deeper) can never open or close an entry (KIT-0110
+    evaluator: latent split risk in unanchored matching).
+    """
     start = None
     for i, line in enumerate(lines):
-        # `==` on the stripped line: exact-entry match, so `feature-developer`
-        # can never claim `feature-developer-f5`'s block.
-        if line.strip() == f"- name: {name}":
+        # `==` (rstrip only): exact-entry match at the list indent, so
+        # `feature-developer` can never claim `feature-developer-f5`'s
+        # block and a deeper-indented lookalike never matches.
+        if line.rstrip() == f"  - name: {name}":
             start = i
             break
     if start is None:
         raise ResyncError(f"{name}: no roster entry found for update")
     end = len(lines)
     for i in range(start + 1, len(lines)):
-        if lines[i].lstrip().startswith("- name:"):
+        if lines[i].startswith("  - name:"):
             end = i
             break
     return start, end
