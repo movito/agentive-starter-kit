@@ -33,6 +33,7 @@ it is excluded from the consumer tests/ rsync in engine-consumer.sh
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -278,3 +279,192 @@ class TestPackagedWorld:
         assert (
             "agent plugin: verified" in out or "Install the agent plugin:" in out
         ), "door must verify the plugin or instruct installing it"
+
+
+# ── KIT-0105 F6: the intake flow, end-to-end ────────────────────────
+# KIT-ADR-0034's enforcement mechanism: the project-intake agent's
+# mechanical spine — everything CI can exercise of the flow without an
+# LLM — runs on every push against a fixture prototype folder, and the
+# created tree must be usable (create → doctor → every seeded-surface
+# file reference exists: the KIT-0081 F2 class, by machine).
+
+_BRIEF = """\
+# proto-widget
+
+## Project name and purpose
+proto-widget — a fixture prototype for the intake acceptance test.
+
+## Suggested task prefix
+PROTO
+
+## Suggested next steps
+1. Harden the widget. Done when: tests pass in CI.
+"""
+
+_TASK_STUB = """\
+# PROTO-0001: Harden the widget
+
+**Status**: Backlog
+**Priority**: medium (default — the planner re-triages)
+**Type**: Feature
+**Created**: 2026-08-14
+**Source**: prototype handoff brief
+
+## Summary
+
+Harden the widget.
+
+## Acceptance Criteria
+
+- [ ] Tests pass in CI.
+"""
+
+
+@pytest.fixture(scope="module")
+def intake_scaffold(tmp_path_factory):
+    """The intake agent's shell steps, verbatim from its body: code
+    repo inited ON MAIN and committed (Step 2), one flags-only door
+    run with the sibling pointers (Step 3), prefix + backlog seeding
+    (Step 4). Returns (proto, target, result)."""
+    base = tmp_path_factory.mktemp("accept-intake")
+    env = _scrubbed_env(XDG_CONFIG_HOME=str(_git_identity(base)))
+    proto = base / "proto-widget"
+    proto.mkdir()
+    (proto / "widget.py").write_text('print("prototype")\n', encoding="utf-8")
+    (proto / "PROTOTYPE-BRIEF.md").write_text(_BRIEF, encoding="utf-8")
+    for cmd in (
+        ["git", "-C", str(proto), "init", "--quiet", "-b", "main"],
+        ["git", "-C", str(proto), "add", "-A"],
+        ["git", "-C", str(proto), "commit", "--quiet", "-m", "chore: import"],
+    ):
+        subprocess.run(cmd, check=True, timeout=60, env=env)
+    target = base / "proto-widget-planning"
+    result = run_door(
+        "--new",
+        str(target),
+        "--shape",
+        "planning",
+        "--target-path",
+        "../proto-widget",
+        "--target-github",
+        "example/proto-widget",
+        env=env,
+    )
+    # Step 4's mechanical parts — only meaningful on a created tree;
+    # a failed door run is reported by the first test, not masked here
+    if result.returncode == 0 and target.is_dir():
+        env_file = target / ".env"
+        if env_file.is_file():
+            content = env_file.read_text(encoding="utf-8")
+            env_file.write_text(
+                content.replace("TASK_PREFIX=", "TASK_PREFIX=PROTO", 1),
+                encoding="utf-8",
+            )
+        backlog = target / ".kit" / "tasks" / "1-backlog"
+        if backlog.is_dir():
+            (backlog / "PROTO-0001-harden-widget.md").write_text(
+                _TASK_STUB, encoding="utf-8"
+            )
+    return proto, target, result
+
+
+@pytest.mark.slow
+class TestIntakeAcceptance:
+    """The intake acceptance criteria of KIT-0105, by machine."""
+
+    def test_door_run_succeeds_from_outside_any_kit_tree(self, intake_scaffold):
+        """AC: the intake completes from a folder with no path
+        relationship to any kit checkout — the door run targets a
+        scratch tree far from this repo."""
+        proto, target, result = intake_scaffold
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "Install complete:" in result.stdout
+
+    def test_code_repo_on_main_and_kit_free(self, intake_scaffold):
+        """AC (KIT-0081 F3 carried through): the code repo's branch IS
+        main after the agent's prescribed init — and it stays kit-free
+        (no .kit/, no .claude/)."""
+        proto, target, result = intake_scaffold
+        branch = subprocess.run(
+            ["git", "-C", str(proto), "branch", "--show-current"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert branch.stdout.strip() == "main"
+        assert not (proto / ".kit").exists(), "no kit install in the code repo"
+        assert not (proto / ".claude").exists(), "no agent copies in the code repo"
+
+    def test_sibling_pointer_resolves(self, intake_scaffold):
+        """The recorded ../<name> pointer must resolve to the actual
+        prototype folder — a wrong pointer is the silent failure the
+        agent's Step 3 re-assertion exists to prevent."""
+        proto, target, result = intake_scaffold
+        text = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "- **Path**: `../proto-widget`" in text
+        assert (target.parent / "proto-widget").resolve() == proto.resolve()
+
+    def test_doctor_ran_or_cli_instructed(self, intake_scaffold):
+        """create → doctor: the door either ran the doctor in the
+        created tree or printed the CLI install instruction — the
+        degradation pattern, never silence."""
+        proto, target, result = intake_scaffold
+        out = result.stdout
+        assert (
+            "Doctor verdict:" in out
+            or "Install the lifecycle CLI: uv tool install agentive-kit" in out
+            or "uv tool upgrade agentive-kit" in out
+        ), "door must run doctor or instruct installing/upgrading the CLI"
+
+    def test_seeded_paths_exist(self, intake_scaffold):
+        """AC (the KIT-0081 F2 class, by machine): every file path a
+        seeded guidance surface references exists in the created tree
+        — including after the intake's own seeding."""
+        proto, target, result = intake_scaffold
+        missing = _referenced_paths(target)
+        assert not missing, f"dangling references in intake scaffold: {missing}"
+
+    def test_prefix_and_backlog_seeded(self, intake_scaffold):
+        """The planning repo opens planner-ready: prefix filled (the
+        door seeds it empty on the planning shape — KIT-0084) and ≥1
+        backlog task from the brief."""
+        proto, target, result = intake_scaffold
+        lines = (target / ".env").read_text(encoding="utf-8").splitlines()
+        assert "TASK_PREFIX=PROTO" in lines
+        stub = target / ".kit" / "tasks" / "1-backlog" / "PROTO-0001-harden-widget.md"
+        assert stub.is_file()
+        assert "**Status**: Backlog" in stub.read_text(encoding="utf-8")
+
+
+# ── KIT-0105 F4: contract strings the agent body must keep ──────────
+
+_INTAKE_AGENT = (
+    Path(__file__).resolve().parent.parent / ".claude" / "agents" / "project-intake.md"
+)
+
+
+class TestIntakeAgentContract:
+    """The location-agnostic rewrite (KIT-0105) must not lose the
+    guards that predate it. Prose contracts, pinned as strings — the
+    same discipline as the door's contract lines above."""
+
+    def _text(self) -> str:
+        return _INTAKE_AGENT.read_text(encoding="utf-8")
+
+    def test_main_branch_guard_held_through_move(self):
+        """KIT-0081 F3, carried through the move unchanged (F4: test,
+        not fix): init lands on main even without init.defaultBranch,
+        and the pre-push verification demands the branch BE main."""
+        text = self._text()
+        assert "init.defaultBranch=main" in text
+        assert "`git -C <code-path> branch --show-current` must print `main`" in text
+
+    def test_missing_cli_instructs_never_dead_ends(self):
+        """F2/AC: a missing `agentive` CLI produces the printed
+        install command — the degradation convention, not a failure."""
+        assert "uv tool install agentive-kit" in self._text()
+
+    def test_no_kit_checkout_residence_claim(self):
+        """F5, pinned for this file: the agent must never again claim
+        to run FROM a kit checkout (it ships in the plugin)."""
+        assert "from an agentive-starter-kit checkout" not in self._text()

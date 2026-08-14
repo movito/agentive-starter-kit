@@ -52,12 +52,14 @@ side in one folder, with your operator preset as a visible sibling:
 └── agentive-starter-kit/    ← optional: the kit's development home
 ```
 
-The kit clone is the *development* home for the kit itself — and,
-today, the home of the conversational flows: `/new-project`,
-`/setup-preset`, and the `project-intake` agent are builder-side
-commands whose files live in this repo, so they run in a Claude Code
-session opened there (moving intake into the plugin is KIT-ADR-0031).
-Creating a project never requires it: the door is the package.
+The kit clone is the *development* home for the kit itself — and the
+home of the guided interviews: `/new-project` and `/setup-preset` are
+builder-side commands whose files live in this repo, so they run in a
+Claude Code session opened there. The `project-intake` agent ships
+with the `agentive-workflow` plugin (KIT-ADR-0031) and runs anywhere
+the plugin is installed — its natural home is the prototype's own
+folder. Creating a project never requires the kit clone: the door is
+the package.
 
 ### Where the guided flows run
 
@@ -175,9 +177,12 @@ private planning repo that manages it (why this split: see
    prototype, paste the contents of
    `.kit/templates/PROTOTYPE-HANDOFF-TEMPLATE.md` and let it fill the
    template in. Save the result as a markdown file.
-2. **Hand it to the intake agent.** Open a **new tab** in the kit
-   clone and invoke the `project-intake` agent, giving it the brief
-   and the code folder:
+2. **Hand it to the intake agent.** Open a **new tab** in the
+   prototype's code folder — the agent ships with the
+   `agentive-workflow` plugin, so it runs right where the deliverable
+   sits — and invoke the `project-intake` agent, giving it the brief
+   (the code folder itself is the default candidate when you open the
+   tab there):
 
    ```text
    Use the project-intake agent. Brief: ~/Downloads/my-prototype-brief.md
@@ -247,11 +252,12 @@ uv tool install agentive-kit   # or: pipx install agentive-kit
 agentive new ~/Github/my-tool
 ```
 
-Clone the kit only when you want the guided flows — the
+Clone the kit only when you want the guided interviews — the
 `/new-project` interview (the one user-facing entry for every
 situation: prototype, blank pair, single repo — it routes to the
-right flow itself), `/setup-preset`, the `project-intake` agent — or
-to work on the kit itself. See [The sibling
+right flow itself) and `/setup-preset` — or to work on the kit
+itself. (The `project-intake` agent needs no clone: it ships with the
+`agentive-workflow` plugin.) See [The sibling
 layout](#the-sibling-layout) above for the clone command. (The
 retired `create-project` agent's job folded into `/new-project` + the
 door in KIT-0093; if you find a live user-facing reference to it,

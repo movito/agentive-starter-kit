@@ -1,13 +1,14 @@
 # Prototype Handoff Template
 
-**Version**: 1.0.0
-**Created**: 2026-07-24 (KIT-0066)
+**Version**: 1.1.0
+**Created**: 2026-07-24 (KIT-0066); location-agnostic launch 2026-08-14
+(KIT-0105)
 **Purpose**: Paste-able boilerplate for graduating a prototype out of a
 prototyping conversation (Cowork or any Claude session) into structured
 development.
-**Consumed by**: the `project-intake` agent
-(`.claude/agents/project-intake.md`), which turns the resulting brief +
-the prototype code folder into the split pair — a plain code repo and a
+**Consumed by**: the `project-intake` agent (ships with the
+`agentive-workflow` plugin), which turns the resulting brief + the
+prototype code folder into the split pair — a plain code repo and a
 preset-configured planning repo (`docs/CROSS-REPO-PATTERN.md`).
 
 ---
@@ -19,9 +20,11 @@ preset-configured planning repo (`docs/CROSS-REPO-PATTERN.md`).
 2. Save the brief it returns as `PROTOTYPE-BRIEF.md` — inside the
    prototype code folder is the convention the intake agent looks for
    first, but any saved location works.
-3. Open a new tab from your agentive-starter-kit checkout and paste —
-   the message belongs in the command, since a session cannot speak
-   first and a bare launch just idles:
+3. Open a new tab in the prototype's code folder — the intake agent
+   ships with the `agentive-workflow` plugin, so it runs right where
+   the deliverable sits — and paste — the message belongs in the
+   command, since a session cannot speak first and a bare launch just
+   idles:
 
    ```sh
    claude --agent project-intake "Begin the intake. Brief: <path-to-brief.md>  Code: <path-to-code-folder>"

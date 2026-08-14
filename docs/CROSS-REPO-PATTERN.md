@@ -116,10 +116,10 @@ The template → agent → pair recipe composes the door run above:
    `.kit/templates/PROTOTYPE-HANDOFF-TEMPLATE.md` into the prototyping
    conversation; save the structured brief it returns (convention:
    `PROTOTYPE-BRIEF.md` in the code folder).
-2. **Agent**: invoke the `project-intake` agent
-   (`.claude/agents/project-intake.md`) in a new tab from your kit
-   checkout, giving it the brief path, the code folder, and the
-   project name.
+2. **Agent**: invoke the `project-intake` agent (ships with the
+   `agentive-workflow` plugin) in a new tab opened in the prototype's
+   code folder — no kit checkout needed — giving it the brief path,
+   the code folder, and the project name.
 3. **Pair**: the agent creates the code repo (git + GitHub, no kit
    install), runs the door for the planning repo (the operator preset
    answers shape/bots/evaluators/env), fills the planning repo's
