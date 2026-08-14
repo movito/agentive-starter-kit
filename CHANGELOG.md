@@ -149,6 +149,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`scripts/local/plugin_resync.py` — the release resync tool**
+  (KIT-0110 R1): codifies the method three releases ran as hand-rolled
+  `/tmp` tooling. Work-list from roster hashes (never `git diff`,
+  KIT-0099); three-way merge per drifted component (base = the kit
+  file's historical content matching the rostered `kit_sha256`, found
+  by history-walk + hash-match; theirs = kit working tree; ours = the
+  published plugin body) so the KIT-ADR-0025 generalization is never
+  flattened by a copy; conflicts surfaced as `<body>.conflict` beside
+  an untouched published body, never auto-resolved; base-not-found
+  fails loud naming the component, with nothing written. Maintains the
+  roster's hash columns: `kit_sha256`/`kit_version` refreshed on clean
+  merges, and the new `plugin_sha256` column (hash of each shipped
+  body) written for every shipped component — the input for the
+  marketplace-side CI check that closes the drift guard's blind half
+  (KIT-0109 retro: a bump-hashes-forget-bodies release previously went
+  green with stale content published). `--dry-run` emits the work-list
+  only; `--hashes-only` refreshes the column without touching bodies.
+  Reuses the drift guard's roster parser so tool and guard cannot
+  disagree about the schema. The guard's header now states the
+  division of verification (kit ↔ roster here; published bodies
+  marketplace-side), and its PyYAML error message points at the kit's
+  `.venv`.
 - **Markdown lint owned locally — KIT-0094** (passenger on the
   KIT-0104 prose-sweep PR): `.markdownlint-cli2.jsonc` runs the same
   tool CodeRabbit runs, scoped to live markdown (historical records,
