@@ -75,3 +75,68 @@ Logs: `.adversarial/logs/KIT-0110-code-review-input--{code-reviewer-fast,code-re
 
 No CSS/dual-render surface in this diff; the known evaluator blind
 spot does not apply.
+
+---
+
+# PR 2 (marketplace repo, movito/agentive-skills) — Gate 5 record
+
+**Date**: 2026-08-14
+**Diff shape**: logic (new verify script + first CI workflow + roster
+column/header) → fast + deep, hand-assembled full-content input
+(`.adversarial/inputs/KIT-0110-pr2-code-review-input.md`; the
+marketplace repo has no helper infra)
+
+## Verdicts
+
+| Evaluator | Model | Verdict |
+|---|---|---|
+| code-reviewer-fast | gemini-2.5-flash | CONCERNS |
+| code-reviewer | o3 | FAIL |
+
+Logs: `.adversarial/logs/KIT-0110-pr2-code-review-input--{code-reviewer-fast,code-reviewer}.md`
+claude-code tier skipped: the script's security surface (local file
+hashing, no network, no subprocess) is a strict subset of PR 1's,
+which claude-code APPROVED the same day.
+
+## Dispositions
+
+### Actioned
+
+1. **Narrow globs let extra files ship undetected** (o3 + fast,
+   CONVERGENT — CONFIRMED): `agents/*.md` / `skills/*/SKILL.md` missed
+   `skills/x/HOWTO.md`, `agents/notes.txt`. Fixed: the unrostered scan
+   now walks `agents/`, `commands/`, `skills/` recursively and flags
+   EVERY non-rostered file. Falsified live: planted
+   `skills/self-review/HOWTO.md` + `agents/.evil.md` → both flagged,
+   exit 1; removed → 27 verified, exit 0.
+2. **Leading-dot component names produce hidden shipped files** (o3 —
+   CONFIRMED latent): `_SAFE_NAME` tightened to forbid a leading dot,
+   in the marketplace script AND kit-side `plugin_resync.py` (fix the
+   class, not the instance).
+
+### Refuted (with reason)
+
+1. **o3 headline "dot-prefixed bodies escape `Path.glob`"** — verified
+   empirically: `pathlib.Path.glob('*.md')` DOES match `.evil.md`
+   (dotfile-skipping is the `glob` module's behavior, not pathlib's).
+   The FAIL's stated mechanism is wrong; the surviving kernel is the
+   extra-file gap actioned above.
+2. **fast "`body_relpath` implicitly returns None on unknown kind"** —
+   it cannot: the final branch is an unconditional return, and
+   `load_components` rejects unknown kinds for shipped entries before
+   any call.
+3. **fast "missing `ships` silently treated as false"** — intentional;
+   identical semantics to the kit guard's parser.
+
+### Declined (out of contract, recorded)
+
+1. **Hard-coded plugin dir breaks forks** (o3) — this repo IS the
+   single-plugin marketplace; a fork edits one constant.
+2. **2 GB body OOM / streamed hashing** (o3) — repo-controlled
+   markdown bodies; speculative surface.
+3. **Duplicate ships:false entries abort** (o3) — strictness is
+   deliberate: the roster is a decision record; duplicates in it are a
+   defect worth loudness.
+4. **Unit-test gaps** (o3) — the marketplace repo has no test infra by
+   design (KIT-0109 retro item 3 notes the tradeoff); the falsification
+   runs above are the test story, recorded in the PR body.

@@ -64,8 +64,10 @@ PLUGIN_REL = "plugins/agentive-workflow"
 ROSTER_REL = f"{PLUGIN_REL}/roster.yaml"
 
 # Component names become file paths under the plugin tree; refuse anything
-# that could traverse (the roster is data, not trusted input).
-_SAFE_NAME = re.compile(r"^[A-Za-z0-9._-]+$")
+# that could traverse (the roster is data, not trusted input). No leading
+# dot: a hidden shipped file is never a legitimate component (KIT-0110
+# evaluator; same rule as the marketplace-side verify script).
+_SAFE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 EXIT_OK = 0
 EXIT_CONFLICTS = 1
