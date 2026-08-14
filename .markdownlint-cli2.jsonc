@@ -1,0 +1,76 @@
+// markdownlint-cli2 config — KIT-0094: own the markdown lint locally so
+// style violations fail pre-commit instead of becoming bot review
+// threads (CodeRabbit runs markdownlint-cli2 against every PR; this
+// config is the same tool, run before the push).
+//
+// Scope: LIVE markdown only. Historical records stay as written — the
+// ignore list below mirrors the .coderabbitignore precedent (evaluator
+// artifacts, reviews, retros, handoffs, task specs) plus the archive
+// folders.
+{
+  "config": {
+    "default": true,
+
+    // Line length: OFF. This repo's prose deliberately uses long
+    // tables, links, and one-line shell commands (KIT-0094 F1).
+    "MD013": false,
+
+    // Ordered-list prefix style: allow BOTH `1. 1. 1.` and sequential
+    // `1. 2. 3.` (each list self-consistent). Decision recorded once
+    // here (KIT-0092 retro #6): the PR #118 MD029 thread was CodeRabbit
+    // linting numbering that only looked wrong inside a diff hunk —
+    // MD029-on-adjacent-hunk-context-lines is a known false-positive
+    // class; judge it against the whole file, never the hunk.
+    "MD029": { "style": "one_or_ordered" },
+
+    // Inline HTML: the kit's markdown carries structural HTML on
+    // purpose (KIT-LOCAL region markers render as comments, but agent
+    // docs also embed <details>/<summary> and line-break tags).
+    "MD033": false,
+
+    // Duplicate headings: allowed when not siblings — retro/handoff
+    // formats repeat section names across different parents.
+    "MD024": { "siblings_only": true },
+
+    // First line need not be a top-level heading: command/agent files
+    // open with YAML frontmatter followed by blockquote banners.
+    "MD041": false,
+
+    // Emphasis-as-heading: OFF. Templates and agent docs use bold
+    // pseudo-headings (`**Status**`, `**Watch for**`) deliberately;
+    // converting them to real headings would reword prose, which the
+    // KIT-0094 sweep explicitly does not do.
+    "MD036": false,
+
+    // Table pipe/column style: OFF. Introduced in markdownlint v0.41;
+    // never bot-flagged here, and enforcing one pipe-spacing style
+    // across ~1,200 hand-aligned table cells is churn without value.
+    "MD060": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": [
+    // Tooling / dependency trees
+    "node_modules/**",
+    ".venv/**",
+    // Test fixtures are test DATA, not prose — several are byte-pinned
+    // by the suite; a lint autofix here breaks tests, not style
+    "tests/fixtures/**",
+    // Historical records stay as written (.coderabbitignore precedent)
+    ".adversarial/inputs/**",
+    ".adversarial/logs/**",
+    ".adversarial/artifacts/**",
+    ".kit/context/reviews/**",
+    ".kit/context/retros/**",
+    ".kit/context/archive/**",
+    ".kit/context/*-REVIEW-STARTER.md",
+    ".kit/context/*-HANDOFF-*.md",
+    // Task specs are working records, not published docs — CodeRabbit
+    // does not review them (.coderabbitignore) and neither do we
+    ".kit/tasks/**",
+    // Archived docs
+    "docs/archive/**",
+    // Byte-pinned packaged twins of live docs (tests/test_door_data_sync.py):
+    // linting the kit-tree source is sufficient; fixes mirror by test.
+    "packages/agentive-kit/src/agentive_kit/door/data/**"
+  ]
+}
