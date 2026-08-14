@@ -73,6 +73,18 @@ Depth scales; the core does not (see the proportionality rule below).
    section itself is core: every starter ends with the operator's
    todos.
 
+   **Agent names must be resolvable FROM the launch directory**
+   (KIT-0109 launch failure, 2026-08-14): bare names
+   (`feature-developer`) resolve only where `.claude/agents/` defines
+   them — i.e. kit/project checkouts and their worktrees. A session
+   launched anywhere else needs the plugin-namespaced name
+   (`agentive-workflow:feature-developer`) — and then the checklist
+   must ALSO carry the plugin-update step first, or the roster may be
+   a stale install: `claude plugin marketplace update <marketplace>`
+   then `claude plugin update <plugin>@<marketplace>`. The planner
+   verifies resolvability against the LAUNCH directory when authoring
+   the checklist, not against the repo the task file lives in.
+
 ## House improvements (include when the task warrants them)
 
 Codified from live use — these are what separate a good starter from
