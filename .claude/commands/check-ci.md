@@ -54,6 +54,7 @@ Run the verification script and report the results:
 ```
 
 The script will output a clear verdict:
+
 - **PASS**: All workflows completed successfully
 - **FAIL**: One or more workflows failed
 - **IN PROGRESS**: Workflows still running (use `--wait` to block)

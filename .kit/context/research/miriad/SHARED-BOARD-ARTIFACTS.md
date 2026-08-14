@@ -57,7 +57,8 @@ interface RosterEntry {
 ```
 
 **Status Flow**:
-```
+
+```text
 active ←→ idle ←→ busy
    ↓         ↓      ↓
 paused ←→ offline → archived
@@ -144,7 +145,7 @@ interface StoredArtifact {
 
 Artifacts form a tree via `path`:
 
-```
+```text
 project-docs/                    (folder)
 ├── architecture/                (folder)
 │   ├── adr-001-database.md     (decision)
@@ -186,6 +187,7 @@ GET /channels/:channelId/artifacts?type=task&status=in_progress
 ```
 
 **Query Parameters**:
+
 - `type` - Filter by artifact type
 - `status` - Filter by status
 - `assignee` - Filter by assignee
@@ -271,7 +273,7 @@ GET /channels/:channelId/artifacts/:slug/diff?from=v1.0&to=v1.1
 
 Tasks are artifacts with status-based lifecycle:
 
-```
+```text
 ┌─────────┐
 │ pending │ (created, not started)
 └────┬────┘
@@ -297,6 +299,7 @@ Tasks are artifacts with status-based lifecycle:
 ### Task Display
 
 In tree views, task status is shown in parentheses:
+
 - `task-auth (pending)`
 - `task-auth (in_progress)`
 - `task-auth (done)`
@@ -318,6 +321,7 @@ Artifacts can reference each other via the `refs` field:
 ```
 
 This enables:
+
 - Dependency tracking
 - Related artifact discovery
 - Impact analysis
@@ -340,6 +344,7 @@ connectionManager.broadcast(channelId, {
 ### Conflict Resolution
 
 CAS (Compare-And-Swap) prevents lost updates:
+
 1. Client reads artifact (version N)
 2. Client sends PATCH with `version: N`
 3. Server checks current version
@@ -375,6 +380,7 @@ CAS (Compare-And-Swap) prevents lost updates:
 ### What We Can Adopt
 
 1. **Structured Task Metadata**
+
    ```yaml
    # In task frontmatter
    type: task
@@ -436,7 +442,7 @@ updated: 2026-02-05
 
 ### Channel-Like Organization
 
-```
+```text
 .kit/context/
 ├── channels/
 │   ├── main/                  # Default channel

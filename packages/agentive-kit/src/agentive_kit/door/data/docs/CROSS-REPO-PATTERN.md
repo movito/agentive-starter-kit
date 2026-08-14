@@ -43,7 +43,7 @@ monorepo remains fine for one-offs and small experiments.
 
 ## How It Works
 
-```
+```text
 planning-repo/                    target-repo/
 ├── CLAUDE.md (## Target Repository config)
 ├── .claude/agents/      ←──────── agent definitions live here
@@ -129,7 +129,7 @@ The template → agent → pair recipe composes the door run above:
 
 Both repos must be siblings on disk:
 
-```
+```text
 ~/Github/
 ├── my-project/           # target repo (the codebase)
 └── my-project-planning/  # planning repo (agentive-starter-kit)

@@ -40,7 +40,7 @@ is clean or the cycle limit is reached.
 
 Track which cycle you are on (1 through 10). Report at the start of each cycle:
 
-```
+```markdown
 ## Babysit Cycle [N]/10 — PR #[number]
 ```
 
@@ -80,22 +80,26 @@ Present the triage table for **unresolved** threads:
 | 1 | ... | ... | ... | ... | Fix / Resolve |
 
 Use the severity triage from the `bot-triage` skill:
+
 - **Fix**: Real bugs, security, compatibility, reasonable improvements
 - **Resolve without fixing**: False positives, cosmetic, platform-irrelevant
 
 ### Phase 3: Decision Gate
 
 **If no unresolved threads** (or all are resolve-without-fixing):
+
 - Resolve any remaining trivial threads via GraphQL
 - Report: "PR is clean after [N] cycle(s). Ready for human review."
 - **Stop babysitting.**
 
 **If fixable threads exist AND this is cycle 10**:
+
 - Report the remaining issues
 - Say: "Cycle limit reached (10/10). [N] threads still need attention."
 - **Stop babysitting** — let the user decide next steps.
 
 **If fixable threads exist AND cycles remain**:
+
 - Proceed to Phase 4.
 
 ### Phase 4: Fix and Push
@@ -106,15 +110,15 @@ Use the severity triage from the `bot-triage` skill:
 4. Push to the feature branch
 5. Reply to each fixed thread:
 
-```bash
-agentive review-helper reply PR_NUMBER COMMENT_ID 'Fixed in COMMIT_SHA: description.'
-```
+   ```bash
+   agentive review-helper reply PR_NUMBER COMMENT_ID 'Fixed in COMMIT_SHA: description.'
+   ```
 
 6. Resolve all addressed threads:
 
-```bash
-agentive review-helper resolve PRRT_node_id
-```
+   ```bash
+   agentive review-helper resolve PRRT_node_id
+   ```
 
 7. **Go back to Cycle Start** (increment cycle counter).
 
@@ -131,7 +135,7 @@ The babysit loop ends when ANY of these are true:
 
 Always end with a summary:
 
-```
+```markdown
 ## Babysit Complete — PR #[number]
 
 | Metric | Value |

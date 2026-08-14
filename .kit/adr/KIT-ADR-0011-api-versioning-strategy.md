@@ -11,6 +11,7 @@
 ### Problem Statement
 
 When APIs evolve, breaking changes are inevitable. We need a versioning strategy that:
+
 - Gives consumers stability guarantees
 - Allows controlled deprecation of old versions
 - Provides clear migration paths
@@ -19,17 +20,20 @@ When APIs evolve, breaking changes are inevitable. We need a versioning strategy
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Support multiple API versions simultaneously
 - Clear version identification in requests
 - Automated deprecation warnings
 - Graceful sunset of old versions
 
 **Constraints:**
+
 - Must work with REST APIs
 - Should integrate with OpenAPI (KIT-ADR-0010)
 - Must be implementable in Python frameworks
 
 **Assumptions:**
+
 - APIs will have external consumers
 - Breaking changes will occur over time
 - Consumers need migration time
@@ -49,7 +53,7 @@ We will adopt **date-based API versioning** (YYYY-MM-DD format) with a **6-month
 
 **Version Format:**
 
-```
+```text
 YYYY-MM-DD
 
 Examples:
@@ -59,6 +63,7 @@ Examples:
 ```
 
 **Why date-based (like Stripe)?**
+
 - Natural chronological ordering
 - Clear "age" of version
 - No semantic ambiguity (what's in v2 vs v3?)
@@ -228,6 +233,7 @@ Each version must have a changelog entry:
 **Description**: Version in URL path like `/v1/tasks`
 
 **Not adopted because**:
+
 - ❌ Pollutes URL namespace
 - ❌ Unclear what's in each version
 - ❌ Harder to deprecate gracefully
@@ -238,6 +244,7 @@ Each version must have a changelog entry:
 **Description**: Full semver for API versions
 
 **Not adopted because**:
+
 - ❌ Overkill for API versioning
 - ❌ Minor/patch versions rarely matter for APIs
 - ❌ Consumers typically pin to major version anyway
@@ -247,6 +254,7 @@ Each version must have a changelog entry:
 **Description**: Single version, break things as needed
 
 **Rejected because**:
+
 - ❌ Terrible for external consumers
 - ❌ No migration time
 - ❌ Unprofessional
@@ -258,6 +266,7 @@ Each version must have a changelog entry:
 **When to Apply**: When adding first REST endpoint with external consumers
 
 **First Steps**:
+
 1. Add version middleware
 2. Document initial version in changelog
 3. Include version in OpenAPI spec
@@ -268,9 +277,9 @@ Each version must have a changelog entry:
 
 ## References
 
-- Stripe API Versioning: https://stripe.com/docs/api/versioning
-- Zalando API Guidelines: https://opensource.zalando.com/restful-api-guidelines/#api-versioning
-- Microsoft REST API Guidelines: https://github.com/microsoft/api-guidelines
+- Stripe API Versioning: <https://stripe.com/docs/api/versioning>
+- Zalando API Guidelines: <https://opensource.zalando.com/restful-api-guidelines/#api-versioning>
+- Microsoft REST API Guidelines: <https://github.com/microsoft/api-guidelines>
 
 ## Revision History
 

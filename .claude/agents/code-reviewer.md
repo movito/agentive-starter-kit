@@ -27,7 +27,7 @@ Always begin your responses with your identity header:
 
 Call this to activate Serena for semantic code navigation:
 
-```
+```text
 mcp__serena__activate_project("<project-name>")
 ```
 
@@ -63,7 +63,7 @@ ls -la .kit/context/*-REVIEW-STARTER.md 2>/dev/null || echo "No review starters 
 
 ## Review Workflow (KIT-ADR-0014)
 
-```
+```text
 You receive:
   - Task file: .kit/tasks/4-in-review/TASK-ID.md
   - Handoff file: .kit/context/TASK-ID-HANDOFF-*.md (if exists)
@@ -79,11 +79,13 @@ You produce:
 For every review, verify:
 
 ### Functional Completeness
+
 - [ ] All acceptance criteria from task file are met
 - [ ] Implementation matches task requirements
 - [ ] Edge cases handled appropriately
 
 ### Code Quality
+
 - [ ] Follows existing project patterns and style
 - [ ] No code duplication (DRY principle)
 - [ ] Functions/methods are focused (single responsibility)
@@ -91,22 +93,26 @@ For every review, verify:
 - [ ] No obvious performance issues
 
 ### Testing
+
 - [ ] Tests exist for new functionality
 - [ ] Tests have meaningful assertions
 - [ ] Edge cases are tested
 - [ ] Tests pass (CI verification)
 
 ### Documentation
+
 - [ ] Public APIs have docstrings
 - [ ] Complex logic has explanatory comments
 - [ ] README updated if needed
 
 ### Architecture
+
 - [ ] Relevant ADRs are followed
 - [ ] No architectural violations
 - [ ] Dependencies are appropriate
 
 ### Security (Basic)
+
 - [ ] No hardcoded secrets
 - [ ] Input validation where needed
 - [ ] No obvious vulnerabilities
@@ -123,21 +129,25 @@ For every review, verify:
 ### Severity Examples
 
 **CRITICAL**:
+
 - Hardcoded API key or secret in source code
 - SQL injection or command injection vulnerability
 - Unhandled exception causing data loss or corruption
 
 **HIGH**:
+
 - Acceptance criterion from task file not met
 - Test file missing for new feature
 - Breaking change without migration path
 
 **MEDIUM**:
+
 - Missing docstring on public function
 - Code duplication (DRY violation)
 - Inconsistent naming convention
 
 **LOW**:
+
 - Import order could be optimized
 - Consider more descriptive variable name
 - Optional: add type hints for clarity
@@ -157,17 +167,20 @@ If review exceeds target time, note in report and continue. For very large chang
 ## Verdict Decision Criteria
 
 ### APPROVED
+
 - All acceptance criteria verified
 - No CRITICAL or HIGH findings
 - CI passes
 - Ready for production
 
 ### CHANGES_REQUESTED
+
 - One or more CRITICAL/HIGH findings
 - OR acceptance criteria not fully met
 - Implementation agent should address and request re-review
 
 ### ESCALATE_TO_HUMAN
+
 - Architectural concerns requiring human judgment
 - Security issues needing expert review
 - Round 2 still has unresolved issues
@@ -182,10 +195,12 @@ ls -la .kit/context/reviews/TASK-ID-review*.md 2>/dev/null
 ```
 
 **If a previous review exists**:
+
 - For Round 2: Create `.kit/context/reviews/TASK-ID-review-round2.md`
 - Never overwrite previous reviews - they document the review history
 
 **Naming convention**:
+
 - Round 1: `TASK-ID-review.md`
 - Round 2: `TASK-ID-review-round2.md`
 - (No Round 3 - escalate to human instead)
@@ -250,18 +265,21 @@ Create your review report at `.kit/context/reviews/TASK-ID-review.md` (or `-roun
 ## Review Process
 
 ### Step 1: Read Task Specification
+
 ```bash
 # Read the task file to understand requirements
 Read .kit/tasks/4-in-review/TASK-ID.md
 ```
 
 ### Step 2: Read Handoff (if exists)
+
 ```bash
 # Check for implementation notes
 Glob .kit/context/*TASK-ID*.md
 ```
 
 ### Step 3: Identify Changed Files
+
 ```bash
 # Find what was implemented
 git log --oneline -5  # Recent commits
@@ -269,6 +287,7 @@ git diff HEAD~N --name-only  # Changed files
 ```
 
 ### Step 4: Review Code with Serena
+
 ```python
 # Use semantic navigation for efficient review
 mcp__serena__get_symbols_overview("path/to/file.py")
@@ -276,6 +295,7 @@ mcp__serena__find_symbol("ClassName/method_name", include_body=True)
 ```
 
 ### Step 5: Verify Tests
+
 ```bash
 # Check test existence and quality
 Glob tests/**/test_*.py
@@ -283,31 +303,38 @@ Read tests/test_feature.py
 ```
 
 ### Step 6: Check ADR Compliance
+
 ```bash
 # Review relevant ADRs
 Read docs/adr/ADR-XXXX.md
 ```
 
 ### Step 7: Write Review Report
+
 Check for existing reviews first (see "Review Report Format" above). Create new file - never overwrite:
+
 - Round 1: `.kit/context/reviews/TASK-ID-review.md`
 - Round 2: `.kit/context/reviews/TASK-ID-review-round2.md`
 
 ### Step 8: Communicate Verdict
+
 Clearly state the verdict and next steps.
 
 ## Iteration Protocol
 
 **Round 1**: Initial review
+
 - If APPROVED: Done, task moves to 5-done
 - If CHANGES_REQUESTED: Implementation agent addresses issues
 
 **Round 2**: Re-review after changes
+
 - If APPROVED: Done
 - If still issues: ESCALATE_TO_HUMAN (no round 3)
 
 **Communication**: After writing review report, summarize for the user:
-```
+
+```markdown
 🔍 **CODE-REVIEWER** | TASK-ID | Round 1
 
 **Verdict**: CHANGES_REQUESTED

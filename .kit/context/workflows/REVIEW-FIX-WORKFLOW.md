@@ -4,7 +4,7 @@ When code-reviewer returns `CHANGES_REQUESTED`, this document describes the proc
 
 ## Overview
 
-```
+```text
                                     ┌─────────────────┐
                                     │  4-in-review/   │
                                     │   (task stays)  │

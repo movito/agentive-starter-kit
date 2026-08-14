@@ -11,6 +11,7 @@
 ### Problem Statement
 
 Applications need configuration that varies by environment (development, CI, production). We need a consistent, secure, and discoverable way to manage settings that:
+
 - Keeps secrets out of version control
 - Supports environment-specific overrides
 - Is easy to understand and extend
@@ -19,17 +20,20 @@ Applications need configuration that varies by environment (development, CI, pro
 ### Forces at Play
 
 **Technical Requirements:**
+
 - API keys and secrets must be protected
 - Configuration should work in local dev, CI, and production
 - Tool configurations (pytest, black, etc.) should be centralized
 - New team members need clear onboarding path
 
 **Constraints:**
+
 - Must work with GitHub Actions (CI environment)
 - Must not require additional infrastructure (no config servers)
 - Should use Python ecosystem tools
 
 **Assumptions:**
+
 - All environments support environment variables
 - Developers can create `.env` from template
 - Secrets are managed per-environment
@@ -49,7 +53,7 @@ We will adopt a **hierarchical configuration system** with four priority levels 
 
 **Configuration Hierarchy (lowest to highest priority):**
 
-```
+```text
 1. Defaults (in code)
     ↓ overridden by
 2. pyproject.toml / config files
@@ -163,6 +167,7 @@ omit = ["tests/*", "venv/*"]
 **Description**: Use Pydantic BaseSettings for typed configuration
 
 **Not adopted yet because**:
+
 - ❌ Additional complexity for current needs
 - ❌ Project is simple enough for env vars
 - ✅ Good future option if validation needed
@@ -172,6 +177,7 @@ omit = ["tests/*", "venv/*"]
 **Description**: Use YAML files for all configuration
 
 **Rejected because**:
+
 - ❌ Secrets would need separate handling anyway
 - ❌ Environment variables are more universal
 - ❌ pyproject.toml already handles tool config
@@ -181,6 +187,7 @@ omit = ["tests/*", "venv/*"]
 **Description**: Document environment variables only in README
 
 **Rejected because**:
+
 - ❌ Less discoverable than template file
 - ❌ No clear structure for required vs optional
 - ❌ Harder to onboard new developers
@@ -189,7 +196,7 @@ omit = ["tests/*", "venv/*"]
 
 **Current Configuration Files:**
 
-```
+```text
 .
 ├── .env.template          # 82 lines, well-documented
 ├── .env                   # (gitignored, user-created)
@@ -200,7 +207,7 @@ omit = ["tests/*", "venv/*"]
 
 **Onboarding Flow:**
 
-```
+```text
 1. Clone repository
 2. cp .env.template .env
 3. Fill in required API keys
@@ -214,9 +221,9 @@ omit = ["tests/*", "venv/*"]
 
 ## References
 
-- 12-Factor App Config: https://12factor.net/config
-- python-dotenv: https://pypi.org/project/python-dotenv/
-- Pydantic Settings: https://docs.pydantic.dev/latest/concepts/pydantic_settings/
+- 12-Factor App Config: <https://12factor.net/config>
+- python-dotenv: <https://pypi.org/project/python-dotenv/>
+- Pydantic Settings: <https://docs.pydantic.dev/latest/concepts/pydantic_settings/>
 
 ## Revision History
 

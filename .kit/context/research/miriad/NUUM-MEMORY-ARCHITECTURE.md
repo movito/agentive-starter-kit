@@ -1,6 +1,6 @@
 # Nuum Memory Architecture (Sanity.io)
 
-**Source**: https://www.sanity.io/blog/how-we-solved-the-agent-memory-problem
+**Source**: <https://www.sanity.io/blog/how-we-solved-the-agent-memory-problem>
 **Date Captured**: 2026-02-05
 **Relevance**: Critical for KIT-ADR-0021 - informs agent lifecycle decisions
 
@@ -9,6 +9,7 @@
 ## The Problem: "Agentic Burn-Out"
 
 As context windows fill during extended sessions, agents:
+
 - Lose coherence
 - Forget earlier decisions
 - Repeat questions
@@ -35,7 +36,7 @@ For each conversation segment, create two outputs:
 
 ## Three-Tier Memory Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │  TIER 1: Temporal Memory                                    │
 │  - Full-fidelity message history                            │
@@ -65,16 +66,19 @@ For each conversation segment, create two outputs:
 ## Key Mechanisms
 
 ### Background Distillation
+
 - Runs invisibly while agent works
 - Compresses older segments automatically
 - Targets ~40-60% context window saturation
 
 ### "Reflect" Tool
+
 - Enables perfect recall
 - Searches original Tier 1 messages
 - Agent can retrieve exact details when needed
 
 ### Recursive Compression
+
 - Tier 2 summaries themselves get summarized
 - Creates natural gradient: recent=detailed, old=abstract
 - Preserves decision rationale while discarding noise
@@ -84,6 +88,7 @@ For each conversation segment, create two outputs:
 ## Results
 
 **Nuum agent stats**:
+
 - 7,400+ messages
 - 6 days continuous operation
 - Maintained coherence throughout
@@ -122,7 +127,7 @@ For each conversation segment, create two outputs:
 
 ### Potential Adaptation Path
 
-```
+```text
 Ephemeral Agent Model + External Memory
 ────────────────────────────────────────
 

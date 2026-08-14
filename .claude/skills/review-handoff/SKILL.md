@@ -157,6 +157,7 @@ When you receive a fix prompt after CHANGES_REQUESTED:
 7. **Notify user** — ready for re-review (Round 2)
 
 **Key points:**
+
 - Task stays in `4-in-review/` — don't move it
 - Max 2 review rounds — Round 2 is final
 - Update, don't create new review-starter file

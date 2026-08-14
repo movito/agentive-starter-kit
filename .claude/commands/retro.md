@@ -29,12 +29,14 @@ grep -A 5 "## Target Repository" CLAUDE.md 2>/dev/null || echo "SINGLE_REPO_MODE
 ```
 
 If found, extract:
+
 - **target_path**: the value after `- **Path**:` (e.g., `../my-project-code`)
 - **target_github**: the value after `- **GitHub**:` (e.g., `your-org/my-project-code`)
 
 If `SINGLE_REPO_MODE`, skip all cross-repo logic — run every command below against the current repo exactly as before.
 
 **For the rest of this document:**
+
 - `GIT_TARGET` means: use `git -C <target_path>` in cross-repo mode, or plain `git` in single-repo mode
 - `GH_TARGET` means: use `gh --repo <target_github>` in cross-repo mode, or plain `gh` in single-repo mode
 
@@ -128,6 +130,7 @@ Concrete, actionable improvements. Each item should be something the planner can
 ### Permission Prompts Hit
 
 Were you blocked by any permission prompts during this session? For each one, note:
+
 - The exact command or tool call that triggered it
 - How long (approximately) you were blocked before the user approved
 - Whether this is already in `.claude/settings.json` allow list or is a new pattern

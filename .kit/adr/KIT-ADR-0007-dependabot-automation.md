@@ -11,6 +11,7 @@
 ### Problem Statement
 
 Dependencies become outdated and vulnerable over time. Manual tracking of security advisories and version updates is time-consuming and error-prone. We need automated dependency management that:
+
 - Alerts us to security vulnerabilities
 - Creates PRs for updates automatically
 - Integrates with our CI pipeline for validation
@@ -18,17 +19,20 @@ Dependencies become outdated and vulnerable over time. Manual tracking of securi
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Python package updates (pip ecosystem)
 - GitHub Actions version updates
 - Weekly update cadence (balance freshness vs. noise)
 - CI validation before merge
 
 **Constraints:**
+
 - Must work with GitHub's native features
 - PRs should be testable via existing CI workflow
 - Should not overwhelm maintainers with PR volume
 
 **Assumptions:**
+
 - Repository is hosted on GitHub
 - CI runs on all PRs (including Dependabot PRs)
 - Maintainers review and merge dependency PRs
@@ -73,14 +77,14 @@ Major updates are kept separate for careful review.
 
 **Commit Message Convention:**
 
-```
+```text
 deps(scope): Update package from x.y.z to a.b.c
 ci(scope): Update action from v1 to v2
 ```
 
 **Workflow Integration:**
 
-```
+```text
 Dependabot detects update
     ↓
 Creates PR with changes
@@ -92,6 +96,7 @@ Tests fail? → Investigate compatibility
 ```
 
 **Labels Applied:**
+
 - `dependencies` - All Dependabot PRs
 - `python` - Python package updates
 - `github-actions` - Actions updates
@@ -124,6 +129,7 @@ Tests fail? → Investigate compatibility
 **Description**: Manually track and update dependencies periodically
 
 **Rejected because**:
+
 - ❌ Time-consuming and easy to forget
 - ❌ Security vulnerabilities may go unnoticed
 - ❌ No automation benefits
@@ -133,6 +139,7 @@ Tests fail? → Investigate compatibility
 **Description**: Use Renovate instead of Dependabot
 
 **Rejected because**:
+
 - ❌ Requires additional setup/hosting
 - ❌ Dependabot is built into GitHub (simpler)
 - ❌ Similar functionality for our needs
@@ -143,6 +150,7 @@ Tests fail? → Investigate compatibility
 **Description**: Run Dependabot daily instead of weekly
 
 **Rejected because**:
+
 - ❌ Too many PRs to review
 - ❌ Excessive noise for maintainers
 - ❌ Weekly is sufficient for non-critical updates
@@ -150,11 +158,13 @@ Tests fail? → Investigate compatibility
 ## Real-World Results
 
 **Before this decision:**
+
 - Manual dependency tracking
 - Security vulnerabilities discovered reactively
 - Inconsistent update cadence
 
 **After this decision:**
+
 - Automated weekly PRs for updates
 - Security alerts within 24 hours
 - Consistent, predictable update schedule
@@ -166,9 +176,9 @@ Tests fail? → Investigate compatibility
 
 ## References
 
-- GitHub Dependabot: https://docs.github.com/en/code-security/dependabot
-- Dependabot configuration: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-- Security advisories: https://github.com/advisories
+- GitHub Dependabot: <https://docs.github.com/en/code-security/dependabot>
+- Dependabot configuration: <https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file>
+- Security advisories: <https://github.com/advisories>
 
 ## Revision History
 

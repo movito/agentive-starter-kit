@@ -369,7 +369,7 @@ or use the `/code-review-evaluator` skill.
 > the PLANNING repo, always. Gate 5 reads it there, so a record
 > written to a relative path from a target-repo worktree is invisible
 > to preflight and the gate fails despite the work being done. See the skill's "When to Skip".
-
+>
 > **Prose-sweep exception (KIT-0069)**: on a PROSE-DOMINATED sweep
 > (many small text fixes across many files), the trio is unreliable —
 > a diff-only input makes evaluators reconstruct unchanged regions
@@ -597,10 +597,12 @@ Then:
      longer wait.
    - Never sleep. Always use `ScheduleWakeup`.
 3. **On wake**, re-poll:
+
    ```bash
    GH_TARGET pr checks <N>
    GH_TARGET pr view <N> --json reviews,statusCheckRollup
    ```
+
    Branch on the result:
 
    - **CI_FAILED**: Read the failed run's logs, fix, commit, push,

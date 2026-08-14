@@ -11,13 +11,14 @@
 ### Problem Statement
 
 Currently, completed tasks move directly from implementation to done after CI passes. While TDD and CI/CD catch functional issues, they don't verify:
+
 - Code style and pattern consistency
 - Architecture adherence (ADR compliance)
 - Documentation completeness
 - Maintainability concerns
 - Non-functional requirements
 
-```
+```text
 CURRENT WORKFLOW (gap identified):
   Task → Implementation → CI passes → Done
                                 ↑
@@ -29,18 +30,21 @@ Human code review is valuable but doesn't scale with agent-based development. We
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Agents are stateless (no persistent conversation)
 - Reviews must be structured and actionable
 - Workflow must integrate with existing task management
 - Review findings must reference specific code locations
 
 **Constraints:**
+
 - Agents cannot directly communicate (async only)
 - Reviews must complete in reasonable time (< 10 minutes)
 - False positives reduce trust in the system
 - Cannot block all changes on review (need escape hatches)
 
 **Assumptions:**
+
 - CI has already verified tests pass
 - Task specifications include acceptance criteria
 - Code is accessible via semantic navigation (Serena)
@@ -61,7 +65,7 @@ We will adopt **agent-based code review** with async file-based communication be
 
 **The Review Workflow:**
 
-```
+```text
                     ┌─────────────────────────────────────┐
                     │                                     │
                     ▼                                     │
@@ -87,7 +91,7 @@ We will adopt **agent-based code review** with async file-based communication be
 
 Since agents are stateless, they communicate via structured files:
 
-```
+```text
 Implementation Agent                    Review Agent
         │                                     │
         ├──→ Writes code                      │
@@ -186,7 +190,7 @@ ESCALATE_TO_HUMAN: [Why human judgment needed]
 
 **Iteration Limits:**
 
-```
+```text
 Round 1: Initial review
     ↓ (if CHANGES_REQUESTED)
 Round 2: Re-review after revisions
@@ -219,7 +223,7 @@ Review may be skipped for:
 
 ### File Locations
 
-```
+```text
 .agent-context/
 ├── reviews/
 │   ├── ASK-0021-review.md
@@ -260,6 +264,7 @@ Review may be skipped for:
 **Description**: All code reviewed by humans, no agent involvement
 
 **Rejected because**:
+
 - ❌ Doesn't scale with agent-generated code volume
 - ❌ Humans are slow for repetitive checks (style, patterns)
 - ❌ Inconsistent application of standards
@@ -270,6 +275,7 @@ Review may be skipped for:
 **Description**: Review happens after merge to main, fix issues later
 
 **Rejected because**:
+
 - ❌ Technical debt accumulates
 - ❌ Harder to fix issues once merged
 - ❌ No gate before completion
@@ -280,6 +286,7 @@ Review may be skipped for:
 **Description**: Review agent comments on code as it's being written
 
 **Rejected because**:
+
 - ❌ Agents are stateless - can't maintain review context
 - ❌ Interrupts implementation flow
 - ❌ Complex coordination between agents
@@ -290,6 +297,7 @@ Review may be skipped for:
 **Description**: Use static analysis tools (ruff, mypy) instead of agent review
 
 **Rejected because**:
+
 - ❌ Linting catches syntax/style, not semantic issues
 - ❌ Can't verify acceptance criteria
 - ❌ No ADR adherence checking
@@ -301,12 +309,14 @@ Review may be skipped for:
 *To be updated after ASK-0024 (Learning Tests) is completed*
 
 **Before this pattern:**
+
 - Tasks moved directly to done after CI
 - Quality issues discovered later by humans
 - Inconsistent adherence to ADRs
 - No documentation of review decisions
 
 **After this pattern:**
+
 - [Results pending]
 
 ## Related Decisions

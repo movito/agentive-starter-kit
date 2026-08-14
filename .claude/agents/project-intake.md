@@ -134,7 +134,7 @@ door applies to its own target.
 Confirm where the pair will live. Both repos must be siblings
 (`docs/CROSS-REPO-PATTERN.md`, Setup §2):
 
-```
+```text
 <parent>/
 ├── <name>/           # code repo (the prototype folder)
 └── <name>-planning/  # planning repo (the door creates this)
@@ -388,7 +388,7 @@ binding rules:
 
 Format (✓/✗ per what actually happened; every line verified):
 
-```
+```text
 📦 **PROJECT-INTAKE** | Step: Complete
 
 ✓ Read the handoff brief (<brief path>)
@@ -411,7 +411,7 @@ You can now start working on <name>. Open a new terminal tab in
 
 With doctor FAILs (or no CLI to run it), the closing block is instead:
 
-```
+```text
 Resolve the ✗ items above, re-run `agentive doctor` in
 <parent>/<name>-planning, THEN open the planner tab.
 ```

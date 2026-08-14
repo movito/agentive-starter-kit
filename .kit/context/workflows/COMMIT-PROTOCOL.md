@@ -16,7 +16,7 @@
 
 ## Commit Message Format
 
-```
+```text
 <type>: <description>
 
 [optional body]
@@ -26,7 +26,7 @@
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-### Types:
+### Types
 
 - `feat`: New feature
 - `fix`: Bug fix
@@ -36,7 +36,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - `chore`: Build, dependencies, tooling
 - `perf`: Performance improvements
 
-### Description Rules:
+### Description Rules
 
 - Use imperative mood ("Add feature" not "Added feature")
 - Start with lowercase (unless proper noun)
@@ -91,7 +91,8 @@ EOF
 
 ## Pre-commit Checks
 
-### Automatic (via pre-commit hooks):
+### Automatic (via pre-commit hooks)
+
 - ✅ trailing-whitespace: Remove trailing spaces
 - ✅ end-of-file-fixer: Ensure newline at EOF
 - ✅ check-yaml: Validate YAML syntax
@@ -101,7 +102,8 @@ EOF
 - ✅ flake8: Critical linting errors
 - ✅ pattern-lint: Project-specific DK rules (DK001, DK003)
 
-### Manual (you should do):
+### Manual (you should do)
+
 - ✅ Run pytest: Ensure tests pass
 - ✅ **Pre-run Black on new/edited Python files before staging**
   (`black <files>`) — letting the hook reformat mid-commit aborts the
@@ -130,6 +132,7 @@ EOF
 ### What It Does
 
 Runs the **SAME checks** as GitHub Actions:
+
 - Full test suite (including slow tests)
 - Coverage threshold check (`fail_under` gate in pyproject.toml, currently 80%)
 - Pre-commit hooks (formatting, linting)
@@ -162,6 +165,7 @@ After pushing to GitHub, you **MUST** verify that GitHub Actions CI/CD passes:
 ```
 
 **What It Does**:
+
 - Monitors GitHub Actions workflow runs
 - Polls every 20 seconds
 - Reports when workflows complete (pass/fail)
@@ -170,6 +174,7 @@ After pushing to GitHub, you **MUST** verify that GitHub Actions CI/CD passes:
 ### Why This Is Critical
 
 Even if `ci-check.sh` passes locally, CI can still fail due to:
+
 - Environment differences (Python versions, dependencies)
 - Race conditions not caught locally
 - Caching issues
@@ -195,6 +200,7 @@ Even if `ci-check.sh` passes locally, CI can still fail due to:
 **Soft Block Policy:**
 
 If CI is still running after timeout:
+
 - Check status manually: `gh run watch <run-id>`
 - You may proceed if you're confident (soft block)
 - Document decision in task completion notes
@@ -222,14 +228,16 @@ If CI is still running after timeout:
 
 ## Best Practices
 
-### ✅ DO:
+### ✅ DO
+
 - One logical change per commit
 - Descriptive commit message (explain WHY, not just WHAT)
 - Run tests before committing
 - Use HEREDOC format for multi-line messages
 - Include Claude Code attribution and co-author
 
-### ❌ DON'T:
+### ❌ DON'T
+
 - Don't commit secrets (.env files, credentials)
 - Don't commit generated files (unless required)
 - Don't use --no-verify (bypasses hooks) without good reason
@@ -242,12 +250,14 @@ If CI is still running after timeout:
 
 ## Special Cases
 
-### Amending Commits:
+### Amending Commits
+
 - Only amend commits that **haven't been pushed**
 - Check authorship first: `git log -1 --format='%an %ae'`
 - Use with caution: `git commit --amend`
 
-### Pre-commit Hook Failures:
+### Pre-commit Hook Failures
+
 - If black/ruff auto-formats files, stage the changes and commit again
 - If validation fails, fix the issues before committing
 - Don't skip hooks unless absolutely necessary
@@ -283,7 +293,8 @@ After pushing changes that affect task files (status changes, new tasks, complet
 ```
 
 **Expected Output (In Sync)**:
-```
+
+```text
 Linear Sync Status
 ==================
 Team: Your Team
@@ -296,7 +307,8 @@ Last sync: 2025-11-29 02:32:31 UTC
 ```
 
 **Expected Output (Mismatch)**:
-```
+
+```text
 Linear Sync Status
 ==================
 Team: Your Team
@@ -327,5 +339,6 @@ The GitHub Actions workflow runs `./scripts/core/project linearsync` on push. Af
 ---
 
 **Related Workflows**:
+
 - [TESTING-WORKFLOW.md](./TESTING-WORKFLOW.md) - Run tests before committing
 - [TASK-COMPLETION-PROTOCOL.md](./TASK-COMPLETION-PROTOCOL.md) - Completing tasks with commits

@@ -11,6 +11,7 @@
 ### Problem Statement
 
 API endpoints require testing at multiple levels: contract validation against OpenAPI specs, integration testing with dependencies, and load testing for performance. Mixing API tests with unit tests creates problems:
+
 - Different test speeds and resource needs
 - Unclear test organization
 - Missing contract validation
@@ -19,6 +20,7 @@ API endpoints require testing at multiple levels: contract validation against Op
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Validate API responses match OpenAPI specification
 - Test authentication and authorization
 - Integration tests with actual services
@@ -26,12 +28,14 @@ API endpoints require testing at multiple levels: contract validation against Op
 - Fast feedback during development
 
 **Constraints:**
+
 - Tests should run in CI pipeline
 - Some tests need external services (databases, etc.)
 - Contract tests need OpenAPI spec file
 - Load tests are slow and resource-intensive
 
 **Assumptions:**
+
 - Project has or will have REST API endpoints
 - OpenAPI specification exists (see KIT-ADR-0010)
 - Using pytest as the test framework
@@ -50,7 +54,7 @@ We will establish a **dedicated API testing infrastructure** with clear separati
 
 ### Directory Structure
 
-```
+```text
 tests/
 ├── unit/                    # Fast, isolated tests
 │   └── ...
@@ -516,6 +520,7 @@ def create_user(
 **Description**: Keep all tests in `tests/` without separation.
 
 **Rejected because**:
+
 - ❌ Hard to run API tests in isolation
 - ❌ Mixed concerns in conftest.py
 - ❌ No clear structure for contract tests
@@ -526,6 +531,7 @@ def create_user(
 **Description**: Create a separate `api_tests/` package at project root.
 
 **Rejected because**:
+
 - ❌ Fragments test infrastructure
 - ❌ Separate pytest configuration needed
 - ❌ Harder to share fixtures
@@ -536,6 +542,7 @@ def create_user(
 **Description**: Use schemathesis for property-based API testing.
 
 **Considered but deferred**:
+
 - ✅ Powerful property-based testing
 - ✅ Auto-generates test cases from spec
 - ⚠️ Higher learning curve
@@ -549,10 +556,10 @@ def create_user(
 
 ## References
 
-- pytest Documentation: https://docs.pytest.org/
-- FastAPI Testing: https://fastapi.tiangolo.com/tutorial/testing/
-- openapi-core: https://openapi-core.readthedocs.io/
-- Schemathesis: https://schemathesis.readthedocs.io/
+- pytest Documentation: <https://docs.pytest.org/>
+- FastAPI Testing: <https://fastapi.tiangolo.com/tutorial/testing/>
+- openapi-core: <https://openapi-core.readthedocs.io/>
+- Schemathesis: <https://schemathesis.readthedocs.io/>
 
 ## Revision History
 

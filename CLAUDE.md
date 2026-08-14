@@ -6,7 +6,7 @@ evaluation, and architectural decision records. For full details, see `README.md
 
 ## Directory Structure
 
-```
+```text
 .claude/agents/       Implementation agents (feature-developer, ci-checker, etc.)
 .claude/commands/     All slash commands (start-task, babysit-pr, retro, etc.)
 .claude/skills/       ALL skills — implementation (pre-implementation, bot-triage) and builder (self-review, review-handoff, code-review-evaluator)

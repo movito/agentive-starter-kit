@@ -21,6 +21,7 @@ The error resolved after ~7 retry attempts (approximately 3-4 minutes).
 ### Root Cause Analysis
 
 The `overloaded_error` is an Anthropic API capacity issue, not a prompt size error. However:
+
 - Larger system prompts increase request payload size
 - More tokens require more processing time
 - During high-demand periods, larger requests may be more susceptible to overload rejection
@@ -28,6 +29,7 @@ The `overloaded_error` is an Anthropic API capacity issue, not a prompt size err
 ## Decision
 
 **Keep the embedded system prompt approach** but:
+
 1. Separate concerns into dedicated agents (e.g., onboarding agent vs coordinator)
 2. Document guidelines for agent size management
 3. Use lighter models (Sonnet) for simpler tasks
@@ -43,6 +45,7 @@ The `overloaded_error` is an Anthropic API capacity issue, not a prompt size err
 ### Separation of Concerns
 
 Rather than one large agent handling everything, split responsibilities:
+
 - **onboarding agent**: First-run setup only (dedicated, focused)
 - **planner agent**: Project coordination (no setup code)
 - **feature-developer**: Implementation only
@@ -58,6 +61,7 @@ This naturally keeps each agent file smaller and more focused.
 ### When to Externalize Content
 
 Consider moving content to external files if:
+
 - Agent markdown exceeds 500 lines
 - Repeated overload errors occur (>5 retries)
 - Content is rarely needed (e.g., reference documentation)
@@ -65,12 +69,14 @@ Consider moving content to external files if:
 ## Consequences
 
 ### Positive
+
 - Simple architecture (single file per agent)
 - All context immediately available to agent
 - Easy to version and review
 - Separation of concerns keeps files manageable
 
 ### Negative
+
 - Larger request payload for complex agents
 - Potentially longer time-to-first-response
 - More susceptible to overload during high-demand periods
@@ -78,6 +84,7 @@ Consider moving content to external files if:
 ### Monitoring
 
 Track these indicators:
+
 - Retry attempts before successful connection
 - Time-to-first-response for different agents
 - Agent file sizes over time

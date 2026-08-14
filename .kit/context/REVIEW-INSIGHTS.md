@@ -9,11 +9,13 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 ## How to Use This File
 
 **For Agents Starting Work**:
+
 1. Check relevant module sections before implementation
 2. Review "Patterns & Anti-Patterns" for established conventions
 3. Note any integration requirements that affect your work
 
 **For Planner Completing Tasks**:
+
 1. After moving task to `5-done/`, read the review file
 2. Extract high-signal insights (not everything, just what's reusable)
 3. Append entries under appropriate sections

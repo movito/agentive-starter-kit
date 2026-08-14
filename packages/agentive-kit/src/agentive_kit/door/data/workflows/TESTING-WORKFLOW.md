@@ -161,6 +161,7 @@ is a commit-latency tool, not a merge gate.
 Tests now run automatically before every commit via pre-commit hooks:
 
 ### Fast Test Subset
+
 - **What runs**: All tests except those marked with `@pytest.mark.slow`
   (`pytest tests/ -x -m "not slow" --maxfail=3`)
 - **Real duration in THIS repo: ~3.5–4 minutes** (measured ~213 s /
@@ -177,6 +178,7 @@ Tests now run automatically before every commit via pre-commit hooks:
 ### Usage
 
 **Normal workflow** (tests run automatically):
+
 ```bash
 git commit -m "feat: Add new feature"
 # → Pre-commit hooks run:
@@ -188,6 +190,7 @@ git commit -m "feat: Add new feature"
 ```
 
 **Skip for WIP commits** (use sparingly):
+
 ```bash
 SKIP_TESTS=1 git commit -m "WIP: Work in progress"
 # → Tests skipped with warning
@@ -197,6 +200,7 @@ SKIP_TESTS=1 git commit -m "WIP: Work in progress"
 ### When Tests Fail
 
 If pre-commit hook blocks your commit:
+
 1. **Read the error message** - Shows which test(s) failed
 2. **Fix the test failure** - Address the root cause
 3. **Try committing again** - Tests will re-run
@@ -269,6 +273,7 @@ git commit -m "feat: add my feature"
 ### TDD Template
 
 See `tests/test_template.py` for a ready-to-use template with examples:
+
 - AAA pattern (Arrange, Act, Assert)
 - Edge case testing
 - Error handling tests
@@ -288,6 +293,7 @@ See `tests/test_template.py` for a ready-to-use template with examples:
 ### What ci-check.sh Does
 
 Runs the **SAME checks** as GitHub Actions CI:
+
 1. ✅ Full test suite (including slow tests)
 2. ✅ Coverage check (`fail_under` gate in pyproject.toml, currently 80%)
 3. ✅ Pre-commit hooks (formatting, linting)
@@ -318,6 +324,7 @@ kit never overwrites it, and it rides no sync tier. Without the hook,
 ### Usage
 
 **Before EVERY push**:
+
 ```bash
 ./scripts/core/ci-check.sh
 ```
@@ -328,6 +335,7 @@ GitHub (`./scripts/core/verify-ci.sh` or `/check-ci`).
 ### When ci-check.sh Fails
 
 If the script fails:
+
 1. **Read error output** - Shows which check failed (tests/coverage/hooks)
 2. **Fix the issue** - Address test failures or coverage drops
 3. **Run again** - Verify fix with `./scripts/core/ci-check.sh`
@@ -339,13 +347,15 @@ If the script fails:
 
 ## Best Practices
 
-### ✅ DO:
+### ✅ DO
+
 - Run full test suite before committing
 - Fix all new failures your code introduces
 - Maintain or improve overall pass rate
 - Update tests if implementation changes intentionally
 
-### ⚠️ USE CAUTION:
+### ⚠️ USE CAUTION
+
 - Don't commit if tests are failing (unless xfailed with justification)
 - Don't skip tests without good reason
 
@@ -415,6 +425,7 @@ that shells out must build an explicitly scrubbed env
 ---
 
 **Related Workflows**:
+
 - [COVERAGE-WORKFLOW.md](./COVERAGE-WORKFLOW.md) - Coverage measurement
 - [COMMIT-PROTOCOL.md](./COMMIT-PROTOCOL.md) - Committing after tests pass
 

@@ -19,6 +19,7 @@ The project has a custom Linear sync implementation (`scripts/sync_tasks_to_line
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Tasks must be version-controlled in git
 - Folder-based status organization (`1-backlog/` through `7-blocked/`)
 - Automated sync on CI/CD (GitHub Actions)
@@ -26,11 +27,13 @@ The project has a custom Linear sync implementation (`scripts/sync_tasks_to_line
 - Offline editing capability
 
 **Constraints:**
+
 - Limited development resources for maintenance
 - Need for consistency with existing workflow
 - Agent-based development relies on file-based task specs
 
 **Assumptions:**
+
 - Git repository remains the source of truth for task definitions
 - Agents will continue to work primarily with markdown task files
 - Linear is used for team visibility, not as primary authoring interface
@@ -49,11 +52,13 @@ We will **keep the custom Linear sync implementation** as the primary mechanism 
 ### Implementation Details
 
 **Current sync architecture:**
+
 - `scripts/sync_tasks_to_linear.py` (~500 lines) - Main sync orchestrator
 - `scripts/linear_sync_utils.py` (~391 lines) - Status mapping utilities
 - `.github/workflows/sync-to-linear.yml` - GitHub Actions automation
 
 **Key capabilities:**
+
 - One-way sync (files → Linear issues)
 - 3-level status priority (Status field → Folder → Default)
 - Legacy status migration (auto-updates files)
@@ -61,6 +66,7 @@ We will **keep the custom Linear sync implementation** as the primary mechanism 
 - Comprehensive test suite (50+ tests)
 
 **CLI usage:**
+
 ```bash
 ./scripts/project linearsync
 ```
@@ -70,9 +76,11 @@ We will **keep the custom Linear sync implementation** as the primary mechanism 
 The sync can be triggered in two ways:
 
 **1. Local Sync (On-Demand)**
+
 ```bash
 ./scripts/project linearsync
 ```
+
 - Reads task files directly from local filesystem
 - Syncs immediately to Linear via API
 - No commit/push required
@@ -80,6 +88,7 @@ The sync can be triggered in two ways:
 - Agent-initiated during task completion
 
 **2. CI Sync (Automated)**
+
 - Triggers on push to main branch (GitHub Actions)
 - Reads files from committed state
 - Ensures Linear stays current with repository
@@ -89,6 +98,7 @@ The sync can be triggered in two ways:
 **Key difference**: Local sync reads uncommitted files, CI sync reads committed files. Both use the same sync script and produce identical results for the same file content.
 
 **Recommended workflow**:
+
 1. Complete task, update Status field (or use `./scripts/project complete <id>`)
 2. Run `./scripts/project linearsync` to verify sync works
 3. Commit and push changes
@@ -124,6 +134,7 @@ The sync can be triggered in two ways:
 **Description**: Remove custom sync entirely and use Linear's official MCP server as the only integration. Tasks would be created/managed directly in Linear.
 
 **Rejected because**:
+
 - Linear becomes source of truth, losing git version control
 - No folder-based status workflow
 - No batch sync capability (individual operations only)
@@ -136,11 +147,13 @@ The sync can be triggered in two ways:
 **Description**: Keep custom sync for file→Linear direction, add Linear MCP for real-time queries and supplementary operations.
 
 **Not implemented now because**:
+
 - Current sync meets all immediate needs
 - MCP integration adds complexity without urgent benefit
 - Can be revisited when real-time query needs emerge
 
 **Future use cases for Linear MCP:**
+
 - Real-time queries: "Show me all my high-priority issues"
 - Comment management: Adding comments without file editing
 - Ad-hoc issue updates: Quick status changes during discussions
@@ -151,6 +164,7 @@ The sync can be triggered in two ways:
 **Description**: Extend custom sync to also pull changes from Linear back to files.
 
 **Deferred because**:
+
 - Significant complexity (conflict resolution, merge strategies)
 - Risk of overwriting local changes
 - Current workflow doesn't require it (Linear is view-only)
@@ -159,12 +173,14 @@ The sync can be triggered in two ways:
 ## Real-World Results
 
 **Current implementation status:**
+
 - Sync script: Production-ready
 - Test suite: 50+ tests (TDD, awaiting full implementation)
 - GitHub Actions: Configured and operational
 - ASK-0005 task: Active improvement work ongoing
 
 **Observed benefits:**
+
 - Tasks visible in Linear for team coordination
 - No manual issue creation required
 - Status automatically derived from folder structure
@@ -175,9 +191,9 @@ The sync can be triggered in two ways:
 
 ## References
 
-- Linear MCP documentation: https://linear.app/docs/mcp
-- Linear MCP tools list: https://www.remote-mcp.com/servers/linear
-- MCP Protocol specification: https://modelcontextprotocol.io/specification/2025-06-18
+- Linear MCP documentation: <https://linear.app/docs/mcp>
+- Linear MCP tools list: <https://www.remote-mcp.com/servers/linear>
+- MCP Protocol specification: <https://modelcontextprotocol.io/specification/2025-06-18>
 - Current sync implementation: `scripts/sync_tasks_to_linear.py`
 - Task management documentation: `docs/LINEAR-SYNC-BEHAVIOR.md`
 - Active improvement task: `delegation/tasks/2-todo/ASK-0005-linear-sync-infrastructure.md`

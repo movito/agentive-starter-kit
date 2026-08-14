@@ -103,7 +103,7 @@ never touched.
 
 When a downstream repo creates a useful command that should be shared:
 
-```
+```text
 1. Downstream creates .claude/commands/my-command.md  (local, not in manifest)
 2. Command proves useful in practice
 3. PR to agentive-starter-kit adds my-command.md to commands_core or commands_optional
@@ -116,7 +116,7 @@ When a downstream repo creates a useful command that should be shared:
 
 When a downstream repo wants optional commands:
 
-```
+```text
 1. Downstream edits .core-manifest.json
 2. Adds "commands_optional" to opted_in array
 3. Runs sync (or waits for next sync PR)

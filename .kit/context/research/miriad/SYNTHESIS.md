@@ -40,6 +40,7 @@ We cannot adopt Miriad directly (requires persistent connections, long-running a
 **Finding**: Tymbal is NDJSON-framed streaming with 5 frame types and 9 message types. Uses ULID ordering, eventual consistency, mention-based routing.
 
 **Relevance**:
+
 - ✅ Message taxonomy (User, Agent, ToolCall, ToolResult, Thinking) - directly adoptable
 - ✅ @mention routing - adaptable to file naming
 - ✅ NDJSON framing - works for file-based logs
@@ -50,6 +51,7 @@ We cannot adopt Miriad directly (requires persistent connections, long-running a
 **Finding**: 12 artifact types with status workflows, CAS updates, versioning, cross-references.
 
 **Relevance**:
+
 - ✅ Artifact types (doc, task, decision, code) - we already use equivalents
 - ✅ Status workflow (pending → in_progress → done) - matches our folder system
 - ✅ Cross-references via `refs` field - adoptable for dependency tracking
@@ -60,6 +62,7 @@ We cannot adopt Miriad directly (requires persistent connections, long-running a
 **Finding**: Agents defined as `system.agent` artifacts with engine, MCP servers, identity. Pluggable engine system (claude-sdk, nuum).
 
 **Relevance**:
+
 - ✅ Structured agent metadata - enhance our `.claude/agents/*.md` files
 - ✅ MCP server configuration - adopt their format
 - ⚠️ Engine abstraction - future consideration
@@ -70,6 +73,7 @@ We cannot adopt Miriad directly (requires persistent connections, long-running a
 **Finding**: Uses `@anthropic-ai/claude-agent-sdk` with session resume/fork, MCP integration, permission modes.
 
 **Relevance**:
+
 - ✅ Session management concepts - adapt for file-based sessions
 - ✅ MCP configuration format - directly adoptable
 - ✅ Permission modes - inform our tool access patterns
@@ -162,7 +166,7 @@ The evaluator flagged KIT-ADR-0021 as NEEDS_REVISION with these concerns:
 
 **Our adaptation**:
 
-```
+```text
 Error Handling Strategy (File-Based)
 ────────────────────────────────────
 
@@ -195,7 +199,7 @@ Error Handling Strategy (File-Based)
 
 **Our adaptation**:
 
-```
+```text
 Resource Management Strategy
 ────────────────────────────
 
@@ -228,7 +232,7 @@ Add Option C (file watcher) for agents needing faster response.
 
 **Our response**:
 
-```
+```text
 Testing Strategy
 ────────────────
 
@@ -269,7 +273,7 @@ Testing Strategy
 
 ## Revised ADR Recommendations
 
-### Update KIT-ADR-0021 with:
+### Update KIT-ADR-0021 with
 
 1. **Concrete file-based protocol** (not just fallback)
 2. **Error handling strategy** from Miriad learnings
@@ -298,7 +302,7 @@ Testing Strategy
 
 **Deliverables**:
 
-```
+```text
 .kit/context/
 ├── channels/
 │   └── main/
@@ -311,6 +315,7 @@ Testing Strategy
 ```
 
 **Functions**:
+
 ```python
 # message.py
 class Message:
@@ -336,6 +341,7 @@ def update_roster(channel: str, agent: str, status: str) -> None
 ```
 
 **Tests**:
+
 - `tests/test_message.py`
 - `tests/test_channel.py`
 
@@ -345,7 +351,7 @@ def update_roster(channel: str, agent: str, status: str) -> None
 
 **Deliverables**:
 
-```
+```text
 scripts/
 ├── agent-wrapper.sh           # Wraps agent with inbox check
 └── project (updated)
@@ -353,7 +359,8 @@ scripts/
 ```
 
 **Agent Startup Flow**:
-```
+
+```text
 1. Agent starts
 2. Read roster.json, update own status to "active"
 3. Read messages.ndjson, filter to own @mentions
@@ -364,6 +371,7 @@ scripts/
 ```
 
 **CLI Commands**:
+
 ```bash
 ./scripts/project message send @feature-developer "Task ready"
 ./scripts/project message list --channel main --since 1h
@@ -376,7 +384,7 @@ scripts/
 
 **Deliverables**:
 
-```
+```text
 scripts/
 ├── channel-watch.sh           # Real-time message display
 └── project (updated)
@@ -384,6 +392,7 @@ scripts/
 ```
 
 **Human Capabilities**:
+
 ```bash
 # Watch channel in real-time
 ./scripts/project channel watch main
@@ -396,7 +405,8 @@ scripts/
 ```
 
 **Display Format** (terminal):
-```
+
+```text
 [10:30:05] @human → @planner
   Please prioritize ASK-0050
 
@@ -413,7 +423,7 @@ scripts/
 
 **Deliverables**:
 
-```
+```markdown
 # Enhanced task frontmatter
 ---
 id: ASK-0050
@@ -429,6 +439,7 @@ channel: main
 ```
 
 **Dependency CLI**:
+
 ```bash
 ./scripts/project task deps ASK-0050
 ./scripts/project task refs KIT-ADR-0021
@@ -495,6 +506,7 @@ Miriad demonstrates that real-time multi-agent communication is achievable and v
 By building a **file-based Tymbal variant**, we get the benefits of structured agent communication while preserving our CLI-first, file-based, ephemeral-agent architecture.
 
 **Next Steps**:
+
 1. Revise KIT-ADR-0021 with these recommendations
 2. Run evaluation on revised ADR
 3. Create implementation task (ASK-00XX)

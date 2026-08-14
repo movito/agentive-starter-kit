@@ -158,6 +158,7 @@ Each round follows the same loop:
 4. Push once → next round
 
 **Resolve-without-fixing** is still valid for:
+
 - Findings that are factually wrong (false positives)
 - Platform-irrelevant concerns (e.g., Windows CRLF on a macOS-only project)
 - Findings that contradict project conventions (with justification)
@@ -212,6 +213,7 @@ agentive review-helper reply {pr_number} {comment_id} \
 ```
 
 **Rules:**
+
 - Always reference the commit SHA where the fix was made
 - Cite specific line numbers in the current code
 - Keep it to 1-3 sentences — the code diff speaks for itself

@@ -11,6 +11,7 @@
 ### Problem Statement
 
 When the project adds REST APIs, we need a consistent approach for:
+
 - API documentation that stays in sync with implementation
 - Request/response validation
 - Client SDK generation
@@ -21,17 +22,20 @@ Without a clear strategy, APIs tend to drift from documentation, leading to inte
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Machine-readable API specification
 - Auto-generated documentation
 - Request/response validation
 - Support for modern Python frameworks (FastAPI, Flask)
 
 **Constraints:**
+
 - Specification must be version-controlled
 - Should work with CI/CD pipelines
 - Must support incremental adoption
 
 **Assumptions:**
+
 - Future APIs will be RESTful
 - Python will be the primary implementation language
 - APIs may need to support external consumers
@@ -51,7 +55,7 @@ We will adopt **OpenAPI 3.1** with a **contract-first development** approach whe
 
 **Specification Location:**
 
-```
+```text
 api/
 ├── openapi.yaml          # Main specification file
 ├── schemas/              # Reusable schema definitions
@@ -178,7 +182,7 @@ app.add_middleware(StarletteOpenAPIMiddleware, openapi=spec)
 
 **Development Workflow:**
 
-```
+```text
 1. Design API in openapi.yaml
     ↓
 2. Review spec in Swagger Editor
@@ -229,6 +233,7 @@ app.add_middleware(StarletteOpenAPIMiddleware, openapi=spec)
 **Description**: Document APIs manually, no formal specification
 
 **Rejected because**:
+
 - ❌ Documentation drifts from implementation
 - ❌ No automated validation
 - ❌ No client generation
@@ -238,6 +243,7 @@ app.add_middleware(StarletteOpenAPIMiddleware, openapi=spec)
 **Description**: Use GraphQL instead of REST with OpenAPI
 
 **Not adopted because**:
+
 - ❌ Different paradigm, higher learning curve
 - ❌ Overkill for simple CRUD APIs
 - ✅ Consider for complex data requirements
@@ -247,6 +253,7 @@ app.add_middleware(StarletteOpenAPIMiddleware, openapi=spec)
 **Description**: Use OpenAPI 3.0 instead of 3.1
 
 **Rejected because**:
+
 - ❌ 3.0 has JSON Schema incompatibilities
 - ❌ 3.1 has better nullable handling
 - ❌ 3.1 is the current standard
@@ -258,6 +265,7 @@ app.add_middleware(StarletteOpenAPIMiddleware, openapi=spec)
 **When to Apply**: When adding first REST endpoint
 
 **Recommended First Steps**:
+
 1. Choose framework (FastAPI recommended)
 2. Create `api/openapi.yaml` or use FastAPI auto-generation
 3. Add CI validation workflow
@@ -270,11 +278,11 @@ app.add_middleware(StarletteOpenAPIMiddleware, openapi=spec)
 
 ## References
 
-- OpenAPI 3.1 Specification: https://spec.openapis.org/oas/v3.1.0
-- FastAPI: https://fastapi.tiangolo.com/
-- openapi-core: https://pypi.org/project/openapi-core/
-- Swagger Editor: https://editor.swagger.io/
-- oasdiff: https://github.com/Tufin/oasdiff
+- OpenAPI 3.1 Specification: <https://spec.openapis.org/oas/v3.1.0>
+- FastAPI: <https://fastapi.tiangolo.com/>
+- openapi-core: <https://pypi.org/project/openapi-core/>
+- Swagger Editor: <https://editor.swagger.io/>
+- oasdiff: <https://github.com/Tufin/oasdiff>
 
 ## Revision History
 

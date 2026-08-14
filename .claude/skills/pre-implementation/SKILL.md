@@ -23,6 +23,7 @@ Result:   Find existing utility — reuse or import it
 ```
 
 Look for:
+
 - DateTime parsing/formatting utilities
 - Duration/interval parsing helpers
 - Event/model construction patterns
@@ -285,6 +286,7 @@ Result:   Catches that `.` is in the character class and `../ixda-services` (Pat
 ```
 
 Common gotchas this catches:
+
 - Character classes that include `.` or `/` matching path-like values
   before slug-like values
 - Greedy quantifiers grabbing more than the line you intended

@@ -85,6 +85,7 @@ For all unresolved threads, present a triage table:
 | 2 | BugBot | `path.py:88` | ... | Low | Resolve |
 
 Use the severity triage from the `bot-triage` skill:
+
 - **Fix**: Major/Critical, real bugs, security, compatibility
 - **Fix (easy)**: Medium severity, reasonable, quick
 - **Resolve without fixing**: Trivial/Low, cosmetic, platform-irrelevant

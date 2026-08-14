@@ -21,6 +21,7 @@
 ### Resolution (2025-11-12)
 
 Added the following permissions to `.claude/settings.local.json`:
+
 - `Write`
 - `Edit`
 - `Glob`
@@ -33,7 +34,7 @@ Subagents can now perform filesystem operations when launched via Task tool.
 
 ## ✅ Task Tool Usage Guidelines
 
-### Task Tool CAN Now Be Used For:
+### Task Tool CAN Now Be Used For
 
 With proper permissions configured in `.claude/settings.local.json`, subagents launched via Task tool can:
 
@@ -53,11 +54,13 @@ With proper permissions configured in `.claude/settings.local.json`, subagents l
 ### Best Practices
 
 **When to use Task tool for implementation:**
+
 - ✅ Complex multi-step tasks that benefit from specialized agent context
 - ✅ Tasks where delegation improves clarity and separation of concerns
 - ✅ When you want implementation work tracked in a separate agent context
 
 **When to use direct tools:**
+
 - ✅ Simple, single-file edits in main conversation
 - ✅ Quick fixes that don't need specialized agent overhead
 - ✅ When you're already in the appropriate agent context
@@ -65,6 +68,7 @@ With proper permissions configured in `.claude/settings.local.json`, subagents l
 ### User Instruction Clarification
 
 The `.claude/CLAUDE.md` instruction **"Always launch agents in new tabs"** can mean:
+
 - ✅ **UI tabs in Claude Desktop** (multiple conversations) - preferred for user visibility
 - ✅ **Task tool invocations** (now functional with proper permissions) - acceptable for complex delegated work
 
@@ -73,11 +77,13 @@ The `.claude/CLAUDE.md` instruction **"Always launch agents in new tabs"** can m
 ## Verification
 
 After completing work that should modify files (whether via Task tool or direct):
+
 1. ✅ Check `git status` shows actual changes
 2. ✅ Verify files exist at expected paths
 3. ✅ Confirm commits appear in `git log`
 
 If any verification fails, check:
+
 - Are the required tools in `.claude/settings.local.json` permissions?
 - Did the operation complete without errors?
 
@@ -118,6 +124,7 @@ If subagents report creating files but nothing appears on disk, check `.claude/s
 **Correct location**: `docs/adr/ADR-NNNN-short-title.md`
 
 **DO NOT create ADRs in**:
+
 - ❌ `.claude/` (agent/settings directory, not for project documentation)
 - ❌ Root directory
 - ❌ `.kit/context/` (coordination files only)
@@ -129,6 +136,7 @@ If subagents report creating files but nothing appears on disk, check `.claude/s
 **Correct location**: `.kit/tasks/[status-folder]/TASK-NNNN-title.md`
 
 Status folders:
+
 - `1-backlog/` - Planned but not started
 - `2-todo/` - Ready for work
 - `3-in-progress/` - Currently being worked on
@@ -166,7 +174,8 @@ All agent definitions and slash commands live in `.claude/`. Templates, launcher
 ### Why This Matters
 
 macOS Homebrew Python is "externally managed" and blocks system-wide pip installs:
-```
+
+```text
 error: externally-managed-environment
 × This environment is externally managed
 ```
@@ -192,7 +201,8 @@ pip install -e ".[dev]"
 ### Detecting Corrupted venv
 
 If you see:
-```
+
+```text
 ⚠️  Corrupted venv detected (missing python)
 ```
 

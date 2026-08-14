@@ -66,6 +66,7 @@ This is the **mirror guards** pattern — the most common source of round-2 bot 
 ### Q3: What happens when this value is missing/None/wrong-type?
 
 Trace the code path for each:
+
 - **None**: Does `.get()` return None? Does None propagate to a `.split()` or `[0]` that crashes?
 - **Wrong type**: Does an int where you expected a string reach `str.split(".")` and crash?
 - **Empty**: Does `[]` reach `[0]` and raise IndexError? Does `""` pass an `if value:` guard?

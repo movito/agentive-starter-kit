@@ -21,14 +21,17 @@
 [List competing concerns and trade-offs]
 
 **Technical Requirements:**
+
 - [Requirement 1]
 - [Requirement 2]
 
 **Constraints:**
+
 - [Constraint 1]
 - [Constraint 2]
 
 **Assumptions:**
+
 - [Assumption 1]
 - [Assumption 2]
 
@@ -48,6 +51,7 @@
 [Provide enough detail for future developers to understand how this decision is implemented]
 
 **Key components:**
+
 - [Component 1]
 - [Component 2]
 
@@ -89,6 +93,7 @@ def example_function():
 **Description**: [What was this alternative?]
 
 **Rejected because**:
+
 - ❌ [Reason 1]
 - ❌ [Reason 2]
 
@@ -97,6 +102,7 @@ def example_function():
 **Description**: [What was this alternative?]
 
 **Rejected because**:
+
 - ❌ [Reason 1]
 - ❌ [Reason 2]
 
@@ -105,14 +111,17 @@ def example_function():
 [If this decision has been implemented, document actual outcomes]
 
 **Before this decision:**
+
 - [Metric 1]: [Value]
 - [Metric 2]: [Value]
 
 **After this decision:**
+
 - [Metric 1]: [New value]
 - [Metric 2]: [New value]
 
 **Impact:**
+
 - [Observed impact 1]
 - [Observed impact 2]
 

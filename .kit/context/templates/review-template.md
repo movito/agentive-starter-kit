@@ -71,7 +71,7 @@ List all issues found, categorized by severity:
 
 ---
 
-### If CHANGES_REQUESTED:
+### If CHANGES_REQUESTED
 
 **Required Changes** (must be addressed before re-review):
 
@@ -84,11 +84,12 @@ List all issues found, categorized by severity:
 
 ---
 
-### If ESCALATE_TO_HUMAN:
+### If ESCALATE_TO_HUMAN
 
 **Reason for Escalation**: [Why human judgment is needed]
 
 **Options for Human to Consider**:
+
 1. [Option A with trade-offs]
 2. [Option B with trade-offs]
 
@@ -96,7 +97,7 @@ List all issues found, categorized by severity:
 
 ---
 
-### If APPROVED:
+### If APPROVED
 
 **Ready for**: Move task to `5-done`
 

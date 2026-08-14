@@ -22,7 +22,7 @@ as context. The agent should create a single feature branch and PR for the migra
 
 After migration, every kit repo should look like this:
 
-```
+```text
 your-project/
 ├── .adversarial/          # Evaluation (stays at root — CLI hardcodes path)
 ├── .claude/               # Implementation layer (stays — Claude Code constraint)
@@ -120,6 +120,7 @@ grep -r 'docs/decisions/' --include='*.md' --include='*.yml' --include='*.json' 
 ### 3. Check for repo-specific extras
 
 Look for things not in the standard layout:
+
 - `delegation/handoffs/` (old handoff location — some repos have this)
 - `delegation/tasks/evaluations/` (ADV has this)
 - `agents/` at root (launcher scripts — all repos have this)
@@ -329,6 +330,7 @@ grep -r 'docs/decisions/' --include='*.md' --include='*.yml' --include='*.json' 
 ```
 
 Any remaining references need manual attention. Common cases:
+
 - **Historical references** in retros, changelogs, commit messages: leave as-is
 - **Python code** referencing `delegation/` paths: update carefully (check logic)
 - **`.claude/settings.local.json`** permission patterns: update path globs
@@ -369,6 +371,7 @@ hardcoded paths.
 ### Step 13: Update Linear sync paths
 
 If the repo uses Linear sync, update:
+
 - `scripts/core/project` or `scripts/project` — task directory path
 - `scripts/optional/sync_tasks_to_linear.py` — task directory path
 - `.github/workflows/sync-tasks.yml` — path triggers

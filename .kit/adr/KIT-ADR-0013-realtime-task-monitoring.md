@@ -11,6 +11,7 @@
 ### Problem Statement
 
 Task status changes currently only sync to Linear on git push (via CI). During active development sessions with multiple agents, users lack visibility into:
+
 - Which tasks are being worked on
 - When tasks change status (move between folders)
 - Real-time progress of multi-agent workflows
@@ -20,18 +21,21 @@ We need a monitoring pattern that provides immediate visibility without requirin
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Watch file system for task folder changes
 - Parse task metadata on change
 - Emit events for status transitions
 - Support multiple output modes (CLI, daemon, future dashboard)
 
 **Constraints:**
+
 - Must work without external services
 - Should not interfere with sync operations
 - Must handle rapid file changes (debouncing)
 - Should be optional (not required for basic operation)
 
 **Assumptions:**
+
 - Tasks are organized in numbered folders
 - File changes are the source of truth
 - Users want immediate feedback during sessions
@@ -51,7 +55,7 @@ We will adopt an **event-driven file watching architecture** with daemon mode fo
 
 **Monitoring Architecture:**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                   File System Events                     │
 │     (create, modify, move, delete in task folders)      │
@@ -245,6 +249,7 @@ def daemon_stop():
 **Linear Sync Integration:**
 
 When monitor detects `task_moved`:
+
 1. Update status field in file (if not matching folder)
 2. Optionally trigger immediate Linear sync
 3. Log the transition for audit
@@ -287,6 +292,7 @@ def on_task_moved(event: TaskEvent):
 **Description**: Periodically scan task folders instead of file watching
 
 **Rejected because**:
+
 - ❌ Higher resource usage (constant scanning)
 - ❌ Latency (depends on poll interval)
 - ❌ Less efficient than OS-native events
@@ -296,6 +302,7 @@ def on_task_moved(event: TaskEvent):
 **Description**: Trigger monitoring on git operations only
 
 **Rejected because**:
+
 - ❌ Misses uncommitted changes
 - ❌ No real-time feedback during editing
 - ❌ Doesn't track folder moves before commit
@@ -305,6 +312,7 @@ def on_task_moved(event: TaskEvent):
 **Description**: Monitor via VS Code / IDE extension
 
 **Rejected because**:
+
 - ❌ Editor-specific implementation
 - ❌ Doesn't work with CLI-based workflows
 - ❌ Requires plugin installation
@@ -316,6 +324,7 @@ def on_task_moved(event: TaskEvent):
 **When to Implement**: When real-time monitoring becomes a priority
 
 **First Steps**:
+
 1. Add `watchdog` to dependencies
 2. Create `scripts/task_monitor.py`
 3. Add daemon commands to `./scripts/project` CLI
@@ -329,10 +338,10 @@ def on_task_moved(event: TaskEvent):
 
 ## References
 
-- watchdog library: https://pypi.org/project/watchdog/
-- python-daemon: https://pypi.org/project/python-daemon/
-- FSEvents (macOS): https://developer.apple.com/documentation/coreservices/file_system_events
-- inotify (Linux): https://man7.org/linux/man-pages/man7/inotify.7.html
+- watchdog library: <https://pypi.org/project/watchdog/>
+- python-daemon: <https://pypi.org/project/python-daemon/>
+- FSEvents (macOS): <https://developer.apple.com/documentation/coreservices/file_system_events>
+- inotify (Linux): <https://man7.org/linux/man-pages/man7/inotify.7.html>
 
 ## Revision History
 

@@ -14,7 +14,7 @@ The agentive-starter-kit architecture uses file-based coordination (`agent-hando
 
 Human operators are forced to act as message routers between agents, creating a bottleneck that doesn't scale and is exhausting to maintain. We need a mechanism for agents to address and communicate with each other directly while preserving human visibility and intervention capability.
 
-```
+```text
 Current Flow:
 ┌─────────────┐     ┌─────────┐     ┌─────────────┐
 │ Agent A     │ ──► │  Human  │ ──► │ Agent B     │
@@ -34,6 +34,7 @@ Desired Flow:
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Agents run as separate CLI processes (Claude Code)
 - Each agent has distinct model, role, and MCP configuration
 - Agents are currently stateless—they spin up, execute, and exit
@@ -41,12 +42,14 @@ Desired Flow:
 - Human needs ability to intervene in any conversation
 
 **Constraints:**
+
 - Must work locally (no cloud dependencies required)
 - Should integrate with existing file-based coordination
 - Cannot modify Claude Code CLI internals
 - Must preserve context-efficiency gains from current setup
 
 **Assumptions:**
+
 - Agents would need to become long-running (or frequently-polling) processes
 - A shared communication channel is acceptable
 - Message ordering and delivery guarantees can be eventual (not strict)
@@ -67,6 +70,7 @@ We will adopt **platform-based communication** by migrating agent coordination t
 **Primary approach: Platform-based communication**
 
 Migrate to a platform providing:
+
 - Native message routing with @mentions
 - Persistent shared artifacts (board)
 - Agent presence and status
@@ -83,6 +87,7 @@ Migrate to a platform providing:
 | `agent-handoffs.json` | `get_roster` + artifact status |
 
 **Migration steps:**
+
 1. Create agent definitions as `system.agent` artifacts
 2. Import ADRs as `doc` artifacts
 3. Model task lifecycle using `task` artifacts with status transitions
@@ -93,7 +98,7 @@ Migrate to a platform providing:
 
 For fully local operation without platform dependency:
 
-```
+```text
 .agent-context/
 ├── agent-handoffs.json      # Existing coordination
 ├── messages/
@@ -105,6 +110,7 @@ For fully local operation without platform dependency:
 ```
 
 **Message format:**
+
 ```json
 {
   "id": "msg_01abc123",
@@ -117,6 +123,7 @@ For fully local operation without platform dependency:
 ```
 
 **Agent polling wrapper:**
+
 ```bash
 AGENT_NAME="feature-developer"
 INBOX=".agent-context/messages/inbox-${AGENT_NAME}.jsonl"
@@ -160,6 +167,7 @@ done
 **Description**: Maintain current setup where human relays all inter-agent messages.
 
 **Rejected because**:
+
 - ❌ Doesn't scale (human becomes bottleneck)
 - ❌ Exhausting for human operator
 - ❌ Introduces latency and potential miscommunication
@@ -170,6 +178,7 @@ done
 **Description**: Fork or extend Claude Code to add IPC/messaging capabilities.
 
 **Rejected because**:
+
 - ❌ Significant engineering effort
 - ❌ Maintenance burden as upstream evolves
 - ❌ Not portable to other agent runtimes
@@ -179,6 +188,7 @@ done
 **Description**: Build custom WebSocket server for agent coordination.
 
 **Rejected because**:
+
 - ❌ More infrastructure to build and maintain
 - ❌ Wrapper complexity for Claude CLI integration
 - ❌ Platform-based option provides this without custom development
@@ -186,14 +196,17 @@ done
 ## Real-World Results
 
 **Before this decision:**
+
 - Human relay time: ~30-60 seconds per handoff
 - Agent collaboration: Sequential only
 - Human fatigue: High during multi-agent sessions
 
 **After this decision:**
+
 - (To be measured after implementation)
 
 **Impact:**
+
 - (To be documented after implementation)
 
 ## Related Decisions
@@ -203,8 +216,8 @@ done
 
 ## References
 
-- Agentive Starter Kit: https://github.com/movito/agentive-starter-kit
-- Adversarial Workflow: https://github.com/movito/adversarial-workflow
+- Agentive Starter Kit: <https://github.com/movito/agentive-starter-kit>
+- Adversarial Workflow: <https://github.com/movito/adversarial-workflow>
 
 ## Revision History
 

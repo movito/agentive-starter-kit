@@ -12,7 +12,7 @@
 
 AI agents need to activate project-specific tools and context at session start. Without explicit initialization, tools are available globally but lack the project context needed for correct operation, leading to silent failures or incorrect behavior.
 
-```
+```text
 Agent starts in Claude Code CLI
     ↓
 MCP tools available (globally configured via ~/.claude.json)
@@ -25,18 +25,21 @@ Result: Tools fail silently or use wrong context
 ### Forces at Play
 
 **Technical Requirements:**
+
 - MCP tools are configured at user level (globally available)
 - Each project has unique configuration requirements
 - Agents are stateless - no memory of previous sessions
 - CLI environment lacks automatic project detection
 
 **Constraints:**
+
 - Cannot modify MCP architecture (it's external)
 - Agents cannot auto-detect project from environment alone
 - Launcher scripts must work across different agent types
 - Pattern must be tool-agnostic (work for any MCP tool)
 
 **Assumptions:**
+
 - Agents are launched via CLI or automation scripts
 - Each project defines its own tool configurations
 - Agents can execute tool calls as their first action
@@ -57,7 +60,7 @@ We will adopt **launcher-initiated activation** as the standard pattern for agen
 
 **The Activation Flow:**
 
-```
+```text
 1. Launcher sends activation prompt as first message
     ↓
 2. Agent's first action: Call activation function(s)
@@ -81,8 +84,10 @@ as your first message. When you see a request to activate [Tool],
 immediately respond by calling:
 
 ```
+
 [tool_activation_function]("[project-name]")
-```
+
+```text
 
 This configures [tool capabilities]. Confirm activation in your
 response: "✅ [Tool] activated: [context]. Ready for [capability]."
@@ -111,12 +116,14 @@ claude --append-system-prompt "$(cat .claude/agents/$AGENT.md)" \
 **Component 3: Activation Confirmation Protocol**
 
 Successful activation:
-```
+
+```text
 Agent: "✅ [Tool] activated: [context details]. Ready for [capabilities]."
 ```
 
 Failed activation:
-```
+
+```text
 Agent: "⚠️ [Tool] activation failed: [error].
 Troubleshooting:
 1. [Check 1]
@@ -138,6 +145,7 @@ Please resolve and retry."
 **Graceful Degradation:**
 
 If activation fails, agents should:
+
 1. **NOT proceed silently** - always inform the user
 2. **Offer alternatives** - suggest fallback tools if available
 3. **Provide remediation** - specific steps to fix the issue
@@ -156,8 +164,10 @@ If activation fails, agents should:
 ```markdown
 After activation, verify by running a simple command:
 ```
+
 mcp__serena__get_current_config()  # Should show correct project
-```
+
+```text
 ```
 
 ## Consequences
@@ -188,6 +198,7 @@ mcp__serena__get_current_config()  # Should show correct project
 **Description**: Tools auto-detect project from current working directory
 
 **Rejected because**:
+
 - ❌ Working directory isn't always reliable (agents launched from various locations)
 - ❌ Some tools require explicit project registration
 - ❌ No way to ensure correct configuration is loaded
@@ -198,6 +209,7 @@ mcp__serena__get_current_config()  # Should show correct project
 **Description**: Set project context via environment variables before launch
 
 **Rejected because**:
+
 - ❌ Environment variables not reliably passed to MCP tools
 - ❌ Harder to verify correct setup
 - ❌ Different tools may need different env vars
@@ -208,6 +220,7 @@ mcp__serena__get_current_config()  # Should show correct project
 **Description**: Assume tools work without activation, handle errors ad-hoc
 
 **Rejected because**:
+
 - ❌ Current pain point - agents have tools but wrong context
 - ❌ Silent failures lead to incorrect results
 - ❌ Inconsistent behavior across sessions
@@ -218,6 +231,7 @@ mcp__serena__get_current_config()  # Should show correct project
 **Description**: Tools detect agent launch and auto-activate appropriate project
 
 **Rejected because**:
+
 - ❌ Requires modifying MCP tool implementations
 - ❌ Tools can't reliably detect which project is intended
 - ❌ Coupling between tool and project detection logic
@@ -226,18 +240,21 @@ mcp__serena__get_current_config()  # Should show correct project
 ## Real-World Results
 
 **Before this pattern (ad-hoc activation):**
+
 - Agents had tools available but in wrong context
 - Silent failures: tools returned errors or incorrect data
 - Users confused why semantic navigation wasn't working
 - Inconsistent behavior across different agent sessions
 
 **After this pattern:**
+
 - Agents reliably activate correct project context
 - Clear feedback when activation fails
 - Consistent behavior across all agent sessions
 - Users understand the activation requirement
 
 **Key Discovery:**
+
 - Agents didn't auto-activate despite having tools available
 - Required explicit "Session Initialization" section in agent definitions
 - Activation must be positioned as startup protocol, not optional guidance
@@ -250,7 +267,7 @@ mcp__serena__get_current_config()  # Should show correct project
 
 - Agent files: `.claude/agents/*.md` (current implementation)
 - Launcher scripts: `agents/launch` (if exists)
-- Claude Code MCP Documentation: https://docs.claude.com/en/docs/claude-code
+- Claude Code MCP Documentation: <https://docs.claude.com/en/docs/claude-code>
 
 ## Revision History
 

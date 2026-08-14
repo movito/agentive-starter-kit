@@ -11,6 +11,7 @@
 ### Problem Statement
 
 The project currently uses `print()` statements for all output, which is:
+
 - Not configurable (can't adjust verbosity)
 - Not structured (hard to parse programmatically)
 - Not persistent (no file logging)
@@ -21,17 +22,20 @@ We need a proper logging architecture that supports development debugging, produ
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Console output for development (human-readable)
 - File output for persistence (debugging after-the-fact)
 - Structured output option (JSON for APIs/monitoring)
 - Component-based filtering (sync vs agents vs CLI)
 
 **Constraints:**
+
 - Must be backward-compatible (existing CLI behavior)
 - Should use Python standard library (no heavy dependencies)
 - Must work in CI environment (GitHub Actions)
 
 **Assumptions:**
+
 - Most users run scripts locally during development
 - CI runs need captured output for debugging
 - Future monitoring may require structured logs
@@ -51,7 +55,7 @@ We will adopt a **hierarchical logging architecture** with dual output (console 
 
 **Logger Hierarchy:**
 
-```
+```text
 agentive                    # Root logger
 ├── agentive.sync           # Linear sync operations
 ├── agentive.cli            # CLI commands
@@ -208,6 +212,7 @@ def test_sync_logs_success(caplog):
 **Description**: Continue using print() for all output
 
 **Rejected because**:
+
 - ❌ Not configurable (no log levels)
 - ❌ Not filterable (all or nothing)
 - ❌ Not persistent (console only)
@@ -218,6 +223,7 @@ def test_sync_logs_success(caplog):
 **Description**: Use structlog for structured logging immediately
 
 **Not adopted yet because**:
+
 - ❌ Additional dependency
 - ❌ Overkill for current needs
 - ✅ Good future option when we need JSON logs
@@ -227,6 +233,7 @@ def test_sync_logs_success(caplog):
 **Description**: Use loguru for simplified logging
 
 **Not adopted because**:
+
 - ❌ Additional dependency
 - ❌ Non-standard API
 - ❌ Standard library is sufficient
@@ -236,6 +243,7 @@ def test_sync_logs_success(caplog):
 **Current State**: Documentation only (this ADR)
 
 **Implementation Task**: ASK-0021 (Logging Infrastructure Implementation)
+
 - Replace print() with logger calls
 - Add logging_config.py module
 - Update .env.template with LOG_* variables
@@ -248,10 +256,10 @@ def test_sync_logs_success(caplog):
 
 ## References
 
-- Python logging: https://docs.python.org/3/library/logging.html
-- 12-factor logs: https://12factor.net/logs
-- structlog (future): https://www.structlog.org/
-- pytest caplog: https://docs.pytest.org/en/stable/how-to/logging.html
+- Python logging: <https://docs.python.org/3/library/logging.html>
+- 12-factor logs: <https://12factor.net/logs>
+- structlog (future): <https://www.structlog.org/>
+- pytest caplog: <https://docs.pytest.org/en/stable/how-to/logging.html>
 
 ## Revision History
 

@@ -89,7 +89,7 @@ a minimal one. Include each WHEN it applies; omit silently when not:
   agent must leave alone, with the parking place for discovered gaps
   (usually `1-backlog/`).
 - **Evaluation status** — if the spec was evaluated, one line: verdict
-  + where the dispositions live ("don't re-litigate").
+  - where the dispositions live ("don't re-litigate").
 - **Success metrics** — quantitative/qualitative targets, for tasks
   where "done" has measurable shape beyond the ACs.
 - **Contract-string cautions** — when the task touches text that tests

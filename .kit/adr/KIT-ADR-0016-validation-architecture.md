@@ -11,6 +11,7 @@
 ### Problem Statement
 
 Data validation in multi-step workflows presents a fundamental tension: strict validation at object creation prevents working with incomplete data, while lenient validation leads to invalid data reaching operations. We need a pattern that allows:
+
 - Working with partially complete data during editing
 - Strict validation before critical operations
 - Clear error messages with appropriate context
@@ -19,18 +20,21 @@ Data validation in multi-step workflows presents a fundamental tension: strict v
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Objects must be type-safe when created
 - Operations (sync, API calls) require complete, valid data
 - Editing workflows need partial data support
 - Validation errors must be actionable
 
 **Constraints:**
+
 - Python type system has limits (Optional vs required)
 - Pydantic validates at construction by default
 - Different operations have different validation requirements
 - Error messages need context (what operation, what's missing)
 
 **Assumptions:**
+
 - Data models will be reused across operations
 - Users will edit data incrementally
 - Some operations are more strict than others
@@ -49,7 +53,7 @@ We will adopt a **two-tier validation architecture** that separates type safety 
 
 ### Two-Tier Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │                 Object Lifecycle                     │
 ├─────────────────────────────────────────────────────┤
@@ -321,6 +325,7 @@ class Task(BaseModel):
 **Description**: Require all fields and validate everything at object creation.
 
 **Rejected because**:
+
 - ❌ Can't create partial objects during editing
 - ❌ Loading incomplete data from files fails
 - ❌ All-or-nothing approach hurts UX
@@ -331,6 +336,7 @@ class Task(BaseModel):
 **Description**: Accept any data at construction, validate only before operations.
 
 **Rejected because**:
+
 - ❌ Type errors caught late
 - ❌ Invalid data can propagate
 - ❌ Harder to reason about object state
@@ -341,6 +347,7 @@ class Task(BaseModel):
 **Description**: Use decorators to automatically validate before method calls.
 
 **Rejected because**:
+
 - ❌ Magic behavior - not obvious when validation runs
 - ❌ Harder to handle errors explicitly
 - ❌ Less control over validation flow
@@ -351,6 +358,7 @@ class Task(BaseModel):
 **Description**: Create different model classes for different operations.
 
 **Rejected because**:
+
 - ❌ Class explosion (TaskDraft, TaskForSync, TaskForApi, etc.)
 - ❌ Conversion overhead between types
 - ❌ Harder to maintain consistency
@@ -406,8 +414,8 @@ def test_sync_fails_with_invalid_task(linear_client):
 
 ## References
 
-- Pydantic v2 Documentation: https://docs.pydantic.dev/
-- Parse, don't validate: https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
+- Pydantic v2 Documentation: <https://docs.pydantic.dev/>
+- Parse, don't validate: <https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/>
 - Domain Driven Design - Value Objects
 
 ## Revision History

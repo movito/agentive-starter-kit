@@ -89,7 +89,7 @@ Verified independent of this task's work: removing the new
 
 **Where "3" came from** — the pre-commit `pytest-fast` hook stops early:
 
-```
+```text
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 3 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
 ===== 3 failed, 323 passed, 45 deselected, 1 warning in 184.42s (0:03:04) =====
 ```

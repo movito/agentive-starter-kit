@@ -3,7 +3,7 @@
 **Date**: 2026-02-05
 **Research Phase**: 1 (High-Level Architecture)
 **Status**: Complete
-**Repository**: https://github.com/sanity-labs/miriad-app
+**Repository**: <https://github.com/sanity-labs/miriad-app>
 
 ---
 
@@ -17,7 +17,7 @@ Miriad (also called "Cast") is a multi-agent collaboration platform from Sanity.
 
 ## System Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           MIRIAD PLATFORM                                │
 ├─────────────────────────────────────────────────────────────────────────┤
@@ -64,7 +64,7 @@ Miriad (also called "Cast") is a multi-agent collaboration platform from Sanity.
 
 ## Package Structure (Backend Monorepo)
 
-```
+```text
 backend/packages/
 ├── core/           # Shared types, utilities, Tymbal protocol types
 ├── server/         # Hono-based API server
@@ -78,6 +78,7 @@ backend/packages/
 ### Key Dependencies
 
 **From `local-runtime/package.json`**:
+
 ```json
 {
   "@anthropic-ai/claude-agent-sdk": "latest",
@@ -96,6 +97,7 @@ backend/packages/
 Tymbal is a custom streaming protocol for agent communication.
 
 ### Transport Layer
+
 - **WebSocket** for real-time bidirectional communication
 - **NDJSON framing** (newline-delimited JSON)
 - **HTTP fallback** for non-streaming operations
@@ -124,7 +126,9 @@ Tymbal is a custom streaming protocol for agent communication.
 | `AgentMessage` | Agent-to-agent communication |
 
 ### Addressing
+
 Messages include `agentId` and `boardId` for routing:
+
 ```typescript
 interface TymbalFrame {
   type: 'start' | 'append' | 'set' | 'control';
@@ -141,6 +145,7 @@ interface TymbalFrame {
 ## Agent Architecture
 
 ### Agent Roles (from Miriad)
+
 - **Lead** - Orchestrates other agents
 - **Builder** - Implements code
 - **Researcher** - Gathers information
@@ -149,6 +154,7 @@ interface TymbalFrame {
 - **Writer** - Creates documentation
 
 ### Agent Lifecycle
+
 1. User @mentions an agent on a board
 2. Server routes to Runtime
 3. Runtime spawns container for agent
@@ -175,7 +181,7 @@ interface TymbalFrame {
 
 ## Data Flow
 
-```
+```text
 User Input                    Agent Response
     │                              ▲
     ▼                              │
@@ -209,18 +215,21 @@ User Input                    Agent Response
 ## Human Visibility & Intervention
 
 ### Visibility
+
 - All agent messages visible on shared "board"
 - Thinking/reasoning visible (not hidden)
 - Tool calls and results displayed
 - Real-time streaming updates
 
 ### Intervention Points
+
 - @mention to engage specific agent
 - Direct messages to agents
 - Ability to pause/redirect agents
 - Human can take over tasks
 
 ### Permission Model
+
 - Board-level access control
 - Agent capabilities defined per role
 - Tool access controlled via MCP
@@ -259,18 +268,21 @@ User Input                    Agent Response
 ## Compatibility Assessment (Preliminary)
 
 ### What We Can Adopt
+
 - ✅ Message type taxonomy (User, Agent, ToolCall, etc.)
 - ✅ Board/workspace concept for shared context
 - ✅ Thinking visibility pattern
 - ✅ Some Tymbal concepts for future WebSocket implementation
 
 ### What Needs Adaptation
+
 - ⚠️ Tymbal protocol → file-based equivalent for CLI
 - ⚠️ Web UI → terminal-based visualization
 - ⚠️ Container runtime → local process model
 - ⚠️ PostgreSQL storage → filesystem-based
 
 ### Fundamental Differences
+
 - ❌ Long-running vs ephemeral agents
 - ❌ Browser vs CLI human interface
 - ❌ Cloud-native vs local-first
@@ -291,12 +303,14 @@ User Input                    Agent Response
 ## Next Steps
 
 **Phase 2: Agent Communication Deep-Dive**
+
 - Study Tymbal protocol implementation details
 - Understand message delivery guarantees
 - Evaluate adopt vs adapt vs build decision
 - Determine if ephemeral agents can use Tymbal concepts
 
 **GO/NO-GO Decision Point**: After Phase 2, we'll have enough information to decide:
+
 - **ADOPT**: Use Tymbal patterns directly
 - **ADAPT**: Take concepts, build file-based implementation
 - **ABORT**: Their approach doesn't fit our constraints
