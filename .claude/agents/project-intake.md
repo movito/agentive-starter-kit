@@ -260,7 +260,7 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    `origin`, do NOT run `gh repo create` — derive `owner/repo` from
    it per the "already has a remote" rules in Edge cases (github.com
    origins only). Otherwise:
-   `gh repo create <owner>/<name> --private --source <code-path> --push`
+   `gh repo create <owner>/<name> --private --source "<code-path>" --push`
    (or `--public` per the answer). If `gh` is unauthenticated or the
    user defers, print the manual commands and continue — the planning
    repo still records `<owner>/<name>` as the pointer.
@@ -281,10 +281,10 @@ rest, optional offers default to skip-with-notice). The door is a
 package command and runs from wherever you are:
 
 ```bash
-agentive new <parent>/<name>-planning \
+agentive new "<parent>/<name>-planning" \
   --shape planning \
-  --target-path ../<name> \
-  --target-github <owner>/<name>
+  --target-path "../<name>" \
+  --target-github "<owner>/<name>"
 ```
 
 - `--target-path`/`--target-github` are always passed explicitly —
@@ -399,9 +399,9 @@ Conventions). Explicit `git -C` here like everywhere else — the CWD
 rule means a bare `git commit` could hit the wrong repository:
 
 ```bash
-git -C <parent>/<name>-planning add -A
-git -C <parent>/<name>-planning diff --cached   # scan this output
-git -C <parent>/<name>-planning commit -m "chore: seed project context and backlog from prototype brief"
+git -C "<parent>/<name>-planning" add -A
+git -C "<parent>/<name>-planning" diff --cached   # scan this output
+git -C "<parent>/<name>-planning" commit -m "chore: seed project context and backlog from prototype brief"
 ```
 
 The scan between add and commit is the same staged-content credential
