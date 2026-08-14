@@ -5,7 +5,7 @@ delegate or spawn other agents.**
 
 **Date**: 2026-08-14
 **From**: planner-f5  **To**: feature-developer
-**Task**: .kit/tasks/3-in-progress/KIT-0109-release-plugin-content-refresh.md
+**Task**: .kit/tasks/5-done/KIT-0109-release-plugin-content-refresh.md
 **Status**: Ready
 **Evaluation**: skipped (planner) — mechanical release, twice-run
 precedent (KIT-0096 → 2.0.0, KIT-0099 → 2.0.1); the KIT-0099 spec in

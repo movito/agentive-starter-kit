@@ -266,6 +266,9 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 - **Tree-wide gates must be exercised in the PRIMARY clone before they count as done**: the lint gate was green in the worktree and CI but failed its first primary-clone run — untracked local state (evaluator library, operator relics) exists only there. A worktree is the CLEANEST environment the gate will ever see; the primary is the dirtiest, and it's where the operator commits. (KIT-0104)
 - **Fix recipes and prose claims verified against the source, not the spec**: PR 3 pulled F5 claims from the door's live `--help` and source rather than the spec's list, catching two stale claims the spec missed — and refuting a bot thread with the recorded PR 1 decision. The spec names the work; the tree is the authority on the words. (KIT-0104)
 
+- **Resync by three-way merge, never by copy** (the other half of KIT-0099's derive-from-roster-hashes rule): when refreshing a published copy from canon, the merge base is the kit blob at the PREVIOUSLY-ROSTERED hash — a straight copy would have flattened the KIT-ADR-0025 generalization carried in all 20 plugin bodies. Copies can legitimately diverge by design; only a three-way merge preserves that while taking the canon delta. (KIT-0109)
+- **A release is a live-use event and generates findings like one**: one mechanical resync surfaced a lapsed discipline (version bumps stopped moving with content within one release of being established) and a rule violating itself (the reviewThreads truth-source query silently truncating at 100 — the exact under-counting it exists to prevent). Both filed and ruled same-day (KIT-0110) — the KIT-ADR-0034 generator working as designed. (KIT-0109)
+
 ---
 
 ## ADR Candidates
@@ -274,4 +277,4 @@ Distilled knowledge from code reviews. Updated by planner during task completion
 
 ---
 
-*Last updated: 2026-08-14 by planner-f5 (KIT-0104 extraction: bidirectional byte-pins, approval-SHA gap diffing, session rotation via files, gate-before-churn, primary-clone gate exercise, tree-as-word-authority)*
+*Last updated: 2026-08-14 by planner-f5 (KIT-0104 + KIT-0109 extractions: bidirectional byte-pins, approval-SHA gap diffing, session rotation via files, gate-before-churn, primary-clone gate exercise, tree-as-word-authority, three-way-merge resync, releases-generate-findings)*

@@ -1,6 +1,6 @@
 # KIT-0109: Plugin release — resync the 20-component drift set, guard to green
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: high — the drift guard has been red on kit main since
 2026-08-12; the cadence rule adopted 2026-08-14 (`plugin-drift.yml`
 header) makes this a standing release obligation, already past its
