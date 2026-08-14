@@ -69,6 +69,10 @@
     ".kit/tasks/**",
     // Archived docs
     "docs/archive/**",
+    // Locally-installed evaluator library (gitignored install state —
+    // exists only in the primary clone, never in worktrees or CI; the
+    // KIT-0104 PR 3 gate first failed here, planner 2026-08-14)
+    ".kit/adversarial/**",
     // Byte-pinned packaged twins of live docs (tests/test_door_data_sync.py):
     // linting the kit-tree source is sufficient; fixes mirror by test.
     "packages/agentive-kit/src/agentive_kit/door/data/**"

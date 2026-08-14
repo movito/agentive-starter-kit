@@ -1,6 +1,6 @@
 # KIT-0094: Own the markdown lint — class sweep + pre-commit gate, so bots stop reviewing style
 
-**Status**: Backlog
+**Status**: Done
 **Priority**: low (quick win — assign between phases or as a passenger on any doc-heavy task; **preferred vehicle (planner, 2026-08-13): passenger on KIT-0104**, whose F5 prose sweep is doc-heavy and would otherwise re-feed the bot-nit machine this task retires)
 **Type**: Infrastructure / hygiene
 **Estimated Effort**: 2-3 h
@@ -8,6 +8,14 @@
 **Source**: operator, PR #118 review — an MD029 one-character nit
 (babysit-pr.md:104) as the latest instance of a recurring class
 **Evaluation**: skipped (planner) — mechanical cleanup, decisions in-spec
+**Completion (planner, 2026-08-14)**: shipped as passenger on KIT-0104
+PR 3 (#131, merged `c42999b`). Evidence: `.markdownlint-cli2.jsonc` +
+tree-wide pre-commit gate; class sweep ~1,150 violations across 95
+files → 0 (planner re-ran the hook over the full tree at the gate:
+Passed); falsified once (planted violation → hook exit 1); acceptance
+OBSERVED — CodeRabbit's round on the markdown-heavy PR produced zero
+markdown-style threads. Record: `.kit/context/KIT-0104-REVIEW-STARTER.md`
+PR 3 section.
 
 ## Overview
 

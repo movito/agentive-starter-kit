@@ -101,7 +101,7 @@ not delegate or spawn other agents.**
 
 **Date**: 2026-08-13
 **From**: planner-f5  **To**: feature-developer-f5
-**Task**: .kit/tasks/3-in-progress/KIT-0104-ship-the-door-in-the-package.md
+**Task**: .kit/tasks/4-in-review/KIT-0104-ship-the-door-in-the-package.md
 **Status**: Ready
 **Evaluation**: arch-review-fast REVISION_SUGGESTED (2026-08-13) — one
 finding, dispositioned in the spec header (engine-consolidation
