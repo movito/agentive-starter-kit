@@ -36,6 +36,24 @@ the bots were the entire prose gate). Not done in KIT-0110 — zero
 content changes was an acceptance criterion and lint config is its own
 decision.
 
+## F4 — Accepted residual: PR-ref execution of the verifier (round 2)
+
+**Severity**: accepted residual (CodeRabbit Major, PR #10 round 2,
+thread `PRRT_kwDOSj0O5s6ZUCvf`)
+
+On `pull_request`, the verify workflow executes the PR's own copy of
+`scripts/verify_plugin_integrity.py`, so a hostile PR could game its
+own check. Declined re-architecture (reusable workflow / second repo)
+because: the `push: branches: [main]` trigger re-runs the verifier
+from trusted post-merge code (a gamed PR check turns main red on
+merge — the loud failure this guard exists for); the threat model is
+accidental bump-without-copy by trusted sessions, not adversarial PRs
+(single-operator repo, human review on merge, fork PRs get read-only
+tokens, no secrets); and a same-repo reusable workflow is still taken
+from the PR ref on `pull_request`, so a real fix means
+`pull_request_target` (ruled out) or a second repo. **Revisit if the
+repo ever takes external contributors.**
+
 ## F3 — `merge_group` trigger if a merge queue is ever adopted
 
 CodeRabbit noted the verify workflow should carry a `merge_group:`
