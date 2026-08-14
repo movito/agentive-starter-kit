@@ -121,3 +121,81 @@ APPROVED. Every thread replied + resolved.
   a root-anchored target (`agentive new /x`) resolves the preset home
   to `/agentive-config` — edge of the PR 1 target-parent anchor
   decision; seeding still requires the directory to already exist.
+
+---
+
+# PR 3 — the prose sweep (F5/F6 + KIT-0094 passenger), 2026-08-14
+
+**PR**: https://github.com/movito/agentive-starter-kit/pull/131
+**Branch**: `feature/KIT-0104-pr3-prose` (worktree ../ask-worktrees/KIT-0104)
+**Status**: bots clean (round 2: CodeRabbit APPROVED + BugBot pass,
+0 unresolved threads), tests/lint green on 3.10/3.12/3.14. FINAL PR
+of the task.
+
+## What shipped
+
+- **KIT-0094 (passenger, complete)**: `.markdownlint-cli2.jsonc`
+  (rule decisions recorded once, incl. MD029 `one_or_ordered` per
+  KIT-0092 retro #6; scope = live markdown, `.coderabbitignore`
+  precedent) + tree-wide pre-commit gate (`pass_filenames: false` —
+  CLI paths extend config globs and bypass ignores, verified) +
+  class sweep: ~1,150 violations / 95 files → 0 (199 files linted)
+  + falsified once (planted bare fence → hook exit 1).
+  **Acceptance observed, not assumed**: CodeRabbit's round 1 on this
+  markdown-heavy PR produced ZERO markdown-style threads (its 7
+  findings were all content, none lint) — the class is retired.
+- **F5**: factory-clone precondition retired by class.
+  STARTING-A-PROJECT teaches the sibling layout; README leads with
+  `uv tool install agentive-kit && agentive new` (pipx named as
+  alternative); `/new-project` + `/setup-preset` (both 1.3.0) derive
+  from `agentive new --help`; config-home prose matches the packaged
+  target-parent anchor everywhere (preset.example, doctor notes +
+  packaged twins, `scripts/core/project` docstring). Grep proofs in
+  the PR body; survivors are records + the optional guided-route
+  session mechanics.
+- **F6**: verified — no hardcoded flag list in either command
+  (single `--no-preset` prose mention, present in help); pinned by
+  `test_door_units.py::TestUsageText` (9 tests).
+- Stale claims corrected while in there: adopt-copies caveat
+  (packaged since PR 2), kit-clone `.env` carryover (the packaged
+  door has none — `note_env_keys`), setup-preset config-home recipe
+  off-by-one (pre-existing; recipe now verified live), playbook
+  launcher policy unified (`.kit/launchers/launch` is the single
+  survivor, KIT-0075).
+
+## Bot rounds
+
+Round 1: 8 threads (1 BugBot Medium — run-step/help-fallback
+asymmetry in new-project.md, fixed `6a1be58`; 7 CodeRabbit — 5 fixed
+same commit, 2 resolved-without-fix with reasons: plugin-release
+coordination = planner-owned KIT-0096 post-merge, project-intake
+door reference = KIT-0105/KIT-0107-F5 scope). Round 2: clean,
+CodeRabbit APPROVED, BugBot pass. Every thread replied + resolved.
+
+## Preflight
+
+6/7 PASS. Gate 1 reads FAIL solely on the **Plugin Drift Guard** —
+pre-existing red on main since 2026-08-12 (4 findings before this
+PR; the sweep mechanically widens the list to 20). Tests pass.
+Remedy is yours post-merge: cut the plugin release (KIT-0096
+procedure) so it picks up the lint-clean bodies once. Precedent:
+#129/#130 merged over the same red.
+
+## Evaluator (Gate 5)
+
+Fast-only per the prose-sweep exception (recorded in
+`.kit/context/reviews/KIT-0104-evaluator-review.md`): FAIL verdict
+refuted against the tree (the "conflicting ADR-0021 pair" is a
+superseded-by-declaration pair from 2026-03; this PR only tagged
+fences). The behavior-bearing hunks (lint config + hook) were
+falsified live instead.
+
+## Next (planner)
+
+- **Merge gate: yours — this PR shape needs tree-grounded
+  verification** (sectioned verifiers against the branch), per the
+  prose-sweep rule. The trio was deliberately not the gate here.
+- After merge: cut the plugin release (drift guard back to green),
+  move KIT-0104 to 4-in-review/5-done (all three PRs landed),
+  KIT-0094 can complete alongside (its acceptance evidence is in
+  this starter), unblock KIT-0105.
