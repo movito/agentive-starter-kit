@@ -83,6 +83,7 @@ similar numbers.
 ## When to Reference These
 
 Reference these KIT-ADRs when:
+
 - Understanding how the starter kit works
 - Deciding whether to adopt or modify a pattern
 - Training agents on project conventions
@@ -97,6 +98,7 @@ If you need to change a pattern from the starter kit:
 3. **Document the rationale** for diverging
 
 Example:
+
 ```markdown
 # ADR-0001: Custom Logging Format
 

@@ -203,8 +203,8 @@ wrapped in markers:
 <!-- END KIT-LOCAL: stack-notes -->
 ```
 
-The consumer engine behind the setup door (`scripts/local/bootstrap
---adopt`, engine `engine-consumer.sh`; KIT-0053) fills these on first
+The consumer engine behind the setup door (`agentive adopt`, engine
+`engine-consumer.sh`; KIT-0053/KIT-ADR-0030) fills these on first
 bootstrap and **preserves them byte-for-byte across re-bootstraps** (via
 `scripts/local/kit_markers.py`), while upstream refreshes everything
 *outside* the markers. This is the

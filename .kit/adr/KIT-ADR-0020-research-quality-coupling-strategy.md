@@ -38,10 +38,12 @@ The question arose: Should we decouple agent definitions from the specific CLI t
 ### Trade-off
 
 **Loose coupling (mechanism-aware)**:
+
 - Pro: Update 1 file when CLI changes
 - Con: Agents need extra lookup; may not follow through
 
 **Tight coupling (tool-specific)**:
+
 - Pro: Clear, actionable instructions; agents execute reliably
 - Con: Multiple files to update when CLI changes
 
@@ -50,6 +52,7 @@ The question arose: Should we decouple agent definitions from the specific CLI t
 **Keep tight coupling.**
 
 Rationale:
+
 1. **Agent effectiveness**: Experience shows agents need explicit, actionable commands to reliably execute the adversarial evaluation workflow
 2. **Current stability**: adversarial-workflow CLI is relatively stable
 3. **Documented debt**: By documenting coupled files, projects can refactor later if needed
@@ -58,16 +61,19 @@ Rationale:
 ## Consequences
 
 ### Positive
+
 - Agents have clear, copy-paste commands
 - No extra file lookups during agent execution
 - Higher likelihood of actual compliance with quality standards
 
 ### Negative
+
 - If adversarial-workflow CLI changes significantly, must update multiple files
 - Duplication of command syntax across files
 - Harder to swap out adversarial-workflow for alternative tools
 
 ### Mitigation
+
 - Coupling manifest maintained (see below)
 - Grep pattern provided for finding all coupled files
 - Decision can be revisited if CLI changes become frequent
@@ -115,6 +121,7 @@ Estimated effort: ~1 hour to refactor all files.
 ## Review Triggers
 
 Revisit this decision if:
+
 - adversarial-workflow CLI undergoes breaking changes
 - Need to support alternative validation tools
 - Maintenance burden of updating files becomes problematic

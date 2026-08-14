@@ -13,6 +13,7 @@
 - ✅ When implementation approach changes significantly
 
 **Don't use for**:
+
 - ❌ Minor implementation details
 - ❌ Trivial code changes
 - ❌ Every small decision
@@ -89,11 +90,13 @@ class Example:
 
 ## Consequences
 
-### Positive:
+### Positive
+
 - What benefits do we get?
 - What problems does this solve?
 
-### Negative:
+### Negative
+
 - What trade-offs did we make?
 - What limitations does this introduce?
 - What technical debt did we accept?
@@ -101,12 +104,14 @@ class Example:
 ## Alternatives Considered
 
 ### Alternative 1: [Name]
+
 - **Description**: What was this approach?
 - **Pros**: Benefits
 - **Cons**: Drawbacks
 - **Why Not Chosen**: Specific reasons
 
 ### Alternative 2: [Name]
+
 - **Description**: ...
 - **Pros**: ...
 - **Cons**: ...
@@ -115,6 +120,7 @@ class Example:
 ## Results
 
 Real-world outcomes:
+
 - Test results (e.g., "300/350 tests passing, 0 regressions")
 - Performance metrics (e.g., "3ms average, down from 45ms")
 - User feedback (if available)
@@ -131,7 +137,8 @@ Real-world outcomes:
 
 **Last Updated**: YYYY-MM-DD
 **Reviewed**: YYYY-MM-DD
-```
+
+```markdown
 
 ---
 
@@ -211,4 +218,5 @@ created the ADR, e.g.:
 ---
 
 **Related Workflows**:
+
 - [TASK-COMPLETION-PROTOCOL.md](./TASK-COMPLETION-PROTOCOL.md) - Document completion when creating ADR

@@ -103,6 +103,7 @@ KIT-0087 F2 (the single install path becomes the package's job);
 KIT-0082 (acceptance surface collapses to install + doctor).
 
 **Migration is staged, not big-bang** (status annotated 2026-08-11):
+
 1. Publish the packages — **DONE**: agentive-kit 0.1.0→0.3.1
    (KIT-0090/0091/0092); plugin 2.0.0→2.0.3 (KIT-0096–0101)
 2. Switch the door to package-install mode — **DONE**: KIT-0093
@@ -129,6 +130,7 @@ KIT-0082 (acceptance surface collapses to install + doctor).
    operator direction.)
 
 **Costs and risks, stated honestly**:
+
 - PyPI release discipline becomes real work (versioning, changelogs,
   a publish workflow) — but it replaces the sync machinery's larger
   standing cost, and the adversarial-workflow precedent shows the shape

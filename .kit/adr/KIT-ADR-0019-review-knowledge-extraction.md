@@ -24,7 +24,7 @@ A review noted "Bridge protocol uses SCHEMA_VERSION 1.0.0 - must maintain for Sw
 
 ### Current State
 
-```
+```text
 .agent-context/reviews/
 ├── TASK-0004-review-v1-planner.md     # 50+ lines each
 ├── TASK-0004-review-v2-code-reviewer.md
@@ -94,23 +94,27 @@ Use CLIOutput helper class that switches between JSON and text modes.
 ## Alternatives Considered
 
 ### Option A: Curated Insights Index Only
+
 - **Pros**: Single file, easy to read, agents can grep for module names
 - **Cons**: Manual curation required, could grow large, no formal decision record
 - **Rejected**: Misses opportunity to formalize significant decisions
 
 ### Option B: Serena Memory Files
-```
+
+```text
 .serena/memories/
 ├── module-cli.md           # CLI-specific learnings
 ├── module-api.md           # API-specific learnings
 ├── patterns-config.md      # Configuration patterns
 └── integration-swift.md    # Swift app integration notes
 ```
+
 - **Pros**: Categorized, agents can selectively load via `mcp__serena__read_memory()`
 - **Cons**: Requires Serena, more files to maintain, fragmented knowledge
 - **Rejected for now**: Can evolve toward this if index grows too large (>500 lines)
 
 ### Option C: Lightweight ADRs Only
+
 - **Pros**: Formal, discoverable, follows existing ADR pattern
 - **Cons**: Heavyweight for small insights, ADR explosion risk
 - **Rejected**: Too much overhead for quick tips and gotchas
@@ -135,7 +139,7 @@ After moving task to `5-done/`:
 
 ### Extraction Prompt Template
 
-```
+```text
 Review the code review at `.agent-context/reviews/[TASK-ID]-review.md` and extract:
 
 1. **Module insights**: Patterns or gotchas specific to modules touched
@@ -161,6 +165,7 @@ Format as entries for REVIEW-INSIGHTS.md index.
 ## Consequences
 
 ### Positive
+
 - Knowledge compounds across tasks
 - Agents can quickly load relevant context before starting work
 - Significant decisions are formally recorded as ADRs
@@ -168,11 +173,13 @@ Format as entries for REVIEW-INSIGHTS.md index.
 - Low overhead - planner already owns task completion
 
 ### Negative
+
 - Manual curation required (could miss insights)
 - Index may grow large over time (mitigated by module organization)
 - Dual maintenance: insights file + ADRs for significant decisions
 
 ### Neutral
+
 - Can evolve toward Serena memories if index exceeds 500 lines
 - Extraction quality depends on planner agent's judgment
 

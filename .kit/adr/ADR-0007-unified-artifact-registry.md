@@ -40,6 +40,7 @@ At 4 projects this is tolerable. At 40 or 400, it breaks:
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Artifacts must be self-describing — all tracking metadata lives inside the artifact, not in a separate database
 - Distribution must be git-based with no hosted service beyond git hosting itself
 - Projects must be able to override, extend, or exclude any artifact without breaking sync
@@ -59,6 +60,7 @@ At 4 projects this is tolerable. At 40 or 400, it breaks:
 After initial sync, all read operations work offline. Only fetch and contribute operations require network access.
 
 **Constraints** (as of Claude Code v1.x, adversarial-evaluator-library v0.5.x):
+
 - Claude Code resolves agents from `.claude/agents/` — this path is not configurable (verified: no env var or config flag exists as of March 2026)
 - The `adversarial` CLI resolves evaluators from `.adversarial/evaluators/` — hardcoded in `adversarial_workflow/evaluators/discovery.py`
 - Skills live in `.claude/skills/` — also hardcoded in Claude Code
@@ -67,6 +69,7 @@ After initial sync, all read operations work offline. Only fetch and contribute 
 - If runtime paths become configurable in future tooling versions, the registry can adapt — artifact identity is name-based, not path-based
 
 **Assumptions:**
+
 - Git is the transport layer (all projects are git repos)
 - The agentive-starter-kit remains the canonical upstream for shared artifacts (multi-source is supported; this is the default, not a hard constraint)
 - Projects will always need local-only artifacts that are never shared
@@ -463,6 +466,7 @@ planner  1.0.0  ⚡ conflict: locally modified + upstream 1.1.0 available
 ```
 
 Resolution options:
+
 - `kit registry diff planner` — see both changes
 - `kit registry sync planner --theirs` — take upstream, discard local
 - `kit registry sync planner --ours` — keep local, update `upstream_version` to acknowledge the upstream change
@@ -480,20 +484,24 @@ Resolution options:
 ### Migration Path
 
 **Phase 1: Metadata adoption** (non-breaking)
+
 - Add `registry:` block to all shared agents, evaluators, and skills in agentive-starter-kit and adversarial-evaluator-library
 - Existing tooling ignores unknown YAML frontmatter fields — zero breakage
 - Build `index.yml` from existing artifacts
 
 **Phase 2: CLI tooling** (`kit registry` commands)
+
 - Implement `status`, `sync`, `install`, `diff` in a new `kit` CLI (or extend `adversarial` CLI)
 - Projects that don't adopt the CLI continue working as before — files are files
 
 **Phase 3: Propose-back**
+
 - Implement `propose` command
 - Requires `gh` CLI for PR creation (already a dependency in all 4 current projects; checked March 2026)
 - Fallback for environments without `gh`: `kit registry propose --patch` generates a `.patch` file that can be submitted manually
 
 **Phase 4: Deprecate old mechanisms**
+
 - `adversarial library install` → `kit registry install` (with compatibility shim)
 - Manual copy-paste → `kit registry sync` (agents finally managed)
 - `.core-manifest.json` sync tiers → `manifest.yml` policy (superset)
@@ -526,6 +534,7 @@ Resolution options:
 **Description**: Add `agents_core` and `skills_core` tiers to the existing manifest system.
 
 **Rejected because**:
+
 - The manifest tracks file paths, not artifact identity. If an agent is renamed or restructured, the manifest breaks.
 - No version tracking, no drift detection, no contribution path.
 - Solves distribution but not the other two atomic components (metadata, contribution).
@@ -535,6 +544,7 @@ Resolution options:
 **Description**: Mount agentive-starter-kit as a submodule and symlink agents/evaluators/skills.
 
 **Rejected because**:
+
 - Submodules are fragile — developers forget to init/update them
 - Symlinks break on Windows and in some CI environments
 - No mechanism for local overrides or project-specific artifacts
@@ -545,6 +555,7 @@ Resolution options:
 **Description**: Publish artifacts as a package, install via package manager.
 
 **Rejected because**:
+
 - Agents and skills are Markdown files, not code libraries. Package managers add ceremony (build, publish, semver lockstep) without benefit.
 - Package updates are all-or-nothing — can't pin one artifact while floating another
 - No natural contribution path back to upstream

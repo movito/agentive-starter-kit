@@ -43,7 +43,7 @@ monorepo remains fine for one-offs and small experiments.
 
 ## How It Works
 
-```
+```text
 planning-repo/                    target-repo/
 ├── CLAUDE.md (## Target Repository config)
 ├── .claude/agents/      ←──────── agent definitions live here
@@ -93,13 +93,14 @@ for cross-repo projects and preflight-validated.
 
 ### 1. Create the planning repo
 
-From the agentive-starter-kit directory:
+From any terminal (the door ships in the `agentive-kit` package —
+KIT-ADR-0030):
 
 ```bash
-# Using the one setup door (KIT-0053) with the planning shape
+# Using the one setup door with the planning shape
 # (ADR-0027 P2): coordination machinery only, no Python toolchain,
 # profile forced to none, target pointers recorded in CLAUDE.md
-./scripts/local/bootstrap --new ~/Github/my-project-planning \
+agentive new ~/Github/my-project-planning \
   --shape planning \
   --target-path ../my-project \
   --target-github acme/my-project
@@ -129,7 +130,7 @@ The template → agent → pair recipe composes the door run above:
 
 Both repos must be siblings on disk:
 
-```
+```text
 ~/Github/
 ├── my-project/           # target repo (the codebase)
 └── my-project-planning/  # planning repo (agentive-starter-kit)

@@ -19,6 +19,7 @@ Miriad integrates with Claude using the **@anthropic-ai/claude-agent-sdk**, Anth
 ### What It Is
 
 The Claude Agent SDK enables:
+
 - Programmatic agent creation with Claude Code capabilities
 - File reading, writing, and editing
 - Shell command execution
@@ -60,7 +61,7 @@ for await (const message of query({
 
 ### Integration Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Miriad Local Runtime                      │
 ├─────────────────────────────────────────────────────────────┤
@@ -95,7 +96,7 @@ for await (const message of query({
 
 ### TymbalBridge Translation
 
-```
+```text
 SDK Message Type        →    Tymbal Frame Type
 ─────────────────────────────────────────────
 system (init)           →    (session setup)
@@ -220,7 +221,7 @@ options: {
 
 ### Tool Naming Convention
 
-```
+```text
 mcp__<server-name>__<tool-name>
 
 Examples:
@@ -232,11 +233,13 @@ mcp__postgres__query
 ### MCP Tool Search (Large Tool Sets)
 
 When tool definitions exceed 10% of context:
+
 1. Tools marked with `defer_loading: true`
 2. Claude uses search tool to discover relevant tools
 3. Only needed tools loaded into context
 
 Configure via environment:
+
 ```typescript
 env: {
   ENABLE_TOOL_SEARCH: "auto"    // Default: 10% threshold
@@ -270,7 +273,8 @@ setTimeout(() => {
 ### Message Formatting
 
 Messages include sender attribution:
-```
+
+```text
 --- @{sender} says:
 {content}
 ```
@@ -278,6 +282,7 @@ Messages include sender attribution:
 ### Cost Tracking
 
 SDK returns usage metrics:
+
 ```typescript
 interface CostFrame {
   inputTokens: number;
@@ -320,6 +325,7 @@ for await (const message of query({
 ```
 
 **Pros**:
+
 - Full streaming control
 - Session management (resume/fork)
 - Programmatic tool permissions
@@ -328,6 +334,7 @@ for await (const message of query({
 - Multi-turn conversations
 
 **Cons**:
+
 - Requires Node.js runtime
 - More complex setup
 - Need to handle message types
@@ -340,12 +347,14 @@ claude "Review and fix bugs" --allowedTools Read,Edit,Glob
 ```
 
 **Pros**:
+
 - Simple, one-line invocation
 - No code required
 - Built-in terminal UI
 - Immediate use
 
 **Cons**:
+
 - Less programmatic control
 - Session handling via filesystem
 - Tool permissions via flags/config
@@ -404,6 +413,7 @@ Keep CLI for simplicity, but learn from SDK patterns:
 ### Short-term
 
 1. **Add MCP config format** to agent definitions:
+
    ```yaml
    mcp:
      - slug: serena

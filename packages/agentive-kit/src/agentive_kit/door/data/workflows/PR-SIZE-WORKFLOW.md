@@ -80,12 +80,14 @@ Agent prompts, handoff files, and CLAUDE.md all contain hardcoded path reference
 break silently when the directory structure is inconsistent.
 
 **Indicators that a task is a structural migration:**
+
 - Primary work is `git mv` + find-and-replace path updates
 - Most changed files are renames (verifiable via `git diff --stat`)
 - The change is mechanically verifiable, not logically complex
 - Splitting would create a state where path references are inconsistent
 
 **The large-PR concern is mitigated because:**
+
 - Renames show as renames in `git diff`, not as add/delete
 - Path rewrites are mechanical and grep-verifiable
 - Reviewers can verify with `git diff --stat` + spot-checks

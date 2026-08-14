@@ -16,17 +16,20 @@
 ## Files Changed
 
 ### New Files
+
 - `path/to/new/file.py` - [brief description]
 
 ### Modified Files
+
 - `path/to/modified/file.py` - [what changed]
 
 ### Deleted Files
+
 - `path/to/deleted/file.py` - [why removed]
 
 ## Test Results
 
-```
+```text
 [Paste test output summary]
 - X tests passing
 - Y% coverage (if applicable)
@@ -62,6 +65,7 @@ Before requesting review, verify:
 **Ready for code-reviewer agent in new tab**
 
 To start review:
+
 1. Open new Claude Code tab
 2. Run: `.kit/launchers/launch code-reviewer`
 3. Reviewer will auto-detect this starter file

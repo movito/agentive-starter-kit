@@ -342,7 +342,7 @@ grep -rn '^model:' .claude/agents/        # local pins only — never the plugin
 
 Print a single summary block:
 
-```
+```text
 PREVIEW — no changes made yet
   Version:     <current> → <target>
   Reconcile:   <N added>, <N removed/renamed (with file refs)>, flat-ref regressions: <none|list>

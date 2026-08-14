@@ -11,6 +11,7 @@
 ### Problem Statement
 
 Task files have a `**Status**:` field and live in numbered folders (`1-backlog/`, `2-todo/`, etc.). When syncing to Linear, we need clear rules for:
+
 - Which status value to use
 - How to handle conflicts between field and folder
 - What to do with legacy status values
@@ -21,17 +22,20 @@ This ADR documents the **implementation pattern** for status alignment. For the 
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Status field and folder should both be valid indicators
 - Legacy statuses from migrations must be handled
 - Archive/reference folders should not sync
 - Status must map to Linear's workflow states
 
 **Constraints:**
+
 - Linear has fixed workflow states (Backlog, Todo, In Progress, etc.)
 - Files may have outdated status values
 - Folder moves should update status
 
 **Assumptions:**
+
 - Git-tracked files are source of truth
 - Linear is for team visibility, not primary editing
 - Agents work with file-based task specs
@@ -77,7 +81,7 @@ We will use a **3-level priority system** for status resolution, with automatic 
 
 **Status Resolution Priority:**
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │  Priority 1: Status Field (if Linear-native)       │
 │  ─────────────────────────────────────────────      │
@@ -115,7 +119,8 @@ When sync encounters non-Linear-native status values, it automatically updates t
 | `blocked` | `Blocked` | Case normalization |
 
 **Migration behavior:**
-```
+
+```text
 Before: **Status**: draft
 After:  **Status**: Backlog
         (file is updated, then synced)
@@ -172,7 +177,7 @@ def should_sync_task(task_file: Path) -> bool:
 
 **Status Flow Diagram:**
 
-```
+```text
                     ┌──────────────────┐
                     │   Task File      │
                     │ (Source of Truth)│
@@ -228,6 +233,7 @@ def should_sync_task(task_file: Path) -> bool:
 **Description**: Ignore status field entirely, derive only from folder
 
 **Rejected because**:
+
 - ❌ Loses flexibility for edge cases
 - ❌ Can't override folder with field when needed
 - ❌ Some workflows need field-based status
@@ -237,6 +243,7 @@ def should_sync_task(task_file: Path) -> bool:
 **Description**: Ignore folder, derive only from status field
 
 **Rejected because**:
+
 - ❌ Loses intuitive folder organization
 - ❌ No visual indication of status in file browser
 - ❌ Must open file to see status
@@ -246,6 +253,7 @@ def should_sync_task(task_file: Path) -> bool:
 **Description**: Fail on legacy status values instead of migrating
 
 **Rejected because**:
+
 - ❌ Breaks existing task files
 - ❌ Requires manual updates for migration
 - ❌ Poor user experience
@@ -286,6 +294,7 @@ A pre-commit hook validates Status field matches folder location:
 ```
 
 **Behavior:**
+
 - Blocks commits if Status doesn't match folder
 - Shows specific files and expected values
 - Suggests fix: `./scripts/project move <task-id> <status>`
@@ -299,12 +308,14 @@ A pre-commit hook validates Status field matches folder location:
 ## Real-World Results
 
 **Current implementation:**
+
 - `scripts/linear_sync_utils.py` - Status mapping utilities
 - `scripts/sync_tasks_to_linear.py` - Sync orchestration
 - `scripts/validate_task_status.py` - Pre-commit validation
 - `./scripts/project` CLI - Helper commands (move, complete, start, block, validate)
 
 **Observed behavior:**
+
 - Tasks sync with correct status on push
 - Legacy statuses auto-migrate transparently
 - Archive folders excluded as expected
@@ -320,7 +331,7 @@ A pre-commit hook validates Status field matches folder location:
 - Implementation: `scripts/linear_sync_utils.py`
 - Sync script: `scripts/sync_tasks_to_linear.py`
 - GitHub Actions: `.github/workflows/sync-to-linear.yml`
-- Linear Workflow States: https://linear.app/docs/workflow-states
+- Linear Workflow States: <https://linear.app/docs/workflow-states>
 
 ## Revision History
 

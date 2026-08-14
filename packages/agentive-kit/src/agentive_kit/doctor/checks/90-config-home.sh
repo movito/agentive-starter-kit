@@ -22,12 +22,12 @@
 # via --git-common-dir (worktree-safe) + /agentive-config. Read-only;
 # network only via gh repo view (the visibility probe).
 #
-# Anchoring note (BugBot, PR #91): this check anchors to the checkout
-# it diagnoses (DOCTOR_ROOT), the door to the kit clone — identical
-# exactly when kit and project share a parent (the documented sibling
-# layout). A consumer checkout cannot compute the kit clone's local
-# path, so when layouts diverge the override is the pin, and every
-# verdict line names the resolved path to keep the anchor visible.
+# Anchoring note (BugBot, PR #91; updated KIT-0104): this check
+# anchors to the checkout it diagnoses (DOCTOR_ROOT), the packaged
+# door to the TARGET's parent at creation time — identical exactly
+# when projects share a parent (the documented sibling layout). When
+# layouts diverge the override is the pin, and every verdict line
+# names the resolved path to keep the anchor visible.
 
 set -u
 

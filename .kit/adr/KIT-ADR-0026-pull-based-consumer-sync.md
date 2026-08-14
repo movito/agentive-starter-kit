@@ -75,7 +75,7 @@ consumer-side CLI invoke. Three parts:
 Move the tier/path/opt-in logic out of the workflow heredoc into a
 standalone **Python** script in the `scripts_core` tier:
 
-```
+```bash
 python3 scripts/core/sync_from_manifest.py \
     --source <upstream-dir> --target <consumer-dir> \
     [--tier <name>]... [--only <entry>]... [--dry-run] [--is-kit]

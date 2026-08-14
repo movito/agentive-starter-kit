@@ -29,7 +29,7 @@ Tymbal is Miriad's custom streaming protocol for real-time agent communication. 
 
 ### Connection Lifecycle
 
-```
+```text
 Client ────► WebSocket Connect to /threads/{threadId}/stream
          ◄──── Server accepts (even before thread exists)
 
@@ -85,7 +85,7 @@ Server ────► Close code 1000 (normal) / 4004 (not found) / 4009 (compl
 
 ### Message Flow Pattern
 
-```
+```text
 User Input
     │
     ▼
@@ -126,6 +126,7 @@ getAddressedAgents(content) → ['builder', 'reviewer']
 ### Visibility Scoping
 
 Agents see messages only when:
+
 1. They are explicitly `@mentioned`
 2. They are the sender
 3. Message is a `@channel` broadcast
@@ -138,7 +139,7 @@ Agents see messages only when:
 
 ### State Machine
 
-```
+```text
 ┌─────────┐
 │ offline │ (initial / suspended)
 └────┬────┘
@@ -172,7 +173,7 @@ Agents see messages only when:
 
 ### Reconnection Strategy
 
-```
+```text
 Disconnect detected
     │
     ├── Wait 1s, retry
@@ -222,14 +223,14 @@ Disconnect detected
 | **Transport** | Real-time streaming | Async file I/O |
 | **Server** | Required (Hono/PostgreSQL) | Optional |
 
-### Cannot Adopt Directly Because:
+### Cannot Adopt Directly Because
 
 1. **Persistent Connections Required**: Tymbal assumes WebSocket stays open
 2. **Long-Running Agents Assumed**: State transitions (offline→online→busy) require continuity
 3. **Server Infrastructure**: Needs backend for routing, storage, sync
 4. **Web Interface**: Designed for browser rendering, not CLI
 
-### Can Adapt These Concepts:
+### Can Adapt These Concepts
 
 1. **Message Taxonomy**: User, Agent, ToolCall, ToolResult, Thinking types
 2. **Mention Routing**: `@agent` addressing pattern
@@ -244,6 +245,7 @@ Disconnect detected
 ### Decision: **ADAPT**
 
 Build a **file-based Tymbal variant** that:
+
 - Uses the same message type taxonomy
 - Implements mention-based routing via file naming/metadata
 - Provides visibility scoping through file organization
@@ -281,7 +283,7 @@ Build a **file-based Tymbal variant** that:
 
 ### Directory Structure
 
-```
+```text
 .kit/context/channels/
 ├── main/                    # Default channel
 │   ├── messages.ndjson      # Append-only message log
@@ -305,7 +307,7 @@ Build a **file-based Tymbal variant** that:
 
 ### Ephemeral Agent Flow
 
-```
+```text
 Agent Starts
     │
     ├── Read roster.json (am I active?)

@@ -3,6 +3,7 @@
 ## Rule
 
 Do NOT edit workflow definitions during an active feature task. This includes:
+
 - Skill files (`.claude/skills/`)
 - Command files (`.claude/commands/`)
 - Agent definition files (`.claude/agents/`)
@@ -11,6 +12,7 @@ Do NOT edit workflow definitions during an active feature task. This includes:
 ## Rationale
 
 Mixing workflow changes with feature work creates:
+
 - **Noisy diffs**: Reviewers can't distinguish feature code from process changes
 - **Coupled risk**: A workflow typo can break an unrelated feature PR
 - **Untestable changes**: Workflow edits aren't covered by pytest

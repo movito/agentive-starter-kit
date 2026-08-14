@@ -38,10 +38,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `tests/test_preflight_check.py`, `tests/test_prepare_review_input.py`
   and `tests/test_gh_review_helper.py`, with no scenario coverage lost.
 
+- **dispatch-kit integration retired** (KIT-0077) — the operator no
+  longer runs it. `.dispatch/config.yml` is archived to
+  `docs/archive/dispatch-config.yml.archived`; `setup-dev.sh` loses its
+  `--with-dispatch` gate and both dispatch steps (2.0.0 — a removed
+  flag); the `local` extra leaves `pyproject.toml` (dispatch-kit was
+  its only member); and the unguarded `dispatch emit` instructions leave
+  the `code-reviewer` agent and the `/wrap-up` command.
+  What is retired is the kit's **adoption** of dispatch — configuration,
+  installer, and agent instructions. **Kept**: the `origin: dispatch-kit`
+  provenance headers; the guarded fire-and-forget emits in shipped
+  `scripts/core/` and the shipped commands (they still serve
+  `movito/dispatch-kit` as a downstream sync consumer, and on any machine
+  with the CLI on PATH they genuinely fire); the `.dispatch/` runtime
+  entries in `.gitignore` — precisely because those emits still
+  regenerate `bus.jsonl`, so it must stay ignored (verified: a preflight
+  run recreated it during this task); and every historical record.
+- **Two version-pinned docs archived** (KIT-0077):
+  `.kit/docs/UPGRADE-0.4.0.md` and `.serena/claude-code/USE-CASES.md`
+  moved to `docs/archive/` (the latter as `SERENA-USE-CASES.md`), with
+  all six live citers repointed.
+
 ### Changed
 
 - **The door ships in the package — KIT-ADR-0030** (KIT-0104, PRs
-  #129 + the shim PR): the setup door is now `agentive new` /
+  #129 + #130 + the prose sweep): the setup door is now `agentive new` /
   `agentive adopt` — same flags, same resolution chain (preset home
   anchors to the TARGET's parent in the packaged world), same engines
   running as packaged data, byte-pinned to their kit-tree twins by
@@ -56,7 +77,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   BOTH verbs** (KIT-ADR-0032: plain repo + check hook, no `.kit/`, no
   record — `new --no-kit` is the KIT-0104 F4 addition; the old
   seeded-record `--no-kit` is gone). The shape × profile matrix has
-  exactly one implementation: the package.
+  exactly one implementation: the package. The prose sweep (KIT-0104
+  F5/F6) retires the factory-clone precondition from every live
+  surface: `docs/STARTING-A-PROJECT.md` teaches the sibling layout
+  instead of the factory model (creation runs from anywhere; the kit
+  clone is the kit's development home and the seat of the guided
+  flows), README's Quickstart leads with `uv tool install agentive-kit
+  && agentive new`, `/new-project` and `/setup-preset` derive their
+  interviews from `agentive new --help` (runtime-read — no hardcoded
+  flag list, pinned by `tests/agentive_kit/test_door_units.py`), and
+  the preset/config-home docs say what the packaged door actually
+  does: anchor to the TARGET's parent, `<projects-parent>/
+  agentive-config`.
 - **The door switches to package-install mode — KIT-ADR-0028 phase 2**
   (KIT-0093, agentive-kit 0.3.0): `bootstrap --new` (both shapes)
   scaffolds CONTENT — `.kit/` skeleton with workflow docs,
@@ -95,8 +127,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`agentive-config`) only, not the package name; ALLOWED back to the
   three genuine readers.
 
+- **`agent-handoffs.json` becomes single-writer** (KIT-0086 F1, landed
+  inside `agentive_kit.lifecycle` per KIT-0090 F6): lifecycle moves
+  write the shared coordination JSON only when the checkout is on
+  `main`; feature-branch (and undeterminable-branch) moves now produce
+  zero diff in it, ending the KIT-0084 / PR #105 squash-merge conflict
+  class. The task's own `HANDOFF-*.md` files are still rewritten on
+  every branch. The stale-path drift WARN (KIT-0086 F2) follows as a
+  doctor check in the doctor-migration PR.
+
+- **`.kit/context/` is legible again** (KIT-0077): the 100 handoffs,
+  review starters, and session records belonging to tasks in a terminal
+  folder moved to `.kit/context/archive/`. The flat listing is now live
+  coordination only (`agent-handoffs.json`, `patterns.yml`,
+  `current-state.json`, `REVIEW-INSIGHTS.md`, the in-flight task's
+  handoff). Pure `git mv` — no history lost. Both consumer copy paths
+  learned to drop the new directory: `engine-export.sh` gained an
+  explicit `rm -rf` (its `.kit/context/` scrubs are `-maxdepth 1`) and
+  `engine-materials.sh` an `--exclude='context/archive/'` (its task-ID
+  pattern is anchored at depth 1). A guard test now covers each path.
+
 ### Added
 
+- **Markdown lint owned locally — KIT-0094** (passenger on the
+  KIT-0104 prose-sweep PR): `.markdownlint-cli2.jsonc` runs the same
+  tool CodeRabbit runs, scoped to live markdown (historical records,
+  task specs, test fixtures, and byte-pinned packaged twins excluded
+  — the `.coderabbitignore` precedent), with the rule decisions
+  recorded once in the config (MD013/MD033/MD036/MD041/MD060 off,
+  MD029 `one_or_ordered` — the KIT-0092 diff-hunk numbering
+  false-positive class is decided here, not per-thread). A tree-wide
+  pre-commit gate (`pass_filenames: false` — CLI paths would extend
+  the config globs and bypass its ignores) fails a violation locally
+  before it can become a bot thread; falsified once by design. One
+  class sweep brought the ~1,150 pre-existing violations across 95
+  in-scope files to zero.
 - **`agentive-kit` package skeleton — KIT-ADR-0028 phase 1, PR 1**
   (KIT-0090): `packages/agentive-kit/` with `src/agentive_kit/`
   modules `gitio` (single home for git invocations; KIT-0080's
@@ -145,53 +210,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   keeps testing the package-less fallback path — recorded decision),
   and the script's help carries the one-release-cycle shim deprecation
   note (F5).
-
-### Changed
-
-- **`agent-handoffs.json` becomes single-writer** (KIT-0086 F1, landed
-  inside `agentive_kit.lifecycle` per KIT-0090 F6): lifecycle moves
-  write the shared coordination JSON only when the checkout is on
-  `main`; feature-branch (and undeterminable-branch) moves now produce
-  zero diff in it, ending the KIT-0084 / PR #105 squash-merge conflict
-  class. The task's own `HANDOFF-*.md` files are still rewritten on
-  every branch. The stale-path drift WARN (KIT-0086 F2) follows as a
-  doctor check in the doctor-migration PR.
-
-- **`.kit/context/` is legible again** (KIT-0077): the 100 handoffs,
-  review starters, and session records belonging to tasks in a terminal
-  folder moved to `.kit/context/archive/`. The flat listing is now live
-  coordination only (`agent-handoffs.json`, `patterns.yml`,
-  `current-state.json`, `REVIEW-INSIGHTS.md`, the in-flight task's
-  handoff). Pure `git mv` — no history lost. Both consumer copy paths
-  learned to drop the new directory: `engine-export.sh` gained an
-  explicit `rm -rf` (its `.kit/context/` scrubs are `-maxdepth 1`) and
-  `engine-materials.sh` an `--exclude='context/archive/'` (its task-ID
-  pattern is anchored at depth 1). A guard test now covers each path.
-
-### Removed
-
-- **dispatch-kit integration retired** (KIT-0077) — the operator no
-  longer runs it. `.dispatch/config.yml` is archived to
-  `docs/archive/dispatch-config.yml.archived`; `setup-dev.sh` loses its
-  `--with-dispatch` gate and both dispatch steps (2.0.0 — a removed
-  flag); the `local` extra leaves `pyproject.toml` (dispatch-kit was
-  its only member); and the unguarded `dispatch emit` instructions leave
-  the `code-reviewer` agent and the `/wrap-up` command.
-  What is retired is the kit's **adoption** of dispatch — configuration,
-  installer, and agent instructions. **Kept**: the `origin: dispatch-kit`
-  provenance headers; the guarded fire-and-forget emits in shipped
-  `scripts/core/` and the shipped commands (they still serve
-  `movito/dispatch-kit` as a downstream sync consumer, and on any machine
-  with the CLI on PATH they genuinely fire); the `.dispatch/` runtime
-  entries in `.gitignore` — precisely because those emits still
-  regenerate `bus.jsonl`, so it must stay ignored (verified: a preflight
-  run recreated it during this task); and every historical record.
-- **Two version-pinned docs archived** (KIT-0077):
-  `.kit/docs/UPGRADE-0.4.0.md` and `.serena/claude-code/USE-CASES.md`
-  moved to `docs/archive/` (the latter as `SERENA-USE-CASES.md`), with
-  all six live citers repointed.
-
-### Added
 
 - Builder-only commands (`/new-project`, `/setup-preset`, `/wrap-up`)
   now declare `distribution: builder-only` in frontmatter with a note
@@ -256,72 +274,6 @@ sweep + doc curation that grounded the docs in the tree.
   vector is closed — `project setup` refuses symlinked venvs), plus
   the `55-worktree-provisioning.sh` doctor check.
 
-### Changed
-
-- **Truth sweep + doc curation** (KIT-0069, KIT-0073): the pre-0.9.0
-  cruft audit's prose findings fixed and verified tree-grounded
-  (complete-coverage verification, residuals fixed same-day); a
-  33-document curation pass (trims, merges, archives) cut the README
-  from ~580 to 96 lines.
-- **Whole-repo aider purge + Python ceiling lift** (KIT-0065; core
-  scripts 3.7.0). Aider is retired everywhere; the four dead
-  `.adversarial/scripts/*.sh` wrappers (evaluate_plan,
-  proofread_content, review_implementation, validate_tests) are
-  deleted — the evaluation path is the `adversarial` CLI +
-  `scripts/core/prepare-review-input.sh`. Verified `adversarial init`
-  (1.0.x) does not re-provision them. The Python `requires-python`
-  ceiling `<3.13` — justified only by the retired dependency — is
-  lifted after the full suite and dev stack passed on 3.14
-  (`>=3.10` now; CI matrix runs 3.10/3.12/3.14). `project setup`
-  drops the uv-based 3.12-venv workaround and its detection helpers;
-  agent/template docs point at the current
-  `<input-name>--<evaluator>.md` log naming and the
-  `echo y | ADVERSARIAL_UNATTENDED=1` unattended invocation.
-
-### Fixed
-
-- **Functional repairs from the pre-0.9.0 cruft audit** (KIT-0068;
-  core scripts 3.6.0). Behavior-broken surfaces only — the audit's
-  prose findings are KIT-0069's, aider residue KIT-0065's:
-  - `project linearsync`, `project create-agent`, and `project
-    reconfigure`'s identity rewrite now target the real v0.4.0+ paths
-    (`scripts/optional/…`, `scripts/core/logging_config.py`) with
-    friendly errors naming the missing file on consumer checkouts
-    (A00/A01/A02/A11). The reconfigure test fixture that modeled the
-    pre-v0.4.0 layout — and masked the breakage for months — now
-    models the real tree, and a fixture-path guard test pins every
-    modeled path to the actual repo.
-  - Linear sync: the root `.env` resolves again from
-    `scripts/optional/` (A15), and any `[A-Z]{2,6}-NNNN` task id is
-    accepted — the hardcoded `TASK-|ASK-` patterns rejected every
-    live KIT-* task (A14).
-  - `engine-materials.sh` no longer ships `scripts/local/`, kit-only
-    tests, the kit's planning corpus (prefix-agnostic task/context
-    excludes), or `.kit/adversarial/` into consumers, names its drops
-    in output, and gained a `--scaffold-only` test seam with an
-    export-content test (A12/A13).
-  - `.adversarial/config.yml` regenerated from the template and
-    verified against the installed CLI 1.0.1; unread keys
-    (`auto_run`, `git_integration`, `save_artifacts`) deleted from
-    config + template (A67). Self-referential
-    `.adversarial/evaluators/evaluators` symlink removed and
-    `new-worktree.sh` now refuses to link over an existing
-    destination — the creation vector (A69).
-  - Toolchain agreement: pre-commit Black rev matches the pyproject
-    pin with a consistency test (A84); ruff is now enforced
-    (ci-check.sh step 4/7 + CI lint step; 24 mechanical violations
-    fixed) instead of declared-but-never-run (A88); ci-check.sh's
-    flake8 args byte-match CI's, also test-pinned (A91).
-  - `project version` reads `scripts/core/VERSION` (was a hardcoded
-    v1.1.0, six minor releases stale — A04); the evaluator-library
-    pin read fails loud naming pyproject.toml instead of silently
-    installing v0.5.3, with a Python 3.10 tomli/regex fallback (A08);
-    `main()` prefers `.venv` and the recovery hint says
-    `./scripts/core/project setup` (A10); `scripts/core/__init__.py`
-    docstring describes the actual package (A05).
-
-### Added
-
 - **Visible config home + `/setup-preset`** (KIT-0058, ADR-0027 P7
   amendment; core scripts 3.5.0):
   - The operator config moved from the invisible
@@ -344,29 +296,6 @@ sweep + doc curation that grounded the docs in the tree.
     `bootstrap --help` at runtime (no hardcoded question list),
     refuses pasted secrets (path references only), and validates
     written keys against the door's accepted set.
-
-### Changed
-
-- **Canonical homes + the prune** (KIT-0057, KIT-ADR-0027 P6 — the
-  arc's final task):
-  - ONE skills home: the three builder skills (code-review-evaluator,
-    review-handoff, self-review) moved from `.kit/skills/` into
-    `.claude/skills/`; `.kit/skills/<name>` survives one release as
-    read-both symlinks, removed in 0.9.0 (KIT-0059). Plugin copy
-    refresh filed (KIT-0060).
-  - Kit identity: `pyproject.toml` is `agentive-starter-kit`; the
-    export engine now resets a `--new` target's name to the
-    placeholder + TODO itself (characterized — targets never inherit
-    the kit's name).
-  - Seam-guards from KIT-0056's retro: baked planning-manifest
-    `core_version` == `scripts/core/VERSION` (proven to fire on
-    desync), and a cross-reader bots-declaration conformance harness
-    (one fixture table through door/project/preflight, incl.
-    duplicate-key first-wins).
-  - Docs converge on the canonical map (CLAUDE.md/README trees,
-    DISTRIBUTION-ARCHITECTURE canonical-homes table).
-
-### Added
 
 - **Degraded modes + operator presets** (KIT-0056, KIT-ADR-0027
   P5+P7; core scripts 3.4.0):
@@ -442,7 +371,88 @@ sweep + doc curation that grounded the docs in the tree.
     `KIT-LOCAL: project-rules` region (content unchanged); bootstrap
     seeds consumers' Project Rules per profile from that single source.
 
+### Changed
+
+- **Truth sweep + doc curation** (KIT-0069, KIT-0073): the pre-0.9.0
+  cruft audit's prose findings fixed and verified tree-grounded
+  (complete-coverage verification, residuals fixed same-day); a
+  33-document curation pass (trims, merges, archives) cut the README
+  from ~580 to 96 lines.
+- **Whole-repo aider purge + Python ceiling lift** (KIT-0065; core
+  scripts 3.7.0). Aider is retired everywhere; the four dead
+  `.adversarial/scripts/*.sh` wrappers (evaluate_plan,
+  proofread_content, review_implementation, validate_tests) are
+  deleted — the evaluation path is the `adversarial` CLI +
+  `scripts/core/prepare-review-input.sh`. Verified `adversarial init`
+  (1.0.x) does not re-provision them. The Python `requires-python`
+  ceiling `<3.13` — justified only by the retired dependency — is
+  lifted after the full suite and dev stack passed on 3.14
+  (`>=3.10` now; CI matrix runs 3.10/3.12/3.14). `project setup`
+  drops the uv-based 3.12-venv workaround and its detection helpers;
+  agent/template docs point at the current
+  `<input-name>--<evaluator>.md` log naming and the
+  `echo y | ADVERSARIAL_UNATTENDED=1` unattended invocation.
+
+- **Canonical homes + the prune** (KIT-0057, KIT-ADR-0027 P6 — the
+  arc's final task):
+  - ONE skills home: the three builder skills (code-review-evaluator,
+    review-handoff, self-review) moved from `.kit/skills/` into
+    `.claude/skills/`; `.kit/skills/<name>` survives one release as
+    read-both symlinks, removed in 0.9.0 (KIT-0059). Plugin copy
+    refresh filed (KIT-0060).
+  - Kit identity: `pyproject.toml` is `agentive-starter-kit`; the
+    export engine now resets a `--new` target's name to the
+    placeholder + TODO itself (characterized — targets never inherit
+    the kit's name).
+  - Seam-guards from KIT-0056's retro: baked planning-manifest
+    `core_version` == `scripts/core/VERSION` (proven to fire on
+    desync), and a cross-reader bots-declaration conformance harness
+    (one fixture table through door/project/preflight, incl.
+    duplicate-key first-wins).
+  - Docs converge on the canonical map (CLAUDE.md/README trees,
+    DISTRIBUTION-ARCHITECTURE canonical-homes table).
+
 ### Fixed
+
+- **Functional repairs from the pre-0.9.0 cruft audit** (KIT-0068;
+  core scripts 3.6.0). Behavior-broken surfaces only — the audit's
+  prose findings are KIT-0069's, aider residue KIT-0065's:
+  - `project linearsync`, `project create-agent`, and `project
+    reconfigure`'s identity rewrite now target the real v0.4.0+ paths
+    (`scripts/optional/…`, `scripts/core/logging_config.py`) with
+    friendly errors naming the missing file on consumer checkouts
+    (A00/A01/A02/A11). The reconfigure test fixture that modeled the
+    pre-v0.4.0 layout — and masked the breakage for months — now
+    models the real tree, and a fixture-path guard test pins every
+    modeled path to the actual repo.
+  - Linear sync: the root `.env` resolves again from
+    `scripts/optional/` (A15), and any `[A-Z]{2,6}-NNNN` task id is
+    accepted — the hardcoded `TASK-|ASK-` patterns rejected every
+    live KIT-* task (A14).
+  - `engine-materials.sh` no longer ships `scripts/local/`, kit-only
+    tests, the kit's planning corpus (prefix-agnostic task/context
+    excludes), or `.kit/adversarial/` into consumers, names its drops
+    in output, and gained a `--scaffold-only` test seam with an
+    export-content test (A12/A13).
+  - `.adversarial/config.yml` regenerated from the template and
+    verified against the installed CLI 1.0.1; unread keys
+    (`auto_run`, `git_integration`, `save_artifacts`) deleted from
+    config + template (A67). Self-referential
+    `.adversarial/evaluators/evaluators` symlink removed and
+    `new-worktree.sh` now refuses to link over an existing
+    destination — the creation vector (A69).
+  - Toolchain agreement: pre-commit Black rev matches the pyproject
+    pin with a consistency test (A84); ruff is now enforced
+    (ci-check.sh step 4/7 + CI lint step; 24 mechanical violations
+    fixed) instead of declared-but-never-run (A88); ci-check.sh's
+    flake8 args byte-match CI's, also test-pinned (A91).
+  - `project version` reads `scripts/core/VERSION` (was a hardcoded
+    v1.1.0, six minor releases stale — A04); the evaluator-library
+    pin read fails loud naming pyproject.toml instead of silently
+    installing v0.5.3, with a Python 3.10 tomli/regex fallback (A08);
+    `main()` prefers `.venv` and the recovery hint says
+    `./scripts/core/project setup` (A10); `scripts/core/__init__.py`
+    docstring describes the actual package (A05).
 
 - `create-project.sh`'s derived-prefix fallback crashed on macOS
   (BSD `tr` read the leading dash of its delete-set as an option) —
@@ -499,49 +509,6 @@ project upgrades were deliberately deferred to the next phase.
   8–10 (wrapper exit-code convention, scoped staging, verify shipped
   hints against installed tools).
 
-### Changed
-
-- **`ci-check.sh` warns on venv Black version drift** against the
-  `pyproject.toml` pin (KIT-0035) — stale-venv phantom failures now read
-  as environment issues; warn-only, the format gate is unchanged.
-- **Evaluator trio runs before PR open for doc-dominated tasks**
-  (KIT-0035, adopted into the code-review-evaluator skill and both
-  feature-developer agents) — validated twice with zero-noise first bot
-  rounds.
-- **`prepare-review-input.sh` 1.5.1** — non-TTY large-input evaluator
-  runs use the verified `echo y |` confirm pattern; the previously
-  advertised `ADVERSARIAL_UNATTENDED` flag never existed in the installed
-  library (KIT-0035 → KIT-0044).
-- **`docs/PLUGIN-UPGRADE-GUIDE.md` detection greps hardened** and
-  `.claude/agents/upgrader.md` re-synced in lockstep (KIT-0035).
-- **`sync-core-scripts.yml` push trigger parked** — `CROSS_REPO_TOKEN`
-  was never provisioned (22/22 failed runs since 2026-03-09);
-  dispatch-only until KIT-0045 re-enables it deliberately, with the
-  re-enable checklist embedded in the workflow file. Matrix `fail-fast`
-  disabled so one leg can't mask the others.
-- **Dependency floors refreshed** (dependabot #46–#50, #55):
-  `pytest>=9.1.1`, `pytest-asyncio>=1.3.0`, `ruff>=0.15.21`,
-  `python-dotenv>=1.2.2`, `gql>=4.0.0`; `actions/checkout@v7`.
-- **Core scripts 3.1.0** (two consumer-visible script changes on top of
-  the 3.0.0 sync-engine major).
-
-### Fixed
-
-- **`kit_markers.py` marker-merge robustness** (KIT-0040 F3, resolves the
-  two BugBot findings open on PR #58 since the KIT-0033 merge):
-  - A prose mention of a region's BEGIN marker inside another (preserved)
-    region no longer aborts re-bootstrap as "malformed" — the malformed
-    check is now line-anchored instead of a raw substring test.
-  - Benign whitespace drift inside a marker line (extra spaces/tabs) no
-    longer makes the region unparseable — previously a drifted marker
-    silently replaced customized consumer content with placeholder TODO
-    text on re-bootstrap. Drift beyond the whitespace tolerance is now
-    *detected* by a deliberately looser line-anchored check and fails
-    fast instead of clobbering. Well-formed and drifted regions still
-    round-trip byte-for-byte.
-
-### Added
-
 - **Stub-`gh` regression harness for `preflight-check.sh`**
   (`tests/test_preflight_check.py`, KIT-0040 F1) — runs the real script
   against canned `gh` payloads via a fake `gh` on PATH, covering the
@@ -597,7 +564,43 @@ project upgrades were deliberately deferred to the next phase.
   - `tests/test_kit_markers.py` covers the merge logic, including the
     re-bootstrap byte-preservation guarantee.
 
+- **KIT-0033 backlog task** (`.kit/tasks/1-backlog/`) — portable agents
+  downstream: marker-based Project Context / Stack Notes overwrite,
+  `.kit/` skeleton scaffolding during bootstrap, F3 opt-out, and
+  re-bootstrap refresh that survives both consumer customization regions.
+  Captures the deferred work that surfaced via PR #57 bot review.
+- **`bootstrap-consumer.sh --no-kit` now prunes pre-existing kit agents**
+  on re-run (#68), `feature-developer-f5` wired into
+  `KIT_AGENTS`/`AGENT_EXCLUDES` (#66), and a marker-membership test
+  guards the whole class mechanically (KIT-0034).
+- **Worktree provisioning symlinks gitignored** so `git worktree remove`
+  works cleanly after a session (KIT-0044).
+
 ### Changed
+
+- **`ci-check.sh` warns on venv Black version drift** against the
+  `pyproject.toml` pin (KIT-0035) — stale-venv phantom failures now read
+  as environment issues; warn-only, the format gate is unchanged.
+- **Evaluator trio runs before PR open for doc-dominated tasks**
+  (KIT-0035, adopted into the code-review-evaluator skill and both
+  feature-developer agents) — validated twice with zero-noise first bot
+  rounds.
+- **`prepare-review-input.sh` 1.5.1** — non-TTY large-input evaluator
+  runs use the verified `echo y |` confirm pattern; the previously
+  advertised `ADVERSARIAL_UNATTENDED` flag never existed in the installed
+  library (KIT-0035 → KIT-0044).
+- **`docs/PLUGIN-UPGRADE-GUIDE.md` detection greps hardened** and
+  `.claude/agents/upgrader.md` re-synced in lockstep (KIT-0035).
+- **`sync-core-scripts.yml` push trigger parked** — `CROSS_REPO_TOKEN`
+  was never provisioned (22/22 failed runs since 2026-03-09);
+  dispatch-only until KIT-0045 re-enables it deliberately, with the
+  re-enable checklist embedded in the workflow file. Matrix `fail-fast`
+  disabled so one leg can't mask the others.
+- **Dependency floors refreshed** (dependabot #46–#50, #55):
+  `pytest>=9.1.1`, `pytest-asyncio>=1.3.0`, `ruff>=0.15.21`,
+  `python-dotenv>=1.2.2`, `gql>=4.0.0`; `actions/checkout@v7`.
+- **Core scripts 3.1.0** (two consumer-visible script changes on top of
+  the 3.0.0 sync-engine major).
 
 - **`./scripts/core/project sync` now means core-file sync, not Linear sync**
   (KIT-0036) — **BREAKING**. `sync` was previously an alias for `linearsync`;
@@ -631,6 +634,21 @@ project upgrades were deliberately deferred to the next phase.
   agent table, `README.md` create-project blurb, `.kit/docs/tmux-tips.md`
   example commands.
 
+### Fixed
+
+- **`kit_markers.py` marker-merge robustness** (KIT-0040 F3, resolves the
+  two BugBot findings open on PR #58 since the KIT-0033 merge):
+  - A prose mention of a region's BEGIN marker inside another (preserved)
+    region no longer aborts re-bootstrap as "malformed" — the malformed
+    check is now line-anchored instead of a raw substring test.
+  - Benign whitespace drift inside a marker line (extra spaces/tabs) no
+    longer makes the region unparseable — previously a drifted marker
+    silently replaced customized consumer content with placeholder TODO
+    text on re-bootstrap. Drift beyond the whitespace tolerance is now
+    *detected* by a deliberately looser line-anchored check and fails
+    fast instead of clobbering. Well-formed and drifted regions still
+    round-trip byte-for-byte.
+
 ### Removed
 
 - **`scripts/core/check-sync.sh`** (KIT-0036) — retired in core **3.0.0**. It
@@ -645,20 +663,6 @@ project upgrades were deliberately deferred to the next phase.
   **`.claude/agents/feature-developer-v6.md`**, and
   **`.claude/agents/feature-developer-v7.md`** — content consolidated into
   the canonical `feature-developer.md`.
-
-### Added
-
-- **KIT-0033 backlog task** (`.kit/tasks/1-backlog/`) — portable agents
-  downstream: marker-based Project Context / Stack Notes overwrite,
-  `.kit/` skeleton scaffolding during bootstrap, F3 opt-out, and
-  re-bootstrap refresh that survives both consumer customization regions.
-  Captures the deferred work that surfaced via PR #57 bot review.
-- **`bootstrap-consumer.sh --no-kit` now prunes pre-existing kit agents**
-  on re-run (#68), `feature-developer-f5` wired into
-  `KIT_AGENTS`/`AGENT_EXCLUDES` (#66), and a marker-membership test
-  guards the whole class mechanically (KIT-0034).
-- **Worktree provisioning symlinks gitignored** so `git worktree remove`
-  works cleanly after a session (KIT-0044).
 
 ## [0.7.0] - 2026-06-13
 

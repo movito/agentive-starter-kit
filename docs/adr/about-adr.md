@@ -16,6 +16,7 @@ See [.kit/adr/about-kit-adr.md](../../.kit/adr/about-kit-adr.md) for the full in
 ## What are ADRs?
 
 ADRs capture important architectural decisions along with their context and consequences:
+
 - **Context**: The forces and factors influencing the decision
 - **Decision**: What was decided and why
 - **Consequences**: The positive, negative, and neutral implications
@@ -50,11 +51,13 @@ Use `TEMPLATE-FOR-ADR-FILES.md` in this directory. Key sections:
 ## Naming Convention
 
 **Format**: `ADR-####-description.md`
+
 - `ADR-` prefix (required)
 - `####` four-digit number (0001, 0002, etc.)
 - `-description` kebab-case summary
 
 **Examples**:
+
 - `ADR-0001-user-authentication-strategy.md`
 - `ADR-0002-database-selection.md`
 
@@ -67,12 +70,14 @@ Use `TEMPLATE-FOR-ADR-FILES.md` in this directory. Key sections:
 ## When to Write an ADR
 
 **Write an ADR when:**
+
 - Making architectural choices that affect project structure
 - Choosing between competing technical approaches
 - Establishing patterns or conventions
 - Making trade-offs with significant implications
 
 **Don't write an ADR for:**
+
 - Routine bug fixes
 - Feature implementations following established patterns
 - Temporary experimental code
@@ -87,6 +92,7 @@ If you need to change a pattern from the starter kit:
 3. Document the rationale for diverging
 
 Example:
+
 ```markdown
 # ADR-0001: Custom Logging Format
 

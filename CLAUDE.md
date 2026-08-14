@@ -6,7 +6,7 @@ evaluation, and architectural decision records. For full details, see `README.md
 
 ## Directory Structure
 
-```
+```text
 .claude/agents/       Implementation agents (feature-developer, ci-checker, etc.)
 .claude/commands/     All slash commands (start-task, babysit-pr, retro, etc.)
 .claude/skills/       ALL skills — implementation (pre-implementation, bot-triage) and builder (self-review, review-handoff, code-review-evaluator)
@@ -103,7 +103,7 @@ See `.kit/templates/AGENT-TEMPLATE.md` for creating new agents.
 | `./scripts/core/verify-ci.sh` | Verify CI status on GitHub |
 | `./scripts/core/pattern_lint.py` | Check for defensive coding violations |
 | `./scripts/optional/create-agent.sh` | Create a new agent definition |
-| `./scripts/local/bootstrap` | The one setup door: `--new`/`--adopt` × shape × profile (KIT-0053) |
+| `agentive new` / `agentive adopt` | The one setup door, packaged (KIT-ADR-0030): shape × profile, runs from anywhere; `./scripts/local/bootstrap` is an exec shim over it (removal: KIT-0107) |
 
 ## Version
 

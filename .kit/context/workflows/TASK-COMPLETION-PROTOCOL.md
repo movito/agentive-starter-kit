@@ -34,12 +34,13 @@
 
 ## Handoff Document Format
 
-### Filename:
-```
+### Filename
+
+```text
 .kit/context/<TASK-ID>-HANDOFF-<agent-type>.md
 ```
 
-### Required Sections:
+### Required Sections
 
 ```markdown
 ## Task Summary
@@ -99,14 +100,16 @@ What should the next agent do with this?
 
 ## Best Practices
 
-### ✅ DO:
+### ✅ DO
+
 - Be thorough - don't skip checklist items
 - Include test metrics in handoff (before/after pass rates)
 - Document any known issues or limitations honestly
 - Provide clear next steps for the user or reviewing agent
 - Update agent-handoffs.json status to "task_complete" (planner, on main — KIT-0086)
 
-### ❌ DON'T:
+### ❌ DON'T
+
 - Don't mark task complete if tests are failing
 - Don't skip handoff document (critical for coordination)
 - Don't leave uncommitted changes
@@ -118,6 +121,7 @@ What should the next agent do with this?
 
 See existing handoffs for examples (finished tasks' handoffs live under
 `.kit/context/archive/`; write new ones to the flat `.kit/context/`):
+
 - `.kit/context/archive/ASK-0043-HANDOFF-feature-developer.md`
 - `.kit/context/archive/ASK-0044-HANDOFF-feature-developer.md`
 
@@ -133,6 +137,7 @@ See existing handoffs for examples (finished tasks' handoffs live under
 ---
 
 **Related Workflows**:
+
 - [TESTING-WORKFLOW.md](./TESTING-WORKFLOW.md) - Verify tests before completion
 - [COMMIT-PROTOCOL.md](./COMMIT-PROTOCOL.md) - Commit changes properly
 - [Evaluation guidance](../../../.claude/skills/code-review-evaluator/SKILL.md) - For planners assigning tasks

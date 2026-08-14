@@ -241,6 +241,7 @@ ID2-0002 retro documented a concrete example: Claude Sonnet flagged
 diff didn't include the line where it was defined.
 
 Include:
+
 - Full source of all new/changed files (complete files, not diffs)
 - Full test file
 - Summary of what bots found and how it was addressed
@@ -364,7 +365,7 @@ mode — never a silent partial trio:
 3. **NAME the mode in the persisted review record** (Step 4's
    artifact). First line of the record, e.g.:
 
-   ```
+   ```text
    Mode: degraded single-key (only GEMINI_API_KEY present) —
    code-reviewer-fast only + self-review checklist; code-reviewer and
    claude-code not run.

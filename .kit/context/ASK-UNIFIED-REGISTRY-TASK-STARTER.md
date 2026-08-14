@@ -41,11 +41,13 @@ The ADR has been through 3 revision rounds informed by 4 adversarial evaluators 
 4. Verify: existing Claude Code agent loader ignores unknown frontmatter keys (it does — verified March 2026)
 
 **Content hash procedure** (from ADR):
+
 - For Markdown: SHA-256 of everything after closing `---` of frontmatter
 - Normalize: LF line endings, strip trailing whitespace per line, single trailing `\n`, UTF-8
 - Format: `sha256:<64-char-hex>`
 
 **What NOT to do in Phase 1**:
+
 - Don't touch evaluators yet (they live in adversarial-evaluator-library, a separate repo)
 - Don't build CLI tooling yet
 - Don't change any runtime behavior
@@ -53,12 +55,14 @@ The ADR has been through 3 revision rounds informed by 4 adversarial evaluators 
 ### Phase 2: CLI Tooling (PR 2)
 
 Implement `kit registry` subcommands:
+
 - `kit registry status` — compare local artifacts against index, show drift/updates
 - `kit registry sync` — pull updates from source repos (scan-then-execute: validate all, then write all)
 - `kit registry install <name>` — install a specific artifact
 - `kit registry diff <name>` — show diff between local and upstream
 
 This requires:
+
 - A `manifest.yml` parser (project policy: sources, tiers, pins, exclusions)
 - A `lock.yml` generator (pinned SHAs for reproducibility)
 - Content hash computation matching the spec above

@@ -11,6 +11,7 @@
 ### Problem Statement
 
 The agentive-starter-kit needs a consistent, automated testing strategy that:
+
 - Ensures code quality across contributions
 - Catches bugs before they reach production
 - Provides fast feedback during development
@@ -21,18 +22,21 @@ Without a defined strategy, testing becomes inconsistent - some contributors wri
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Fast local feedback (tests run in seconds, not minutes)
 - Coverage tracking to identify untested code
 - Automated checks before commits reach the repository
 - Support for both unit and integration tests
 
 **Constraints:**
+
 - Must work with Python 3.9+ (project minimum)
 - Should not require complex setup for new contributors
 - CI costs should remain minimal (GitHub Actions free tier)
 - Must integrate with existing pre-commit workflow
 
 **Assumptions:**
+
 - Contributors have basic pytest familiarity
 - Local development uses virtual environments
 - GitHub is the primary code hosting platform
@@ -71,7 +75,7 @@ We adopt **pytest-based testing** with **pre-commit hooks** for local quality ga
 
 ### Test Organization
 
-```
+```text
 tests/
 ├── test_*.py           # Test files (current flat structure)
 ├── conftest.py         # Shared fixtures (create as needed)
@@ -79,6 +83,7 @@ tests/
 ```
 
 **Test Markers** (defined in `pyproject.toml`):
+
 - `@pytest.mark.unit` - Fast, isolated tests (default)
 - `@pytest.mark.integration` - Tests requiring external services
 - `@pytest.mark.slow` - Tests taking >1 second
@@ -202,6 +207,7 @@ Pre-commit runs automatically before each commit:
 **Description**: Use Python's built-in unittest framework instead of pytest.
 
 **Rejected because**:
+
 - ❌ More verbose test syntax (class-based)
 - ❌ Less powerful fixtures (no pytest fixtures)
 - ❌ Smaller plugin ecosystem
@@ -212,6 +218,7 @@ Pre-commit runs automatically before each commit:
 **Description**: Only run tests in CI, not locally before commits.
 
 **Rejected because**:
+
 - ❌ Slower feedback loop (wait for CI)
 - ❌ More failed CI runs (waste of resources)
 - ❌ Issues discovered later are harder to fix
@@ -222,6 +229,7 @@ Pre-commit runs automatically before each commit:
 **Description**: Require 100% test coverage for all code.
 
 **Rejected because**:
+
 - ❌ Diminishing returns past ~80%
 - ❌ Encourages testing trivial code
 - ❌ Can lead to brittle tests
@@ -232,6 +240,7 @@ Pre-commit runs automatically before each commit:
 **Description**: Don't track or enforce coverage at all.
 
 **Rejected because**:
+
 - ❌ No visibility into untested code
 - ❌ Coverage tends to decline over time
 - ❌ Harder to identify testing gaps

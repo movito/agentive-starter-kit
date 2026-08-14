@@ -13,6 +13,7 @@
 Complex technical tasks in agentic systems are prone to **phantom work** - where implementations appear complete but contain zero actual code changes, wasting hours before discovery.
 
 This occurs because AI agents can:
+
 - Misunderstand requirements and implement the wrong thing
 - Experience silent tool failures without realizing it
 - Claim completion based on intent rather than verified results
@@ -20,16 +21,19 @@ This occurs because AI agents can:
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Catch design flaws before implementation begins
 - Verify agent understanding matches actual requirements
 - Prevent wasted implementation time on wrong approaches
 
 **Constraints:**
+
 - Must not slow down simple, well-understood tasks
 - External review should be cost-effective (< $0.10 per task)
 - Process must integrate with existing agent workflows
 
 **Assumptions:**
+
 - Different AI models (Claude, GPT-4o) have complementary strengths
 - External perspective catches blind spots that self-review misses
 - Investigation before implementation prevents most phantom work
@@ -37,6 +41,7 @@ This occurs because AI agents can:
 ### Observed Phantom Work Example
 
 **TASK-2025-014** (from thematic-cuts project):
+
 - **Claimed**: "Complete - All 6 tests fixed"
 - **Reality**: 0 code changes, only documentation renamed
 - **Evidence**: `git diff` showed no modifications to target files
@@ -57,7 +62,7 @@ We adopt **investigation-first development with external GPT-4o evaluation** to 
 
 ### Implementation Overview
 
-```
+```text
 Phase 0: Investigation (understand before implementing)
    ↓
 Phase 1: Evaluator Review (external GPT-4o validation)
@@ -66,6 +71,7 @@ Phase 2+: Implementation (with validated understanding)
 ```
 
 **Workflow Commands:**
+
 ```bash
 # Evaluate implementation plans
 adversarial evaluate <task-file>
@@ -114,6 +120,7 @@ adversarial proofread <doc-file>
 **Description**: Implement immediately, fix issues as discovered.
 
 **Rejected because**:
+
 - High phantom work risk - agents may not realize tool failures
 - Wasted implementation time on wrong approaches
 - Design flaws discovered late are expensive to fix
@@ -123,6 +130,7 @@ adversarial proofread <doc-file>
 **Description**: Human reviews all plans before implementation.
 
 **Rejected because**:
+
 - Slower than automated evaluation
 - Human availability becomes bottleneck
 - AI evaluator catches different issues than humans
@@ -132,6 +140,7 @@ adversarial proofread <doc-file>
 **Description**: Have Claude review its own plans.
 
 **Rejected because**:
+
 - Same blind spots as original author
 - External perspective (GPT-4o) catches different issues
 - Multi-model collaboration provides better coverage
@@ -139,6 +148,7 @@ adversarial proofread <doc-file>
 ## Real-World Results
 
 **TASK-2025-017** (Semantic Parser, from thematic-cuts):
+
 - **Original estimate**: 2-3 weeks (16-24 days)
 - **Investigation finding**: 90%+ complete, only 7 minor bugs
 - **Actual duration**: 3 hours (1.5h investigation, 1.5h implementation)
@@ -163,8 +173,8 @@ adversarial proofread <doc-file>
 
 ### External
 
-- **Aider CLI**: https://aider.chat (GPT-4o integration tool)
-- **OpenAI API**: https://platform.openai.com (evaluator model)
+- **Aider CLI**: <https://aider.chat> (GPT-4o integration tool)
+- **OpenAI API**: <https://platform.openai.com> (evaluator model)
 
 ### Source Documentation
 

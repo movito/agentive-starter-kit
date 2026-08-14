@@ -63,7 +63,8 @@ Read ALL files listed in the context message. From them, extract:
   Example: "recipe-api" → RECIPE, "my-cool-app" → MCA
 
 Print a brief summary:
-```
+
+```markdown
 **BOOTSTRAP** | Step: Read Materials
 
 I've read your design materials. Here's what I understand:
@@ -79,6 +80,7 @@ Proceeding with configuration...
 ### Step 2: Configure pyproject.toml
 
 Edit `pyproject.toml` to set:
+
 - `name` — project name (from folder)
 - `description` — one-sentence summary (from materials)
 
@@ -93,6 +95,7 @@ Do NOT change version, dependencies, or tool config — those are correct as-is.
 ### Step 3: Configure .env.template
 
 Edit `.env.template` to set:
+
 - `PROJECT_NAME=<project-name>`
 - `TASK_PREFIX=<PREFIX>`
 
@@ -112,6 +115,7 @@ done
 ### Step 5: Configure Serena
 
 Edit `.serena/project.yml` (created from template) to:
+
 - Set `project_name` to the project name
 - Enable the detected languages
 
@@ -124,11 +128,12 @@ The scaffolding contains references to "Agentive Starter Kit" that should be
 replaced with the actual project name. Run this cleanup:
 
 1. **Search** for all occurrences:
-```bash
-grep -ri "agentive.starter.kit\|agentive-starter-kit" \
-  --include='*.md' --include='*.yml' --include='*.py' --include='*.sh' \
-  -l | grep -v '.git/' | grep -v '.venv/' | sort
-```
+
+   ```bash
+   grep -ri "agentive.starter.kit\|agentive-starter-kit" \
+     --include='*.md' --include='*.yml' --include='*.py' --include='*.sh' \
+     -l | grep -v '.git/' | grep -v '.venv/' | sort
+   ```
 
 2. **Replace branding references** — these should use the project name:
    - `CLAUDE.md` header and description
@@ -275,7 +280,7 @@ Languages: LANGUAGES"
 
 Ask the user (this is the ONE interactive step):
 
-```
+```markdown
 **BOOTSTRAP** | Step: GitHub
 
 Project configured! One last thing:
@@ -287,6 +292,7 @@ and do it later.
 ```
 
 If yes:
+
 ```bash
 gh repo create PROJECT_NAME --private --source=. --push
 gh repo set-default
@@ -296,7 +302,7 @@ If no: print the manual commands for later.
 
 ### Step 13: Print Summary
 
-```
+```markdown
 **BOOTSTRAP** | Step: Complete ✅
 
 **PROJECT_NAME is ready!**

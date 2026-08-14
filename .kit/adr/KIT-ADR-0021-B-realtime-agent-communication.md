@@ -18,7 +18,7 @@ The agentive-starter-kit architecture uses file-based coordination (`agent-hando
 
 Human operators are forced to act as message routers between agents, creating a bottleneck that doesn't scale and is exhausting to maintain. We need a mechanism for agents to address and communicate with each other directly while preserving human visibility and intervention capability.
 
-```
+```text
 Current Flow:
 ┌─────────────┐     ┌─────────┐     ┌─────────────┐
 │ Agent A     │ ──► │  Human  │ ──► │ Agent B     │
@@ -52,6 +52,7 @@ Analysis of sanity-labs/miriad-app revealed proven patterns for multi-agent comm
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Agents run as separate CLI processes (Claude Code)
 - Each agent has distinct model, role, and MCP configuration
 - Agents are ephemeral—they spin up, execute, and exit
@@ -59,6 +60,7 @@ Analysis of sanity-labs/miriad-app revealed proven patterns for multi-agent comm
 - Human needs ability to intervene in any conversation
 
 **Constraints:**
+
 - Must work locally (no cloud dependencies required)
 - Should integrate with existing file-based coordination
 - Cannot modify Claude Code CLI internals
@@ -109,13 +111,14 @@ interface Message {
 ```
 
 **Example NDJSON line:**
+
 ```json
 {"id":"01HXYZ...","t":"2026-02-05T10:30:00.000Z","type":"agent","sender":"planner","content":"@feature-developer Task ASK-0050 is ready for implementation.","addressed":["feature-developer"],"refs":["ASK-0050"]}
 ```
 
 ### Directory Structure
 
-```
+```text
 .agent-context/
 ├── channels/
 │   └── main/                      # Default channel
@@ -133,13 +136,14 @@ interface Message {
 
 Agents address each other using `@callsign` syntax:
 
-```
+```text
 @feature-developer Please implement the auth module.
 @planner @code-reviewer Ready for review.
 @channel Broadcast to all agents.
 ```
 
 **Visibility rules** (adapted from Miriad):
+
 - Agents see messages where they are `@mentioned`
 - Agents see messages they sent
 - `@channel` broadcasts to all roster agents
@@ -148,7 +152,8 @@ Agents address each other using `@callsign` syntax:
 ### Agent Integration
 
 **Startup flow** (added to agent wrapper):
-```
+
+```text
 1. Read roster.json, update own status to "online"
 2. Read messages.ndjson
 3. Filter to messages where self is @mentioned
@@ -164,21 +169,25 @@ Agents address each other using `@callsign` syntax:
 ### Error Handling Strategy
 
 **Ordering** (from Miriad research):
+
 - Use ULID for message IDs (lexicographically sortable)
 - Sort messages by ID on read, not by arrival time
 - No sequence numbers or coordination needed
 
 **Delivery guarantees**:
+
 - Append-only logs ensure durability
 - Agent reads all messages on startup (no "delivery" concept)
 - Idempotent processing via message ID tracking
 
 **Conflict resolution**:
+
 - Concurrent appends handled by filesystem (atomic append)
 - Use file locking for safety: `fcntl.flock()` or equivalent
 - Git merge handles distributed sync conflicts
 
 **Recovery**:
+
 - Messages persist in filesystem (survive crashes)
 - Agent can resume from any point using timestamp filter
 - No message loss unless filesystem fails
@@ -186,7 +195,8 @@ Agents address each other using `@callsign` syntax:
 ### Resource Management
 
 **Ephemeral mode** (default, recommended):
-```
+
+```text
 Agent starts → Checks inbox → Processes → Exits
 - No background processes
 - No polling
@@ -195,7 +205,8 @@ Agent starts → Checks inbox → Processes → Exits
 ```
 
 **File watcher mode** (optional, for faster response):
-```
+
+```text
 Agent starts → Watches inbox → Responds to new messages → Idle timeout → Exits
 - Uses fswatch/inotify (no polling)
 - Configurable idle timeout (default: 15 minutes)
@@ -225,7 +236,7 @@ Agent starts → Watches inbox → Responds to new messages → Idle timeout →
 
 Terminal display for `channel watch`:
 
-```
+```text
 ╭─ Channel: main ─────────────────────────────────────────────╮
 │                                                              │
 │ [10:30:05] @human → @planner                                │
@@ -288,6 +299,7 @@ def is_broadcast(mentions: list[str]) -> bool
 ```
 
 **Tests:**
+
 - `tests/test_message.py` - Serialization, ULID sorting
 - `tests/test_channel.py` - Read/write, filtering
 - `tests/test_mention.py` - @mention parsing
@@ -302,6 +314,7 @@ def is_broadcast(mentions: list[str]) -> bool
 | `.claude/agents/*.md` | Add inbox check instructions |
 
 **Agent startup injection:**
+
 ```python
 # agent-inbox.py
 def get_inbox_context(agent: str, channel: str = "main") -> str:
@@ -324,6 +337,7 @@ def get_inbox_context(agent: str, channel: str = "main") -> str:
 ### Phase 4: Enhanced Features (Week 4)
 
 **Enhancements:**
+
 - Cross-references via `refs` field
 - Dependency tracking in tasks
 - Message archival (rotate old messages)
@@ -406,6 +420,7 @@ def test_concurrent_appends_no_corruption()
 **Description**: Migrate to platform providing native message routing.
 
 **Not chosen because**:
+
 - Adds external dependency
 - Requires learning new platform
 - May not fit CLI-first workflow
@@ -416,6 +431,7 @@ def test_concurrent_appends_no_corruption()
 **Description**: Build local WebSocket server for agent coordination.
 
 **Not chosen because**:
+
 - Requires running server process
 - More infrastructure to maintain
 - Over-engineered for file-based system
@@ -425,6 +441,7 @@ def test_concurrent_appends_no_corruption()
 **Description**: Maintain current manual relay approach.
 
 **Not chosen because**:
+
 - Doesn't scale
 - Exhausting for human operator
 - Introduces latency and potential miscommunication
@@ -457,8 +474,8 @@ def test_concurrent_appends_no_corruption()
 
 - Miriad Research: `.agent-context/research/miriad/SYNTHESIS.md`
 - Tymbal Protocol Analysis: `.agent-context/research/miriad/TYMBAL-PROTOCOL.md`
-- sanity-labs/miriad-app: https://github.com/sanity-labs/miriad-app
-- ULID Specification: https://github.com/ulid/spec
+- sanity-labs/miriad-app: <https://github.com/sanity-labs/miriad-app>
+- ULID Specification: <https://github.com/ulid/spec>
 
 ## Revision History
 

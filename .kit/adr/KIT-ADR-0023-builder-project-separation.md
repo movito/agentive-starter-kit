@@ -60,7 +60,7 @@ layer if you don't know exactly what it contains.
 
 All builder infrastructure moves under `.kit/`:
 
-```
+```text
 .kit/                              ← Builder layer (the "how I work" stuff)
 ├── delegation/                    ← Task management (tasks/, handoffs/)
 │   └── tasks/                     ← 1-backlog/ through 9-reference/
@@ -112,7 +112,7 @@ All builder infrastructure moves under `.kit/`:
 
 ### 2. Project Layer Stays in Standard Locations
 
-```
+```text
 .claude/                           ← Implementation-time agents and commands
 ├── agents/
 │   ├── feature-developer.md       ← Implementation agents only
@@ -218,7 +218,7 @@ path guidance.
 
 Once `.kit/` is stable:
 
-```
+```text
 Step 1 (this ADR): .kit/ inside each kit repo
 Step 2 (future):   .kit/ → ~/Github/workspace/.kit/
                    with per-project subdirs or symlinks

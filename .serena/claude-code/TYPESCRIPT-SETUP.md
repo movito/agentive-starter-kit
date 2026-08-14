@@ -11,6 +11,7 @@
 This guide explains how to set up and verify TypeScript/JavaScript semantic navigation with Serena MCP for the `frontend/` directory.
 
 **Benefits**:
+
 - 65% average token reduction (vs traditional grep + file reads)
 - 2-3x faster code navigation
 - 100% precision reference tracking (no false positives)
@@ -23,18 +24,21 @@ This guide explains how to set up and verify TypeScript/JavaScript semantic navi
 ### Required Software
 
 ✅ **Node.js v16+** (Installed: v22.18.0)
+
 ```bash
 node --version
 # Output: v22.18.0 (or higher)
 ```
 
 ✅ **npm v8+** (Installed: v11.5.2)
+
 ```bash
 npm --version
 # Output: 11.5.2 (or higher)
 ```
 
 ✅ **Serena MCP** (Already configured)
+
 ```bash
 claude mcp list
 # Output should show: serena: ✓ Connected
@@ -51,6 +55,7 @@ claude mcp list
 The TypeScript Language Server is already installed globally via npm.
 
 **Verification**:
+
 ```bash
 which typescript-language-server
 # Expected: a path inside your node installation (e.g. ~/.nvm/versions/node/<version>/bin/typescript-language-server)
@@ -60,6 +65,7 @@ typescript-language-server --version
 ```
 
 **If not installed** (for other team members):
+
 ```bash
 npm install -g typescript-language-server typescript
 ```
@@ -71,6 +77,7 @@ npm install -g typescript-language-server typescript
 **IMPORTANT**: Serena detects language servers at MCP startup, not dynamically.
 
 **Required Action**:
+
 1. Close your current Claude Code session completely
 2. Restart Claude Code (or start a fresh conversation in new tab)
 3. This allows Serena to detect the TypeScript LSP
@@ -83,17 +90,19 @@ npm install -g typescript-language-server typescript
 
 In your **new** Claude Code conversation:
 
-```
+```text
 Please activate Serena for this project:
 mcp__serena__activate_project("your-project")
 ```
 
 **Expected Output**:
-```
+
+```text
 "Programming languages: python, swift, typescript"
 ```
 
 **If TypeScript is NOT shown**:
+
 1. Verify TypeScript LSP is installed (Step 1)
 2. Ensure you restarted Claude Code (Step 2)
 3. Check that TypeScript LSP is in your PATH
@@ -110,12 +119,14 @@ Run these tests in Claude Code to verify TypeScript semantic navigation works.
 **Objective**: Verify `find_symbol` works for React components
 
 **Test**:
-```
+
+```text
 Can you find the App component in the frontend directory using Serena?
 Expected tool: mcp__serena__find_symbol
 ```
 
 **Expected Result**:
+
 - Component found: `App` (Function, lines 6-13)
 - File: `frontend/src/App.tsx`
 - ✅ PASS if component found
@@ -127,12 +138,14 @@ Expected tool: mcp__serena__find_symbol
 **Objective**: Verify reference tracking works across files
 
 **Test**:
-```
+
+```text
 Can you find all references to the useWizard hook using Serena?
 File: frontend/src/context/WizardContext.tsx
 ```
 
 **Expected Result**:
+
 - References found in 4+ files
 - Includes imports and usages
 - ✅ PASS if references span multiple files
@@ -144,12 +157,14 @@ File: frontend/src/context/WizardContext.tsx
 **Objective**: Verify symbol overview for large files
 
 **Test**:
-```
+
+```text
 Can you get a symbol overview of WizardContext.tsx using Serena?
 Expected tool: mcp__serena__get_symbols_overview
 ```
 
 **Expected Result**:
+
 - 10 top-level symbols found
 - Includes: Functions, interfaces, constants
 - ✅ PASS if overview shows symbols without full file content
@@ -161,11 +176,13 @@ Expected tool: mcp__serena__get_symbols_overview
 **Objective**: Ensure Python still works
 
 **Test**:
-```
+
+```text
 Can you find the sync_task_to_linear function in the scripts directory using Serena?
 ```
 
 **Expected Result**:
+
 - Python function found in `scripts/linear_sync_stubs.py`
 - ✅ PASS if Python symbols still work
 
@@ -176,6 +193,7 @@ Can you find the sync_task_to_linear function in the scripts directory using Ser
 ### When to Use Serena for TypeScript
 
 ✅ **Use Serena for**:
+
 - Navigating React components (100+ lines)
 - Finding component references across files
 - Understanding component structure (hooks, handlers, state)
@@ -183,6 +201,7 @@ Can you find the sync_task_to_linear function in the scripts directory using Ser
 - Understanding context providers and consumers
 
 ❌ **Use traditional tools for**:
+
 - Small files (< 50 lines) - savings are minimal
 - Reading full file content - Serena shows structure, not full code
 - Simple string searches - grep is fine for non-symbol searches
@@ -196,7 +215,8 @@ Can you find the sync_task_to_linear function in the scripts directory using Ser
 **Goal**: Understand the structure of a large React component without reading full file.
 
 **Serena Approach**:
-```
+
+```text
 1. Get symbol overview:
    mcp__serena__get_symbols_overview("frontend/src/components/wizard/WizardContext.tsx")
 
@@ -218,7 +238,8 @@ Can you find the sync_task_to_linear function in the scripts directory using Ser
 **Goal**: Find all usages of a custom hook across the codebase.
 
 **Serena Approach**:
-```
+
+```text
 mcp__serena__find_referencing_symbols(
     name_path="useWizard",
     relative_path="frontend/src/context/WizardContext.tsx"
@@ -226,6 +247,7 @@ mcp__serena__find_referencing_symbols(
 ```
 
 **Benefit**:
+
 - 100% precision (only code references, no comments)
 - Shows context snippets for each usage
 - 60% token savings vs grep + reading multiple files
@@ -237,7 +259,8 @@ mcp__serena__find_referencing_symbols(
 **Goal**: Quickly jump to a component definition.
 
 **Serena Approach**:
-```
+
+```text
 mcp__serena__find_symbol(
     name_path_pattern="WizardRouter",
     relative_path="frontend/src"
@@ -281,12 +304,14 @@ Based on validation testing:
 **Solutions**:
 
 **A. Restart Claude Code (Most Common)**
+
 1. Close Claude Code completely
 2. Restart application
 3. Start fresh conversation
 4. Activate project again
 
 **B. Verify TypeScript LSP Installation**
+
 ```bash
 which typescript-language-server
 # Should return a path
@@ -296,6 +321,7 @@ typescript-language-server --version
 ```
 
 If not installed:
+
 ```bash
 npm install -g typescript-language-server typescript
 ```
@@ -316,6 +342,7 @@ export PATH="$HOME/.nvm/versions/node/<your-version>/bin:$PATH"  # substitute yo
 ```
 
 **D. Test LSP Server Directly**
+
 ```bash
 typescript-language-server --stdio
 # Should start without errors (Ctrl+C to exit)
@@ -330,14 +357,17 @@ typescript-language-server --stdio
 **Solutions**:
 
 **A. Check File Path**
+
 - Ensure `relative_path` points to correct directory
 - Example: `frontend/src` not `frontend`
 
 **B. Check Symbol Name**
+
 - Try partial name with `substring_matching=true`
 - Use `get_symbols_overview` first to see available symbols
 
 **C. Check File Type**
+
 - `.tsx` files work best for React components
 - `.ts` files (non-React) may have reduced support for re-exports
 
@@ -350,10 +380,12 @@ typescript-language-server --stdio
 **Solutions**:
 
 **A. Verify Symbol Definition**
+
 - Run `find_symbol` first to confirm symbol exists
 - Use exact `name_path` from find_symbol result
 
 **B. Check Import Paths**
+
 - References using path aliases (`@/components`) are tracked
 - References using relative paths (`../components`) are tracked
 - Both should work if `tsconfig.json` is correctly configured
@@ -367,17 +399,20 @@ typescript-language-server --stdio
 **Solutions**:
 
 **A. Check Project Size**
+
 - Serena indexes on-demand
 - First query may be slower (~5-10s)
 - Subsequent queries should be fast (~2-3s)
 
 **B. Restart Language Server**
-```
+
+```text
 Use Serena tool:
 mcp__serena__restart_language_server
 ```
 
 **C. Check System Resources**
+
 - Ensure adequate RAM (8GB+ recommended)
 - Close other resource-intensive applications
 
@@ -432,6 +467,7 @@ Serena correctly resolves these path aliases defined in `tsconfig.json`:
 ```
 
 **Supported Aliases**:
+
 - `@/components` → `src/components`
 - `@/context` → `src/context`
 - `@/hooks` → `src/hooks`
@@ -451,6 +487,7 @@ Serena correctly resolves these path aliases defined in `tsconfig.json`:
    - Verify Serena MCP connected: `claude mcp list`
 
 2. **Installation** (2 minutes)
+
    ```bash
    npm install -g typescript-language-server typescript
    ```
@@ -470,14 +507,16 @@ Serena correctly resolves these path aliases defined in `tsconfig.json`:
 ### Training Resources
 
 **Documentation**:
+
 - This setup guide (`.serena/claude-code/TYPESCRIPT-SETUP.md`)
 - Use case matrix (`docs/archive/SERENA-USE-CASES.md`, archived KIT-0077)
 - Python setup guide (`.serena/claude-code/SETUP-GUIDE.md`) - similar patterns
 
 **External References**:
-- TypeScript LSP: https://github.com/typescript-language-server/typescript-language-server
-- Serena GitHub: https://github.com/oraios/serena
-- LSP Protocol: https://microsoft.github.io/language-server-protocol/
+
+- TypeScript LSP: <https://github.com/typescript-language-server/typescript-language-server>
+- Serena GitHub: <https://github.com/oraios/serena>
+- LSP Protocol: <https://microsoft.github.io/language-server-protocol/>
 
 ---
 
@@ -486,6 +525,7 @@ Serena correctly resolves these path aliases defined in `tsconfig.json`:
 ### Q: Do I need to install TypeScript LSP separately from TypeScript compiler?
 
 **A**: Yes, but they're typically installed together:
+
 ```bash
 npm install -g typescript-language-server typescript
 ```
@@ -497,6 +537,7 @@ The LSP server (`typescript-language-server`) is separate from the TypeScript co
 ### Q: Will this affect my TypeScript compilation or build process?
 
 **A**: No. The TypeScript LSP is only for code navigation in Claude Code. It does not affect:
+
 - TypeScript compilation (`tsc`)
 - Build processes (`npm run build`)
 - Testing (`npm run test`)
@@ -521,7 +562,8 @@ The LSP server (`typescript-language-server`) is separate from the TypeScript co
 ### Q: What if I'm working on a different TypeScript project?
 
 **A**: The TypeScript LSP is installed globally and works for any TypeScript project. Just activate the project:
-```
+
+```text
 mcp__serena__activate_project("/path/to/your/project")
 ```
 
@@ -532,6 +574,7 @@ mcp__serena__activate_project("/path/to/your/project")
 **A**: Yes! Serena complements traditional tools (grep, read). Use Serena for semantic navigation and traditional tools for other tasks.
 
 **Best Practice**:
+
 - Serena: Component structure, reference tracking, symbol navigation
 - Traditional: Reading full implementations, string searches, file content
 
@@ -546,9 +589,9 @@ mcp__serena__activate_project("/path/to/your/project")
 
 ### External Support
 
-- **Serena GitHub**: https://github.com/oraios/serena
-- **TypeScript LSP Issues**: https://github.com/typescript-language-server/typescript-language-server/issues
-- **Claude Code Docs**: https://docs.claude.com/en/docs/claude-code
+- **Serena GitHub**: <https://github.com/oraios/serena>
+- **TypeScript LSP Issues**: <https://github.com/typescript-language-server/typescript-language-server/issues>
+- **Claude Code Docs**: <https://docs.claude.com/en/docs/claude-code>
 
 ---
 

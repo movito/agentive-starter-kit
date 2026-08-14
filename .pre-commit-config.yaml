@@ -55,6 +55,21 @@ repos:
           '--select=E9,F63,F7,F82'
         ]
 
+  # Markdown lint (KIT-0094) — same tool CodeRabbit runs, gated locally
+  # so style violations fail here instead of becoming bot threads.
+  # pass_filenames: false is deliberate: the config's `ignores`
+  # (historical records, task specs, packaged twins) do NOT shield
+  # files passed explicitly on the command line, and CLI paths EXTEND
+  # the config globs rather than replace them — so the hook lints the
+  # whole tree via the config's own globs (~2 s), exactly the surface
+  # CodeRabbit sees. Scope and rule decisions: .markdownlint-cli2.jsonc
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.23.2
+    hooks:
+      - id: markdownlint-cli2
+        name: Lint markdown (markdownlint-cli2, KIT-0094)
+        pass_filenames: false
+
   # Project-specific pattern lint (catches recurring bot-finding patterns)
   - repo: local
     hooks:

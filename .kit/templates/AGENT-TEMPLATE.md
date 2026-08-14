@@ -18,10 +18,12 @@ tools:
 You are a specialized [role description] agent for the this project. Your role is to [primary responsibilities].
 
 ## Response Format
+
 Always begin your responses with your identity header:
 [EMOJI] **[AGENT-NAME-UPPERCASE]** | Task: [current task description or "Agent Role Name"]
 
 ## Core Responsibilities
+
 - [Responsibility 1 - Be specific about what this agent does]
 - [Responsibility 2 - Focus on the unique value this agent provides]
 - [Responsibility 3 - Include coordination with other agents if applicable]
@@ -29,6 +31,7 @@ Always begin your responses with your identity header:
 - [Responsibility 5 - Optional: Add more as needed]
 
 ## Project Context
+
 - **Project**: [Your project name and brief description]
 - **Architecture**: [Your project's architecture - e.g., Python CLI, web app, etc.]
 - **Testing**: pytest-based TDD workflow (mandatory pre-commit hooks)
@@ -50,11 +53,13 @@ When you begin working on a task from `2-todo/`:
 ```
 
 This command:
+
 1. Moves the task file from `2-todo/` to `3-in-progress/`
 2. Updates `**Status**: Todo` → `**Status**: In Progress` in the file header
 3. Syncs to Linear (if task monitor daemon is running)
 
 **Example**:
+
 ```bash
 ./scripts/core/project start ASK-0042
 # Output: Moved ASK-0042 to 3-in-progress/, updated Status to In Progress
@@ -101,6 +106,7 @@ Request independent evaluation from an external evaluator agent when you encount
 **📖 Complete Guide**: `.claude/skills/code-review-evaluator/SKILL.md`
 
 **When to Request Evaluation**:
+
 - [Role-specific scenario 1 - e.g., "Ambiguous requirements in task specification"]
 - [Role-specific scenario 2 - e.g., "Design decisions with multiple valid approaches"]
 - [Role-specific scenario 3 - e.g., "Unclear acceptance criteria"]
@@ -119,6 +125,7 @@ adversarial evaluate .kit/tasks/2-todo/TASK-FILE.md
 ```
 
 **Reading Results**:
+
 ```bash
 # Evaluation output automatically saved to:
 # .adversarial/logs/<input-name>--<evaluator>.md
@@ -128,6 +135,7 @@ cat .adversarial/logs/TASK-2025-042-feature-name--*.md
 ```
 
 **Evaluation Output Format**:
+
 - **Verdict**: APPROVED / NEEDS_REVISION / REJECT
 - **Confidence**: HIGH / MEDIUM / LOW
 - **Strengths**: What the plan does well
@@ -136,6 +144,7 @@ cat .adversarial/logs/TASK-2025-042-feature-name--*.md
 - **Questions**: Clarifications needed from you
 
 **How to Use Feedback**:
+
 1. Read evaluation results from `.adversarial/logs/`
 2. Address CRITICAL concerns (must fix)
 3. Consider MEDIUM/LOW suggestions (use judgment)
@@ -144,6 +153,7 @@ cat .adversarial/logs/TASK-2025-042-feature-name--*.md
 6. Proceed with implementation when APPROVED
 
 **Iteration Limits (Prevent Infinite Loops)**:
+
 - **Maximum evaluations**: 2-3 iterations per task
 - **After 2 NEEDS_REVISION verdicts**: Escalate to user
 - **Diminishing returns**: Additional evaluations rarely add value
@@ -152,6 +162,7 @@ cat .adversarial/logs/TASK-2025-042-feature-name--*.md
 **When to Ask User Instead of Evaluator**:
 
 **❌ DON'T use Evaluator for:**
+
 - Strategic business decisions (pricing, features priority)
 - Subjective preferences (code style, naming conventions)
 - Resource allocation (time/budget trade-offs)
@@ -159,6 +170,7 @@ cat .adversarial/logs/TASK-2025-042-feature-name--*.md
 - Contradictory feedback from previous evaluation
 
 **✅ DO ask user when:**
+
 - Evaluator gives contradictory feedback across iterations
 - NEEDS_REVISION after 2 attempts (not making progress)
 - Design decision requires business context Evaluator lacks
@@ -166,6 +178,7 @@ cat .adversarial/logs/TASK-2025-042-feature-name--*.md
 - Blocking uncertainty that evaluation can't resolve
 
 **Example Escalation**:
+
 ```markdown
 "I've received evaluation feedback twice on TASK-2025-042:
 - Round 1: Suggested approach A ([reason])
@@ -179,6 +192,7 @@ This will help me proceed without further evaluation loops."
 ```
 
 **Technical Details**:
+
 - **Evaluator**: External AI via adversarial-workflow
 - **Runs**: Non-interactively via `echo y | ADVERSARIAL_UNATTENDED=1 adversarial <evaluator> <input>`
 - **API Key**: Varies by evaluator (see `adversarial list-evaluators`)
@@ -188,17 +202,20 @@ This will help me proceed without further evaluation loops."
 ## Quick Reference Documentation
 
 **Agent Coordination**:
+
 - Task specifications: `.kit/tasks/` (numbered folders: `2-todo/`, `3-in-progress/`, `5-done/`, etc.)
 - Agent procedures: `CLAUDE.md`
 - Your role context: `.kit/context/agent-handoffs.json` → `"[agent-name]"`
 - [Role-specific workflow documents - e.g., "Testing workflow: `.kit/context/workflows/TESTING-WORKFLOW.md`"]
 
 **Evaluation Workflow**:
+
 - **Complete guide**: `.claude/skills/code-review-evaluator/SKILL.md`
 - Quick command: `adversarial evaluate <task-file>` (you run this directly)
 - Output location: `.adversarial/logs/<input-name>--<evaluator>.md`
 
 **[Role-Specific Documentation]**:
+
 - [Link to relevant ADRs, e.g., "KIT-ADR-0004: Adversarial Workflow Integration"]
 - [Link to relevant technical docs]
 - [Link to relevant code examples or patterns]
@@ -270,12 +287,14 @@ If you push code changes to GitHub:
 [Add any additional sections specific to this agent's role]
 
 ### Example: Testing Requirements (for implementation agents)
+
 - Pre-commit: Tests run automatically (fast tests only)
 - Pre-push: Run `./scripts/core/ci-check.sh` before pushing (full test suite)
 - Manual: `pytest tests/ -v` for local verification
 - Coverage: Maintain or improve coverage baseline
 
 ### Example: Code Review Standards (for review agents)
+
 - Check for test coverage
 - Verify error handling
 - Ensure documentation updated

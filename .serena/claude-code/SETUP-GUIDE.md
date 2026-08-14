@@ -12,16 +12,19 @@
 This guide provides step-by-step instructions for installing and configuring Serena MCP (Model Context Protocol) server for semantic code navigation in Claude Code.
 
 **What is Serena?**
+
 - LSP-based semantic code navigation tool
 - Provides symbol finding, reference tracking, and code structure analysis
 - Integrates with Claude Code via MCP
 
 **What you'll get**:
+
 - 70-85% token reduction for Python code navigation
 - 2-4x faster symbol/reference finding
 - 100% precision (vs 43-60% for traditional Grep)
 
 **Limitations**:
+
 - ⚠️ **Python-only** (TypeScript/JavaScript not currently indexed)
 - ✅ Works in main conversations
 - ❓ Agent tab support (requires testing - see note below)
@@ -33,18 +36,21 @@ This guide provides step-by-step instructions for installing and configuring Ser
 ### Required Software
 
 1. **Claude Code CLI**
+
    ```bash
    claude --version
    # Should show version 0.1.x or higher
    ```
 
 2. **UV (Python Package Manager)**
+
    ```bash
    uv --version
    # Should show 0.4.x or higher
    ```
 
    **If not installed**:
+
    ```bash
    # macOS/Linux
    curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -54,12 +60,14 @@ This guide provides step-by-step instructions for installing and configuring Ser
    ```
 
 3. **Python 3.10+**
+
    ```bash
    python3 --version
    # Should show 3.10.x or higher
    ```
 
 4. **Python LSP Server (pylsp)**
+
    ```bash
    # Check if installed
    which pylsp
@@ -83,16 +91,19 @@ This guide provides step-by-step instructions for installing and configuring Ser
 ### Step 1: Install Serena MCP Server
 
 **Command**:
+
 ```bash
 claude mcp add-json "serena" '{"command":"uvx","args":["--from","git+https://github.com/oraios/serena","serena","start-mcp-server"]}'
 ```
 
 **Expected Output**:
-```
+
+```text
 Added MCP server 'serena' to config
 ```
 
 **What this does**:
+
 - Registers Serena as an MCP server in Claude Code configuration
 - Uses `uvx` to run Serena from GitHub repository
 - No manual JSON editing required (unlike Claude Desktop setup)
@@ -102,17 +113,20 @@ Added MCP server 'serena' to config
 ### Step 2: Verify Installation
 
 **Command**:
+
 ```bash
 claude mcp list
 ```
 
 **Expected Output**:
-```
+
+```text
 Configured MCP servers:
   serena: ✓ Connected
 ```
 
 **If you see**:
+
 - ✅ `serena: ✓ Connected` → Installation successful
 - ❌ `serena: ✗ Not connected` → Troubleshoot (see below)
 - ❌ `No MCP servers configured` → Re-run Step 1
@@ -124,6 +138,7 @@ Configured MCP servers:
 **Important**: MCP tools load at conversation start
 
 **If testing immediately after installation**:
+
 1. Exit current conversation
 2. Start new Claude Code conversation
 3. MCP tools will be available in new session
@@ -135,11 +150,13 @@ Configured MCP servers:
 ### Test 1: Check Tool Availability
 
 **In Claude Code conversation**, ask:
-```
+
+```text
 Do you have tools starting with "mcp__serena__"? If so, list them.
 ```
 
 **Expected Tools** (29 total):
+
 - `mcp__serena__find_symbol`
 - `mcp__serena__activate_project`
 - `mcp__serena__search_for_pattern`
@@ -158,11 +175,13 @@ Do you have tools starting with "mcp__serena__"? If so, list them.
 ### Test 2: Activate Project
 
 **In your codebase directory**, run in Claude Code:
-```
+
+```text
 Use mcp__serena__activate_project to activate the current project
 ```
 
 **Expected Output**:
+
 ```json
 {
   "result": "The project 'your-project' at /path/to/project is activated.\nProgramming languages: python; file encoding: utf-8"
@@ -170,6 +189,7 @@ Use mcp__serena__activate_project to activate the current project
 ```
 
 **Verify**:
+
 - ✅ Shows your project path
 - ✅ Lists "Programming languages: python"
 - ✅ No errors
@@ -179,11 +199,13 @@ Use mcp__serena__activate_project to activate the current project
 ### Test 3: Find a Symbol
 
 **Try finding a real class** in your codebase:
-```
+
+```text
 Use mcp__serena__find_symbol to find a class named "YourClassName"
 ```
 
 **Expected**:
+
 ```json
 {
   "name_path": "YourClassName",
@@ -206,6 +228,7 @@ Use mcp__serena__find_symbol to find a class named "YourClassName"
 **Symptom**: `claude mcp list` shows no servers
 
 **Solution**:
+
 ```bash
 # Re-run installation command
 claude mcp add-json "serena" '{"command":"uvx","args":["--from","git+https://github.com/oraios/serena","serena","start-mcp-server"]}'
@@ -219,6 +242,7 @@ claude mcp list
 ### Issue 2: "serena: ✗ Not connected"
 
 **Possible Causes**:
+
 1. UV not installed or not in PATH
 2. Network issues (GitHub repository access)
 3. Python LSP server not installed
@@ -226,6 +250,7 @@ claude mcp list
 **Solutions**:
 
 **Check UV**:
+
 ```bash
 which uvx
 # Should show: /Users/you/.local/bin/uvx or similar
@@ -235,6 +260,7 @@ export PATH="$HOME/.local/bin:$PATH"
 ```
 
 **Check LSP**:
+
 ```bash
 which pylsp
 # Should show path to pylsp
@@ -244,6 +270,7 @@ pip install 'python-lsp-server[all]'
 ```
 
 **Test Serena manually**:
+
 ```bash
 uvx --from 'git+https://github.com/oraios/serena' serena start-mcp-server
 # Should show Serena server output (Ctrl+C to exit)
@@ -258,6 +285,7 @@ uvx --from 'git+https://github.com/oraios/serena' serena start-mcp-server
 **Cause**: Tools load at conversation start (not dynamically)
 
 **Solution**:
+
 1. Exit current Claude Code conversation
 2. Start fresh conversation
 3. Tools will load in new session
@@ -273,6 +301,7 @@ uvx --from 'git+https://github.com/oraios/serena' serena start-mcp-server
 **Explanation**: **This is expected behavior** - Serena currently indexes Python only
 
 **Impact**:
+
 - ✅ Python files: Full semantic navigation
 - ❌ TypeScript/JavaScript: Not indexed (use traditional tools)
 
@@ -287,7 +316,8 @@ uvx --from 'git+https://github.com/oraios/serena' serena start-mcp-server
 **Cause**: Must call `activate_project` before other Serena operations
 
 **Solution**:
-```
+
+```text
 First use mcp__serena__activate_project("project-name")
 Then use other Serena tools
 ```
@@ -329,11 +359,13 @@ claude mcp remove serena  # to re-register from scratch
 ### Step 1: Activate Your Project
 
 **First time using Serena in a codebase**:
-```
+
+```text
 mcp__serena__activate_project("your-project-name")
 ```
 
 **This will**:
+
 - Index Python files in current directory
 - Configure LSP server for project
 - Enable semantic navigation
@@ -345,16 +377,19 @@ mcp__serena__activate_project("your-project-name")
 ### Step 2: Verify Indexing
 
 **Check what was indexed**:
-```
+
+```text
 Ask Claude: "How many Python files did Serena index?"
 ```
 
 **Example Output**:
-```
+
+```text
 Project activated: 1,123 Python files indexed out of 7,802 total files
 ```
 
 **Excluded automatically**:
+
 - `node_modules/`
 - `venv/`, `.venv/`
 - `.git/`
@@ -367,13 +402,15 @@ Project activated: 1,123 Python files indexed out of 7,802 total files
 ### Example 1: Find Class Definition
 
 **Traditional approach** (Grep + Read):
-```
+
+```text
 1. Grep for "class MyClass"
 2. Read entire file (~1,500 tokens for 700-line file)
 ```
 
 **Serena approach**:
-```
+
+```text
 mcp__serena__find_symbol("MyClass", include_body=false, depth=1)
 → Returns class structure with all methods (~500 tokens)
 → 70% token savings!
@@ -384,13 +421,15 @@ mcp__serena__find_symbol("MyClass", include_body=false, depth=1)
 ### Example 2: Find All References
 
 **Traditional approach**:
-```
+
+```text
 grep -r "MyClass"
 → Returns 7 files (3 code, 4 docs - manual filtering required)
 ```
 
 **Serena approach**:
-```
+
+```text
 mcp__serena__find_referencing_symbols("MyClass")
 → Returns 3 code references only (100% precision)
 → No manual filtering needed!
@@ -401,12 +440,14 @@ mcp__serena__find_referencing_symbols("MyClass")
 ### Example 3: Navigate Large File
 
 **Traditional approach**:
-```
+
+```text
 Read 707-line file → ~8,700 tokens
 ```
 
 **Serena approach**:
-```
+
+```text
 mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 → Returns method only (~200 tokens)
 → 98% token savings!
@@ -421,6 +462,7 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 **Current Status**: Only Python files are indexed
 
 **Impact**:
+
 - ✅ Python: Full semantic navigation
 - ❌ TypeScript/JavaScript: Not indexed
 - ❌ Shell/YAML/JSON: File finding only
@@ -436,9 +478,11 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 **Status**: ❓ **Agent tab support unclear - requires testing**
 
 **Known Working**:
+
 - ✅ Main conversation in Claude Code: Tools available
 
 **Requires Testing**:
+
 - ❓ Agent tabs (specialized agents invoked in separate tabs)
 - ❓ Autonomous agent workflows
 
@@ -451,6 +495,7 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 **Limit**: 25,000 token maximum for single tool response
 
 **Impact**:
+
 - ❌ Full recursive directory listing of large repos exceeds limit
 - ❌ Very broad pattern searches may overflow
 
@@ -463,6 +508,7 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 **Limitation**: LSP cannot resolve runtime behavior
 
 **Impact**:
+
 - ✅ Decorators: Supported
 - ⚠️ Dynamic imports: May not resolve
 - ❌ Metaprogramming: Limited understanding
@@ -538,9 +584,9 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 
 ### External Resources
 
-- **Serena GitHub**: https://github.com/oraios/serena
-- **Serena MCP Guide**: https://playbooks.com/mcp/oraios-serena
-- **LSP Protocol**: https://microsoft.github.io/language-server-protocol/
+- **Serena GitHub**: <https://github.com/oraios/serena>
+- **Serena MCP Guide**: <https://playbooks.com/mcp/oraios-serena>
+- **LSP Protocol**: <https://microsoft.github.io/language-server-protocol/>
 
 ### Project-Specific
 
@@ -553,6 +599,7 @@ mcp__serena__find_symbol("MyClass/my_method", include_body=true)
 ### Version 1.0 (2025-11-19)
 
 **Initial release** based on Phase 1-5 validation:
+
 - Installation via `claude mcp add-json` command
 - Python-only support documented
 - Token/speed metrics validated
@@ -577,6 +624,7 @@ After successful installation:
 You're now ready to use Serena for semantic Python code navigation in Claude Code.
 
 **Remember**:
+
 - ✅ Use for Python navigation (70-85% token savings)
 - ❌ Fall back to traditional tools for TypeScript/docs
 - 📊 Monitor your token usage to see real savings

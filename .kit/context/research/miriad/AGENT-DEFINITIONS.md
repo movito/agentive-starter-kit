@@ -39,6 +39,7 @@ interface McpReference {
 ### Agent as Artifact
 
 Agents are stored as artifacts with:
+
 - **Type**: `system.agent`
 - **Slug**: URL-safe identifier (e.g., `builder`, `researcher`)
 - **Props**: Configuration from schema above
@@ -50,7 +51,7 @@ Agents are stored as artifacts with:
 
 ### Pluggable Engine System
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │               EngineManager                      │
 ├─────────────────────────────────────────────────┤
@@ -130,7 +131,7 @@ interface EngineProcess {
 
 ### State Machine
 
-```
+```text
                     ┌───────────┐
                     │  offline  │ (initial state)
                     └─────┬─────┘
@@ -199,7 +200,7 @@ interface SystemMcpProps {
 
 ### Tool Discovery & Execution
 
-```
+```text
 Agent                    MCP Endpoint                 MCP Server
   │                          │                            │
   │── tools/list ───────────►│                            │
@@ -289,6 +290,7 @@ stream.push({ role: 'user', content: 'New instruction mid-task' });
 ```
 
 This enables:
+
 - Human intervention during long tasks
 - Agent-to-agent communication mid-execution
 - Dynamic context updates
@@ -419,6 +421,7 @@ You are a feature implementation specialist...
 ### What We Can Adopt
 
 1. **Structured MCP Configuration**
+
    ```yaml
    mcp:
      - slug: serena
@@ -428,12 +431,14 @@ You are a feature implementation specialist...
    ```
 
 2. **Engine Abstraction** (future)
+
    ```yaml
    engine: claude-code  # Current default
    # Future: custom-engine, local-llm, etc.
    ```
 
 3. **Agent Metadata**
+
    ```yaml
    singleton: true      # Only one instance allowed
    featured: true       # Show in suggestions
@@ -441,6 +446,7 @@ You are a feature implementation specialist...
    ```
 
 4. **Environment Injection**
+
    ```yaml
    environment:
      GITHUB_TOKEN: ${GITHUB_TOKEN}

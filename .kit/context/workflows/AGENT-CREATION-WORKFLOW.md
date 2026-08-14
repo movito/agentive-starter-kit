@@ -37,7 +37,7 @@
 
 ### Decision Tree
 
-```
+```text
 Do I need a new agent?
     ↓
 Is this a distinct role that will be reused?
@@ -67,6 +67,7 @@ CREATE NEW AGENT ✅
 ### Required Information
 
 Before creating agent, gather:
+
 - **Agent name** (kebab-case, e.g., "api-tester", "docs-generator")
 - **One-sentence description** of agent's primary responsibility
 - **3-6 core responsibilities** (specific, actionable)
@@ -82,16 +83,19 @@ Before creating agent, gather:
 ### Step 1: Use Agent Template
 
 **Option A: Manual Copy**
+
 ```bash
 cp .kit/templates/AGENT-TEMPLATE.md .claude/agents/your-agent-name.md
 ```
 
 **Option B: Automation Script (Recommended)**
+
 ```bash
 scripts/optional/create-agent.sh your-agent-name "One sentence description"
 ```
 
 The automation script will:
+
 - Copy template to correct location
 - Perform basic substitutions ([agent-name], [description])
 - Create properly named file
@@ -122,10 +126,12 @@ tools:  # Select tools this agent needs
 ```
 
 **Model Selection Guide**:
+
 - **claude-sonnet-5**: Complex tasks, architectural decisions, coordination, code review
 - **claude-haiku-4-5**: Simple tasks, testing, straightforward implementations
 
 **Common Tool Combinations**:
+
 - **Implementation agents**: Read, Write, Edit, Bash, Glob, Grep, TodoWrite
 - **Review agents**: Read, Grep, Glob, WebSearch, WebFetch
 - **Coordination agents**: Read, Write, Edit, Bash, Glob, Grep, TodoWrite, WebSearch
@@ -148,6 +154,7 @@ Always begin your responses with your identity header:
 ```
 
 **Choose an appropriate emoji**:
+
 - 📋 Coordinator
 - 💻 Feature Developer
 - 🧪 Test Runner
@@ -175,6 +182,7 @@ List 3-6 specific, actionable responsibilities:
 ```
 
 **Good practices**:
+
 - ✅ Start with action verbs (Test, Validate, Create, Document, Report)
 - ✅ Be specific about domain (e.g., "external API" not "APIs")
 - ✅ Include coordination responsibilities if applicable
@@ -207,6 +215,7 @@ Follow these practices when testing APIs:
 **Critical**: Update the "When to Request Evaluation" scenarios for this agent's role.
 
 **Template provides generic examples**:
+
 ```markdown
 **When to Request Evaluation**:
 - [Role-specific scenario 1]
@@ -216,6 +225,7 @@ Follow these practices when testing APIs:
 ```
 
 **Replace with role-specific scenarios**:
+
 ```markdown
 **When to Request Evaluation**:
 - Ambiguous test acceptance criteria in task specification
@@ -395,11 +405,13 @@ git push -u origin [branch-name]
 ### Why This Matters
 
 The Evaluator workflow is a **critical quality assurance mechanism** that prevents:
+
 - ❌ Phantom work (implementing wrong solutions)
 - ❌ Wasted time (discovering issues after implementation)
 - ❌ Architectural drift (making decisions without validation)
 
 **Consistency across agents ensures**:
+
 - ✅ All agents have access to quality assurance
 - ✅ Uniform invocation pattern (reduces confusion)
 - ✅ Proper escalation safeguards (prevents infinite loops)
@@ -470,6 +482,7 @@ scripts/optional/create-agent.sh api-tester "API testing and validation speciali
 ### After Running Script
 
 You still need to manually:
+
 1. Edit agent file and customize all remaining [bracketed] sections
 2. Choose appropriate model (sonnet vs haiku)
 3. Select correct tools for agent's role
@@ -482,6 +495,7 @@ You still need to manually:
 ### Script Limitations
 
 The script handles **basic setup only**. It cannot:
+
 - ❌ Choose the right model for your use case
 - ❌ Select appropriate tools
 - ❌ Write role-specific guidelines
@@ -494,6 +508,7 @@ The script handles **basic setup only**. It cannot:
 ### Script Error Handling
 
 If script fails:
+
 - Check you provided both name and description
 - Ensure you're in project root directory
 - Verify template file exists at `.kit/templates/AGENT-TEMPLATE.md`
@@ -508,6 +523,7 @@ If script fails:
 **Symptom**: Agent fails to load, YAML parsing errors
 
 **Solution**:
+
 1. Check frontmatter YAML is properly formatted
 2. Ensure `---` delimiters are on their own lines
 3. Verify proper indentation (2 spaces for YAML)
@@ -539,6 +555,7 @@ name: api-tester
 **Symptom**: Created agent file but can't launch agent
 
 **Solution**:
+
 1. Verify file is in `.claude/agents/` directory
 2. Check filename matches `name:` in frontmatter
 3. Ensure file has `.md` extension
@@ -552,6 +569,7 @@ name: api-tester
 **Symptom**: Agent can't invoke Evaluator, gets errors
 
 **Solution**:
+
 1. Verify `.env` file exists with `OPENAI_API_KEY`
 2. Check `adversarial` CLI is installed and in PATH
 3. Ensure agent has `Bash` tool in tools list
@@ -565,6 +583,7 @@ name: api-tester
 **Symptom**: Agent file has [bracketed] text still present
 
 **Solution**:
+
 1. Search for all `[` characters in file
 2. Replace each [placeholder] with actual content
 3. Verify no placeholders remain before committing

@@ -22,7 +22,7 @@ as context. The agent should create a single feature branch and PR for the migra
 
 After migration, every kit repo should look like this:
 
-```
+```text
 your-project/
 ├── .adversarial/          # Evaluation (stays at root — CLI hardcodes path)
 ├── .claude/               # Implementation layer (stays — Claude Code constraint)
@@ -39,7 +39,7 @@ your-project/
 │   │   ├── templates/     #     review-starter template, etc.
 │   │   └── workflows/     #     COMMIT-PROTOCOL, TESTING-WORKFLOW, etc.
 │   ├── docs/              #   builder documentation
-│   ├── launchers/         #   launch, onboarding, preflight scripts (from agents/ at root)
+│   ├── launchers/         #   launch ONLY (interactive agent menu); onboarding/preflight retired (KIT-0067 D1 — see Step 4)
 │   ├── skills/            #   RETIRED — KIT-0057 moved ALL skills to .claude/skills/;
 │   ├── tasks/             #   task specs (from delegation/tasks/)
 │   │   ├── 1-backlog/
@@ -120,6 +120,7 @@ grep -r 'docs/decisions/' --include='*.md' --include='*.yml' --include='*.json' 
 ### 3. Check for repo-specific extras
 
 Look for things not in the standard layout:
+
 - `delegation/handoffs/` (old handoff location — some repos have this)
 - `delegation/tasks/evaluations/` (ADV has this)
 - `agents/` at root (launcher scripts — all repos have this)
@@ -192,11 +193,14 @@ git mv delegation/handoffs/* .kit/context/ 2>/dev/null
 
 ### Step 4: Retire launchers
 
-> **Updated (KIT-0067 D1)**: the kit retired `.kit/launchers/`
-> entirely — agents are invoked via new Claude Code tabs or
+> **Updated (KIT-0067 D1)**: the kit retired the legacy launcher
+> scripts (`agents/launch`, `agents/onboarding`, `agents/preflight`)
+> — agents are invoked via new Claude Code tabs or
 > `claude --agent <file>`, and setup runs through the one door
-> (`scripts/local/bootstrap` + `/new-project`). Do NOT migrate old
-> launchers forward; delete them.
+> (`agentive new` / `agentive adopt` + `/new-project`). The single
+> survivor is `.kit/launchers/launch`, the interactive agent menu
+> (kept deliberately — KIT-0075); it is seeded fresh, so do NOT
+> migrate old launchers forward; delete them.
 
 ```bash
 # Retire the pre-kit launcher scripts (superseded by the setup door)
@@ -311,11 +315,12 @@ find . -type f \( -name "*.md" -o -name "*.yml" -o -name "*.yaml" \
     {} +
 ```
 
-Launcher references (`agents/launch`, `agents/onboarding`,
-`agents/preflight`) have no new path — the launchers were retired
-(KIT-0067 D1). Grep for them after the bulk sed and rewrite each site
-to the current invocation (`claude --agent .claude/agents/<name>.md`,
-setup via `scripts/local/bootstrap`).
+Launcher references: `agents/onboarding` and `agents/preflight` have
+no new path — they were retired (KIT-0067 D1); `agents/launch`'s
+successor is `.kit/launchers/launch` (the interactive agent menu).
+Grep for all three after the bulk sed and rewrite each site to the
+current invocation (`claude --agent .claude/agents/<name>.md`,
+setup via `agentive new` / `agentive adopt`).
 
 **After sed — CRITICAL VERIFICATION:**
 
@@ -329,6 +334,7 @@ grep -r 'docs/decisions/' --include='*.md' --include='*.yml' --include='*.json' 
 ```
 
 Any remaining references need manual attention. Common cases:
+
 - **Historical references** in retros, changelogs, commit messages: leave as-is
 - **Python code** referencing `delegation/` paths: update carefully (check logic)
 - **`.claude/settings.local.json`** permission patterns: update path globs
@@ -369,6 +375,7 @@ hardcoded paths.
 ### Step 13: Update Linear sync paths
 
 If the repo uses Linear sync, update:
+
 - `scripts/core/project` or `scripts/project` — task directory path
 - `scripts/optional/sync_tasks_to_linear.py` — task directory path
 - `.github/workflows/sync-tasks.yml` — path triggers

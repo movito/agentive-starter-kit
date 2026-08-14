@@ -65,7 +65,6 @@ step in `docs/MANIFEST-UPGRADE-GUIDE.md`.
 > ```
 <!-- END KIT-LOCAL: project-context -->
 
-
 ## Repository Topology
 
 Detect the topology before any git operation:

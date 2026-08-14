@@ -11,6 +11,7 @@
 ### Problem Statement
 
 Multi-agent systems have complex workflows with handoffs, parallel tasks, and state changes. Understanding what's happening requires visibility into agent actions, task progress, and system health. Without structured observation:
+
 - Debugging agent behavior is difficult
 - Performance bottlenecks are hidden
 - Handoff failures go unnoticed
@@ -19,6 +20,7 @@ Multi-agent systems have complex workflows with handoffs, parallel tasks, and st
 ### Forces at Play
 
 **Technical Requirements:**
+
 - Capture events across multiple agents
 - Store events for later analysis
 - Enable real-time monitoring dashboards
@@ -26,12 +28,14 @@ Multi-agent systems have complex workflows with handoffs, parallel tasks, and st
 - Integrate with existing logging (KIT-ADR-0009)
 
 **Constraints:**
+
 - Agents run in separate processes/sessions
 - Events must be lightweight (low overhead)
 - Storage should be append-only (immutable log)
 - Multiple observers may consume events
 
 **Assumptions:**
+
 - Projects may have multiple concurrent agents
 - Event volume is moderate (not high-frequency trading)
 - Observers are decoupled from emitters
@@ -50,7 +54,7 @@ We will adopt an **event-driven workflow observation architecture** with structu
 
 ### Architecture Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Agent Activities                          │
 │  ┌─────────┐    ┌─────────┐    ┌─────────┐                 │
@@ -477,6 +481,7 @@ def archive_old_events(days_to_keep: int = 30):
 **Description**: Store events in SQLite or PostgreSQL.
 
 **Rejected because**:
+
 - ❌ Adds database dependency
 - ❌ More complex setup
 - ⚠️ Could be added later for querying
@@ -486,6 +491,7 @@ def archive_old_events(days_to_keep: int = 30):
 **Description**: Use OpenTelemetry for tracing and metrics.
 
 **Deferred because**:
+
 - ✅ Industry standard
 - ✅ Rich ecosystem
 - ⚠️ Higher complexity for small projects
@@ -496,6 +502,7 @@ def archive_old_events(days_to_keep: int = 30):
 **Description**: Rely solely on logging.
 
 **Rejected because**:
+
 - ❌ Logs are unstructured
 - ❌ Hard to query and aggregate
 - ❌ No event correlation
@@ -507,9 +514,9 @@ def archive_old_events(days_to_keep: int = 30):
 
 ## References
 
-- Event Sourcing: https://martinfowler.com/eaaDev/EventSourcing.html
-- OpenTelemetry: https://opentelemetry.io/
-- JSONL Format: https://jsonlines.org/
+- Event Sourcing: <https://martinfowler.com/eaaDev/EventSourcing.html>
+- OpenTelemetry: <https://opentelemetry.io/>
+- JSONL Format: <https://jsonlines.org/>
 
 ## Revision History
 

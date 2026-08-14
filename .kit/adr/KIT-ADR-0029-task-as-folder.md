@@ -52,7 +52,7 @@ paper accumulates at a separate address from the thing it belongs to.
 **A task is a folder, not a file**, and it carries its own paperwork
 through the lifecycle:
 
-```
+```text
 .kit/tasks/<status>/<TASK-ID>-<slug>/
 ├── spec.md          # today's task file
 ├── HANDOFF.md

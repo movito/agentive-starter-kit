@@ -31,6 +31,7 @@ grep -A 5 "## Target Repository" CLAUDE.md 2>/dev/null || echo "SINGLE_REPO_MODE
 ```
 
 If found, extract:
+
 - **target_path**: the value after `- **Path**:` (e.g., `../my-project-code`)
 - **target_github**: the value after `- **GitHub**:` (e.g., `your-org/my-project-code`)
 
@@ -75,6 +76,7 @@ in CLAUDE.md. Both `GIT_TARGET` and `GH_TARGET` resolve to plain `git` and
 `gh` against the current (planning) repo.
 
 **For the rest of this document:**
+
 - `GIT_TARGET` means: use `git -C <target_path>` in cross-repo mode, or plain `git` in single-repo mode
 - `GH_TARGET` means: use `gh --repo <target_github>` in cross-repo mode, or plain `gh` in single-repo mode
 

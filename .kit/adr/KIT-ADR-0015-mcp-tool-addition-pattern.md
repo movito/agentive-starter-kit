@@ -11,6 +11,7 @@
 ### Problem Statement
 
 As the MCP (Model Context Protocol) ecosystem grows, projects may need to integrate additional MCP tools beyond Serena. Each integration requires consistent configuration, activation patterns, and documentation. Without a standardized approach:
+
 - Integrations become ad-hoc and inconsistent
 - Agent files diverge in structure and patterns
 - Troubleshooting becomes harder across different tools
@@ -19,18 +20,21 @@ As the MCP (Model Context Protocol) ecosystem grows, projects may need to integr
 ### Forces at Play
 
 **Technical Requirements:**
+
 - MCP tools are external to the project (third-party servers)
 - Claude Code supports both global (`--scope user`) and local (`--scope local`) MCP configurations
 - Tools require project-specific configuration for context
 - Agents need to activate tools at session start
 
 **Constraints:**
+
 - MCP configuration is managed through `claude mcp` CLI
 - Each tool has unique configuration requirements
 - Secrets and credentials must be handled securely
 - Agents are stateless across sessions
 
 **Assumptions:**
+
 - Projects may integrate multiple MCP tools over time
 - Each tool provides specific capabilities (code navigation, database, APIs, etc.)
 - Consistent patterns reduce cognitive load for developers
@@ -90,7 +94,7 @@ claude mcp add --scope local api-gateway -- python -m api_gateway_mcp
 
 Each tool should have a project-specific config in a dedicated folder:
 
-```
+```text
 .<tool-name>/
 ├── project.yml          # Main configuration
 ├── project.yml.template # Template for onboarding
@@ -137,8 +141,10 @@ as your first message. When you see a request to activate <Tool>,
 immediately respond by calling:
 
 ```
+
 mcp__<tool>__<activation_function>("<project-name>")
-```
+
+```text
 
 This configures <tool capabilities>. Confirm activation in your
 response: "✅ <Tool> activated: <context>. Ready for <capability>."
@@ -173,6 +179,7 @@ done
 **Required Documentation Files:**
 
 1. **Setup Guide** (in `.<tool>/README.md` or `docs/mcp/<tool>.md`):
+
    ```markdown
    # <Tool> Integration
 
@@ -260,11 +267,13 @@ done
 ## Example: Hypothetical Database MCP Tool
 
 **Phase 1: Setup**
+
 ```bash
 claude mcp add --scope user db-client -- npx @mcp/postgres-client
 ```
 
 **Phase 2: Configuration**
+
 ```yaml
 # .db-client/project.yml
 project_name: "my-project"
@@ -281,6 +290,7 @@ connections:
 ```
 
 **Phase 3: Agent Section**
+
 ```markdown
 ## Database Activation (Launcher-Initiated)
 
@@ -289,14 +299,17 @@ as your first message. When you see a request to activate Database,
 immediately respond by calling:
 
 ```
+
 mcp__db__connect("local-dev")
-```
+
+```text
 
 This connects to the configured database. Confirm activation in your
 response: "✅ Database activated: local-dev. Ready for queries."
 ```
 
 **Phase 4: Verification**
+
 ```bash
 # After activation, verify with:
 mcp__db__run_query("SELECT 1")  # Should return 1
@@ -360,8 +373,8 @@ def test_tool_error_handling():
 
 ## References
 
-- Claude Code MCP Documentation: https://docs.claude.com/en/docs/claude-code
-- MCP Protocol Specification: https://modelcontextprotocol.io/
+- Claude Code MCP Documentation: <https://docs.claude.com/en/docs/claude-code>
+- MCP Protocol Specification: <https://modelcontextprotocol.io/>
 - Serena setup script: `.serena/setup-serena.sh` (reference implementation)
 
 ## Revision History
