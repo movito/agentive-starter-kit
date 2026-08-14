@@ -20,6 +20,17 @@ June→August 2026 staleness (plugin shipping v6/v7-era agents, no planner)
 recurs silently without it. Kit-internal: lives in ``scripts/local/`` and is
 NOT synced to consumer projects (their ``.claude/`` comes from the plugin).
 
+**Division of verification (KIT-0110)**: this guard verifies KIT ↔ ROSTER
+only — each shipped entry's ``kit_sha256`` against the kit source tree. It
+never opens the published plugin bodies, and deliberately cannot: those
+differ from canon by design (generalization per KIT-ADR-0025), so a
+kit-side byte comparison would always fail. The published bodies are
+verified MARKETPLACE-side instead: ``roster.yaml`` records each shipped
+body's ``plugin_sha256`` (maintained by ``plugin_resync.py``), and CI in
+movito/agentive-skills compares recorded vs actual. A
+bump-hashes-forget-bodies release is caught there, not here (KIT-0109
+retro: this guard alone goes green over stale published content).
+
 Runs in CI only — it fetches the roster over the network by default, so it
 must never be wired into pre-commit. Exit codes follow the kit convention:
 ``0`` in sync, ``1`` drift detected, ``2`` usage/environment error,
@@ -80,7 +91,10 @@ def parse_roster(text: str) -> list[dict]:
     try:
         import yaml
     except ImportError as exc:  # pragma: no cover - environment guard
-        print("ERROR: PyYAML is required (pip install pyyaml).")
+        print(
+            "ERROR: PyYAML is required — the kit ships it in .venv "
+            "(run via .venv/bin/python), or pip install pyyaml."
+        )
         raise SystemExit(EXIT_USAGE) from exc
     try:
         data = yaml.safe_load(text)
