@@ -288,6 +288,10 @@ class TestPackagedWorld:
 # created tree must be usable (create → doctor → every seeded-surface
 # file reference exists: the KIT-0081 F2 class, by machine).
 
+# Deliberately minimal: only the sections the MECHANICAL spine consumes
+# (name, prefix, next steps). The agent's prose-extraction of the full
+# template (languages, decisions, solid/rough, …) is LLM work this test
+# cannot exercise — that gap is the fixture's scope, not an oversight.
 _BRIEF = """\
 # proto-widget
 
@@ -301,6 +305,8 @@ PROTO
 1. Harden the widget. Done when: tests pass in CI.
 """
 
+# The Created date is frozen, not asserted — the stub simulates agent
+# output shape, not agent output freshness.
 _TASK_STUB = """\
 # PROTO-0001: Harden the widget
 
@@ -337,7 +343,7 @@ def intake_scaffold(tmp_path_factory):
         ["git", "-C", str(proto), "add", "-A"],
         ["git", "-C", str(proto), "commit", "--quiet", "-m", "chore: import"],
     ):
-        subprocess.run(cmd, check=True, timeout=60, env=env)
+        subprocess.run(cmd, check=True, timeout=60, env=env, capture_output=True)
     target = base / "proto-widget-planning"
     result = run_door(
         "--new",
@@ -401,6 +407,8 @@ class TestIntakeAcceptance:
         agent's Step 3 re-assertion exists to prevent."""
         proto, target, result = intake_scaffold
         text = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        # deliberate format-contract pin on the door's Target Repository
+        # section (same discipline as the door's printed contract lines)
         assert "- **Path**: `../proto-widget`" in text
         assert (target.parent / "proto-widget").resolve() == proto.resolve()
 
