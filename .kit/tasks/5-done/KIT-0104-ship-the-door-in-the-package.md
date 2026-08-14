@@ -1,6 +1,6 @@
 # KIT-0104: Ship the door in the package — `agentive new` / `agentive adopt`
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high — this is the load-bearing move of KIT-ADR-0030;
 every other move in the 0030–0034 set still starts inside the factory
 until it lands

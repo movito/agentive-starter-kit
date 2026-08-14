@@ -7,6 +7,15 @@
 # Expected-red window: between merging a kit .claude/ change and cutting
 # the corresponding plugin release, this check is legitimately FAILING —
 # that is the guard doing its job. Cut the release to go green.
+#
+# POSTURE (operator ruling, 2026-08-14, KIT-0104 PR 3 retro escalation):
+# the guard STAYS REQUIRED on PRs and main. The remedy for a red guard
+# is CADENCE, not demotion: a red on main is a release obligation
+# (KIT-ADR-0034 legitimizes those), cut same-day or next-day. Advisory
+# checks rot into ignored checks — the KIT-0062 genesis. A PR merging
+# over the expected-red window records one line of justification citing
+# this comment; a red older than ~2 days means the cadence rule is
+# being broken, not that the guard is wrong.
 name: Plugin Drift Guard
 
 on:

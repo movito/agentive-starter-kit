@@ -1,19 +1,19 @@
 {
   "planner": {
-    "status": "handoff_ready",
-    "current_task": "KIT-0104",
-    "task_started": "2026-08-13",
-    "brief_note": "2026-08-14: KIT-0104 ALL THREE PRs MERGED (#129/#130/#131 — every gate planner-verified incl. tree-grounded PR 3; task 4-in-review awaiting operator verdict + fd retro). KIT-0094 DONE (passenger, acceptance observed: zero markdown threads on a markdown-heavy PR). KIT-0105 UNBLOCKED. Drift guard red on main = plugin release due (decision pending: cut now vs hold for KIT-0105+0103-R1 train). Backlog: 0103, 0105, 0106, 0107+0108 (pinned 0.10.0).",
-    "details_link": ".kit/tasks/4-in-review/KIT-0104-ship-the-door-in-the-package.md",
-    "handoff_file": ".kit/context/KIT-0104-HANDOFF-feature-developer-f5.md"
+    "status": "available",
+    "current_task": null,
+    "task_started": null,
+    "brief_note": "2026-08-14: KIT-0104 COMPLETE (5-done; 3 PRs #129/#130/#131 all planner-gated; retro processed — patterns.yml autofix entry + recipes-run-once widening, bot-triage sixth face; insights extracted; worktree removed clean). KIT-0094 done (passenger). Drift-guard posture RULED: stays required, cadence rule in plugin-drift.yml header — release cut is the standing remedy. NEXT: overdue plugin release (guard red since 2026-08-12), then KIT-0105 (unblocked; KIT-0103 R1 rides its train). Backlog: 0103, 0105, 0106, 0107+0108 (0.10.0 pair). Aider era fully closed.",
+    "details_link": ".kit/tasks/5-done/KIT-0104-ship-the-door-in-the-package.md",
+    "handoff_file": null
   },
   "feature-developer": {
-    "status": "assigned",
-    "current_task": "KIT-0104",
-    "task_started": "2026-08-13",
-    "brief_note": "KIT-0104: PRs 1+2 MERGED (#129 ca11cd7, #130 abfea22 — both planner-gated; PR 2 SHA-gap dispositioned as zero-code delta; bootstrap now a ~190-line shim; KIT-0107/0108 filed pinned 0.10.0, 0108 carries the root-anchored preset-home rider). PR 3 FINAL: prose sweep F5/F6 + KIT-0094 passenger; same worktree, branch feature/KIT-0104-pr3-prose; fresh session per rotation practice. Planner moves task to 4-in-review after PR 3 merges.",
-    "details_link": ".kit/tasks/4-in-review/KIT-0104-ship-the-door-in-the-package.md",
-    "handoff_file": ".kit/context/KIT-0104-HANDOFF-feature-developer-f5.md"
+    "status": "idle",
+    "current_task": null,
+    "task_started": null,
+    "brief_note": "No active assignment. KIT-0104 complete (all 3 PRs merged). Next assignable: KIT-0105 (project-intake into the plugin, unblocked — rides the same release train as KIT-0103 R1).",
+    "details_link": null,
+    "handoff_file": null
   },
   "code-reviewer": {
     "status": "idle",
