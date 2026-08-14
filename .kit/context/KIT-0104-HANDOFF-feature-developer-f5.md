@@ -3,6 +3,51 @@
 **You are the feature-developer-f5. Implement this task directly. Do
 not delegate or spawn other agents.**
 
+> ## PR 3 ADDENDUM (2026-08-14, planner — read this FIRST if you are
+> ## the PR 3 session; the PR 2 addendum below it is history)
+>
+> **PRs 1 AND 2 are MERGED** (#129 `ca11cd7`, #130 `abfea22`; both
+> planner-gated PASS; records in
+> `.kit/context/reviews/KIT-0104-evaluator-review.md` and the review
+> starter). You are a fresh session. State on main: `bootstrap` is a
+> ~190-line exec shim; `agentive new/adopt` incl. `--no-kit` on both
+> verbs is the door; KIT-0107/KIT-0108 filed and pinned 0.10.0.
+>
+> **PR 3 scope** (spec PR Plan item 3 — F5, F6 + KIT-0094 passenger;
+> the FINAL PR of this task):
+> 1. **F5 — retire the factory-clone prose, by class**: sweep
+>    `docs/STARTING-A-PROJECT.md` ("The factory model", "How every
+>    kit conversation starts"), `README.md` Quickstart,
+>    `.claude/commands/new-project.md`, and any surface the class
+>    grep finds instructing `cd` into the kit clone to create a
+>    project. New truth: the kit clone is the kit's development home;
+>    creation happens anywhere via `agentive new/adopt`. Grep-proof
+>    the class kill in the PR body (KIT-0069 F1: the class, not the
+>    listed instances).
+> 2. **F6 — verify `/new-project` still derives its questions at
+>    runtime** from the door's help (now package-owned) — no
+>    hardcoded flag list may appear (KIT-0067 F2 rule).
+> 3. **KIT-0094 rides as passenger** (its spec is the config
+>    authority): markdownlint config + one class sweep over in-scope
+>    files + pre-commit gate + falsify-once. Scope exclusions per its
+>    spec (historical records stay as written).
+> 4. Extend the CHANGELOG entry from PR 2.
+> 5. On completion the planner moves the task to 4-in-review — do not
+>    move it yourself.
+>
+> **Session topology (PR 3)**: worktree
+> `/Users/broadcaster_three/Github/ask-worktrees/KIT-0104` (unchanged),
+> branch `feature/KIT-0104-pr3-prose` — planner-created off merged
+> main. Verify, never create.
+>
+> **Watch for**: this PR is markdown-heavy — exactly CodeRabbit's
+> favorite surface. Land the KIT-0094 lint config EARLY in the branch
+> so your own sweep files pass the gate you're installing. The
+> KIT-0106 findings (byte-pinned workflow-doc copies) are OUT of
+> scope — dispositioned to their own task; remember any doc you edit
+> that has a packaged twin must be mirrored same-commit or
+> `test_door_data_sync.py` fails.
+
 > ## PR 2 ADDENDUM (2026-08-13, planner — read this FIRST if you are
 > ## the PR 2 session)
 >

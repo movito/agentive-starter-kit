@@ -11,7 +11,7 @@
     "status": "assigned",
     "current_task": "KIT-0104",
     "task_started": "2026-08-13",
-    "brief_note": "KIT-0104: PR 1 MERGED (#129 squash ca11cd7, planner deep-dive PASS, CodeRabbit approved on head, 26/26 threads). PR 2 next: shim + new --no-kit + follow-up tasks; same worktree ../ask-worktrees/KIT-0104, NEW branch feature/KIT-0104-pr2-shim (off ca11cd7, upstream set). fd flagged PR 2 bigger than spec estimate (characterization rewrite). KIT-0106 filed from PR 1 (doc-content findings).",
+    "brief_note": "KIT-0104: PRs 1+2 MERGED (#129 ca11cd7, #130 abfea22 — both planner-gated; PR 2 SHA-gap dispositioned as zero-code delta; bootstrap now a ~190-line shim; KIT-0107/0108 filed pinned 0.10.0, 0108 carries the root-anchored preset-home rider). PR 3 FINAL: prose sweep F5/F6 + KIT-0094 passenger; same worktree, branch feature/KIT-0104-pr3-prose; fresh session per rotation practice. Planner moves task to 4-in-review after PR 3 merges.",
     "details_link": ".kit/tasks/3-in-progress/KIT-0104-ship-the-door-in-the-package.md",
     "handoff_file": ".kit/context/KIT-0104-HANDOFF-feature-developer-f5.md"
   },

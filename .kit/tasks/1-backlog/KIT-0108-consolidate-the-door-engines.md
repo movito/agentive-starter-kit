@@ -61,3 +61,12 @@ guard retires with the duplication it guarded.
 - Scope guard: this is the follow-up KIT-0104 explicitly declared out
   of its own scope ("port, not rewrite") — the rewrite happens HERE,
   against the E2E net, never mid-port.
+- **Rider (planner, 2026-08-14, from the PR #130 deep evaluator —
+  dispositioned there, decide-explicitly here)**: a root-anchored
+  target (`agentive new /x`) resolves the preset home to
+  `/agentive-config` (edge of the PR 1 target-parent anchor decision;
+  today seeding requires the directory to pre-exist, so nothing is
+  created at root). During consolidation, make the root-parent case
+  an explicit decision — refuse, warn, or document — rather than an
+  emergent one. Source: `.kit/context/KIT-0104-REVIEW-STARTER.md`
+  PR 2 section.
