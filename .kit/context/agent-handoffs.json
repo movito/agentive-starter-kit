@@ -11,7 +11,7 @@
     "status": "assigned",
     "current_task": "KIT-0105",
     "task_started": "2026-08-14",
-    "brief_note": "KIT-0105: ALL THREE PRs MERGED (#133/#134/agentive-skills#11 — release 2.1.0, first tooled cut, plugin_resync cited). Task 4-in-review awaiting operator verdict + retro. Train closures done: KIT-0112 5-done, KIT-0103 R1 checked, KIT-0110 final AC closed. KIT-0113 filed (intake hardening — Critical quiet-scan finding from the release bots). Drift guard dispatch pending confirmation. Operator: update plugin to 2.1.0 + restart.",
+    "brief_note": "KIT-0105: ALL THREE PRs MERGED, release 2.1.0 live, drift guard GREEN (arc-closing dispatch 31902960093). Task 4-in-review — RETRO PROCESSED (cherry-picked bd20550; all planner actions shipped: KIT-0103 R3 pagination widening, KIT-0108 tool riders + incident-2 both-remedies ruling, patterns.yml retirement_sweeps_grep_internals + npm_needs_a_manifest, KIT-0113 filed). AWAITING: operator verdict to complete (then worktree down, branch freed, ADR-0030/0031 flip to Accepted). Operator observation ON RECORD: this fd-f5 session behaved notably differently from prior sessions — behavioral datapoint to explore before the next assignment (holding patterns, sequential single-finding rounds; also deepest verification discipline yet). Operator: update plugin to 2.1.0 + restart Claude Code.",
     "details_link": ".kit/tasks/4-in-review/KIT-0105-project-intake-into-the-plugin.md",
     "handoff_file": ".kit/context/KIT-0105-HANDOFF-feature-developer-f5.md"
   },

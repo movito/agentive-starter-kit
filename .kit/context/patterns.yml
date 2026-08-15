@@ -89,6 +89,33 @@ defensive:
       - "same family as bot-triage's committable-but-uncompilable rule (KIT-0058): displayed shell is code, verify it as code"
       - "KIT-0080/PR #107: generated-script face — the rule existed, its stated scope stopped one shape short (counted as a regression for that reason)"
     caught_by: "KIT-0071 retro (Surprising #2, Should Change #1); planner adopted 2026-07-27; generated-shell face CodeRabbit PR #107, widened 2026-08-06"
+  retirement_sweeps_grep_internals:
+    rule: >
+      A retirement sweep's class covers CITATIONS OF THE RETIRED
+      THING'S INTERNALS — function names, file paths, docstring
+      references, "see X()" anchors — not only its invocation names.
+      Prose that cites a retired implementation as a LIVE contract
+      anchor is stale the moment the file dies, and invocation-name
+      greps never see it (KIT-0105: self-review items 8 AND 9 cited
+      sync_from_manifest.py's docstring, cmd_sync, resolve_source,
+      _stage_and_commit as living contracts weeks after KIT-0102
+      retired them; two grep iterations — planner's then the fd's
+      widened one — were needed to close the class). Extends
+      fix_by_class_not_instance and the grep-first refinement: the
+      class definition includes the retired thing's INTERIOR surface.
+    examples:
+      - "KIT-0105 PR 2: principle kept, citations rewritten to historical form + live re-anchors"
+    caught_by: "planner gate grep + fd widened re-sweep, 2026-08-15"
+  npm_needs_a_manifest:
+    rule: >
+      In a directory without package.json, npm resolves ANCESTOR
+      manifests silently — `npm install` from a manifest-less repo can
+      install into the operator's HOME. Write the manifest FIRST (or
+      use an explicit --prefix); verify expected outputs with ls
+      immediately after any install.
+    examples:
+      - "KIT-0105 PR 3: npm install --save-dev landed in ~/package.json; caught same-minute by output ls, exact-uninstalled"
+    caught_by: "KIT-0105 retro (Surprising 3 / incident 1); planner adopted 2026-08-15"
   invariants_hold_on_every_abort_path:
     rule: >
       When code STATES an atomicity/all-or-nothing guarantee ("nothing

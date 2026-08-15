@@ -61,6 +61,21 @@ guard retires with the duplication it guarded.
 - Scope guard: this is the follow-up KIT-0104 explicitly declared out
   of its own scope ("port, not rewrite") — the rewrite happens HERE,
   against the E2E net, never mid-port.
+- **Riders (planner, 2026-08-15, from the KIT-0105 retro — release
+  tooling improvements, same 0.10.0 surface)**:
+  1. `plugin_resync.py --hashes-only` refreshes stale `kit_version`
+     columns for ALL shipped entries, not only merged ones (planner's
+     column sat one version wrong across a release; found by accident).
+  2. Publish-adaptation manifest: the adapted components (fd, fd-f5,
+     self-review) get a machine-readable adaptation note (roster field
+     or resync conflict-message) so resolvers stop rediscovering the
+     layer from conflict markers.
+  3. **Incident-2 ruling (planner, 2026-08-15)**: BOTH remedies —
+     `verify_plugin_integrity.py` additionally asserts
+     `kit_version` == the `version:` frontmatter inside the published
+     body it already hashes (closes column drift in the REQUIRED
+     check), AND rider 1 fixes the writer side. Ride the next
+     marketplace-touching PR; falsify once (stale column → red).
 - **Rider (planner, 2026-08-14, from the PR #130 deep evaluator —
   dispositioned there, decide-explicitly here)**: a root-anchored
   target (`agentive new /x`) resolves the preset home to

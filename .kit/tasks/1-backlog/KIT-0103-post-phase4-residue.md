@@ -67,6 +67,14 @@ worktree-hookpath doctor WARN (fires when a worktree's environment
 gives git hooks no usable pytest; quiet when provisioned — break-once
 both directions; cite the KIT-0092 incident).
 
+**R3 widening (KIT-0105 retro, 2026-08-15)**: the fail-closed
+pagination contract (KIT-0112's canon fix) has three CODE siblings —
+`review_input.py`, `check-bots.sh`, and `preflight.py` all verified
+carrying bare `first: 100` counts (CodeRabbit on kit #134; fd
+re-verified all three). Apply the same `hasNextPage` → refuse-to-
+certify treatment in code; the canon query at retro.md:97 is the
+reference implementation.
+
 ## R3 addendum (from archived KIT-0074, 2026-08-12)
 
 While hardening the preflight gates: consider Gate 1's at-cap
