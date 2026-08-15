@@ -80,3 +80,44 @@ The pre-existing-helper findings (deep-reviewer 1–4) are the familiar
 full-format artifact: evaluators treat appended unchanged file contents
 as new code. If `_referenced_paths` breadth ever matters, it is a
 backlog item, not a rider on this train.
+
+---
+
+# PR 2 of 3 — canon bundle (2026-08-15)
+
+**Scope**: commit `8f9e5c5` on `feature/KIT-0105-pr2-canon-bundle` —
+KIT-0112 complete + KIT-0103 R1
+**Tier**: fast-only (planner's explicit call in the handoff — the
+prose-sweep exception; the one behavioral hunk, retro.md's fail-closed
+query, was tree-grounded by executing BOTH arms live: clean page →
+count + exit 0, truncated page → REFUSED + exit 1)
+**Input**: diff format (prose-dominated)
+
+## Verdict
+
+| Evaluator | Verdict | Log |
+|-----------|---------|-----|
+| code-reviewer-fast | CONCERNS (5 findings) | `.adversarial/logs/KIT-0105-code-review-input--code-reviewer-fast.md` |
+
+## Dispositions (all 5: no action — each verified against the tree)
+
+1. **jq error() path not automated** — reproduced live, both arms
+   (see Tier note). `.claude/` command snippets have no test harness;
+   the falsification is the KIT-0112 spec's own acceptance mechanism.
+2. **`docs/UPDATING-YOUR-PROJECT.md` might be missing/outdated** — it
+   exists and is the canonical migration doc; speculative.
+3. **`uv` might not be installed** — the kit-wide install convention
+   on every surface; the hint is a hint, not an executed step.
+4. **Hybrid project classification** — the binary `scripts/core/`
+   presence check IS the kit's documented world-split
+   (`docs/UPDATING-YOUR-PROJECT.md` uses the identical check);
+   consistent by design, not a gap.
+5. **`test_door_data_sync.py` could change someday** — speculative
+   meta-concern about a live, passing guard.
+
+## Note for the planner
+
+Per the prose-sweep rule: the trio's deep tier was skipped by your
+call; tree-grounded verification before merge remains the real gate
+for this PR shape. The end-greps for both classes are quoted in the
+PR body.
