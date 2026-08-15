@@ -2,9 +2,9 @@
 name: upgrader
 description: Raises a project from one agentive-workflow plugin version to a newer one, and refreshes local agent model: pins on a model rollout. Automates docs/PLUGIN-UPGRADE-GUIDE.md. Ongoing upgrades only — refuses initial migration, script/manifest upgrades, and CLAUDE.md identity edits.
 model: claude-sonnet-5
-version: 1.5.0
+version: 1.5.1
 origin: agentive-starter-kit
-last-updated: 2026-08-09
+last-updated: 2026-08-15
 created-by: "@movito"
 tools:
   - Bash
@@ -53,13 +53,12 @@ out-of-scope work.
 | Out-of-scope condition | Halt message + pointer |
 |---|---|
 | **Initial migration** onto the plugin not yet done (project does not consume the plugin yet — see Phase 0) | "Project does not consume the agentive-workflow plugin yet — initial migration is a one-time manual step, not an upgrade. See `docs/PLUGIN-UPGRADE-GUIDE.md` § Scope." |
-| Asked to upgrade **scripts** (`scripts/core/`) / the manifest | "Scripts upgrade via manifest sync, a separate surface — see `docs/MANIFEST-UPGRADE-GUIDE.md`. I only upgrade the plugin." |
+| Asked to upgrade **scripts** (`scripts/core/`) / lifecycle tooling | "Lifecycle tooling ships in the `agentive-kit` package — `uv tool upgrade agentive-kit`; a project still carrying `scripts/core/` copies follows `docs/UPDATING-YOUR-PROJECT.md`. I only upgrade the plugin." |
 | Asked to edit **CLAUDE.md identity/topology** (target repo, project rules) beyond the Provenance stamp | "CLAUDE.md identity/topology is out of scope — I only restamp the `## Provenance` pin (guide step 5)." |
 | Marketplace is a local **`Directory (...)`** source (Phase 0) | "Marketplace `agentive-skills` is a local directory source — version pins do not apply. Re-point it (commands below); I cannot edit settings.json." |
 
-A detected **scripts-version gap is never folded into the upgrade.** It is
-surfaced once, at the end, as a post-upgrade hint to run
-`./scripts/core/project sync --dry-run` (see Phase 8).
+A detected **lifecycle-tooling gap is never folded into the upgrade.** It is
+surfaced once, at the end, as a post-upgrade hint (see Phase 8).
 
 ## Idempotence & the two-phase gate (hard rules)
 
@@ -497,23 +496,20 @@ rule. Follow the project's commit conventions:
 
 ## PHASE 8 — Post-upgrade hints (not part of the upgrade)
 
-After a successful upgrade, **detect** whether scripts/manifest drift exists, and
-if so surface it **once** as a hint. `project sync --dry-run` is read-only (it
-reports which core files would be added/modified/removed and exits `1` when there
-is drift, `0` when clean — it mutates nothing), so you run it yourself as the
-detection step:
+After a successful upgrade, **detect** which world the project's
+lifecycle tooling lives in (one read-only directory check) and surface
+at most **one** hint. The copy-sync channel (`project sync`,
+`.core-manifest.json`) was retired in KIT-ADR-0028 phase 4 — there is
+no drift check to run:
 
-```bash
-./scripts/core/project sync --dry-run   # read-only; prints per-file drift, exit 1 if any
-```
-
-- Exit `0` / no changes listed (or upstream is unreachable so no comparison ran)
-  → say nothing.
-- Exit `1` with added/modified/removed lines → surface one line quoting what it
-  reported (e.g. "project sync --dry-run reports N core files would change") and
-  point to `docs/MANIFEST-UPGRADE-GUIDE.md`. **Never** fold the scripts upgrade
-  into the plugin upgrade; running `project sync` is the operator's separate
-  manifest-sync action.
+- **Packaged project** (no `scripts/core/` directory): the lifecycle
+  surface is the `agentive-kit` package. Hint once: "keep the
+  lifecycle CLI current with `uv tool upgrade agentive-kit`."
+- **Pre-packaged project** (`scripts/core/` copies present): point
+  once at `docs/UPDATING-YOUR-PROJECT.md` for the migration path —
+  never edit or delete the copies yourself.
+- Either way, **never** fold lifecycle-tooling work into the plugin
+  upgrade; acting on the hint is the operator's separate action.
 
 ---
 

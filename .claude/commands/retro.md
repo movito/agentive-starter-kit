@@ -1,9 +1,9 @@
 ---
 description: Run a structured session retrospective after completing a task
-version: 1.4.0
+version: 1.5.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-08-11
+last-updated: 2026-08-15
 created-by: "@movito with planner2"
 ---
 
@@ -94,10 +94,17 @@ if [ -z "$OWNER" ] || [ -z "$NAME" ]; then
   exit 1
 fi
 
-gh api graphql -f query="{ repository(owner: \"$OWNER\", name: \"$NAME\") { pullRequest(number: <PR_NUM>) { reviewThreads(first: 100) { nodes { isResolved } } } } }" --jq '[.data.repository.pullRequest.reviewThreads.nodes[]] | length'
+gh api graphql -f query="{ repository(owner: \"$OWNER\", name: \"$NAME\") { pullRequest(number: <PR_NUM>) { reviewThreads(first: 100) { pageInfo { hasNextPage endCursor } nodes { isResolved } } } } }" --jq '.data.repository.pullRequest.reviewThreads | if .pageInfo.hasNextPage then error("REFUSED: more than 100 review threads — a first:100 count would silently drop the remainder. Paginate with reviewThreads(first: 100, after: \"<endCursor>\") and sum the pages by hand before reporting a thread count.") else ([.nodes[]] | length) end'
 ```
 
 (Replace `<PR_NUM>` with the PR number from Step 1.)
+
+**Fail closed on pagination (KIT-0112)**: the count asserts triage
+completeness, so past 100 threads the query REFUSES (the `error(…)`
+arm) instead of under-counting — the same reason `reviewThreads` is
+the mandatory truth source over REST in the first place. On refusal,
+paginate by hand from the printed `endCursor` and sum; never report a
+single-page count as the total.
 
 **Commit count** (on the feature branch):
 

@@ -1,8 +1,8 @@
 ---
 description: Interview the user and create their new project through the setup door or the intake agent
-version: 1.4.0
+version: 1.4.1
 origin: agentive-starter-kit
-last-updated: 2026-08-14
+last-updated: 2026-08-15
 created-by: "@movito with feature-developer-f5 (KIT-0067)"
 distribution: builder-only
 ---
@@ -10,8 +10,9 @@ distribution: builder-only
 # New Project
 
 > **Builder-side command**: the guided interview over the packaged
-> setup door (`agentive new` / `agentive adopt`); not distributed
-> via `scripts/.core-manifest.json` (intended — see KIT-0077).
+> setup door (`agentive new` / `agentive adopt`); deliberately not
+> part of any distributed surface (KIT-0077 — the manifest channel
+> it once opted out of was itself retired in KIT-ADR-0028 phase 4).
 
 **First response — open with this transparency header, before any
 other output or tool call:**
