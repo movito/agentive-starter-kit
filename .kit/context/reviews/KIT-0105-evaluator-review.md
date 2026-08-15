@@ -121,3 +121,45 @@ Per the prose-sweep rule: the trio's deep tier was skipped by your
 call; tree-grounded verification before merge remains the real gate
 for this PR shape. The end-greps for both classes are quoted in the
 PR body.
+
+---
+
+# PR 3 of 3 — marketplace release 2.1.0 (2026-08-15)
+
+**Scope**: commit `72054bf` on `release/agentive-workflow-2.1.0`
+(movito/agentive-skills) — roster flip + resynced bodies + version
+bump + CHANGELOG + markdownlint rider
+**Tier**: fast (the KIT-0109 release precedent)
+**Input**: `.adversarial/inputs/KIT-0105-pr3-release-code-review-input.md`
+(hand-assembled release diff — the review-input helper is CWD-bound;
+its `--repo-root` flag is the tracked KIT-0103 rider)
+
+## Verdict
+
+| Evaluator | Verdict | Log |
+|-----------|---------|-----|
+| code-reviewer-fast | FAIL (5 findings) | `.adversarial/logs/KIT-0105-pr3-release-code-review-input--code-reviewer-fast.md` |
+
+## Dispositions (all 5: no action — merged-canon republication)
+
+Every finding targets the PUBLISHED COPIES of kit canon already merged
+through PR 1/PR 2's full gates (trio + two bot rounds + planner
+verification): four on the `project-intake` agent body's pre-existing
+prose (gh-create failure modes, `git rm --cached` failure, malformed
+brief, filesystem writes — the same LLM-agent-robustness family the
+PR 1 trio raised and the record above dispositions) and one on
+`retro`'s `gh api` error handling (pre-existing shape; PR 2 changed
+the jq arm, not the call's error handling). Per KIT-0097, a genuine
+fix would land in kit canon as its own task and ride the NEXT release
+— never a divergent marketplace edit. None rises to filing: all are
+speculative robustness prose-asks on an LLM-interpreted body, not
+defects introduced by this release.
+
+## Release verification (local, pre-PR)
+
+- `plugin_resync.py`: work-list empty after resolution; 28 shipped
+  `plugin_sha256` refreshed (THE first tooled cut — closes the open
+  KIT-0110 AC)
+- `verify_plugin_integrity.py` (the required check's script): 28
+  published bodies match roster.yaml
+- `markdownlint-cli2@0.23.2`: 0 issues in 31 files
