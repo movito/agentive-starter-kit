@@ -94,7 +94,7 @@ if [ -z "$OWNER" ] || [ -z "$NAME" ]; then
   exit 1
 fi
 
-gh api graphql -f query="{ repository(owner: \"$OWNER\", name: \"$NAME\") { pullRequest(number: <PR_NUM>) { reviewThreads(first: 100) { pageInfo { hasNextPage endCursor } nodes { isResolved } } } } }" --jq '.data.repository.pullRequest.reviewThreads | if .pageInfo.hasNextPage then error("REFUSED: more than 100 review threads — a first:100 count would silently drop the remainder. Paginate with reviewThreads(first: 100, after: \"<endCursor>\") and sum the pages by hand before reporting a thread count.") else ([.nodes[]] | length) end'
+gh api graphql -f query="{ repository(owner: \"$OWNER\", name: \"$NAME\") { pullRequest(number: <PR_NUM>) { reviewThreads(first: 100) { pageInfo { hasNextPage endCursor } nodes { isResolved } } } } }" --jq '.data.repository.pullRequest.reviewThreads | if .pageInfo.hasNextPage then error("REFUSED: more than 100 review threads — a first:100 count would silently drop the remainder. Paginate with reviewThreads(first: 100, after: \"" + (.pageInfo.endCursor // "?") + "\") and sum the pages by hand before reporting a thread count.") else ([.nodes[]] | length) end'
 ```
 
 (Replace `<PR_NUM>` with the PR number from Step 1.)
