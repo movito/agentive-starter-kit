@@ -132,3 +132,22 @@ Gate 1 FAIL = drift guard only (Tests: pass) — expected-red. Gates
 2–7 PASS (2/3 report ".md-only, review not required"; stronger
 evidence verified manually: both bots reviewed and approved/cleared
 on head).
+
+**Planner verification: PENDING at the time this section was
+written** — Gates 2–7 above are the AUTOMATED gates only; the
+tree-grounded planner verification is a separate, outstanding gate
+for this PR shape (prose sweep) and its result is recorded at merge,
+not here. This record must not be read as fully cleared until then.
+
+*Fix round (2026-08-15, planner gate result)*: planner tree grep
+caught an R1-class miss my grep's class definition excluded —
+`self-review/SKILL.md` items 8 and 9 cited retired contract anchors
+(`sync_from_manifest.py` docstring, `cmd_sync`, `resolve_source()`,
+`_stage_and_commit`, `sync-core-scripts.yml`) as LIVE references.
+Both items rewritten in historical form, principles intact;
+self-review bumped to 1.2.1. Lesson folded back: the R1 class is
+"references to retired sync machinery" INCLUDING contract-anchor
+citations, not just command names — re-grepped with the widened
+token set; the two planner-agent `resolve_source()` mentions are
+narrative anecdotes (recounting KIT-0037), not directive citations,
+and stay.
