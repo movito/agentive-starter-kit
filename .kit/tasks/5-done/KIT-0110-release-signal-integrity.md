@@ -79,10 +79,15 @@ bodies differ from canon per KIT-ADR-0025):
 - [ ] Roster header + kit guard header state the verification division
 - [ ] Base-not-found case fails loud (fixture-tested), never silent
       copy
-- [ ] Operator step at completion: mark the marketplace check REQUIRED
-      in GitHub settings (planner reminds at the gate)
-- [ ] The next release (the KIT-0105 train) uses the tool and passes
-      both checks — cited in that release's record
+- [x] Operator step at completion: mark the marketplace check REQUIRED
+      in GitHub settings — done 2026-08-14, ruleset 20868466 (planner
+      added the check via API)
+- [x] The next release (the KIT-0105 train) uses the tool and passes
+      both checks — CLOSED 2026-08-15: release 2.1.0
+      (agentive-skills#11, merged `3848b64`) cited `plugin_resync.py`
+      in its PR body and CHANGELOG (7 drifted: 4 clean-merged, 3
+      conflicts surfaced and hand-resolved preserving published
+      adaptations); required check green on the release PR
 
 ## Notes
 

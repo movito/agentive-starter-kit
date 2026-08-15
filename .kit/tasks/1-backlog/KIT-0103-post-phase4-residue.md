@@ -104,8 +104,12 @@ does not remove any STOP rule.
 
 ## Acceptance Criteria
 
-- [ ] R1: class grep opens the work, end grep proves it; ships in the
-      next plugin release; drift guard green after
+- [x] R1: DONE 2026-08-15 — rode the KIT-0105 train (kit PR #134 +
+      release 2.1.0, agentive-skills#11 `3848b64`); class grep opened
+      the work, planner tree grep at the gate caught + fixed two
+      additional dangling-anchor instances (self-review items 8/9)
+      under the improved class definition; drift guard green after
+      the release
 - [ ] R2: stale project produces the retirement notice, not the raw
       error (falsified once against the `_old` archive shape)
 - [ ] R5: both paragraphs in canon, versions bumped, rides a release

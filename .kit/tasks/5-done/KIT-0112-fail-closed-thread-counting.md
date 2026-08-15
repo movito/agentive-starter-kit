@@ -1,6 +1,6 @@
 # KIT-0112: Fail-closed thread counting — `reviewThreads` must not under-count silently
 
-**Status**: Backlog
+**Status**: Done
 **Priority**: medium — certifies falsely when it fails; not currently
 biting (PRs top out ~a dozen threads), which is exactly how it will
 stay invisible until it certifies a false "clean"

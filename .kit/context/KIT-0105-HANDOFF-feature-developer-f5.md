@@ -5,7 +5,7 @@ not delegate or spawn other agents.**
 
 **Date**: 2026-08-14
 **From**: planner-f5  **To**: feature-developer-f5
-**Task**: .kit/tasks/3-in-progress/KIT-0105-project-intake-into-the-plugin.md
+**Task**: .kit/tasks/4-in-review/KIT-0105-project-intake-into-the-plugin.md
 **Status**: Ready
 **Evaluation**: arch-review-fast APPROVED (2026-08-14), two findings
 dispositioned in the spec header. The parent ADR (KIT-ADR-0031) was

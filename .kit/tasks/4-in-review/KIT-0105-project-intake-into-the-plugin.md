@@ -1,6 +1,6 @@
 # KIT-0105: `project-intake` ships in the plugin — run intake in the deliverable folder
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: high — the operator-facing half of the KIT-ADR-0030–0034
 set; KIT-0104 removes the technical precondition, this task collects
 the benefit
