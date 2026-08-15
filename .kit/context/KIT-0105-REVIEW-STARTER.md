@@ -72,3 +72,82 @@ code-reviewer-fast FAIL and code-reviewer CONCERNS fully dispositioned
   `release/agentive-workflow-2.1.0` in
   `/Users/broadcaster_three/Github/agentive-skills` (planner-created,
   verified present).
+
+---
+
+# PR 2 of 3 — canon bundle (2026-08-15)
+
+**PR**: https://github.com/movito/agentive-starter-kit/pull/134
+**Branch**: `feature/KIT-0105-pr2-canon-bundle` (head `2bf3c2b`)
+**Status**: CodeRabbit APPROVED on head, BugBot clean after fix, 5/5
+threads resolved, all CI green EXCEPT the drift guard — the
+**expected-red window** (justified in the PR body per the
+plugin-drift.yml posture ruling; PR 3 greens it)
+
+## Commits
+
+| SHA | What |
+|-----|------|
+| `8f9e5c5` | The bundle: KIT-0112 complete + KIT-0103 R1, 8 version bumps |
+| `9b5eaf2` | PR 2 evaluator record (fast-only, dispositioned) |
+| `5d5b90a` | BugBot round: interpolate the REAL endCursor into the refusal |
+| `2bf3c2b` | CodeRabbit round: /wrap-up ships via the plugin — over-claim fixed |
+
+## Bot rounds (2 substantive)
+
+1. **BugBot** (check read `skipping` while reviewing — SIXTH face,
+   sighted live on the very PR that documents faces): refusal printed
+   a literal `<endCursor>` placeholder → FIXED `5d5b90a`, re-falsified
+   (real cursor + exit 1).
+2. **CodeRabbit** (check read `pass` over CHANGES_REQUESTED — FOURTH
+   face): (a) wrap-up "not distributed" over-claim → FIXED `2bf3c2b`
+   (roster says `ships: true`; only new-project/setup-preset are
+   `ships: false`, their wording kept); (b) extend fail-closed
+   pagination to `review_input.py` / `check-bots.sh` / `preflight.py`
+   → DECLINED here (canon-only bundle; single-theme rule) with a
+   tracked home — **planner: please widen KIT-0103 R3 to cover
+   pagination fail-closed in those three code consumers** (verified
+   all three use `first: 100` bare; `preflight.py:679` soft-flags
+   `total == 100` but still PASSes). Thread cites this.
+
+## For the tree-grounded verification (the real gate — prose sweep)
+
+- KIT-0112: the ONE `first: N` site in `.claude/` is `retro.md:97`,
+  now with `pageInfo` + jq `error(…)` refusal; both arms falsified
+  live TWICE (initial + after cursor interpolation).
+- KIT-0103 R1 end grep (`core-manifest|copy-sync|project sync[^-a-z]|sync --dry-run`
+  over `.claude/`): remaining hits are the upgrader's own retirement
+  notice and bot-triage's historical lesson — statements ABOUT the
+  retirement. Verified NOT stale and kept: `project sync-status` /
+  `linearsync` (live Linear commands), the four agents'
+  MANIFEST-UPGRADE-GUIDE model-pin refs (section live in the stub).
+- Version bumps: retro 1.5.0, bot-triage 1.2.0, upgrader 1.5.1,
+  wrap-up **2.3.3** (two bumps this PR), setup-preset 1.3.1,
+  new-project 1.4.1, feature-developer 2.6.1, feature-developer-f5
+  1.6.1. PR 3's resync must pick up wrap-up at 2.3.3.
+
+## Preflight
+
+Gate 1 FAIL = drift guard only (Tests: pass) — expected-red. Gates
+2–7 PASS (2/3 report ".md-only, review not required"; stronger
+evidence verified manually: both bots reviewed and approved/cleared
+on head).
+
+**Planner verification: PENDING at the time this section was
+written** — Gates 2–7 above are the AUTOMATED gates only; the
+tree-grounded planner verification is a separate, outstanding gate
+for this PR shape (prose sweep) and its result is recorded at merge,
+not here. This record must not be read as fully cleared until then.
+
+*Fix round (2026-08-15, planner gate result)*: planner tree grep
+caught an R1-class miss my grep's class definition excluded —
+`self-review/SKILL.md` items 8 and 9 cited retired contract anchors
+(`sync_from_manifest.py` docstring, `cmd_sync`, `resolve_source()`,
+`_stage_and_commit`, `sync-core-scripts.yml`) as LIVE references.
+Both items rewritten in historical form, principles intact;
+self-review bumped to 1.2.1. Lesson folded back: the R1 class is
+"references to retired sync machinery" INCLUDING contract-anchor
+citations, not just command names — re-grepped with the widened
+token set; the two planner-agent `resolve_source()` mentions are
+narrative anecdotes (recounting KIT-0037), not directive citations,
+and stay.

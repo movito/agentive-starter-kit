@@ -1,16 +1,18 @@
 ---
 description: Interview the user and author their setup-door preset in the visible config home
-version: 1.3.0
+version: 1.3.1
 origin: agentive-starter-kit
-last-updated: 2026-08-14
+last-updated: 2026-08-15
 created-by: "@movito with feature-developer-f5 (KIT-0058)"
 distribution: builder-only
 ---
 
 # Setup Preset
 
-> **Builder-side command**: operates the kit factory; not distributed
-> via `scripts/.core-manifest.json` (intended — see KIT-0077).
+> **Builder-side command**: operates the kit factory; deliberately
+> not part of any distributed surface (KIT-0077 — the manifest
+> channel it once opted out of was itself retired in KIT-ADR-0028
+> phase 4).
 
 **First response — open with this transparency header, before any
 other output or tool call:**

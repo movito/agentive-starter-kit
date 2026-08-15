@@ -61,6 +61,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Canon-fix bundle — fail-closed thread counting + stale sync
+  references** (KIT-0105 PR 2 of 3; passengers KIT-0112 complete +
+  KIT-0103 R1): `/retro`'s reviewThreads count now requests
+  `pageInfo { hasNextPage endCursor }` and REFUSES to certify
+  completeness past 100 threads (jq `error(…)`, exit 1, actionable
+  pagination message) instead of silently under-counting — the same
+  rationale that made `reviewThreads` the mandatory truth source over
+  REST; both arms falsified live. The class grep
+  (`first: N` in `.claude/`) found exactly one site, quoted
+  before/after in the PR. The bot-triage skill gains the **seventh
+  lying-status face** (KIT-0110: CodeRabbit status `pass — Review
+  rate limited` while NO review exists behind a spending cap;
+  recovery = raise cap + explicit `@coderabbitai review`). KIT-0103
+  R1: the six rostered `.claude/` files still referencing the retired
+  copy-sync machinery (`project sync --dry-run` in the upgrader's
+  refusal table + Phase 8, `scripts/.core-manifest.json` in the
+  wrap-up/setup-preset/new-project builder notes and both
+  feature-developer project-context fills) now state the packaged-era
+  truth; `project sync-status`/`linearsync` (live Linear commands)
+  and accurately-historical lesson text were verified NOT stale and
+  left alone. Every touched rostered component got a manual
+  `version:` bump (KIT-0111's guard doesn't exist yet). This merge
+  opens the drift guard's expected-red window by design — release
+  2.1.0 (PR 3) greens it.
+
 - **`project-intake` becomes location-agnostic and ships in the
   plugin — KIT-ADR-0031** (KIT-0105, PR 1 of 3): the intake agent no
   longer claims a kit-checkout home. It verifies the `agentive` CLI up

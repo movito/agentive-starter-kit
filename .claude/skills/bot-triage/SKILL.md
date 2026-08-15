@@ -1,10 +1,10 @@
 ---
 description: How to triage, reply to, and resolve automated review comments from BugBot and CodeRabbit
 user-invocable: false
-version: 1.1.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-04-19
+last-updated: 2026-08-15
 created-by: "@movito with planner2"
 ---
 
@@ -78,6 +78,15 @@ Reference knowledge for triaging automated review comments. Use `/triage-threads
   Medium-severity thread. Statuses lie in every direction; the
   threads query is the only truth, in both the "clean" and the
   "reviewed" directions.
+  **Seventh face (KIT-0110, agentive-skills#10): CodeRabbit's
+  commit-status reads `pass — Review rate limited` while NO review
+  exists behind an org fair-usage/spending cap** — the PR showed
+  "Next review available in: 51 minutes" plus a billing notice while
+  the status said pass throughout. Recovery recipe: raise the cap,
+  then post an explicit `@coderabbitai review` comment — the review
+  does NOT auto-trigger after the cap lifts. The reviewThreads-first
+  rule (step 0) is what makes the absence visible; this face is more
+  evidence for it, same family as faces four through six.
 - **Class sweeps must be indentation-tolerant** — when sweeping a
   markdown/format class from one finding (e.g. MD040 bare fences), the
   pattern is `^\s*` + token, never `^` + token: KIT-0067's `^```$`

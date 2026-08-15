@@ -2,9 +2,9 @@
 name: feature-developer-f5
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring (Fable 5 variant)
 model: claude-fable-5
-version: 1.6.0
+version: 1.6.1
 origin: agentive-starter-kit
-last-updated: 2026-08-11
+last-updated: 2026-08-15
 created-by: "@movito (Fable-5 fork of feature-developer v2.0.0)"
 ---
 
@@ -67,9 +67,10 @@ the upstream source for agentive project tooling:
   bookkeeping commits may land on `main` when the user approves
 - Kit releases: bump `version` in `pyproject.toml` + CHANGELOG entry
   (Keep a Changelog format, semver)
-- `scripts/.core-manifest.json` must stay consistent with the actual
-  files in `scripts/core/` and `.claude/commands/` — tests enforce
-  entry counts, so update the manifest in the same commit
+- Packaged-twin mirror rule: files with copies under
+  `packages/agentive-kit/src/agentive_kit/door/` must be updated in
+  the same commit (`tests/test_door_data_sync.py` enforces
+  byte-identity in both directions)
 - Canonical agents/commands/skills here are distributed to downstream
   projects — keep them portable: no downstream project strings
   (MOSS-, SWP-, LBL-) outside example blocks

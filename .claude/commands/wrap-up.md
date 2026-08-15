@@ -1,14 +1,17 @@
 ---
 description: Finalize session — run retro, move the task to done, and confirm completion
-version: 2.3.1
-last-updated: 2026-08-11
+version: 2.3.3
+last-updated: 2026-08-15
 distribution: builder-only
 ---
 
 # /wrap-up — Finalize Session
 
-> **Builder-side command**: operates the kit factory; not distributed
-> via `scripts/.core-manifest.json` (intended — see KIT-0077).
+> **Kit-factory command**: `/wrap-up` ships to consumer projects via
+> the `agentive-workflow` plugin. The `distribution: builder-only`
+> marker above only ever excluded it from the script-sync channel
+> (KIT-0077) — a channel that was itself retired in KIT-ADR-0028
+> phase 4.
 
 **First response — open with this transparency header, before any
 other output or tool call:**
