@@ -80,9 +80,32 @@ writes CWD-relative, so marketplace-side reviews (KIT-0109 AND
 KIT-0110 — two hand-assemblies now) can't use it. A flag pair makes
 it serve any local checkout. Same surface as the `--base` item above.
 
+## R5 — Thread ownership + holding-entry rules (canon, next train)
+*(planner, 2026-08-15, from the KIT-0105 PR 2 holding incident —
+operator deferred to "the next task")*
+
+Two canon paragraphs:
+
+- **bot-triage**: "Thread ownership follows the PR, not the finding's
+  TOPIC. A finding about someone else's process (e.g. the planner's
+  pending verification) is still yours to action — amend the record,
+  request the input — never grounds to park the PR. Escalate the
+  question, not the merge."
+- **both fd agents** (holding/Phase 7): "Enter holding only after
+  re-running the reviewThreads query AT THAT MOMENT — a preflight
+  PASS ages the instant a bot re-reviews (KIT-0105 PR 2: a
+  CHANGES_REQUESTED landed on the final head after preflight, and the
+  session held on a stale gate table)."
+
+Context for the implementer: the diagnosis (ownership seam + timing
+race + tripwire accumulation) is in the planner session record
+2026-08-15; the fix teaches judgment about WHERE caution applies, it
+does not remove any STOP rule.
+
 ## Acceptance Criteria
 
 - [ ] R1: class grep opens the work, end grep proves it; ships in the
       next plugin release; drift guard green after
 - [ ] R2: stale project produces the retirement notice, not the raw
       error (falsified once against the `_old` archive shape)
+- [ ] R5: both paragraphs in canon, versions bumped, rides a release
