@@ -1,6 +1,6 @@
 ---
 description: Interview the user and create their new project through the setup door or the intake agent
-version: 1.3.0
+version: 1.4.0
 origin: agentive-starter-kit
 last-updated: 2026-08-14
 created-by: "@movito with feature-developer-f5 (KIT-0067)"
@@ -115,7 +115,9 @@ context of its own. Print the invocation for the user:
 
 ```text
 ⚠️ LAUNCH
-Open a new tab in this kit checkout and paste:
+Open a new tab in the prototype's code folder — the intake agent
+ships with the agentive-workflow plugin and runs right where the
+deliverable sits — and paste:
 
   claude --agent project-intake "Begin the intake. Brief: <path-to-brief.md>  Code: <path-to-code-folder>"
 ```

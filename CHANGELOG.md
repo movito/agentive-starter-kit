@@ -61,6 +61,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`project-intake` becomes location-agnostic and ships in the
+  plugin — KIT-ADR-0031** (KIT-0105, PR 1 of 3): the intake agent no
+  longer claims a kit-checkout home. It verifies the `agentive` CLI up
+  front (absence prints the install command — never a dead end), treats
+  its own working directory as the candidate prototype folder when no
+  path is given, composes the packaged door (`agentive new`) instead of
+  `scripts/local/bootstrap`, and reports door gaps to the operator as a
+  ready-to-paste task body instead of filing into a `.kit/` tree it may
+  not have. The intended flow is now real: open Claude in the Cowork
+  output folder and run the intake in place. Every surface that said
+  intake runs from a kit checkout is updated (agent body, handoff
+  template + packaged twin, `docs/STARTING-A-PROJECT.md`,
+  `docs/CROSS-REPO-PATTERN.md` + packaged twin, `/new-project`), the
+  KIT-0081 F3 main-branch guard is carried through unchanged and pinned
+  by contract-string tests, and a new end-to-end intake acceptance test
+  (`TestIntakeAcceptance`) exercises the flow's mechanical spine in CI
+  — create → doctor → seeded-path existence (the KIT-0081 F2 class, by
+  machine; KIT-ADR-0034's enforcement mechanism). The plugin-side
+  roster flip (`ships: true`) and release 2.1.0 land in the
+  agentive-skills marketplace (PR 3).
+
 - **The door ships in the package — KIT-ADR-0030** (KIT-0104, PRs
   #129 + #130 + the prose sweep): the setup door is now `agentive new` /
   `agentive adopt` — same flags, same resolution chain (preset home
