@@ -1,6 +1,6 @@
 # KIT-0113: project-intake hardening — quiet credential scan + post-seeding doctor
 
-**Status**: Backlog
+**Status**: In Progress
 **Priority**: medium (one Critical-severity bot finding; contained — operator's own transcript)
 **Type**: Canon fix (`.claude/agents/project-intake.md`)
 **Estimated Effort**: ~1 h
@@ -40,3 +40,17 @@ contract stays the install truth; the re-run is repo-state truth).
       line gated on it
 - [ ] Rides the next plugin release (drift guard red-by-design between
       merge and that cut; version bump on the touched component)
+
+## Release scoping (planner, 2026-08-16)
+
+No other release is queued, and the drift ruling (plugin-drift.yml
+header) makes red a same/next-day release obligation — so this task
+CUTS the release itself as a second leg, per the KIT-0109/0110/0105
+precedent: marketplace PR on `~/Github/agentive-skills` via
+`scripts/local/plugin_resync.py` (three-way merge, never copy).
+Versions: component `project-intake.md` 1.2.0 → **1.3.0** (R2 adds
+behavior; bump is MANUAL until KIT-0111); plugin membership unchanged
+→ **2.1.0 → 2.1.1** (all four version fields; CHANGELOG with explicit
+empty categories). Note: project-intake carries no published
+adaptation (the three adapted components are fd, fd-f5, self-review) —
+expect a clean merge, but let the tool say so.
