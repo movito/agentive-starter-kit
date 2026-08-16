@@ -2,7 +2,7 @@
 name: project-intake
 description: Graduates a prototype into the split pair — plain code repo plus preset-configured planning repo — from a handoff brief and a code folder
 model: claude-sonnet-5
-version: 1.3.0
+version: 1.3.1
 origin: agentive-starter-kit
 last-updated: 2026-08-16
 created-by: "@movito (KIT-0066)"
@@ -227,9 +227,18 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    never a grep that prints matched lines.
 
    ```bash
-   git -C <code-path> add -A
-   git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
+   if ! git -C <code-path> add -A; then
+     echo "BLOCKED: staging failed — the index is not the tree you are importing"
+   else
+     git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
+     # read the exit code below before committing
+   fi
    ```
+
+   The `add` is checked for the same reason Step 4c checks it: a
+   failed or partial stage leaves an index that is not the tree being
+   imported, and a clean scan of *that* index would authorize the
+   import commit anyway.
 
    **Read the exit code — it is inverted from the intuition**: exit 0
    with filenames printed means credential shapes WERE found (stop);
