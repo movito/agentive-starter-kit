@@ -203,7 +203,13 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    tracked files — the same quiet form, filenames only:
    `git -C <code-path> grep -lIE '<the Step 2.3 pattern set>'` (a bare
    `git grep` prints the matched LINES, which is the leak this scan
-   exists to prevent). Deep history
+   exists to prevent; no `--cached` here — this scans tracked files,
+   not an index). **Read its exit code exactly as Step 2.3 does** —
+   0 plus filenames means credential shapes were found and the push
+   does NOT happen, 1 with no output means clean, anything else is a
+   broken scan and fails closed. Filenames-only output makes a hit
+   quiet, not harmless: quiet is the point, the block is still
+   mandatory. Deep history
    scanning is the user's call — offer it as a suggestion
    (`gitleaks`/`trufflehog`) rather than running it yourself.
 2. Ensure ignore rules cover secrets and artifacts — create
@@ -222,7 +228,7 @@ All commands target the code folder explicitly (`git -C <code-path>`).
 
    ```bash
    git -C <code-path> add -A
-   git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Z ]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
+   git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
    ```
 
    **Read the exit code — it is inverted from the intuition**: exit 0
@@ -234,11 +240,20 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    stop, never commit on the strength of a scan that errored. Any hit:
    unstage, tell the user **which files matched** — never the matched
    value — and wait. A tracked `.env` bypasses `.gitignore` —
-   `git rm --cached` it first. **Re-run the scan after any
-   remediation**: removing one offending file does not clear hits in
-   the others, and the post-remediation scan — not the original one —
-   is the pass that authorizes the commit. Only then commit
-   (e.g. "chore: import prototype from Cowork handoff").
+   `git rm --cached` it first.
+
+   **Re-scan after remediation, and scan what you will actually
+   commit.** Removing one offending file does not clear hits in the
+   others, so the original scan can never authorize the commit. But
+   note the trap in re-scanning: `--cached` only sees the INDEX, so a
+   scan run right after unstaging the offender passes vacuously — the
+   secret is still sitting in the working tree, and the next `add`
+   would stage it again behind a green scan. So: remediate in the
+   working tree (remove the value, or ignore the file), stage
+   everything that is going to be committed, and only THEN run the
+   authorizing scan. **Nothing may be staged after it** — if you
+   `add` again, that scan is stale and you owe another one. Only then
+   commit (e.g. "chore: import prototype from Cowork handoff").
 4. **Visibility question** (AskUserQuestion): create the GitHub repo
    **private (default, recommended)** or public? Rationale to present:
    the split pair keeps planning artifacts out of this repo precisely
@@ -419,11 +434,26 @@ repo works directly on main — `docs/CROSS-REPO-PATTERN.md`,
 Conventions). Explicit `git -C` here like everywhere else — the CWD
 rule means a bare `git commit` could hit the wrong repository:
 
+The commit is **gated on the scan in the shell, not in prose** — a
+narrative "check the output first" cannot stop a pasted sequence, and
+the scan's exit 0 means a credential WAS found, so an ungated
+`git commit` on the next line would commit exactly what the scan
+exists to catch:
+
 ```bash
-git -C "<parent>/<name>-planning" add -A
-git -C "<parent>/<name>-planning" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Z ]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
-git -C "<parent>/<name>-planning" commit -m "chore: seed project context and backlog from prototype brief"
+PLANNING="<parent>/<name>-planning"
+git -C "$PLANNING" add -A
+git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
+case $? in
+  0) echo "BLOCKED: credential shapes in the files listed above — do not commit" ;;
+  1) git -C "$PLANNING" commit -m "chore: seed project context and backlog from prototype brief" ;;
+  *) echo "BLOCKED: scan failed to run — it has proven nothing" ;;
+esac
 ```
+
+The `case` is fail-closed on purpose: an `if`/`else` would send both
+"clean" (1) and "scan errored" (128) down the same branch and commit
+on a scan that never ran. Only exit 1 commits.
 
 The scan between add and commit is the same quiet staged-content
 credential scan as Step 2.3 — same pattern set, same filenames-only

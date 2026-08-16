@@ -42,7 +42,7 @@ grounds, reasoning recorded below.
 | Severity | Finding | Disposition |
 |----------|---------|-------------|
 | HIGH | `eyJ[A-Za-z0-9_-]{20,}` is structurally incomplete (no `.` separator) and false-positives on any base64 JSON; tighten to require three JWT segments | **DECLINED.** For a *detection* scan, matching the header segment is sufficient to flag the file — the `.` is needed to parse a JWT, not to spot one. Requiring three segments would narrow detection, i.e. fail open, which is the wrong bias for a credential gate. False positives here cost one user glance at a filename; false negatives cost a leaked credential. The `eyJ` shape is also inherited from the pre-existing prose pattern ("long `eyJ` JWT blobs"), which this change merely made executable. |
-| HIGH | `BEGIN [A-Z ]*PRIVATE KEY` lacks the PEM `-----` delimiters, false-positiving on docs | **DECLINED**, same fail-closed reasoning — and the evaluator itself concedes the cost is "annoying but not a security regression." Note the new pattern is already strictly *broader* than the one it replaces: verified live, `BEGIN [A-Z ]*PRIVATE KEY` matches 3/3 PEM header forms where the old `BEGIN .* PRIVATE KEY` matched 2/3 (it missed bare `BEGIN PRIVATE KEY`). |
+| HIGH | `BEGIN [A-Z ]*PRIVATE KEY` lacks the PEM `-----` delimiters, false-positiving on docs | **DECLINED**, same fail-closed reasoning — the evaluator itself concedes the cost is "annoying but not a security regression." ⚠️ **But see the bot round below**: the claim originally recorded here — that this pattern was "strictly broader" than the `BEGIN .* PRIVATE KEY` it replaced — was WRONG, and CodeRabbit caught it. Corrected there. |
 | HIGH | `git grep --cached` on an empty index exits 1, indistinguishable from clean | **DECLINED** — self-limiting. Nothing staged means `git commit` fails on its own, so the "scan passed but nothing was committed" state cannot ship a credential. The evaluator concedes an empty commit is harmless. |
 | MEDIUM | Pattern set duplicated across two sites, manual sync is fragile | **DECLINED** — already mitigated in-document with an explicit "change it in both" instruction, and the two literals are byte-identical (verified by grep count = 2). A markdown agent body has no DRY mechanism; the suggested line-number cross-references would themselves drift. |
 | MEDIUM | A failed `cd` short-circuits `&&` so the doctor never runs; the fail-closed posture should cover it | **ALREADY ADDRESSED** in `c8ee531` (the evaluator read the pre-fix hunk). Wording sharpened from "wrong directory" to "a `cd` that failed" for precision. |
@@ -68,3 +68,54 @@ reasoned about, since displayed commands are contracts:
 
 This is what established the inverted-exit reading now documented at
 both scan sites.
+
+## Bot round 1 — PR #135 (BugBot 3 + CodeRabbit 3)
+
+Bot truth taken from the `reviewThreads` GraphQL query with
+`hasNextPage` fail-closed counting, **not** the check statuses: the
+Cursor BugBot check reported `skipping` while its three threads were
+already posted — another face of the lying-status class.
+
+All six threads accepted. Two of CodeRabbit's were convergent with
+BugBot's, so the substantive findings are four:
+
+| # | Bot(s) | Finding | Fix |
+|---|--------|---------|-----|
+| 1 | BugBot High + CodeRabbit Major | Step 4c ran `add` → scan → `commit` as one pasteable block with no gate. Under the inverted reading, a hit exits 0 — which *looks* like success — so a faithful run commits the staged secret. | Replaced the block with a shell-level `case $?` gate. **Prose cannot stop a pasted sequence** (CodeRabbit's phrasing, and it is right); the gate now lives in the shell. `case` not `if`: an `if`/`else` sends both "clean" (1) and "scan errored" (128) down the same branch and commits on a scan that never ran. |
+| 2 | BugBot High | The Step 2.1 pre-existing-repo scan was switched to `-l` but never got the inverted-exit / fail-closed rules, so a hit could read as success and the push proceed. | Gave it the exit contract by explicit reference to Step 2.3, plus a note that it takes no `--cached` (it scans tracked files, not an index). |
+| 3 | BugBot Medium + CodeRabbit Major | The "re-scan after remediation" instruction — added in evaluator round 2 — could itself false-pass: `--cached` sees only the index, so a scan run right after *unstaging* the offender passes vacuously while the secret sits in the working tree, ready to be re-`add`ed behind a green scan. | Rewrote the sequence to: remediate in the working tree → stage everything to be committed → scan → commit, with "nothing may be staged after the authorizing scan". |
+| 4 | CodeRabbit Minor | The review record's claim that the new PEM pattern was "strictly broader" than the old one was **false**. | Correct, and it exposed a real regression — see below. |
+
+### Finding 4 corrected a regression, not just a claim
+
+CodeRabbit's point: `BEGIN .* PRIVATE KEY` also matched labels with
+lowercase or punctuation, which `[A-Z ]*` rejects. Neither pattern was
+a superset of the other — so the change had *narrowed* coverage for
+those labels while widening it for the bare form.
+
+Re-tested over an 8-fixture PEM set (bare, RSA, OPENSSH, EC, DSA,
+ENCRYPTED, lowercase `rsa`, `X-509`):
+
+| Pattern | Matches |
+|---------|---------|
+| `BEGIN .* PRIVATE KEY` (original) | 7/8 — misses bare `BEGIN PRIVATE KEY` |
+| `BEGIN [A-Z ]*PRIVATE KEY` (this PR, round 1) | **6/8** — misses lowercase `rsa` and `X-509` |
+| `BEGIN [A-Za-z0-9 -]*PRIVATE KEY` (adopted) | **8/8** |
+
+Both scan sites now carry the 8/8 form, and the "strictly broader"
+claim above is retracted — the adopted pattern is a genuine superset
+of both predecessors, which the original was not.
+
+### Gate verified live
+
+The `case` gate was executed against all three exit classes rather
+than assumed, and the first run **found a bug in the test, which is
+how the fixture caught a real subtlety**: a directory nested inside
+another git repo returns exit 1 (empty index for that path), not 128.
+Against a true non-repo:
+
+| Case | Result |
+|------|--------|
+| staged secret present (exit 0) | BLOCKED (credential found) |
+| clean index (exit 1) | COMMIT would run |
+| not a git repository (exit 128) | BLOCKED (scan failed to run) |
