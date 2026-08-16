@@ -175,6 +175,25 @@ defensive:
       - "KIT-0069 class greps found ~15% more sites than the audit's 92-finding list (.env.template, bare ./project help form, filename-less prose mentions)"
       - "…and still missed 6 sibling instances that only file-reads/tree-verification caught (6 regressions, all one failure mode)"
     caught_by: "KIT-0069 retro (What Worked 1 + Surprising 5); planner adopted 2026-07-27"
+  harden_twins_by_copy_not_rederivation:
+    rule: >
+      When you harden one site of a duplicated construct, sweep the
+      twins in the SAME commit — and port the hardened form
+      VERBATIM rather than re-deriving an equivalent. Re-derivation
+      is how asymmetry creeps back: the re-derived twin looks
+      right, reads right in review, and quietly drops a property
+      the original had for a reason nobody restates. This is
+      fix_by_class_not_instance applied to a construct rather than
+      a token, plus the clause that class-sweeping alone does not
+      supply — sweeping finds the twin, copying is what makes it
+      actually equivalent. Verify by asserting the twins agree
+      OUTPUT-for-OUTPUT on identical inputs, not by reading them
+      side by side.
+    examples:
+      - "KIT-0113: five consecutive bot rounds, each finding created by the previous fix — leak → ungated commit → unchecked add -A → wrong exit status → inverted exit status"
+      - "The Step 2.3 gate was re-derived from Step 4c's rather than copied; it dropped the `case $?`, so the block inherited git grep's INVERTED status and returned 0 (success) on a credential hit, 1 (failure) on a clean index"
+      - "The re-derived twin had already been reviewed twice by bots and once by the author before the inversion was measured — reading them side by side did not surface it; running both and diffing the status did"
+    caught_by: "KIT-0113 (planner gate-check on PR #136, 2026-08-16); sibling of fix_by_class_not_instance"
   evidence_files_append_only:
     rule: >
       Evidence records (audit records, retros, review records) are
