@@ -234,8 +234,11 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    stop, never commit on the strength of a scan that errored. Any hit:
    unstage, tell the user **which files matched** — never the matched
    value — and wait. A tracked `.env` bypasses `.gitignore` —
-   `git rm --cached` it first. Only then commit (e.g. "chore: import
-   prototype from Cowork handoff").
+   `git rm --cached` it first. **Re-run the scan after any
+   remediation**: removing one offending file does not clear hits in
+   the others, and the post-remediation scan — not the original one —
+   is the pass that authorizes the commit. Only then commit
+   (e.g. "chore: import prototype from Cowork handoff").
 4. **Visibility question** (AskUserQuestion): create the GitHub repo
    **private (default, recommended)** or public? Rationale to present:
    the split pair keeps planning artifacts out of this repo precisely
@@ -458,9 +461,11 @@ binding rules:
   root at all. Those are different situations: the first is a repo
   that needs fixing, the second is a re-run that never happened. Read
   the `DOCTOR:` verdict lines to tell them apart. A re-run that could
-  not execute — no `agentive` CLI, wrong directory, driver error — is
-  **not** a pass: say so as a ✗ with the remedy command, and treat the
-  launch gate as unmet.
+  not execute — no `agentive` CLI, a `cd` that failed, a driver error
+  — is **not** a pass: say so as a ✗ with the remedy command, and
+  treat the launch gate as unmet. WARNs do not block: a warnings-only
+  re-run (exit 2) still prints the launch command, with the WARNs
+  listed as informational rather than as ✗ items.
 - **Every ✓ line is a claim verified at print time** — check the fact
   (the repo exists, the push landed, the value is set) immediately
   before printing it, never assume it from "that step ran earlier".
