@@ -2,9 +2,9 @@
 name: project-intake
 description: Graduates a prototype into the split pair — plain code repo plus preset-configured planning repo — from a handoff brief and a code folder
 model: claude-sonnet-5
-version: 1.2.0
+version: 1.3.0
 origin: agentive-starter-kit
-last-updated: 2026-08-14
+last-updated: 2026-08-16
 created-by: "@movito (KIT-0066)"
 tools:
   - Read
@@ -200,8 +200,16 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    coverage (step 2's check — `.env` and key files must be ignored
    and untracked; a tracked `.env` blocks the push until resolved
    with the user) and run the Step 2.3 credential scan over its
-   tracked files (`git -C <code-path> grep` the same credential
-   patterns listed there). Deep history
+   tracked files — the same quiet form, filenames only:
+   `git -C <code-path> grep -lIE '<the Step 2.3 pattern set>'` (a bare
+   `git grep` prints the matched LINES, which is the leak this scan
+   exists to prevent; no `--cached` here — this scans tracked files,
+   not an index). **Read its exit code exactly as Step 2.3 does** —
+   0 plus filenames means credential shapes were found and the push
+   does NOT happen, 1 with no output means clean, anything else is a
+   broken scan and fails closed. Filenames-only output makes a hit
+   quiet, not harmless: quiet is the point, the block is still
+   mandatory. Deep history
    scanning is the user's call — offer it as a suggestion
    (`gitleaks`/`trufflehog`) rather than running it yourself.
 2. Ensure ignore rules cover secrets and artifacts — create
@@ -212,12 +220,40 @@ All commands target the code folder explicitly (`git -C <code-path>`).
 3. Stage and scan, then commit. `git -C <code-path> add -A` is
    acceptable here (a fresh import, not selective feature work). Then
    a **mandatory secret scan of the staged files** before the commit
-   — not optional, not a vibe check: grep the staged content for
-   common credential shapes (`sk-`, `ghp_`, `github_pat_`, `xoxb-`,
-   `AKIA`, `BEGIN .* PRIVATE KEY`, long `eyJ` JWT blobs). Any hit:
-   unstage, tell the user, and wait. A tracked `.env` bypasses
-   `.gitignore` — `git rm --cached` it first. Only then commit
-   (e.g. "chore: import prototype from Cowork handoff").
+   — not optional, not a vibe check. Run it as a **quiet scan**: the
+   scan must never put staged bytes in front of the user, because a
+   scan that echoes what it found leaks the credential BEFORE it
+   rejects it. `-l` reports FILENAMES ONLY; never `git diff --cached`,
+   never a grep that prints matched lines.
+
+   ```bash
+   git -C <code-path> add -A
+   git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
+   ```
+
+   **Read the exit code — it is inverted from the intuition**: exit 0
+   with filenames printed means credential shapes WERE found (stop);
+   exit 1 with no output means the index is clean (proceed). **Any
+   other exit is a broken scan, not a pass** — `git` exits 128 for a
+   bad path, a missing repo, or a permission error, and a scan that
+   did not run has proven nothing. Fail closed: report the error and
+   stop, never commit on the strength of a scan that errored. Any hit:
+   unstage, tell the user **which files matched** — never the matched
+   value — and wait. A tracked `.env` bypasses `.gitignore` —
+   `git rm --cached` it first.
+
+   **Re-scan after remediation, and scan what you will actually
+   commit.** Removing one offending file does not clear hits in the
+   others, so the original scan can never authorize the commit. But
+   note the trap in re-scanning: `--cached` only sees the INDEX, so a
+   scan run right after unstaging the offender passes vacuously — the
+   secret is still sitting in the working tree, and the next `add`
+   would stage it again behind a green scan. So: remediate in the
+   working tree (remove the value, or ignore the file), stage
+   everything that is going to be committed, and only THEN run the
+   authorizing scan. **Nothing may be staged after it** — if you
+   `add` again, that scan is stale and you owe another one. Only then
+   commit (e.g. "chore: import prototype from Cowork handoff").
 4. **Visibility question** (AskUserQuestion): create the GitHub repo
    **private (default, recommended)** or public? Rationale to present:
    the split pair keeps planning artifacts out of this repo precisely
@@ -398,15 +434,41 @@ repo works directly on main — `docs/CROSS-REPO-PATTERN.md`,
 Conventions). Explicit `git -C` here like everywhere else — the CWD
 rule means a bare `git commit` could hit the wrong repository:
 
+The commit is **gated on the scan in the shell, not in prose** — a
+narrative "check the output first" cannot stop a pasted sequence, and
+the scan's exit 0 means a credential WAS found, so an ungated
+`git commit` on the next line would commit exactly what the scan
+exists to catch:
+
 ```bash
-git -C "<parent>/<name>-planning" add -A
-git -C "<parent>/<name>-planning" diff --cached   # scan this output
-git -C "<parent>/<name>-planning" commit -m "chore: seed project context and backlog from prototype brief"
+PLANNING="<parent>/<name>-planning"
+if ! git -C "$PLANNING" add -A; then
+  echo "BLOCKED: staging failed — the index is not what you think, do not commit"
+else
+  git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
+  case $? in
+    0) echo "BLOCKED: credential shapes in the files listed above — do not commit" ;;
+    1) git -C "$PLANNING" commit -m "chore: seed project context and backlog from prototype brief" ;;
+    *) echo "BLOCKED: scan failed to run — it has proven nothing" ;;
+  esac
+fi
 ```
 
-The scan between add and commit is the same staged-content credential
-scan as Step 2.3 — the seeded content is brief-derived, and a brief
-that leaked a value must not land in the planning repo either.
+Every abort path here is deliberate. The `case` is fail-closed
+because an `if`/`else` on the scan would send both "clean" (1) and
+"scan errored" (128) down the same branch and commit on a scan that
+never ran — only exit 1 commits. The `add` is checked for the
+adjacent reason: a partially-failed stage leaves an index that is not
+the tree you meant to seed, and a scan of it would authorize an
+incomplete commit while looking green.
+
+The scan between add and commit is the same quiet staged-content
+credential scan as Step 2.3 — same pattern set, same filenames-only
+output, same inverted exit reading (0 + filenames = stop; 1 + silence
+= clean; anything else = broken scan, fail closed), same response to a
+hit (unstage, name the files not the value, wait). The seeded content is brief-derived, and a brief that
+leaked a value must not land in the planning repo either. Keep the two
+sites in step: if you ever change the pattern set, change it in both.
 
 ### Step 5: Finish loudly — ONE verified checklist, ONE command
 
@@ -414,19 +476,56 @@ The completion summary is a single checklist ending in a single
 command (format operator-specified, KIT-0101/KIT-0100 F10). Its
 binding rules:
 
+- **Re-run the doctor before you print anything.** The door's tail was
+  captured BEFORE Step 4 seeded the prefix and the backlog, so it can
+  still WARN about things the seeding has since cured (the empty
+  `TASK_PREFIX`, KIT-0084). Run the doctor again, after the Step 4c
+  seeding commit, **with the planning repo as the working directory**:
+
+  ```bash
+  cd "<parent>/<name>-planning" && agentive doctor
+  ```
+
+  The working directory is load-bearing: the CLI discovers the project
+  from the CWD and refuses when it finds none, so this cannot be run
+  from elsewhere via `--root=`. This re-run is **repo-state truth** and
+  it is what the ✓/✗ lines and the launch-line gate below consume.
+
+  **Gate on the doctor's OUTPUT, not on its exit code alone.** Exit 1
+  is overloaded — the doctor's own contract uses it for "at least one
+  check FAILed" (0 = all PASS/SKIP, 2 = warnings only, 3 = driver or
+  usage error), but the CLI also exits 1 when it cannot find a project
+  root at all. Those are different situations: the first is a repo
+  that needs fixing, the second is a re-run that never happened. Read
+  the `DOCTOR:` verdict lines to tell them apart. A re-run that could
+  not execute — no `agentive` CLI, a `cd` that failed, a driver error
+  — is **not** a pass: say so as a ✗ with the remedy command, and
+  treat the launch gate as unmet. WARNs do not block: a warnings-only
+  re-run (exit 2) still prints the launch command, with the WARNs
+  listed as informational rather than as ✗ items.
 - **Every ✓ line is a claim verified at print time** — check the fact
   (the repo exists, the push landed, the value is set) immediately
   before printing it, never assume it from "that step ran earlier".
 - **Anything outstanding appears IN the same list as ✗** with the
   exact remedy command — including everything the door's tail left
-  open (a missing `agentive` CLI, an uninstalled plugin, doctor
-  FAILs). "Done" and "still needed" must never contradict each other
+  open (a missing `agentive` CLI, an uninstalled plugin) plus every
+  FAIL still standing in the post-seeding re-run. "Done" and "still
+  needed" must never contradict each other
   across two messages: this list is the only completion statement.
-- **Relay the door's doctor tail verbatim** below the checklist —
-  never summarize it away.
-- **The closing launch command prints ONLY when the doctor reported
-  no FAILs** (and the `agentive` CLI exists — without it the doctor
-  could not run at all). It carries its opening prompt: a session
+- **Relay BOTH doctor outputs verbatim** below the checklist, each
+  under its own label — never summarize either away, and never merge
+  them into one block. The door's tail is **install truth** (its exit
+  contract is what says the install succeeded); the post-seeding
+  re-run is **repo-state truth** (what the repo looks like now that
+  Step 4 has filled it). They can legitimately disagree — a WARN in
+  the door's tail that the re-run no longer reports is the seeding
+  working, not a contradiction — which is exactly why the labels
+  matter.
+- **The closing launch command prints ONLY when the POST-SEEDING
+  re-run reported no FAILs** (and the `agentive` CLI exists — without
+  it the re-run could not happen at all, so the gate is unmet). The
+  door's tail never gates this line: it describes a repo state that
+  Step 4 has already moved past. It carries its opening prompt: a session
   cannot speak first, so a bare `claude --agent planner` opens an
   idle prompt that looks broken (KIT-0075; reproduced live under
   native `--agent`, 2026-08-11). When there ARE failures, the last
@@ -447,8 +546,11 @@ Format (✓/✗ per what actually happened; every line verified):
 ✓ Verified the agentive-workflow plugin
 ✗ <anything outstanding> — run: <exact remedy command>
 
-Doctor tail (verbatim):
-<the door's doctor output>
+Doctor tail — the door's install verdict, verbatim:
+<the door's doctor output, as captured at Step 3>
+
+Doctor re-run — planning repo after seeding, verbatim:
+<the output of `agentive doctor` from Step 5's re-run>
 
 You can now start working on <name>. Open a new terminal tab in
 <parent>/<name>-planning and paste:
@@ -456,7 +558,8 @@ You can now start working on <name>. Open a new terminal tab in
   claude --agent planner "Triage the backlog and recommend what to start."
 ```
 
-With doctor FAILs (or no CLI to run it), the closing block is instead:
+With FAILs in the post-seeding re-run (or no CLI to run it), the
+closing block is instead:
 
 ```text
 Resolve the ✗ items above, re-run `agentive doctor` in
@@ -504,4 +607,8 @@ fixed at session launch — this session cannot become the planner.)
 - **Never print, stage, or commit secret values** — names only; the
   door's `env-source` handling owns key material end-to-end
 - **Never re-derive install state** — the door's exit code and doctor
-  tail are the only truth you report
+  tail are the only truth you report about whether the INSTALL
+  succeeded. Re-running `agentive doctor` after the Step 4c seeding
+  commit is not an exception to this: it reports repo state after your
+  own seeding, it is relayed under its own label alongside the door's
+  tail (never in place of it), and it never revises the door's verdict

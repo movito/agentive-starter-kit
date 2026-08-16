@@ -1,6 +1,6 @@
 # KIT-0113: project-intake hardening — quiet credential scan + post-seeding doctor
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: medium (one Critical-severity bot finding; contained — operator's own transcript)
 **Type**: Canon fix (`.claude/agents/project-intake.md`)
 **Estimated Effort**: ~1 h
