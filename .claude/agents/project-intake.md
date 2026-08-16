@@ -2,7 +2,7 @@
 name: project-intake
 description: Graduates a prototype into the split pair — plain code repo plus preset-configured planning repo — from a handoff brief and a code folder
 model: claude-sonnet-5
-version: 1.3.0
+version: 1.3.1
 origin: agentive-starter-kit
 last-updated: 2026-08-16
 created-by: "@movito (KIT-0066)"
@@ -227,9 +227,43 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    never a grep that prints matched lines.
 
    ```bash
-   git -C <code-path> add -A
-   git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
+   if ! git -C <code-path> add -A; then
+     echo "BLOCKED: staging failed — the index is not the tree you are importing" >&2
+     false
+   else
+     scan=0
+     git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}' || scan=$?
+     case $scan in
+       0) echo "BLOCKED: credential shapes in the files listed above — do not commit" >&2; false ;;
+       1) true ;;  # clean — proceed to the commit described below
+       *) echo "BLOCKED: scan failed to run — it has proven nothing" >&2; false ;;
+     esac
+   fi
    ```
+
+   The `add` is checked for the same reason Step 4c checks it: a
+   failed or partial stage leaves an index that is not the tree being
+   imported, and a clean scan of *that* index would authorize the
+   import commit anyway.
+
+   **Do not "simplify" `|| scan=$?` into a bare `grep` followed by
+   `case $?`.** They are equivalent only without `set -e`. Under
+   `set -e` a bare `grep` returning 1 — which is the CLEAN result —
+   aborts the shell before `case` ever runs, so the scan passing is
+   what kills the commit. The `|| scan=$?` form makes the non-zero
+   status part of a compound command, which `set -e` ignores. This
+   was simplified away once and had to be restored (KIT-0113).
+
+   **This is Step 4c's gate, copied — not a re-derivation of it.** The
+   `case` is what makes the block's own exit status mean something:
+   without it the block ends on the `grep`, so it inherits the grep's
+   INVERTED status and reports 0 (success) when a credential was found
+   and 1 (failure) when the index is clean. Every blocked branch ends
+   in `false` for the same reason — a branch whose last command is
+   `echo` returns 0, so the block would announce BLOCKED and report OK
+   to any wrapper or `set -e` script. `false` rather than `exit 1`
+   because these snippets get pasted into live shells, where `exit`
+   would close the operator's session.
 
    **Read the exit code — it is inverted from the intuition**: exit 0
    with filenames printed means credential shapes WERE found (stop);
@@ -443,13 +477,15 @@ exists to catch:
 ```bash
 PLANNING="<parent>/<name>-planning"
 if ! git -C "$PLANNING" add -A; then
-  echo "BLOCKED: staging failed — the index is not what you think, do not commit"
+  echo "BLOCKED: staging failed — the index is not what you think, do not commit" >&2
+  false
 else
-  git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
-  case $? in
-    0) echo "BLOCKED: credential shapes in the files listed above — do not commit" ;;
+  scan=0
+  git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}' || scan=$?
+  case $scan in
+    0) echo "BLOCKED: credential shapes in the files listed above — do not commit" >&2; false ;;
     1) git -C "$PLANNING" commit -m "chore: seed project context and backlog from prototype brief" ;;
-    *) echo "BLOCKED: scan failed to run — it has proven nothing" ;;
+    *) echo "BLOCKED: scan failed to run — it has proven nothing" >&2; false ;;
   esac
 fi
 ```
@@ -460,7 +496,10 @@ because an `if`/`else` on the scan would send both "clean" (1) and
 never ran — only exit 1 commits. The `add` is checked for the
 adjacent reason: a partially-failed stage leaves an index that is not
 the tree you meant to seed, and a scan of it would authorize an
-incomplete commit while looking green.
+incomplete commit while looking green. And **every blocked branch ends
+in `false`**, exactly as in Step 2.3: without it the branch's last
+command is `echo`, the block returns 0, and a wrapper reads "BLOCKED"
+as success.
 
 The scan between add and commit is the same quiet staged-content
 credential scan as Step 2.3 — same pattern set, same filenames-only
