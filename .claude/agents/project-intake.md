@@ -228,7 +228,8 @@ All commands target the code folder explicitly (`git -C <code-path>`).
 
    ```bash
    if ! git -C <code-path> add -A; then
-     echo "BLOCKED: staging failed — the index is not the tree you are importing"
+     echo "BLOCKED: staging failed — the index is not the tree you are importing" >&2
+     false
    else
      git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
      # read the exit code below before committing
@@ -239,6 +240,13 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    failed or partial stage leaves an index that is not the tree being
    imported, and a clean scan of *that* index would authorize the
    import commit anyway.
+
+   **Every blocked branch ends in `false`** so the block itself exits
+   non-zero. Without it the branch's last command is `echo`, the whole
+   `if` returns 0, and any wrapper or `set -e` script reads a refusal
+   as success — the block would announce BLOCKED and report OK. `false`
+   rather than `exit 1` because these snippets get pasted into live
+   shells, and `exit` would close the operator's session.
 
    **Read the exit code — it is inverted from the intuition**: exit 0
    with filenames printed means credential shapes WERE found (stop);
@@ -452,13 +460,14 @@ exists to catch:
 ```bash
 PLANNING="<parent>/<name>-planning"
 if ! git -C "$PLANNING" add -A; then
-  echo "BLOCKED: staging failed — the index is not what you think, do not commit"
+  echo "BLOCKED: staging failed — the index is not what you think, do not commit" >&2
+  false
 else
   git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
   case $? in
-    0) echo "BLOCKED: credential shapes in the files listed above — do not commit" ;;
+    0) echo "BLOCKED: credential shapes in the files listed above — do not commit" >&2; false ;;
     1) git -C "$PLANNING" commit -m "chore: seed project context and backlog from prototype brief" ;;
-    *) echo "BLOCKED: scan failed to run — it has proven nothing" ;;
+    *) echo "BLOCKED: scan failed to run — it has proven nothing" >&2; false ;;
   esac
 fi
 ```
@@ -469,7 +478,10 @@ because an `if`/`else` on the scan would send both "clean" (1) and
 never ran — only exit 1 commits. The `add` is checked for the
 adjacent reason: a partially-failed stage leaves an index that is not
 the tree you meant to seed, and a scan of it would authorize an
-incomplete commit while looking green.
+incomplete commit while looking green. And **every blocked branch ends
+in `false`**, exactly as in Step 2.3: without it the branch's last
+command is `echo`, the block returns 0, and a wrapper reads "BLOCKED"
+as success.
 
 The scan between add and commit is the same quiet staged-content
 credential scan as Step 2.3 — same pattern set, same filenames-only
