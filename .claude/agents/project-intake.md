@@ -227,7 +227,11 @@ All commands target the code folder explicitly (`git -C <code-path>`).
 
    **Read the exit code — it is inverted from the intuition**: exit 0
    with filenames printed means credential shapes WERE found (stop);
-   exit 1 with no output means the index is clean (proceed). Any hit:
+   exit 1 with no output means the index is clean (proceed). **Any
+   other exit is a broken scan, not a pass** — `git` exits 128 for a
+   bad path, a missing repo, or a permission error, and a scan that
+   did not run has proven nothing. Fail closed: report the error and
+   stop, never commit on the strength of a scan that errored. Any hit:
    unstage, tell the user **which files matched** — never the matched
    value — and wait. A tracked `.env` bypasses `.gitignore` —
    `git rm --cached` it first. Only then commit (e.g. "chore: import
@@ -421,8 +425,8 @@ git -C "<parent>/<name>-planning" commit -m "chore: seed project context and bac
 The scan between add and commit is the same quiet staged-content
 credential scan as Step 2.3 — same pattern set, same filenames-only
 output, same inverted exit reading (0 + filenames = stop; 1 + silence
-= clean), same response to a hit (unstage, name the files not the
-value, wait). The seeded content is brief-derived, and a brief that
+= clean; anything else = broken scan, fail closed), same response to a
+hit (unstage, name the files not the value, wait). The seeded content is brief-derived, and a brief that
 leaked a value must not land in the planning repo either. Keep the two
 sites in step: if you ever change the pattern set, change it in both.
 
@@ -443,11 +447,20 @@ binding rules:
   ```
 
   The working directory is load-bearing: the CLI discovers the project
-  from the CWD and exits 1 when it finds none, so this cannot be run
+  from the CWD and refuses when it finds none, so this cannot be run
   from elsewhere via `--root=`. This re-run is **repo-state truth** and
-  it is what the ✓/✗ lines and the launch-line gate below consume. If
-  the `agentive` CLI does not exist, the re-run cannot happen — say so
-  as a ✗ with the install command, and treat the gate as unmet.
+  it is what the ✓/✗ lines and the launch-line gate below consume.
+
+  **Gate on the doctor's OUTPUT, not on its exit code alone.** Exit 1
+  is overloaded — the doctor's own contract uses it for "at least one
+  check FAILed" (0 = all PASS/SKIP, 2 = warnings only, 3 = driver or
+  usage error), but the CLI also exits 1 when it cannot find a project
+  root at all. Those are different situations: the first is a repo
+  that needs fixing, the second is a re-run that never happened. Read
+  the `DOCTOR:` verdict lines to tell them apart. A re-run that could
+  not execute — no `agentive` CLI, wrong directory, driver error — is
+  **not** a pass: say so as a ✗ with the remedy command, and treat the
+  launch gate as unmet.
 - **Every ✓ line is a claim verified at print time** — check the fact
   (the repo exists, the push landed, the value is set) immediately
   before printing it, never assume it from "that step ran earlier".
