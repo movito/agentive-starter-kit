@@ -190,16 +190,20 @@ defensive:
       SUGGESTED form: "simplify away the part that looks
       redundant" is re-derivation wearing a tidier hat, and the
       dropped part is usually load-bearing under a condition the
-      suggestion never had to name. Verify by asserting the twins
-      agree OUTPUT-for-OUTPUT on identical inputs, across every
-      ENVIRONMENT the snippet can run in — not by reading them side
-      by side.
+      suggestion never had to name. Verify each twin in an
+      ISOLATED FIXTURE and compare exit status, stdout, stderr, AND
+      the resulting state it was supposed to protect — for
+      identical inputs, across every ENVIRONMENT the snippet can
+      run in. Status parity alone is not equivalence: two gates can
+      agree on every exit code while one of them still commits.
+      Never rely on side-by-side reading.
     examples:
       - "KIT-0113: five consecutive bot rounds, each finding created by the previous fix — leak → ungated commit → unchecked add -A → wrong exit status → inverted exit status"
       - "The Step 2.3 gate was re-derived from Step 4c's rather than copied; it dropped the `case $?`, so the block inherited git grep's INVERTED status and returned 0 (success) on a credential hit, 1 (failure) on a clean index"
       - "The re-derived twin had already been reviewed twice by bots and once by the author before the inversion was measured — reading them side by side did not surface it; running both and diffing the status did"
       - "Second instance, same task: a reviewer's `|| scan=$?` capture was declined as 'a moving part without a job' and simplified to a bare command + `case $?`. Equivalent — except under `set -e`, where the CLEAN exit (1) aborts the shell before `case` runs, so the scan PASSING killed the commit. The reviewer re-found it two PRs later."
       - "Test gap that hid it: the `set -e` check exercised only the ABORT paths, where aborting was the wanted outcome — never the PROCEED path, which was the one breaking. Assert the happy path under the hostile environment too"
+      - "The status-parity test itself was insufficient and a reviewer said so: it stubbed the commit out, so it could not have caught a gate that returned the right code and committed anyway. Re-run against real fixtures — no commit on a hit, commit on clean, secret absent from history, offending file left staged for remediation"
     caught_by: "KIT-0113 (planner gate-check on PR #136, 2026-08-16); sibling of fix_by_class_not_instance"
   evidence_files_append_only:
     rule: >
