@@ -231,8 +231,9 @@ All commands target the code folder explicitly (`git -C <code-path>`).
      echo "BLOCKED: staging failed — the index is not the tree you are importing" >&2
      false
    else
-     git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
-     case $? in
+     scan=0
+     git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}' || scan=$?
+     case $scan in
        0) echo "BLOCKED: credential shapes in the files listed above — do not commit" >&2; false ;;
        1) true ;;  # clean — proceed to the commit described below
        *) echo "BLOCKED: scan failed to run — it has proven nothing" >&2; false ;;
@@ -245,8 +246,16 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    imported, and a clean scan of *that* index would authorize the
    import commit anyway.
 
+   **Do not "simplify" `|| scan=$?` into a bare `grep` followed by
+   `case $?`.** They are equivalent only without `set -e`. Under
+   `set -e` a bare `grep` returning 1 — which is the CLEAN result —
+   aborts the shell before `case` ever runs, so the scan passing is
+   what kills the commit. The `|| scan=$?` form makes the non-zero
+   status part of a compound command, which `set -e` ignores. This
+   was simplified away once and had to be restored (KIT-0113).
+
    **This is Step 4c's gate, copied — not a re-derivation of it.** The
-   `case $?` is what makes the block's own exit status mean something:
+   `case` is what makes the block's own exit status mean something:
    without it the block ends on the `grep`, so it inherits the grep's
    INVERTED status and reports 0 (success) when a credential was found
    and 1 (failure) when the index is clean. Every blocked branch ends
@@ -471,8 +480,9 @@ if ! git -C "$PLANNING" add -A; then
   echo "BLOCKED: staging failed — the index is not what you think, do not commit" >&2
   false
 else
-  git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
-  case $? in
+  scan=0
+  git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}' || scan=$?
+  case $scan in
     0) echo "BLOCKED: credential shapes in the files listed above — do not commit" >&2; false ;;
     1) git -C "$PLANNING" commit -m "chore: seed project context and backlog from prototype brief" ;;
     *) echo "BLOCKED: scan failed to run — it has proven nothing" >&2; false ;;
