@@ -232,7 +232,11 @@ All commands target the code folder explicitly (`git -C <code-path>`).
      false
    else
      git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
-     # read the exit code below before committing
+     case $? in
+       0) echo "BLOCKED: credential shapes in the files listed above — do not commit" >&2; false ;;
+       1) true ;;  # clean — proceed to the commit described below
+       *) echo "BLOCKED: scan failed to run — it has proven nothing" >&2; false ;;
+     esac
    fi
    ```
 
@@ -241,12 +245,16 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    imported, and a clean scan of *that* index would authorize the
    import commit anyway.
 
-   **Every blocked branch ends in `false`** so the block itself exits
-   non-zero. Without it the branch's last command is `echo`, the whole
-   `if` returns 0, and any wrapper or `set -e` script reads a refusal
-   as success — the block would announce BLOCKED and report OK. `false`
-   rather than `exit 1` because these snippets get pasted into live
-   shells, and `exit` would close the operator's session.
+   **This is Step 4c's gate, copied — not a re-derivation of it.** The
+   `case $?` is what makes the block's own exit status mean something:
+   without it the block ends on the `grep`, so it inherits the grep's
+   INVERTED status and reports 0 (success) when a credential was found
+   and 1 (failure) when the index is clean. Every blocked branch ends
+   in `false` for the same reason — a branch whose last command is
+   `echo` returns 0, so the block would announce BLOCKED and report OK
+   to any wrapper or `set -e` script. `false` rather than `exit 1`
+   because these snippets get pasted into live shells, where `exit`
+   would close the operator's session.
 
    **Read the exit code — it is inverted from the intuition**: exit 0
    with filenames printed means credential shapes WERE found (stop);
