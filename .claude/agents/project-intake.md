@@ -2,7 +2,7 @@
 name: project-intake
 description: Graduates a prototype into the split pair — plain code repo plus preset-configured planning repo — from a handoff brief and a code folder
 model: claude-sonnet-5
-version: 1.3.1
+version: 1.3.2
 origin: agentive-starter-kit
 last-updated: 2026-08-16
 created-by: "@movito (KIT-0066)"
@@ -201,14 +201,17 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    and untracked; a tracked `.env` blocks the push until resolved
    with the user) and run the Step 2.3 credential scan over its
    tracked files — the same quiet form, filenames only:
-   `git -C <code-path> grep -lIE '<the Step 2.3 pattern set>'` (a bare
+   `git -C <code-path> grep -laE '<the Step 2.3 pattern set>'` (a bare
    `git grep` prints the matched LINES, which is the leak this scan
    exists to prevent; no `--cached` here — this scans tracked files,
-   not an index). **Read its exit code exactly as Step 2.3 does** —
-   0 plus filenames means credential shapes were found and the push
-   does NOT happen, 1 with no output means clean, anything else is a
-   broken scan and fails closed. Filenames-only output makes a hit
-   quiet, not harmless: quiet is the point, the block is still
+   not an index). **This one is a bare `grep`, not a wrapped gate, so
+   you read the RAW inverted polarity here**: 0 plus filenames means
+   credential shapes were found and the push does NOT happen, 1 with
+   no output means clean, anything else is a broken scan and fails
+   closed. (Step 2.3 and Step 4c wrap the same scan in a `case` that
+   normalizes this to 0 = clean — do not carry that reading over to
+   this line, or you will invert it.) Filenames-only output makes a
+   hit quiet, not harmless: quiet is the point, the block is still
    mandatory. Deep history
    scanning is the user's call — offer it as a suggestion
    (`gitleaks`/`trufflehog`) rather than running it yourself.
@@ -232,7 +235,7 @@ All commands target the code folder explicitly (`git -C <code-path>`).
      false
    else
      scan=0
-     git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}' || scan=$?
+     git -C <code-path> grep -laE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}' || scan=$?
      case $scan in
        0) echo "BLOCKED: credential shapes in the files listed above — do not commit" >&2; false ;;
        1) true ;;  # clean — proceed to the commit described below
@@ -265,16 +268,27 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    because these snippets get pasted into live shells, where `exit`
    would close the operator's session.
 
-   **Read the exit code — it is inverted from the intuition**: exit 0
-   with filenames printed means credential shapes WERE found (stop);
-   exit 1 with no output means the index is clean (proceed). **Any
-   other exit is a broken scan, not a pass** — `git` exits 128 for a
-   bad path, a missing repo, or a permission error, and a scan that
-   did not run has proven nothing. Fail closed: report the error and
-   stop, never commit on the strength of a scan that errored. Any hit:
-   unstage, tell the user **which files matched** — never the matched
-   value — and wait. A tracked `.env` bypasses `.gitignore` —
-   `git rm --cached` it first.
+   **Two different exit codes live here — do not confuse them.**
+
+   - **The raw `git grep`** has INVERTED polarity: 0 means credential
+     shapes were found, 1 means the index is clean, anything else
+     (128 for a bad path, missing repo, permission error) means the
+     scan did not run and has proven nothing. That polarity is why
+     the `case` arms read the way they do — it is an explanation of
+     the gate, not an instruction to you.
+   - **The block above**, because the `case` normalizes it, reports
+     conventionally: **0 = clean, proceed; any non-zero = blocked.**
+
+   **Judge by the block, never by the raw grep.** The gate exists so
+   you do not have to hold an inverted polarity in your head at the
+   moment you decide whether to commit. If the block printed a
+   `BLOCKED:` line or exited non-zero, you stop — whichever of the
+   three reasons caused it. Fail closed: a scan that errored is not a
+   pass.
+
+   On any hit: unstage, tell the user **which files matched** — never
+   the matched value — and wait. A tracked `.env` bypasses
+   `.gitignore` — `git rm --cached` it first.
 
    **Re-scan after remediation, and scan what you will actually
    commit.** Removing one offending file does not clear hits in the
@@ -481,7 +495,7 @@ if ! git -C "$PLANNING" add -A; then
   false
 else
   scan=0
-  git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}' || scan=$?
+  git -C "$PLANNING" grep -laE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}' || scan=$?
   case $scan in
     0) echo "BLOCKED: credential shapes in the files listed above — do not commit" >&2; false ;;
     1) git -C "$PLANNING" commit -m "chore: seed project context and backlog from prototype brief" ;;
@@ -503,11 +517,13 @@ as success.
 
 The scan between add and commit is the same quiet staged-content
 credential scan as Step 2.3 — same pattern set, same filenames-only
-output, same inverted exit reading (0 + filenames = stop; 1 + silence
-= clean; anything else = broken scan, fail closed), same response to a
-hit (unstage, name the files not the value, wait). The seeded content is brief-derived, and a brief that
-leaked a value must not land in the planning repo either. Keep the two
-sites in step: if you ever change the pattern set, change it in both.
+output, same `case` normalization (the raw grep's polarity is
+inverted, so the gate converts it: the BLOCK reports 0 = clean,
+non-zero = blocked), same response to a hit (unstage, name the files
+not the value, wait). The seeded content is brief-derived, and a brief
+that leaked a value must not land in the planning repo either. Keep
+the two sites in step: if you ever change the pattern set or the flags,
+change them in both.
 
 ### Step 5: Finish loudly — ONE verified checklist, ONE command
 
