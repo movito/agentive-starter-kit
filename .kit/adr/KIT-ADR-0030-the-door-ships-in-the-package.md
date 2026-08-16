@@ -1,6 +1,6 @@
 # KIT-ADR-0030: The door ships in the package — `agentive new` / `agentive adopt`
 
-**Status**: Proposed
+**Status**: Accepted (2026-08-16, at KIT-0105 completion)
 **Date**: 2026-08-13 (drafted 2026-08-09 as part of a combined ADR; split
 per operator decision — see Provenance)
 **Deciders**: Fredrik Matheson (operator), Claude Code

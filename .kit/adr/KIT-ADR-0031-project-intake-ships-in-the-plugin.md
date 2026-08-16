@@ -1,6 +1,6 @@
 # KIT-ADR-0031: `project-intake` ships in the plugin — run intake in the deliverable folder
 
-**Status**: Proposed
+**Status**: Accepted (2026-08-16, at KIT-0105 completion)
 **Date**: 2026-08-13 (drafted 2026-08-09 as part of a combined ADR; split
 per operator decision — see KIT-ADR-0030 Provenance)
 **Deciders**: Fredrik Matheson (operator), Claude Code
