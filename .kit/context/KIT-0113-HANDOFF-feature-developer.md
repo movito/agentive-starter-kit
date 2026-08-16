@@ -5,7 +5,7 @@ delegate or spawn other agents.**
 
 **Date**: 2026-08-16
 **From**: planner-f5  **To**: feature-developer
-**Task**: .kit/tasks/3-in-progress/KIT-0113-project-intake-hardening.md
+**Task**: .kit/tasks/4-in-review/KIT-0113-project-intake-hardening.md
 **Status**: Ready
 **Evaluation**: N/A — skipped (single-file canon fix; both findings
 bot-sourced and already characterized; class grep defined in the spec)
