@@ -2,9 +2,9 @@
 name: project-intake
 description: Graduates a prototype into the split pair — plain code repo plus preset-configured planning repo — from a handoff brief and a code folder
 model: claude-sonnet-5
-version: 1.2.0
+version: 1.3.0
 origin: agentive-starter-kit
-last-updated: 2026-08-14
+last-updated: 2026-08-16
 created-by: "@movito (KIT-0066)"
 tools:
   - Read
@@ -200,8 +200,10 @@ All commands target the code folder explicitly (`git -C <code-path>`).
    coverage (step 2's check — `.env` and key files must be ignored
    and untracked; a tracked `.env` blocks the push until resolved
    with the user) and run the Step 2.3 credential scan over its
-   tracked files (`git -C <code-path> grep` the same credential
-   patterns listed there). Deep history
+   tracked files — the same quiet form, filenames only:
+   `git -C <code-path> grep -lIE '<the Step 2.3 pattern set>'` (a bare
+   `git grep` prints the matched LINES, which is the leak this scan
+   exists to prevent). Deep history
    scanning is the user's call — offer it as a suggestion
    (`gitleaks`/`trufflehog`) rather than running it yourself.
 2. Ensure ignore rules cover secrets and artifacts — create
@@ -212,12 +214,24 @@ All commands target the code folder explicitly (`git -C <code-path>`).
 3. Stage and scan, then commit. `git -C <code-path> add -A` is
    acceptable here (a fresh import, not selective feature work). Then
    a **mandatory secret scan of the staged files** before the commit
-   — not optional, not a vibe check: grep the staged content for
-   common credential shapes (`sk-`, `ghp_`, `github_pat_`, `xoxb-`,
-   `AKIA`, `BEGIN .* PRIVATE KEY`, long `eyJ` JWT blobs). Any hit:
-   unstage, tell the user, and wait. A tracked `.env` bypasses
-   `.gitignore` — `git rm --cached` it first. Only then commit
-   (e.g. "chore: import prototype from Cowork handoff").
+   — not optional, not a vibe check. Run it as a **quiet scan**: the
+   scan must never put staged bytes in front of the user, because a
+   scan that echoes what it found leaks the credential BEFORE it
+   rejects it. `-l` reports FILENAMES ONLY; never `git diff --cached`,
+   never a grep that prints matched lines.
+
+   ```bash
+   git -C <code-path> add -A
+   git -C <code-path> grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Z ]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
+   ```
+
+   **Read the exit code — it is inverted from the intuition**: exit 0
+   with filenames printed means credential shapes WERE found (stop);
+   exit 1 with no output means the index is clean (proceed). Any hit:
+   unstage, tell the user **which files matched** — never the matched
+   value — and wait. A tracked `.env` bypasses `.gitignore` —
+   `git rm --cached` it first. Only then commit (e.g. "chore: import
+   prototype from Cowork handoff").
 4. **Visibility question** (AskUserQuestion): create the GitHub repo
    **private (default, recommended)** or public? Rationale to present:
    the split pair keeps planning artifacts out of this repo precisely
@@ -400,13 +414,17 @@ rule means a bare `git commit` could hit the wrong repository:
 
 ```bash
 git -C "<parent>/<name>-planning" add -A
-git -C "<parent>/<name>-planning" diff --cached   # scan this output
+git -C "<parent>/<name>-planning" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Z ]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
 git -C "<parent>/<name>-planning" commit -m "chore: seed project context and backlog from prototype brief"
 ```
 
-The scan between add and commit is the same staged-content credential
-scan as Step 2.3 — the seeded content is brief-derived, and a brief
-that leaked a value must not land in the planning repo either.
+The scan between add and commit is the same quiet staged-content
+credential scan as Step 2.3 — same pattern set, same filenames-only
+output, same inverted exit reading (0 + filenames = stop; 1 + silence
+= clean), same response to a hit (unstage, name the files not the
+value, wait). The seeded content is brief-derived, and a brief that
+leaked a value must not land in the planning repo either. Keep the two
+sites in step: if you ever change the pattern set, change it in both.
 
 ### Step 5: Finish loudly — ONE verified checklist, ONE command
 
@@ -414,19 +432,45 @@ The completion summary is a single checklist ending in a single
 command (format operator-specified, KIT-0101/KIT-0100 F10). Its
 binding rules:
 
+- **Re-run the doctor before you print anything.** The door's tail was
+  captured BEFORE Step 4 seeded the prefix and the backlog, so it can
+  still WARN about things the seeding has since cured (the empty
+  `TASK_PREFIX`, KIT-0084). Run the doctor again, after the Step 4c
+  seeding commit, **with the planning repo as the working directory**:
+
+  ```bash
+  cd "<parent>/<name>-planning" && agentive doctor
+  ```
+
+  The working directory is load-bearing: the CLI discovers the project
+  from the CWD and exits 1 when it finds none, so this cannot be run
+  from elsewhere via `--root=`. This re-run is **repo-state truth** and
+  it is what the ✓/✗ lines and the launch-line gate below consume. If
+  the `agentive` CLI does not exist, the re-run cannot happen — say so
+  as a ✗ with the install command, and treat the gate as unmet.
 - **Every ✓ line is a claim verified at print time** — check the fact
   (the repo exists, the push landed, the value is set) immediately
   before printing it, never assume it from "that step ran earlier".
 - **Anything outstanding appears IN the same list as ✗** with the
   exact remedy command — including everything the door's tail left
-  open (a missing `agentive` CLI, an uninstalled plugin, doctor
-  FAILs). "Done" and "still needed" must never contradict each other
+  open (a missing `agentive` CLI, an uninstalled plugin) plus every
+  FAIL still standing in the post-seeding re-run. "Done" and "still
+  needed" must never contradict each other
   across two messages: this list is the only completion statement.
-- **Relay the door's doctor tail verbatim** below the checklist —
-  never summarize it away.
-- **The closing launch command prints ONLY when the doctor reported
-  no FAILs** (and the `agentive` CLI exists — without it the doctor
-  could not run at all). It carries its opening prompt: a session
+- **Relay BOTH doctor outputs verbatim** below the checklist, each
+  under its own label — never summarize either away, and never merge
+  them into one block. The door's tail is **install truth** (its exit
+  contract is what says the install succeeded); the post-seeding
+  re-run is **repo-state truth** (what the repo looks like now that
+  Step 4 has filled it). They can legitimately disagree — a WARN in
+  the door's tail that the re-run no longer reports is the seeding
+  working, not a contradiction — which is exactly why the labels
+  matter.
+- **The closing launch command prints ONLY when the POST-SEEDING
+  re-run reported no FAILs** (and the `agentive` CLI exists — without
+  it the re-run could not happen at all, so the gate is unmet). The
+  door's tail never gates this line: it describes a repo state that
+  Step 4 has already moved past. It carries its opening prompt: a session
   cannot speak first, so a bare `claude --agent planner` opens an
   idle prompt that looks broken (KIT-0075; reproduced live under
   native `--agent`, 2026-08-11). When there ARE failures, the last
@@ -447,8 +491,11 @@ Format (✓/✗ per what actually happened; every line verified):
 ✓ Verified the agentive-workflow plugin
 ✗ <anything outstanding> — run: <exact remedy command>
 
-Doctor tail (verbatim):
-<the door's doctor output>
+Doctor tail — the door's install verdict, verbatim:
+<the door's doctor output, as captured at Step 3>
+
+Doctor re-run — planning repo after seeding, verbatim:
+<the output of `agentive doctor` from Step 5's re-run>
 
 You can now start working on <name>. Open a new terminal tab in
 <parent>/<name>-planning and paste:
@@ -456,7 +503,8 @@ You can now start working on <name>. Open a new terminal tab in
   claude --agent planner "Triage the backlog and recommend what to start."
 ```
 
-With doctor FAILs (or no CLI to run it), the closing block is instead:
+With FAILs in the post-seeding re-run (or no CLI to run it), the
+closing block is instead:
 
 ```text
 Resolve the ✗ items above, re-run `agentive doctor` in
@@ -504,4 +552,8 @@ fixed at session launch — this session cannot become the planner.)
 - **Never print, stage, or commit secret values** — names only; the
   door's `env-source` handling owns key material end-to-end
 - **Never re-derive install state** — the door's exit code and doctor
-  tail are the only truth you report
+  tail are the only truth you report about whether the INSTALL
+  succeeded. Re-running `agentive doctor` after the Step 4c seeding
+  commit is not an exception to this: it reports repo state after your
+  own seeding, it is relayed under its own label alongside the door's
+  tail (never in place of it), and it never revises the door's verdict
