@@ -119,3 +119,32 @@ Against a true non-repo:
 | staged secret present (exit 0) | BLOCKED (credential found) |
 | clean index (exit 1) | COMMIT would run |
 | not a git repository (exit 128) | BLOCKED (scan failed to run) |
+
+## Bot round 2 — PR #135 (CodeRabbit 1)
+
+One new thread; the six from round 1 stayed resolved.
+
+| Bot | Finding | Fix |
+|-----|---------|-----|
+| CodeRabbit Major | `git add -A` was unchecked in the Step 4c gate. A partially-failed stage leaves a stale/partial index; the scan then validates *that*, and exit 1 authorizes a commit that is not the tree meant to be seeded. | **ACCEPTED.** Wrapped the gate in `if ! git -C "$PLANNING" add -A`. Classified correctly by the bot as data integrity rather than credential leak — the scan still examines exactly what would be committed, so this cannot leak a secret; what it can do is ship a silently incomplete seeding commit. |
+
+**Simplified from the suggested fix.** CodeRabbit's diff captured the
+scan status into a `scan_status` variable via an `if`/`else` before
+branching. That is unnecessary here: `case $?` already follows the
+`git grep` directly, with no intervening command, so `$?` is the
+scan's status. Adopted the guard, dropped the extra variable — same
+behavior, one less moving part.
+
+Re-tested across four paths after the change:
+
+| Case | Result |
+|------|--------|
+| staged secret present | BLOCKED (credential found) |
+| clean index | COMMIT would run |
+| not a git repo (add fails first) | BLOCKED (staging failed) |
+| path does not exist | BLOCKED (staging failed) |
+
+Note the abort ordering shifted: a non-repo now fails at `add` rather
+than reaching the scan's 128 branch. Both block, so the invariant
+holds either way — but the `*)` scan-error branch is still load-bearing
+for the case where staging succeeds and the scan itself breaks.

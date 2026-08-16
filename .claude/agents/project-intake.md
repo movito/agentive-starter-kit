@@ -442,18 +442,25 @@ exists to catch:
 
 ```bash
 PLANNING="<parent>/<name>-planning"
-git -C "$PLANNING" add -A
-git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
-case $? in
-  0) echo "BLOCKED: credential shapes in the files listed above — do not commit" ;;
-  1) git -C "$PLANNING" commit -m "chore: seed project context and backlog from prototype brief" ;;
-  *) echo "BLOCKED: scan failed to run — it has proven nothing" ;;
-esac
+if ! git -C "$PLANNING" add -A; then
+  echo "BLOCKED: staging failed — the index is not what you think, do not commit"
+else
+  git -C "$PLANNING" grep -lIE --cached 'sk-|ghp_|github_pat_|xoxb-|AKIA|BEGIN [A-Za-z0-9 -]*PRIVATE KEY|eyJ[A-Za-z0-9_-]{20,}'
+  case $? in
+    0) echo "BLOCKED: credential shapes in the files listed above — do not commit" ;;
+    1) git -C "$PLANNING" commit -m "chore: seed project context and backlog from prototype brief" ;;
+    *) echo "BLOCKED: scan failed to run — it has proven nothing" ;;
+  esac
+fi
 ```
 
-The `case` is fail-closed on purpose: an `if`/`else` would send both
-"clean" (1) and "scan errored" (128) down the same branch and commit
-on a scan that never ran. Only exit 1 commits.
+Every abort path here is deliberate. The `case` is fail-closed
+because an `if`/`else` on the scan would send both "clean" (1) and
+"scan errored" (128) down the same branch and commit on a scan that
+never ran — only exit 1 commits. The `add` is checked for the
+adjacent reason: a partially-failed stage leaves an index that is not
+the tree you meant to seed, and a scan of it would authorize an
+incomplete commit while looking green.
 
 The scan between add and commit is the same quiet staged-content
 credential scan as Step 2.3 — same pattern set, same filenames-only
