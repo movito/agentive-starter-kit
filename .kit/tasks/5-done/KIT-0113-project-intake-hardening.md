@@ -1,6 +1,6 @@
 # KIT-0113: project-intake hardening — quiet credential scan + post-seeding doctor
 
-**Status**: In Review
+**Status**: Done
 **Priority**: medium (one Critical-severity bot finding; contained — operator's own transcript)
 **Type**: Canon fix (`.claude/agents/project-intake.md`)
 **Estimated Effort**: ~1 h
@@ -33,13 +33,49 @@ contract stays the install truth; the re-run is repo-state truth).
 
 ## Acceptance
 
-- [ ] No step prints staged file contents into the transcript
-      (falsified by the class grep: zero echoing staged-scan
-      instructions remain)
-- [ ] Step 5's checklist consumes a post-seeding doctor run; launch
-      line gated on it
-- [ ] Rides the next plugin release (drift guard red-by-design between
-      merge and that cut; version bump on the touched component)
+- [x] No step prints staged file contents into the transcript
+      (class grep clean; three sites fixed, not two — Step 2.1's bare
+      `git grep` printed matched LINES, outside the spec's grep)
+- [x] Step 5's checklist consumes a post-seeding doctor run; launch
+      line gated on it, door tail still relayed verbatim under a
+      distinct label
+- [x] Rides the plugin release: **2.1.1 merged** (agentive-skills#12,
+      `d0800f3`); drift guard verified **GREEN** on kit main by
+      workflow_dispatch run 31980414599 at `e75de7c`
+- [x] Component version bumped — 1.2.0 → **1.3.2** (three kit PRs; see
+      Outcome)
+
+## Outcome (fd, 2026-08-17)
+
+Scope grew beyond the two findings: the credential gate was rebuilt
+across three kit PRs, each round exposing a defect created by the
+previous fix.
+
+| PR | Component | What it fixed |
+|----|-----------|---------------|
+| #135 | 1.2.0 → 1.3.0 | R1 quiet scans (3 sites), R2 post-seeding doctor, shell-level commit gate |
+| #136 | → 1.3.1 | Step 2.3 twin: `add -A` unchecked, inverted block status, blocked branches returning 0, `set -e` killing the CLEAN path |
+| #137 | → 1.3.2 | `-I` skipped binaries so a staged binary credential scanned CLEAN (fail-open); prose stated raw-grep polarity as the decision rule, contradicting the normalized gate |
+
+Fifteen bot/evaluator findings: fourteen real and fixed, one declined
+(CodeRabbit asking for the roster update in the kit PR — the roster
+lives marketplace-side and the resync must read kit main first).
+
+Two of the defects were mine to own twice over: the `-I` binary
+bypass was raised pre-PR by a security evaluator and I filed it as a
+"deployment policy question" instead of testing it; and `|| scan=$?`
+was proposed by CodeRabbit on the first release round, declined as "a
+moving part without a job", then restored two PRs later when `set -e`
+proved it had one.
+
+Pattern recorded: `harden_twins_by_copy_not_rederivation` in
+`.kit/context/patterns.yml`.
+
+**Follow-up recommended (not filed):** extract the gate into a small
+tested script the agent invokes. Executable logic living in prose
+across three sites that must agree by hand is what produced the
+polarity contradiction; a script gives the contract one home and a
+test.
 
 ## Release scoping (planner, 2026-08-16)
 
