@@ -1,7 +1,18 @@
 # KIT-0111: Version-bump guard — changed component ⇒ same-commit `version:` bump
 
 **Status**: Backlog
-**Priority**: low (anytime filler — independent of every train)
+**Priority**: medium — RAISED from "anytime filler" (planner,
+2026-08-17): three consecutive releases have now produced a
+version-column incident — 2.0.4 (20 components, zero bumps), 2.1.0
+(planner's roster `kit_version` stale across a release, invisible to
+every hash-keyed check), 2.1.1 (the `kit_version: "2.1.0"` /
+plugin-version string collision, defused only by hand-discipline:
+anchored regex + assert-one-substitution). A discipline that generates
+an incident per release is a pattern arguing for the guard before the
+next cut, not filler. Scope note: the 2.1.1 collision suggests the
+guard (or a sibling check) should also cover the RELEASE-side bump —
+asserting the plugin-version substitution touched exactly the intended
+fields — not only the kit-side component frontmatter.
 **Type**: Infrastructure / CI guard
 **Estimated Effort**: ~1 h
 **Created**: 2026-08-14 (split from KIT-0110, operator-approved)

@@ -130,9 +130,21 @@ Canon paragraphs, both fd agents (wrap-up) + both planners (Phase 7/8):
   session owns the tree."
 - **planner**: "Do not begin close-out bookkeeping in the primary
   clone until the fd's wrap-up commit is observed on main (`git log`,
-  not the relay). After every Edit near a live session, re-verify the
-  edit survived on disk immediately before `git add` — pre-commit
-  stash/rollback from the other side can revert it silently."
+  not the relay)."
+- **BOTH sides** (fd amendment, 2026-08-17): "After every Edit near a
+  live session, re-verify the edit's CONTENT survived on disk
+  immediately before `git add` — pre-commit stash/rollback from the
+  other side can revert it silently. Existence isn't integrity: a
+  file being present says nothing about whether its modifications
+  survived a 'Restored changes from patch' cycle. Verify by grep for
+  the edited content, not by `ls`."
+
+Post-incident note (fd, closeout): the under-verified "nothing was
+lost" reassurance was the same failure as the retro's mistake #4
+(citing a check as proof of something it couldn't establish), recurring
+in the SAME session immediately after being written down. Recording a
+lesson does not prevent repeating it; the observable boundary (wrap-up
+commit = handover) and the mandatory content re-verify are what will.
 
 ## Acceptance Criteria
 
