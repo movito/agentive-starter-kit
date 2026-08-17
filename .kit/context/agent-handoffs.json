@@ -8,12 +8,12 @@
     "handoff_file": null
   },
   "feature-developer": {
-    "status": "assigned",
-    "current_task": "KIT-0113",
-    "task_started": "2026-08-16",
-    "brief_note": "KIT-0113: project-intake hardening (R1 Critical quiet credential scan + R2 post-seeding doctor) + release 2.1.1 as leg 2. Worktree ../ask-worktrees/KIT-0113 on feature/KIT-0113-intake-hardening. Evaluation skipped (single-file canon fix, bot-sourced findings). fd-f5 observation resolved 2026-08-16 (passivity; operator ruled no-action, maybe fluke) — handoff carries a working-agreement section asking for interactivity.",
+    "status": "available",
+    "current_task": null,
+    "task_started": null,
+    "brief_note": "2026-08-17: KIT-0113 COMPLETE — project-intake 1.2.0->1.3.2 (kit #135/#136/#137), release 2.1.1 shipped (skills#12), drift guard measured-GREEN (dispatch 31980414599 at e75de7c). Retro processed by planner: KIT-0114 (gate-script extraction, fd-filed) + KIT-0115 (ninth face, planner-filed) in backlog; 6 insights extracted; harden_twins pattern landed via the PR train. Worktree removed, branches pruned. Behavioral note: this fd session was fully interactive — the KIT-0105 passivity datapoint did not repeat.",
     "details_link": ".kit/tasks/5-done/KIT-0113-project-intake-hardening.md",
-    "handoff_file": ".kit/context/KIT-0113-HANDOFF-feature-developer.md"
+    "handoff_file": null
   },
   "code-reviewer": {
     "status": "idle",
