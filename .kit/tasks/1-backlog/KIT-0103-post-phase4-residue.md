@@ -110,6 +110,30 @@ race + tripwire accumulation) is in the planner session record
 2026-08-15; the fix teaches judgment about WHERE caution applies, it
 does not remove any STOP rule.
 
+## R6 — Primary-clone ownership seam at task-end (canon, next train)
+*(planner, 2026-08-17, from the KIT-0113 triple collision — fd wrap-up
+and planner close-out interleaved in the primary clone: fd staged files
+under the planner's feet, pre-commit's stash/rollback reverted the
+planner's uncommitted edits TWICE, and the fd's own commit failed twice
+on the mutating-hook pattern against the planner's concurrent writes.
+All content survived because BOTH sides stopped and verified rather
+than committing through it — but that was discipline, not structure.)*
+
+Canon paragraphs, both fd agents (wrap-up) + both planners (Phase 7/8):
+
+- **fd wrap-up**: "The wrap-up COMMIT is the ownership handover of the
+  primary clone. Announce completion only after `git status` is clean
+  and the commit is pushed; anything authored after that (follow-up
+  task filings, addenda) is handed to the planner as content, not
+  committed yourself. If a commit fails on the mutating-hook pattern
+  and `git status` shows files you did not touch: STOP — another
+  session owns the tree."
+- **planner**: "Do not begin close-out bookkeeping in the primary
+  clone until the fd's wrap-up commit is observed on main (`git log`,
+  not the relay). After every Edit near a live session, re-verify the
+  edit survived on disk immediately before `git add` — pre-commit
+  stash/rollback from the other side can revert it silently."
+
 ## Acceptance Criteria
 
 - [x] R1: DONE 2026-08-15 — rode the KIT-0105 train (kit PR #134 +
@@ -121,3 +145,5 @@ does not remove any STOP rule.
 - [ ] R2: stale project produces the retirement notice, not the raw
       error (falsified once against the `_old` archive shape)
 - [ ] R5: both paragraphs in canon, versions bumped, rides a release
+- [ ] R6: ownership-seam paragraphs in all four agent bodies (fd,
+      fd-f5, planner, planner-f5), versions bumped, rides a release
