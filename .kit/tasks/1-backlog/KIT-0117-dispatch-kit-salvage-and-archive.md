@@ -31,8 +31,35 @@ niche became a platform feature. dispatch-kit's durable concepts (transition
 rules, gates, trust modes) are salvaged as design input to KIT-0116
 (Appendix A there is the canonical mapping).
 
+## Plugin survey (VERIFIED by grep, 2026-08-18 planner session)
+
+`grep -rniE "dispatch (emit|log|watch|spawn)|origin: dispatch-kit"` over
+`~/Github/agentive-skills/plugins` and kit `.claude/`:
+
+- **Live CLI steps in FIVE plugin commands** (twins in kit
+  `.claude/commands/`): `start-task` (emit task_started), `preflight`
+  (emit preflight_complete), `check-ci` (emit ci_verified),
+  `commit-push-pr` (emit pr_created), `status` (dispatch log --since 2h).
+  All fire-and-forget (`2>/dev/null || true`) — but NOT inert here:
+- **Global dispatch CLI still installed**: `which dispatch` →
+  `/Library/Frameworks/Python.framework/Versions/3.11/bin/dispatch`
+  (KIT-0077 mechanism, still armed — steps execute and write `.dispatch/`
+  into consumer repos). Kit `settings.local.json:207` carries a
+  `Bash(dispatch emit:*)` allow-entry.
+- **Provenance frontmatter** `origin: dispatch-kit` on 14 commands/skills
+  + historical notes (README, CONSOLIDATION, CHANGELOG, check-spec,
+  code-review-evaluator): harmless lineage — KEEP.
+- CONSOLIDATION.md records dispatch-kit still holding two vendored
+  skill-copy sets; archiving the repo retires those exports.
+
 ## Requirements
 
+0. **Strip the five live `dispatch emit`/`dispatch log` steps** from
+   plugin commands AND kit twins (copy-not-rederivation; one release
+   train — patch/minor bump per versioning rules, CHANGELOG entry;
+   precedent: wrap-up's phase_complete emit was removed the same way).
+   Remove the `Bash(dispatch emit:*)` allow-entry from
+   `settings.local.json`. `origin:` frontmatter stays.
 1. Write `RETROSPECTIVE.md` (or README banner section) in the dispatch-kit
    repo: what it set out to do, what it got right (bus/matcher/gates design,
    tmux quarantined in 2 modules, 945 tests/94% cov), why it's archived
@@ -49,6 +76,8 @@ rules, gates, trust modes) are salvaged as design input to KIT-0116
 
 ## Acceptance Criteria
 
+- [ ] Plugin commands + kit twins carry NO `dispatch emit`/`dispatch log`
+      steps (grep evidence); shipped on a release train with CHANGELOG
 - [ ] Retrospective committed to dispatch-kit `main`
 - [ ] Global `dispatch` CLI confirmed absent or uninstalled (evidence: command output)
 - [ ] GitHub repo archived (operator confirms)
