@@ -69,7 +69,11 @@ rules, gates, trust modes) are salvaged as design input to KIT-0116
 3. Check for anything still writing to `.dispatch/` paths (KIT-0077
    lesson: the globally-installed dispatch CLI kept emitting after the
    workflow retired it). Verify with `which dispatch` + grep of shell
-   profiles/launchd; uninstall the global CLI if present.
+   profiles/launchd. **DTL CONSTRAINT (KIT-ADR-0035)**: DTL retained
+   `.dispatch/` as a live dispatch-kit 0.4.2 writer (operator choice
+   2026-08-19, DTL-0026) — do NOT uninstall the global CLI until DTL is
+   migrated off the writer or the CLI is explicitly scoped DTL-local.
+   Repo archive proceeds independently of this step.
 4. Operator: archive the GitHub repo (Settings → Archive). Planner cannot
    and must not do this.
 5. Update kit memory: dispatch-kit → archived, pointer to KIT-0116.
@@ -79,7 +83,9 @@ rules, gates, trust modes) are salvaged as design input to KIT-0116
 - [ ] Plugin commands + kit twins carry NO `dispatch emit`/`dispatch log`
       steps (grep evidence); shipped on a release train with CHANGELOG
 - [ ] Retrospective committed to dispatch-kit `main`
-- [ ] Global `dispatch` CLI confirmed absent or uninstalled (evidence: command output)
+- [ ] Global `dispatch` CLI: DTL dependency resolved first, THEN removed
+      or explicitly scoped DTL-local (evidence: command output + DTL
+      status; see KIT-ADR-0035 Known constraint)
 - [ ] GitHub repo archived (operator confirms)
 - [ ] Memory updated
 

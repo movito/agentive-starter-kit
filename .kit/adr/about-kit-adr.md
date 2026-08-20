@@ -55,11 +55,13 @@ This folder contains ADRs inherited from the **agentive-starter-kit** template. 
 | KIT-ADR-0027 | A Leaner, Language-Agnostic Kit | Accepted |
 | KIT-ADR-0028 | Versioned Packages, Not File Copies | Accepted — COMPLETE |
 | KIT-ADR-0029 | Task-as-Folder | Proposed — deliberately deferred |
-| KIT-ADR-0030 | The Door Ships in the Package | Proposed |
-| KIT-ADR-0031 | `project-intake` Ships in the Plugin | Proposed |
+| KIT-ADR-0030 | The Door Ships in the Package | Accepted |
+| KIT-ADR-0031 | `project-intake` Ships in the Plugin | Accepted |
 | KIT-ADR-0032 | Two Rungs — `.kit/` Never in Code Repos | Proposed |
 | KIT-ADR-0033 | Handoff Brief Primacy | Proposed |
 | KIT-ADR-0034 | What Generates Kit Work | Proposed (governance) |
+| KIT-ADR-0035 | Native Coordination Supersedes dispatch-kit | Accepted |
+| KIT-ADR-0036 | Read-Only Reviewer Delegation | Reserved (authored within KIT-0116) |
 
 KIT-ADR-0030 through 0034 were drafted as one combined ADR ("the door
 is a tool, not a place", PR #128, closed unmerged 2026-08-13) and split

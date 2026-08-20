@@ -209,9 +209,10 @@ Files to modify:
 
 ### Phase 2 — Tier 2 + ADR
 
-6. New ADR `KIT-ADR-0035-readonly-reviewer-delegation.md` — the carve-out,
-   its rationale, and the toolset condition (number reserved 2026-08-18;
-   highest existing is KIT-ADR-0034 — re-verify at authoring time)
+6. New ADR `KIT-ADR-0036-readonly-reviewer-delegation.md` — the carve-out,
+   its rationale, and the toolset condition (renumbered 2026-08-20:
+   KIT-ADR-0035 was taken by the native-coordination decision ADR —
+   re-verify at authoring time)
 7. fd bodies — background-spawn instructions (spawn after tests pass,
    continue docs work, triage on notification, fix-or-defer discipline)
 8. `.claude/agents/code-reviewer.md`, `security-reviewer.md`,
