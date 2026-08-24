@@ -60,8 +60,13 @@ whether KIT-0115 / KIT-0103 R6 / KIT-0117 ride the same train).
 
 ## Operator next steps
 
-1. Review + merge PR #148 (drift guard red is expected — merge over it
-   per the held-release ruling)
+1. Review + merge PR #148 — with **every non-drift check green** (they
+   are, at `5f0945d`: tests ×3, lint, both bots). The ONLY red is the
+   plugin drift guard, whose expected-red window is documented in
+   `.github/workflows/plugin-drift.yml`; justification: KIT-0116 arc
+   held-release ruling (handoff §"Twins and the release train") —
+   the planner cuts the plugin release ONCE at arc end, superseding
+   the same-day default for this arc
 2. Say the word for **Phase 2** (Tier 2 + KIT-ADR-0036 + reviewer
    toolset audit + architecture-reviewer) — new branch from updated
    main, announced in-session
