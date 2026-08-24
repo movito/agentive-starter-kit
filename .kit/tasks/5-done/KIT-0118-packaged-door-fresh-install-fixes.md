@@ -1,6 +1,6 @@
 # KIT-0118: Packaged-door fresh-install fixes + agentive-kit 0.4.0 release
 
-**Status**: In Review
+**Status**: Done
 **Priority**: high
 **Assigned To**: feature-developer
 **Estimated Effort**: 4-6 hours
@@ -196,6 +196,76 @@ record reader before assuming single-copy.
 | Part D (bump, PR, tag, publish verify) | 1 h |
 | Review rounds | 0.5–1.5 h |
 | **Total** | **5–6.5 h** |
+
+## Release Verification (Part D — post-merge, 2026-08-24)
+
+Merge: `e12047b` (squash of PR #147). Tag: `agentive-kit-v0.4.0` →
+`e12047b`, pushed only after main's `Tests` run went green (PyPI accepts
+each version exactly once, so this ordering was the whole constraint).
+
+**Publish workflow**: run `32725114443` — `build=success`,
+`publish=success`. The tag-vs-`__version__` guard passed
+(`PKG_VERSION=0.4.0 TAG_VERSION=0.4.0`).
+
+**PyPI**: serves `0.4.0` (latest; 2 files — sdist + wheel). Note the
+JSON API reported `0.3.1` for a period AFTER the publish job succeeded —
+CDN lag, not a failed upload. Polled to confirm rather than trusting the
+workflow's green.
+
+**The check that actually closes #144.** The workflow's own smoke test
+runs only `agentive version`, which the door-less 0.3.1 wheel passes
+too — so a defective wheel would sail through it. Inspecting the
+published artifacts directly:
+
+| check | 0.3.1 (published) | 0.4.0 (published) |
+|---|---|---|
+| files in wheel | 32 | 60 |
+| `door/` entries | **0** | **29** |
+| `door/__init__.py` | absent | present |
+| `engine-consumer.sh` | absent | present |
+| `engine-scaffold.sh` | absent | present |
+| `engines/kit_markers.py` | absent | present |
+
+All five fixes confirmed INSIDE the published 0.4.0 wheel (not merely on
+main): derived target path, `_LEGACY_TODO` migration, `EVALUATORS_GIVEN`,
+`DOCTOR_EVALUATORS`, `prefix_problem`.
+
+**Clean-env install** (fresh venv, `pip install agentive-kit==0.4.0`, no
+kit clone present):
+
+```
+$ agentive version        →  agentive-kit v0.4.0
+$ agentive new --help     →  agentive new — the agentive setup door (agentive-kit v0.4.0)
+$ agentive adopt --help   →  agentive adopt — the agentive setup door (agentive-kit v0.4.0)
+```
+
+`docs/STARTING-A-PROJECT.md:42` ("No kit clone is required to create a
+project") is now TRUE for a PyPI install. No doc edit needed — the
+sentence was correct about the intent and false only about the shipped
+artifact.
+
+**Not done, deliberately**: the operator's global `uv tool` install is
+still 0.3.1. Upgrading a machine-level install is the operator chore
+this spec lists as out of scope (`uv tool upgrade agentive-kit`).
+
+## Review Outcome
+
+- **PR**: #147, squash-merged as `e12047b`
+- **Bot rounds**: 4 (3 substantive), 7 threads, all replied + resolved
+- **Suite**: 1145 → 1217, coverage 90.15%
+- **Evaluator record**: `.kit/context/reviews/KIT-0118-evaluator-review.md`
+- **Retro**: `.kit/context/retros/KIT-0118-retro.md`
+
+Two of seven bot/evaluator findings were refuted with evidence rather
+than accepted (o3's `GIT_CONFIG_*` claim; CodeRabbit's "announces a
+repair that did not happen" — disproven with a `set -e` probe), with the
+remedies taken anyway where they stood on their own merits.
+
+**Followed up, not fixed here**: KIT-0119 (`--against-preset` ignores
+the `evaluators:` line, plus a rider on legacy prose in the human-facing
+`## Target Repository` section). The `--bots` flag carries the same
+empty-value hole found in `--evaluators`; it belongs to KIT-0108's
+engine consolidation and is recorded there.
 
 ## Evaluation
 

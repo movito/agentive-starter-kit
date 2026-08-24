@@ -5,7 +5,7 @@ delegate or spawn other agents.**
 
 **Date**: 2026-08-24
 **From**: planner-f5  **To**: feature-developer
-**Task**: .kit/tasks/4-in-review/KIT-0118-packaged-door-fresh-install-fixes.md
+**Task**: .kit/tasks/5-done/KIT-0118-packaged-door-fresh-install-fixes.md
 **Status**: Ready
 **Evaluation**: REVISION_SUGGESTED, both findings strategic-only and
 dispositioned in the spec's Evaluation section — don't re-litigate.
