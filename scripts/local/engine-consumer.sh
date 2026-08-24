@@ -68,6 +68,14 @@
 #              line gets it added surgically via kit_markers (the one
 #              writer path); a conflicting recorded value is an error,
 #              never a silent overwrite.
+#   --evaluators yes|no
+#              (KIT-0118, issue #146) record whether the operator
+#              accepted the adversarial-evaluator install, as an
+#              `evaluators:` line in the kit-install region. Doctor
+#              SKIPs the evaluator checks on `no` instead of FAILing a
+#              deliberate decline. Omitted = no line = legacy install =
+#              evaluators expected (today's behavior). Same surgical
+#              add + conflict-is-an-error rules as --bots above.
 #
 # Prerequisites:
 #   - Target directory exists
@@ -101,11 +109,25 @@ PROFILE=""
 TARGET_PATH=""
 TARGET_GITHUB=""
 BOTS=""
+EVALUATORS=""
+# The exact prose a pre-KIT-0118 engine seeded INSIDE the target-pointer
+# values. Deliberately not a general " #" comment opener: a directory
+# name containing " #" is the operator's real path (CodeRabbit, PR
+# #147). Defined once — both the ## Target Repository extraction and the
+# preserved-region migration match against this single marker.
+_LEGACY_TODO='[[:space:]]+#[[:space:]]*TODO:.*$'
+# Presence, not emptiness (CodeRabbit, this PR): `--evaluators=` and a
+# trailing `--evaluators` both leave EVALUATORS empty, which a
+# [ -n "$EVALUATORS" ] guard reads as "never passed" — silently dropping
+# a flag the operator explicitly gave. That is the masking class this
+# task exists to close, so the GIVEN sentinel drives validation and the
+# emptiness guard is left to mean only "not declared".
+EVALUATORS_GIVEN=0
 RECORD_ONLY=0
 PRESERVE_REGIONS=0
 PACKAGED=0
 PROJECT_NAME_ARG=""
-USAGE="Usage: $0 [--no-kit] [--shape single|planning] [--profile python|none] [--target-path <p>] [--target-github <o/r>] [--bots <b>] <target-directory>"
+USAGE="Usage: $0 [--no-kit] [--shape single|planning] [--profile python|none] [--target-path <p>] [--target-github <o/r>] [--bots <b>] [--evaluators yes|no] <target-directory>"
 while [ $# -gt 0 ]; do
     case "$1" in
         --no-kit)
@@ -161,6 +183,15 @@ while [ $# -gt 0 ]; do
             ;;
         --bots=*)
             BOTS="${1#--bots=}"
+            ;;
+        --evaluators)
+            shift
+            EVALUATORS="${1:-}"
+            EVALUATORS_GIVEN=1
+            ;;
+        --evaluators=*)
+            EVALUATORS="${1#--evaluators=}"
+            EVALUATORS_GIVEN=1
             ;;
         --project-name)
             shift
@@ -249,6 +280,21 @@ EOF
                 echo "Error: 'none' cannot be combined with bot names (--bots $BOTS)"
                 exit 1
             fi
+            ;;
+    esac
+fi
+
+# --evaluators validation (KIT-0118): same rule as --bots — the engine
+# writes the record, so it validates its own input. Case-tolerant like
+# every other record reader; normalized to lowercase so one declaration
+# can never be valid to one reader and invalid to another.
+if [ "$EVALUATORS_GIVEN" -eq 1 ]; then
+    EVALUATORS="$(printf '%s' "$EVALUATORS" | tr '[:upper:]' '[:lower:]')"
+    case "$EVALUATORS" in
+        yes|no) ;;
+        *)
+            echo "Error: --evaluators must be yes or no (got: $EVALUATORS)"
+            exit 1
             ;;
     esac
 fi
@@ -665,8 +711,29 @@ echo "Recording install (shape: $SHAPE, profile: $PROFILE) in CLAUDE.md..."
 CLAUDE_MD="$TARGET/CLAUDE.md"
 
 if [ "$SHAPE" = "planning" ]; then
-    TP="${TARGET_PATH:-../<target-repo>  # TODO: set the product repo path}"
-    TG="${TARGET_GITHUB:-<owner>/<repo>  # TODO: set the product repo}"
+    # Recorded values carry NO prose (KIT-0118, issue #145): the
+    # kit-install region is a machine-read identity record and
+    # load_record()/_parse_install_record() have no `#` handling, so a
+    # "# TODO" hint inside the value BECOMES the recorded target path.
+    # The hint lives on the CONSOLE instead: the Step 4 tail below for
+    # a direct engine run, and the packaged door's own completion tail
+    # (run_doctor_tail) for `agentive new/adopt` — which passes
+    # --internal-record-only and so never reaches Step 4.
+    if [ -n "$TARGET_PATH" ]; then
+        TP="$TARGET_PATH"
+    elif [ -n "$TARGET_GITHUB" ]; then
+        # Sibling layout is the documented convention
+        # (docs/STARTING-A-PROJECT.md): the product repo checks out
+        # next to the planning repo, so owner/repo implies ../repo.
+        # ##*/ is basename semantics; the owner/repo validation above
+        # guarantees exactly one slash, and a literal ".git" suffix is
+        # left alone deliberately — it is a legal repo-name character
+        # sequence, and guessing it away could corrupt a real name.
+        TP="../${TARGET_GITHUB##*/}"
+    else
+        TP="../<target-repo>"
+    fi
+    TG="${TARGET_GITHUB:-<owner>/<repo>}"
 
     # printf %s + quoted heredoc delimiters everywhere below: the
     # target-pointer values are operator input and must be written
@@ -688,6 +755,26 @@ if [ "$SHAPE" = "planning" ]; then
         TARGET_SECTION="$(awk '/^## Target Repository/{in_s=1; next} in_s && /^## /{in_s=0} in_s' "$CLAUDE_MD")"
         EXISTING_TP="$(printf '%s\n' "$TARGET_SECTION" | grep -E '^\- \*\*Path\*\*:' | head -1 | sed -E 's/.*`([^`]*)`.*/\1/')"
         EXISTING_TG="$(printf '%s\n' "$TARGET_SECTION" | grep -E '^\- \*\*GitHub\*\*:' | head -1 | sed -E 's/.*`([^`]*)`.*/\1/')"
+        # Legacy sections (pre-KIT-0118) were seeded WITH the "# TODO"
+        # hint inside the backticks, so an adopt of such a tree would
+        # copy that prose straight into the machine-read record. Strip
+        # an unquoted trailing comment here — before the conflict
+        # comparison below, which is unaffected (a placeholder still
+        # mismatches an explicit flag either way).
+        #
+        # Matched against the EXACT prose the old engine wrote, not a
+        # general " #" comment opener (CodeRabbit + claude-code, this
+        # PR): a directory name legitimately containing " #" — say
+        # `../target #1` — must survive, since whatever it is, it is
+        # the operator's real path and not something this engine seeded.
+        # Narrowing to the literal "# TODO" marker migrates every tree
+        # the old engine produced while touching nothing else.
+        # ($_LEGACY_TODO is defined once near the top — the preserved-
+        # region migration further down uses the same marker, and two
+        # definitions of "what legacy prose looks like" would be one
+        # too many.)
+        EXISTING_TP="$(printf '%s' "$EXISTING_TP" | sed -E "s/$_LEGACY_TODO//")"
+        EXISTING_TG="$(printf '%s' "$EXISTING_TG" | sed -E "s/$_LEGACY_TODO//")"
         if [ -n "$TARGET_PATH" ] && [ -n "$EXISTING_TP" ] && [ "$TARGET_PATH" != "$EXISTING_TP" ]; then
             echo "Error: --target-path '$TARGET_PATH' conflicts with the existing"
             echo "       ## Target Repository section ('$EXISTING_TP')."
@@ -790,8 +877,12 @@ if [ -n "$BOTS" ]; then
     KIT_INSTALL_BODY="$KIT_INSTALL_BODY
 bots: $BOTS"
 fi
+if [ -n "$EVALUATORS" ]; then
+    KIT_INSTALL_BODY="$KIT_INSTALL_BODY
+evaluators: $EVALUATORS"
+fi
 seed_region kit-install "$KIT_INSTALL_BODY" \
-    "shape: $SHAPE, profile: $PROFILE${BOTS:+, bots: $BOTS}"
+    "shape: $SHAPE, profile: $PROFILE${BOTS:+, bots: $BOTS}${EVALUATORS:+, evaluators: $EVALUATORS}"
 
 # A PRESERVED region + --bots: the seed above did not touch it, and
 # silently dropping an explicit declaration would be the masking
@@ -831,6 +922,86 @@ if [ -n "$BOTS" ]; then
         echo "Error: --bots '$BOTS' conflicts with the recorded declaration (bots: $EXISTING_BOTS)"
         echo "       Update the kit-install region in CLAUDE.md first, or drop the flag."
         exit 1
+    fi
+fi
+
+# A PRESERVED region + --evaluators: the same masking class as --bots
+# above, so the same treatment. Deliberately a parallel block rather
+# than a shared helper: the bots path is heavily pinned by tests and
+# KIT-0108 owns collapsing this engine's duplication.
+if [ -n "$EVALUATORS" ]; then
+    if ! REGION_NOW="$(python3 "$KIT_MARKERS" extract "$CLAUDE_MD" kit-install 2>&1)"; then
+        echo "Error: kit_markers extract kit-install failed on $CLAUDE_MD:"
+        echo "       $REGION_NOW"
+        exit 1
+    fi
+    # whitespace- and case-tolerant like every other record reader
+    EXISTING_EVALUATORS="$(printf '%s\n' "$REGION_NOW" |
+        sed -n 's/^[[:space:]]*evaluators:[[:space:]]*//p' | head -1 |
+        sed 's/[[:space:]]*$//' | tr '[:upper:]' '[:lower:]')"
+    if printf '%s\n' "$REGION_NOW" | grep -q '^[[:space:]]*evaluators:' &&
+       [ -z "$EXISTING_EVALUATORS" ]; then
+        # presence-aware: a valueless line is a malformed record, not
+        # absence — appending after it would leave two declarations
+        echo "Error: the target's kit-install region has an evaluators: line with no value — fix the record in CLAUDE.md, then re-run"
+        exit 1
+    elif [ -z "$EXISTING_EVALUATORS" ]; then
+        # no trailing newline: the region body group excludes the
+        # newline before END, so extract->replace stays byte-identical
+        printf '%s\nevaluators: %s' "$REGION_NOW" "$EVALUATORS" |
+            python3 "$KIT_MARKERS" replace "$CLAUDE_MD" kit-install --stdin
+        echo "  kit-install region: evaluators line added (evaluators: $EVALUATORS)"
+    elif [ "$EXISTING_EVALUATORS" != "$EVALUATORS" ]; then
+        echo "Error: --evaluators '$EVALUATORS' conflicts with the recorded declaration (evaluators: $EXISTING_EVALUATORS)"
+        echo "       Update the kit-install region in CLAUDE.md first, or drop the flag."
+        exit 1
+    fi
+fi
+
+# Legacy target-pointer migration (KIT-0118, issue #145 — BugBot, PR
+# #147). The strip at the ## Target Repository extraction above only
+# cleans values on their way INTO a freshly seeded region. An adopt of a
+# pre-KIT-0118 planning tree passes --preserve-regions, so seed_region
+# keeps the existing region verbatim — prose and all — and
+# load_record() goes on returning an unusable target path. Without this
+# block the migration looks complete and silently is not, which is worse
+# than not attempting one.
+#
+# This is the ONLY place the engine rewrites an existing recorded VALUE
+# rather than appending a line. It is deliberately narrow, and it is a
+# repair rather than a rewrite: the text being removed is the kit's own
+# seeded hint, matched by the exact legacy marker, and the bare value is
+# what the record always MEANT. Operator-authored content cannot match
+# (a real path would have to contain " # TODO:"). Announced out loud —
+# a silent mutation of a consumer-owned region would be its own defect.
+if [ "$SHAPE" = "planning" ]; then
+    if ! REGION_NOW="$(python3 "$KIT_MARKERS" extract "$CLAUDE_MD" kit-install 2>&1)"; then
+        echo "Error: kit_markers extract kit-install failed on $CLAUDE_MD:"
+        echo "       $REGION_NOW"
+        exit 1
+    fi
+    REGION_MIGRATED="$(printf '%s\n' "$REGION_NOW" |
+        sed -E "/^[[:space:]]*target_(path|github):/ s/$_LEGACY_TODO//")"
+    if [ "$REGION_MIGRATED" != "$REGION_NOW" ]; then
+        # The write is checked EXPLICITLY, not left to `set -e`
+        # (CodeRabbit, this PR). `set -e` does already abort here — the
+        # pipeline's status is the replace's, so a failure kills the
+        # script before the announcement (verified). But relying on that
+        # makes the announcement's correctness a property a reader has
+        # to derive, and it surfaces a bare kit_markers error with no
+        # indication of which file or step failed. The explicit check
+        # gives the same error shape as the extract above, and makes the
+        # ordering invariant local instead of ambient.
+        #
+        # no trailing newline: the region body group excludes the
+        # newline before END, so extract->replace stays byte-identical
+        if ! REPLACE_OUT="$(printf '%s' "$REGION_MIGRATED" |
+            python3 "$KIT_MARKERS" replace "$CLAUDE_MD" kit-install --stdin 2>&1)"; then
+            echo "Error: kit_markers replace kit-install failed on $CLAUDE_MD:"
+            echo "       $REPLACE_OUT"
+            exit 1
+        fi
+        echo "  kit-install region: legacy '# TODO' prose migrated out of the target pointer"
     fi
 fi
 
@@ -994,6 +1165,9 @@ if [ "$SHAPE" = "planning" ]; then
     # KIT-0081 F1: the tail reflects what was actually resolved — an
     # operator whose flags/preset filled the pointer must not be told
     # to fill it in (they'd conclude the install is incomplete).
+    # *TODO* is NOT dead after KIT-0118: this engine no longer seeds
+    # prose into the values, but an adopt whose ## Target Repository
+    # section was written by an older kit can still carry it.
     case "$TP$TG" in
         *TODO*|*'<owner>'*|*'<target-repo>'*)
             echo "Fill in the target-repo pointer (path + github) in CLAUDE.md:"

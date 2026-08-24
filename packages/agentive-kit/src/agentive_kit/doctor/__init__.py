@@ -88,18 +88,21 @@ def _doctor_install(project_dir):
 
     The record lives in CLAUDE.md's ``kit-install`` KIT-LOCAL region and
     kit_markers.py is its only reader (N4: one extract, runtime-read, no
-    cache). Returns ``(shape, profile, bots, errors)`` where ``errors``
-    is a list of ``(record, detail)`` pairs, ``record`` in
-    {"shape-record", "profile-record", "bots-record"}:
+    cache). Returns ``(shape, profile, bots, evaluators, errors)`` where
+    ``errors`` is a list of ``(record, detail)`` pairs, ``record`` in
+    {"shape-record", "profile-record", "bots-record",
+    "evaluators-record"}:
 
     - anything absent (kit_markers, CLAUDE.md, region) ->
-      ("single", "python", None, []) — back-compat: absent means
+      ("single", "python", None, None, []) — back-compat: absent means
       today's single shape with the Python toolchain, never an error;
     - a readable record: shape in {single, planning}; a missing
       profile: line defaults by shape (single -> python,
       planning -> none — the KIT-0050 back-compat rule); a missing
       bots: line is None — "both bots expected", the pre-KIT-0056
-      default, never an error;
+      default, never an error; a missing evaluators: line is None —
+      "evaluators expected", the pre-KIT-0118 default, also never an
+      error;
     - malformed/unknown value or unreadable record -> the affected
       value(s) are None and ``errors`` carries the detail — the caller
       runs the FULL check set AND emits a DOCTOR:<record>:FAIL line —
@@ -109,7 +112,7 @@ def _doctor_install(project_dir):
     kit_markers = project_dir / "scripts" / "local" / "kit_markers.py"
     claude_md = project_dir / "CLAUDE.md"
     if not claude_md.exists():
-        return "single", "python", None, []
+        return "single", "python", None, None, []
     if not kit_markers.exists():
         # Packaged repos (KIT-0093) ship no kit_markers.py copy — the
         # reader travels with the package (agentive_kit.markers).
@@ -122,7 +125,7 @@ def _doctor_install(project_dir):
             text = claude_md.read_text(encoding="utf-8")
         except OSError as exc:
             detail = f"shape record unreadable ({exc.__class__.__name__})"
-            return None, None, None, [("shape-record", detail)]
+            return None, None, None, None, [("shape-record", detail)]
         region = markers.extract_region(text, "kit-install")
         if region is None:
             # EITHER exact marker comment alone means a corrupted
@@ -138,6 +141,7 @@ def _doctor_install(project_dir):
                     None,
                     None,
                     None,
+                    None,
                     [
                         (
                             "shape-record",
@@ -146,7 +150,7 @@ def _doctor_install(project_dir):
                         )
                     ],
                 )
-            return "single", "python", None, []
+            return "single", "python", None, None, []
         region_text = region
         return _parse_install_record(region_text)
     try:
@@ -164,16 +168,17 @@ def _doctor_install(project_dir):
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         detail = f"shape record unreadable ({exc.__class__.__name__})"
-        return None, None, None, [("shape-record", detail)]
+        return None, None, None, None, [("shape-record", detail)]
     if result.returncode != 0:
         # kit_markers exits 1 with this exact stderr for a missing region
         # (absent = single, back-compat). ANY other failure — crash, bad
         # interpreter, argv error — is an unreadable record and must fail
         # loud, not silently fall back (o3 review).
         if "region not found" in result.stderr:
-            return "single", "python", None, []
+            return "single", "python", None, None, []
         detail = result.stderr.strip().splitlines()
         return (
+            None,
             None,
             None,
             None,
@@ -196,6 +201,7 @@ def _parse_install_record(region_text):
     raw_shape = None
     raw_profile = None
     raw_bots = None
+    raw_evaluators = None
     for line in region_text.splitlines():
         stripped = line.strip()
         if stripped.startswith("shape:") and raw_shape is None:
@@ -204,6 +210,8 @@ def _parse_install_record(region_text):
             raw_profile = stripped.partition(":")[2].strip()
         elif stripped.startswith("bots:") and raw_bots is None:
             raw_bots = stripped.partition(":")[2].strip()
+        elif stripped.startswith("evaluators:") and raw_evaluators is None:
+            raw_evaluators = stripped.partition(":")[2].strip()
 
     errors = []
     shape = None
@@ -283,7 +291,28 @@ def _parse_install_record(region_text):
                     "coderabbit bugbot",
                 )
             )
-    return shape, profile, bots, errors
+
+    # evaluators declaration (KIT-0118, issue #146): whether the
+    # operator accepted the evaluator install at door time. Absent =
+    # None = legacy install = evaluators expected, the pre-KIT-0118
+    # behavior — never an error. An invalid value fails loud for the
+    # same reason bots does: a typo silently read as "declined" would
+    # SKIP checks it should run.
+    evaluators = None
+    if raw_evaluators is not None:
+        candidate = raw_evaluators.strip().lower()
+        # identifier equality per value, the same rule as shape/profile
+        if candidate == "yes" or candidate == "no":
+            evaluators = candidate
+        else:
+            errors.append(
+                (
+                    "evaluators-record",
+                    f"invalid evaluators declaration '{raw_evaluators}' in "
+                    "kit-install region — expected yes|no",
+                )
+            )
+    return shape, profile, bots, evaluators, errors
 
 
 def _check_declared(check_path, keyword):
@@ -598,13 +627,22 @@ def cmd_doctor(args, project_dir):
     # `# shapes:` / `# profiles:` headers; the driver reads the install
     # record once and stays otherwise declaration-driven. A malformed
     # record runs everything AND fails loud via the record lines below.
-    shape, profile, bots, record_errors = _doctor_install(project_dir)
+    shape, profile, bots, evaluators, record_errors = _doctor_install(project_dir)
 
     # Scrub ambient GIT_* so a leaked GIT_DIR (the KIT-0043 incident
     # class — e.g. doctor invoked from a pre-commit hook in a worktree)
     # cannot redirect git-facing checks at the wrong repository.
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env["DOCTOR_ROOT"] = str(project_dir)
+    # The driver stays the record's ONE reader (N4) — checks never parse
+    # CLAUDE.md themselves. The evaluator checks need the declaration to
+    # tell a deliberate decline from a broken install (KIT-0118, issue
+    # #146), so it reaches them the same way the root does: as an
+    # environment variable, set only when the record actually declares
+    # one. Unset = legacy = today's behavior.
+    env.pop("DOCTOR_EVALUATORS", None)
+    if evaluators is not None:
+        env["DOCTOR_EVALUATORS"] = evaluators
     verdicts = []
     for record, detail in record_errors:
         print(f"DOCTOR:{record}:FAIL:{detail}")

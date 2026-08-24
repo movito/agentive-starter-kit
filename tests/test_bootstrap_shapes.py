@@ -318,3 +318,125 @@ class TestExitContractPassThrough:
         )
         assert result.returncode == 2
         assert "owner/repo" in result.stdout + result.stderr
+
+
+class TestEngineValidatesItsOwnEvaluatorsInput:
+    """KIT-0118: the engine writes the record, so it defends its own
+    input — the same rule --bots follows. The packaged door can only
+    send yes|no, but the engine is invocable directly and a bad value
+    written here would poison every downstream reader.
+
+    Validation runs before the target check, so these need no fixture
+    tree and touch no filesystem.
+    """
+
+    ENGINE = REPO_ROOT / "scripts" / "local" / "engine-consumer.sh"
+
+    def _run(self, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["bash", str(self.ENGINE), *args],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            stdin=subprocess.DEVNULL,
+            env=_scrubbed_env(),
+        )
+
+    def test_bad_value_refused(self):
+        result = self._run("--evaluators", "bogus")
+        assert result.returncode == 1
+        assert "must be yes or no" in result.stdout + result.stderr
+
+    def test_empty_value_refused(self):
+        # `--evaluators` with nothing after it must not read as "unset"
+        result = self._run("--evaluators", "--shape", "single")
+        assert result.returncode == 1
+        assert "must be yes or no" in result.stdout + result.stderr
+
+    @pytest.mark.parametrize("value", ["yes", "no", "YES", "No"])
+    def test_valid_values_pass_validation(self, value):
+        # reaches the usage error for the missing target instead
+        result = self._run("--evaluators", value)
+        assert "must be yes or no" not in result.stdout + result.stderr
+        assert "Usage:" in result.stdout + result.stderr
+
+    def test_usage_line_documents_the_flag(self):
+        result = self._run()
+        assert "[--evaluators yes|no]" in result.stdout + result.stderr
+
+    @pytest.mark.parametrize(
+        "argv",
+        [
+            ("--evaluators=", "--shape", "single"),
+            ("--evaluators", ""),
+            ("--evaluators=",),
+        ],
+        ids=["equals-empty", "space-empty", "equals-empty-alone"],
+    )
+    def test_supplied_but_empty_is_refused_not_dropped(self, argv):
+        """CodeRabbit (this PR): validation keyed on `[ -n "$EVALUATORS" ]`
+        read an EMPTY value as "flag never passed" and skipped straight
+        past it, so `--evaluators=` completed the install recording
+        nothing. An explicitly-passed flag silently dropped is the exact
+        masking class this task closes — presence drives validation now.
+        """
+        result = self._run(*argv)
+        assert result.returncode == 1
+        assert "must be yes or no" in result.stdout + result.stderr
+
+
+class TestLegacyTodoMigrationIsNarrow:
+    """KIT-0118: adopting a pre-KIT-0118 planning tree strips the "# TODO"
+    prose the old engine seeded INSIDE the recorded value. The expression
+    matches that exact marker and nothing else — a directory name that
+    legitimately contains " #" is the operator's real path, not something
+    this engine wrote, and must survive (CodeRabbit + claude-code).
+    """
+
+    EXPR = r"s/[[:space:]]+#[[:space:]]*TODO:.*$//"
+
+    def _strip(self, value: str) -> str:
+        return subprocess.run(
+            ["sed", "-E", self.EXPR],
+            input=value,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        ).stdout
+
+    def test_expression_matches_the_engine(self):
+        """The literal above must stay the one the engine actually runs —
+        a test that drifts from its source proves nothing."""
+        engine = (REPO_ROOT / "scripts" / "local" / "engine-consumer.sh").read_text(
+            encoding="utf-8"
+        )
+        assert "_LEGACY_TODO='[[:space:]]+#[[:space:]]*TODO:.*$'" in engine
+
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            (
+                "../<target-repo>  # TODO: set the product repo path",
+                "../<target-repo>",
+            ),
+            ("<owner>/<repo>  # TODO: set the product repo", "<owner>/<repo>"),
+            ("../product  # TODO: anything at all", "../product"),
+        ],
+        ids=["legacy-path", "legacy-github", "legacy-arbitrary-tail"],
+    )
+    def test_legacy_prose_is_migrated(self, value, expected):
+        assert self._strip(value) == expected
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "../target #1",
+            "../my project # notes",
+            "../plain-path",
+            "acme/product",
+            "../repo#tag",
+        ],
+        ids=["hash-one", "hash-prose", "plain", "github", "no-space-hash"],
+    )
+    def test_real_values_survive_untouched(self, value):
+        assert self._strip(value) == value

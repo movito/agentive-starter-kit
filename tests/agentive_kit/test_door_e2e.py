@@ -800,3 +800,353 @@ class TestPreset:
         # answer is ignored OUT LOUD, never silently
         assert "profile: none" in (target / "CLAUDE.md").read_text(encoding="utf-8")
         assert "Preset venv answer ignored" in result.stdout
+
+
+# ─────────────────────────────────────────
+# KIT-0118 — packaged-door fresh-install fixes (issues #145, #146)
+# ─────────────────────────────────────────
+@pytest.fixture(scope="module")
+def new_planning_github_only(tmp_path_factory):
+    """Planning shape with --target-github but NO --target-path: the
+    sibling-layout convention derives the path (issue #145)."""
+    base = tmp_path_factory.mktemp("door-planning-gh-only")
+    env = _door_env(base)
+    target = base / "coord-gh"
+    result = run_door(
+        "new",
+        str(target),
+        "--shape",
+        "planning",
+        "--target-github",
+        "acme/widget-factory",
+        cwd=base,
+        env=env,
+    )
+    return target, result
+
+
+@pytest.fixture(scope="module")
+def new_planning_bare(tmp_path_factory):
+    """Planning shape with NEITHER pointer flag — the placeholder case."""
+    base = tmp_path_factory.mktemp("door-planning-bare")
+    env = _door_env(base)
+    target = base / "coord-bare"
+    result = run_door("new", str(target), "--shape", "planning", cwd=base, env=env)
+    return target, result
+
+
+def _region_of(target: Path) -> str:
+    text = (target / "CLAUDE.md").read_text(encoding="utf-8")
+    assert "<!-- BEGIN KIT-LOCAL: kit-install -->" in text
+    return text.split("BEGIN KIT-LOCAL: kit-install -->")[1].split(
+        "<!-- END KIT-LOCAL: kit-install"
+    )[0]
+
+
+class TestTargetPathDerivation:
+    """Issue #145: the machine-read identity record must carry a usable
+    path and no prose, in every flag combination."""
+
+    def test_path_derived_from_github(self, new_planning_github_only):
+        target, result = new_planning_github_only
+        assert result.returncode == 0, result.stderr + result.stdout
+        region = _region_of(target)
+        assert "target_path: ../widget-factory" in region
+        assert "target_github: acme/widget-factory" in region
+
+    def test_derived_path_also_seeds_the_human_section(self, new_planning_github_only):
+        target, _ = new_planning_github_only
+        text = (target / "CLAUDE.md").read_text(encoding="utf-8")
+        assert "- **Path**: `../widget-factory`" in text
+
+    def test_derived_pointer_reported_as_recorded_not_todo(
+        self, new_planning_github_only
+    ):
+        # KIT-0081 F1's tail must not tell an operator whose pointer
+        # resolved that the install is unfinished.
+        _, result = new_planning_github_only
+        assert "Target-repo pointer recorded in CLAUDE.md" in result.stdout
+        assert "Fill in the target-repo pointer" not in result.stdout
+
+    def test_no_prose_in_any_recorded_value_derived(self, new_planning_github_only):
+        target, _ = new_planning_github_only
+        self._assert_clean(target)
+
+    def test_no_prose_in_any_recorded_value_placeholders(self, new_planning_bare):
+        target, result = new_planning_bare
+        assert result.returncode == 0, result.stderr + result.stdout
+        region = _region_of(target)
+        # bare placeholders, no "# TODO" prose glued onto the value
+        assert "target_path: ../<target-repo>" in region
+        assert "target_github: <owner>/<repo>" in region
+        self._assert_clean(target)
+
+    def test_placeholder_case_still_prompts_for_the_pointer(self, new_planning_bare):
+        _, result = new_planning_bare
+        assert "Fill in the target-repo pointer" in result.stdout
+
+    @staticmethod
+    def _assert_clean(target: Path) -> None:
+        region = _region_of(target)
+        for line in region.splitlines():
+            if not line.strip():
+                continue
+            _key, _sep, value = line.partition(":")
+            assert "#" not in value, f"prose leaked into the record: {line!r}"
+
+    def test_record_round_trips_through_load_record(self, new_planning_github_only):
+        # the door's own reader is the one downstream consumers use
+        from agentive_kit import door
+
+        record = door.load_record(new_planning_github_only[0])
+        assert record["target_path"] == "../widget-factory"
+        assert record["target_github"] == "acme/widget-factory"
+        assert record["shape"] == "planning"
+
+
+@pytest.fixture(scope="module")
+def new_without_evaluators(tmp_path_factory):
+    base = tmp_path_factory.mktemp("door-eval-declined")
+    env = _door_env(base)
+    target = base / "declined"
+    result = run_door("new", str(target), "--without-evaluators", cwd=base, env=env)
+    return target, result
+
+
+class TestEvaluatorDeclarationRecorded:
+    """Issue #146.1: a declined evaluator install is a DECLARATION, and
+    doctor must read it instead of failing the operator's own choice."""
+
+    def test_declined_answer_is_recorded(self, new_without_evaluators):
+        target, result = new_without_evaluators
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "evaluators: no" in _region_of(target)
+
+    def test_doctor_tail_skips_both_evaluator_checks(self, new_without_evaluators):
+        _, result = new_without_evaluators
+        assert "DOCTOR:30-evaluators.sh:SKIP" in result.stdout or (
+            "DOCTOR:evaluators:SKIP:evaluators declined at install" in result.stdout
+        )
+        assert "DOCTOR:evaluator-cli:SKIP:evaluators declined at install" in (
+            result.stdout
+        )
+        assert "DOCTOR:evaluators:FAIL" not in result.stdout
+        assert "DOCTOR:evaluator-cli:FAIL" not in result.stdout
+
+    def test_unanswered_offer_records_nothing(self, new_single):
+        # The default run is non-interactive: the offer is SKIPPED, not
+        # answered, so the record must stay silent — a defaulted "no"
+        # written here would let doctor skip evaluator checks on a
+        # project that never declined anything.
+        target, _ = new_single
+        assert "evaluators:" not in _region_of(target)
+
+
+class TestEvaluatorDeclarationOnAdopt:
+    """Adopt preserves consumer-owned regions, so the declaration has to
+    be added surgically — the same masking class (and the same
+    treatment) as the `bots:` line."""
+
+    def _adopted(self, tmp_path: Path, *extra: str):
+        env = _door_env(tmp_path)
+        target = tmp_path / "adopted"
+        target.mkdir()
+        subprocess.run(
+            ["git", "init", "-q", "-b", "main", str(target)], check=True, timeout=30
+        )
+        first = run_door(
+            "adopt", str(target), "--profile", "none", cwd=tmp_path, env=env
+        )
+        assert first.returncode == 0, first.stderr + first.stdout
+        # the baseline record carries no evaluators: line
+        assert "evaluators:" not in _region_of(target)
+        return target, env
+
+    def test_line_added_to_a_preserved_region(self, tmp_path):
+        target, env = self._adopted(tmp_path)
+        result = run_door(
+            "adopt",
+            str(target),
+            "--without-evaluators",
+            cwd=tmp_path,
+            env=env,
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert "evaluators: no" in _region_of(target)
+
+    def test_conflicting_answer_is_an_error_not_an_overwrite(self, tmp_path):
+        target, env = self._adopted(tmp_path)
+        assert (
+            run_door(
+                "adopt", str(target), "--without-evaluators", cwd=tmp_path, env=env
+            ).returncode
+            == 0
+        )
+        result = run_door(
+            "adopt", str(target), "--with-evaluators", cwd=tmp_path, env=env
+        )
+        assert result.returncode != 0
+        assert "conflicts with the recorded declaration" in (
+            result.stdout + result.stderr
+        )
+        # the record is unchanged — never a silent overwrite
+        assert "evaluators: no" in _region_of(target)
+
+    def test_re_adopt_without_the_flag_does_not_duplicate(self, tmp_path):
+        """o3 review (KIT-0118) predicted the engine would append an
+        `evaluators:` line on every re-adopt once one exists, silently
+        polluting the record. It does not — the append is gated on the
+        flag being GIVEN, and a preserved region is never reseeded — but
+        the claim is cheap to pin permanently.
+        """
+        target, env = self._adopted(tmp_path)
+        assert (
+            run_door(
+                "adopt", str(target), "--without-evaluators", cwd=tmp_path, env=env
+            ).returncode
+            == 0
+        )
+        for _ in range(2):
+            result = run_door("adopt", str(target), cwd=tmp_path, env=env)
+            assert result.returncode == 0, result.stderr + result.stdout
+        region = _region_of(target)
+        assert region.count("evaluators:") == 1
+        assert "evaluators: no" in region
+
+    def test_repeating_the_same_answer_is_idempotent(self, tmp_path):
+        target, env = self._adopted(tmp_path)
+        for _ in range(2):
+            result = run_door(
+                "adopt", str(target), "--without-evaluators", cwd=tmp_path, env=env
+            )
+            assert result.returncode == 0, result.stderr + result.stdout
+        region = _region_of(target)
+        assert region.count("evaluators:") == 1
+
+
+class TestLegacyRecordMigrationOnAdopt:
+    """BugBot (PR #147): the ## Target Repository strip only cleans values
+    on their way INTO a freshly seeded region. Adopt passes
+    --preserve-regions, so a pre-KIT-0118 tree's EXISTING kit-install
+    region kept its prose and `load_record()` went on returning an
+    unusable path — a migration that looks complete and silently is not.
+    """
+
+    LEGACY_TP = "../<target-repo>  # TODO: set the product repo path"
+    LEGACY_TG = "<owner>/<repo>  # TODO: set the product repo"
+
+    def _legacy_tree(self, tmp_path: Path, tp: str, tg: str):
+        env = _door_env(tmp_path)
+        target = tmp_path / "legacy"
+        target.mkdir()
+        subprocess.run(
+            ["git", "init", "-q", "-b", "main", str(target)], check=True, timeout=30
+        )
+        (target / "CLAUDE.md").write_text(
+            "# Legacy Planning Repo\n\n"
+            "## Target Repository\n\n"
+            f"- **Path**: `{tp}`\n"
+            f"- **GitHub**: `{tg}`\n\n"
+            "<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: planning\nprofile: none\n"
+            f"target_path: {tp}\n"
+            f"target_github: {tg}\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "-C", str(target), "add", "-A"], check=True, timeout=30)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(target),
+                "-c",
+                "user.email=t@t",
+                "-c",
+                "user.name=t",
+                "commit",
+                "-q",
+                "-m",
+                "legacy",
+            ],
+            check=True,
+            timeout=60,
+        )
+        result = run_door(
+            "adopt", str(target), "--shape", "planning", cwd=tmp_path, env=env
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        return target, result
+
+    def test_prose_is_migrated_out_of_the_record(self, tmp_path):
+        target, _ = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        region = _region_of(target)
+        assert "target_path: ../<target-repo>" in region
+        assert "target_github: <owner>/<repo>" in region
+        assert "TODO" not in region
+
+    def test_migration_preserves_the_rest_of_the_record(self, tmp_path):
+        """CodeRabbit (this PR): the migration rewrites the WHOLE region
+        body through sed. Asserting only that the cleaned values appear
+        and "TODO" is gone would stay green if the rewrite dropped
+        `shape:`/`profile:` or truncated the last line — the record
+        would silently lose fields while the tests passed.
+        """
+        from agentive_kit import door
+
+        target, _ = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        body = [ln.strip() for ln in _region_of(target).splitlines() if ln.strip()]
+        assert body == [
+            "shape: planning",
+            "profile: none",
+            "target_path: ../<target-repo>",
+            "target_github: <owner>/<repo>",
+        ]
+        # and the reader agrees, field for field
+        assert door.load_record(target) == {
+            "shape": "planning",
+            "profile": "none",
+            "target_path": "../<target-repo>",
+            "target_github": "<owner>/<repo>",
+        }
+
+    def test_load_record_returns_the_clean_value(self, tmp_path):
+        # the actual defect: a machine reader getting an unusable path
+        from agentive_kit import door
+
+        target, _ = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        record = door.load_record(target)
+        assert record["target_path"] == "../<target-repo>"
+        assert record["target_github"] == "<owner>/<repo>"
+
+    def test_migration_is_announced_not_silent(self, tmp_path):
+        # this is the one place the engine rewrites an existing recorded
+        # VALUE in a consumer-owned region — it must say so
+        _, result = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        assert "legacy '# TODO' prose migrated" in result.stdout
+
+    def test_real_values_with_a_hash_are_not_touched(self, tmp_path):
+        # the over-reach guard: `../target #1` is the operator's real
+        # path, not something this engine ever seeded
+        from agentive_kit import door
+
+        target, result = self._legacy_tree(tmp_path, "../target #1", "acme/product")
+        assert door.load_record(target)["target_path"] == "../target #1"
+        assert "legacy '# TODO' prose migrated" not in result.stdout
+
+    def test_clean_record_is_left_alone(self, tmp_path):
+        target, result = self._legacy_tree(tmp_path, "../product", "acme/product")
+        region = _region_of(target)
+        assert "target_path: ../product" in region
+        assert "legacy '# TODO' prose migrated" not in result.stdout
+
+    def test_migration_is_idempotent(self, tmp_path):
+        target, _ = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        env = _door_env(tmp_path)
+        second = run_door(
+            "adopt", str(target), "--shape", "planning", cwd=tmp_path, env=env
+        )
+        assert second.returncode == 0, second.stderr + second.stdout
+        # already migrated — nothing left to do, and it says nothing
+        assert "legacy '# TODO' prose migrated" not in second.stdout
+        assert "TODO" not in _region_of(target)

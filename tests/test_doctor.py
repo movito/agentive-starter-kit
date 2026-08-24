@@ -2545,3 +2545,155 @@ class TestHandoffsPathsCheck:
         # PASS specifically — a bare prefix match would also accept the
         # not-executable FAIL shape (CodeRabbit, PR #109).
         assert "DOCTOR:35-handoffs-paths.py:PASS:" in result.stdout
+
+
+# ─────────────────────────────────────────
+# KIT-0118 (issue #146): a DECLINED evaluator install is a declaration
+# ─────────────────────────────────────────
+def run_evaluator_check(
+    name: str, root: Path, declared: str | None, path_dir: Path | None = None
+):
+    """Run an evaluator check with the record's `evaluators:` answer in
+    the environment, exactly as the doctor driver passes it."""
+    env = {**os.environ, "DOCTOR_ROOT": str(root)}
+    env.pop("DOCTOR_EVALUATORS", None)
+    if declared is not None:
+        env["DOCTOR_EVALUATORS"] = declared
+    if path_dir is not None:
+        env["PATH"] = str(path_dir)
+    return subprocess.run(
+        [BASH, str(DOCTOR_D / name)],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+
+class TestEvaluatorsDeclinedAtInstall:
+    """Issue #146.1: `--without-evaluators` is an operator DECISION.
+    Doctor must SKIP the evaluator checks on it rather than FAIL the
+    project for honoring the answer the door itself offered.
+    """
+
+    def _provisioned_but_empty(self, tmp_path: Path) -> Path:
+        # the fresh-install shape: .adversarial/ copied unconditionally
+        # by the consumer engine, evaluators/ never populated
+        (tmp_path / ".adversarial").mkdir()
+        return tmp_path
+
+    def test_library_check_skips_when_declined(self, tmp_path):
+        root = self._provisioned_but_empty(tmp_path)
+        result = run_evaluator_check("30-evaluators.sh", root, "no")
+        assert "DOCTOR:evaluators:SKIP:" in result.stdout
+        assert "declined at install" in result.stdout
+        assert "DOCTOR:evaluators:FAIL" not in result.stdout
+
+    def test_cli_check_skips_when_declined(self, tmp_path):
+        root = self._provisioned_but_empty(tmp_path)
+        result = run_evaluator_check(
+            "31-evaluator-cli.sh", root, "no", _restricted_bin(tmp_path)
+        )
+        assert "DOCTOR:evaluator-cli:SKIP:" in result.stdout
+        assert "declined at install" in result.stdout
+        assert "DOCTOR:evaluator-cli:FAIL" not in result.stdout
+
+    def test_skip_message_says_how_to_re_enable(self, tmp_path):
+        # a SKIP that hides a real gap forever would be the masking
+        # class — the way back must be in the line itself
+        root = self._provisioned_but_empty(tmp_path)
+        result = run_evaluator_check("30-evaluators.sh", root, "no")
+        assert "install-evaluators" in result.stdout
+        assert "update the record" in result.stdout
+
+    def test_accepted_answer_keeps_todays_behavior(self, tmp_path):
+        root = self._provisioned_but_empty(tmp_path)
+        result = run_evaluator_check("30-evaluators.sh", root, "yes")
+        assert "DOCTOR:evaluators:FAIL:" in result.stdout
+
+    def test_legacy_record_keeps_todays_behavior(self, tmp_path):
+        # no evaluators: line at all -> the driver sets nothing ->
+        # pre-KIT-0118 behavior, fail-open to FAIL
+        root = self._provisioned_but_empty(tmp_path)
+        result = run_evaluator_check("30-evaluators.sh", root, None)
+        assert "DOCTOR:evaluators:FAIL:" in result.stdout
+
+    def test_accepted_answer_still_passes_a_real_install(self, tmp_path):
+        (tmp_path / ".adversarial" / "evaluators").mkdir(parents=True)
+        (tmp_path / ".adversarial" / "evaluators" / "one.yml").write_text(
+            "x\n", encoding="utf-8"
+        )
+        result = run_evaluator_check("30-evaluators.sh", tmp_path, "yes")
+        assert "DOCTOR:evaluators:PASS:" in result.stdout
+
+
+class TestFreshInstallEnvKeys:
+    """Issue #146.2: on a fresh install BOTH problems co-occur by
+    construction — .env.template ships ANTHROPIC_API_KEY commented AND
+    TASK_PREFIX empty. The required-key FAIL used to return before the
+    prefix block ran, hiding the warning the door explicitly promises.
+    """
+
+    # verbatim shape of the seeded .env (planning --new)
+    FRESH = (
+        "# ANTHROPIC_API_KEY=sk-ant-your-key-here\n"
+        "# OPENAI_API_KEY=sk-your-key-here\n"
+        "# GEMINI_API_KEY=your-key-here\n"
+        "TASK_PREFIX=\n"
+    )
+
+    def test_both_problems_surface(self, tmp_path):
+        (tmp_path / ".env").write_text(self.FRESH, encoding="utf-8")
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:FAIL:" in result.stdout
+        assert "ANTHROPIC_API_KEY" in result.stdout
+        assert "TASK_PREFIX" in result.stdout
+
+    def test_still_one_protocol_line(self, tmp_path):
+        (tmp_path / ".env").write_text(self.FRESH, encoding="utf-8")
+        result = run_env_check(tmp_path)
+        verdicts = [
+            ln for ln in result.stdout.splitlines() if ln.startswith("DOCTOR:env-keys:")
+        ]
+        assert len(verdicts) == 1  # one check, one protocol line
+
+    def test_verdict_stays_fail_not_warn(self, tmp_path):
+        # semantics unchanged: a missing required key is still a FAIL
+        (tmp_path / ".env").write_text(self.FRESH, encoding="utf-8")
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:WARN:" not in result.stdout
+
+    def test_required_key_fail_alone_says_nothing_about_prefix(self, tmp_path):
+        # the fold must be conditional — a good prefix must not be
+        # reported as a problem alongside a genuine key failure
+        (tmp_path / ".env").write_text(
+            "# ANTHROPIC_API_KEY=x\nOPENAI_API_KEY=a\nGEMINI_API_KEY=b\n"
+            "TASK_PREFIX=DEMO\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:FAIL:" in result.stdout
+        assert "TASK_PREFIX" not in result.stdout
+
+    def test_the_real_seeded_template_surfaces_both(self, tmp_path):
+        """Grounded on the SHIPPED template, not a hand-written stand-in:
+        the co-occurrence is a property of what the door actually seeds,
+        so a template edit that changes it must fail this test."""
+        template = REPO_ROOT / ".env.template"
+        (tmp_path / ".env").write_text(
+            template.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:FAIL:" in result.stdout
+        assert "ANTHROPIC_API_KEY" in result.stdout
+        assert "TASK_PREFIX" in result.stdout
+
+    def test_prefix_only_problem_is_still_a_warn(self, tmp_path):
+        (tmp_path / ".env").write_text(
+            "ANTHROPIC_API_KEY=x\nOPENAI_API_KEY=a\nGEMINI_API_KEY=b\n"
+            "TASK_PREFIX=\n",
+            encoding="utf-8",
+        )
+        result = run_env_check(tmp_path)
+        assert "DOCTOR:env-keys:WARN:" in result.stdout
+        assert "TASK_PREFIX" in result.stdout
