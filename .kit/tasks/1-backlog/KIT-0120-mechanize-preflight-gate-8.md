@@ -40,7 +40,13 @@ routinely on a door-era `agentive-kit`, move the check into the engine.
 1. `agentive preflight` gains Gate 8: PASS on a non-empty
    `.kit/context/reviews/<TASK-ID>-review-pass.md`, FAIL otherwise
    (existence + non-empty, mirroring Gates 5/6 — content stays
-   agent/human discipline).
+   agent/human discipline). While mechanizing, EVALUATE whether a
+   minimal structure check (e.g. a passes-ran table and at least one
+   disposition line) is worth the brittleness — CodeRabbit (PR #148)
+   argued a placeholder file can satisfy a pure non-empty check; the
+   KIT-0042 counter-doctrine is that gates stay strict-but-simple and
+   content intelligence lives in process. Decide with evidence, not
+   by default.
 2. Behavior matrix extended; all "all 7"/"7-gate" literals inside the
    engine (`preflight.py` docstring, `_HELP`, dispatch summary,
    `cli.py`) move to 8.

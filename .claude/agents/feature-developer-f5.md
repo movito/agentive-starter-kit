@@ -527,9 +527,13 @@ never restate it.
 2. **Flagged dimensions**: read `**Review Flags**:` from the task spec
    and handoff. `security` declared → run `/security-review` in this
    slot. Flagged dimensions are never silently skipped — a flagged run
-   that cannot happen is recorded with its reason. (Which dimensions
-   are currently runnable — e.g. `architecture` via its reviewer
-   agent — is stated in REVIEW-PIPELINE.md, not here.)
+   that cannot happen is recorded with its reason. **Fail closed on
+   flag trouble**: if the spec and handoff declarations disagree, run
+   the UNION of both and flag the mismatch to the planner; a flag not
+   in REVIEW-PIPELINE.md's registry is a typo until proven otherwise —
+   ask, don't drop it. (Which dimensions are currently runnable —
+   e.g. `architecture` via its reviewer agent — is stated in
+   REVIEW-PIPELINE.md, not here.)
 3. **Triage fix-or-defer**: every finding is either fixed now or
    explicitly deferred with a reason. No third state.
 4. **Persist the record** to

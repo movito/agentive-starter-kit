@@ -72,8 +72,10 @@ flagged dimensions as declared. The rules live in
 (cite, don't restate); the check here is mechanical:
 
 ```bash
-# Planning repo — a non-empty record is PASS, missing/empty is FAIL:
-ls -l .kit/context/reviews/<TASK-ID>-review-pass.md
+# Planning repo — non-empty record is PASS; missing OR zero-byte is
+# FAIL (`test -s`, matching Gates 5/6's st_size > 0 rule — a bare
+# `ls` would pass a touch'd empty file):
+test -s .kit/context/reviews/<TASK-ID>-review-pass.md && echo "GATE:8:ReviewPass:PASS" || echo "GATE:8:ReviewPass:FAIL"
 ```
 
 A record whose content says "skipped: <reason>" per the pipeline's

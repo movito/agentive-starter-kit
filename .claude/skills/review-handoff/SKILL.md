@@ -32,8 +32,9 @@ process). When one PR ships several tasks, follow the lead-task +
 pointer-files convention **up front**, not after a gate failure:
 
 1. **Pick the lead task** (usually the lowest ID) and write the full
-   review starter and evaluator record under the lead's name, covering
-   the whole bundle.
+   review starter, evaluator record, AND review-pass record under the
+   lead's name, covering the whole bundle — the non-lead pointers in
+   step 2 target all three lead artifacts, so each must exist.
 2. **For every other bundled task**, create three short pointer files
    with the exact solo-task names:
    - `.kit/context/<TASK-ID>-REVIEW-STARTER.md` — a few lines: names the
