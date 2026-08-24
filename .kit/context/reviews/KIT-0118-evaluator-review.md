@@ -106,9 +106,13 @@ Both findings were real, both reproduced against the tree, both fixed:
    dropped a flag the operator explicitly gave. Reproduced directly
    (`--evaluators= --shape single` fell through to the usage error).
    Fixed with an `EVALUATORS_GIVEN` presence sentinel driving
-   validation; emptiness now means only "not declared". The `--bots`
-   flag shares the original shape — noted, not changed here (pinned by
-   many tests; KIT-0108 owns that engine's consolidation).
+   validation. The three states are now distinct: flag ABSENT = not
+   declared (no record line, legacy behavior); flag GIVEN but empty =
+   REJECTED; flag given with yes|no = declared. Only the first is
+   "not declared" — an explicit `--evaluators=` is an error, not a
+   silent no-op. The `--bots` flag shares the original shape — noted,
+   not changed here (pinned by many tests; KIT-0108 owns that engine's
+   consolidation).
 2. **Minor — the legacy-prose strip was a general `" #"` comment
    opener.** Narrowed to the literal `# TODO` marker the old engine
    actually wrote. `../target #1` and `../my project # notes` now

@@ -37,7 +37,8 @@ fixed inline, per the task's out-of-scope rule.
 ## Verified facts (2026-08-24, branch `feature/KIT-0118-packaged-door-fixes`)
 
 1. `_print_preset_comparison(shape, profile, bots, record_errors, project_dir)`
-   exists in TWO copies — `agentive_kit/doctor/__init__.py` and the
+   exists in TWO copies —
+   `packages/agentive-kit/src/agentive_kit/doctor/__init__.py` and the
    inline fallback in `scripts/core/project` — and its docstring states
    the omission explicitly: *"Keys other than shape/profile/bots are
    ignored here by design."* That sentence predates the `evaluators:`
