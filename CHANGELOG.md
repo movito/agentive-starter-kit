@@ -251,6 +251,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Review pipeline, Tier 1 + flag system** (KIT-0116 Phase 1, closes
+  the KIT-ADR-0035 Decision #3 obligation's first rung). New
+  `.kit/context/workflows/REVIEW-PIPELINE.md` is the single value
+  authority for the review ladder: the harness-native `/code-review`
+  skill becomes a default-on pre-PR gate in the feature-developer
+  workflow (new Phase 5b, fix-or-defer triage, persisted
+  `<TASK-ID>-review-pass.md` record), `/security-review` runs when the
+  new planner-declared `**Review Flags**:` field says so, and the
+  `/preflight` command grows Gate 8 ("review pass done" —
+  session-checked; CLI mechanization filed as KIT-0120). The tier
+  heuristics encode three measured axes, including KIT-0118's
+  argv/input-validation seam finding. Drift pinned by
+  `tests/test_review_pipeline_contracts.py` (red-first), with
+  Phase-2 checks (KIT-ADR-0036 citations, reviewer Bash-absence)
+  arming mechanically when the ADR lands. Surfaces bumped:
+  feature-developer 2.7.0 / -f5 1.7.0, planner 2.2.0 / -f5 1.2.0,
+  preflight command 1.6.0, commit-push-pr command 1.2.0,
+  TASK-STARTER-TEMPLATE 2.2.0.
+
 - **`scripts/local/plugin_resync.py` — the release resync tool**
   (KIT-0110 R1): codifies the method three releases ran as hand-rolled
   `/tmp` tooling. Work-list from roster hashes (never `git diff`,

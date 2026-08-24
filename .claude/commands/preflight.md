@@ -1,10 +1,10 @@
 ---
-description: Check all 7 completion gates before requesting human review
+description: Check all 8 completion gates before requesting human review
 argument-hint: "[optional --pr PR_NUMBER --task TASK_ID --repo owner/name]"
-version: 1.5.0
+version: 1.6.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-08-11
+last-updated: 2026-08-24
 created-by: "@movito with planner2"
 ---
 
@@ -13,13 +13,16 @@ created-by: "@movito with planner2"
 **First response — open with this transparency header, before any
 other output or tool call:**
 
-> 🧭 `/preflight` — runs all 7 completion gates and presents a
+> 🧭 `/preflight` — runs all 8 completion gates and presents a
 > PASS/FAIL table with a READY / NOT READY verdict.
 > Reads: CI, bot reviews, and threads via `gh`; `.kit/` review
 > artifacts in the planning repo · Writes: nothing
 > Source: [preflight.md](https://github.com/movito/agentive-starter-kit/blob/main/.claude/commands/preflight.md) · Docs: [task completion protocol](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/TASK-COMPLETION-PROTOCOL.md)
 
-Run all 7 completion gates and present a PASS/FAIL table.
+Run all 8 completion gates and present a PASS/FAIL table. Gates 1–7
+are mechanical (`agentive preflight`); Gate 8 — the review-pass gate
+(KIT-0116) — is checked by this command until it is mechanized in the
+CLI (backlog: KIT-0120).
 
 ## Cross-repo mode (automatic)
 
@@ -58,6 +61,25 @@ whenever the auto-detection could be wrong. A positional task ID
 Outputs structured `GATE:<number>:<name>:PASS|FAIL|PENDING|SKIP:<detail>` lines
 and exits 0 (all pass), 1 (any fail), or 2 (no failures, but at least one gate PENDING).
 
+**The CLI emits gates 1–7 only.** Gate 8 is checked in the next step by
+this command; its absence from the CLI output is expected, not a bug.
+
+## Step 1b: Check Gate 8 — review pass done (session-checked)
+
+Gate 8 verifies the dedicated review pass ran — code review always;
+flagged dimensions as declared. The rules live in
+[REVIEW-PIPELINE.md](https://github.com/movito/agentive-starter-kit/blob/main/.kit/context/workflows/REVIEW-PIPELINE.md)
+(cite, don't restate); the check here is mechanical:
+
+```bash
+# Planning repo — a non-empty record is PASS, missing/empty is FAIL:
+ls -l .kit/context/reviews/<TASK-ID>-review-pass.md
+```
+
+A record whose content says "skipped: <reason>" per the pipeline's
+skip rules still PASSES — the gate enforces that the decision was
+persisted, not that a review necessarily ran.
+
 **PENDING** (Gate 1 only, KIT-0034): CI runs are not yet registered for the head
 SHA, or are still executing — GitHub takes a few seconds to register runs after a
 push. PENDING is not a failure verdict; re-run preflight shortly (or use
@@ -80,6 +102,7 @@ the gates below can emit more than PASS/FAIL:
 | 5 | Evaluator review persisted | PASS/FAIL | [file path or "missing"] |
 | 6 | Review starter exists | PASS/FAIL | [file path or "missing"] |
 | 7 | Task in correct folder | PASS/FAIL | [folder/file] |
+| 8 | Review pass done | PASS/FAIL | [record path or "missing"] (from Step 1b) |
 
 `SKIP` means the gate does not apply (a `bots:` declaration says the bot is
 absent — KIT-0056) and **counts as satisfied**; the "wait for the bot"
@@ -88,7 +111,7 @@ neither pass nor fail.
 
 ### Verdict
 
-- If all 7 pass: **READY** — proceed with review handoff (move to `4-in-review`, notify user)
+- If all 8 pass: **READY** — proceed with review handoff (move to `4-in-review`, notify user)
 - If no gate fails but one is PENDING: **NOT READY YET (pending)** — wait briefly
   and re-run preflight; do not report a CI failure
 - If any fail: **NOT READY (N gates failing)** — list prescriptive actions for each failing gate:
@@ -101,6 +124,9 @@ neither pass nor fail.
   - Gate 5 fails: "Run the code-review evaluator and persist output"
   - Gate 6 fails: "Create the review starter file"
   - Gate 7 fails: "Run `./scripts/core/project move <TASK-ID> in-review`"
+  - Gate 8 fails: "Run the native review pass (fd Phase 5b; authority:
+    `.kit/context/workflows/REVIEW-PIPELINE.md`) and persist
+    `.kit/context/reviews/<TASK-ID>-review-pass.md`"
 
 ### Fresh vs lingering threads (Gate 4 nuance)
 

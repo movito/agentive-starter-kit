@@ -1,7 +1,7 @@
 # Task Starter Template — the single starter authority
 
-**Version**: 2.1.0
-**Last Updated**: 2026-08-13
+**Version**: 2.2.0
+**Last Updated**: 2026-08-24
 **Purpose**: THE contract for task starter messages. Every starter a
 planner produces — in this repo or any consumer project — instantiates
 this template. Planner agent bodies point here; they do not carry
@@ -97,6 +97,11 @@ a minimal one. Include each WHEN it applies; omit silently when not:
 - **Budget and gate citations** — when the task runs under a standing
   policy (review-surface budget, evaluator tier policy, circuit
   breaker), cite it in one line each. Cite, don't restate.
+- **Review Flags** — when the spec declares `**Review Flags**:`, the
+  starter carries the declaration line verbatim so the session runs
+  the flagged dimensions pre-PR. This is the field SHELL only —
+  registry and trigger heuristics live in
+  `.kit/context/workflows/REVIEW-PIPELINE.md` (cite, never restate).
 - **Out of scope — do not touch** — name the adjacent surfaces the
   agent must leave alone, with the parking place for discovered gaps
   (usually `1-backlog/`).

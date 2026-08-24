@@ -1,10 +1,10 @@
 ---
 description: Commit all changes, push to remote, and open a pull request
 argument-hint: "[optional commit message override]"
-version: 1.1.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-08-11
+last-updated: 2026-08-24
 created-by: "@movito with planner2"
 ---
 
@@ -128,14 +128,17 @@ persisted, review starter, task folder) CAN be checked now.
 After presenting results, output the **Next Steps** checklist:
 
 ```text
-## Next Steps (do NOT skip — review handoff requires all 7 gates)
+## Next Steps (do NOT skip — review handoff requires all 8 gates)
 
 1. Wait for bots: `/check-bots` (CodeRabbit ~1-2 min, BugBot ~4-6 min)
 2. Triage bot findings: `/triage-threads`
 3. Run code-review evaluator (skill: code-review-evaluator)
-4. Create review starter (skill: review-handoff)
-5. Re-run preflight: `/preflight --pr PR_NUMBER --task TASK_ID`
-6. When all 7 gates pass -> hand off for human review
+4. Run the native review pass (/code-review; flagged dimensions per
+   .kit/context/workflows/REVIEW-PIPELINE.md) and persist the
+   review-pass record
+5. Create review starter (skill: review-handoff)
+6. Re-run preflight: `/preflight --pr PR_NUMBER --task TASK_ID`
+7. When all 8 gates pass -> hand off for human review
 ```
 
 > **Why this exists**: Post-mortem analysis found that agents skip evaluator and
