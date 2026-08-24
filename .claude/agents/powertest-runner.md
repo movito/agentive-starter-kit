@@ -446,12 +446,15 @@ After implementation is complete and CI passes, you **MUST** request code review
 
 ### Requesting Code Review
 
-**Do NOT spawn the code-reviewer via the Task tool.** `code-reviewer`
-carries the Bash tool, and agents launched through `Task` do not inherit
-`.claude/settings.json` allow patterns — the run dies on "Permission to
-use Bash has been denied". This is the same failure this file already
-documents for `ci-checker`, and the kit-wide convention (planner,
-feature-developer, project-intake) is user-invoked tabs.
+**Reviewer delegation is governed by KIT-ADR-0036.** Since 2.0.0,
+`code-reviewer` no longer carries Bash — it satisfies the read-only
+carve-out, and *feature-developer* sessions spawn it as a background
+subagent (fd Phase 5b, Tier 2). That carve-out is scoped to fd
+sessions; this agent's flow stays the interactive one: request the
+review via the coordinator/operator (user-invoked tab), as this file
+already documents for `ci-checker` — which DOES still carry Bash and
+remains un-spawnable (the permission trap: `Task`-launched agents do
+not inherit `.claude/settings.json` allow patterns).
 
 Instead, after CI passes and the task is in `4-in-review`, write a review
 starter and hand off to the user:

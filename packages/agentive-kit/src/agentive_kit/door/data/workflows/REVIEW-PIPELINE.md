@@ -1,7 +1,7 @@
 # Review Pipeline — the single value authority
 
-**Version**: 1.0.0
-**Created**: 2026-08-24 (KIT-0116 Phase 1)
+**Version**: 1.1.0
+**Created**: 2026-08-24 (KIT-0116 Phase 1; 1.1.0 = Phase 2, Tier 2 live)
 **Maintained By**: planner
 **Purpose**: THE authority for the kit's review ladder — what review
 runs when, who triggers it, what evidence it leaves, and how these
@@ -149,8 +149,14 @@ nothing to invoke.
     tokens, ~6 min wall clock, 8 verified findings — several real and
     distinct from both the evaluator trio and what bots typically
     catch (cross-file contract consistency).
-  - Tier 2 reviewer-subagent costs: recorded at the KIT-0116 Phase 2
-    smoke.
+  - **Tier 2, background reviewer subagents** (KIT-0116 Phase 2
+    smokes, same instruction-surface diff): `code-reviewer` ≈ 95k
+    subagent tokens / ~4.8 min / 29 tool uses; `architecture-reviewer`
+    ≈ 113k tokens / ~6.1 min / 46 tool uses. Both returned findings
+    the Tier-1 skill and evaluators had not surfaced (cross-surface
+    contract contradictions; twin/boundary drift) — the flags buy a
+    genuinely distinct dimension, at roughly one deep-evaluator run's
+    token cost each.
 
 ---
 

@@ -118,6 +118,26 @@ quality (spec-time evaluators).
 `ESCALATE_TO_HUMAN` is for genuine architectural forks the ADRs do
 not settle — never for effort avoidance.
 
+## Evaluator Workflow (request, don't run)
+
+External evaluation is useful for a second opinion on a contested
+architectural finding. **You cannot run it** — `adversarial` is a
+shell command and this agent has no Bash tool. Name the ask in your
+report: what should be evaluated, which evaluator (`arch-review-fast`
+/ `arch-review` / `claude-arch`), and the specific question. The
+calling agent (or the operator) runs it and brings the verdict back.
+Reading an existing log under `.adversarial/logs/` is within your
+tools; producing one is not.
+
+## Allowed Operations
+
+- Read all source code, tests, ADRs, patterns.yml, and workflow docs
+- Search the codebase with Grep/Glob
+- Use Serena for semantic navigation if available (harness-inherited
+  — never block on it)
+- Return the review report as your final message (the caller persists
+  it — you have no Write and no Bash, KIT-ADR-0036)
+
 ## Restrictions
 
 - Read-only: cannot modify code, cannot run shell commands, cannot

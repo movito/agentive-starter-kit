@@ -60,3 +60,55 @@ exactly the dimension bots and single-file evaluators miss), and every
 finding was triaged fix-or-defer before the PR opened. Transcript
 evidence: this session (`KIT-0116 FDF5 review pipeline`), /code-review
 agent `cccfa7`, 2026-08-24.
+
+---
+
+# Phase 2 append — PR 2 (`feature/KIT-0116-reviewer-delegation`)
+
+**Date**: 2026-08-24 · **Authority**: REVIEW-PIPELINE.md 1.1.0
+
+## Passes that ran
+
+| Pass | Tool / effort | Outcome |
+|------|---------------|---------|
+| Code review (always) | `/code-review medium` (harness skill) | 8 verified findings, all FIXED |
+| Tier 2 spawn smoke 1 | `code-reviewer` background subagent (Agent tool) | CHANGES_REQUESTED — 1 HIGH + 2 MEDIUM + 1 LOW, all FIXED. ~95k tokens / 4.8 min / 29 tool uses, zero permission prompts. Roster caveat: session registry predated the 2.0.0 toolset edit, so this run verified spawn mechanics, not the read-only toolset (recorded in KIT-ADR-0036 §5) |
+| Tier 2 spawn smoke 2 | `architecture-reviewer` background subagent (fresh roster: Read/Grep/Glob only) | FINDINGS — 1 CRITICAL + 2 HIGH + 4 MEDIUM + 2 LOW, all FIXED. ~113k tokens / 6.1 min / 46 tool uses, zero permission prompts, no shell used or attempted. THE read-only §5 verification + FR-8 Should-Have (implementation-level findings distinct from spec-time evaluators) |
+| Security review | skipped | no `security` flag declared |
+
+## Fix-or-defer ledger (all FIXED, none deferred)
+
+From /code-review: ADR §5 evidence honesty (rewritten to the actual
+boundary); starter-template handoff boilerplate "do not spawn"
+carve-out (2.3.0) — the finding that would have zeroed the Tier-2
+metric; code-reviewer stale write/git/CI-precondition sections;
+vacuous ADR-side enumeration check (heading-anchored regex);
+powertest-runner stated opposite delegation law (reconciled + added to
+citation-test roster); engine-consumer.sh consumer exclusion for
+architecture-reviewer; REVIEW-PIPELINE 1.1.0 (+ twins).
+
+From code-reviewer smoke: KIT-ADR-0014-era sections contradicting the
+no-Write contract (Review Workflow I/O, Step 7, Reporting the
+Verdict); Reference Documents omitted KIT-ADR-0036 and pointed at the
+wrong ADR dir; fd bodies' ADR §4 restatement trimmed to citation.
+
+From architecture-reviewer smoke: THREE stale door twins (packaged
+engine-consumer.sh missing the exclusion — would have shipped the
+builder-only reviewer to consumers; REVIEW-PIPELINE.md and
+TASK-STARTER-TEMPLATE.md packaged copies at Phase-1 state); toolset
+test inverted the ADR's iff (deny-list → per-agent allow-list; a
+declared `Task` tool now fails CI); new roster-exclusion pin test
+(two_homes_get_a_pin); KIT-ADR-0014 supersession annotated both sides;
+Serena ruling reconciled (harness-inherited, "if available");
+Tier-2 cost slot filled with measured numbers; architecture-reviewer
+gained the sibling Evaluator-Workflow/Allowed-Operations sections;
+about-kit-adr.md Last-Updated stamp.
+
+## Smoke verdict
+
+Tier 2 works end-to-end: background spawn, autonomous completion,
+final-message report return, zero permission prompts on a genuinely
+read-only toolset — and both spawns surfaced findings no other rung
+of the ladder had (cross-surface contract contradictions, twin
+drift). Transcript evidence: session "KIT-0116 FDF5 review pipeline",
+2026-08-24.

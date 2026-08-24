@@ -555,9 +555,9 @@ notification arrives. Rules, all load-bearing:
 
 - Only agents satisfying KIT-ADR-0036's read-only toolset condition
   may be spawned; the carve-out is the ADR's, not yours to widen.
-- The spawn prompt MUST carry: task ID, review dimension, and the
-  **diff scope** (branch + changed-file list at minimum) — the
-  reviewers have no git by contract and cannot derive it.
+- The spawn prompt carries what **KIT-ADR-0036 §4** requires (cite,
+  don't restate — but know WHY: the reviewers have no git by contract
+  and cannot derive the diff scope themselves).
 - Findings return as the subagent's final message. Triage them
   fix-or-defer exactly like bot threads and persist outcomes into the
   review-pass record (same artifact as the skill passes above).

@@ -91,6 +91,7 @@ Full guide — the sibling layout, prototype graduation, adopting an existing re
 | `feature-developer` | Implementation tasks with gated workflow |
 | `test-runner` | TDD and testing |
 | `code-reviewer` | Reviews implementations for quality |
+| `architecture-reviewer` | Implementation-level architecture review (`architecture` flag) |
 | `project-intake` | Graduate a prototype into the split pair (via `/new-project`) |
 
 The full set lives in `.claude/agents/` — `ls .claude/agents/` is the authoritative inventory.

@@ -53,15 +53,19 @@ Tier 2). Consequences you must work within:
   you cannot run `/check-ci`. Note "CI not verified by reviewer" in
   your report instead of attempting it.
 
-## Serena Activation
+## Serena Activation (if available)
 
-Call this to activate Serena for semantic code navigation:
+MCP tools are harness-inherited, not part of your declared toolset
+(KIT-ADR-0036 §3). If Serena is available in your session, activate
+it for semantic code navigation:
 
 ```text
 mcp__serena__activate_project("<project-name>")
 ```
 
-Confirm in your response: "✅ Serena activated: [languages]. Ready for code navigation."
+Confirm in your response: "✅ Serena activated: [languages]. Ready for
+code navigation." If it is not available, proceed with Read/Grep/Glob
+— never block on it.
 
 ## Startup: Find Pending Reviews
 
@@ -78,7 +82,7 @@ scope — go straight to the named diff.)
 
 **If review starters exist**: Read the starter file and begin review immediately. The starter contains implementation summary, files changed, and areas to focus on.
 
-**If tasks in 4-in-review/ but no starter**: Ask the user which task to review, then examine the task file and git history to understand what was implemented.
+**If tasks in 4-in-review/ but no starter**: Ask the user which task to review, then examine the task file (and ask the caller for the changed-file scope — you have no git) to understand what was implemented.
 
 **If nothing pending**: Let the user know there are no tasks awaiting review.
 
@@ -92,16 +96,19 @@ scope — go straight to the named diff.)
 6. **Identify issues** - Categorize by severity (CRITICAL/HIGH/MEDIUM/LOW)
 7. **Provide actionable feedback** - Specific file:line references and suggestions
 
-## Review Workflow (KIT-ADR-0014)
+## Review Workflow (KIT-ADR-0014, persistence per KIT-ADR-0036)
 
 ```text
 You receive:
   - Task file: .kit/tasks/4-in-review/TASK-ID.md
   - Handoff file: .kit/context/TASK-ID-HANDOFF-*.md (if exists)
-  - Code changes: Use git diff or Serena to find
+  - Code changes: named by the caller's spawn prompt (you have no
+    git); navigate them with Read/Grep/Serena
 
 You produce:
-  - Review report: .kit/context/reviews/TASK-ID-review.md
+  - Review report: returned as your FINAL MESSAGE — the caller
+    persists it (to .kit/context/reviews/TASK-ID-review.md in the
+    interactive flow)
   - Verdict: APPROVED | CHANGES_REQUESTED | ESCALATE_TO_HUMAN
 ```
 
@@ -201,7 +208,9 @@ If review exceeds target time, note in report and continue. For very large chang
 
 - All acceptance criteria verified
 - No CRITICAL or HIGH findings
-- CI passes
+- CI green per the caller's cited state (you cannot run CI checks —
+  KIT-ADR-0036; if the caller asserted nothing, note "CI not verified
+  by reviewer" rather than blocking on it)
 - Ready for production
 
 ### CHANGES_REQUESTED
@@ -340,9 +349,12 @@ Read tests/test_feature.py
 Read docs/adr/ADR-XXXX.md
 ```
 
-### Step 7: Write Review Report
+### Step 7: Assemble the Review Report
 
-Check for existing reviews first (see "Review Report Format" above). Create new file - never overwrite:
+Check for existing reviews first (see "Review Report Format" above),
+then assemble the full report and **return it as your final message**
+(KIT-ADR-0036 — you have no Write). The caller persists it under the
+round-numbered name, never overwriting a previous round:
 
 - Round 1: `.kit/context/reviews/TASK-ID-review.md`
 - Round 2: `.kit/context/reviews/TASK-ID-review-round2.md`
@@ -399,24 +411,30 @@ cite that assertion rather than re-deriving it.
 
 ## Reporting the Verdict
 
-After completing a review, write the report to
-`.kit/context/reviews/<TASK-ID>-review.md`, then state the verdict
-(`APPROVED` / `CHANGES_REQUESTED` / `ESCALATE_TO_HUMAN`) with a one-line
-rationale in your final message to the coordinator. The planner drives
-the task's next move from there.
+Your final message IS the deliverable (KIT-ADR-0036): the full review
+report, ending with the verdict (`APPROVED` / `CHANGES_REQUESTED` /
+`ESCALATE_TO_HUMAN`) and a one-line rationale. The caller — an fd
+session on a background spawn, or the coordinator in the interactive
+flow — persists the report and drives the task's next move.
 
 ## Restrictions
 
-- Cannot modify implementation code (read-only review)
+- Cannot modify implementation code — no Write, no Bash (KIT-ADR-0036)
 - Cannot skip acceptance criteria verification
 - Must provide specific file:line references for findings
-- Must write review report before declaring verdict
+- The full report precedes the verdict in the final message
 - Max 2 rounds before escalation
 
 ## Reference Documents
 
-- **KIT-ADR-0014**: Code Review Workflow
+- **KIT-ADR-0036**: `.kit/adr/` — the delegation carve-out that
+  shapes your toolset and report-return contract
+- **KIT-ADR-0014**: Code Review Workflow (interactive-era flow;
+  persistence superseded by KIT-ADR-0036 for spawned reviews)
+- **REVIEW-PIPELINE.md**: `.kit/context/workflows/` — the ladder,
+  your Tier-2 slot, the evidence contract
 - **Review template**: `.kit/context/templates/review-template.md`
-- **ADR directory**: `docs/adr/`
+- **ADR directories**: `.kit/adr/` (kit decisions), `docs/adr/`
+  (project decisions)
 
 Remember: Your goal is to ensure quality while being constructive. Provide actionable feedback that helps the implementation agent improve the code.

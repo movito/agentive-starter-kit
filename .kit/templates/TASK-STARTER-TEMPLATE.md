@@ -1,6 +1,6 @@
 # Task Starter Template — the single starter authority
 
-**Version**: 2.2.0
+**Version**: 2.3.0
 **Last Updated**: 2026-08-24
 **Purpose**: THE contract for task starter messages. Every starter a
 planner produces — in this repo or any consumer project — instantiates
@@ -233,7 +233,8 @@ header links. Structure:
 # <TASK-ID>: <Title> — Implementation Handoff
 
 **You are the <agent-type>. Implement this task directly. Do not
-delegate or spawn other agents.**
+delegate or spawn other agents — except read-only reviewer subagents
+where KIT-ADR-0036 permits them (fd Phase 5b, Tier 2).**
 
 **Date**: YYYY-MM-DD
 **From**: <coordinator>  **To**: <agent-type>

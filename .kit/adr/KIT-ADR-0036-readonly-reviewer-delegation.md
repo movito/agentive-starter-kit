@@ -76,7 +76,7 @@ this ruled roster:
 | TodoWrite | Permitted (code-reviewer) | Session-scoped scratch state; touches neither filesystem nor repo |
 | WebSearch | Permitted (security-, document-reviewer) | Network read, no repo mutation; needed for CVE and docs verification. Accepted residual risk: a reader that can also query the web is an exfiltration surface — acceptable on this trusted codebase; revisit before pointing reviewers at untrusted diffs |
 | WebFetch | Permitted (document-reviewer) | Link verification; same residual-risk note as WebSearch |
-| Serena MCP (read/navigation tools) | Permitted | Semantic navigation; bodies must not instruct `execute_shell_command` (none do — audited 2026-08-24) |
+| Serena MCP (read/navigation tools) | Permitted | Semantic navigation. MCP tools are harness-inherited, never declared in agent `tools:` frontmatter — so §3's "every declared tool" test does not see them; this row rules them anyway. Bodies instruct Serena use conditionally ("if available") and must not instruct `execute_shell_command` (none do — audited 2026-08-24) |
 | **Write, Edit, NotebookEdit** | **Forbidden** | Findings RETURN as the subagent's final message; the CALLER persists them (review-pass record). A reviewer that cannot write cannot corrupt the tree, and the KIT-ADR-0014-era "write your report file" flow is superseded for spawned reviews |
 | **Bash** | **Removed from all reviewers** (FR-6 default remedy) | No reviewer demonstrated necessity: the diff scope arrives IN the spawn prompt (branch, changed-file list, or inline diff — the spawning fd already has it), so no reviewer needs git. Retention would require demonstrable necessity PLUS the exact commands enumerated under a `Permitted Bash commands` heading in BOTH the agent body and this ADR — `tests/test_review_pipeline_contracts.py` pins that mechanically. As of this ADR: **no agent enumerates any; the heading intentionally does not exist here** |
 
@@ -93,14 +93,28 @@ gate — operator sovereignty is untouched by this ADR.
 
 ### 5. The verified boundary
 
-Recorded from the KIT-0116 Phase-2 live smoke (the gate for codifying
-this — spec Risk 1: "the ADR records the verified boundary, not the
-hoped-for one"):
+Recorded from the KIT-0116 Phase-2 live smokes (the gate for
+codifying this — spec Risk 1: "the ADR records the verified boundary,
+not the hoped-for one"). Two runs, recorded exactly as they happened:
 
-- VERIFIED 2026-08-24: `code-reviewer` (toolset per §3) spawned as a
-  background subagent via the Agent tool from an fd session completed
-  its review and returned findings with **zero permission prompts**.
-  Evidence: KIT-0116 Phase-2 PR + `KIT-0116-review-pass.md`.
+- VERIFIED 2026-08-24, **spawn mechanics**: `code-reviewer` spawned
+  as a background subagent via the Agent tool from an fd session,
+  completed autonomously (~4.8 min, 29 tool uses), and returned a
+  full report as its final message with zero permission prompts.
+  Caveat, recorded honestly: the spawning session's agent roster
+  predated the 2.0.0 toolset edit (bodies bind at NEXT launch), so
+  this run held the old Bash-bearing definition — it verifies the
+  spawn/notify/return path, not the read-only toolset.
+- VERIFIED 2026-08-24, **the read-only toolset itself**:
+  `architecture-reviewer` — whose definition the session roster
+  loaded fresh, Read/Grep/Glob only — spawned the same way, completed
+  autonomously (~6.1 min, 46 tool uses, zero permission prompts, no
+  shell access used or attempted), and returned implementation-level
+  architecture findings distinct from spec-time evaluator output
+  (the FR-8 Should-Have, verified on a real diff).
+
+Evidence for both: the Tier-2 section of
+`.kit/context/reviews/KIT-0116-review-pass.md` (KIT-0116 Phase-2 PR).
 
 ## Consequences
 

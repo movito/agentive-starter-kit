@@ -38,7 +38,7 @@ This folder contains ADRs inherited from the **agentive-starter-kit** template. 
 | KIT-ADR-0011 | API Versioning Strategy | Accepted |
 | KIT-ADR-0012 | Task Status Linear Alignment | Accepted |
 | KIT-ADR-0013 | Real-Time Task Monitoring | Accepted |
-| KIT-ADR-0014 | Code Review Workflow | Accepted |
+| KIT-ADR-0014 | Code Review Workflow | Accepted (persistence superseded by KIT-ADR-0036 for spawned reviews) |
 | KIT-ADR-0015 | MCP Tool Addition Pattern | Accepted |
 | KIT-ADR-0016 | Validation Architecture | Accepted |
 | KIT-ADR-0017 | API Testing Infrastructure | Accepted |
@@ -114,4 +114,4 @@ We need JSON-structured logs for our monitoring system...
 ---
 
 **Template**: agentive-starter-kit
-**Last Updated**: 2026-08-13
+**Last Updated**: 2026-08-24
