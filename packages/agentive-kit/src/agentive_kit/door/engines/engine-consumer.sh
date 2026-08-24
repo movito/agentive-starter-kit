@@ -746,6 +746,16 @@ if [ "$SHAPE" = "planning" ]; then
         # an unquoted trailing comment here — before the conflict
         # comparison below, which is unaffected (a placeholder still
         # mismatches an explicit flag either way).
+        #
+        # Assumption, stated because it is a real (if remote) tradeoff
+        # (claude-code review, this PR): " #" is treated as a comment
+        # opener, so a path whose DIRECTORY NAME contains " #" would be
+        # truncated here. That is legal on most filesystems but has
+        # never occurred; --target-github cannot contain '#' at all (it
+        # is validated to [A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+). The
+        # alternative — carrying legacy prose into the record — is the
+        # exact defect this task exists to fix. Operators with such a
+        # path should pass --target-path explicitly.
         EXISTING_TP="$(printf '%s' "$EXISTING_TP" | sed -E 's/[[:space:]]+#.*$//')"
         EXISTING_TG="$(printf '%s' "$EXISTING_TG" | sed -E 's/[[:space:]]+#.*$//')"
         if [ -n "$TARGET_PATH" ] && [ -n "$EXISTING_TP" ] && [ "$TARGET_PATH" != "$EXISTING_TP" ]; then

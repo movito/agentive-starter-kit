@@ -200,6 +200,27 @@ class TestPackagedInstallRecordReader:
         )
         assert doctor._doctor_install(root) == ("single", "python", None, None, [])
 
+    def test_trailing_comment_in_the_value_fails_loud(self, tmp_path):
+        """The record format has NO comment syntax — `#` is data, in
+        every key. `shape:`/`profile:` compare identifiers and `bots:`
+        tokenizes over a fixed vocabulary, so a trailing comment is
+        invalid for all of them; `evaluators:` matches that contract
+        rather than inventing comment-stripping of its own.
+
+        Pinned because silently stripping prose from a recorded value is
+        the near-miss cousin of issue #145, where prose silently BECAME
+        the value (fast-gate evaluator, this PR).
+        """
+        root = self._claude_md(
+            tmp_path,
+            "# P\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: single\nprofile: python\nevaluators: yes # why not\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+        )
+        _shape, _profile, _bots, evaluators, errors = doctor._doctor_install(root)
+        assert evaluators is None
+        assert any(record == "evaluators-record" for record, _ in errors)
+
     def test_invalid_evaluators_declaration_fails_loud(self, tmp_path):
         # a typo silently read as "declined" would SKIP checks it
         # should run — the same fail-loud rule as bots

@@ -992,6 +992,27 @@ class TestEvaluatorDeclarationOnAdopt:
         # the record is unchanged — never a silent overwrite
         assert "evaluators: no" in _region_of(target)
 
+    def test_re_adopt_without_the_flag_does_not_duplicate(self, tmp_path):
+        """o3 review (KIT-0118) predicted the engine would append an
+        `evaluators:` line on every re-adopt once one exists, silently
+        polluting the record. It does not — the append is gated on the
+        flag being GIVEN, and a preserved region is never reseeded — but
+        the claim is cheap to pin permanently.
+        """
+        target, env = self._adopted(tmp_path)
+        assert (
+            run_door(
+                "adopt", str(target), "--without-evaluators", cwd=tmp_path, env=env
+            ).returncode
+            == 0
+        )
+        for _ in range(2):
+            result = run_door("adopt", str(target), cwd=tmp_path, env=env)
+            assert result.returncode == 0, result.stderr + result.stdout
+        region = _region_of(target)
+        assert region.count("evaluators:") == 1
+        assert "evaluators: no" in region
+
     def test_repeating_the_same_answer_is_idempotent(self, tmp_path):
         target, env = self._adopted(tmp_path)
         for _ in range(2):

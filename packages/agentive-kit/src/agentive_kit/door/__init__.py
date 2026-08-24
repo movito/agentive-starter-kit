@@ -1519,6 +1519,13 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
     # record (KIT-0118): the engine is the record's one writer, so the
     # answer has to exist by the time it runs. run_offers() acts on the
     # settled value later.
+    #
+    # Deliberately AFTER the rung-0 early return above (o3 review, this
+    # PR): --no-kit targets carry no .adversarial config and no record,
+    # so there is nothing to install and nothing to record. Prompting
+    # there would ask a question whose only honest answer the door
+    # already prints ("Evaluators not installed — ..."), and resolving
+    # would leave a declaration no reader will ever see.
     resolve_evaluator_offer(opts)
 
     # effective pair, same rule as _consumer_record_args
