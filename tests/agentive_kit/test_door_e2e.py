@@ -1085,6 +1085,31 @@ class TestLegacyRecordMigrationOnAdopt:
         assert "target_github: <owner>/<repo>" in region
         assert "TODO" not in region
 
+    def test_migration_preserves_the_rest_of_the_record(self, tmp_path):
+        """CodeRabbit (this PR): the migration rewrites the WHOLE region
+        body through sed. Asserting only that the cleaned values appear
+        and "TODO" is gone would stay green if the rewrite dropped
+        `shape:`/`profile:` or truncated the last line — the record
+        would silently lose fields while the tests passed.
+        """
+        from agentive_kit import door
+
+        target, _ = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        body = [ln.strip() for ln in _region_of(target).splitlines() if ln.strip()]
+        assert body == [
+            "shape: planning",
+            "profile: none",
+            "target_path: ../<target-repo>",
+            "target_github: <owner>/<repo>",
+        ]
+        # and the reader agrees, field for field
+        assert door.load_record(target) == {
+            "shape": "planning",
+            "profile": "none",
+            "target_path": "../<target-repo>",
+            "target_github": "<owner>/<repo>",
+        }
+
     def test_load_record_returns_the_clean_value(self, tmp_path):
         # the actual defect: a machine reader getting an unusable path
         from agentive_kit import door

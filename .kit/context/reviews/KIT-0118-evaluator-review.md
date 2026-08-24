@@ -181,3 +181,43 @@ managed region, which is a different act deserving its own decision.
 Recorded in KIT-0119.
 
 Suite after round 3: **1216 passed, 13 skipped**.
+
+## Bot round 4 — CodeRabbit on the migration commit
+
+Two findings on 7f5fb54, both actioned, one with its stated mechanism
+corrected.
+
+1. **Major (severity overstated) — "unchecked `replace` write lets the
+   migration announce a repair that did not happen."** The remedy is
+   right; the mechanism as described is **false**. The script runs under
+   `set -e` (line 84) and the pipeline's exit status is the `replace`'s,
+   so a failed write aborts BEFORE the announcement. Verified with a
+   standalone probe of the exact construct:
+
+   ```
+   boom: replace failed
+   SCRIPT EXIT: 1        # the success line never printed
+   ```
+
+   So there is no false-success path and no silent prose retention.
+   What IS true is that the failure surfaces as a bare kit_markers
+   error naming neither the file nor the step, and the announcement's
+   correctness becomes a property the reader must derive from ambient
+   `set -e` semantics. **Fixed on those merits**: explicit status check,
+   same error shape as the `extract` above it.
+
+   Note for KIT-0108: the `bots:` and `evaluators:` blocks use the
+   identical unchecked construct and are equally safe for the same
+   `set -e` reason — equally implicit, too. Not changed here (widening
+   a release PR to restyle working code), but recorded.
+
+2. **Trivial — tests did not assert the rest of the region survives.**
+   Correct and worth having: the migration rewrites the WHOLE region
+   body through `sed`, and the existing assertions would have stayed
+   green if the rewrite dropped `shape:`/`profile:` or truncated the
+   final line. Added
+   `test_migration_preserves_the_rest_of_the_record`, which pins the
+   exact four-line body AND the full `load_record()` dict, field for
+   field.
+
+Suite after round 4: **1217 passed, 13 skipped**.

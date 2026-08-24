@@ -983,10 +983,24 @@ if [ "$SHAPE" = "planning" ]; then
     REGION_MIGRATED="$(printf '%s\n' "$REGION_NOW" |
         sed -E "/^[[:space:]]*target_(path|github):/ s/$_LEGACY_TODO//")"
     if [ "$REGION_MIGRATED" != "$REGION_NOW" ]; then
+        # The write is checked EXPLICITLY, not left to `set -e`
+        # (CodeRabbit, this PR). `set -e` does already abort here — the
+        # pipeline's status is the replace's, so a failure kills the
+        # script before the announcement (verified). But relying on that
+        # makes the announcement's correctness a property a reader has
+        # to derive, and it surfaces a bare kit_markers error with no
+        # indication of which file or step failed. The explicit check
+        # gives the same error shape as the extract above, and makes the
+        # ordering invariant local instead of ambient.
+        #
         # no trailing newline: the region body group excludes the
         # newline before END, so extract->replace stays byte-identical
-        printf '%s' "$REGION_MIGRATED" |
-            python3 "$KIT_MARKERS" replace "$CLAUDE_MD" kit-install --stdin
+        if ! REPLACE_OUT="$(printf '%s' "$REGION_MIGRATED" |
+            python3 "$KIT_MARKERS" replace "$CLAUDE_MD" kit-install --stdin 2>&1)"; then
+            echo "Error: kit_markers replace kit-install failed on $CLAUDE_MD:"
+            echo "       $REPLACE_OUT"
+            exit 1
+        fi
         echo "  kit-install region: legacy '# TODO' prose migrated out of the target pointer"
     fi
 fi
