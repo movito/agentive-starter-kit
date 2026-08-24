@@ -110,6 +110,13 @@ TARGET_PATH=""
 TARGET_GITHUB=""
 BOTS=""
 EVALUATORS=""
+# Presence, not emptiness (CodeRabbit, this PR): `--evaluators=` and a
+# trailing `--evaluators` both leave EVALUATORS empty, which a
+# [ -n "$EVALUATORS" ] guard reads as "never passed" — silently dropping
+# a flag the operator explicitly gave. That is the masking class this
+# task exists to close, so the GIVEN sentinel drives validation and the
+# emptiness guard is left to mean only "not declared".
+EVALUATORS_GIVEN=0
 RECORD_ONLY=0
 PRESERVE_REGIONS=0
 PACKAGED=0
@@ -174,9 +181,11 @@ while [ $# -gt 0 ]; do
         --evaluators)
             shift
             EVALUATORS="${1:-}"
+            EVALUATORS_GIVEN=1
             ;;
         --evaluators=*)
             EVALUATORS="${1#--evaluators=}"
+            EVALUATORS_GIVEN=1
             ;;
         --project-name)
             shift
@@ -273,7 +282,7 @@ fi
 # writes the record, so it validates its own input. Case-tolerant like
 # every other record reader; normalized to lowercase so one declaration
 # can never be valid to one reader and invalid to another.
-if [ -n "$EVALUATORS" ]; then
+if [ "$EVALUATORS_GIVEN" -eq 1 ]; then
     EVALUATORS="$(printf '%s' "$EVALUATORS" | tr '[:upper:]' '[:lower:]')"
     case "$EVALUATORS" in
         yes|no) ;;
@@ -747,17 +756,16 @@ if [ "$SHAPE" = "planning" ]; then
         # comparison below, which is unaffected (a placeholder still
         # mismatches an explicit flag either way).
         #
-        # Assumption, stated because it is a real (if remote) tradeoff
-        # (claude-code review, this PR): " #" is treated as a comment
-        # opener, so a path whose DIRECTORY NAME contains " #" would be
-        # truncated here. That is legal on most filesystems but has
-        # never occurred; --target-github cannot contain '#' at all (it
-        # is validated to [A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+). The
-        # alternative — carrying legacy prose into the record — is the
-        # exact defect this task exists to fix. Operators with such a
-        # path should pass --target-path explicitly.
-        EXISTING_TP="$(printf '%s' "$EXISTING_TP" | sed -E 's/[[:space:]]+#.*$//')"
-        EXISTING_TG="$(printf '%s' "$EXISTING_TG" | sed -E 's/[[:space:]]+#.*$//')"
+        # Matched against the EXACT prose the old engine wrote, not a
+        # general " #" comment opener (CodeRabbit + claude-code, this
+        # PR): a directory name legitimately containing " #" — say
+        # `../target #1` — must survive, since whatever it is, it is
+        # the operator's real path and not something this engine seeded.
+        # Narrowing to the literal "# TODO" marker migrates every tree
+        # the old engine produced while touching nothing else.
+        _LEGACY_TODO='[[:space:]]+#[[:space:]]*TODO:.*$'
+        EXISTING_TP="$(printf '%s' "$EXISTING_TP" | sed -E "s/$_LEGACY_TODO//")"
+        EXISTING_TG="$(printf '%s' "$EXISTING_TG" | sed -E "s/$_LEGACY_TODO//")"
         if [ -n "$TARGET_PATH" ] && [ -n "$EXISTING_TP" ] && [ "$TARGET_PATH" != "$EXISTING_TP" ]; then
             echo "Error: --target-path '$TARGET_PATH' conflicts with the existing"
             echo "       ## Target Repository section ('$EXISTING_TP')."

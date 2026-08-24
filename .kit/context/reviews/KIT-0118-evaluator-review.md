@@ -35,9 +35,13 @@ dismissed (the verify-before-believing reflex). 3 actioned, 5 refuted,
    of #145. **Pinned as a contract test**:
    `test_trailing_comment_in_the_value_fails_loud`.
 2. **claude-code LOW: `sed` comment-strip could truncate a path whose
-   directory name contains `" #"`.** Real if remote. **Documented the
-   tradeoff explicitly** at the strip site, including the escape hatch
-   (pass `--target-path`) and why the alternative is worse.
+   directory name contains `" #"`.** Real if remote. Initially
+   dispositioned as "document the tradeoff" — **CodeRabbit raised the
+   same finding on the PR and asked for a fix rather than a note, which
+   was the better call**: the expression now matches only the literal
+   legacy `# TODO` marker, so every tree the old engine produced still
+   migrates while a real `../target #1` survives untouched. See the bot
+   round below.
 3. **o3 INTERACTION: `--no-kit` never resolves the evaluator offer.**
    Deliberate, not an oversight. **Added the rationale as a comment**
    at the `resolve_evaluator_offer` call site: rung-0 targets carry no
@@ -85,3 +89,33 @@ dismissed (the verify-before-believing reflex). 3 actioned, 5 refuted,
 Two tests added on top of the reviewed commit; full suite re-run green
 (1198 passed, 13 skipped). No behavior changed as a result of the
 review — the two source edits are comments, the rest is coverage.
+
+## Bot round (PR #147, one substantive round)
+
+CI: all six checks green. **Bot truth was read from `reviewThreads`
+GraphQL, not the check statuses** — CodeRabbit's *check* showed `pass`
+while `reviewDecision` was `CHANGES_REQUESTED` with 2 unresolved
+threads. That is the eighth recorded face of the lying-check-status
+class (bot-triage skill); the trio had passed the same diff.
+
+Both findings were real, both reproduced against the tree, both fixed:
+
+1. **Major — `--evaluators=` skipped validation entirely.** Validation
+   was keyed on `[ -n "$EVALUATORS" ]`, so an empty value read as "flag
+   never passed": the engine would complete an install having silently
+   dropped a flag the operator explicitly gave. Reproduced directly
+   (`--evaluators= --shape single` fell through to the usage error).
+   Fixed with an `EVALUATORS_GIVEN` presence sentinel driving
+   validation; emptiness now means only "not declared". The `--bots`
+   flag shares the original shape — noted, not changed here (pinned by
+   many tests; KIT-0108 owns that engine's consolidation).
+2. **Minor — the legacy-prose strip was a general `" #"` comment
+   opener.** Narrowed to the literal `# TODO` marker the old engine
+   actually wrote. `../target #1` and `../my project # notes` now
+   survive; all three legacy forms still migrate.
+
+Regression tests added for both, including one asserting the sed
+expression in the test still matches the literal in the engine — a
+migration test that drifts from its source proves nothing.
+
+Suite after the bot round: **1210 passed, 13 skipped**.
