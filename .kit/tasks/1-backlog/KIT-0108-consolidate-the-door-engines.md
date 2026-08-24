@@ -76,6 +76,16 @@ guard retires with the duplication it guarded.
      body it already hashes (closes column drift in the REQUIRED
      check), AND rider 1 fixes the writer side. Ride the next
      marketplace-touching PR; falsify once (stale column → red).
+- **Rider (planner, 2026-08-24, from the KIT-0118 retro — `--bots`
+  empty-value hole)**: `--bots=` (present, empty value) has the same
+  validation-skip hole CodeRabbit found in `--evaluators=` on PR #147
+  — the mirrored source carried the bug the mirror inherited. Real,
+  recorded in three places (KIT-0118 commit message, PR #147 thread,
+  review record); deliberately NOT drive-by-fixed on the release PR.
+  Fix during consolidation using patterns.yml
+  `flag_presence_is_not_flag_emptiness`: enumerate all four argv
+  forms for EVERY flag the consolidated engine parses (not just
+  `--bots`), test presence separately from emptiness.
 - **Rider (planner, 2026-08-14, from the PR #130 deep evaluator —
   dispositioned there, decide-explicitly here)**: a root-anchored
   target (`agentive new /x`) resolves the preset home to

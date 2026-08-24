@@ -205,6 +205,41 @@ defensive:
       - "Test gap that hid it: the `set -e` check exercised only the ABORT paths, where aborting was the wanted outcome — never the PROCEED path, which was the one breaking. Assert the happy path under the hostile environment too"
       - "The status-parity test itself was insufficient and a reviewer said so: it stubbed the commit out, so it could not have caught a gate that returned the right code and committed anyway. Re-run against real fixtures — no commit on a hit, commit on clean, secret absent from history, offending file left staged for remediation"
     caught_by: "KIT-0113 (planner gate-check on PR #136, 2026-08-16); sibling of fix_by_class_not_instance"
+  flag_presence_is_not_flag_emptiness:
+    rule: >
+      When adding a CLI flag, enumerate the argv input space before
+      calling it tested: `--flag value`, `--flag=value`, `--flag=`
+      (present but empty), and `--flag` at end-of-args. Track
+      PRESENCE separately from VALUE whenever "not given" and "given
+      empty" mean different things — for a recorded declaration they
+      always do. Testing one member of an input class and calling
+      the class covered is the trap: the passing test reads as
+      coverage and removes the reason for anyone to look. Corollary
+      for mirrored mechanisms: a copied pattern inherits its
+      source's unreviewed edge cases — "it's been reviewed many
+      times" is evidence about the parts reviewers looked at; audit
+      the source's argv space BEFORE copying, which finds the hole
+      in both.
+    examples:
+      - "KIT-0118: `--evaluators=` (empty value) skipped validation entirely and recorded an empty declaration — the exact masking class the task existed to close, in code the task added; the author's own test passed `--evaluators --shape single` (rejected) and never tried the `=` form. Found by CodeRabbit, missed by the full evaluator trio on full-file input AND by self-review"
+      - "Same task: `--bots` — the battle-tested mechanism being mirrored — has the identical hole (recorded in commit + PR thread; fix belongs to KIT-0108's consolidation). Mirroring copied the bug before anyone knew it was there"
+    caught_by: "KIT-0118 retro (Lessons 1-2); CodeRabbit Major on PR #147"
+  partial_migration_is_worse_than_none:
+    rule: >
+      Scope extensions are all-or-nothing. When taking on work
+      beyond the spec — especially migrating legacy state to a new
+      format — either complete the case across every path that
+      touches the state, or file the whole case and do none of it.
+      A partial migration is worse than declining: the code then
+      reads as though the case is handled, which removes the reason
+      for anyone to look, while the unhandled paths keep producing
+      the old corruption under a new veneer. Before shipping a
+      migration, enumerate every entry path to the migrated state
+      and verify each one migrates (or is explicitly documented as
+      out-of-band).
+    examples:
+      - "KIT-0118: the `# TODO`-prose strip cleaned values on their way INTO a freshly seeded region, but adopt passes --preserve-regions, so a legacy tree's EXISTING region kept its prose and load_record() went on returning an unusable path. The strip was self-chosen scope beyond the spec; BugBot round 3 (operator-flagged) found it after self-review and Gate 5 passed it"
+    caught_by: "KIT-0118 retro (Surprising 4, Lesson 4); BugBot Medium on PR #147"
   evidence_files_append_only:
     rule: >
       Evidence records (audit records, retros, review records) are

@@ -371,6 +371,22 @@ copy-not-rederivation for twins; changes ride one release train.
   features. Feature availability is re-verified at implementation time;
   long-term platform coupling is revisited in ordinary architecture
   reviews, not hedged against here.
+- **Design input (planner, 2026-08-24, from the KIT-0118 retro —
+  binding on REVIEW-PIPELINE.md's tier heuristics)**: reviewer-tier
+  selection has a third axis beyond the prose-vs-logic split.
+  Measured on PR #147: the full evaluator trio, on full-file input,
+  passed an argument-parsing seam that CodeRabbit flagged Major
+  (`--evaluators=` skipping validation), and across four bot rounds
+  the trio found nothing true the bots missed while its one FAIL was
+  three-fifths false. Combined with KIT-0069/0073 (trio 0-for-17 vs
+  bots 11-for-14 on deletion-heavy prose), the heuristic
+  REVIEW-PIPELINE.md should encode: **argument-parsing and
+  input-validation seams are bot-favourable and evaluator-hostile**
+  — on flag-adding or argv-touching diffs, do not buy extra
+  evaluator passes; spend the review budget on input-space
+  enumeration (patterns.yml `flag_presence_is_not_flag_emptiness`)
+  and on the bots. Full evidence: KIT-0118 retro (Surprising 2,
+  Lesson 3) + REVIEW-INSIGHTS.md (KIT-0118 block).
 
 ---
 
