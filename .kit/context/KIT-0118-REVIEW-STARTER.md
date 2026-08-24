@@ -2,7 +2,7 @@
 
 **PR**: https://github.com/movito/agentive-starter-kit/pull/147
 **Branch**: `feature/KIT-0118-packaged-door-fixes` → `main`
-**Head**: `9da0223`
+**Head**: `f5b778f`
 **Task**: `.kit/tasks/4-in-review/KIT-0118-packaged-door-fresh-install-fixes.md`
 **Review record**: `.kit/context/reviews/KIT-0118-evaluator-review.md`
 **Closes**: GitHub issues #144, #145, #146
@@ -34,15 +34,37 @@ doesn't ship in the wheel doesn't reach the operator who filed it.
 |------|-------|
 | Tests (3.10 / 3.12 / 3.14) | ✅ pass |
 | Lint & format | ✅ pass |
-| CodeRabbit | ✅ `reviewDecision: APPROVED` on head `9da0223` (SHA-matched) |
+| CodeRabbit | ✅ reviewed head `f5b778f`, latest state `COMMENTED` — but see the merge note below |
 | Cursor BugBot | ✅ clean |
-| Review threads | ✅ 4/4 replied + resolved, `hasNextPage` false |
+| Review threads | ✅ 7/7 replied + resolved, `hasNextPage` false |
 | Evaluators | ✅ full trio pre-PR, all findings dispositioned |
 | Twin parity | ✅ `diff -q` clean, all four pairs |
-| Suite | 1145 → 1210, coverage 90.15% |
+| Suite | 1145 → 1217, coverage 90.15% |
 
 No plugin-drift guard on this PR — it touches no rostered `.claude/`
 component.
+
+### ⚠️ `reviewDecision` reads CHANGES_REQUESTED — and that is stale
+
+All 7 threads are resolved and every check is green, but GitHub's
+`reviewDecision` field still reads `CHANGES_REQUESTED`. This is the
+**KIT-0115 ninth face**: CodeRabbit's dismissing review was submitted as
+`CHANGES_REQUESTED`, and its subsequent clears came as `COMMENTED` —
+which does not lift the decision. The field is stuck, not accurate.
+
+Evidence (GraphQL, head `f5b778f`):
+
+```
+decision      = CHANGES_REQUESTED
+unresolved    = 0     (7 total, 7 resolved)
+hasNextPage   = false
+recentReviews = coderabbitai:COMMENTED, coderabbitai:COMMENTED, ...
+```
+
+Preflight Gate 2 passes because it asks "did the bot review the latest
+commit", not "what does the decision field say" — the gate is right and
+the field is wrong. **If branch protection requires an approving review,
+this needs a human APPROVE to merge.**
 
 ## What a reviewer should look hardest at
 
@@ -75,6 +97,27 @@ component.
    `scripts/core/project`'s inline fallback) changed together, with a
    conformance table pinning them to one meaning.
 
+## Bot rounds — four, all of them productive
+
+This is the number worth pausing on. **Four bot rounds, every one
+finding something real, on a diff the full evaluator trio had already
+passed.**
+
+1. **CodeRabbit, Major** — `--evaluators=` skipped validation entirely.
+   An explicitly-passed flag silently dropped: the exact masking class
+   this task exists to close, in the code the task added.
+2. **CodeRabbit, doc nits ×2** — a non-repo-relative path, and wording
+   in my own record that reintroduced the confusion the fix removes.
+3. **BugBot, Medium (operator-flagged)** — the legacy migration was
+   *half done*: it cleaned values seeding a new region but not a
+   preserved one, so adopt left the prose in place and `load_record()`
+   kept returning an unusable path. Reproduced exactly.
+4. **CodeRabbit ×2 on the migration** — a weak test that would have
+   stayed green if the rewrite dropped a record field (real, fixed),
+   and a Major whose *mechanism was false* (`set -e` already aborts the
+   pipeline before the announcement — probed and disproven) but whose
+   *remedy* was worth taking anyway.
+
 ## Review-process notes worth reading
 
 **The bots beat the evaluator trio on this diff.** The trio ran pre-PR
@@ -92,7 +135,14 @@ is boolean and the `=VALUE` form is refused at parse; and that duplicate
 being given. Each was checked against the tree before being dismissed,
 and two were turned into regression tests anyway.
 
-Per-finding dispositions are in the review record.
+Per-finding dispositions — including the two claims I refuted with
+evidence rather than accepted — are in the review record.
+
+**Suggested retro follow-up for the planner** (recorded in the retro,
+not acted on unilaterally): tier selection may want a third signal
+beyond prose-vs-logic. Argument-parsing and file-mutation seams look
+**bot-favourable and evaluator-hostile** — the trio's spend bought
+nothing on either of this PR's real defects.
 
 ## Known gap, filed not fixed
 
