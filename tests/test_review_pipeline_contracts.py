@@ -281,29 +281,18 @@ def test_reviewer_toolsets_satisfy_readonly_carveout(agent):
         "document-reviewer.md": {"websearch", "webfetch"},
         "architecture-reviewer.md": set(),
     }[agent.rsplit("/", 1)[-1]]
-    unruled = tools - allowed - {"bash"}
+    unruled = tools - allowed
     assert not unruled, (
         f"{agent}: declares tool(s) {sorted(unruled)} not on its "
         "KIT-ADR-0036 §3 roster — rule each in the ADR (same PR) or "
-        "remove them; the carve-out is iff-shaped"
+        "remove them; the carve-out is iff-shaped. Bash in particular "
+        "is rejected OUTRIGHT: as of KIT-ADR-0036 no reviewer holds "
+        "it, and heading/content checks against a hypothetical "
+        "enumeration format were vacuously satisfiable (evaluator + "
+        "bot convergent, Phase 2). Re-ruling Bash means editing this "
+        "test, the agent body, AND the ADR's §3 table in one PR — "
+        "which is exactly the deliberate act the ADR requires."
     )
-    # Bash is allowed ONLY with a real enumeration HEADING in both the
-    # body and the ADR — a substring check would pass vacuously on the
-    # ADR's own §3 prose (Tier-1 smoke finding, Phase 2 round 1).
-    heading = re.compile(r"^#+\s*Permitted Bash commands", re.MULTILINE)
-    # membership: tool-name vocabulary check over the normalized list,
-    # not identifier equality
-    if "bash" in tools:
-        assert heading.search(text), (
-            f"{agent}: declares Bash without an enumerated permitted-"
-            "command heading (FR-6 — removal is the default remedy)"
-        )
-        adr = _adr_0036()
-        adr_text = adr.read_text(encoding="utf-8")
-        assert heading.search(adr_text), (
-            f"{adr}: a reviewer retains Bash but the ADR carries no "
-            "'Permitted Bash commands' heading enumerating them (FR-6)"
-        )
 
 
 def test_every_reviewer_is_consumer_excluded():

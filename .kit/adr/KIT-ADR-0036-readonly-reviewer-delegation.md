@@ -78,7 +78,7 @@ this ruled roster:
 | WebFetch | Permitted (document-reviewer) | Link verification; same residual-risk note as WebSearch |
 | Serena MCP (read/navigation tools) | Permitted | Semantic navigation. MCP tools are harness-inherited, never declared in agent `tools:` frontmatter — so §3's "every declared tool" test does not see them; this row rules them anyway. Bodies instruct Serena use conditionally ("if available") and must not instruct `execute_shell_command` (none do — audited 2026-08-24) |
 | **Write, Edit, NotebookEdit** | **Forbidden** | Findings RETURN as the subagent's final message; the CALLER persists them (review-pass record). A reviewer that cannot write cannot corrupt the tree, and the KIT-ADR-0014-era "write your report file" flow is superseded for spawned reviews |
-| **Bash** | **Removed from all reviewers** (FR-6 default remedy) | No reviewer demonstrated necessity: the diff scope arrives IN the spawn prompt (branch, changed-file list, or inline diff — the spawning fd already has it), so no reviewer needs git. Retention would require demonstrable necessity PLUS the exact commands enumerated under a `Permitted Bash commands` heading in BOTH the agent body and this ADR — `tests/test_review_pipeline_contracts.py` pins that mechanically. As of this ADR: **no agent enumerates any; the heading intentionally does not exist here** |
+| **Bash** | **Removed from all reviewers** (FR-6 default remedy); the drift test rejects a declared Bash **outright** | No reviewer demonstrated necessity: the diff scope arrives IN the spawn prompt (branch, changed-file list, or inline diff — the spawning fd already has it), so no reviewer needs git. Re-ruling Bash for a reviewer requires demonstrable necessity, the exact read-only commands enumerated in BOTH the agent body and this ADR's table, and a matching edit to `tests/test_review_pipeline_contracts.py` — all in one PR. (Heading/content checks against a not-yet-existing enumeration format proved vacuously satisfiable — evaluator + bot convergent, Phase 2 — so the mechanical pin is outright rejection until a real enumeration exists to pin.) |
 
 ### 4. The spawn contract
 
@@ -90,6 +90,17 @@ message; the fd triages fix-or-defer and persists into
 `.kit/context/reviews/<TASK-ID>-review-pass.md`. Reviewer findings
 **inform**; the human verdict (planner Phase 7) remains the merge
 gate — operator sovereignty is untouched by this ADR.
+
+**Bounded completion**: a spawn is not a hostage. If the completion
+notification has not arrived by the time the session is otherwise
+ready to Ship — after roughly 30 minutes, or immediately when the
+harness reports the subagent dead — the fd records the pass in the
+review-pass record as *"spawned, no result — deferred to the human
+gate"* (naming the dimension and what was attempted) and proceeds.
+Never block Ship indefinitely on a silent spawn; never re-spawn
+silently — a retry is a new, recorded decision. The missing dimension
+reaches the human reviewer through the record, which is the gate's
+fail-open-but-loud shape.
 
 ### 5. The verified boundary
 
@@ -139,7 +150,8 @@ Evidence for both: the Tier-2 section of
 
 - A reviewer demonstrates genuine need for a git read (e.g. blame
   archaeology): add the enumeration to §3's table AND the agent body,
-  under the pinned heading, in one PR.
+  and relax the drift test's outright-rejection to pin the real
+  enumeration — all in one PR.
 - Reviewers pointed at untrusted diffs: re-rule WebSearch/WebFetch
   (exfiltration surface).
 - Agent Teams leaves the experimental flag: re-evaluate whether the

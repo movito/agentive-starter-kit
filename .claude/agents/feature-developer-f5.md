@@ -566,8 +566,11 @@ notification arrives. Rules, all load-bearing:
 - Findings return as the subagent's final message. Triage them
   fix-or-defer exactly like bot threads and persist outcomes into the
   review-pass record (same artifact as the skill passes above).
-- Never wait idle on a spawn — that inverts the point. If the
-  notification hasn't arrived by Ship time, Ship waits, not you.
+- Never wait idle on a spawn — that inverts the point. If a spawn is
+  still silent when you are otherwise ready to Ship, apply
+  KIT-ADR-0036 §4's bounded-completion rule: record it as "spawned,
+  no result — deferred to the human gate" in the review-pass record
+  and proceed. Bounded, recorded, never silently retried.
 
 ## Phase 6: Ship
 

@@ -47,7 +47,7 @@ empty) = code review only.**
 
 | Flag | Declares | Trigger heuristics |
 |------|----------|--------------------|
-| `architecture` | Implementation-level architecture pass via the `architecture-reviewer` subagent (Tier 2; Tier 3 for high-risk) | Multi-module change; a new pattern or abstraction; public API surface; cross-repo or cross-package contract; anything an ADR governs |
+| `architecture` | Implementation-level architecture pass via the `architecture-reviewer` subagent (Tier 2; Tier 3 only when explicitly requested by a human — see Escalation) | Multi-module change; a new pattern or abstraction; public API surface; cross-repo or cross-package contract; anything an ADR governs |
 | `security` | `/security-review` in the Tier-1 slot; `security-reviewer` subagent (Tier 2) | Auth or permissions logic; input handling/parsing; secrets or credential paths; network calls; dependency changes |
 | `docs-audit` | `document-reviewer` **periodic audit** — not a per-task gate | User-facing surface changed; or several sessions have passed since the last audit (planner judgment) |
 
