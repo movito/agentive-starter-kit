@@ -123,3 +123,61 @@ expression in the test still matches the literal in the engine — a
 migration test that drifts from its source proves nothing.
 
 Suite after the bot round: **1210 passed, 13 skipped**.
+
+## Bot round 3 — BugBot, Medium (operator-flagged)
+
+**Finding**: *Legacy record prose survives adopt.* The `# TODO` strip
+added for #145 only cleans values read out of `## Target Repository` on
+their way INTO a freshly seeded region. A pre-KIT-0118 planning tree
+already has the prose inside its `kit-install` region, and adopt passes
+`--preserve-regions`, so `seed_region` keeps that region verbatim.
+Unlike `bots:`/`evaluators:` there was no surgical rewrite of
+`target_path`/`target_github`, so `load_record()` kept returning the
+unusable path.
+
+**Verified before believing — and it reproduced exactly.** Built a
+legacy tree by hand, adopted it, read the record back:
+
+```
+target_path  = '../<target-repo>  # TODO: set the product repo path'
+PROSE STILL IN RECORD: True
+```
+
+**This was the worst kind of miss**: a half-done migration. The code
+read as though it migrated legacy trees while silently not doing so —
+strictly worse than not attempting one, because it removes the reason
+to look. The section strip was scope I *chose* to add; taking on a
+migration and leaving it partial is on me, not on the spec.
+
+**Fix**: a narrow surgical migration of the preserved region, matching
+the same single `$_LEGACY_TODO` marker (hoisted to one top-level
+definition — it had been scoped inside the section-exists branch and
+would have been unset at the new call site).
+
+Three things make this defensible despite touching the "consumer-owned
+regions are preserved, never rewritten" invariant — this is the only
+place the engine rewrites an existing recorded VALUE rather than
+appending a line:
+
+1. It is a **repair, not a rewrite**: the text removed is the kit's own
+   seeded hint, and the bare value is what the record always meant.
+2. Operator content **cannot match** — a real path would have to
+   contain `" # TODO:"`. Pinned by
+   `test_real_values_with_a_hash_are_not_touched` (`../target #1`
+   survives).
+3. It is **announced out loud**. A silent mutation of a consumer-owned
+   region would be its own defect.
+
+Six tests added: migration, `load_record()` round-trip, the
+announcement, the over-reach guard, clean-record no-op, idempotence.
+
+**Related gap, filed not fixed**: the `## Target Repository` *section*
+keeps its prose, and that section is machine-read too
+(`check_cross_repo_config.py`, `target_repo.py`). It fails LOUDLY there
+— `target_repo.py` validates `owner/name` and exits 1 — rather than
+silently returning garbage, which is why it is a lesser problem than
+the record was. Migrating it means editing consumer prose OUTSIDE any
+managed region, which is a different act deserving its own decision.
+Recorded in KIT-0119.
+
+Suite after round 3: **1216 passed, 13 skipped**.

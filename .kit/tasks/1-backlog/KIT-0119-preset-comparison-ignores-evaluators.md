@@ -80,6 +80,25 @@ fixed inline, per the task's out-of-scope rule.
 - [ ] Both copies changed together; parity test added
 - [ ] Existing preset-comparison tests still pass
 
+## Rider: legacy prose in the `## Target Repository` section
+
+Discovered while fixing BugBot's round-3 finding on PR #147 (KIT-0118).
+
+KIT-0118 migrates legacy `# TODO` prose out of the **kit-install
+record** on adopt. It deliberately does NOT touch the human-facing
+`## Target Repository` section, which keeps its prose — and that
+section is machine-read too (`scripts/core/check_cross_repo_config.py`,
+`packages/agentive-kit/src/agentive_kit/target_repo.py`).
+
+It is a lesser problem than the record was: `target_repo.py` validates
+`owner/name` and exits 1 on the prose, so it fails LOUDLY rather than
+silently returning an unusable value. But it is the same class.
+
+Migrating it means editing consumer-owned prose OUTSIDE any KIT-LOCAL
+region — a different act from repairing a value inside a managed
+record, and one that deserves its own decision rather than riding a
+release PR.
+
 ## References
 
 - KIT-0118 PR (movito/agentive-starter-kit#147) — added the record line

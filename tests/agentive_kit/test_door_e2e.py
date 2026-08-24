@@ -1022,3 +1022,106 @@ class TestEvaluatorDeclarationOnAdopt:
             assert result.returncode == 0, result.stderr + result.stdout
         region = _region_of(target)
         assert region.count("evaluators:") == 1
+
+
+class TestLegacyRecordMigrationOnAdopt:
+    """BugBot (PR #147): the ## Target Repository strip only cleans values
+    on their way INTO a freshly seeded region. Adopt passes
+    --preserve-regions, so a pre-KIT-0118 tree's EXISTING kit-install
+    region kept its prose and `load_record()` went on returning an
+    unusable path — a migration that looks complete and silently is not.
+    """
+
+    LEGACY_TP = "../<target-repo>  # TODO: set the product repo path"
+    LEGACY_TG = "<owner>/<repo>  # TODO: set the product repo"
+
+    def _legacy_tree(self, tmp_path: Path, tp: str, tg: str):
+        env = _door_env(tmp_path)
+        target = tmp_path / "legacy"
+        target.mkdir()
+        subprocess.run(
+            ["git", "init", "-q", "-b", "main", str(target)], check=True, timeout=30
+        )
+        (target / "CLAUDE.md").write_text(
+            "# Legacy Planning Repo\n\n"
+            "## Target Repository\n\n"
+            f"- **Path**: `{tp}`\n"
+            f"- **GitHub**: `{tg}`\n\n"
+            "<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: planning\nprofile: none\n"
+            f"target_path: {tp}\n"
+            f"target_github: {tg}\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+            encoding="utf-8",
+        )
+        subprocess.run(["git", "-C", str(target), "add", "-A"], check=True, timeout=30)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(target),
+                "-c",
+                "user.email=t@t",
+                "-c",
+                "user.name=t",
+                "commit",
+                "-q",
+                "-m",
+                "legacy",
+            ],
+            check=True,
+            timeout=60,
+        )
+        result = run_door(
+            "adopt", str(target), "--shape", "planning", cwd=tmp_path, env=env
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        return target, result
+
+    def test_prose_is_migrated_out_of_the_record(self, tmp_path):
+        target, _ = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        region = _region_of(target)
+        assert "target_path: ../<target-repo>" in region
+        assert "target_github: <owner>/<repo>" in region
+        assert "TODO" not in region
+
+    def test_load_record_returns_the_clean_value(self, tmp_path):
+        # the actual defect: a machine reader getting an unusable path
+        from agentive_kit import door
+
+        target, _ = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        record = door.load_record(target)
+        assert record["target_path"] == "../<target-repo>"
+        assert record["target_github"] == "<owner>/<repo>"
+
+    def test_migration_is_announced_not_silent(self, tmp_path):
+        # this is the one place the engine rewrites an existing recorded
+        # VALUE in a consumer-owned region — it must say so
+        _, result = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        assert "legacy '# TODO' prose migrated" in result.stdout
+
+    def test_real_values_with_a_hash_are_not_touched(self, tmp_path):
+        # the over-reach guard: `../target #1` is the operator's real
+        # path, not something this engine ever seeded
+        from agentive_kit import door
+
+        target, result = self._legacy_tree(tmp_path, "../target #1", "acme/product")
+        assert door.load_record(target)["target_path"] == "../target #1"
+        assert "legacy '# TODO' prose migrated" not in result.stdout
+
+    def test_clean_record_is_left_alone(self, tmp_path):
+        target, result = self._legacy_tree(tmp_path, "../product", "acme/product")
+        region = _region_of(target)
+        assert "target_path: ../product" in region
+        assert "legacy '# TODO' prose migrated" not in result.stdout
+
+    def test_migration_is_idempotent(self, tmp_path):
+        target, _ = self._legacy_tree(tmp_path, self.LEGACY_TP, self.LEGACY_TG)
+        env = _door_env(tmp_path)
+        second = run_door(
+            "adopt", str(target), "--shape", "planning", cwd=tmp_path, env=env
+        )
+        assert second.returncode == 0, second.stderr + second.stdout
+        # already migrated — nothing left to do, and it says nothing
+        assert "legacy '# TODO' prose migrated" not in second.stdout
+        assert "TODO" not in _region_of(target)

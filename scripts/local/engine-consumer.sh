@@ -110,6 +110,12 @@ TARGET_PATH=""
 TARGET_GITHUB=""
 BOTS=""
 EVALUATORS=""
+# The exact prose a pre-KIT-0118 engine seeded INSIDE the target-pointer
+# values. Deliberately not a general " #" comment opener: a directory
+# name containing " #" is the operator's real path (CodeRabbit, PR
+# #147). Defined once — both the ## Target Repository extraction and the
+# preserved-region migration match against this single marker.
+_LEGACY_TODO='[[:space:]]+#[[:space:]]*TODO:.*$'
 # Presence, not emptiness (CodeRabbit, this PR): `--evaluators=` and a
 # trailing `--evaluators` both leave EVALUATORS empty, which a
 # [ -n "$EVALUATORS" ] guard reads as "never passed" — silently dropping
@@ -763,7 +769,10 @@ if [ "$SHAPE" = "planning" ]; then
         # the operator's real path and not something this engine seeded.
         # Narrowing to the literal "# TODO" marker migrates every tree
         # the old engine produced while touching nothing else.
-        _LEGACY_TODO='[[:space:]]+#[[:space:]]*TODO:.*$'
+        # ($_LEGACY_TODO is defined once near the top — the preserved-
+        # region migration further down uses the same marker, and two
+        # definitions of "what legacy prose looks like" would be one
+        # too many.)
         EXISTING_TP="$(printf '%s' "$EXISTING_TP" | sed -E "s/$_LEGACY_TODO//")"
         EXISTING_TG="$(printf '%s' "$EXISTING_TG" | sed -E "s/$_LEGACY_TODO//")"
         if [ -n "$TARGET_PATH" ] && [ -n "$EXISTING_TP" ] && [ "$TARGET_PATH" != "$EXISTING_TP" ]; then
@@ -946,6 +955,39 @@ if [ -n "$EVALUATORS" ]; then
         echo "Error: --evaluators '$EVALUATORS' conflicts with the recorded declaration (evaluators: $EXISTING_EVALUATORS)"
         echo "       Update the kit-install region in CLAUDE.md first, or drop the flag."
         exit 1
+    fi
+fi
+
+# Legacy target-pointer migration (KIT-0118, issue #145 — BugBot, PR
+# #147). The strip at the ## Target Repository extraction above only
+# cleans values on their way INTO a freshly seeded region. An adopt of a
+# pre-KIT-0118 planning tree passes --preserve-regions, so seed_region
+# keeps the existing region verbatim — prose and all — and
+# load_record() goes on returning an unusable target path. Without this
+# block the migration looks complete and silently is not, which is worse
+# than not attempting one.
+#
+# This is the ONLY place the engine rewrites an existing recorded VALUE
+# rather than appending a line. It is deliberately narrow, and it is a
+# repair rather than a rewrite: the text being removed is the kit's own
+# seeded hint, matched by the exact legacy marker, and the bare value is
+# what the record always MEANT. Operator-authored content cannot match
+# (a real path would have to contain " # TODO:"). Announced out loud —
+# a silent mutation of a consumer-owned region would be its own defect.
+if [ "$SHAPE" = "planning" ]; then
+    if ! REGION_NOW="$(python3 "$KIT_MARKERS" extract "$CLAUDE_MD" kit-install 2>&1)"; then
+        echo "Error: kit_markers extract kit-install failed on $CLAUDE_MD:"
+        echo "       $REGION_NOW"
+        exit 1
+    fi
+    REGION_MIGRATED="$(printf '%s\n' "$REGION_NOW" |
+        sed -E "/^[[:space:]]*target_(path|github):/ s/$_LEGACY_TODO//")"
+    if [ "$REGION_MIGRATED" != "$REGION_NOW" ]; then
+        # no trailing newline: the region body group excludes the
+        # newline before END, so extract->replace stays byte-identical
+        printf '%s' "$REGION_MIGRATED" |
+            python3 "$KIT_MARKERS" replace "$CLAUDE_MD" kit-install --stdin
+        echo "  kit-install region: legacy '# TODO' prose migrated out of the target pointer"
     fi
 fi
 
