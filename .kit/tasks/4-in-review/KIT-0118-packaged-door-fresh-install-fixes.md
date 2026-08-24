@@ -1,6 +1,6 @@
 # KIT-0118: Packaged-door fresh-install fixes + agentive-kit 0.4.0 release
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: high
 **Assigned To**: feature-developer
 **Estimated Effort**: 4-6 hours
