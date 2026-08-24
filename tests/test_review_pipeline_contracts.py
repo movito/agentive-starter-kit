@@ -28,7 +28,10 @@ REVIEW_PIPELINE = ".kit/context/workflows/REVIEW-PIPELINE.md"
 PREFLIGHT_CMD = ".claude/commands/preflight.md"
 COMMIT_PUSH_PR_CMD = ".claude/commands/commit-push-pr.md"
 STARTER_TEMPLATE = ".kit/templates/TASK-STARTER-TEMPLATE.md"
-ADR_0036 = ".kit/adr/KIT-ADR-0036-readonly-reviewer-delegation.md"
+# Glob on the ADR NUMBER, not an exact slug — a slug variant
+# ("read-only" vs "readonly") must arm the Phase-2 checks, not
+# silently disarm them forever (/code-review smoke, Phase 1 round 1).
+ADR_0036_GLOB = "KIT-ADR-0036*.md"
 
 FEATURE_DEVELOPERS = [
     ".claude/agents/feature-developer.md",
@@ -56,10 +59,28 @@ def _read(rel):
 
 
 def _frontmatter(text):
-    """The YAML frontmatter block between the leading --- fences."""
-    match = re.match(r"\A---\n(.*?)\n---\n", text, re.DOTALL)
+    """The YAML frontmatter block between the leading --- fences.
+
+    Tolerates a BOM and CRLF line endings (o3 evaluator, Phase 1
+    round 1) so an editor's save style cannot red-bar the suite.
+    """
+    match = re.match("\\A\ufeff?---\\r?\\n(.*?)\\r?\\n---\\r?\\n", text, re.DOTALL)
     assert match, "no frontmatter block"
     return match.group(1)
+
+
+def _declared_tools(frontmatter):
+    """Tool names under the ``tools:`` key, lower-cased.
+
+    Reads the whole value block up to the next top-level key, so both
+    the bullet form (``- Read``) and an inline list (``tools: [Read]``)
+    are seen, and case variants cannot slip a tool past the carve-out
+    check (o3 evaluator, Phase 1 round 1).
+    """
+    match = re.search(r"^tools:(.*?)(?=^\S|\Z)", frontmatter, re.MULTILINE | re.DOTALL)
+    if not match:
+        return []
+    return [t.lower() for t in re.findall(r"[A-Za-z_]\w*", match.group(1))]
 
 
 # ---------------------------------------------------------------------------
@@ -107,7 +128,16 @@ def test_no_stale_seven_gate_literals(surface):
     (which keeps emitting mechanical gates 1-7 — Gate 8 is session-checked
     until mechanized); the *command surfaces* must not carry a stale 7."""
     text = _read(surface)
-    stale = re.findall(r"(?:all )?7 (?:completion )?gates", text, re.I)
+    # Also catches the verdict idiom ("all 7 pass") and the hyphenated
+    # form ("7-gate") — the /code-review smoke found the original
+    # pattern required the literal noun "gates" and would have missed a
+    # regression of preflight's READY rule (Phase 1 round 1).
+    stale = re.findall(
+        r"(?:all\s+)?(?:7|seven)\s+(?:completion\s+)?gates\b"
+        r"|\ball\s+7\s+pass\b|\b7-gate\b",
+        text,
+        re.I,
+    )
     assert not stale, f"{surface}: stale 7-gate literal(s): {stale}"
 
 
@@ -210,8 +240,14 @@ def test_starter_template_carries_flag_shell_and_bumped_version():
 # Phase 2 — armed mechanically by the ADR's existence
 
 
+def _adr_0036():
+    """The carve-out ADR's path, resolved by number (any slug), or None."""
+    matches = sorted((REPO / ".kit" / "adr").glob(ADR_0036_GLOB))
+    return matches[0] if matches else None
+
+
 def _adr_exists():
-    return (REPO / ADR_0036).is_file()
+    return _adr_0036() is not None
 
 
 @pytest.mark.parametrize("agent", REVIEWER_AGENTS)
@@ -231,14 +267,18 @@ def test_reviewer_toolsets_satisfy_readonly_carveout(agent):
             )
         pytest.skip(f"{agent} absent")
     text = path.read_text(encoding="utf-8")
-    tools = re.findall(r"^\s*-\s*(\w+)\s*$", _frontmatter(text), re.MULTILINE)
-    if "Bash" in tools:
+    tools = _declared_tools(_frontmatter(text))
+    # membership: tool-name vocabulary check over the normalized list,
+    # not identifier equality
+    if "bash" in tools:
         assert "Permitted Bash commands" in text, (
             f"{agent}: declares Bash without an enumerated permitted-"
             "command list (FR-6 — removal is the default remedy)"
         )
-        assert "Permitted Bash commands" in _read(ADR_0036), (
-            f"{ADR_0036}: a reviewer retains Bash but the ADR does not "
+        adr = _adr_0036()
+        adr_text = adr.read_text(encoding="utf-8")
+        assert "Permitted Bash commands" in adr_text, (
+            f"{adr}: a reviewer retains Bash but the ADR does not "
             "enumerate the permitted commands (FR-6)"
         )
 

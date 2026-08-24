@@ -114,8 +114,10 @@ KIT-0120 — same extraction direction as KIT-0114).
 
 Before preflight, the implementing session updates the docs its diff
 touches (README, workflow docs, CHANGELOG as applicable). The
-`document-reviewer` agent runs as a **flag-triggered periodic audit**
-(`docs-audit`), never as a per-task gate (FR-9).
+`document-reviewer` agent runs only on tasks that declare `docs-audit`
+— the flag is how the planner schedules a periodic audit — and its run
+is an **audit pass, never a completion gate**: it produces findings to
+triage, it does not block preflight (FR-9).
 
 ## Escalation to Tier 3 (opt-in contract)
 
@@ -140,8 +142,15 @@ nothing to invoke.
   the release train and reach twins **by copy, not re-derivation**
   (patterns.yml `harden_twins_by_copy_not_rederivation`).
 - Cost data: reviewer-subagent token/time costs from live smoke runs
-  are recorded here as they are measured (KIT-0116 Phase 2), so flag
-  decisions are informed.
+  are recorded here as they are measured, so flag decisions are
+  informed. Measured so far:
+  - **Tier 1, `/code-review` medium** (KIT-0116 Phase 1 smoke, a
+    ~800-line/14-file instruction-surface diff): ~95k subagent
+    tokens, ~6 min wall clock, 8 verified findings — several real and
+    distinct from both the evaluator trio and what bots typically
+    catch (cross-file contract consistency).
+  - Tier 2 reviewer-subagent costs: recorded at the KIT-0116 Phase 2
+    smoke.
 
 ---
 

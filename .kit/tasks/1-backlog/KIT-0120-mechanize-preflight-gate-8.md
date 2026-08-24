@@ -54,8 +54,10 @@ routinely on a door-era `agentive-kit`, move the check into the engine.
 ## Acceptance Criteria
 
 - [ ] Gate 8 emitted by the engine, matrix-pinned
-- [ ] No stale 7-gate literal in package or command surfaces
-      (extend `tests/test_review_pipeline_contracts.py`)
+- [ ] Once the engine emits Gate 8, no stale 7-gate literal remains in
+      package or command surfaces (post-change state — extend
+      `tests/test_review_pipeline_contracts.py`; until this task lands,
+      the engine's 7-gate literals are correct and intentional)
 - [ ] Compatibility note for lagging engines in the command markdown
 
 ## Notes

@@ -31,9 +31,9 @@ CLI (backlog: KIT-0120).
 
 - Gates 1–4 (CI, bots, threads) query the target repo via `gh`.
 - Branch and `git log` queries read from the target-repo working tree.
-- Gates 5–7 (evaluator review, review starter, task folder) still read
-  the planning repo's `.kit/` directory — those artifacts always live
-  in planning regardless of where code lives.
+- Gates 5–8 (evaluator review, review starter, task folder, review-pass
+  record) still read the planning repo's `.kit/` directory — those
+  artifacts always live in planning regardless of where code lives.
 
 Override with `--repo owner/name` if needed. Pass `--task` explicitly
 alongside it: `--task` otherwise defaults to *derived from the branch*,

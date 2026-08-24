@@ -122,8 +122,9 @@ agentive preflight --pr PR_NUMBER --task TASK_ID
 Parse the `GATE:` lines and present the PASS/FAIL table (same format as `/preflight`).
 
 **This step is informational, not blocking** — gates 1-4 (CI, bots, threads) are expected
-to fail immediately after PR creation since bots need 2-6 minutes. But gates 5-7 (evaluator
-persisted, review starter, task folder) CAN be checked now.
+to fail immediately after PR creation since bots need 2-6 minutes. But gates 5-8 (evaluator
+persisted, review starter, task folder, review pass) CAN be checked now — Gate 8 via
+/preflight's Step 1b (the `agentive preflight` CLI emits gates 1-7 only).
 
 After presenting results, output the **Next Steps** checklist:
 
@@ -133,9 +134,11 @@ After presenting results, output the **Next Steps** checklist:
 1. Wait for bots: `/check-bots` (CodeRabbit ~1-2 min, BugBot ~4-6 min)
 2. Triage bot findings: `/triage-threads`
 3. Run code-review evaluator (skill: code-review-evaluator)
-4. Run the native review pass (/code-review; flagged dimensions per
-   .kit/context/workflows/REVIEW-PIPELINE.md) and persist the
-   review-pass record
+4. Verify the native review pass already ran PRE-PR (fd Phase 5b —
+   it is a before-PR-open gate; rewrites after open burn a bot round)
+   and its record is persisted per
+   .kit/context/workflows/REVIEW-PIPELINE.md. If it was missed, run
+   it now and note the ordering miss in the record
 5. Create review starter (skill: review-handoff)
 6. Re-run preflight: `/preflight --pr PR_NUMBER --task TASK_ID`
 7. When all 8 gates pass -> hand off for human review
