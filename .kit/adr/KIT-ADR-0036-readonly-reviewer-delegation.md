@@ -100,7 +100,11 @@ gate"* (naming the dimension and what was attempted) and proceeds.
 Never block Ship indefinitely on a silent spawn; never re-spawn
 silently — a retry is a new, recorded decision. The missing dimension
 reaches the human reviewer through the record, which is the gate's
-fail-open-but-loud shape.
+fail-open-but-loud shape. A completion that arrives AFTER the
+deferral was recorded never rewrites the deferred entry: append it as
+a dated addendum and triage it like any late finding — and if the
+human gate has already read the record, surface it to the reviewer
+directly rather than editing what they read.
 
 ### 5. The verified boundary
 

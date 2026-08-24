@@ -252,10 +252,12 @@ def _adr_exists():
 
 @pytest.mark.parametrize("agent", REVIEWER_AGENTS)
 def test_reviewer_toolsets_satisfy_readonly_carveout(agent):
-    """FR-6: the carve-out's default remedy is REMOVAL of Bash from
-    reviewer agents. Bash may survive only with the exact permitted
-    read-only commands enumerated in BOTH the agent body and the ADR —
-    'documented read-only usage' without enumeration is not acceptable."""
+    """FR-6 / KIT-ADR-0036 §3: delegation-eligible iff EVERY declared
+    tool is on the agent's ruled allow-list. Bash is rejected outright
+    — no reviewer holds it, and re-ruling it means editing this test,
+    the agent body, and the ADR's §3 table in one PR (heading/content
+    checks against a not-yet-existing enumeration format proved
+    vacuously satisfiable — evaluator + bot convergent, Phase 2)."""
     if not _adr_exists():
         pytest.skip("KIT-ADR-0036 not yet authored — arms in Phase 2")
     path = REPO / agent
