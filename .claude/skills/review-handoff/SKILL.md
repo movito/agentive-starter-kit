@@ -1,10 +1,10 @@
 ---
 description: How to hand off a PR for human code review after automated reviews pass
 user-invocable: false
-version: 1.1.0
+version: 1.2.0
 origin: dispatch-kit
 origin-version: 0.3.2
-last-updated: 2026-07-13
+last-updated: 2026-08-24
 created-by: "@movito with planner2"
 ---
 
@@ -14,7 +14,7 @@ After automated review is complete, you **MUST** request human code review befor
 
 ## Process
 
-1. **Verify automated review is complete**: PR has no unresolved threads, evaluator run persisted
+1. **Verify automated review is complete**: PR has no unresolved threads, evaluator run persisted, native review-pass record persisted (`.kit/context/reviews/<TASK-ID>-review-pass.md` — preflight Gate 8; authority: `.kit/context/workflows/REVIEW-PIPELINE.md`)
 2. **Move task**: `./scripts/core/project move <TASK-ID> in-review`
 3. **Create review starter**: Write `.kit/context/<TASK-ID>-REVIEW-STARTER.md`
 4. **Add Review section to task file**: Append review index to the task file
@@ -24,23 +24,26 @@ After automated review is complete, you **MUST** request human code review befor
 
 ## Bundled PR? Do this FIRST (multiple task IDs, one PR)
 
-Preflight Gates 5/6 check for artifacts named exactly
-`<TASK-ID>-REVIEW-STARTER.md` and `<TASK-ID>-evaluator-review.md` —
-**per task ID**, deliberately (KIT-0042: the gates stay strict; the
-bundle intelligence lives here, in process). When one PR ships several
-tasks, follow the lead-task + pointer-files convention **up front**, not
-after a gate failure:
+Preflight Gates 5/6/8 check for artifacts named exactly
+`<TASK-ID>-REVIEW-STARTER.md`, `<TASK-ID>-evaluator-review.md`, and
+`<TASK-ID>-review-pass.md` — **per task ID**, deliberately (KIT-0042:
+the gates stay strict; the bundle intelligence lives here, in
+process). When one PR ships several tasks, follow the lead-task +
+pointer-files convention **up front**, not after a gate failure:
 
 1. **Pick the lead task** (usually the lowest ID) and write the full
-   review starter and evaluator record under the lead's name, covering
-   the whole bundle.
-2. **For every other bundled task**, create two short pointer files with
-   the exact solo-task names:
+   review starter, evaluator record, AND review-pass record under the
+   lead's name, covering the whole bundle — the non-lead pointers in
+   step 2 target all three lead artifacts, so each must exist.
+2. **For every other bundled task**, create three short pointer files
+   with the exact solo-task names:
    - `.kit/context/<TASK-ID>-REVIEW-STARTER.md` — a few lines: names the
      bundle + PR, points at the lead's starter, and states this task's
      slice of the change.
    - `.kit/context/reviews/<TASK-ID>-evaluator-review.md` — points at the
      lead's evaluator record (and notes any per-task skip rationale).
+   - `.kit/context/reviews/<TASK-ID>-review-pass.md` — points at the
+     lead's review-pass record (Gate 8; same pointer shape).
 
 Reference shape: the KIT-0037/38/39 bundle (PR #71) —
 `.kit/context/archive/KIT-0038-REVIEW-STARTER.md` and
@@ -52,7 +55,7 @@ examples of pointer files. (Finished tasks' starters live under
 shape): the task-level artifacts live on ONE branch (put them on the
 first/primary PR's branch; sibling PRs must not touch them, or the
 branches conflict). Until that PR merges, preflight run against a
-sibling branch shows spurious Gate 5–7 FAILs — expected, not a
+sibling branch shows spurious Gate 5–8 FAILs — expected, not a
 regression; re-run after the artifact-carrying PR merges.
 
 If you forget, Gates 5/6's FAIL output names this convention — but doing

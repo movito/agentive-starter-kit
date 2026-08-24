@@ -2,9 +2,9 @@
 name: planner
 description: Planning and coordination agent — task lifecycle, evaluation, handoff, cross-repo aware
 model: claude-opus-4-8
-version: 2.1.0
+version: 2.2.0
 origin: agentive-starter-kit
-last-updated: 2026-08-11
+last-updated: 2026-08-24
 created-by: "@movito (rewrite modeled on feature-developer-v6)"
 ---
 
@@ -158,6 +158,13 @@ Task specs live in `.kit/tasks/<status-folder>/<TASK-ID>-<slug>.md`.
    - Ready to assign → `2-todo/`
 4. **Estimate size**: if the change is likely > 500 lines, add a
    `## PR Plan` section breaking it into mergeable chunks
+5. **Declare Review Flags (optional)**: when the trigger heuristics
+   apply, add a `**Review Flags**:` line to the spec naming the flagged
+   dimensions (e.g. `**Review Flags**: architecture, security`). The
+   flag registry and trigger heuristics live in
+   `.kit/context/workflows/REVIEW-PIPELINE.md` — cite, never restate;
+   its Governance section owns changes. Default (no field) = code
+   review only.
 
 ## Phase 3: Evaluation (GATE)
 
@@ -215,6 +222,10 @@ Create `.kit/context/<TASK-ID>-HANDOFF-<agent-type>.md` containing:
 - **Evaluation summary**: link to the evaluator log; list addressed vs.
   outstanding concerns
 - **Out of scope**: what NOT to touch — guard against scope creep
+- **Review Flags**: carry the spec's `**Review Flags**:` declaration
+  (or note its absence) so the implementing session knows which review
+  dimensions run pre-PR — registry and heuristics live in
+  `.kit/context/workflows/REVIEW-PIPELINE.md` (cite, never restate)
 - **Session topology (REQUIRED)**: the worktree path and branch name
   the session runs on, plus the verify-never-create reminder. A
   handoff-only launch must carry the same safeguard as a starter

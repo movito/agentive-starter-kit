@@ -83,6 +83,7 @@ See `.kit/templates/AGENT-TEMPLATE.md` for creating new agents.
 | Commit protocol | `.kit/context/workflows/COMMIT-PROTOCOL.md` |
 | Testing | `.kit/context/workflows/TESTING-WORKFLOW.md` |
 | Review fixes | `.kit/context/workflows/REVIEW-FIX-WORKFLOW.md` |
+| Review pipeline (ladder + flags) | `.kit/context/workflows/REVIEW-PIPELINE.md` |
 | PR sizing | `.kit/context/workflows/PR-SIZE-WORKFLOW.md` |
 | Stacked PRs | `.kit/context/workflows/STACKED-PR-WORKFLOW.md` |
 | Workflow freeze | `.kit/context/workflows/WORKFLOW-FREEZE-POLICY.md` |

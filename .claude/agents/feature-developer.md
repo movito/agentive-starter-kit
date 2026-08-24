@@ -2,9 +2,9 @@
 name: feature-developer
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring
 model: claude-opus-5
-version: 2.6.1
+version: 2.7.0
 origin: agentive-starter-kit
-last-updated: 2026-08-15
+last-updated: 2026-08-24
 created-by: "@movito (canonicalized from feature-developer-v6 v1.2.0 + v7 v2.1.1 local config)"
 ---
 
@@ -144,6 +144,7 @@ Begin every response with:
 | 3. Implement | Make changes, test locally | Inner loop (below) | — |
 | 4. Self-review | Audit changed code for issues | Self-review checklist | **GATE** |
 | 5. Evaluator | Adversarial code review — **before PR open** | code-review evaluator | **GATE** |
+| 5b. Native review | /code-review + flagged dims — **before PR open** | Phase 5b (REVIEW-PIPELINE.md) | **GATE** |
 | 6. Ship | Commit, push, open PR | From code repo | — |
 | 7. CI + Bots | Monitor CI and bot reviews | Inline `gh` + ScheduleWakeup | **GATE** |
 | 8. Preflight | Verify all completion gates | `/preflight` | **GATE** |
@@ -341,6 +342,11 @@ Before shipping, audit all changed files:
 5. **No debug code**: No print/console.log, no hardcoded test values, no
    commented-out code.
 6. **No regressions**: Run through affected functionality manually.
+7. **Docs habit (KIT-0116)**: update the docs your diff touches —
+   README, workflow docs, CHANGELOG as applicable — in the same PR as
+   the change they describe. The `document-reviewer` agent runs as a
+   flag-triggered periodic audit (`docs-audit`), never as a per-task
+   gate (authority: `.kit/context/workflows/REVIEW-PIPELINE.md`).
 
 ## Phase 5: Evaluator (GATE) — before the PR opens
 
@@ -500,6 +506,41 @@ CSS/cascade and dual-render-path bugs (conditional wrappers that
 change which element receives styling). Flag those for manual review
 instead of relying on the evaluator gate.
 
+## Phase 5b: Native Review Pass (GATE) — before the PR opens
+
+After the evaluator gate, run the harness-native review skills on the
+branch diff — same pre-PR ordering rationale as Phase 5: rewrites
+after PR open each burn a bot round. The ladder's values (tier
+heuristics, flag registry, skip rules, effort levels) live in
+`"$PLANNING"/.kit/context/workflows/REVIEW-PIPELINE.md` — cite it,
+never restate it.
+
+1. **Always**: invoke the `/code-review` skill on the branch diff, at
+   the default effort REVIEW-PIPELINE.md names. If the skill is
+   unavailable in this session, that is a recorded skip reason — never
+   substitute an untracked ad-hoc review.
+2. **Flagged dimensions**: read `**Review Flags**:` from the task spec
+   and handoff. `security` declared → run `/security-review` in this
+   slot. Flagged dimensions are never silently skipped — a flagged run
+   that cannot happen is recorded with its reason. **Fail closed on
+   flag trouble**: if the spec and handoff declarations disagree, run
+   the UNION of both and flag the mismatch to the planner; a flag not
+   in REVIEW-PIPELINE.md's registry is a typo until proven otherwise —
+   ask, don't drop it. (Which dimensions are currently runnable —
+   e.g. `architecture` via its reviewer agent — is stated in
+   REVIEW-PIPELINE.md, not here.)
+3. **Triage fix-or-defer**: every finding is either fixed now or
+   explicitly deferred with a reason. No third state.
+4. **Persist the record** to
+   `"$PLANNING"/.kit/context/reviews/<TASK-ID>-review-pass.md`: the
+   passes that ran, effort levels, findings with dispositions, flagged
+   outcomes, and any skips with reasons. This is preflight Gate 8's
+   artifact. Deferred findings ALSO go in the PR description and the
+   review starter, where the human reviewer sees them.
+
+A skip decision (trivial diff, per REVIEW-PIPELINE.md's rules) is
+persisted to the same record — a missing record fails Gate 8.
+
 ## Phase 6: Ship
 
 > **Pre-format before committing (KIT-0057)**: run the project's own
@@ -642,6 +683,8 @@ Verify all gates before requesting human review:
 - [ ] PR is open and CI passes
 - [ ] Bot reviews addressed (all threads resolved)
 - [ ] Evaluator review run and findings addressed
+- [ ] Native review pass persisted (`.kit/context/reviews/<TASK-ID>-review-pass.md`
+      — Gate 8: code always, flagged dimensions as declared)
 - [ ] No debug code, no console.log, no commented-out code
 - [ ] Manual testing confirms no regressions
 

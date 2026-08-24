@@ -57,6 +57,9 @@ Before requesting review, verify:
 - [ ] Tests written and passing
 - [ ] CI passes (`/check-ci` or `./scripts/core/verify-ci.sh`)
 - [ ] Task moved to `4-in-review/`
+- [ ] Native review pass persisted
+      (`.kit/context/reviews/[TASK-ID]-review-pass.md` — preflight
+      Gate 8) and its deferred findings surfaced in this starter
 - [ ] No debug code or console.logs left behind
 - [ ] Docstrings for public APIs
 
