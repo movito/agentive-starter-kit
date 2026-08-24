@@ -1,6 +1,6 @@
 # KIT-0116: Automated review pipeline — native review skills, background reviewer subagents, deep-review workflow
 
-**Status**: In Progress
+**Status**: In Review
 **Priority**: high
 **Assigned To**: feature-developer
 **Estimated Effort**: 2-3 days (3 phases, independently shippable)

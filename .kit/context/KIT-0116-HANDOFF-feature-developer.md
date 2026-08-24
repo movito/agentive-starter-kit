@@ -7,7 +7,7 @@ subagents via the Agent tool, per the carve-out ADR you will author.**
 
 **Date**: 2026-08-24
 **From**: planner-f5  **To**: feature-developer-f5
-**Task**: .kit/tasks/3-in-progress/KIT-0116-automated-review-pipeline.md
+**Task**: .kit/tasks/4-in-review/KIT-0116-automated-review-pipeline.md
 **Status**: Ready
 **Evaluation**: Gate PASSED at the 3-round limit (fast ×2 + o3), all
 findings folded into the spec — don't re-litigate. The spec's Notes
