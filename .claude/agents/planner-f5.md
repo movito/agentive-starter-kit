@@ -2,7 +2,7 @@
 name: planner-f5
 description: Planning and coordination agent — task lifecycle, evaluation, handoff, cross-repo aware (Fable 5 variant)
 model: claude-fable-5
-version: 1.2.0
+version: 1.3.0
 origin: agentive-starter-kit
 last-updated: 2026-08-24
 created-by: "@movito (Fable-5 fork of planner v2.0.0)"
@@ -483,7 +483,12 @@ silently breaks invocation. (See
 **Sub-agent permission trap**: agents launched via the Task tool do
 not inherit `.claude/settings.json` allow patterns. Bash-only sub-agents
 block on permission prompts. This is why planner does not delegate via
-Task — the user invokes agents in new tabs instead.
+Task — the user invokes agents in new tabs instead. ONE ruled
+exception exists: **read-only reviewer agents** (no Bash, no Write —
+nothing to trap on, nothing to mutate) may be spawned as background
+subagents by feature-developer sessions per **KIT-ADR-0036**
+(REVIEW-PIPELINE.md Tier 2). Implementation delegation remains
+banned; the exception lives in the ADR, not here.
 
 **zsh eats bare `=word` arguments** — in Bash-tool commands, a bare
 `===` separator or `=x` token triggers zsh filename expansion and

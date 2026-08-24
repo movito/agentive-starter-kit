@@ -21,7 +21,7 @@ ones structurally cannot:
 |-------|-----------|---------|------------|
 | Spec time | Adversarial evaluators (`arch-review-fast` / `arch-review` / `claude-arch`) | Planner, per evaluation policy | ¢–$ per run |
 | Implementation time, Tier 1 | Harness-native `/code-review` on the branch diff; `/security-review` when flagged | **Default-on** (code review); flag-triggered (security) | One session pass |
-| Implementation time, Tier 2 | Kit reviewer agents as **background read-only subagents** (`code-reviewer`; `architecture-reviewer` / `security-reviewer` / `document-reviewer` when flagged) | Flag-triggered · *lands in KIT-0116 Phase 2, governed by KIT-ADR-0036* | Parallel subagent tokens |
+| Implementation time, Tier 2 | Kit reviewer agents as **background read-only subagents** (`code-reviewer`; `architecture-reviewer` / `security-reviewer` / `document-reviewer` when flagged) | fd MAY spawn after local tests pass; flags gate the specialists. Spawn contract: **KIT-ADR-0036 §4** | Parallel subagent tokens |
 | Implementation time, Tier 3 | Deep-review workflow: multi-lens fan-out + adversarial verification | **Opt-in only** (see Escalation) · *lands in KIT-0116 Phase 3* | Many agents — explicit budget |
 | PR time | BugBot + CodeRabbit, triaged per the bot-triage skill | Automatic on PR | Bot rounds (budget: one substantive round) |
 | Merge gate | **Human review verdict** (planner Phase 7) | Always | — |
@@ -47,8 +47,8 @@ empty) = code review only.**
 
 | Flag | Declares | Trigger heuristics |
 |------|----------|--------------------|
-| `architecture` | Implementation-level architecture pass (`architecture-reviewer` from Phase 2; Tier 3 for high-risk) | Multi-module change; a new pattern or abstraction; public API surface; cross-repo or cross-package contract; anything an ADR governs |
-| `security` | `/security-review` in the Tier-1 slot; `security-reviewer` subagent from Phase 2 | Auth or permissions logic; input handling/parsing; secrets or credential paths; network calls; dependency changes |
+| `architecture` | Implementation-level architecture pass via the `architecture-reviewer` subagent (Tier 2; Tier 3 for high-risk) | Multi-module change; a new pattern or abstraction; public API surface; cross-repo or cross-package contract; anything an ADR governs |
+| `security` | `/security-review` in the Tier-1 slot; `security-reviewer` subagent (Tier 2) | Auth or permissions logic; input handling/parsing; secrets or credential paths; network calls; dependency changes |
 | `docs-audit` | `document-reviewer` **periodic audit** — not a per-task gate | User-facing surface changed; or several sessions have passed since the last audit (planner judgment) |
 
 Flag inflation is a named risk (spec Risk 2): flags are set from these
@@ -158,4 +158,5 @@ nothing to invoke.
 pre-PR adversarial evaluators, skip rules), `.claude/skills/bot-triage/`
 (PR-time bot discipline), `.claude/commands/preflight.md` (Gate 8),
 `.kit/context/patterns.yml`, KIT-ADR-0035 (native coordination),
-KIT-ADR-0036 (read-only reviewer delegation — Phase 2).
+KIT-ADR-0036 (read-only reviewer delegation — the Tier-2 carve-out
+and spawn contract).

@@ -61,7 +61,7 @@ This folder contains ADRs inherited from the **agentive-starter-kit** template. 
 | KIT-ADR-0033 | Handoff Brief Primacy | Proposed |
 | KIT-ADR-0034 | What Generates Kit Work | Proposed (governance) |
 | KIT-ADR-0035 | Native Coordination Supersedes dispatch-kit | Accepted |
-| KIT-ADR-0036 | Read-Only Reviewer Delegation | Reserved (authored within KIT-0116) |
+| KIT-ADR-0036 | Read-Only Reviewer Delegation | Proposed (ratifies on KIT-0116 Phase-2 merge) |
 
 KIT-ADR-0030 through 0034 were drafted as one combined ADR ("the door
 is a tool, not a place", PR #128, closed unmerged 2026-08-13) and split

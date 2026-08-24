@@ -70,7 +70,8 @@ tests/                pytest test suite
 | `planner` | Planning and task orchestration (cross-repo aware) |
 | `feature-developer` | Implementation with gated workflow + inline CI/bot loop |
 | `ci-checker` | CI/CD verification |
-| `code-reviewer` | Code quality review |
+| `code-reviewer` | Code quality review (read-only, spawnable — KIT-ADR-0036) |
+| `architecture-reviewer` | Implementation-level architecture review (`architecture` flag) |
 | `test-runner` / `powertest-runner` | TDD and testing |
 
 Full listing: `.claude/agents/` (all agents live here for Claude Code resolution).
