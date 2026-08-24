@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Packaged setup door: three fresh-install defects, and the wheel that
+  carried none of the door** (KIT-0118; closes issues #144, #145, #146).
+  An operator's from-scratch run filed all three against the same
+  install:
+
+  - **The planning scaffold wrote prose into the machine-read identity
+    record** (#145). `engine-consumer.sh` seeded
+    `target_path: ../<target-repo>  # TODO: set the product repo path`
+    — and `load_record()` / `_parse_install_record()` have no `#`
+    handling, so the TODO hint *became* the recorded target path.
+    Recorded values are now bare. When `--target-github` is given
+    without `--target-path`, the path is derived as `../<repo>` per the
+    documented sibling layout; the operator hint moved to the console,
+    on the door's own completion tail (the engine's Step 4 tail is
+    unreachable under `--internal-record-only`). An adopt of a
+    pre-KIT-0118 tree strips the legacy prose out of its
+    `## Target Repository` section rather than copying it into the
+    record.
+  - **Doctor FAILed projects for declining evaluators** (#146.1). The
+    `--without-evaluators` answer was never persisted, while the
+    consumer engine copies `.adversarial/` unconditionally — so
+    `30-evaluators.sh` and `31-evaluator-cli.sh` FAILed every install
+    that took the door up on its own offer. An **answered** offer (flag,
+    preset, or interactive prompt) is now recorded as an `evaluators:`
+    line in the kit-install region, mirroring `bots:` end to end —
+    surgical add on a preserved region, conflicting value is an error,
+    never a silent overwrite. Both checks SKIP on `evaluators: no` and
+    say how to re-enable. A *non-interactive default* records nothing:
+    writing a defaulted "no" would let a plain `agentive adopt` mask the
+    checks on a project that never declined anything. An absent line is
+    a legacy install and keeps the previous behavior.
+  - **The TASK_PREFIX warning was unreachable on fresh installs**
+    (#146.2). `20-env-keys.py` returned on the required-key FAIL before
+    the prefix block ran — and the seeded `.env.template` ships
+    `ANTHROPIC_API_KEY` commented *and* `TASK_PREFIX` empty, so the two
+    co-occur on every fresh install. The prefix finding is now collected
+    first and folded into the FAIL detail; verdict semantics are
+    unchanged and the check still emits exactly one protocol line.
+
+  Both doctor record readers (the packaged driver and the inline
+  fallback in `scripts/core/project`) learned `evaluators:` together,
+  with a conformance table pinning them to one meaning. The declaration
+  reaches the checks as `DOCTOR_EVALUATORS`, so the driver stays the
+  record's single reader.
+
 ### Removed
 
 - **The three one-release deprecation shims — KIT-ADR-0028 phase 1b**
@@ -60,6 +107,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   all six live citers repointed.
 
 ### Changed
+
+- **`agentive-kit` 0.4.0** (KIT-0118, closes #144). The PyPI wheel was
+  published before KIT-ADR-0030 and contains **no door** — no `agentive
+  new` / `agentive adopt` — yet reported the same `agentive version` →
+  `0.3.1` as main, which has both. That falsified
+  `docs/STARTING-A-PROJECT.md`'s "No kit clone is required to create a
+  project" for every PyPI install and made bug reports against "0.3.1"
+  ambiguous. 0.4.0 ships the door plus the three fixes above (see
+  **Fixed**), in one release train.
 
 - **Canon-fix bundle — fail-closed thread counting + stale sync
   references** (KIT-0105 PR 2 of 3; passengers KIT-0112 complete +

@@ -14,6 +14,16 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${DOCTOR_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
+# Declined at install (KIT-0118, issue #146): DOCTOR_EVALUATORS carries
+# the kit-install record's `evaluators:` declaration, read once by the
+# driver (this check never parses CLAUDE.md itself). A deliberate "no"
+# is not a broken install, so it SKIPs rather than FAILs. Unset =
+# legacy install = the pre-KIT-0118 behavior below.
+if [ "${DOCTOR_EVALUATORS:-}" = "no" ]; then
+    echo "DOCTOR:evaluators:SKIP:evaluators declined at install (evaluators: no in the kit-install record) — install them with 'agentive install-evaluators' and update the record to re-enable this check"
+    exit 0
+fi
+
 if [ ! -d "$ROOT/.adversarial" ]; then
     echo "DOCTOR:evaluators:SKIP:adversarial workflow not initialized (.adversarial/ absent)"
     exit 0

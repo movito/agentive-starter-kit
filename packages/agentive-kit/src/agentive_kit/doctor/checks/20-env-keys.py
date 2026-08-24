@@ -113,6 +113,22 @@ def main():
         print(f"DOCTOR:env-keys:FAIL:.env unreadable ({exc.__class__.__name__})")
         return 0
 
+    # The prefix finding is collected BEFORE the required-key verdict
+    # (KIT-0118, issue #146.2): the seeded .env.template ships
+    # ANTHROPIC_API_KEY commented AND TASK_PREFIX empty, so on every
+    # fresh install the required-key FAIL used to return before the
+    # prefix block ever ran — masking the one warning the door
+    # explicitly promises ("doctor warns until then"). Both problems
+    # co-occur by construction, so both must surface.
+    prefix = key_value(lines, "TASK_PREFIX")
+    prefix_problem = None
+    if prefix is None or prefix == "" or prefix == PREFIX_PLACEHOLDER:
+        prefix_problem = (
+            "TASK_PREFIX not set (empty, missing, or the 'TASK' placeholder)"
+            " — set your project's task prefix in .env (decided at intake"
+            " Step 4a / project onboarding)"
+        )
+
     problems = []
     for key in REQUIRED_KEYS:
         state = key_state(lines, key)
@@ -121,7 +137,14 @@ def main():
         elif state == "missing":
             problems.append(f"{key} missing")
     if problems:
-        print(f"DOCTOR:env-keys:FAIL:{'; '.join(problems)} in .env")
+        # Folded into the FAIL detail rather than emitted as a second
+        # verdict line: one check, one protocol line (the driver counts
+        # verdicts, and test_combined_with_evaluator_warning_one_line
+        # pins that contract for the WARN path).
+        detail = f"{'; '.join(problems)} in .env"
+        if prefix_problem is not None:
+            detail += f"; also: {prefix_problem}"
+        print(f"DOCTOR:env-keys:FAIL:{detail}")
         return 0
 
     warn_parts = []
@@ -135,13 +158,8 @@ def main():
             + ", ".join(warnings)
             + " — those evaluators will drop out of the trio"
         )
-    prefix = key_value(lines, "TASK_PREFIX")
-    if prefix is None or prefix == "" or prefix == PREFIX_PLACEHOLDER:
-        warn_parts.append(
-            "TASK_PREFIX not set (empty, missing, or the 'TASK' placeholder)"
-            " — set your project's task prefix in .env (decided at intake"
-            " Step 4a / project onboarding)"
-        )
+    if prefix_problem is not None:
+        warn_parts.append(prefix_problem)
     if warn_parts:
         print("DOCTOR:env-keys:WARN:" + "; ".join(warn_parts))
         return 0

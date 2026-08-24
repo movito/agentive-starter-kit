@@ -586,6 +586,16 @@ class DoorOptions:
         self.no_kit = False
         self.design_materials = ""
         self.with_evaluators = ""
+        # The evaluator answer as a DECLARATION (KIT-0118): "" until an
+        # operator actually answers — via flag, preset, or the
+        # interactive offer. A non-interactive run that merely DEFAULTS
+        # to "no" leaves this empty on purpose, so the record stays
+        # silent and doctor keeps its legacy behavior. Recording a
+        # defaulted "no" would let a plain `agentive adopt` on a repo
+        # that HAS evaluators SKIP the checks that guard them — the
+        # masking class.
+        self.evaluators_declared = ""
+        self.evaluators_resolved = False
         self.with_venv = ""
         self.bots_cli = ""
         self.bots = ""
@@ -670,7 +680,12 @@ Flags (every interactive question has one — non-TTY runs never hang):
                        No flag/answer = no line = both bots expected.
   --with-evaluators / --without-evaluators
                        answer the evaluator-install offer (provisions
-                       the evaluator library + the adversarial CLI)
+                       the evaluator library + the adversarial CLI).
+                       An ANSWERED offer — by flag, preset, or the
+                       interactive prompt — is recorded as an
+                       `evaluators:` line in the kit-install region, and
+                       doctor SKIPs the evaluator checks on `no` rather
+                       than failing a deliberate decline.
   --with-venv / --without-venv
                        answer the venv offer (profile python only)
   --no-preset          ignore the operator preset for this run
@@ -1200,20 +1215,40 @@ def _cli_subprocess(target: Path, *cli_args: str) -> int:
     return result.returncode
 
 
-def run_offers(opts: DoorOptions) -> None:
-    target = opts.target
-    assert target is not None
+def resolve_evaluator_offer(opts: DoorOptions) -> None:
+    """Settle the evaluator answer — flag/preset value, interactive
+    prompt, or the non-interactive default — WITHOUT acting on it.
+
+    Split out of ``run_offers`` (KIT-0118) because the consumer engine
+    writes the kit-install record before the offers run, and the record
+    must carry the answer. Idempotent: the second call (from
+    ``run_offers``) is a no-op, so a non-interactive default can never
+    be mistaken for a declaration on the way back through.
+    """
+    if opts.evaluators_resolved:
+        return
+    opts.evaluators_resolved = True
     if opts.with_evaluators == "":
         if _is_tty():
             opts.with_evaluators = _prompt_yn(
                 "Install adversarial evaluators now? (library + CLI)"
             )
+            opts.evaluators_declared = opts.with_evaluators
         else:
             print(
                 "Offer skipped (non-interactive): evaluators (library + CLI) "
                 "— pass --with-evaluators to install"
             )
             opts.with_evaluators = "no"
+    else:
+        # came from --with-/--without-evaluators or the preset key
+        opts.evaluators_declared = opts.with_evaluators
+
+
+def run_offers(opts: DoorOptions) -> None:
+    target = opts.target
+    assert target is not None
+    resolve_evaluator_offer(opts)
     if opts.with_evaluators == "yes":
         # Copied-scripts targets (legacy adopts) keep their own
         # installer; packaged targets use this package's.
@@ -1305,6 +1340,35 @@ def run_doctor_tail(opts: DoorOptions) -> None:
         verdict = f"doctor could not run (exit {doctor_exit})"
     print()
     print(f"Doctor verdict: {verdict}")
+    if opts.effective_shape == "planning":
+        # KIT-0118: the target-pointer hint used to ride INSIDE the
+        # recorded value as "# TODO" prose, which is exactly what made
+        # the record unusable (issue #145). The record is now clean, so
+        # the hint belongs here — on the door's own surface. The
+        # engine's Step 4 tail says the same thing, but it is skipped
+        # under --internal-record-only, which is the only way the
+        # packaged door ever calls it.
+        #
+        # Read it back from the RECORD rather than from opts: on adopt
+        # the values can come from an existing ## Target Repository
+        # section, so opts alone would misreport. Angle brackets are the
+        # placeholder marker (../<target-repo>, <owner>/<repo>) and
+        # cannot occur in a resolved pointer — --target-github is
+        # validated to [A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+.
+        recorded = load_record(target)
+        pointer_tp = recorded.get("target_path", "")
+        pointer_tg = recorded.get("target_github", "")
+        if "<" in pointer_tp or "<" in pointer_tg or not (pointer_tp and pointer_tg):
+            print(
+                "Fill in the target-repo pointer (path + github) in "
+                "CLAUDE.md: the ## Target Repository section AND the "
+                "kit-install region."
+            )
+        else:
+            print(
+                "Target-repo pointer recorded in CLAUDE.md: "
+                f"{pointer_tp} ({pointer_tg}) — verify it."
+            )
     print(
         f"Install complete: shape={opts.effective_shape} "
         f"profile={opts.effective_profile} → {target}"
@@ -1380,6 +1444,8 @@ def _consumer_record_args(opts: DoorOptions) -> list[str]:
         args += ["--target-github", opts.target_github]
     if opts.bots:
         args += ["--bots", opts.bots]
+    if opts.evaluators_declared:
+        args += ["--evaluators", opts.evaluators_declared]
     return args
 
 
@@ -1448,6 +1514,12 @@ def _orchestrate(opts: DoorOptions, staged_root: Path) -> None:
             f"profile={opts.effective_profile} → {target} (rung 0)"
         )
         raise DoorExit(0)
+
+    # Settle the evaluator answer BEFORE the consumer engine writes the
+    # record (KIT-0118): the engine is the record's one writer, so the
+    # answer has to exist by the time it runs. run_offers() acts on the
+    # settled value later.
+    resolve_evaluator_offer(opts)
 
     # effective pair, same rule as _consumer_record_args
     scaffold_args = [

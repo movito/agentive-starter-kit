@@ -630,3 +630,71 @@ class TestSyncPairs:
             "engine-scaffold.sh",
             "kit_markers.py",
         ]
+
+
+class TestEvaluatorDeclaration:
+    """KIT-0118 (issue #146.1): the evaluator answer reaches the record
+    only when an operator actually ANSWERED — never when a
+    non-interactive run merely defaulted to "no".
+
+    The distinction is load-bearing: recording a defaulted "no" would
+    let a plain `agentive adopt` on a project that HAS evaluators tell
+    doctor to skip the checks that guard them.
+    """
+
+    def _opts(self, answer=""):
+        opts = door.DoorOptions("new")
+        opts.with_evaluators = answer
+        return opts
+
+    def test_flag_answer_is_a_declaration(self, monkeypatch):
+        monkeypatch.setattr(door, "_is_tty", lambda: False)
+        opts = self._opts("no")
+        door.resolve_evaluator_offer(opts)
+        assert opts.evaluators_declared == "no"
+        assert opts.with_evaluators == "no"
+
+    def test_accepted_flag_answer_is_a_declaration(self, monkeypatch):
+        monkeypatch.setattr(door, "_is_tty", lambda: False)
+        opts = self._opts("yes")
+        door.resolve_evaluator_offer(opts)
+        assert opts.evaluators_declared == "yes"
+
+    def test_non_interactive_default_declares_nothing(self, monkeypatch):
+        monkeypatch.setattr(door, "_is_tty", lambda: False)
+        opts = self._opts("")
+        door.resolve_evaluator_offer(opts)
+        assert opts.with_evaluators == "no"  # the offer still defaults
+        assert opts.evaluators_declared == ""  # but nothing is recorded
+
+    def test_interactive_answer_is_a_declaration(self, monkeypatch):
+        monkeypatch.setattr(door, "_is_tty", lambda: True)
+        monkeypatch.setattr(door, "_prompt_yn", lambda _q: "no")
+        opts = self._opts("")
+        door.resolve_evaluator_offer(opts)
+        assert opts.evaluators_declared == "no"
+
+    def test_resolution_is_idempotent(self, monkeypatch):
+        """run_offers() calls this again after _orchestrate did. A second
+        pass must not promote a defaulted "no" into a declaration."""
+        monkeypatch.setattr(door, "_is_tty", lambda: False)
+        opts = self._opts("")
+        door.resolve_evaluator_offer(opts)
+        door.resolve_evaluator_offer(opts)
+        assert opts.evaluators_declared == ""
+
+    def test_declaration_reaches_the_engine(self):
+        opts = door.DoorOptions("new")
+        opts.effective_shape = "single"
+        opts.effective_profile = "python"
+        opts.evaluators_declared = "no"
+        args = door._consumer_record_args(opts)
+        assert "--evaluators" in args
+        assert args[args.index("--evaluators") + 1] == "no"
+
+    def test_undeclared_answer_sends_no_flag(self):
+        opts = door.DoorOptions("new")
+        opts.effective_shape = "single"
+        opts.effective_profile = "python"
+        opts.evaluators_declared = ""
+        assert "--evaluators" not in door._consumer_record_args(opts)

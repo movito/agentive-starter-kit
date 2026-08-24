@@ -130,7 +130,7 @@ class TestPackagedInstallRecordReader:
             "shape: planning\nprofile: none\n"
             "<!-- END KIT-LOCAL: kit-install -->\n",
         )
-        assert doctor._doctor_install(root) == ("planning", "none", None, [])
+        assert doctor._doctor_install(root) == ("planning", "none", None, None, [])
 
     def test_bots_line_read_without_kit_markers_copy(self, tmp_path):
         root = self._claude_md(
@@ -139,20 +139,20 @@ class TestPackagedInstallRecordReader:
             "shape: single\nprofile: python\nbots: coderabbit\n"
             "<!-- END KIT-LOCAL: kit-install -->\n",
         )
-        shape, profile, bots, errors = doctor._doctor_install(root)
-        assert (shape, profile, errors) == ("single", "python", [])
+        shape, profile, bots, evaluators, errors = doctor._doctor_install(root)
+        assert (shape, profile, evaluators, errors) == ("single", "python", None, [])
         assert bots == ["coderabbit"] or bots == "coderabbit"
 
     def test_absent_region_keeps_backcompat_default(self, tmp_path):
         root = self._claude_md(tmp_path, "# P\nno region here\n")
-        assert doctor._doctor_install(root) == ("single", "python", None, [])
+        assert doctor._doctor_install(root) == ("single", "python", None, None, [])
 
     def test_unbalanced_markers_fail_loud_not_default(self, tmp_path):
         root = self._claude_md(
             tmp_path,
             "# P\n<!-- BEGIN KIT-LOCAL: kit-install -->\nshape: planning\n",
         )
-        shape, profile, bots, errors = doctor._doctor_install(root)
+        shape, profile, bots, evaluators, errors = doctor._doctor_install(root)
         assert shape is None
         assert errors and "malformed" in errors[0][1]
 
@@ -165,7 +165,54 @@ class TestPackagedInstallRecordReader:
             "# P\nThe record lives between BEGIN KIT-LOCAL: kit-install "
             "markers in this file.\n",
         )
-        assert doctor._doctor_install(root) == ("single", "python", None, [])
+        assert doctor._doctor_install(root) == ("single", "python", None, None, [])
+
+    def test_evaluators_declaration_read(self, tmp_path):
+        # KIT-0118 (issue #146.1): the answer the door recorded
+        root = self._claude_md(
+            tmp_path,
+            "# P\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: single\nprofile: python\nevaluators: no\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+        )
+        assert doctor._doctor_install(root) == ("single", "python", None, "no", [])
+
+    def test_evaluators_declaration_is_case_and_space_tolerant(self, tmp_path):
+        # the same tolerance as every other record reader — one
+        # declaration cannot be valid to one reader and invalid to
+        # another
+        root = self._claude_md(
+            tmp_path,
+            "# P\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: single\nprofile: python\n  evaluators:   YES  \n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+        )
+        assert doctor._doctor_install(root) == ("single", "python", None, "yes", [])
+
+    def test_absent_evaluators_line_is_not_an_error(self, tmp_path):
+        # legacy install: absent = "evaluators expected" = today's
+        # behavior, never an error (the back-compat rule)
+        root = self._claude_md(
+            tmp_path,
+            "# P\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: single\nprofile: python\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+        )
+        assert doctor._doctor_install(root) == ("single", "python", None, None, [])
+
+    def test_invalid_evaluators_declaration_fails_loud(self, tmp_path):
+        # a typo silently read as "declined" would SKIP checks it
+        # should run — the same fail-loud rule as bots
+        root = self._claude_md(
+            tmp_path,
+            "# P\n\n<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+            "shape: single\nprofile: python\nevaluators: maybe\n"
+            "<!-- END KIT-LOCAL: kit-install -->\n",
+        )
+        shape, profile, _bots, evaluators, errors = doctor._doctor_install(root)
+        assert (shape, profile) == ("single", "python")
+        assert evaluators is None
+        assert any(record == "evaluators-record" for record, _ in errors)
 
     def test_lone_end_marker_fails_loud_not_default(self, tmp_path):
         # CodeRabbit (PR #116): a lone END marker is just as unbalanced
@@ -174,6 +221,6 @@ class TestPackagedInstallRecordReader:
             tmp_path,
             "# P\n<!-- END KIT-LOCAL: kit-install -->\nshape: planning\n",
         )
-        shape, profile, bots, errors = doctor._doctor_install(root)
+        shape, profile, bots, evaluators, errors = doctor._doctor_install(root)
         assert shape is None
         assert errors and "malformed" in errors[0][1]

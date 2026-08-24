@@ -94,7 +94,7 @@ def _project_verdict(tmp_path: Path, lines: list[str]) -> tuple[bool, frozenset]
     (root / "scripts" / "local").mkdir(parents=True)
     shutil.copy(KIT_MARKERS, root / "scripts" / "local" / "kit_markers.py")
     (root / "CLAUDE.md").write_text("# stub\n\n" + _region(lines), encoding="utf-8")
-    _shape, _profile, bots, errors = _pm._doctor_install(root)
+    _shape, _profile, bots, _evaluators, errors = _pm._doctor_install(root)
     # membership: scanning the error list for the bots record, not
     # comparing one identifier
     if any(record == "bots-record" for record, _detail in errors):
@@ -176,3 +176,64 @@ def test_three_readers_agree(case_id, lines, valid, effective, proj, tmp_path):
     assert preflight_set == effective, f"{case_id}: preflight effective set"
     if door_valid:
         assert door_set == effective, f"{case_id}: door effective set"
+
+
+# ─────────────────────────────────────────
+# evaluators declaration (KIT-0118, issue #146.1) — TWO readers
+# ─────────────────────────────────────────
+# The `evaluators:` line has two readers, not three: preflight does not
+# consult it (it gates bots, not the evaluator library). Both copies of
+# _doctor_install — the packaged doctor and the project script's inline
+# fallback — must agree, for the same reason the bots table exists: a
+# duplicated parser is where meanings drift.
+_EVALUATOR_ROWS = [
+    ("absent", [], None, False),
+    ("declined", ["evaluators: no"], "no", False),
+    ("accepted", ["evaluators: yes"], "yes", False),
+    ("uppercase", ["evaluators: YES"], "yes", False),
+    ("padded", ["  evaluators:   no  "], "no", False),
+    ("duplicate-first-wins", ["evaluators: no", "evaluators: yes"], "no", False),
+    ("invalid", ["evaluators: maybe"], None, True),
+    ("valueless", ["evaluators:"], None, True),
+]
+
+
+def _evaluator_region(lines: list[str]) -> str:
+    body = "shape: single\nprofile: python\n"
+    for raw in lines:
+        body += raw + "\n"
+    return (
+        "<!-- BEGIN KIT-LOCAL: kit-install -->\n"
+        f"{body}"
+        "<!-- END KIT-LOCAL: kit-install -->\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "case_id,lines,expected,errors_expected",
+    _EVALUATOR_ROWS,
+    ids=[row[0] for row in _EVALUATOR_ROWS],
+)
+def test_both_record_readers_agree_on_evaluators(
+    case_id, lines, expected, errors_expected, tmp_path
+):
+    from agentive_kit import doctor as pkg_doctor
+
+    root = tmp_path / case_id
+    (root / "scripts" / "local").mkdir(parents=True)
+    shutil.copy(KIT_MARKERS, root / "scripts" / "local" / "kit_markers.py")
+    (root / "CLAUDE.md").write_text(
+        "# stub\n\n" + _evaluator_region(lines), encoding="utf-8"
+    )
+
+    _s1, _p1, _b1, project_eval, project_errors = _pm._doctor_install(root)
+    _s2, _p2, _b2, pkg_eval, pkg_errors = pkg_doctor._doctor_install(root)
+
+    assert project_eval == expected, f"{case_id}: project reader"
+    assert pkg_eval == expected, f"{case_id}: packaged reader"
+
+    # membership over the error list, not identifier equality on one pair
+    project_flagged = any(r == "evaluators-record" for r, _d in project_errors)
+    pkg_flagged = any(r == "evaluators-record" for r, _d in pkg_errors)
+    assert project_flagged == errors_expected, f"{case_id}: project errors"
+    assert pkg_flagged == errors_expected, f"{case_id}: packaged errors"

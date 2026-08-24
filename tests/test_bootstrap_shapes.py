@@ -318,3 +318,48 @@ class TestExitContractPassThrough:
         )
         assert result.returncode == 2
         assert "owner/repo" in result.stdout + result.stderr
+
+
+class TestEngineValidatesItsOwnEvaluatorsInput:
+    """KIT-0118: the engine writes the record, so it defends its own
+    input — the same rule --bots follows. The packaged door can only
+    send yes|no, but the engine is invocable directly and a bad value
+    written here would poison every downstream reader.
+
+    Validation runs before the target check, so these need no fixture
+    tree and touch no filesystem.
+    """
+
+    ENGINE = REPO_ROOT / "scripts" / "local" / "engine-consumer.sh"
+
+    def _run(self, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["bash", str(self.ENGINE), *args],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            stdin=subprocess.DEVNULL,
+            env=_scrubbed_env(),
+        )
+
+    def test_bad_value_refused(self):
+        result = self._run("--evaluators", "bogus")
+        assert result.returncode == 1
+        assert "must be yes or no" in result.stdout + result.stderr
+
+    def test_empty_value_refused(self):
+        # `--evaluators` with nothing after it must not read as "unset"
+        result = self._run("--evaluators", "--shape", "single")
+        assert result.returncode == 1
+        assert "must be yes or no" in result.stdout + result.stderr
+
+    @pytest.mark.parametrize("value", ["yes", "no", "YES", "No"])
+    def test_valid_values_pass_validation(self, value):
+        # reaches the usage error for the missing target instead
+        result = self._run("--evaluators", value)
+        assert "must be yes or no" not in result.stdout + result.stderr
+        assert "Usage:" in result.stdout + result.stderr
+
+    def test_usage_line_documents_the_flag(self):
+        result = self._run()
+        assert "[--evaluators yes|no]" in result.stdout + result.stderr
