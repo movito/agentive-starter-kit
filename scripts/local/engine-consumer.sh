@@ -413,6 +413,7 @@ PLANNING_LOCAL=(
 # Stack Notes) nor refresh structure for an existing one. With --no-kit they
 # are dropped entirely. Keep this list in sync with KIT_AGENTS below.
 AGENT_EXCLUDES=(--exclude='code-reviewer.md' --exclude='document-reviewer.md' --exclude='security-reviewer.md' \
+                --exclude='architecture-reviewer.md' \
                 --exclude='planner.md' --exclude='planner-f5.md' \
                 --exclude='feature-developer.md' --exclude='feature-developer-f5.md')
 

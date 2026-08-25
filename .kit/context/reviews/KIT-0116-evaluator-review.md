@@ -73,3 +73,37 @@ Both verdicts were FAIL; all findings dispositioned above (5 fixed,
 2 rejected-verified-wrong, 3 rejected with house-pattern rationale,
 1 deferred to Phase 2 with a named owner). Native /code-review pass
 recorded separately in `KIT-0116-review-pass.md` (Gate 8 artifact).
+
+---
+
+# Phase 2 append — PR 2 (`feature/KIT-0116-reviewer-delegation`)
+
+**Date**: 2026-08-24
+**Input**: `agentive review-input KIT-0116 --format diff` at 529c012
+
+## Tier decision
+
+Pure instruction-surface diff (ADR, agent bodies, workflow doc,
+templates; zero executable changes at input time) → **prose-dominated**
+per REVIEW-PIPELINE.md axis 1: `code-reviewer-fast` only; deep tier
+and claude-code skipped (recorded here). The heavy review lift for
+this PR came from Tier 1 (/code-review) and the two Tier-2 smokes —
+tree-grounded, which is exactly what the axis prescribes for prose.
+
+## Dispositions — code-reviewer-fast (verdict CONCERNS, 6 findings)
+
+1. Missing spawn scope degrades review — REJECTED: degraded-loudly by
+   design (reviewer reports the gap; fd triages). 2. Malformed TASK-ID
+   in shell path — REJECTED: upstream regex-constrained; `"$rec"`
+   quoted. 3. Bash-enumeration content mismatch — SUPERSEDED by this
+   round's test rewrite (heading-anchored + iff allow-list).
+4. Malformed Review Flags syntax — REJECTED: fail-closed rule covers
+   (unregistered token → ask). 5. Bundled pointer forgotten →
+   Gate 8 FAIL names remedy — working as designed (KIT-0042).
+6. Record-exists-but-review-failed passes Gate 8 — ACKNOWLEDGED
+   design choice, recorded in KIT-0120.
+
+## Dispositions — Tier-1 /code-review (8 findings) and Tier-2 smokes
+
+See the Phase-2 section of `KIT-0116-review-pass.md` — all triaged
+fix-or-defer there (11 fixed incl. 1 CRITICAL and 2 HIGH; 0 deferred).

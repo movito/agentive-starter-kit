@@ -1,6 +1,9 @@
 # KIT-ADR-0014: Code Review Workflow
 
-**Status**: Accepted
+**Status**: Accepted (report persistence superseded by KIT-ADR-0036
+for spawned reviews — the reviewer returns its report as the final
+message and the caller persists; the interactive flow below remains
+valid history)
 
 **Date**: 2025-11-29
 

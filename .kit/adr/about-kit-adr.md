@@ -38,7 +38,7 @@ This folder contains ADRs inherited from the **agentive-starter-kit** template. 
 | KIT-ADR-0011 | API Versioning Strategy | Accepted |
 | KIT-ADR-0012 | Task Status Linear Alignment | Accepted |
 | KIT-ADR-0013 | Real-Time Task Monitoring | Accepted |
-| KIT-ADR-0014 | Code Review Workflow | Accepted |
+| KIT-ADR-0014 | Code Review Workflow | Accepted (persistence superseded by KIT-ADR-0036 for spawned reviews) |
 | KIT-ADR-0015 | MCP Tool Addition Pattern | Accepted |
 | KIT-ADR-0016 | Validation Architecture | Accepted |
 | KIT-ADR-0017 | API Testing Infrastructure | Accepted |
@@ -61,7 +61,7 @@ This folder contains ADRs inherited from the **agentive-starter-kit** template. 
 | KIT-ADR-0033 | Handoff Brief Primacy | Proposed |
 | KIT-ADR-0034 | What Generates Kit Work | Proposed (governance) |
 | KIT-ADR-0035 | Native Coordination Supersedes dispatch-kit | Accepted |
-| KIT-ADR-0036 | Read-Only Reviewer Delegation | Reserved (authored within KIT-0116) |
+| KIT-ADR-0036 | Read-Only Reviewer Delegation | Proposed (ratifies on KIT-0116 Phase-2 merge) |
 
 KIT-ADR-0030 through 0034 were drafted as one combined ADR ("the door
 is a tool, not a place", PR #128, closed unmerged 2026-08-13) and split
@@ -114,4 +114,4 @@ We need JSON-structured logs for our monitoring system...
 ---
 
 **Template**: agentive-starter-kit
-**Last Updated**: 2026-08-13
+**Last Updated**: 2026-08-24

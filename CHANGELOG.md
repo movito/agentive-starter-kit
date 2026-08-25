@@ -251,6 +251,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Review pipeline, Tier 2 — read-only reviewer delegation**
+  (KIT-0116 Phase 2). **KIT-ADR-0036** codifies the carve-out to the
+  no-Task-delegation rule: reviewer agents whose declared toolset is
+  read-only may be spawned as background subagents via the Agent tool;
+  every retained tool is ruled in the ADR, and **Bash is removed from
+  `code-reviewer`** (FR-6 default remedy — the diff scope arrives in
+  the spawn prompt, findings return as the final message, the caller
+  persists). New **`architecture-reviewer`** agent (implementation-
+  level ADR/pattern/boundary review, read-only from birth, runs on the
+  `architecture` flag). fd bodies gain the Tier-2 spawn contract in
+  Phase 5b; planner/fd footgun text now cites the ADR instead of an
+  absolute. The Phase-1 drift checks armed mechanically on the ADR's
+  existence and pass. Surfaces bumped: feature-developer 2.8.0 / -f5
+  1.8.0, planner 2.3.0 / -f5 1.3.0, code-reviewer 2.0.0,
+  security-reviewer 1.4.0, document-reviewer 1.4.0,
+  architecture-reviewer 1.0.0 (new — needs plugin rostering at the
+  arc-end release).
+
 - **Review pipeline, Tier 1 + flag system** (KIT-0116 Phase 1, closes
   the KIT-ADR-0035 Decision #3 obligation's first rung). New
   `.kit/context/workflows/REVIEW-PIPELINE.md` is the single value
