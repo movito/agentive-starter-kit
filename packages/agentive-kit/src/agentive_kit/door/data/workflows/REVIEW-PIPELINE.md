@@ -1,7 +1,8 @@
 # Review Pipeline — the single value authority
 
-**Version**: 1.1.0
-**Created**: 2026-08-24 (KIT-0116 Phase 1; 1.1.0 = Phase 2, Tier 2 live)
+**Version**: 1.2.0
+**Created**: 2026-08-24 (KIT-0116 Phase 1; 1.1.0 = Phase 2, Tier 2
+live; 1.2.0 = Phase 3, Tier 3 shipped with its escalation contract)
 **Maintained By**: planner
 **Purpose**: THE authority for the kit's review ladder — what review
 runs when, who triggers it, what evidence it leaves, and how these
@@ -22,7 +23,7 @@ ones structurally cannot:
 | Spec time | Adversarial evaluators (`arch-review-fast` / `arch-review` / `claude-arch`) | Planner, per evaluation policy | ¢–$ per run |
 | Implementation time, Tier 1 | Harness-native `/code-review` on the branch diff; `/security-review` when flagged | **Default-on** (code review); flag-triggered (security) | One session pass |
 | Implementation time, Tier 2 | Kit reviewer agents as **background read-only subagents** (`code-reviewer`; `architecture-reviewer` / `security-reviewer` / `document-reviewer` when flagged) | fd MAY spawn after local tests pass; flags gate the specialists. Spawn contract: **KIT-ADR-0036 §4** | Parallel subagent tokens |
-| Implementation time, Tier 3 | Deep-review workflow: multi-lens fan-out + adversarial verification | **Opt-in only** (see Escalation) · *lands in KIT-0116 Phase 3* | Many agents — explicit budget |
+| Implementation time, Tier 3 | Saved `deep-review` workflow (`.claude/workflows/deep-review.js`): multi-lens fan-out + refute-first verification | **Opt-in only** — a human asks in words (see Escalation) | Up to 13 agents per run |
 | PR time | BugBot + CodeRabbit, triaged per the bot-triage skill | Automatic on PR | Bot rounds (budget: one substantive round) |
 | Merge gate | **Human review verdict** (planner Phase 7) | Always | — |
 
@@ -119,17 +120,51 @@ touches (README, workflow docs, CHANGELOG as applicable). The
 is an **audit pass, never a completion gate**: it produces findings to
 triage, it does not block preflight (FR-9).
 
-## Escalation to Tier 3 (opt-in contract)
+## Escalation to Tier 3 (the formal opt-in contract, FR-12)
 
-Tier 3 — the deep-review workflow (multi-lens diff review with
-adversarial verification) — runs **only** when a human asked for it in
-words: the operator in-session, or the planner via the task starter
-("run the deep-review workflow on this PR"). The implementing agent
-**never self-escalates** to Tier 3 (FR-11) — not for a scary diff, not
-for a failed review round. The full invocation contract (exact
-command, who may invoke, what evidence the run leaves) is formalized
-here when the workflow ships in KIT-0116 Phase 3; until then there is
-nothing to invoke.
+Tier 3 — the saved `deep-review` workflow
+(`.claude/workflows/deep-review.js`: three lenses over the branch
+diff, every finding adversarially verified refute-first before it may
+surface) — is **opt-in only**. The contract, exactly:
+
+**Who may invoke** (two paths, both human):
+
+1. The **operator**, in-session, in words — e.g. *"run the
+   deep-review workflow on this PR"*.
+2. The **planner via the task starter or handoff**, in words — the
+   starter carries a line of the form
+   *"Tier 3: run the deep-review workflow before opening the PR"*
+   (a Review Flag is NOT enough — flags trigger Tier 2; Tier 3 is
+   always an explicit sentence).
+
+The implementing agent **never self-escalates** (FR-11) — not for a
+scary diff, not for a failed review round, not "to be safe". An fd
+that believes a task needs Tier 3 says so to the operator and waits.
+
+**Invocation** (by the session, once a human has asked):
+
+```text
+Workflow tool → name: "deep-review",
+args: { "taskId": "<TASK-ID>", "base": "main" }
+```
+
+**What evidence the run leaves** (so escalation is neither accidental
+token-spend nor a dead code path):
+
+- The workflow returns `{ confirmed, refutedCount, scope }`. The
+  session appends a **"Tier 3 — deep review"** section to
+  `.kit/context/reviews/<TASK-ID>-review-pass.md`: who invoked it (in
+  whose words), the run's confirmed findings with fix-or-defer
+  dispositions, the refuted count, and the run's cost. Preflight
+  Gate 8's artifact therefore carries the proof that the escalation
+  happened and was acted on.
+- A Tier-3 run that was *requested but could not execute* is recorded
+  the same way with its reason — never silently skipped.
+
+Cost class: up to 13 agents per run (1 scope + 3 lenses + up to 9
+verifiers; per-lens finding caps are logged, never silent). Spend it
+on genuinely high-risk diffs; the tier-selection axes above say when
+it buys nothing.
 
 ## Governance — how these rules change
 

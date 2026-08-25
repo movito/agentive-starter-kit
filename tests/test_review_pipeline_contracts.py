@@ -237,6 +237,51 @@ def test_starter_template_carries_flag_shell_and_bumped_version():
 
 
 # ---------------------------------------------------------------------------
+# Phase 3 — Tier 3 stays opt-in and resumable
+
+DEEP_REVIEW_WF = ".claude/workflows/deep-review.js"
+
+
+def test_deep_review_workflow_exists_and_stays_optin():
+    """FR-10/FR-11/FR-12: the saved workflow exists, declares its
+    opt-in-only nature in its own metadata, and avoids the
+    resume-breaking primitives the Workflow runtime forbids."""
+    path = REPO / DEEP_REVIEW_WF
+    assert path.is_file(), f"{DEEP_REVIEW_WF} missing (FR-10)"
+    text = _read(DEEP_REVIEW_WF)
+    assert "explicit human opt-in" in text, (
+        f"{DEEP_REVIEW_WF}: whenToUse must state the opt-in-only rule "
+        "(FR-11 — never a default gate, never agent-initiated)"
+    )
+    assert "name: 'deep-review'" in text, (
+        f"{DEEP_REVIEW_WF}: meta.name must stay 'deep-review' — the "
+        "escalation contract invokes it by this name"
+    )
+    for banned in ("Date.now", "Math.random", "new Date()"):
+        assert banned not in text, (
+            f"{DEEP_REVIEW_WF}: uses {banned} — breaks Workflow resume "
+            "(pass timestamps via args instead)"
+        )
+
+
+def test_escalation_contract_is_formal():
+    """FR-12: REVIEW-PIPELINE.md's Escalation section names the exact
+    workflow file, the invocation, and the evidence artifact."""
+    text = _read(REVIEW_PIPELINE)
+    assert (
+        DEEP_REVIEW_WF in text
+    ), f"{REVIEW_PIPELINE}: escalation contract must name {DEEP_REVIEW_WF}"
+    assert "run the deep-review workflow" in text, (
+        f"{REVIEW_PIPELINE}: the contract carries the invocation wording "
+        "a human uses (FR-12 — escalation is words, not vibes)"
+    )
+    assert re.search(r"Tier 3 — deep review", text), (
+        f"{REVIEW_PIPELINE}: the contract must name the review-pass "
+        "record section a run leaves behind (FR-12 evidence rule)"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Phase 2 — armed mechanically by the ADR's existence
 
 

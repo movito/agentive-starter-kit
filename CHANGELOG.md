@@ -251,6 +251,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Review pipeline, Tier 3 — opt-in deep-review workflow** (KIT-0116
+  Phase 3, closing the arc). New saved workflow
+  `.claude/workflows/deep-review.js`: one scope agent, three lenses
+  (correctness / kit-convention architecture / security) over the
+  branch diff, every finding adversarially verified **refute-first**
+  before it may surface — capped at 13 agents per run with logged,
+  never-silent drops. REVIEW-PIPELINE.md 1.2.0 carries the **formal
+  escalation contract** (FR-12): who may invoke (operator in words, or
+  planner via an explicit starter sentence — a Review Flag is not
+  enough), the exact invocation, and the evidence a run must leave in
+  the review-pass record; the implementing agent never self-escalates
+  (FR-11). Drift tests pin the workflow's existence, its opt-in
+  metadata, resume-safety (no Date.now/Math.random), and the
+  contract's invocation wording.
+
 - **Review pipeline, Tier 2 — read-only reviewer delegation**
   (KIT-0116 Phase 2). **KIT-ADR-0036** codifies the carve-out to the
   no-Task-delegation rule: reviewer agents whose declared toolset is
