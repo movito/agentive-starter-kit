@@ -110,7 +110,7 @@ Either option:
       `check-updates` per chosen option)
 - [ ] No surface still implies `adversarial library update` works
       unconditionally in kit projects
-- [ ] Upstream issue filed on movito/adversarial-workflow (draft below)
+- [x] Upstream issue filed on movito/adversarial-workflow (#76, 2026-09-14)
 - [ ] Library-agent guidance drift reported to
       adversarial-evaluator-library maintainers
 - [ ] If Option A: conformance test pinning kit-install visibility
@@ -125,3 +125,4 @@ Either option:
 - `scripts/core/project` — `cmd_install_evaluators` (:885),
   `_get_evaluator_library_version` (:35)
 - Upstream issue draft: `.kit/context/KIT-0121-adversarial-workflow-issue-draft.md`
+- Upstream issue FILED 2026-09-14: movito/adversarial-workflow#76

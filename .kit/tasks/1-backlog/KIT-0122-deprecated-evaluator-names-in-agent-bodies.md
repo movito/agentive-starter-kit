@@ -94,7 +94,7 @@ cosmetic.
 - [ ] fd / fd-f5 changed identically (SYNC contract intact)
 - [ ] Guard exists and fails on reintroduction of a deprecated name
 - [ ] Plugin release plan noted (or executed) so consumers receive it
-- [ ] Upstream issue filed on movito/adversarial-workflow
+- [x] Upstream issue filed on movito/adversarial-workflow (#77, 2026-09-14)
 - [ ] Evaluator cost/selection table in fd bodies updated if v2
       pricing differs
 
@@ -104,4 +104,6 @@ cosmetic.
   deprecated code-reviewer-fast end-to-end; v2 comparison table in the
   agent's report)
 - `adversarial_workflow/evaluators/discovery.py:244` — the discard point
+- Upstream issue FILED 2026-09-14: movito/adversarial-workflow#77
+  (companion: #76, KIT-0121's messaging issue)
 - KIT-0121 — sibling task, install/update channel sync
