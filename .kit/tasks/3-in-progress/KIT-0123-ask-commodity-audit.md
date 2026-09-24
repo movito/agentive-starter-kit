@@ -1,6 +1,6 @@
 # KIT-0123: ASK commodity audit — define lightweight ASK v2 scope
 
-**Status**: Todo
+**Status**: In Progress
 **Priority**: high
 **Assigned To**: planner (analysis phases) + feature-developer (ADR drafting; no code expected)
 **Estimated Effort**: 2-3 sessions
