@@ -407,7 +407,8 @@ PLANNING_LOCAL=(
 # .claude/ — implementation agents, commands, skills, settings — ships to
 # every shape. Reviewer agents stay builder-only. The consumer-customizable
 # marker-bearing agents (planner.md, planner-f5.md, feature-developer.md,
-# feature-developer-f5.md) are excluded here and handled by the marker-merge
+# feature-developer-f5.md, feature-developer-o55.md) are excluded here and
+# handled by the marker-merge
 # step below — rsync's --ignore-existing can neither fill their KIT-LOCAL
 # regions for a fresh consumer (it would leak the kit's own Project Context /
 # Stack Notes) nor refresh structure for an existing one. With --no-kit they
@@ -415,7 +416,8 @@ PLANNING_LOCAL=(
 AGENT_EXCLUDES=(--exclude='code-reviewer.md' --exclude='document-reviewer.md' --exclude='security-reviewer.md' \
                 --exclude='architecture-reviewer.md' \
                 --exclude='planner.md' --exclude='planner-f5.md' \
-                --exclude='feature-developer.md' --exclude='feature-developer-f5.md')
+                --exclude='feature-developer.md' --exclude='feature-developer-f5.md' \
+                --exclude='feature-developer-o55.md')
 
 if [ "$SHAPE" = "planning" ]; then
     echo "1/4 Copying planning-shape scaffolding..."
@@ -625,7 +627,7 @@ echo "2/4 Provisioning kit workflow..."
 # The consumer-customizable marker-bearing agents, single-sourced so the
 # kit-enabled path marker-merges them and the --no-kit path prunes them.
 # Keep in sync with AGENT_EXCLUDES above.
-KIT_AGENTS=(planner.md planner-f5.md feature-developer.md feature-developer-f5.md)
+KIT_AGENTS=(planner.md planner-f5.md feature-developer.md feature-developer-f5.md feature-developer-o55.md)
 
 if [ "$KIT_ENABLED" -eq 1 ]; then
     mkdir -p "$TARGET/.claude/agents"
