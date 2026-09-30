@@ -10,7 +10,7 @@ Phase 2 MERGED (#149 → 4c7af31, KIT-ADR-0036 ratified).
 
 | Surface | Change |
 |---------|--------|
-| `.claude/workflows/deep-review.js` (NEW) | Tier-3 saved workflow (FR-10): scope agent → 3 lenses (correctness / kit-convention architecture / security) → one **refute-first** verifier per finding → synthesis. Budget derived + capped at 13 agents; dead lenses, dead verifiers, capped drops all logged AND returned (`lensesFailed`, `noVerdict`) — never silent. Resume-safe; `args {taskId, base}` shape-validated |
+| `.claude/workflows/deep-review.js` (NEW) | Tier-3 saved workflow (FR-10): scope agent → 3 lenses (correctness / kit-convention architecture / security) → one **refute-first** verifier per finding → synthesis. Budget derived + capped at 13 agents; dead lenses and dead verifiers logged AND returned (`lensesFailed`, `noVerdict`); capped drops logged with their titles — never silent. Resume-safe; `args {taskId, base}` shape-validated |
 | REVIEW-PIPELINE.md 1.2.0 (+ door twin, byte-synced) | **Formal escalation contract** (FR-12): who may invoke (operator in words, or planner via explicit starter sentence — a Review Flag is NOT enough), exact invocation, evidence incl. requested-but-could-not-run and partial-coverage honesty; FR-11 never-self-escalate; Tier-2 toolset distinction; distribution note (door/plugin consumers lack the file → KIT-0124) |
 | Contract tests | Workflow existence, opt-in metadata, `meta.name` stability, nondeterminism-family resume ban, budget derived from the real lens count, contract wording + evidence section, `node --check` under runtime wrapping |
 | `KIT-0124` (NEW, backlog) | Parked distribution gap — routed to the distribution-ADR successor, not ad-hoc copy |
