@@ -293,7 +293,14 @@ def test_deep_review_workflow_parses(tmp_path):
         pytest.skip("node not available")
     src = _read(DEEP_REVIEW_WF)
     lines = src.split("\n")
-    end = next(i for i, line in enumerate(lines) if line == "}")
+    # Anchor the split at the meta export's own closing brace, not the
+    # file's first bare "}" — a top-level construct added above meta
+    # must not silently shift the wrap boundary (claude-code evaluator,
+    # Phase 3 round 2).
+    meta_start = next(
+        i for i, line in enumerate(lines) if line.startswith("export const meta")
+    )
+    end = next(i for i, line in enumerate(lines) if i > meta_start and line == "}")
     wrapped = (
         "\n".join(lines[: end + 1])
         + "\nasync function __wf(args, agent, parallel, pipeline, "

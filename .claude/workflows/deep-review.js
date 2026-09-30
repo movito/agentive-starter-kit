@@ -43,6 +43,18 @@ export const meta = {
 const input = typeof args === 'undefined' || args === null ? {} : args
 const taskId = input.taskId || 'UNLABELED-TASK'
 const base = input.base || 'main'
+
+// Callers are trusted sessions (opt-in contract), but both values are
+// interpolated into sub-agent prompts including a git command — a
+// strict shape check turns a typo'd or mangled arg into a loud error
+// instead of a 13-agent run against garbage (claude-code evaluator,
+// Phase 3 round 2; KIT-0118: enumerate input seams, don't trust them).
+if (!/^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(taskId)) {
+  throw new Error(`deep-review: invalid taskId ${JSON.stringify(taskId)}`)
+}
+if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/.test(base)) {
+  throw new Error(`deep-review: invalid base ref ${JSON.stringify(base)}`)
+}
 const PER_LENS_CAP = 3
 
 const SCOPE_SCHEMA = {
@@ -104,7 +116,7 @@ if (!scope) {
   )
 }
 
-if (scope.files.length === 0) {
+if (!Array.isArray(scope.files) || scope.files.length === 0) {
   log(
     `deep-review ${taskId}: empty diff vs ${base} — nothing to review, ` +
       'ending without fan-out (13-agent budget unspent)'
@@ -211,10 +223,15 @@ const verified = results
   .flat()
   .filter(Boolean)
 const confirmed = verified.filter((f) => f.verdict && f.verdict.refuted === false)
+const noVerdict = verified.filter((f) => !f.verdict).length
+// refutedCount keeps the documented return shape: everything verified
+// that did not confirm. The log splits out verifier deaths so a dead
+// verifier is not mistaken for an evidence-backed refutation.
 const refuted = verified.length - confirmed.length
 
 log(
-  `deep-review ${taskId}: ${confirmed.length} confirmed / ${refuted} refuted ` +
+  `deep-review ${taskId}: ${confirmed.length} confirmed / ` +
+    `${refuted - noVerdict} refuted / ${noVerdict} no-verdict ` +
     `across ${verified.length} verified findings`
 )
 
