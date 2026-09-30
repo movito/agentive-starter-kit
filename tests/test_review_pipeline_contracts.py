@@ -271,10 +271,12 @@ def test_deep_review_workflow_exists_and_stays_optin():
         f"{DEEP_REVIEW_WF}: PER_LENS_CAP changed — update the 13-agent "
         "cost prose here and in REVIEW-PIPELINE.md, then update this pin"
     )
-    assert "13 agents" in _read(REVIEW_PIPELINE) and "13" in text, (
+    assert "13 agents" in _read(REVIEW_PIPELINE) and re.search(
+        r"= 13\b|13-agent", text
+    ), (
         "the 13-agent budget figure must appear in both the workflow "
         "header and REVIEW-PIPELINE.md's cost class — derived from "
-        "1 + LENSES*(1+PER_LENS_CAP)"
+        "1 + LENSES*(1+PER_LENS_CAP); a bare '13' substring is not a pin"
     )
 
 

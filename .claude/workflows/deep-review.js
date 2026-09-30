@@ -91,6 +91,15 @@ const scope = await agent(
   { schema: SCOPE_SCHEMA, label: 'scope' }
 )
 
+// Same null semantics as the lens stages: a scope agent that dies on a
+// terminal error yields null — fail the run loudly rather than TypeError.
+if (!scope) {
+  throw new Error(
+    `deep-review ${taskId}: scope agent returned no result — ` +
+      'aborting before any lens fan-out (re-run, or pass the diff via args)'
+  )
+}
+
 if (scope.files.length === 0) {
   log(
     `deep-review ${taskId}: empty diff vs ${base} — nothing to review, ` +
