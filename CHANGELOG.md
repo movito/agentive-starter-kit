@@ -261,7 +261,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   escalation contract** (FR-12): who may invoke (operator in words, or
   planner via an explicit starter sentence — a Review Flag is not
   enough), the exact invocation, and the evidence a run must leave in
-  the review-pass record; the implementing agent never self-escalates
+  the review-pass record — including partial-coverage honesty: the
+  return carries `noVerdict` and `lensesFailed`, so a dead verifier is
+  never recorded as an evidence-backed refutation nor a two-lens run
+  as full coverage, and a distribution note marks the workflow file as
+  out of reach of door/plugin consumers until the distribution ADR
+  lands (KIT-0124). The implementing agent never self-escalates
   (FR-11). Drift tests pin the workflow's existence, its opt-in
   metadata, resume-safety (no Date.now/Math.random), the contract's
   invocation wording, the 13-agent budget figure on both surfaces, and

@@ -121,7 +121,15 @@ if (!Array.isArray(scope.files) || scope.files.length === 0) {
     `deep-review ${taskId}: empty diff vs ${base} — nothing to review, ` +
       'ending without fan-out (13-agent budget unspent)'
   )
-  return { taskId, base, scope: scope.summary, confirmed: [], refutedCount: 0 }
+  return {
+    taskId,
+    base,
+    scope: scope.summary,
+    confirmed: [],
+    refutedCount: 0,
+    noVerdict: 0,
+    lensesFailed: [],
+  }
 }
 
 const LENSES = [
@@ -170,6 +178,10 @@ const refutePrompt = (f, lens) =>
   `ambiguous or the claim rests on assumed content. reason = the decisive ` +
   `evidence, one or two sentences, citing file:line.`
 
+// Lenses whose agent died without a result — deterministic across a
+// resume (the same cached lens results re-drive the same pushes).
+const lensesFailed = []
+
 const results = await pipeline(
   LENSES,
   (lens) =>
@@ -178,21 +190,27 @@ const results = await pipeline(
       phase: 'Review',
       label: `review:${lens.key}`,
     }).then((r) =>
-      // A lens agent that dies terminally resolves null — pass the null
-      // through to the verify stage's guard instead of dereferencing it
-      // here; normalize findings so schema drift cannot crash the slice.
-      r
-        ? {
-            lens: lens.key,
-            findings: Array.isArray(r.findings) ? r.findings : [],
-          }
-        : null
+      // A lens agent that dies terminally resolves null — keep the lens
+      // identity and mark findings null so the verify stage can LOG the
+      // death instead of swallowing it (a silent lens loss would make a
+      // two-lens run indistinguishable from a clean three-lens run);
+      // normalize live findings so schema drift cannot crash the slice.
+      ({
+        lens: lens.key,
+        findings: r ? (Array.isArray(r.findings) ? r.findings : []) : null,
+      })
     ),
   (review) => {
-    // agent() returns null when a run is skipped mid-flight or dies on
-    // a terminal API error — the lens stage passes that null through
-    // untouched, so this guard is live, not defensive decoration.
-    if (!review) return null
+    if (!review) return null // defensive; stage 1 always yields an object
+    if (!review.findings) {
+      lensesFailed.push(review.lens)
+      log(
+        `deep-review: ${review.lens} lens returned no result — this ` +
+          "run's evidence is PARTIAL; the contract requires recording " +
+          'the failed lens, never treating the run as full coverage'
+      )
+      return null
+    }
     const kept = review.findings.slice(0, PER_LENS_CAP)
     if (kept.length === 0) return [] // clean lens — nothing to verify
     if (review.findings.length > kept.length) {
@@ -211,28 +229,31 @@ const results = await pipeline(
         agent(refutePrompt(f, review.lens), {
           schema: VERDICT_SCHEMA,
           phase: 'Verify',
-          label: `verify:${review.lens}:${f.file.split('/').pop()}`,
+          label: `verify:${review.lens}:${(f.file || '').split('/').pop() || 'unknown'}`,
         }).then((v) => ({ ...f, lens: review.lens, verdict: v }))
       )
     )
   }
 )
 
-const verified = results
-  .filter(Boolean)
-  .flat()
-  .filter(Boolean)
+// Stage-2 results are null (dead/clean-guarded lens), [] (clean lens),
+// or arrays of always-truthy objects — one null-filter, then flatten.
+const verified = results.filter(Boolean).flat()
 const confirmed = verified.filter((f) => f.verdict && f.verdict.refuted === false)
 const noVerdict = verified.filter((f) => !f.verdict).length
-// refutedCount keeps the documented return shape: everything verified
-// that did not confirm. The log splits out verifier deaths so a dead
-// verifier is not mistaken for an evidence-backed refutation.
+// refutedCount = everything verified that did not confirm; noVerdict
+// and lensesFailed ride the RETURN (not just the log) so the evidence
+// record cannot mistake a dead verifier for an evidence-backed
+// refutation, or a partial run for full coverage.
 const refuted = verified.length - confirmed.length
 
 log(
   `deep-review ${taskId}: ${confirmed.length} confirmed / ` +
     `${refuted - noVerdict} refuted / ${noVerdict} no-verdict ` +
-    `across ${verified.length} verified findings`
+    `across ${verified.length} verified findings` +
+    (lensesFailed.length
+      ? ` — PARTIAL: lens(es) failed: ${lensesFailed.join(', ')}`
+      : '')
 )
 
 // The CALLER persists this into the review-pass record's deep-review
@@ -243,4 +264,6 @@ return {
   scope: scope.summary,
   confirmed,
   refutedCount: refuted,
+  noVerdict,
+  lensesFailed,
 }

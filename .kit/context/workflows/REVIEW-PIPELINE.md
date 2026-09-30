@@ -151,8 +151,13 @@ args: { "taskId": "<TASK-ID>", "base": "main" }
 **What evidence the run leaves** (so escalation is neither accidental
 token-spend nor a dead code path):
 
-- The workflow returns `{ confirmed, refutedCount, scope }`. The
-  session appends a **"Tier 3 — deep review"** section to
+- The workflow returns
+  `{ confirmed, refutedCount, noVerdict, lensesFailed, scope }`. A
+  non-empty `lensesFailed` or non-zero `noVerdict` makes the run
+  **partial evidence**: a dead verifier is not an evidence-backed
+  refutation and a dead lens is not a clean lens — the record states
+  the gap explicitly. The session appends a
+  **"Tier 3 — deep review"** section to
   `.kit/context/reviews/<TASK-ID>-review-pass.md`: who invoked it (in
   whose words), the run's confirmed findings with fix-or-defer
   dispositions, the refuted count, and the run's cost. Preflight
@@ -167,6 +172,14 @@ Cost class: up to 13 agents per run (1 scope + 3 lenses + up to 9
 verifiers; per-lens finding caps are logged, never silent). Spend it
 on genuinely high-risk diffs; the tier-selection axes above say when
 it buys nothing.
+
+**Distribution note**: the workflow file rides `.claude/workflows/`,
+which today reaches kit-cloned consumers (the consumer engine copies
+`.claude/` wholesale) but NOT door/plugin-scaffolded projects — there,
+an invocation per this contract is *requested but could not execute*
+until the file is copied in, and the record says so (the shipped-set
+drift class of issues #142/#143; distribution fix tracked upstream in
+the kit backlog).
 
 **Toolset distinction from Tier 2** (so nobody reads the git use as a
 bug): the workflow's stages are ordinary Workflow-tool agents running

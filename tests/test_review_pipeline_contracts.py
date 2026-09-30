@@ -259,18 +259,34 @@ def test_deep_review_workflow_exists_and_stays_optin():
         f"{DEEP_REVIEW_WF}: meta.name must stay 'deep-review' — the "
         "escalation contract invokes it by this name"
     )
-    for banned in ("Date.now", "Math.random", "new Date()"):
-        assert banned not in text, (
-            f"{DEEP_REVIEW_WF}: uses {banned} — breaks Workflow resume "
-            "(pass timestamps via args instead)"
-        )
+    # Ban the nondeterminism FAMILY, not three spellings — new Date(x),
+    # bare Date(), performance.now() and crypto.randomUUID() break
+    # resume exactly like Date.now (/code-review, Phase 3 round 4).
+    nondet = re.search(
+        r"\bDate\s*\(|\bDate\.now\b|\bMath\.random\b"
+        r"|\bperformance\.now\b|\brandomUUID\b",
+        text,
+    )
+    assert not nondet, (
+        f"{DEEP_REVIEW_WF}: uses {nondet.group(0)!r} — breaks Workflow "
+        "resume (pass timestamps via args instead)"
+    )
     # The agent-budget figure is restated as prose in REVIEW-PIPELINE.md;
-    # pin the derivation so a cap change reds both surfaces (Tier-2
-    # smoke finding, Phase 3 round 1 — same class as the 7-gate literals).
+    # DERIVE it from the real lens count and cap so neither a cap change
+    # nor an added lens can leave a stale 13 on either surface (Tier-2
+    # smoke finding, Phase 3 round 1; lens-count derivation round 4 —
+    # same class as the 7-gate literals).
     assert "PER_LENS_CAP = 3" in text, (
         f"{DEEP_REVIEW_WF}: PER_LENS_CAP changed — update the 13-agent "
         "cost prose here and in REVIEW-PIPELINE.md, then update this pin"
     )
+    lens_count = len(re.findall(r"^\s+key: '", text, re.MULTILINE))
+    assert lens_count == 3, (
+        f"{DEEP_REVIEW_WF}: LENSES now has {lens_count} entries — the "
+        "budget is 1 + lenses*(1+PER_LENS_CAP); update the 13-agent "
+        "prose on both surfaces, then this pin"
+    )
+    assert 1 + lens_count * (1 + 3) == 13, "budget derivation drifted"
     assert "13 agents" in _read(REVIEW_PIPELINE) and re.search(
         r"= 13\b|13-agent", text
     ), (
@@ -298,9 +314,21 @@ def test_deep_review_workflow_parses(tmp_path):
     # must not silently shift the wrap boundary (claude-code evaluator,
     # Phase 3 round 2).
     meta_start = next(
-        i for i, line in enumerate(lines) if line.startswith("export const meta")
+        (i for i, line in enumerate(lines) if line.startswith("export const meta")),
+        None,
     )
-    end = next(i for i, line in enumerate(lines) if i > meta_start and line == "}")
+    assert meta_start is not None, (
+        f"{DEEP_REVIEW_WF}: no 'export const meta' line — the wrap "
+        "anchor moved; update this test alongside the workflow shape"
+    )
+    end = next(
+        (i for i, line in enumerate(lines) if i > meta_start and line == "}"),
+        None,
+    )
+    assert end is not None, (
+        f"{DEEP_REVIEW_WF}: meta export has no bare '}}' closing line "
+        "(reformatted?) — the wrap anchor moved; update this test"
+    )
     wrapped = (
         "\n".join(lines[: end + 1])
         + "\nasync function __wf(args, agent, parallel, pipeline, "
