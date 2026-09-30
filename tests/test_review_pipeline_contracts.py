@@ -64,7 +64,9 @@ def _frontmatter(text):
     Tolerates a BOM and CRLF line endings (o3 evaluator, Phase 1
     round 1) so an editor's save style cannot red-bar the suite.
     """
-    match = re.match("\\A\ufeff?---\\r?\\n(.*?)\\r?\\n---\\r?\\n", text, re.DOTALL)
+    match = re.match(
+        "\\A\ufeff?---\\r?\\n(.*?)\\r?\\n---(?:\\r?\\n|\\Z)", text, re.DOTALL
+    )
     assert match, "no frontmatter block"
     return match.group(1)
 
@@ -233,6 +235,132 @@ def test_starter_template_carries_flag_shell_and_bumped_version():
     assert tuple(int(g) for g in match.groups()) >= (2, 2, 0), (
         f"{STARTER_TEMPLATE}: adding the field shell bumps the template "
         "version to >= 2.2.0 (single starter authority contract)"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase 3 — Tier 3 stays opt-in and resumable
+
+DEEP_REVIEW_WF = ".claude/workflows/deep-review.js"
+
+
+def test_deep_review_workflow_exists_and_stays_optin():
+    """FR-10/FR-11/FR-12: the saved workflow exists, declares its
+    opt-in-only nature in its own metadata, and avoids the
+    resume-breaking primitives the Workflow runtime forbids."""
+    path = REPO / DEEP_REVIEW_WF
+    assert path.is_file(), f"{DEEP_REVIEW_WF} missing (FR-10)"
+    text = _read(DEEP_REVIEW_WF)
+    assert "explicit human opt-in" in text, (
+        f"{DEEP_REVIEW_WF}: whenToUse must state the opt-in-only rule "
+        "(FR-11 — never a default gate, never agent-initiated)"
+    )
+    assert "name: 'deep-review'" in text, (
+        f"{DEEP_REVIEW_WF}: meta.name must stay 'deep-review' — the "
+        "escalation contract invokes it by this name"
+    )
+    # Ban the nondeterminism FAMILY, not three spellings — new Date(x),
+    # bare Date(), performance.now() and crypto.randomUUID() break
+    # resume exactly like Date.now (/code-review, Phase 3 round 4).
+    nondet = re.search(
+        r"\bDate\s*\(|\bDate\.now\b|\bMath\.random\b"
+        r"|\bperformance\.now\b|\brandomUUID\b",
+        text,
+    )
+    assert not nondet, (
+        f"{DEEP_REVIEW_WF}: uses {nondet.group(0)!r} — breaks Workflow "
+        "resume (pass timestamps via args instead)"
+    )
+    # The agent-budget figure is restated as prose in REVIEW-PIPELINE.md;
+    # DERIVE it from the real lens count and cap so neither a cap change
+    # nor an added lens can leave a stale 13 on either surface (Tier-2
+    # smoke finding, Phase 3 round 1; lens-count derivation round 4 —
+    # same class as the 7-gate literals).
+    assert "PER_LENS_CAP = 3" in text, (
+        f"{DEEP_REVIEW_WF}: PER_LENS_CAP changed — update the 13-agent "
+        "cost prose here and in REVIEW-PIPELINE.md, then update this pin"
+    )
+    lens_count = len(re.findall(r"^\s+key: '", text, re.MULTILINE))
+    assert lens_count == 3, (
+        f"{DEEP_REVIEW_WF}: LENSES now has {lens_count} entries — the "
+        "budget is 1 + lenses*(1+PER_LENS_CAP); update the 13-agent "
+        "prose on both surfaces, then this pin"
+    )
+    assert 1 + lens_count * (1 + 3) == 13, "budget derivation drifted"
+    assert "13 agents" in _read(REVIEW_PIPELINE) and re.search(
+        r"= 13\b|13-agent", text
+    ), (
+        "the 13-agent budget figure must appear in both the workflow "
+        "header and REVIEW-PIPELINE.md's cost class — derived from "
+        "1 + LENSES*(1+PER_LENS_CAP); a bare '13' substring is not a pin"
+    )
+
+
+def test_deep_review_workflow_parses(tmp_path):
+    """The Tier-3 tool must not rot silently: wrap the script body the
+    way the Workflow runtime does (meta export top-level, body inside
+    an async function with the runtime globals as parameters) and
+    syntax-check it with node (o3 evaluator gap, Phase 3 round 1).
+    Skipped where node is unavailable — CI has it."""
+    import shutil
+    import subprocess
+
+    if shutil.which("node") is None:
+        pytest.skip("node not available")
+    src = _read(DEEP_REVIEW_WF)
+    lines = src.split("\n")
+    # Anchor the split at the meta export's own closing brace, not the
+    # file's first bare "}" — a top-level construct added above meta
+    # must not silently shift the wrap boundary (claude-code evaluator,
+    # Phase 3 round 2).
+    meta_start = next(
+        (i for i, line in enumerate(lines) if line.startswith("export const meta")),
+        None,
+    )
+    assert meta_start is not None, (
+        f"{DEEP_REVIEW_WF}: no 'export const meta' line — the wrap "
+        "anchor moved; update this test alongside the workflow shape"
+    )
+    end = next(
+        (i for i, line in enumerate(lines) if i > meta_start and line == "}"),
+        None,
+    )
+    assert end is not None, (
+        f"{DEEP_REVIEW_WF}: meta export has no bare '}}' closing line "
+        "(reformatted?) — the wrap anchor moved; update this test"
+    )
+    wrapped = (
+        "\n".join(lines[: end + 1])
+        + "\nasync function __wf(args, agent, parallel, pipeline, "
+        + "phase, log, budget, workflow) {\n"
+        + "\n".join(lines[end + 1 :])
+        + "\n}\n"
+    )
+    tmp = tmp_path / "deep-review-wrapped.mjs"
+    tmp.write_text(wrapped, encoding="utf-8")
+    result = subprocess.run(
+        ["node", "--check", str(tmp)], capture_output=True, text=True, timeout=30
+    )
+    assert result.returncode == 0, (
+        f"{DEEP_REVIEW_WF}: syntax error under the runtime wrapping —\n"
+        f"{result.stderr}"
+    )
+
+
+def test_escalation_contract_is_formal():
+    """FR-12: REVIEW-PIPELINE.md's Escalation section names the exact
+    workflow file, the invocation, and the evidence artifact."""
+    text = _read(REVIEW_PIPELINE)
+    assert (
+        DEEP_REVIEW_WF in text
+    ), f"{REVIEW_PIPELINE}: escalation contract must name {DEEP_REVIEW_WF}"
+    assert "run the deep-review workflow" in text, (
+        f"{REVIEW_PIPELINE}: the contract carries the invocation wording "
+        "a human uses (FR-12 — escalation is words, not vibes)"
+    )
+    assert re.search(r"Tier 3 — deep review", text), (
+        f"{REVIEW_PIPELINE}: the contract must name the review-pass "
+        "record section a run leaves behind (FR-12 evidence rule)"
     )
 
 
