@@ -37,8 +37,12 @@ export const meta = {
   ],
 }
 
-const taskId = (args && args.taskId) || 'UNLABELED-TASK'
-const base = (args && args.base) || 'main'
+// The runtime exposes `args` as a global; guard the binding anyway so a
+// runner that scopes it as a wrapper parameter cannot ReferenceError
+// at module load (o3 evaluator, Phase 3 round 2).
+const input = typeof args === 'undefined' || args === null ? {} : args
+const taskId = input.taskId || 'UNLABELED-TASK'
+const base = input.base || 'main'
 const PER_LENS_CAP = 3
 
 const SCOPE_SCHEMA = {
@@ -161,11 +165,21 @@ const results = await pipeline(
       schema: FINDINGS_SCHEMA,
       phase: 'Review',
       label: `review:${lens.key}`,
-    }).then((r) => ({ lens: lens.key, findings: r.findings })),
+    }).then((r) =>
+      // A lens agent that dies terminally resolves null — pass the null
+      // through to the verify stage's guard instead of dereferencing it
+      // here; normalize findings so schema drift cannot crash the slice.
+      r
+        ? {
+            lens: lens.key,
+            findings: Array.isArray(r.findings) ? r.findings : [],
+          }
+        : null
+    ),
   (review) => {
     // agent() returns null when a run is skipped mid-flight or dies on
-    // a terminal API error — the pipeline hands that null to the next
-    // stage, so this guard is live, not defensive decoration.
+    // a terminal API error — the lens stage passes that null through
+    // untouched, so this guard is live, not defensive decoration.
     if (!review) return null
     const kept = review.findings.slice(0, PER_LENS_CAP)
     if (kept.length === 0) return [] // clean lens — nothing to verify
