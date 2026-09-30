@@ -186,8 +186,9 @@ bug): the workflow's stages are ordinary Workflow-tool agents running
 with session permissions — NOT the KIT-ADR-0036 read-only reviewer
 roster. That ADR governs Agent-tool reviewer *spawns*; a Tier-3 run
 is operator-invoked and session-scoped, so its stages may run git
-reads. If a run ever hits a permission wall, pass the diff content
-via `args` and record the observation here.
+reads. If a run ever hits a permission wall, record it as *requested
+but could not execute* (the evidence contract above) and note the
+observation here — the workflow takes no alternate diff input.
 
 ## Governance — how these rules change
 

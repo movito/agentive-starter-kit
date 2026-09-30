@@ -19,8 +19,9 @@
 // with session permissions — NOT the KIT-ADR-0036 read-only reviewer
 // roster. That ADR governs Agent-tool reviewer spawns; Workflow stages
 // may run git reads because a Tier-3 run is operator-invoked and
-// session-scoped. If a run ever hits a permission wall on git, pass
-// the diff content in via args instead and file the observation.
+// session-scoped. If a run ever hits a permission wall on git, record
+// it as requested-but-could-not-run per the contract and file the
+// observation — there is no alternate input path.
 //
 // args: { taskId: "KIT-NNNN", base: "main" } — both optional
 // (base defaults to main; taskId is used for labeling and the
@@ -112,7 +113,8 @@ const scope = await agent(
 if (!scope) {
   throw new Error(
     `deep-review ${taskId}: scope agent returned no result — ` +
-      'aborting before any lens fan-out (re-run, or pass the diff via args)'
+      'aborting before any lens fan-out (re-run; if git access is the ' +
+      'blocker, record the run as requested-but-could-not-run)'
   )
 }
 
@@ -241,15 +243,15 @@ const results = await pipeline(
 const verified = results.filter(Boolean).flat()
 const confirmed = verified.filter((f) => f.verdict && f.verdict.refuted === false)
 const noVerdict = verified.filter((f) => !f.verdict).length
-// refutedCount = everything verified that did not confirm; noVerdict
-// and lensesFailed ride the RETURN (not just the log) so the evidence
-// record cannot mistake a dead verifier for an evidence-backed
-// refutation, or a partial run for full coverage.
-const refuted = verified.length - confirmed.length
+// refutedCount = EVIDENCE-BACKED refutations only — dead verifiers are
+// counted separately in noVerdict, and lensesFailed marks partial
+// coverage, so the persisted record matches the log exactly and can
+// never launder a verifier failure into a refutation.
+const refuted = verified.length - confirmed.length - noVerdict
 
 log(
   `deep-review ${taskId}: ${confirmed.length} confirmed / ` +
-    `${refuted - noVerdict} refuted / ${noVerdict} no-verdict ` +
+    `${refuted} refuted / ${noVerdict} no-verdict ` +
     `across ${verified.length} verified findings` +
     (lensesFailed.length
       ? ` — PARTIAL: lens(es) failed: ${lensesFailed.join(', ')}`
