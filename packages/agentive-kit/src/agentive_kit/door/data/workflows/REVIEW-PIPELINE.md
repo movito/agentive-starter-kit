@@ -157,7 +157,9 @@ token-spend nor a dead code path):
   whose words), the run's confirmed findings with fix-or-defer
   dispositions, the refuted count, and the run's cost. Preflight
   Gate 8's artifact therefore carries the proof that the escalation
-  happened and was acted on.
+  happened and was acted on. **The persisting session dedupes at
+  triage**: two lenses may confirm the same defect independently —
+  one disposition covers both, noted as such.
 - A Tier-3 run that was *requested but could not execute* is recorded
   the same way with its reason — never silently skipped.
 
@@ -165,6 +167,14 @@ Cost class: up to 13 agents per run (1 scope + 3 lenses + up to 9
 verifiers; per-lens finding caps are logged, never silent). Spend it
 on genuinely high-risk diffs; the tier-selection axes above say when
 it buys nothing.
+
+**Toolset distinction from Tier 2** (so nobody reads the git use as a
+bug): the workflow's stages are ordinary Workflow-tool agents running
+with session permissions — NOT the KIT-ADR-0036 read-only reviewer
+roster. That ADR governs Agent-tool reviewer *spawns*; a Tier-3 run
+is operator-invoked and session-scoped, so its stages may run git
+reads. If a run ever hits a permission wall, pass the diff content
+via `args` and record the observation here.
 
 ## Governance — how these rules change
 

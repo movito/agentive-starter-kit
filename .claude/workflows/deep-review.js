@@ -9,9 +9,18 @@
 // Shape: one scope agent maps the diff; three lenses (correctness,
 // architecture-vs-kit-conventions, security) review it in a pipeline;
 // every finding is adversarially verified refute-first before it may
-// surface; a plain-code synthesis dedupes and ranks. Agent budget is
-// capped at 13 (1 + 3 + 3*3 caps), inside the medium size guideline;
-// capped drops are logged, never silent.
+// surface; plain code then filters to confirmed findings and counts
+// refutations (cross-lens DUPLICATES are the persisting session's job
+// to notice at triage — the contract says so). Agent budget is capped
+// at MAX_AGENTS = 1 + LENSES.length * (1 + PER_LENS_CAP) = 13, inside
+// the medium size guideline; capped drops are logged, never silent.
+//
+// Toolset note: these stages are ordinary Workflow-tool agents running
+// with session permissions — NOT the KIT-ADR-0036 read-only reviewer
+// roster. That ADR governs Agent-tool reviewer spawns; Workflow stages
+// may run git reads because a Tier-3 run is operator-invoked and
+// session-scoped. If a run ever hits a permission wall on git, pass
+// the diff content in via args instead and file the observation.
 //
 // args: { taskId: "KIT-NNNN", base: "main" } — both optional
 // (base defaults to main; taskId is used for labeling and the
@@ -82,6 +91,14 @@ const scope = await agent(
   { schema: SCOPE_SCHEMA, label: 'scope' }
 )
 
+if (scope.files.length === 0) {
+  log(
+    `deep-review ${taskId}: empty diff vs ${base} — nothing to review, ` +
+      'ending without fan-out (13-agent budget unspent)'
+  )
+  return { taskId, base, scope: scope.summary, confirmed: [], refutedCount: 0 }
+}
+
 const LENSES = [
   {
     key: 'correctness',
@@ -137,8 +154,12 @@ const results = await pipeline(
       label: `review:${lens.key}`,
     }).then((r) => ({ lens: lens.key, findings: r.findings })),
   (review) => {
+    // agent() returns null when a run is skipped mid-flight or dies on
+    // a terminal API error — the pipeline hands that null to the next
+    // stage, so this guard is live, not defensive decoration.
     if (!review) return null
     const kept = review.findings.slice(0, PER_LENS_CAP)
+    if (kept.length === 0) return [] // clean lens — nothing to verify
     if (review.findings.length > kept.length) {
       log(
         `deep-review: ${review.lens} lens returned ` +

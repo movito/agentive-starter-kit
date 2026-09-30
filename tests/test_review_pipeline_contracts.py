@@ -64,7 +64,9 @@ def _frontmatter(text):
     Tolerates a BOM and CRLF line endings (o3 evaluator, Phase 1
     round 1) so an editor's save style cannot red-bar the suite.
     """
-    match = re.match("\\A\ufeff?---\\r?\\n(.*?)\\r?\\n---\\r?\\n", text, re.DOTALL)
+    match = re.match(
+        "\\A\ufeff?---\\r?\\n(.*?)\\r?\\n---(?:\\r?\\n|\\Z)", text, re.DOTALL
+    )
     assert match, "no frontmatter block"
     return match.group(1)
 
@@ -262,6 +264,50 @@ def test_deep_review_workflow_exists_and_stays_optin():
             f"{DEEP_REVIEW_WF}: uses {banned} — breaks Workflow resume "
             "(pass timestamps via args instead)"
         )
+    # The agent-budget figure is restated as prose in REVIEW-PIPELINE.md;
+    # pin the derivation so a cap change reds both surfaces (Tier-2
+    # smoke finding, Phase 3 round 1 — same class as the 7-gate literals).
+    assert "PER_LENS_CAP = 3" in text, (
+        f"{DEEP_REVIEW_WF}: PER_LENS_CAP changed — update the 13-agent "
+        "cost prose here and in REVIEW-PIPELINE.md, then update this pin"
+    )
+    assert "13 agents" in _read(REVIEW_PIPELINE) and "13" in text, (
+        "the 13-agent budget figure must appear in both the workflow "
+        "header and REVIEW-PIPELINE.md's cost class — derived from "
+        "1 + LENSES*(1+PER_LENS_CAP)"
+    )
+
+
+def test_deep_review_workflow_parses(tmp_path):
+    """The Tier-3 tool must not rot silently: wrap the script body the
+    way the Workflow runtime does (meta export top-level, body inside
+    an async function with the runtime globals as parameters) and
+    syntax-check it with node (o3 evaluator gap, Phase 3 round 1).
+    Skipped where node is unavailable — CI has it."""
+    import shutil
+    import subprocess
+
+    if shutil.which("node") is None:
+        pytest.skip("node not available")
+    src = _read(DEEP_REVIEW_WF)
+    lines = src.split("\n")
+    end = next(i for i, line in enumerate(lines) if line == "}")
+    wrapped = (
+        "\n".join(lines[: end + 1])
+        + "\nasync function __wf(args, agent, parallel, pipeline, "
+        + "phase, log, budget, workflow) {\n"
+        + "\n".join(lines[end + 1 :])
+        + "\n}\n"
+    )
+    tmp = tmp_path / "deep-review-wrapped.mjs"
+    tmp.write_text(wrapped, encoding="utf-8")
+    result = subprocess.run(
+        ["node", "--check", str(tmp)], capture_output=True, text=True, timeout=30
+    )
+    assert result.returncode == 0, (
+        f"{DEEP_REVIEW_WF}: syntax error under the runtime wrapping —\n"
+        f"{result.stderr}"
+    )
 
 
 def test_escalation_contract_is_formal():

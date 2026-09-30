@@ -263,8 +263,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   enough), the exact invocation, and the evidence a run must leave in
   the review-pass record; the implementing agent never self-escalates
   (FR-11). Drift tests pin the workflow's existence, its opt-in
-  metadata, resume-safety (no Date.now/Math.random), and the
-  contract's invocation wording.
+  metadata, resume-safety (no Date.now/Math.random), the contract's
+  invocation wording, the 13-agent budget figure on both surfaces, and
+  a `node --check` syntax pass under the runtime's function wrapping.
 
 - **Review pipeline, Tier 2 — read-only reviewer delegation**
   (KIT-0116 Phase 2). **KIT-ADR-0036** codifies the carve-out to the
