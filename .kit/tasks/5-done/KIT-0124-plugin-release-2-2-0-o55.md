@@ -1,6 +1,6 @@
 # KIT-0124: agentive-workflow 2.2.0 — ship feature-developer-o55 + full resync
 
-**Status**: In Progress
+**Status**: Done
 **Priority**: medium
 **Type**: Plugin release (movito/agentive-skills)
 **Estimated Effort**: ~1-2 h
@@ -37,8 +37,12 @@ refresh from the kit tree.
 
 ## Acceptance
 
-- [ ] `check_plugin_drift.py --roster-file <marketplace roster>` exits 0
-- [ ] `verify_plugin_integrity.py` exits 0 in agentive-skills
-- [ ] markdownlint clean on changed bodies
-- [ ] No un-namespaced `/command` references in shipped bodies
-- [ ] Release PR open on movito/agentive-skills
+- [x] `check_plugin_drift.py --roster-file <marketplace roster>` exits 0
+      (and against the live roster after merge: 30 in sync)
+- [x] `verify_plugin_integrity.py` exits 0 in agentive-skills (30 bodies)
+- [x] markdownlint clean on changed bodies (0 issues, 33 files)
+- [x] No un-namespaced `/command` references added (`wrap-up.md:10`
+      predates 2.2.0)
+- [x] Release PR movito/agentive-skills#13 merged 2026-10-18. Bot
+      finding (preflight Gate 8 split-mode path) deferred to KIT-0126;
+      wait-for-bots wrong-repo bug found during babysit filed as KIT-0125
