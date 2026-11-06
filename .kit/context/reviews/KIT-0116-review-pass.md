@@ -112,3 +112,48 @@ read-only toolset — and both spawns surfaced findings no other rung
 of the ladder had (cross-surface contract contradictions, twin
 drift). Transcript evidence: session "KIT-0116 FDF5 review pipeline",
 2026-08-24.
+
+---
+
+# Phase 3 append — PR 3 (`feature/KIT-0116-deep-review`)
+
+**Date**: 2026-09-30 · **Authority**: REVIEW-PIPELINE.md 1.2.0
+
+## Passes that ran
+
+| Pass | Tool / effort | Outcome |
+|------|---------------|---------|
+| Evaluator trio (Gate 5) | code-reviewer-fast / o3 / claude-code, 3 rounds | 9 FIXED, 8 rejected w/ reasons, 1 deferred — full dispositions in `KIT-0116-evaluator-review.md` (Phase 3 section) |
+| Code review (always) | `/code-review origin/main..HEAD medium` (forked skill, background) | 8 deduped findings: 7 FIXED, 1 PARKED (below) |
+| Security review | skipped | no `security` flag declared on spec, handoff, or resume starter |
+| Tier 2 spawn | skipped (recorded decision) | no flags declared; diff already carried 3 evaluator rounds + Tier 1 — proportionality (NFR-1). Tier-2 mechanics were smoke-verified in Phase 2 |
+| Tier 3 live run | **not run — by contract** | the resume starter contains no Tier-3 sentence; running our own deep-review workflow "as a test" would be self-escalation (FR-11). Ships parse-pinned + contract-pinned; first live run awaits a human ask |
+
+## Fix-or-defer ledger — /code-review (7 fixed, 1 parked)
+
+FIXED: (1) silent whole-lens death — lens identity now survives the
+null path, the death is logged as PARTIAL evidence, and `lensesFailed`
+rides the return; (2) `refutedCount` conflation — `noVerdict` added to
+the RETURN (shape addition), contract text updated: dead verifier ≠
+evidence-backed refutation; (3) budget pin now DERIVES 13 from the
+real lens count (`key:` entries) + PER_LENS_CAP, so an added lens reds
+the suite; (4) `f.file` label deref guarded (`|| 'unknown'`);
+(5) StopIteration → `next(..., None)` + diagnostic asserts naming the
+wrap anchor; (6) dead trailing `.filter(Boolean)` removed with a
+shape comment; (7) resume-safety ban widened from three spellings to
+the nondeterminism family regex (`Date(`, `performance.now`,
+`randomUUID`, …).
+
+PARKED: door/plugin consumers receive the escalation contract but not
+`.claude/workflows/deep-review.js` (#142/#143 shipped-set drift
+class) → honest **distribution note added to the contract** (both
+twins) + filed `KIT-0124-deep-review-distribution-gap.md` (backlog),
+routed to the distribution ADR successor rather than an ad-hoc copy.
+
+## Deferred findings visible to the human reviewer
+
+- o3: behavioural (execute-not-just-parse) test for the workflow —
+  disproportionate to stub the runtime in pytest; first live Tier-3
+  run is the behavioural check (and needs a human ask, FR-11).
+- KIT-0124 (parked distribution gap, above) — rides the PR
+  description too.

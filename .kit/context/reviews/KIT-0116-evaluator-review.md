@@ -107,3 +107,77 @@ tree-grounded, which is exactly what the axis prescribes for prose.
 
 See the Phase-2 section of `KIT-0116-review-pass.md` — all triaged
 fix-or-defer there (11 fixed incl. 1 CRITICAL and 2 HIGH; 0 deferred).
+
+---
+
+# Phase 3 — Tier-3 deep-review workflow (2026-09-30, fd-f5 resume session)
+
+## Tier decision
+
+Mixed diff: a new 200-line JS workflow (logic), instruction surfaces
+(REVIEW-PIPELINE.md ×2 twins), test logic, CHANGELOG. Any behavioral
+hunk ⇒ logic-shaped ⇒ full trio (fd body tier rule). Input: `agentive
+review-input KIT-0116 --base origin/main` (local `main` ref stale in
+the worktree), format `full`, regenerated after each fix round.
+
+## Dispositions — code-reviewer-fast (CONCERNS, 5 findings)
+
+1. Scope-null TypeError — **FIXED** (29ece4c→c249f30 lineage: throw
+   with labeled error before fan-out). 2. Non-boolean `refuted` —
+   REJECTED: schema-enforced by the runtime; failure direction is
+   conservative (malformed drops, never confirms). 3. Bare `"13"`
+   substring pin — **FIXED** (regex `= 13\b|13-agent`). 4. KeyError in
+   toolsets test — REJECTED/out-of-scope: Phase-2 code already merged
+   (full-format noise mode); a KeyError fails that one test loudly
+   naming the missing key. 5. No git fallback — by-design, documented
+   in REVIEW-PIPELINE.md's toolset note; crash vector was finding 1.
+
+## Dispositions — code-reviewer o3 (FAIL, 5 findings)
+
+1. Lens `.then` null-deref — **FIXED** (655a53b): null passes through
+   to the verify guard; also made our own "null reaches next stage"
+   comment true. 2. `args` binding ReferenceError — **FIXED**
+   defensively (`typeof` guard); runtime docs say the global is
+   provided. 3. `findings: null` crash — **FIXED** (Array.isArray
+   normalization in the `.then`). 4. Label regex rejects paths —
+   REJECTED: hallucinated constraint; the runtime's canonical example
+   passes full file paths as labels, and existing `review:x` labels
+   contain `:`. 5. Execute-not-just-parse test — DEFERRED: stubbing
+   the whole runtime in pytest is disproportionate for a contract
+   pin; the live smoke run covers behavior.
+
+## Dispositions — claude-code (CHANGES_REQUESTED, 12 findings)
+
+1. taskId/base prompt/command injection [HIGH] — **FIXED** (8136aad):
+   strict shape regexes, throw on mismatch — trusted callers, but the
+   seam gets enumerated per KIT-0118. 2. Second-order injection via
+   `scope.summary` [HIGH] — REJECTED: single trust domain (every stage
+   runs with the same session permissions); refute-first tree-grounded
+   verification IS the structural mitigation; sanitizing our own
+   agents' outputs to each other is theater. 3. Finding fields into
+   verifier prompts [MED] — REJECTED: same trust-domain reasoning.
+   4. subprocess/node PATH [MED] — REJECTED: standard CI trust,
+   evaluator itself rates residual low. 5. `refuted: null` counted as
+   refuted [LOW] — **FIXED** (log splits no-verdict; return shape
+   unchanged). 6. `scope.files` non-array [LOW] — **FIXED**
+   (Array.isArray in the empty-diff guard, consistency). 7. No
+   auth-on-args [LOW] — by-design, documented (FR-11 is procedural);
+   evaluator concurs no change. 8. Fragile `line == "}"` wrap [MED] —
+   **FIXED** (anchored at the meta export). 9. `.flat()` shape [MED] —
+   REJECTED: matches the Workflow runtime's canonical
+   pipeline+parallel example verbatim. 10. Trailing-space prompt
+   segments [LOW] — REJECTED: cosmetic. 11. CHANGELOG release hygiene
+   [LOW] — out of scope (release train is planner-owned, arc-end).
+   12. refutedCount imprecision — same as 5, fixed.
+
+## Round budget
+
+Three rounds (fast → o3 → claude-code), fixes committed between
+rounds, input regenerated each time. 9 findings fixed, 8 rejected
+with recorded reasoning, 1 deferred. Stopping at the 3-round limit.
+
+## Logs
+
+`.adversarial/logs/KIT-0116-code-review-input--code-reviewer-fast.md`,
+`--code-reviewer.md`, `--claude-code.md` (all against the Phase 3
+branch diff vs origin/main).
