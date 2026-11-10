@@ -1,10 +1,10 @@
 ---
 name: planner-f5
 description: Planning and coordination agent — task lifecycle, evaluation, handoff, cross-repo aware (Fable 5 variant)
-model: claude-fable-5
-version: 1.3.0
+model: claude-fable-5-2
+version: 1.3.1
 origin: agentive-starter-kit
-last-updated: 2026-08-24
+last-updated: 2026-11-10
 created-by: "@movito (Fable-5 fork of planner v2.0.0)"
 ---
 

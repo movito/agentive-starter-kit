@@ -1,10 +1,10 @@
 ---
 name: feature-developer-f5
 description: Feature implementation specialist — gated workflow with inline CI/bot monitoring (Fable 5 variant)
-model: claude-fable-5
-version: 1.8.0
+model: claude-fable-5-2
+version: 1.8.1
 origin: agentive-starter-kit
-last-updated: 2026-08-24
+last-updated: 2026-11-10
 created-by: "@movito (Fable-5 fork of feature-developer v2.0.0)"
 ---
 

@@ -1,10 +1,10 @@
 ---
 name: planner
 description: Planning and coordination agent — task lifecycle, evaluation, handoff, cross-repo aware
-model: claude-opus-4-8
-version: 2.3.0
+model: claude-opus-5-5
+version: 2.3.1
 origin: agentive-starter-kit
-last-updated: 2026-08-24
+last-updated: 2026-11-10
 created-by: "@movito (rewrite modeled on feature-developer-v6)"
 ---
 

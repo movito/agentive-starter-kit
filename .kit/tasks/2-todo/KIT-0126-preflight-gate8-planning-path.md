@@ -34,8 +34,10 @@ planning repo; only the CLI-backed gates 5–7 actually do.
   `-f && -s` rule and the PASS/FAIL output unchanged.
 - R2 — fd Phase 8 checklist line ("Native review pass persisted
   (`.kit/context/reviews/...`)") uses `"$PLANNING"/` in both
-  `feature-developer.md` and `feature-developer-f5.md` (and
-  `feature-developer-o55.md`, pair-synced).
+  `feature-developer.md` and `feature-developer-f5.md`.
+  (`feature-developer-o55.md` retired 2026-11-10 — canonical
+  `feature-developer.md` now pins the same `claude-opus-5-5` the
+  o55 variant piloted; twin set is back to two.)
 - R3 — Class grep: every CWD-relative `.kit/` path in the commands
   and agents that run in split mode; fix or list each.
 - R4 — Mechanize Gate 8 in the `agentive preflight` CLI so it uses
